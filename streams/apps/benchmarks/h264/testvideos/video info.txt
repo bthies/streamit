@@ -1,0 +1,39 @@
+
+YUV 4:2:0 Video Sequences
+
+Format YCbCr
+
+
+Source: http://trace.eas.asu.edu/
+
+
+*****
+
+CIF files are 288 h x 352 w
+
+
+Mobile
+Frames: 300
+Filesize: 37MB
+
+
+Tempete
+Frames: 260
+Filesize: 28MB
+
+
+
+*****
+
+
+QCIF files are 144h x 176 w
+
+ 	
+Container Ship
+Frames: 300
+Filesize: 6.8MB 
+
+ 	
+News
+Frames: 300
+Filesize: 7.2MB 

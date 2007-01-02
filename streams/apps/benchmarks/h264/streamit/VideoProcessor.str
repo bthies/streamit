@@ -1,0 +1,142 @@
+/**
+ * @description
+ * This contains all the filters required to rearrange pixel data from a
+ * YCrCb 4:2:0 file to macroblocks.
+ * 
+ * The specification for MPEG-4 (Part 10) used is the ITU-T H-Series 
+ * Recommendation for H.264.
+ * 
+ * @author <a href="mailto:shirleyf@gmail.com">Shirley Fung</a>
+ * @file VideoProcessor.str
+ * @version 1.0
+ */
+
+/** 
+ * List of TODOs
+ * 
+ */
+
+/**
+ * For testing purposes:
+ */
+void->Frame pipeline Test() {
+	//	video parameters
+	int width = 352;
+	int height = 288;
+	int numPictures = 10;	
+	add ImageStreamPreProcessor(width, height, numPictures);
+	
+}
+
+
+
+/**
+ * Interprets an input stream of successive frames of the original video in 
+ * raw data format, and produces a stream of frames (defined struct).
+ * @param width The resolution width of the video.
+ * @param height The resolution height of the video.
+ * @param numPictures The number of pictures to be put into the video.
+ * @input VOID
+ * @output A stream of Frames (defined struct).
+ */
+void->Frame pipeline ImageStreamPreProcessor(int width, int height, int numPictures) {
+	
+	// video parameters
+	// int width = 352;
+	// int height = 288;
+	// int numPictures = 300; 
+	
+	// useful variables
+	// int numOfMacroblocks = (width/16)*(height/16); // number of macroblocks in a frame
+	add FileReader<int> ("../testvideos/mobile.cif");
+	add MacroblockMaker(width, height, numPictures);
+
+}
+
+/**
+ * Interprets an input stream of successive frames of the original video in 
+ * raw data format, and produces a stream of frames (defined struct).
+ * @param width The resolution width of the video.
+ * @param height The resolution height of the video.
+ * @param numPictures The number of pictures to be put into the video.
+ * @input A series of images representing the frames of the video. 
+ * 		  Each picture frame is coded in YCrCb 4:2:0 format, where a 
+ * 		  2x2 pixel block is represented by, arranged in raster format:
+ * 
+ * 		  Y1 Y2 Y3 Y4 Cr Cb
+ * 
+ * 		  
+ * @output A stream of Frames (defined struct) in time.
+ */
+int->Frame filter MacroblockMaker(int width, int height, int numPictures) {
+	
+	// video parameters
+	// int width = 352;
+	// int height = 288;
+	// int numPictures = 300; 
+	
+	// useful variables
+	// int numOfMacroblocks = (width/16)*(height/16); // number of macroblocks in a frame
+	work pop 1 push 1 {
+		print(pop());
+		Frame newFrame;
+		push(newFrame);
+	}
+
+}
+
+
+/**
+ * This is the container for a frame, using 4:2:0 sampling scheme.
+ * It may be modified easily for a different sampling scheme.
+ * 
+ * Note that in the StreamIt Language Specification 2.1, user initiated 
+ * parameterized types is listed as a future extension.
+ * 
+ * @param numOfMacroblocks number of macroblocks in a frame is needed 
+ * 						   to size the array for the frame
+ * 						   DEPRECATED, NO PARAMETERIZABLE STRUCTS
+ * @frameNumber used for temporal reference
+ * @sliceType labeling of I, P,or B slice types
+ * @macroblock samples coded using 4:2:0 scheme
+ */
+struct Frame {
+	int frameNumber;
+	int sliceType;
+	// QCIF 22w x 16h blocks
+	Macroblock[396] macroblocks;
+}
+
+/**
+ * This is the container for a macroblock, used for 4:2:0 sampling scheme.
+ * It may be modified easily for a different sampling scheme.
+ *
+ * @YSamples 16x16 luma samples block
+ * @CbSamples 8x8 blue chroma samples block
+ * @CrSamples 8x8 red chroma samples block
+ */
+struct Macroblock {
+	Block16x16 YSamples;
+	Block8x8 CbSamples;
+	Block8x8 CrSamples;
+}
+
+/**
+ * This is the container for a 8x8 block. Used for Cb and Cr samples.
+ *
+ * @block 8x8 block of pixels, ordering of right to left, top to bottom.
+ */
+struct Block8x8 {
+	int[64] block;
+}
+
+/**
+ * This is the container for a 16x16 block. Used for Cb and Cr samples.
+ *
+ * @block 16x16 block of pixels, ordering of right to left, top to bottom.
+ */
+struct Block16x16 {
+	int[265] block;
+}
+
+

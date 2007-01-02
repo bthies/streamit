@@ -18,16 +18,23 @@
 /**
  * Interprets an input stream of raw video and encodes a compressed MPEG-4 
  * compliant bit stream, in accordance with the ITU-T specification.
- * @param width The resolution width of the video.
- * @param height The resolution height of the video.
- * @param numPictures The number of pictures to be put into the video.
- * @input A series of images representing the frames of the video. Each image
- *        consists of 3 integers for each pixel, with the number of pixels per
- *        image equalling the width * height of the video. Frames are output
- *        in time order, top to bottom, left to right, and RGB color order.
+ * 
+ * The encoder is limited to work only with CIF videos in YCrCb 4:2:0 format,
+ * with resolution of 288w x 352h. However, with small changes in the code, it
+ * can work with QCIF files as well. It is important that the width and height
+ * dimensions must be in multiples of 16 for macroblock division to work. The
+ * reason why the input video resolution is fixed due to the fact that there
+ * is no parameterizable structs, arrays of macroblocks must be of a fixed size.
+ * 
+ * @input VOID
  * @output An MPEG-4 compliant bit stream of variable length.
  */ 
-int->bit pipeline rawImageStream_to_MPEGStream(int width, int height, int numPictures) {
+void->bit pipeline rawImageStream_to_MPEGStream() {
+	
+	// video parameters
+	int width = 352;
+	int height = 288;
+	int numPictures = 300; 
 	
 	// useful variables
 	// int numOfMacroblocks = (width/16)*(height/16); // number of macroblocks in a frame
@@ -37,7 +44,10 @@ int->bit pipeline rawImageStream_to_MPEGStream(int width, int height, int numPic
 	//deprecated for now
 	//portal<SendBackReconstructedFrame> portal_backwardReferenceFrame;
 	
+	
 	add ImageStreamPreProcessor(width, height, numPictures); // similar to mpeg2
+	// see VideoProcessor.str
+		
 	add Prediction(portal_forwardReferenceFrame);
 				   //portal_backwardReferenceFrame); // deprecated
 	// may have to modify parameters, and portals
@@ -72,21 +82,8 @@ int->bit pipeline rawImageStream_to_MPEGStream(int width, int height, int numPic
 	// write to file!
 }
 
-/**
- * Interprets an input stream of successive frames of the original video in 
- * raw data format, and produces a stream of frames (defined struct).
- * @param width The resolution width of the video.
- * @param height The resolution height of the video.
- * @param numPictures The number of pictures to be put into the video.
- * @input A series of images representing the frames of the video. Each image
- *        consists of 3 integers for each pixel, with the number of pixels per
- *        image equalling the width * height of the video. Frames are output
- *        in time order, top to bottom, left to right, and RGB color order.
- * @output A stream of Frames (defined struct).
- */
-int->Frame pipeline ImageStreamPreProcessor(int width, int height, int numPictures) {
-	
-}
+
+
 
 /**
  * Interprets an input stream of successive frames (in macroblock form), and produces a 
@@ -162,14 +159,17 @@ CodedFrame->CodedFrame filter SendBackReconstructedFrame() {
  * 
  * @param numOfMacroblocks number of macroblocks in a frame is needed 
  * 						   to size the array for the frame
+ * 						   DEPRECATED, NO PARAMETERIZABLE STRUCTS
+ * 
  * @frameNumber used for temporal reference
  * @sliceType labeling of I, P,or B slice types
  * @macroblock samples coded using 4:2:0 scheme
  */
-struct Frame(int numOfMacroblocks) {
+struct Frame {
 	int frameNumber;
 	int sliceType;
-	Macroblock[numOfMacroblocks] macroblocks;
+	// QCIF 22w x 16h blocks
+	Macroblock[396] macroblocks;
 }
 
 /**
@@ -181,6 +181,7 @@ struct Frame(int numOfMacroblocks) {
  * 
  * @param numOfMacroblocks number of macroblocks in a frame is needed 
  * 						   to size the array for the frame
+ * 						   DEPRECATED, NO PARAMETERIZABLE STRUCTS
  * @??? motion vectors
  * @??? residuals
  * @??? intraprediction modes
@@ -189,11 +190,11 @@ struct Frame(int numOfMacroblocks) {
  * @sliceType labeling of I, P,or B slice types
  * @predictedBlocks samples coded using 4:2:0 scheme
  */
-struct PredictedFrame(int numOfMacroblocks) {
+struct PredictedFrame {
 	// need more here...
 	int frameNumber;
 	int sliceType;
-	Macroblock[numOfMacroblocks] predictedBlocks;
+	Macroblock[396] predictedBlocks;
 }
 
 /**
@@ -206,6 +207,8 @@ struct PredictedFrame(int numOfMacroblocks) {
  * 
  * @param numOfMacroblocks number of macroblocks in a frame is needed 
  * 						   to size the array for the frame
+ * 						   DEPRECATED, NO PARAMETERIZABLE STRUCTS
+ * 
  * @??? motion vectors
  * @??? residuals
  * @??? intraprediction modes
@@ -218,7 +221,7 @@ struct CodedFrame(int numOfMacroblocks) {
 	// need more here...
 	int frameNumber;
 	int sliceType;
-	Macroblock[numOfMacroblocks] encodedBlocks;
+	Macroblock[396] encodedBlocks;
 }
 
 /**
@@ -231,12 +234,13 @@ struct CodedFrame(int numOfMacroblocks) {
  * 
  * @param numOfMacroblocks number of macroblocks in a frame is needed 
  * 						   to size the array for the frame
+ * 						   DEPRECATED, NO PARAMETERIZABLE STRUCTS
  * @reconstructedBlocks samples coded using 4:2:0 scheme
  */
-struct DistortedFrame(int numOfMacroblocks) {
+struct DistortedFrame {
 	int frameNumber;
 	int sliceType;
-	Macroblock[numOfMacroblocks] reconstructedBlocks;
+	Macroblock[396] reconstructedBlocks;
 }
 
 /**
@@ -249,7 +253,7 @@ struct DistortedFrame(int numOfMacroblocks) {
  */
 struct Macroblock {
 	Block16x16 YSamples;
-	Block16x16 CbSamples;
+	Block8x8 CbSamples;
 	Block8x8 CrSamples;
 }
 

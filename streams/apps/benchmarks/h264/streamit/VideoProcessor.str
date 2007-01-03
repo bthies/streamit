@@ -96,7 +96,7 @@ bit->int filter BitStream2IntStream() {
   work pop 8 push 1 {
 	int some_int = 0;
 	int two_power = 1;
-	print("printing bits");
+	println("printing bits");
 	for (int i = 0; i < 8; i++) {
 		// little endian
 		int add_int = peek(i) * two_power;
@@ -109,7 +109,7 @@ bit->int filter BitStream2IntStream() {
 }
 
 /**
- * preserves endianess?
+ * preserves endianess? still works for 32 right now.
  */
 int->int filter IntStreamReorder() {
 	work pop 1 push 1 {
@@ -149,9 +149,8 @@ int->void filter MacroblockMaker(int width, int height, int numPictures) {
 	// useful variables
 	// int numOfMacroblocks = (width/16)*(height/16); // number of macroblocks in a frame
 	work pop 1 push 0 {
-		print(" ");
-		print(pop());
-		print(" ");
+
+		println(pop());
 		// Frame newFrame;
 		// push(newFrame);
 	}

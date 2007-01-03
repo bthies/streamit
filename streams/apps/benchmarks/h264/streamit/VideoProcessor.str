@@ -63,10 +63,58 @@ void->void pipeline ImageStreamPreProcessor(int width, int height, int numPictur
 	
 	// useful variables
 	// int numOfMacroblocks = (width/16)*(height/16); // number of macroblocks in a frame
-	add FileReader<int> ("../testvideos/mobile.cif");
+	add FileReader<bit> ("../testvideos/news.qcif");
+	add BitStream2IntStream();
 	add MacroblockMaker(width, height, numPictures);
 
 }
+
+/** 
+ * ORIGINALLY WRITTEN BY MATTHEW DRAKE FROM MPEG2/BINARYFILE.STR.PRE
+ * MODIFICATIONS BY SHIRLEY FUNG, changed code to work with values of 
+ * 8 bits instead of the original 32.
+ * 
+ * Converts a bit stream into a sequence of integers suitable for writing to a file with a 
+ * FileWriter<int>. The integers written by the FileWriter will create a file matching the
+ * underlying representation of the bit stream. Note that if less than full 8 bits is 
+ * sent to this filter it won't generate output, so components which generate bit streams
+ * for use by this filter must be careful to generate output in multiples of 8 bits, or be
+ * aware of the truncation that will happen.
+ * 
+ * Works with unsigned byte representation only, and currently expect that peek(0) reads
+ * the least significant bit in the byte.
+ * 
+ * @input 8 bits representing bit data to be translated to integers
+ * @output An integer stream equivalent to the original 8 bits.
+ */
+bit->int filter BitStream2IntStream() {
+  work pop 8 push 1 {
+	int some_int;
+	int two_power = 1;
+	for (i = 0; i < 8; i++) {
+		// little endian
+		some_int = peek(i) * two_power;
+		two_power = two_power * 2;
+	}
+	push(some_int);
+  }
+}
+
+/**
+ * preserves endianess?
+ */
+int->int filter IntStreamReorder() {
+	work pop 1 push 1 {
+		int some_int = pop();
+		int b0 = ((some_int >> 24) & 0x000000FF);
+		int b1 = (some_int & 0x00FF0000) >> 8;
+		int b2 = (some_int & 0x0000FF00) << 8;
+		int b3 = (some_int & 0x000000FF) << 24;
+		some_int = (b0 | b1 | b2 | b3);
+		push(some_int);
+	}
+}
+
 
 /**
  * Interprets an input stream of successive frames of the original video in 

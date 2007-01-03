@@ -10,39 +10,49 @@ figure out the correct format for these videos.
 
 The test video sequences are in YUV planar format, which means that
 each image in the video sequence has 3 arrays, an array for each Y,
-U (Cr), and V (Cb) values. Each color values is 1 byte (8 bits).
+U (Cr), and V (Cb) values. Each color values is 1 byte (8 bits). Note
+that YCrCb values are unsigned.
+
+Format is little endian:
+The least significant byte (LSB) value, is at the lowest address. 
+The other bytes follow in increasing order of significance. Therefore
+First bit read from file will be the least significant bit.
+
+Refer to I420 format from http://www.FOURCC.org:
 
 The videos are sampled at 4:2:0, which means that the crominance values
 are subsampled by half in the vertical and horizontal directions.
 
 
+Here is information for the videos used:
+
 *****
 
 CIF files are 288 h x 352 w
-
 
 Mobile
 Frames: 300
 Filesize: 37MB
 
-
 Tempete
 Frames: 260
 Filesize: 28MB
 
-
-
 *****
 
-
 QCIF files are 144h x 176 w
-
  	
 Container Ship
 Frames: 300
 Filesize: 6.8MB 
-
  	
 News
 Frames: 300
 Filesize: 7.2MB 
+
+
+*****
+Other resources for videos:
+http://www.tkn.tu-berlin.de/research/evalvid/ -- collection of QCIF and CIF files (unknown format)
+http://en.wikipedia.org/wiki/YUV -- Wikipedia
+http://www.fourcc.org/fccyuv.htm -- reference for various types of YUV formats, and other video formats

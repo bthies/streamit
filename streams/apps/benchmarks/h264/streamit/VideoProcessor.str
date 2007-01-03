@@ -98,8 +98,8 @@ bit->int filter BitStream2IntStream() {
 	int two_power = 1;
 	println("printing bits");
 	for (int i = 0; i < 8; i++) {
-		// little endian
-		int add_int = peek(i) * two_power;
+		// big endian
+		int add_int = peek(8-i) * two_power;
 		two_power = two_power * 2;
 		some_int += add_int;
 		print(peek(i));

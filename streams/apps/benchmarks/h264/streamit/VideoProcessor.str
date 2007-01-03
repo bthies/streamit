@@ -100,7 +100,7 @@ bit->int filter BitStream2IntStream() {
 		// big endian
 		add_int = peek(8-i) * two_power;
 		two_power = two_power * 2;
-		some_int =+ add_int;
+		some_int += add_int;
 	}
 	push(some_int);
   }

@@ -41,7 +41,9 @@ void->void pipeline VideoProcessor(int width, int height, int numPictures) {
 	
 	// useful variables
 	// int numOfMacroblocks = (width/16)*(height/16); // number of macroblocks in a frame
-	add ImageStreamPreProcessor(width, height, numPictures);
+	add FileReader<bit> ("../testvideos/news.qcif");
+	add BitStream2IntStream();
+	add MacroblockMaker(width, height, numPictures);
 
 }
 
@@ -54,6 +56,8 @@ void->void pipeline VideoProcessor(int width, int height, int numPictures) {
  * @input VOID
  * @output A stream of Frames (defined struct).
  */
+
+/*
 void->void pipeline ImageStreamPreProcessor(int width, int height, int numPictures) {
 	
 	// video parameters
@@ -68,6 +72,7 @@ void->void pipeline ImageStreamPreProcessor(int width, int height, int numPictur
 	add MacroblockMaker(width, height, numPictures);
 
 }
+*/
 
 /** 
  * ORIGINALLY WRITTEN BY MATTHEW DRAKE FROM MPEG2/BINARYFILE.STR.PRE

@@ -104,6 +104,7 @@ bit->int filter BitStream2IntStream() {
 		some_int += add_int;
 		print(peek(i));
 	}
+	println("now to int value");
 	push(some_int);
   }
 }

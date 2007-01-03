@@ -41,8 +41,8 @@ void->void pipeline VideoProcessor() {
 	
 	// useful variables
 	// int numOfMacroblocks = (width/16)*(height/16); // number of macroblocks in a frame
-	add FileReader<bit> ("../testvideos/news.qcif");
-	add BitStream2IntStream();
+	add FileReader<int> ("../testvideos/news.qcif");
+	//add BitStream2IntStream();
 	add MacroblockMaker(width, height, numPictures);
 
 }

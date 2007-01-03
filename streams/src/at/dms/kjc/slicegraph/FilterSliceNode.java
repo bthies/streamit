@@ -1,6 +1,6 @@
 package at.dms.kjc.slicegraph;
 
-import at.dms.kjc.sir.*;
+//import at.dms.kjc.sir.*;
 import at.dms.kjc.spacetime.Layout;
 import java.util.*;
 /** 

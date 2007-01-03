@@ -39,7 +39,7 @@ public class GeneratePrimePumpSchedule {
             return;
         }
         
-        LinkedList dataFlowTraversal = DataFlowOrder.getTraversal(spaceTimeSchedule.partitioner.getSliceGraph());
+        LinkedList dataFlowTraversal = DataFlowOrder.getTraversal(spaceTimeSchedule.getPartitioner().getSliceGraph());
               
         //keep adding traces to the schedule until all traces can fire 
         while (!canEverythingFire(dataFlowTraversal)) {
@@ -112,7 +112,7 @@ public class GeneratePrimePumpSchedule {
         //one more time than me.
         for (int i = 0; i < depends.length; i++) {
             //file input nodes can always fire
-            if (spaceTimeSchedule.partitioner.isIO(depends[i]))
+            if (spaceTimeSchedule.getPartitioner().isIO(depends[i]))
                 continue;
             
             int dependsExeCount = getExeCount(depends[i]);
@@ -147,7 +147,7 @@ public class GeneratePrimePumpSchedule {
      * @return should this be counted as a trace that needs to fire.
      */
     private boolean shouldFire(Slice slice) {
-        if (!spaceTimeSchedule.partitioner.isIO(slice))
+        if (!spaceTimeSchedule.getPartitioner().isIO(slice))
             return true;
         if (slice.getHead().getNextFilter().isFileOutput()) {
             if (slice.getHead().oneInput())

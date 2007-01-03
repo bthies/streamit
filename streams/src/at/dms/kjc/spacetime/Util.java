@@ -144,15 +144,16 @@ public class Util {
     
     /**
      * Return true if the sets contructed from list and array are equal.
+     * @param <T> Type of list elements and array elements.
      * 
      * @param list The list
      * @param array The array
      * @return true if the sets contructed from list and array are equal.
      */
-    public static boolean setCompare(LinkedList list, Object[] array) {
+    public static <T> boolean setCompare(LinkedList<T> list, T[] array) {
         if (array.length == list.size()) {
-            HashSet listSet = new HashSet();
-            HashSet<Object> arraySet = new HashSet<Object>();
+            HashSet<T> listSet = new HashSet<T>();
+            HashSet<T> arraySet = new HashSet<T>();
             for (int i = 0; i < array.length; i++) {
                 listSet.add(list.get(i));
                 arraySet.add(array[i]);

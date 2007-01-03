@@ -322,7 +322,7 @@ public class Rawify {
     private static void processFilterSlices(Slice slice, boolean init, boolean primepump,
             RawChip rawChip) {
         //don't do anything for io because it is handled at other levels
-        if (spaceTimeSchedule.partitioner.isIO(slice))
+        if (spaceTimeSchedule.getPartitioner().isIO(slice))
             return;
         //create the DRAM commands for trace input and output 
         //this is done before we create the compute code for the filters of the

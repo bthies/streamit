@@ -38,8 +38,8 @@ public class BenchChar {
         System.out.println("---- Characteristics ----");
         //get the number of splits, joins, peekinng filters
         
-        findNodes(spaceTime.partitioner.getSliceGraph());
-        calcPaths(spaceTime.partitioner.getSliceGraph());
+        findNodes(spaceTime.getPartitioner().getSliceGraph());
+        calcPaths(spaceTime.getPartitioner().getSliceGraph());
         System.out.println("SplitJoins: " + findSplitJoins(str));
         System.out.println("Splits: " + splits);
         System.out.println("Joins: " + joins);

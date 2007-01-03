@@ -95,7 +95,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
         super();
         this.spaceTime = spaceTime;
         rawChip = spaceTime.getRawChip();
-        this.partitioner = spaceTime.partitioner;
+        this.partitioner = spaceTime.getPartitioner();
         numTiles = rawChip.getTotalTiles();
         tiles = new RawTile[numTiles];
         for (int i = 0; i < numTiles; i++) 
@@ -104,11 +104,11 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
         if (SpaceTimeBackend.NO_SWPIPELINE) {
             //if we are not software pipelining then then respect
             //dataflow dependencies
-            scheduleOrder = DataFlowOrder.getTraversal(spaceTime.partitioner.getSliceGraph());
+            scheduleOrder = DataFlowOrder.getTraversal(spaceTime.getPartitioner().getSliceGraph());
         } else {
             //if we are software pipelining then sort the slices by work
-            Slice[] tempArray = (Slice[]) spaceTime.partitioner.getSliceGraph().clone();
-            Arrays.sort(tempArray, new CompareSliceBNWork(spaceTime.partitioner));
+            Slice[] tempArray = (Slice[]) spaceTime.getPartitioner().getSliceGraph().clone();
+            Arrays.sort(tempArray, new CompareSliceBNWork(spaceTime.getPartitioner()));
             scheduleOrder = new LinkedList<Slice>(Arrays.asList(tempArray));
             //reverse the list, we want the list in descending order!
             Collections.reverse(scheduleOrder);

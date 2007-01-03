@@ -43,12 +43,12 @@ public class ManualDRAMPortAssignment {
      */
     public static void run(SpaceTimeSchedule spaceTime) {
         chip = spaceTime.getRawChip();
-        files = spaceTime.partitioner.io;
+        files = spaceTime.getPartitioner().io;
         inputBuffer = new BufferedReader(new InputStreamReader(
                                                                System.in));
       
         
-        Iterator<SliceNode> traceNodeTrav = Util.sliceNodeTraversal(spaceTime.partitioner.getSliceGraph());
+        Iterator<SliceNode> traceNodeTrav = Util.sliceNodeTraversal(spaceTime.getPartitioner().getSliceGraph());
         while (traceNodeTrav.hasNext()) {
             SliceNode sliceNode = traceNodeTrav.next();
             // assign the buffer between inputtracenode and the filter

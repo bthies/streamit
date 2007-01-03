@@ -490,7 +490,7 @@ public class SpaceTimeBackend {
                 
         //calculate preloop and initialization code
         System.out.println("Creating Initialization Schedule...");
-        spaceTimeSchedule.setInitSchedule(DataFlowOrder.getTraversal(spaceTimeSchedule.partitioner.getSliceGraph()));
+        spaceTimeSchedule.setInitSchedule(DataFlowOrder.getTraversal(spaceTimeSchedule.getPartitioner().getSliceGraph()));
         
         System.out.println("Creating Pre-Loop Schedule...");
         GeneratePrimePumpSchedule preLoopSched = new GeneratePrimePumpSchedule(spaceTimeSchedule);

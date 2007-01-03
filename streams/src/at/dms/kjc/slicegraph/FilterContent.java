@@ -22,26 +22,38 @@ import at.dms.kjc.spacetime.SafeFileReaderWriterPositions;
  * @author jasperln
  */
 public class FilterContent implements SIRCodeUnit {
-    private String name; //Filter name
-    private JMethodDeclaration[] prework,steady; //Init and steady method declarations
-    private CType inputType,outputType; //Input and output types
-    private int initMult, steadyMult; //Multiplicities from scheduler
-    private JMethodDeclaration[] methods; //Other method declarations
-    //private List paramList; //List of parameters
-    private JMethodDeclaration initFunction; //Init function for two-stage filters
-    private boolean is2stage; //Is true when two-stage filter
-    private JFieldDeclaration[] fields; //Field declarations
-    //LinearRepresentation
-    /** if the filter is linear, then array stores the A in Ax + b **/
-    private double[] array;
-    /** if the filter is linear, then constant holds the b in Ax + b **/
-    private double constant;
+    /** Unique id used in new name if one FilterContent created from another. */
+    private static int unique_ID = 0; 
+    /** Filter name */
+    private String name; 
+    /** PreWork and Work method declarations */
+    private JMethodDeclaration[] prework,steady; 
+    /** Input and output types */
+    private CType inputType,outputType; 
+    /** Multiplicities from scheduler */
+    private int initMult, steadyMult; 
+    /** Other method declarations */
+    private JMethodDeclaration[] methods;
+    /** Init function for two-stage filters */
+    private JMethodDeclaration initFunction; 
+    /** Is true when two-stage filter */
+    private boolean is2stage; 
+    /** Field declarations */  
+    private JFieldDeclaration[] fields; 
     /** For all filters, the pop count **/
     private int popCount;
     /** For all filters, the peek count **/
     private int peek;
+
+    /////////////////////////
+    //Linear Representation
+    /////////////////////////
     /** true if the filter is linear **/
     private boolean linear;
+    /** if the filter is linear, then array stores the A in Ax + b **/
+    private double[] array;
+    /** if the filter is linear, then constant holds the b in Ax + b **/
+    private double constant;
     /** true if this filter is linear and it is the first filter of
         the fissed filters representing an original linear filter **/
     private boolean begin;
@@ -55,8 +67,6 @@ public class FilterContent implements SIRCodeUnit {
         fissed filters that were generated from the original linear filter **/
     private int total;
     
-    private static int unique_ID = 0; //Unique id for this FilterContent
-
     /**
      * Copy constructor for FilterContent
      * @param content The FilterContent to copy.

@@ -36,16 +36,16 @@ public class ManualSliceLayout implements Layout {
     public void run() {
         assignment = new HashMap();
         //call layout on traces!
-        Slice[] traces = spaceTime.partitioner.getSliceGraph();
+        Slice[] traces = spaceTime.getPartitioner().getSliceGraph();
         
         for (int i = 0; i < traces.length; i++) {
-            if (!spaceTime.partitioner.isIO(traces[i]))
+            if (!spaceTime.getPartitioner().isIO(traces[i]))
                 layout(spaceTime.getRawChip(), traces[i]);
         }
         
         //now set the tiles of the i/o
-        for (int i = 0; i < spaceTime.partitioner.io.length; i++) {
-            Slice slice = spaceTime.partitioner.io[i];
+        for (int i = 0; i < spaceTime.getPartitioner().io.length; i++) {
+            Slice slice = spaceTime.getPartitioner().io[i];
             if (slice.getHead().getNextFilter().isFileOutput()) {
                 //file writer
                 assert slice.getHead().oneInput();

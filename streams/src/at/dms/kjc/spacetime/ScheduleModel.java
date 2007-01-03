@@ -183,27 +183,27 @@ public class ScheduleModel {
                 //has produced enough data for the current to start and when its
                 //tile is avail
                 int currentStart =  Math.max(tileCosts[tile.getTileNumber()], 
-                        prevStart + spaceTime.partitioner.getFilterStartupCost(current));
+                        prevStart + spaceTime.getPartitioner().getFilterStartupCost(current));
                 
                 if (debug)
                     System.out.println("  prev start + startUp Cost: " + 
-                            (prevStart + spaceTime.partitioner.getFilterStartupCost(current)));
+                            (prevStart + spaceTime.getPartitioner().getFilterStartupCost(current)));
                 
                 //now the tile avail for this current tile is the max of the current
                 //start plus the current occupancy and the previous end plus one iteration
                 //of the current, this is because the have to give the current enough
                 //cycles after the last filter completes to complete one iteration
                 int tileAvail = 
-                    Math.max(spaceTime.partitioner.getFilterOccupancy(current) +
+                    Math.max(spaceTime.getPartitioner().getFilterOccupancy(current) +
                             currentStart, 
-                            prevEnd + spaceTime.partitioner.getWorkEstOneFiring(current));
+                            prevEnd + spaceTime.getPartitioner().getWorkEstOneFiring(current));
                 if (debug)
                     System.out.println("  Occ + start = " + 
-                            spaceTime.partitioner.getFilterOccupancy(current) + " " +
+                            spaceTime.getPartitioner().getFilterOccupancy(current) + " " +
                             currentStart);
                 if (debug)
                     System.out.println("  PrevEnd + One firing = " + 
-                            prevEnd + " " + spaceTime.partitioner.getWorkEstOneFiring(current));
+                            prevEnd + " " + spaceTime.getPartitioner().getWorkEstOneFiring(current));
                 
                 if (debug)
                     System.out.println("Checking start of " + current + " on " + tile + 
@@ -253,7 +253,7 @@ public class ScheduleModel {
                         tileCosts[bottleNeckTile.getTileNumber()]);
             
             int nextFinish = tileCosts[bottleNeckTile.getTileNumber()];
-            int next1Iter = spaceTime.partitioner.getWorkEstOneFiring(bottleNeck);
+            int next1Iter = spaceTime.getPartitioner().getWorkEstOneFiring(bottleNeck);
             SliceNode current = bottleNeck.getPrevious();
             //record the end time for the bottleneck filter
             endTime.put(bottleNeck, new Integer(nextFinish));
@@ -271,7 +271,7 @@ public class ScheduleModel {
                 //record the end time of this filter on the tile
                 endTime.put(current.getAsFilter(), new Integer(nextFinish));
                 //get ready for next iteration
-                next1Iter = spaceTime.partitioner.getWorkEstOneFiring(current.getAsFilter());
+                next1Iter = spaceTime.getPartitioner().getWorkEstOneFiring(current.getAsFilter());
                 current = current.getPrevious();
             }
             /*
@@ -295,12 +295,12 @@ public class ScheduleModel {
             for (int f = 0; f < slice.getFilterNodes().length; f++) {
                 assert getFilterStart(slice.getFilterNodes()[f]) <=
                     (getFilterEnd(slice.getFilterNodes()[f]) - 
-                    spaceTime.partitioner.getFilterWorkSteadyMult(slice.getFilterNodes()[f])) :
+                    spaceTime.getPartitioner().getFilterWorkSteadyMult(slice.getFilterNodes()[f])) :
    
                         slice.getFilterNodes()[f] + " " + 
                         getFilterStart(slice.getFilterNodes()[f]) + " <= " +
                             getFilterEnd(slice.getFilterNodes()[f]) + " - " + 
-                                    spaceTime.partitioner.getFilterWorkSteadyMult(slice.getFilterNodes()[f]) +
+                                    spaceTime.getPartitioner().getFilterWorkSteadyMult(slice.getFilterNodes()[f]) +
                                         " (bottleneck: " + bottleNeck + ")";
             }
         }
@@ -330,7 +330,7 @@ public class ScheduleModel {
        while (slices.hasNext()) {
            Slice slice = slices.next();
            RawTile tile = layout.getTile(slice.getHead().getNextFilter());
-           int traceWork = spaceTime.partitioner.getSliceBNWork(slice); 
+           int traceWork = spaceTime.getPartitioner().getSliceBNWork(slice); 
            int myStart = 0;
            //now find the start time
            
@@ -340,7 +340,7 @@ public class ScheduleModel {
            Iterator<Edge> inEdges = input.getSourceSet().iterator();
            while (inEdges.hasNext()) {
                Edge edge = inEdges.next();
-               if (spaceTime.partitioner.isIO(edge.getSrc().getParent()))
+               if (spaceTime.getPartitioner().isIO(edge.getSrc().getParent()))
                    continue;
                FilterSliceNode upStream = edge.getSrc().getPrevFilter();
                

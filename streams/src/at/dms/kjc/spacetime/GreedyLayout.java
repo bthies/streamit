@@ -93,11 +93,11 @@ public class GreedyLayout implements Layout {
         if (SpaceTimeBackend.NO_SWPIPELINE) {
             //if we are not software pipelining then use then respect
             //dataflow dependencies
-            scheduleOrder = DataFlowOrder.getTraversal(spaceTime.partitioner.getSliceGraph());
+            scheduleOrder = DataFlowOrder.getTraversal(spaceTime.getPartitioner().getSliceGraph());
         } else {
             //if we are software pipelining then sort the traces by work
-            Slice[] tempArray = (Slice[]) spaceTime.partitioner.getSliceGraph().clone();
-            Arrays.sort(tempArray, new CompareSliceBNWork(spaceTime.partitioner));
+            Slice[] tempArray = (Slice[]) spaceTime.getPartitioner().getSliceGraph().clone();
+            Arrays.sort(tempArray, new CompareSliceBNWork(spaceTime.getPartitioner()));
            // System.out.println(tempArray.length);
             scheduleOrder = new LinkedList<Slice>(Arrays.asList(tempArray));
             //reverse the list, we want the list in descending order!
@@ -126,10 +126,10 @@ public class GreedyLayout implements Layout {
             
             bins[bin].add(node);
             assignment.put(node, chip.getTile(bin));
-            binWeight[bin] += spaceTime.partitioner.getFilterWorkSteadyMult(node);
-            totalWork += spaceTime.partitioner.getFilterWorkSteadyMult(node);
+            binWeight[bin] += spaceTime.getPartitioner().getFilterWorkSteadyMult(node);
+            totalWork += spaceTime.getPartitioner().getFilterWorkSteadyMult(node);
             System.out.println(" Placing: " + node + " work = " + 
-                    spaceTime.partitioner.getFilterWorkSteadyMult(node) + 
+                    spaceTime.getPartitioner().getFilterWorkSteadyMult(node) + 
                             " on bin " + bin + ", bin work = " + binWeight[bin]);
 
         }

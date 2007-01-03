@@ -34,7 +34,7 @@ public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout {
             StreamlinedDuplicate duplicate) {
         this.chip = chip;
         this.spaceTime = spaceTime;
-        this.partitioner = spaceTime.partitioner;
+        this.partitioner = spaceTime.getPartitioner();
         rand = new Random(17);
         this.duplicate = duplicate;
     }
@@ -240,14 +240,14 @@ public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout {
             for (int i = 0; i < duplicate.getFilterOnTile(t).size(); i++) {
                 SIRFilter filter = duplicate.getFilterOnTile(t).get(i);
                 FilterSliceNode node = 
-                    FilterSliceNode.getFilterNode(spaceTime.partitioner.getContent(filter));
+                    FilterSliceNode.getFilterNode(spaceTime.getPartitioner().getContent(filter));
                 assignment.put(node, chip.getTile(t));
                 tileCosts[t] += partitioner.getFilterWorkSteadyMult(node); 
             }
         }
         
         Iterator<FilterSliceNode> nodes = 
-            Util.sortedFilterSlicesTime(spaceTime.partitioner).iterator();
+            Util.sortedFilterSlicesTime(spaceTime.getPartitioner()).iterator();
         while (nodes.hasNext()) {
             FilterSliceNode node = nodes.next();
             //already assigned above

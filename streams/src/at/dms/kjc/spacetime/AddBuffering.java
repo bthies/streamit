@@ -66,8 +66,8 @@ public class AddBuffering {
      * then create an id filter to buffer items to make it integral.
      */
     private void checkOutputNodes() {
-        for (int t = 0; t < spaceTime.partitioner.getSliceGraph().length; t++) {
-            Slice slice = spaceTime.partitioner.getSliceGraph()[t];
+        for (int t = 0; t < spaceTime.getPartitioner().getSliceGraph().length; t++) {
+            Slice slice = spaceTime.getPartitioner().getSliceGraph()[t];
             //check all the outgoing edges to see if they are balanced in the init
             //and fix them if we have to
             fixOutputNode(slice.getTail());
@@ -121,8 +121,8 @@ public class AddBuffering {
         do {
             //System.out.println("Iteration " + i++);
             change = false;
-            for (int t = 0; t < spaceTime.partitioner.getSliceGraph().length; t++) {
-                Slice slice = spaceTime.partitioner.getSliceGraph()[t];
+            for (int t = 0; t < spaceTime.getPartitioner().getSliceGraph().length; t++) {
+                Slice slice = spaceTime.getPartitioner().getSliceGraph()[t];
                 //check all the outgoing edges to see if they are balanced in the init
                 //and fix them if we have to
                 boolean currentChange 
@@ -134,8 +134,8 @@ public class AddBuffering {
             FilterInfo.reset();
             //tell the partitioner that new slices maybe have been added!
             LinkedList<Slice> newSlices = 
-                DataFlowOrder.getTraversal(spaceTime.partitioner.getSliceGraph());
-            spaceTime.partitioner.setSliceGraphNewIds(
+                DataFlowOrder.getTraversal(spaceTime.getPartitioner().getSliceGraph());
+            spaceTime.getPartitioner().setSliceGraphNewIds(
                     newSlices.toArray(new Slice[newSlices.size()]));
                     
         } while (change);
@@ -320,7 +320,7 @@ public class AddBuffering {
         if (KjcOptions.greedysched || KjcOptions.noswpipe)
             return false;
         if (slice.getFilterNodes().length >=
-                spaceTime.getRawChip().getTotalTiles())
+                spaceTime.getTotalNodes()/*getRawChip().getTotalTiles()*/)
             return false;
         
         OutputSliceNode output = slice.getTail();
@@ -393,7 +393,7 @@ public class AddBuffering {
         FilterSliceNode oldLast = slice.getTail().getPrevFilter();
      
         assert slice.getFilterNodes().length < 
-            spaceTime.getRawChip().getTotalTiles() : 
+            spaceTime.getTotalNodes()/*getRawChip().getTotalTiles()*/ : 
                 "Cannot add buffering to slice because it has (filters == tiles).";
         
         //create the identity
@@ -416,7 +416,7 @@ public class AddBuffering {
         slice.getTail().setPrevious(filter);
         slice.finish();
         
-        spaceTime.partitioner.addFilterToSlice(filter, slice);
+        spaceTime.getPartitioner().addFilterToSlice(filter, slice);
     }
     
     /**

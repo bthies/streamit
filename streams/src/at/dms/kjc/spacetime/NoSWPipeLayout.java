@@ -28,7 +28,7 @@ public class NoSWPipeLayout extends SimulatedAnnealing implements Layout {
         this.spaceTime = spaceTime;
         this.chip = spaceTime.getRawChip();
         scheduleOrder = 
-            DataFlowOrder.getTraversal(spaceTime.partitioner.getSliceGraph());
+            DataFlowOrder.getTraversal(spaceTime.getPartitioner().getSliceGraph());
         assignedFilters = new LinkedList<FilterSliceNode>();
         rand = new Random(17);
     }
@@ -109,7 +109,7 @@ public class NoSWPipeLayout extends SimulatedAnnealing implements Layout {
         while (slices.hasNext()) {
             Slice slice = slices.next();
             RawTile tile = getTile(slice.getHead().getNextFilter());
-            double traceWork = spaceTime.partitioner.getSliceBNWork(slice); 
+            double traceWork = spaceTime.getPartitioner().getSliceBNWork(slice); 
             double startTime = 0;
             //now find the start time
             
@@ -119,7 +119,7 @@ public class NoSWPipeLayout extends SimulatedAnnealing implements Layout {
             Iterator<Edge> inEdges = input.getSourceSet().iterator();
             while (inEdges.hasNext()) {
                 Edge edge = inEdges.next();
-                if (spaceTime.partitioner.isIO(edge.getSrc().getParent()))
+                if (spaceTime.getPartitioner().isIO(edge.getSrc().getParent()))
                     continue;
                 FilterSliceNode upStream = edge.getSrc().getPrevFilter();
                 

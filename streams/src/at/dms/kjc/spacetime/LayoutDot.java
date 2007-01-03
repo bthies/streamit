@@ -30,7 +30,7 @@ public class LayoutDot
         AnnealedLayout anneal = new AnnealedLayout(spaceTime);
         anneal.initialize();
         Iterator<SliceNode> nodes  = 
-            Util.sliceNodeTraversal(spaceTime.partitioner.getSliceGraph());
+            Util.sliceNodeTraversal(spaceTime.getPartitioner().getSliceGraph());
         HashMap assignment = new HashMap();
         while (nodes.hasNext()) {
             SliceNode node = nodes.next();

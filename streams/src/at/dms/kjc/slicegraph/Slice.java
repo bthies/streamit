@@ -16,7 +16,7 @@ public class Slice {
     //The length of the slice.
     private int len;
     //This should be deleted, not used anymore!
-    private int primePump;
+//    private int primePump;
     private FilterSliceNode[] filterNodes;
     
     /*
@@ -153,18 +153,18 @@ public class Slice {
         return "Slice: " + head + "->" + head.getNext() + "->...";
     }
 
-    public void setPrimePump(int pp) {
-        primePump = pp;
-        /*
-         * SliceNode cur=head.getNext(); while(cur instanceof FilterSliceNode) {
-         * ((FilterSliceNode)cur).getFilter().setPrimePump(pp);
-         * cur=cur.getNext(); }
-         */
-    }
+//    public void setPrimePump(int pp) {
+//        primePump = pp;
+//        /*
+//         * SliceNode cur=head.getNext(); while(cur instanceof FilterSliceNode) {
+//         * ((FilterSliceNode)cur).getFilter().setPrimePump(pp);
+//         * cur=cur.getNext(); }
+//         */
+//    }
 
-    public int getPrimePump() {
-        return primePump;
-    }
+//    public int getPrimePump() {
+//        return primePump;
+//    }
 
     // return the number of filters in the slice
     public int getNumFilters() {

@@ -56,7 +56,7 @@ public class GenerateSteadyStateSchedule {
     public void schedule() {
         if (SpaceTimeBackend.NO_SWPIPELINE) {
             spaceTime.setSchedule(DataFlowOrder.getTraversal
-                    (spaceTime.partitioner.getSliceGraph()));
+                    (spaceTime.getPartitioner().getSliceGraph()));
         }
         else {
             //for now just call schedule work, may want other schemes later
@@ -72,8 +72,8 @@ public class GenerateSteadyStateSchedule {
      */
     private void scheduleWork() {
         // sort traces...
-        Slice[] tempArray = (Slice[]) spaceTime.partitioner.getSliceGraph().clone();
-        Arrays.sort(tempArray, new CompareSliceBNWork(spaceTime.partitioner));
+        Slice[] tempArray = (Slice[]) spaceTime.getPartitioner().getSliceGraph().clone();
+        Arrays.sort(tempArray, new CompareSliceBNWork(spaceTime.getPartitioner()));
         LinkedList<Slice> sortedTraces = new LinkedList<Slice>(Arrays.asList(tempArray));
 
         // schedule predefined filters first, but don't put them in the
@@ -88,7 +88,7 @@ public class GenerateSteadyStateSchedule {
         while (it.hasNext()) {
             Slice slice = it.next();
             CommonUtils.println_debugging(" * " + slice + " (work: "
-                               + spaceTime.partitioner.getSliceBNWork(slice) + ")");
+                               + spaceTime.getPartitioner().getSliceBNWork(slice) + ")");
         }
 
         
@@ -149,7 +149,7 @@ public class GenerateSteadyStateSchedule {
             tileAvail[tile.getTileNumber()] = ((currentTime > tileAvail[tile
                                                                         .getTileNumber()]) ? currentTime : tileAvail[tile
                                                                                                                      .getTileNumber()])
-                + spaceTime.partitioner.getSliceBNWork(slice);
+                + spaceTime.getPartitioner().getSliceBNWork(slice);
             CommonUtils.println_debugging("   * new avail for " + tile + " = "
                                + tileAvail[tile.getTileNumber()]);
             // SpaceTimeBackend.println(" *(" + currentTime + ") Assigning " + node +
@@ -213,8 +213,8 @@ public class GenerateSteadyStateSchedule {
      * @param sortedTraces The traces of the graph
      */
     private void removePredefined(LinkedList sortedTraces) {
-        for (int i = 0; i < spaceTime.partitioner.io.length; i++) {
-            sortedTraces.remove(spaceTime.partitioner.io[i]);
+        for (int i = 0; i < spaceTime.getPartitioner().io.length; i++) {
+            sortedTraces.remove(spaceTime.getPartitioner().io[i]);
         }
     } 
    

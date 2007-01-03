@@ -2,7 +2,7 @@ package at.dms.kjc.slicegraph;
 
 import at.dms.util.Utils;
 import java.util.HashSet;
-import java.util.Iterator;
+import java.util.Set;
 import java.util.LinkedList;
 import at.dms.kjc.*;
 
@@ -22,6 +22,7 @@ public class InputSliceNode extends SliceNode {
 
     private static Edge[] EMPTY_SRCS = new Edge[0];
 
+    /** Creator */
     public InputSliceNode(int[] weights, Edge[] sources) {
         // this.parent = parent;
         if (weights.length != sources.length)
@@ -35,6 +36,7 @@ public class InputSliceNode extends SliceNode {
         unique++;
     }
 
+    /** Constructor */
     public InputSliceNode(int[] weights, OutputSliceNode[] sources) {
         // this.parent = parent;
         if (weights.length != sources.length)
@@ -52,6 +54,7 @@ public class InputSliceNode extends SliceNode {
         unique++;
     }
 
+    /** Constructor: weights, edges to be set later. */
     public InputSliceNode(int[] weights) {
         // this.parent = parent;
         sources = EMPTY_SRCS;
@@ -63,6 +66,7 @@ public class InputSliceNode extends SliceNode {
         unique++;
     }
 
+    /** Constructor: no edges, no weights */
     public InputSliceNode() {
         // this.parent = parent;
         sources = EMPTY_SRCS;
@@ -72,9 +76,11 @@ public class InputSliceNode extends SliceNode {
     }
 
     /**
-     * Merge any neighboring edges in the sources and weights 
-     * arrays that are equal.
-     *
+     * Merge neighboring edges and weights if the neighboring edges
+     * are actually the same Edge object. 
+     * This operation exists as a cleanup operation for synch removal.
+     * Code generation for Edges may rely on {@link OutputSliceNode#canonicalize()}
+     * being run on all output nodes whose edges are combined by canonicalize.
      */
     public void canonicalize() {
         //do nothing for 0 length joiners
@@ -106,10 +112,12 @@ public class InputSliceNode extends SliceNode {
         set(newWeights, newEdges);
     }
     
+    /** InputSliceNode is FileOutput if FilterSliceNode is FileOutput.*/
     public boolean isFileOutput() {
         return ((FilterSliceNode) getNext()).isFileOutput();
     }
 
+    /** Returns unique string identifying slice. */
     public String getIdent() {
         return ident;
     }
@@ -144,11 +152,12 @@ public class InputSliceNode extends SliceNode {
         return items;
     }
   
-    
+    /** @return array of edge weights */
     public int[] getWeights() {
         return weights;
     }
 
+    /** @return array of edges */
     public Edge[] getSources() {
         return sources;
     }
@@ -183,10 +192,12 @@ public class InputSliceNode extends SliceNode {
             this.weights = newWeights;
     }
     
+    /** Set the source edges. (shares, does not copy.) */
     public void setSources(Edge[] sources) {
         this.sources = sources;
     }
 
+    /** @return total weight of all edges */
     public int totalWeights() {
         int sum = 0;
         for (int i = 0; i < weights.length; i++)
@@ -194,6 +205,8 @@ public class InputSliceNode extends SliceNode {
         return sum;
     }
 
+    /** @return total weight on all connections to a single Edge. 
+     * @param out The Edge that we are interested in*/
     public int getWeight(Edge out) {
         int sum = 0;
 
@@ -204,27 +217,51 @@ public class InputSliceNode extends SliceNode {
         return sum;
     }
 
+    /**
+     * Does sources have a single element. 
+     * @return true if there is a single element in sources. */
     public boolean oneInput() {
         return (sources.length == 1);
     }
     
+    /** 
+     * Is a joiner if there are at least 2 sources (even if same Edge object).
+     * @return is a joiner.
+     */
     public boolean isJoiner() {
         return sources.length >= 2;
     }
 
+    /** Get the singleton edge. 
+     * Must have only one input in sources.
+     * @return the edge, or throw AssertionError
+     */
     public Edge getSingleEdge() {
         assert oneInput() : "Calling getSingeEdge() on InputSlice with less/more than one input";
         return sources[0];
     }
 
+    /** 
+     * Get the following FilterSliceNode.
+     * @return
+     */
     public FilterSliceNode getNextFilter() {
         return (FilterSliceNode) getNext();
     }
 
+    /** Are there no inputs?
+     * 
+     * @return
+     */
     public boolean noInputs() {
         return sources.length == 0;
     }
 
+    /** return ratio of weight of iege to totalWeights().
+     * 
+     * @param edge
+     * @return  0.0 if totalWeights() == 0, else ratio.
+     */
     public double ratio(Edge edge) {
         if (totalWeights() == 0)
             return 0.0;
@@ -259,7 +296,7 @@ public class InputSliceNode extends SliceNode {
        return list;
     }
     
-    public HashSet<Edge> getSourceSet() {
+    public Set<Edge> getSourceSet() {
         HashSet<Edge> set = new HashSet<Edge>();
         for (int i = 0; i < sources.length; i++)
             set.add(sources[i]);

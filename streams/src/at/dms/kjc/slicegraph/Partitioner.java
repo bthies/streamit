@@ -2,15 +2,15 @@ package at.dms.kjc.slicegraph;
 
 import java.util.*;
 import java.io.FileWriter;
-import java.io.FilterWriter;
+//import java.io.FilterWriter;
 
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.sir.*;
-import at.dms.util.Utils;
+//import at.dms.util.Utils;
 import at.dms.kjc.sir.linear.LinearAnalyzer;
 import at.dms.kjc.sir.lowering.partition.*;
 import at.dms.kjc.spacetime.MultiLevelSplitsJoins;
-import at.dms.kjc.spacetime.RawChip;
+//import at.dms.kjc.spacetime.RawChip;
 import at.dms.kjc.KjcOptions;
 
 /**

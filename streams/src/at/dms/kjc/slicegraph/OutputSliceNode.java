@@ -1,6 +1,5 @@
 package at.dms.kjc.slicegraph;
 
-import at.dms.util.Utils;
 import at.dms.kjc.*;
 import at.dms.kjc.spacetime.OffChipBuffer;
 import at.dms.kjc.spacetime.Util;
@@ -13,14 +12,22 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * Each slice is terminated by an OutputSliceNode that is single input (the last filter) 
- * and multiple output (to downstream slices through edges).
+ * Each slice is terminated by an OutputSliceNode that has single input (the last filter) 
+ * and multiple outputs (to downstream slices through edges).
  * 
  * @author mgordon
  */
 public class OutputSliceNode extends SliceNode {
+    // the (round-robin) weight for each edge.
     private int[] weights;
 
+    // Ordered array of sets of edges.
+    // The order in the outer array corresponds to the order of weights.
+    // The inner array is just a set: the elements correspond to 
+    // elements of dulicate splitters fused with the top-level
+    // round-robin splitter (by synch removal).
+    // A round-robin splitter of size n would be an Edge[n][1]
+    // A duplicate splitter of size n would be an Edge[1][n]
     private Edge[][] dests;
 
     private String ident;
@@ -34,6 +41,13 @@ public class OutputSliceNode extends SliceNode {
     private List sortedOutputs;
 
     
+    /**
+     * Construct a new output slice node based on the arrays weights
+     * and dests.
+     * 
+     * @param weights The array of weights
+     * @param dests The array of dests.
+     */
 
     public OutputSliceNode(int[] weights, Edge[][] dests) {
         // this.parent = parent;
@@ -48,7 +62,7 @@ public class OutputSliceNode extends SliceNode {
     }
 
     /**
-     * Create a new output slice node based on the lists weights
+     * Construct a new output slice node based on the lists weights
      * and dests.
      * 
      * @param weights The list of weights
@@ -63,8 +77,13 @@ public class OutputSliceNode extends SliceNode {
     }
     
     
+    /**
+     * Construct a new output slice node based on the array weights.
+     * Dests is to be set later.
+     * 
+     * @param weights The array of weights
+     */
     public OutputSliceNode(int[] weights) {
-        // this.parent = parent;
         ident = "output" + unique;
         unique++;
         if (weights.length == 1)
@@ -74,14 +93,19 @@ public class OutputSliceNode extends SliceNode {
         dests = EMPTY_DESTS;
     }
 
+    /**
+     * Construct a nre output slice node.
+     * Weights and dests to be st later.
+     *
+     */
     public OutputSliceNode() {
-        // this.parent = parent;
         ident = "output" + unique;
         unique++;
         weights = EMPTY_WEIGHTS;
         dests = EMPTY_DESTS;
     }
 
+    /** Set the weights */
     public void setWeights(int[] newW) {
         this.weights = newW;
     }
@@ -108,26 +132,32 @@ public class OutputSliceNode extends SliceNode {
             this.dests[i] = dests.get(i).toArray(new Edge[0]);
     }
         
+    /** @return the weights */
     public int[] getWeights() {
         return weights;
     }
 
+    /** @return whether previous filter was FileInput */
     public boolean isFileInput() {
         return ((FilterSliceNode) getPrevious()).isFileInput();
     }
 
+    /** @return dests */
     public Edge[][] getDests() {
         return dests;
     }
 
+    /** Set dests */
     public void setDests(Edge[][] dests) {
         this.dests = dests;
     }
 
+    /** @return unique string */
     public String getIdent() {
         return ident;
     }
 
+    /** @return total of weights */
     public int totalWeights() {
         int sum = 0;
         for (int i = 0; i < weights.length; i++)
@@ -138,7 +168,9 @@ public class OutputSliceNode extends SliceNode {
     /**
      * Combine the weights of adajacent outputs that have equal 
      * destinations.
-     *
+     * This operation exists as a cleanup operation for synch removal.
+     * Code generation for Edges may rely on {@link InputSliceNode#canonicalize()}
+     * being run on all input nodes whose edges are combined by canonicalize.
      */
     public void canonicalize() {
         if (weights.length == 0)
@@ -153,9 +185,9 @@ public class OutputSliceNode extends SliceNode {
         
         for (int i = 1; i < dests.length; i++) {
             if (Util.setCompare(edges.get(edges.size() - 1), dests[i])) {
-                Integer newWeight = new Integer(
+                Integer newWeight = 
                     newWeights.get(newWeights.size() - 1).intValue() + 
-                    weights[i]);
+                    weights[i];
                 newWeights.remove(newWeights.size() - 1);
                 newWeights.add(newWeight);
             }
@@ -167,7 +199,7 @@ public class OutputSliceNode extends SliceNode {
                 newWeights.add(new Integer(weights[i]));
             }
         }
-        //set the new weights and the destsx
+        //set the new weights and the dests
         set(newWeights, edges);
     }
     
@@ -201,8 +233,7 @@ public class OutputSliceNode extends SliceNode {
     }
     
     /**
-     * return the number of items sent to this inputslicenode for on iteration
-     * of the weights..
+     * return the number of items sent by this output slice node on all instances of a particular edge.
      */
     public int getWeight(Edge in) {
         int sum = 0;
@@ -221,6 +252,7 @@ public class OutputSliceNode extends SliceNode {
         return sum;
     }
 
+    /** type is output type of previous filter */
     public CType getType() {
         return getPrevFilter().getFilter().getOutputType();
     }
@@ -238,7 +270,7 @@ public class OutputSliceNode extends SliceNode {
             for (int j = 0; j < dests[i].length; j++)
                 edges.add(dests[i][j]);
         }
-        return edges.toArray(new Edge[0]);
+        return edges.toArray(new Edge[edges.size()]);
     }
     
     /**

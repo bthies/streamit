@@ -25,6 +25,8 @@ int correlationWindow = 13;
 int imageWidth = 320; // width of the ppm image
 int imageHeight = 240; // height of the ppm image
 int iters = 20;
+int numImages = 2; //this is fixed for now, but eventually we want to 
+				  // change the program so as to take an indeterminate number
 	init {}
 
 }
@@ -82,6 +84,7 @@ struct Gstruct{
 }
 
 
+
 /*~~~~~~~~~~~~~~~~~~~
 ~~~~MAIN PIPELINE~~~~
 ~~~~~~~~~~~~~~~~~~~*/
@@ -91,48 +94,81 @@ flexibly*/
 
 void->void pipeline mosaic{
 
+
 	int patchsize = 9; // must be odd-valued -- 
 					// the size of each feature square's side
 	int startx = patchsize + 1; 
 	int starty = patchsize + 1;
-    	int winWidth = imageWidth - patchsize - startx - 1; 
+    int winWidth  = imageWidth - patchsize - startx - 1; 
 	int winHeight = imageHeight - patchsize - starty - 1 ;
 	int corrWindowSize = patchsize;
 
 	float iweight = 1.0; 
 	float qweight = 1.0;
 	bestFeatures[20] best;
-
-	boolean valsOK = true;
-
-	Gstruct[320 + patchsize - 1] Garray;	
 	
-	add FileReader<int>("cheese.bin");
+	//add fileRead();
+	add FileReader<int>("bin/1.bin");
 	add RGB2YIQ();
-	add makeMatrix(imageWidth, imageHeight);
-	add featureExtraction(Garray, startx, starty, imageWidth, imageHeight, 
-					winWidth, winHeight,patchsize, valsOK,
-					iweight, qweight, iters, best);
-/*	add correlation(startx, starty, imageWidth, imageHeight, 
+	add makeMatrix();
+	add featureExtraction(startx, starty, imageWidth, imageHeight, 
+					winWidth, winHeight, patchsize, iweight, qweight, iters, best);
+				/*
+	add correlation(startx, starty, imageWidth, imageHeight, 
 					winWidth, winHeight,patchsize, valsOK,
 					iters, corrWindowSize);
-*/					
+				*/	
 	add plotFeatures(patchsize);
-	add tempBackToJustImage();
+	add backToJustImage();
+	add unmakeMatrix();
+	add YIQ2RGB();
+	add FileWriter<int>("1out.bin");
+	//add fileWrite();
+}
 
-	add unmakeMatrix(imageWidth, imageHeight);
-	add YIQ2RGB();	
-	add FileWriter<int>("basier.bin");
+/*~~~~~~~~~~~~~~ 
+~~~~fileRead~~~~
+~~~~~~~~~~~~~~*/
+
+void->int splitjoin fileRead()
+{
+	split roundrobin(imageWidth*imageHeight*3);
+	/*for(int i = 1; i<=numImages; i++)
+	{ 	
+		char tempChar = char(i) + ".bin";
+		add FileReader<int>(tempChar);
+	}*/
+	add FileReader<int>("bin/1.bin");
+	add FileReader<int>("bin/2.bin");
+	join roundrobin(imageWidth*imageHeight*3);
+}
+
+/*~~~~~~~~~~~~~~~
+~~~~fileWrite~~~~
+~~~~~~~~~~~~~~~*/
+
+int->void splitjoin fileWrite()
+{
+	split roundrobin(imageWidth*imageHeight*3);
+	/*for(int i = 1; i<=numImages; i++)
+	{ 
+		char tempChar = char(i) + "out.bin";
+		add FileWriter<int>(tempChar);
+	}*/
+	add FileWriter<int>("1out.bin");
+	add FileWriter<int>("2out.bin");
+	join roundrobin(imageWidth*imageHeight*3);
+	
 }
 
 
-/*~~~~~~~~~~~~~~~~~~~~~~~~~
-~~~~TEMPBACKTOJUSTIMAGE~~~~
-~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+/*~~~~~~~~~~~~~~~~~~~~~
+~~~~backToJustImage~~~~
+~~~~~~~~~~~~~~~~~~~~~*/
 
 
 imageAndFeatures->yiqStruct[320][240]
-	filter tempBackToJustImage(){
+	filter backToJustImage(){
 
 	work pop 1 push 1
 	{
@@ -200,7 +236,7 @@ yiqStruct->int filter YIQ2RGB()
 of them into a matrix where each matrix element is a struct
 of the type 'yiqStruct'*/
 
-yiqStruct->yiqStruct[320][240] filter makeMatrix(int imageWidth, int imageHeight)
+yiqStruct->yiqStruct[320][240] filter makeMatrix()
 {
 	yiqStruct[320][240] yiqMatrix;
     work pop imageHeight*imageWidth push 1 {
@@ -211,7 +247,9 @@ yiqStruct->yiqStruct[320][240] filter makeMatrix(int imageWidth, int imageHeight
 		       yiqMatrix[j][i].yi = i;			
 		  }
 	}
+	println("before matrix push");
 	push(yiqMatrix);
+	println("after matrix push");
     }
 }
 
@@ -220,18 +258,22 @@ yiqStruct->yiqStruct[320][240] filter makeMatrix(int imageWidth, int imageHeight
 ~~~~~~~~~~~~~~~~~~*/
 
 /*gets an incoming matrix of yiqStructs, and converts them to a stream of y,i,q, floats*/
+
 /*this inverts the action of the makeMatrix filter*/
 
-yiqStruct[320][240]->yiqStruct filter unmakeMatrix(int imageWidth, int imageHeight)
+yiqStruct[320][240]->yiqStruct filter unmakeMatrix()
 {
 	work pop 1 push imageHeight*imageWidth 
 	{
 		yiqStruct[320][240] yiqMatrix = pop();
+		println("before unmatrix push");
 		 for(int i = 0; i < imageHeight; i++){
 		  for(int  j = 0; j < imageWidth; j++){
 			       push(yiqMatrix[j][i]);
 			
-		  }}
+		  }
+		  }
+		println("after unmatrix push");
 	}
 }
 

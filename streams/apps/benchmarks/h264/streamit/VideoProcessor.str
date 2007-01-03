@@ -32,12 +32,12 @@
  * @input VOID
  * @output A stream of Frames (defined struct).
  */
-void->void pipeline VideoProcessor(int width, int height, int numPictures) {
+void->void pipeline VideoProcessor() {
 	
 	// video parameters
-	int width = 352;
-	int height = 288;
-	int numPictures = 300; 
+	width = 352;
+	height = 288;
+	numPictures = 300; 
 	
 	// useful variables
 	// int numOfMacroblocks = (width/16)*(height/16); // number of macroblocks in a frame

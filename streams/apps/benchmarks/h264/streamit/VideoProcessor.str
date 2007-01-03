@@ -35,9 +35,9 @@
 void->void pipeline VideoProcessor() {
 	
 	// video parameters
-	width = 352;
-	height = 288;
-	numPictures = 300; 
+	int width = 352;
+	int height = 288;
+	int numPictures = 300; 
 	
 	// useful variables
 	// int numOfMacroblocks = (width/16)*(height/16); // number of macroblocks in a frame

@@ -148,6 +148,7 @@ int->void filter MacroblockMaker(int width, int height, int numPictures) {
 	// int numOfMacroblocks = (width/16)*(height/16); // number of macroblocks in a frame
 	work pop 1 push 0 {
 		print(pop());
+		print("next");
 		// Frame newFrame;
 		// push(newFrame);
 	}

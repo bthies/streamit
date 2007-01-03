@@ -5,15 +5,12 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 yiqStruct[320][240]->imageAndFeatures
-		pipeline featureExtraction(Gstruct[cushionedWidth] Garray, 
-					int startx, int starty, 
+		pipeline featureExtraction(int startx, int starty, 
 					int imageWidth, int imageHeight, int winWidth, int winHeight, 
-					int patchsize, boolean valsOK,
-					float iweight, float qweight, int iters, bestFeatures[20] best)
+					int patchsize, float iweight, float qweight, int iters, bestFeatures[20] best)
 {
-	add generateMinorEigs(Garray, startx, starty, imageWidth, imageHeight, 
-					winWidth, winHeight,patchsize, valsOK,
-					iweight, qweight);
+	add generateMinorEigs(startx, starty, imageWidth, imageHeight, 
+					winWidth, winHeight,patchsize, iweight, qweight);
 
 	add chooseEigsAndHighlight(imageWidth, imageHeight, patchsize, iters, best);
 }
@@ -61,16 +58,16 @@ row subsequently until finished.
 
 
 yiqStruct[320][240]->yiqStruct[320][240] 
-		filter generateMinorEigs(Gstruct[cushionedWidth] Garray, 
-					int startx, int starty, 
+		filter generateMinorEigs(int startx, int starty, 
 					int imageWidth, int imageHeight, int winWidth, int winHeight, 
-					int patchsize, boolean valsOK,
-					float iweight, float qweight)
+					int patchsize, float iweight, float qweight)
 {
+	
 	//check to make sure that the window has a half-patchsize cushion around it plus one.  
 	//actually, since patchsizes are odd, it's half-patchsize - 1/2 cushion plus one). 
 	work pop 1 push 1
 	{
+	Gstruct[320 + patchsize - 1] Garray;
 	yiqStruct[320][240] img = pop();		  	
 	if(
 		(startx-((patchsize-1)/2 + 1))<0 || 
@@ -207,6 +204,7 @@ yiqStruct[320][240]->yiqStruct[320][240]
 	}
 	
 	push(img);
+	println("genMinorEig completed...");
 	}
 }
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -227,6 +225,7 @@ filter chooseEigsAndHighlight(int imageWidth, int imageHeight, int patchsize, in
 	yiqStruct[320][240] img = pop();
 
 	for(int k = 0; k < iters; k++){	
+		println("beginning the chooseEigs loop one iteration of twenty");
 	for(int j = 0; j< imageHeight; j++){
 		for(int i = 0; i < imageWidth; i++){
 		int h = 0;
@@ -248,9 +247,11 @@ filter chooseEigsAndHighlight(int imageWidth, int imageHeight, int patchsize, in
 			best[k].y =j;
 			best[k].val = img[i][j].eigen;
 		}
+		
 		}
-	
+		
 	}
+	println("ending the chooseEigs loop one iteration of twenty");
 	}
 /*	println("best values: ");
 	for(int i = 0; i< iters; i++){
@@ -264,12 +265,15 @@ filter chooseEigsAndHighlight(int imageWidth, int imageHeight, int patchsize, in
 	for(int i = 0; i< iters; i++){
 	println(best[i].y);}
 */
-
+    println("beginn imageAndFeatures define");
 	imageAndFeatures featExtOutput;
+	println("end imageAndFeatures define, begin img transfer");
 	featExtOutput.myImage = img;
+	println("end img transfer, begin best transfer");
 	featExtOutput.myBest = best;
-
+	println("end best transfer, begin push");
 	push(featExtOutput);
+	println("chooseEigs completed...");
 	}
 }
 
@@ -283,6 +287,7 @@ imageAndFeatures->imageAndFeatures filter plotFeatures(int patchsize)
 	work pop 1 push 1
 	{
 		imageAndFeatures myImgAndFeat;
+
 		myImgAndFeat = pop();
 		
 		yiqStruct[320][240] img = myImgAndFeat.myImage;
@@ -291,7 +296,7 @@ imageAndFeatures->imageAndFeatures filter plotFeatures(int patchsize)
 		int r = (patchsize-1)/2;
 		
 		for(int k=0; k <iters; k++)
-		{	
+		{	println("beginning the plotFeatures loop one iteration of twenty");
 			for(int i=best[k].x-r; i<=best[k].x+r; i++)
 			{
 				img[i][best[k].y-r].y = 255*0.114;
@@ -321,6 +326,7 @@ imageAndFeatures->imageAndFeatures filter plotFeatures(int patchsize)
 				img[i][best[k].y+r].i = 255*-0.322;
 				img[i][best[k].y+r].q = 255*0.311;
 			}
+			println("ending the plotFeatures loop one iteration of twenty");
 		}
 		
 		/*for(int i=0; i <320; i++)
@@ -334,6 +340,7 @@ imageAndFeatures->imageAndFeatures filter plotFeatures(int patchsize)
 		}*/
  		myImgAndFeat.myImage = img;
 	  	push(myImgAndFeat);
+		println("plotFeatures completed...");
 	    
 	}
 

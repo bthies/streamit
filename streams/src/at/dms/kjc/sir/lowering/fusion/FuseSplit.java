@@ -860,7 +860,7 @@ public class FuseSplit {
         // from each of the component filters.
         JBlock newStatements = new JBlock();
 
-        FindVarDecls findVarDecls = new FindVarDecls();
+//        FindVarDecls findVarDecls = new FindVarDecls();
 
         // do peeking/popping
         newStatements.addStatement(MarkFilterBoundaries.makeBeginMarker(sj.getSplitter()));

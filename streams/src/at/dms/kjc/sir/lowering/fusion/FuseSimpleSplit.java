@@ -815,8 +815,8 @@ public class FuseSimpleSplit {
 
         // Build the new work function; add the list of statements
         // from each of the component filters.
-        JBlock newStatements = new JBlock(null, new LinkedList(), null);
-        FindVarDecls findVarDecls = new FindVarDecls();
+        JBlock newStatements = new JBlock(null, new LinkedList<JStatement>(), null);
+//        FindVarDecls findVarDecls = new FindVarDecls();
         Iterator<SIRStream> childIter = children.iterator();
         int i=0;
         while (childIter.hasNext())

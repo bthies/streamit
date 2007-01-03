@@ -290,7 +290,7 @@ class ModuloPipelineFusion {
                                      JBlock statements,
                                      boolean init) {
 
-        FindVarDecls findVarDecls = new FindVarDecls();
+//        FindVarDecls findVarDecls = new FindVarDecls();
 
         // for all the filters...
         for (int i=0; i<filterInfo.size(); i++) {

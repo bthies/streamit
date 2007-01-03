@@ -6,17 +6,29 @@ import java.util.*;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 
-
+/**
+ *  Used by {@link FindVarDecls#findAndReplace(JStatement) FindVarDecls.findAndReplace}.
+ */
 public class ReplaceVarDecls extends SLIRReplacingVisitor {
     
     private HashMap<JVariableDefinition, Integer> var_names; // String (Ident) -> Integer
     private FindVarDecls find_obj;
 
+    /**
+     * Constructor.
+     * Replace int or float variable names.
+     * Only used from {@link FindVarDecls#findAndReplace(JStatement) FindVarDecls.findAndReplace}
+     * @param var_names Map from variable name to occurrence number of its declaration.
+     * @param find_obj used to map variable names to __int_N or __float_N
+     */
     ReplaceVarDecls(HashMap<JVariableDefinition, Integer> var_names, FindVarDecls find_obj) {
         this.var_names = var_names;
         this.find_obj = find_obj;
     }
 
+    /**
+     * Part of visitor: replace declarations from <i>var_names</i> with initialization statements but no declaration.
+     */
     public Object visitVariableDeclarationStatement(JVariableDeclarationStatement self,
                                                     JVariableDefinition[] vars) 
     {
@@ -86,7 +98,10 @@ public class ReplaceVarDecls extends SLIRReplacingVisitor {
         }
     }
 
-    
+
+    /**
+     * Part of visitor: replace occurence of variables in <i>var_names</i> with reference to new name.
+     */
     public Object visitLocalVariableExpression(JLocalVariableExpression self,
                                                String ident) {
 

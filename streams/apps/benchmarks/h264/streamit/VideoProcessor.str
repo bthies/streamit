@@ -14,6 +14,8 @@
 /** 
  * List of TODOs
  * 
+ * impl filter for FrameBuilder
+ * update doc
  */
 
 /**
@@ -46,6 +48,8 @@ void->void pipeline VideoProcessor() {
 	add FileReader<bit> ("../testvideos/mobile.cif");
 	add BitStream2IntStream();
 	add MacroblockMaker(width, height, numPictures);
+	add FrameBuilder(width, height, numPictures);
+	add FramePrinter();
 
 }
 
@@ -63,20 +67,28 @@ void->void pipeline VideoProcessor() {
  * @output An integer stream equivalent to the original 8 bits.
  */
 bit->int filter BitStream2IntStream() {
-  work pop 8 push 1 {
-	int some_int = 0;
-	int two_power = 1;
-	//println("printing bits");
-	for (int i = 0; i < 8; i++) {
-		// big endian, peek(0) of the byte is the most sig bit
-		int add_int = peek(8-i) * two_power;
-		two_power = two_power * 2;
-		some_int += add_int;
-		//print(peek(8-i));
+	work pop 8 push 1 {
+  	
+		int some_int = 0;
+		int two_power = 1;
+		//println("printing bits");
+		for (int i = 0; i < 8; i++) {
+			// big endian, peek(0) of the byte is the most sig bit
+			int add_int = peek(8-i) * two_power;
+			two_power = two_power * 2;
+			some_int += add_int;
+			//print(peek(8-i));
+		}
+		//println("now to int value");
+
+		// pop all
+		for (int i=0; i<8; i++) {
+			pop();
+		}
+	
+		push(some_int);
+	
 	}
-	//println("now to int value");
-	push(some_int);
-  }
 }
 
 /**
@@ -92,18 +104,131 @@ bit->int filter BitStream2IntStream() {
  * 		  Y1 Y2 Y3 Y4 Cr Cb
  * 
  * 		  
- * @output A stream of Frames (defined struct) in time.
+ * @output A stream of ints grouped as macroblock units.
  */
-int->void filter MacroblockMaker(int width, int height, int numPictures) {
+int->Macroblock splitjoin MacroblockMaker(int width, int height, int numPictures) {
 	
-	// useful variables
-	// int numOfMacroblocks = (width/16)*(height/16); // number of macroblocks in a frame
-	work pop 1 push 0 {
 
-		println(pop());
-		// Frame newFrame;
-		// push(newFrame);
+	// split inputs into planes;
+	int numOfYValues = width*height;
+	int numOfCrCbValues = width*height/4; // 4:2:0 downsampling scheme
+	int numOfValuesInFrame = numOfYValues + 2*numOfCrCbValues;
+
+	split roundrobin(numOfYValues, numOfCrCbValues, numOfCrCbValues);
+
+
+	// reorganizes Y values
+	add splitjoin {
+		split roundrobin(16);
+		for (int i=0; i<(width/16); i++) {
+			add Identity<int>;
+		}
 	}
 
+	// reorganizes Y values
+	add splitjoin {
+		split roundrobin(8);
+		for (int i=0; i<(width/16); i++) {
+			add Identity<int>;
+		}
+	}
+
+	// reorganizes Y values
+	add splitjoin {
+		split roundrobin(8);
+		for (int i=0; i<(width/16); i++) {
+			add Identity<int>;
+		}
+	}
+
+	join roundrobin(256,64,64); // 4:2:0 downsampling scheme for a macroblock
+	// at this point, 256+64+64 pixels represent a set of YCrCb values for a macroblock
+	// 256+64+64 = 384
+	
+	add filter {
+		work pop 386 push 1 {
+			
+			/////////// TODO
+			// stuff 386 values into a macroblock
+		}	
+	}
+}
+
+Macroblock->Frame filter FrameBuilder(int width, int height, int numPictures) {
+	
+	int numOfMacroblocks = (width/16)*(height/16); // number of macroblocks in a frame
+
+	work pop numOfMacroblocks push 1 {
+		
+		//////// TODO
+		//println(pop());
+		Frame newFrame;
+		//push(newFrame);
+	}
+
+}
+
+
+/**
+ * FOR TESTING PURPOSES
+ */
+Frame->void filter FramePrinter() {
+	
+
+	work pop numOfValuesInAFrame push 1 {
+		
+		//println(pop());
+		Frame newFrame;
+		//push(newFrame);
+	}
+
+}
+
+
+/* ********************************************************
+ * STRUCTS FOR VARIOUS DATA TYPES
+ * Note: more structs will be needed for intra/inter 
+ * prediction to tag the necessary labels for block sizes
+ * *********************************************************/
+
+
+/**
+ * This is the container for a frame, using 4:2:0 sampling scheme.
+ * It may be modified easily for a different sampling scheme.
+ * 
+ * Note that in the StreamIt Language Specification 2.1, user initiated 
+ * parameterized types is listed as a future extension.
+ * 
+ * @param numOfMacroblocks number of macroblocks in a frame is needed 
+ * 						   to size the array for the frame
+ * 						   DEPRECATED, NO PARAMETERIZABLE STRUCTS
+ * 
+ * @frameNumber used for temporal reference
+ * @sliceType labeling of I, P,or B slice types
+ * @macroblock samples coded using 4:2:0 scheme
+ */
+struct Frame {
+	int frameNumber;
+	int sliceType;
+	// QCIF 22w x 16h blocks
+	// For clarification, first number will index the row
+	// and second number will index the column
+	Macroblock[16][22] macroblocks;
+}
+
+/**
+ * This is the container for a macroblock, used for 4:2:0 sampling scheme.
+ * It may be modified easily for a different sampling scheme.
+ *
+ * @YSamples 16x16 luma samples block
+ * @CbSamples 8x8 blue chroma samples block
+ * @CrSamples 8x8 red chroma samples block
+ */
+struct Macroblock {
+	// For clarification, first number will index the row
+	// and second number will index the column
+	int[16][16] YSamples;
+	int[8][8] CbSamples;
+	int[8][8] CrSamples;
 }
 

@@ -45,8 +45,9 @@ void->bit pipeline rawImageStream_to_MPEGStream() {
 	//portal<SendBackReconstructedFrame> portal_backwardReferenceFrame;
 	
 	
-	add ImageStreamPreProcessor(width, height, numPictures); // similar to mpeg2
-	// see VideoProcessor.str
+	add VideoProcessor(width, height, numPictures); // similar to mpeg2
+	// see VideoProcessor.str, for testing purposes, it currently does not
+	// take the W,H,numPictures as parameters
 		
 	add Prediction(portal_forwardReferenceFrame);
 				   //portal_backwardReferenceFrame); // deprecated
@@ -169,8 +170,11 @@ struct Frame {
 	int frameNumber;
 	int sliceType;
 	// QCIF 22w x 16h blocks
-	Macroblock[396] macroblocks;
+	// For clarification, first number will index the row
+	// and second number will index the column
+	Macroblock[16][22] macroblocks;
 }
+
 
 /**
  * This is the container for a predicted frame, using 4:2:0 sampling scheme.
@@ -194,7 +198,9 @@ struct PredictedFrame {
 	// need more here...
 	int frameNumber;
 	int sliceType;
-	Macroblock[396] predictedBlocks;
+	// For clarification, first number will index the row
+	// and second number will index the column
+	Macroblock[16][22] predictedBlocks;
 }
 
 /**
@@ -221,7 +227,9 @@ struct CodedFrame {
 	// need more here...
 	int frameNumber;
 	int sliceType;
-	Macroblock[396] encodedBlocks;
+	// For clarification, first number will index the row
+	// and second number will index the column
+	Macroblock[16][22] encodedBlocks;
 }
 
 /**
@@ -240,8 +248,18 @@ struct CodedFrame {
 struct DistortedFrame {
 	int frameNumber;
 	int sliceType;
-	Macroblock[396] reconstructedBlocks;
+	// For clarification, first number will index the row
+	// and second number will index the column
+	Macroblock[16][22] reconstructedBlocks;
 }
+
+/* ********************************************************
+ * STRUCTS FOR VARIOUS DATA TYPES
+ * Note: more structs will be needed for intra/inter 
+ * prediction to tag the necessary labels for block sizes
+ * *********************************************************/
+
+
 
 /**
  * This is the container for a macroblock, used for 4:2:0 sampling scheme.
@@ -257,20 +275,3 @@ struct Macroblock {
 	Block8x8 CrSamples;
 }
 
-/**
- * This is the container for a 8x8 block. Used for Cb and Cr samples.
- *
- * @block 8x8 block of pixels, ordering of right to left, top to bottom.
- */
-struct Block8x8 {
-	int[64] block;
-}
-
-/**
- * This is the container for a 16x16 block. Used for Cb and Cr samples.
- *
- * @block 16x16 block of pixels, ordering of right to left, top to bottom.
- */
-struct Block16x16 {
-	int[265] block;
-}

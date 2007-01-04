@@ -1,7 +1,7 @@
 #!/usr/uns/bin/perl
 #
 # bin2dat.pl: convert binary to formatted data
-# $Id: bin2dat.pl,v 1.1 2007-01-04 17:51:58 basier Exp $
+# $Id: bin2dat.pl,v 1.2 2007-01-04 18:02:54 basier Exp $
 #
 # Use this script to convert data from a native binary (output by a
 # StreamIt FileWriter object) to a text or .ppm file.
@@ -30,9 +30,9 @@ if ($format eq "int") {
 	undef $/;
 	while(<$in>){
 	  my @decimals = unpack('i*', $_);
-	  #for (@decimals) {
-	  # print $out "$_\n";
-	  #}
+	  for (@decimals) {
+	   print $out "$_\n";
+	  }
 	
 	}
 }

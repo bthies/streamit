@@ -159,7 +159,7 @@ int->Macroblock pipeline MacroblockMaker(int width, int height) {
 		// 256+64+64 = 384
 	}
 	
-	add filter {
+	add int->Macroblock filter {
 		
 		// stuff 386 values into a macroblock
 		work pop 386 push 1 {

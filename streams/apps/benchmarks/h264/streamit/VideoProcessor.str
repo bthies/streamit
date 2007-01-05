@@ -82,7 +82,7 @@ bit->int filter BitStream2IntStream() {
 		//println("printing bits");
 		for (int i = 0; i < 8; i++) {
 			// big endian, peek(0) of the byte is the most sig bit
-			int add_int = peek(8-i) * two_power;
+			int add_int = peek(7-i) * two_power;
 			two_power = two_power * 2;
 			some_int += add_int;
 			//print(peek(8-i));

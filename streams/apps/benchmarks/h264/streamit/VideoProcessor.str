@@ -38,7 +38,7 @@ void->void pipeline VideoProcessor() {
 	// part has been tested
 	int width = 352;
 	int height = 288;
-	int numPictures = 300; 
+	// int numPictures = 300; 
 
 	
 	// useful variables
@@ -113,13 +113,15 @@ bit->int filter BitStream2IntStream() {
 int->Macroblock pipeline MacroblockMaker(int width, int height) {
 	
 
-	// split inputs into planes;
-	int numOfYValues = width*height;
-	int numOfCbCrValues = width*height/4; // 4:2:0 downsampling scheme
-	int numOfValuesInFrame = numOfYValues + 2*numOfCbCrValues;		
+
 
 
 	add splitjoin {
+		
+		// split inputs into planes;
+		int numOfYValues = width*height;
+		int numOfCbCrValues = width*height/4; // 4:2:0 downsampling scheme
+		int numOfValuesInFrame = numOfYValues + 2*numOfCbCrValues;		
 		
 		split roundrobin(numOfYValues, numOfCbCrValues, numOfCbCrValues);
 	

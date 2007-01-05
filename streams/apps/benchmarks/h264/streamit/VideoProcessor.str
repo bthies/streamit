@@ -14,7 +14,8 @@
 /** 
  * List of TODOs
  * 
- * impl filter for FrameBuilder
+ * impl filter for frameprinter
+ * testing..
  * update doc
  */
 
@@ -267,7 +268,7 @@ void->int filter fakeVideoIntsGenerator() {
 	}
 }	
 
-/** TO DO
+/** TO DO, for testing!!!
 Frame->void filter FramePrinter() {
 	
 }

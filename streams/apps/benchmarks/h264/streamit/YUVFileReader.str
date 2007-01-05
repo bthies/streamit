@@ -25,16 +25,18 @@ bit->void filter BitStream2IntStream() {
   	
 		int some_int = 0;
 		int two_power = 1;
-		println("printing bits");
+		//println("printing bits");
 		for (int i = 0; i < 8; i++) {
 			// big endian, peek(0) of the byte is the most sig bit
 			int add_int = peek(7-i) * two_power;
 			two_power = two_power * 2;
 			some_int += add_int;
-			print(peek(7-i));
+			//print(peek(7-i));
+			
 		}
-		println("now to int value");
+		//println("now to int value");
 		print(some_int);
+		print(" ");
 
 		// pop all
 		for (int i=0; i<8; i++) {

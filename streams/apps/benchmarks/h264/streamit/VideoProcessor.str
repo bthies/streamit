@@ -224,7 +224,7 @@ Macroblock->Frame filter FrameBuilder(int width, int height) {
 	
 	
 	init {
-		int frameCount;	
+		int frameCount = 0;	
 	}
 	work pop numOfMacroblocks push 1 {
 		

@@ -1,0 +1,953 @@
+/*
+ * [Shirley]
+ * This file contains the various functions for generating the 9
+ * prediction modes for a 4x4 luma intra prediction block. 
+ *
+ * This is new to MPEG-2
+ *  
+ * Note that all prediction modes can be calculated independently
+ * of each other and therefore can be parallelized.
+ * 
+ * Reference: http://www.rgu.ac.uk/files/h264_intrapred.pdf
+ */
+
+/**
+ * @description
+ * This file contains various functions that takes in 13 pixels
+ * and calculate all 9 prediction modes such that the best one 
+ * can be used for a luminance block. Not all modes will require
+ * all 13 pixels. These filters will assume the input will give 
+ * luminance values from A through M (if needed), giving the 
+ * 'Sum of Absolute Errors' as the output of the filter.
+ * 
+ * 
+ * M  A  B  C  D  E  F  G  H 
+ * 
+ * I  0  1  2  3  x  x  x  x
+ * 
+ * J  4  5  6  7  x  x  x  x
+ * 
+ * K  8  9 10 11  x  x  x  x
+ * 
+ * L 12 13 14 15  x  x  x  x
+ * 
+ * The number represents the indices of the original block.
+ * 
+ * The cost function is the residual between the original block
+ * and the predicted block. The encoder will choose the prediction
+ * mode that minimizes the residual.
+ * 
+ * PREDICTION MODES:
+ * 0 - Vertical
+ * 1 - Horizontal
+ * 2 - DC
+ * 3 - Diagonal Down-Left
+ * 4 - Diagonal Down-Right
+ * 5 - Vertical-Right
+ * 6 - Horizontal-Down
+ * 7 - Vertical-Left
+ * 8 - Horizontal-Up
+ * 
+ *
+ * @author <a href="mailto:shirley.mit07@gmail.com">Shirley Fung</a>
+ * @file PredictionModes4x4Luma.str
+ * @version 1.0
+ */
+
+/**
+ * This constructs the pipeline for all the different prediction
+ * modes, find the mininum SAE and output the corresponding predidtion
+ * mode.
+ * 
+ * Note that the children of this splitjoin are pipelines that would
+ * prepare the A-M + 16 pixels for the prediction mode filters.
+ *
+ * @input A-M + 16 pixels from the original block (total: 29 pixels)
+ * @output recommended 4x4 luma prediction: ModeandPBlock4x4
+ */
+int-int pipeline BestPredictionMode4x4 {
+	add CalculatePredictionModes4x4;
+	add FindBestPredictionMode4x4();
+}
+
+/**
+ * This struct contains the SAE and the predicted block.
+ *
+ * @sae "Sum of Absolute Errors" between the original block and predicted block.
+ * @predBlock predicted block - original block calculated from the 
+ * original A-M pixels under a particular mode.
+ */
+struct SAEandPBlock4x4 {
+	int SAE;
+	int[16] residual;
+}
+
+/**
+ * This struct contains the mode and the predicted block. Used for the block
+ * with the mininum SAE.
+ *
+ * @mode prediction mode, has values from 0 to 8.
+ * @residual predicted block - original block calculated from the 
+ * original A-M pixels under a particular mode.
+ */
+struct ModeandPBlock4x4 {
+	int mode;
+	int[16] residual;
+}
+
+
+
+/**
+ * This constructs the splitjoin for all the different prediction
+ * modes, and gather them up so that the SAE can be compared.
+ * 
+ * Note that the children of this splitjoin are pipelines that would
+ * prepare the A-M + 16 pixels for the prediction mode filters.
+ *
+ * @input A-M + 16 pixels from the original block (total: 29 pixels)
+ * @output stream of all SAEandPredictedBlock4x4 (9 elements)
+ */
+int->int splitjoin CalculatePredictionModes4x4 {
+	split duplicate;
+	add PredictionMode0Pipeline;
+	add PredictionMode1Pipeline;
+	add PredictionMode2Pipeline;
+	add PredictionMode3Pipeline;
+	add PredictionMode4Pipeline;
+	add PredictionMode5Pipeline;
+	add PredictionMode6Pipeline;
+	add PredictionMode7Pipeline;
+	add PredictionMode8Pipeline;
+	join roundrobin;
+}
+
+
+/**
+ * This filter gathers all the sum of absolute errors from 
+ * all the prediction modes, and find the mininum - then output
+ * the prediction mode block. 
+ * 
+ * @input stream of all SAEandPredictedBlock4x4 (mode0 to mode8 in order)
+ * @output ModeandPBlock4x4 (recommended 4x4 luma prediction 
+ * mode (possible: 0 to 8) + predicted block)
+ */
+int->int splitjoin FindBestPredictionMode4x4() {
+	work pop 9 push 1 {
+		ModeandPBlock4x4 bestMode;
+		int currentMinSAE = peek(0).SAE;
+		bestMode.mode = 0;
+		for (int i=1; i<=8; i++) {
+			if (peek(i).SAE < currentMinSAE) {
+				bestMode.mode = i;
+				currentMinSAE = peek(i).SAE;
+			}
+		}
+		bestMode.mode = minPredictionMode;
+		bestMode.residual = peek(minPredictionMode).residual;
+		push(bestMode);
+	}
+}
+
+//////////////////////////////////////////////
+//PREDICTION MODE 0                         //
+//////////////////////////////////////////////
+
+/**
+ * This constructs the pipeline for prediction mode 0. The
+ * pipeline prepares the stream and adds the prediction mode filter.
+ * 
+ * @input A-M + 16 pixels from the original block (total: 29 pixels)
+ * @output SAEandPredictedBlock4x4 for mode 0
+ */
+int->int pipeline PredictionMode0Pipeline {
+	add PredictionMode0Prep();
+	add PredictionMode0();
+}
+
+/**
+ * This filter prepares the data for prediction mode 0. 
+ * 
+ * @input A-M + 16 pixels from the original block (total: 29 pixels)
+ * @output A,B,C,D + 16 pixels from the original block for mode 0
+ */
+int->int filter PredictionMode0Prep() {
+	work pop 29 push 20 {
+		// A,B,C,D
+		push(peek(0)); 
+		push(peek(1));
+		push(peek(2));
+		push(peek(3));
+		// original 16 pixels (index: 13-28)
+		for (int i=13; i<=28; i++) {
+			push(peek(i));
+		}
+		// pop all
+		for (int i=0; i<=28; i++) {
+			pop();
+		}
+	}
+}
+
+/**
+ * This function calculates prediction mode 0 for a 4x4 luminance
+ * block. This is also called: vertical. 
+ * 
+ * Note that only pixels A, B, C, and D is required.
+ * 
+ * Note: there is an alternate implementation to this filter.
+ *
+ * @input A,B,C,D + 16 pixels from the original block
+ * @output SAEandPBlock for mode 0
+ */
+int->int filter PredictionMode0() {
+	
+	// A,B,C,D 			peek(0-3);
+	// originalBlk 		peek(4,19);
+	work pop 20 push 1 {
+		
+		SAEandPBlock pBlock;
+
+		pBlock.SAE = 0; // sum of absolute errors
+		for (int i=4; i<19; i++) {
+			int predicted = peek(i%4);
+			int original = peek(i);
+			int difference = predicted - original;
+			pBlock.SAE += abs(difference);
+			pBlock.residual[i-4] = difference;
+		}
+		push(pBlock);
+		
+		for (int i=0; i<=19; i++) {
+			pop();
+		}
+	}
+}
+
+//////////////////////////////////////////////
+//PREDICTION MODE 1                         //
+//////////////////////////////////////////////
+
+/**
+ * This constructs the pipeline for prediction mode 1. The
+ * pipeline prepares the stream and adds the prediction mode filter.
+ * 
+ * @input A-M + 16 pixels from the original block (total: 29 pixels)
+ * @output SAEandPBlock for mode 1
+ */
+int->int pipeline PredictionMode1Pipeline {
+	add PredictionMode1Prep();
+	add PredictionMode1();
+}
+
+/**
+ * This filter prepares the data for prediction mode 1. 
+ * 
+ * @input A-M + 16 pixels from the original block (total: 29 pixels)
+ * @output I,J,K,L + 16 pixels from the original block for mode 1
+ */
+int->int filter PredictionMode1Prep() {
+	work pop 29 push 20 {
+		// I,J,K,L
+		push(peek(8)); 
+		push(peek(9));
+		push(peek(10));
+		push(peek(11));
+		// original 16 pixels (index: 13-28)
+		for (int i=13; i<=28; i++) {
+			push(peek(i));
+		}
+		// pop all
+		for (int i=0; i<=28; i++) {
+			pop();
+		}
+	}
+}
+
+/**
+ * This function calculates prediction mode 1 for a 4x4 luminance
+ * block. This is also called: horizontal.
+ * 
+ * Note that only pixels I, J, K, and L is required.
+ * 
+ * @input I,J,K,L + 16 pixels from the original block
+ * @output SAEandPBlock for mode 0
+ */
+int->int filter PredictionMode1() {
+
+	// I,J,K,L			peek(0-3);
+	// originalBlk 		peek(4,19);
+	work pop 20 push 1 {
+		
+		SAEandPBlock pBlock;
+		pBlock.SAE = 0; // sum of absolute errors
+		for (int rowCount=0; rowCount<4; rowCount++) {
+			int original = peek(i); // gives you I,J,K, or L
+			// interate though out values for each column
+			for (int colCount=0; colCount<4; colCount++) {
+				// note the peek index:
+				// for a rowCount of 0, 
+				// 4*(rowCount+1) gives you the offset to start at peek(4);
+				// and so on...
+				int predicted = peek(colCount + 4*(rowCount+1));
+				int difference = predicted - original;
+				pBlock.SAE += abs(difference);
+				pBlock.residual[rowCount*4+colCount] = difference;
+			}
+		}
+		push(pBlock);
+		
+		for (int i=0; i<=19; i++) {
+			pop();
+		}
+	}
+	
+}
+
+//////////////////////////////////////////////
+//PREDICTION MODE 2                         //
+//////////////////////////////////////////////
+
+
+/**
+ * This constructs the pipeline for prediction mode 2. The
+ * pipeline prepares the stream and adds the prediction mode filter.
+ * 
+ * @input A-M + 16 pixels from the original block (total: 29 pixels)
+ * @output SAEandPBlock for mode 2
+ */
+int->int pipeline PredictionMode2Pipeline {
+	add PredictionMode2Prep();
+	add PredictionMode2();
+}
+
+/**
+ * This filter prepares the data for prediction mode 2. 
+ * 
+ * @input A-M + 16 pixels from the original block (total: 29 pixels)
+ * @output A,B,C,D,I,J,K,L + 16 pixels from the original block for mode 2
+ */
+int->int filter PredictionMode2Prep() {
+	work pop 29 push 24 {
+		// A,B,C,D
+		push(peek(0)); 
+		push(peek(1));
+		push(peek(2));
+		push(peek(3));
+		// I,J,K,L
+		push(peek(8)); 
+		push(peek(9));
+		push(peek(10));
+		push(peek(11));
+		// original 16 pixels (index: 13-28)
+		for (int i=13; i<=28; i++) {
+			push(peek(i));
+		}
+		// pop all
+		for (int i=0; i<=28; i++) {
+			pop();
+		}
+	}
+}
+
+/**
+ * This function calculates prediction mode 2 for a 4x4 luminance
+ * block. This is a DC interpolation where the entire output stream
+ * has the mean value of all luminance values from A,B,C,D,I,J,K,L.
+ * In other words: result luminance value = sum{A,B,C,D,I,J,K,L}/8 
+ * Consequently, A known values are required to generate the 16
+ * predicted pixels.
+ * @input A,B,C,D,I,J,K,L + 16 original pixels 
+ * @output SAEandPBlock for mode 2
+ */
+int->int filter PredictionMode2() {
+	
+	// A,B,C,D,I,J,K,L		peek(0-7);
+	// originalBlk 			peek(8,23);	
+	work pop 28 push 1 {
+		
+		int cumulativeAvg = 0;
+		
+		SAEandPBlock pBlock;
+		pBlock.SAE = 0;
+		for (int i=0; i<=7; i++) {
+			cumulativeAvg =+ (int) peek(i)/8;
+		}
+		
+		for (int origCounter=8; origCounter<=23; origCounter++) {
+			int original = peek(origCounter);
+			int difference = cumulativeAvg - original;
+			pBlock.SAE += abs(difference);
+			pBlock.residual[origCounter-8] = difference;
+		}
+		
+		push(pBlock);
+		
+		for (int i=0; i<=23; i++) {
+			pop();
+		}
+	}   
+}
+
+//////////////////////////////////////////////
+//PREDICTION MODE 3                         //
+//////////////////////////////////////////////
+
+
+/**
+ * This constructs the pipeline for prediction mode 3. The
+ * pipeline prepares the stream and adds the prediction mode filter.
+ * 
+ * @input A-M + 16 pixels from the original block (total: 29 pixels)
+ * @output SAEandPBlock for mode 3
+ */
+int->int pipeline PredictionMode3Pipeline {
+	add PredictionMode3Prep();
+	add PredictionMode3();
+}
+
+/**
+ * This filter prepares the data for prediction mode 3. 
+ * 
+ * @input A-M + 16 pixels from the original block (total: 29 pixels)
+ * @output A,B,C,D,E,F,G,H + 16 pixels from the original block for mode 3
+ */
+int->int filter PredictionMode3Prep() {
+	work pop 29 push 24 {
+		// A,B,C,D,E,F,G,H
+		for (int i=0; i<=7; i++) {
+			push(peek(i));
+		}
+		// original 16 pixels (index: 13-28)
+		for (int i=13; i<=28; i++) {
+			push(peek(i));
+		}
+		// pop all
+		for (int i=0; i<=28; i++) {
+			pop();
+		}
+	}
+}
+
+
+
+/**
+ * This function calculates prediction mode 3 for a 4x4 luminance
+ * block. This is also called: diagonal down-left.
+ * @input A,B,C,D,E,F,G,H + 16 original pixels
+ * @output SAEandPBlock for mode 3
+ */
+int->int filter PredictionMode3() {
+	
+	// A,B,C,D,E,F,G,H		peek(0-7);
+	// originalBlk 			peek(8,23);
+
+	work pop 24 push 1 {
+		
+		SAEandPBlock pBlock;
+		pBlock.SAE = 0;
+		int[16] predBlock;
+		// calculate values for the 4x4 matrix
+		predBlock[0] = (int) (peek(0) + 2*peek(1) + peek(2) + 2) / 4; 
+		predBlock[1] =
+		predBlock[4] = (int) (peek(1) + 2*input(2) + peek(3) + 2) / 4; 
+		predBlock[2] =
+		predBlock[5] =
+		predBlock[8] = (int) (peek(2) + 2*peek(3) + peek(4) + 2) / 4; 
+		predBlock[3] =
+		predBlock[6] =
+		predBlock[9] =
+		predBlock[12] = (int) (peek(3) + 2*peek(4) + peek(5) + 2) / 4;
+		predBlock[7] =
+		predBlock[10] =
+		predBlock[13] = (int) (peek(4) + 2*peek(5) + peek(6) + 2) / 4; 
+		predBlock[11] =
+		predBlock[14] = (int) (peek(5) + 2*peek(6) + peek(7) + 2) / 4; 
+		predBlock[15] = (int) (peek(6) + 3*peek(7) + 2) / 4;
+		
+		for (int i=8; i<=23; i++) {
+			int difference = predBlock[i] - peek(i);
+			pBlock.SAE += abs(difference);
+			pBlock.residual[i-8] = difference;
+		}
+		
+		push(pBlock);
+		
+		for (int i=0; i<=23; i++) {
+			pop();
+		}
+	}   
+}
+
+//////////////////////////////////////////////
+//PREDICTION MODE 4                         //
+//////////////////////////////////////////////
+
+
+/**
+ * This constructs the pipeline for prediction mode 4. The
+ * pipeline prepares the stream and adds the prediction mode filter.
+ * 
+ * @input A-M + 16 pixels from the original block (total: 29 pixels)
+ * @output SAEandPBlock for mode 4
+ */
+int->int pipeline PredictionMode4Pipeline {
+	add PredictionMode4Prep();
+	add PredictionMode4();
+}
+
+/**
+ * This filter prepares the data for prediction mode 4. 
+ * 
+ * @input A-M + 16 pixels from the original block (total: 29 pixels)
+ * @output A,B,C,D,I,J,K,L,M + 16 pixels from the original block for mode 4
+ */
+int->int filter PredictionMode4Prep() {
+	work pop 29 push 25 {
+		// A,B,C,D,I,J,K,L,M 
+		push(peek(0)); 
+		push(peek(1));
+		push(peek(2));
+		push(peek(3));
+		push(peek(8)); 
+		push(peek(9));
+		push(peek(10));
+		push(peek(11));
+		push(peek(12));
+		
+		// original 16 pixels (index: 13-28)
+		for (int i=13; i<=28; i++) {
+			push(peek(i));
+		}
+		// pop all
+		for (int i=0; i<=28; i++) {
+			pop();
+		}
+	}
+}
+
+
+/**
+ * This function calculates prediction mode 4 for a 4x4 luminance
+ * block. This is also called: diagonal down-right.
+ * @input A,B,C,D,I,J,K,L,M + 16 original pixels
+ * @output SAEandPBlock for mode 4
+ */
+int->int filter PredictionMode4() {
+	
+	// A,B,C,D,I,J,K,L,M	peek(0-8);
+	// originalBlk 			peek(9,24);
+
+	work pop 25 push 1 {
+		
+		SAEandPBlock pBlock;
+		pBlock.SAE = 0;
+		int[16] predBlock;
+		// calculate values for the 4x4 matrix
+		predBlock[0] = 
+		predBlock[5] =
+		predBlock[10] =
+		predBlock[15] = (int) (peek(4) + 2*peek(8) + peek(0) + 2) / 4; 
+		predBlock[4] =
+		predBlock[9] =
+		predBlock[14] = (int) (peek(5) + 2*peek(4) + peek(8)] + 2) / 4;
+		predBlock[8] =
+		predBlock[13] = (int) (peek(6) + 2*peek(5) + peek(4) + 2) / 4;
+		predBlock[12] = (int) (peek(7) + 2*peek(6) + peek(5) + 2) / 4;
+		predBlock[1] =
+		predBlock[6] =
+		predBlock[11] = (int) (peek(8) + 2*peek(0) + peek(1) + 2) / 4;
+		predBlock[2] =
+		predBlock[7] = (int) (peek(0) + 2*peek(1) + peek(2) + 2) / 4;
+		predBlock[3] = (int) (peek(1) + 2*peek(2) + peek(3) + 2) / 4;
+		
+
+		for (int i=9; i<=24; i++) {
+			int difference = predBlock[i] - peek(i);
+			pBlock.SAE += abs(difference);
+			pBlock.residual[i-9] = difference;
+		}
+		
+		push(pBlock);
+		
+		for (int i=0; i<=24; i++) {
+			pop();
+		}
+	}   
+}
+
+//////////////////////////////////////////////
+//PREDICTION MODE 5                         //
+//////////////////////////////////////////////
+
+
+/**
+ * This constructs the pipeline for prediction mode 5. The
+ * pipeline prepares the stream and adds the prediction mode filter.
+ * 
+ * @input A-M + 16 pixels from the original block (total: 29 pixels)
+ * @output SAEandPBlock for mode 5
+ */
+int->int pipeline PredictionMode5Pipeline {
+	add PredictionMode5Prep();
+	add PredictionMode5();
+}
+
+/**
+ * This filter prepares the data for prediction mode 5. 
+ * 
+ * @input A-M + 16 pixels from the original block (total: 29 pixels)
+ * @output A,B,C,D,I,J,K,M + 16 pixels from the original block for mode 5
+ */
+int->int filter PredictionMode5Prep() {
+	work pop 29 push 24 {
+		// A,B,C,D,I,J,K,M
+		push(peek(0)); 
+		push(peek(1));
+		push(peek(2));
+		push(peek(3));
+		push(peek(8)); 
+		push(peek(9));
+		push(peek(10));
+		push(peek(12));
+		
+		// original 16 pixels (index: 13-28)
+		for (int i=13; i<=28; i++) {
+			push(peek(i));
+		}
+		// pop all
+		for (int i=0; i<=28; i++) {
+			pop();
+		}
+	}
+}
+
+/**
+ * This function calculates prediction mode 5 for a 4x4 luminance
+ * block. This is also called: vertical-right.
+ * @input A,B,C,D,I,J,K,M + 16 original pixels
+ * @output SAEandPBlocks for mode 5
+ */
+int->int filter PredictionMode5() {
+	
+	// A,B,C,D,I,J,K,M		peek(0-7);
+	// originalBlk 			peek(8,23);
+	
+	work pop 24 push 1 {
+		
+		SAEandPBlock pBlock;
+		pBlock.SAE = 0;
+		int[16] predBlock;
+		// calculate values for the 4x4 matrix
+		predBlock[0] = 
+		predBlock[9] = (int) (peek(7) + peek(0) + 1) / 2; 
+		predBlock[1] =
+		predBlock[10] = (int) (peek(0) + peek(1) + 1) / 2; 
+		predBlock[2] =
+		predBlock[11] = (int) (peek(1) + peek(2) + 1) / 2;
+		predBlock[3] = (int) (peek(2) + peek(3) + 1) / 2;
+		predBlock[4] =
+		predBlock[13] = (int) (peek(4) + 2*peek(7) + peek(0) + 2) / 4;
+		predBlock[5] =
+		predBlock[14] = (int) (peek(7) + 2*peek(0) + peek(1) + 2) / 4;
+		predBlock[6] =
+		predBlock[15] = (int) (peek(0) + 2*peek(1) + peek(2) + 2) / 4;
+		predBlock[7] = (int) (peek(1) + 2*peek(2) + peek(3) + 2) / 4;
+		predBlock[8] = (int) (peek(7) + 2*peek(4) + peek(5) + 2) / 4;
+		predBlock[12] = (int) (peek(4) + 2*peek(5) + peek(6) + 2) / 4;
+
+		for (int i=8; i<=23; i++) {
+			int difference = predBlock[i-8] - peek(i);
+			pBlock.SAE += abs(difference);
+			pBlock.residual[i-8] = difference;
+		}
+		
+		push(pBlock);
+		
+		for (int i=0; i<=23; i++) {
+			pop();
+		}
+	} 
+}
+
+//////////////////////////////////////////////
+//PREDICTION MODE 6                         //
+//////////////////////////////////////////////
+
+
+/**
+ * This constructs the pipeline for prediction mode 6. The
+ * pipeline prepares the stream and adds the prediction mode filter.
+ * 
+ * @input A-M + 16 pixels from the original block (total: 29 pixels)
+ * @output SAEandPBlock for mode 6
+ */
+int->int pipeline PredictionMode6Pipeline {
+	add PredictionMode6Prep();
+	add PredictionMode6();
+}
+
+/**
+ * This filter prepares the data for prediction mode 6. 
+ * 
+ * @input A-M + 16 pixels from the original block (total: 29 pixels)
+ * @output A,B,C,I,J,K,L,M + 16 pixels from the original block for mode 6
+ */
+int->int filter PredictionMode6Prep() {
+	work pop 29 push 24 {
+		// A,B,C,I,J,K,L,M
+		push(peek(0)); 
+		push(peek(1));
+		push(peek(2));
+		push(peek(8));
+		push(peek(9)); 
+		push(peek(10));
+		push(peek(11));
+		push(peek(12));
+		
+		// original 16 pixels (index: 13-28)
+		for (int i=13; i<=28; i++) {
+			push(peek(i));
+		}
+		// pop all
+		for (int i=0; i<=28; i++) {
+			pop();
+		}
+	}
+}
+
+/**
+ * This function calculates prediction mode 6 for a 4x4 luminance
+ * block. This is also called: horizontal-down.
+ * @input A,B,C,I,J,K,L,M + 16 original pixels
+ * @output SAEandPBlock for mode 6
+ */
+int->int filter PredictionMode6() {
+	
+	// A,B,C,I,J,K,L,M		peek(0-7);
+	// originalBlk 			peek(8,23);
+
+	work pop 24 push 1 {
+		
+		SAEandPBlock pBlock;
+		pBlock.SAE = 0;
+		int[16] predBlock;
+		// calculate values for the 4x4 matrix
+		predBlock[0] = 
+		predBlock[6] = (int) (peek(7) + peek(3) + 1) / 2; 
+		predBlock[1] =
+		predBlock[7] = (int) (peek(3) + 2*peek(7) + peek(0) + 2) / 4; 
+		predBlock[2] =
+		predBlock[2] = (int) (peek(7) + 2*peek(0) + peek(1) + 2) / 4; 
+		predBlock[3] = (int) (peek(7) + 2*peek(0) + peek(1) + 2) / 4;
+		predBlock[4] =
+		predBlock[10] = (int) (peek(3) + peek(4) + 1) / 2;
+		predBlock[5] =
+		predBlock[11] = (int) (peek(7) + 2*peek(3) + peek(4) + 2) / 4;
+		predBlock[8] =
+		predBlock[14] = (int) (peek(4) + peek(5) + 1) / 2;
+		predBlock[9] = 
+		predBlock[15] = (int) (peek(3) + 2*peek(4) + peek(5) + 2) / 4;
+		predBlock[12] = (int) (peek(4) + 2*peek(5) + peek(6) + 2) / 4;
+
+
+		for (int i=8; i<=23; i++) {
+			int difference = predBlock[i-8] - peek(i);
+			pBlock.SAE += abs(difference);
+			pBlock.residual[i-8] = difference;
+		}
+		
+		push(pBlock);
+		
+		for (int i=0; i<=23; i++) {
+			pop();
+		}
+	} 
+}
+
+//////////////////////////////////////////////
+//PREDICTION MODE 7                         //
+//////////////////////////////////////////////
+
+
+/**
+ * This constructs the pipeline for prediction mode 7. The
+ * pipeline prepares the stream and adds the prediction mode filter.
+ * 
+ * @input A-M + 16 pixels from the original block (total: 29 pixels)
+ * @output SAEandPBlock for mode 7
+ */
+int->int pipeline PredictionMode7Pipeline {
+	add PredictionMode7Prep();
+	add PredictionMode7();
+}
+
+/**
+ * This filter prepares the data for prediction mode 7. 
+ * 
+ * @input A-M + 16 pixels from the original block (total: 29 pixels)
+ * @output A,B,C,D,E,F,G + 16 pixels from the original block for mode 7
+ */
+int->int filter PredictionMode7Prep() {
+	work pop 29 push 23 {
+		// A,B,C,D,E,F,G
+		push(peek(0)); 
+		push(peek(1));
+		push(peek(2));
+		push(peek(3));
+		push(peek(4)); 
+		push(peek(5));
+		push(peek(6));
+	
+		// original 16 pixels (index: 13-28)
+		for (int i=13; i<=28; i++) {
+			push(peek(i));
+		}
+		// pop all
+		for (int i=0; i<=28; i++) {
+			pop();
+		}
+	}
+}
+
+/**
+ * This function calculates prediction mode 7 for a 4x4 luminance
+ * block. This is also called: vertical-left.
+ * @input A,B,C,D,E,F,G + 16 original pixels
+ * @output SAEandPBlock for mode 7
+ */
+int->int filter PredictionMode7() {
+	
+	// A,B,C,D,E,F,G		peek(0-6);
+	// originalBlk 			peek(7,22);
+	work pop 23 push 1 {
+		
+		SAEandPBlock pBlock;
+		pBlock.SAE = 0;
+		int[16] predBlock;
+		// calculate values for the 4x4 matrix
+		predBlock[0] = (int) (peek(0) + peek(1) + 1) / 2; 
+		predBlock[1] =  
+		predBlock[8] = (int) (peek(1) + peek(2) + 1) / 2;
+		predBlock[2] = 
+		predBlock[9] = (int) (peek(2) + peek(3) + 1) / 2;
+		predBlock[3] = 
+		predBlock[10] = (int) (peek(3) + peek(4) + 1) / 2;
+		predBlock[11] = (int) (peek(4) + peek(5) + 1) / 2;
+		predBlock[4] = (int) (peek(0) + 2*peek(1) + peek(2) + 2) / 4; 
+		predBlock[5] =
+		predBlock[12] = (int) (peek(1) + 2*peek(2) + peek(3) + 2) / 4; 
+		predBlock[6] =
+		predBlock[13] = (int) (peek(2) + 2*peek(3) + peek(4) + 2) / 4; 
+		predBlock[7] =
+		predBlock[14] = (int) (peek(3) + 2*peek(4) + peek(5) + 2) / 4;
+		predBlock[15] = (int) (peek(4) + 2*peek(5) + peek(6) + 2) / 4;  
+
+		for (int i=7; i<=22; i++) {
+			int difference = predBlock[i-7] - peek(i);
+			pBlock.SAE += abs(difference);
+			pBlock.residual[i-7] = difference;
+			
+		}
+		
+		push(pBlock);
+		
+		for (int i=0; i<=23; i++) {
+			pop();
+		}
+	} 
+}
+
+//////////////////////////////////////////////
+//PREDICTION MODE 8                         //
+//////////////////////////////////////////////
+
+
+/**
+ * This constructs the pipeline for prediction mode 8. The
+ * pipeline prepares the stream and adds the prediction mode filter.
+ * 
+ * @input A-M + 16 pixels from the original block (total: 29 pixels)
+ * @output SAEandPBlock for mode 8
+ */
+int->int pipeline PredictionMode8Pipeline {
+	add PredictionMode8Prep();
+	add PredictionMode8();
+}
+
+/**
+ * This filter prepares the data for prediction mode 8. 
+ * 
+ * @input A-M + 16 pixels from the original block (total: 29 pixels)
+ * @output I,J,K,L + 16 pixels from the original block for mode 8
+ */
+int->int filter PredictionMode7Prep() {
+	work pop 29 push 20 {
+		// I,J,K,L
+		push(peek(8)); 
+		push(peek(9));
+		push(peek(10));
+		push(peek(11));
+	
+		// original 16 pixels (index: 13-28)
+		for (int i=13; i<=28; i++) {
+			push(peek(i));
+		}
+		// pop all
+		for (int i=0; i<=28; i++) {
+			pop();
+		}
+	}
+}
+
+
+/**
+ * This function calculates prediction mode 8 for a 4x4 luminance
+ * block. This is also called: horizontal-up.
+ * @input I,J,K,L + 16 original pixels
+ * @output sSAEandPBlock for mode 8
+ */
+int->int filter PredictionMode8() {
+	
+	work pop 20 push 1 {
+		
+		SAEandPBlock pBlock;
+		// I,J,K,L				peek(0-3);
+		// originalBlk 			peek(4,19);
+		pBlock.SAE = 0;
+		int[16] predictionBlock;
+		// calculate values for the 4x4 matrix
+		pBlock.predBlock[0] = (int) (peek(0) + peek(1) + 1) / 2; 
+		pBlock.predBlock[1] = (int) (peek(0) + 2*peek(1) + peek(2) + 2) / 4;
+		pBlock.predBlock[2] = 
+		pBlock.predBlock[4] = (int) (peek(1) + peek(2) + 1) / 2;
+		pBlock.predBlock[3] = 
+		pBlock.predBlock[5] = (int) (peek(1) + 2*peek(2) + peek(3) + 2) / 4;
+		pBlock.predBlock[6] = 
+		pBlock.predBlock[8] = (int) (peek(2) + peek(3) + 1) / 2;
+		pBlock.predBlock[7] = 
+		pBlock.predBlock[9] = (int) (peek(2) + 3*peek(3) + 2) / 4;
+		pBlock.predBlock[11] =
+		pBlock.predBlock[13] =
+		pBlock.predBlock[14] =
+		pBlock.predBlock[15] = input[11];
+
+
+		for (int i=4; i<=19; i++) {
+			int difference = predBlock[i-4] - peek(i);
+			pBlock.SAE += abs(difference);
+			pBlock.residual[i-4] = difference;
+			
+		}
+		
+		push(pBlock);
+		
+		for (int i=0; i<=23; i++) {
+			pop();
+		}
+	} 
+}
+
+
+
+
+

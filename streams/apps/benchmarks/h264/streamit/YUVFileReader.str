@@ -1,0 +1,47 @@
+// testing:
+
+void->void pipeline YUVFileReader() {
+	add FileReader<bit> ("../testvideos/mobile.cif");
+	add BitStream2IntStream();
+	
+}
+
+/** 
+ * ORIGINALLY WRITTEN BY MATTHEW DRAKE FROM MPEG2/BINARYFILE.STR.PRE
+ * MODIFICATIONS BY SHIRLEY FUNG, changed code to work with values of 
+ * 8 bits instead of the original 32.
+ * 
+ * Converts a byte stream into a sequence of integers. A byte represents a value.
+ * 
+ * Works with unsigned byte representation only, and currently expect that peek(0) reads
+ * the most significant bit in the byte.
+ * 
+ * @input 8 bits representing bit data to be translated to integers
+ * @output An integer stream equivalent to the original 8 bits.
+ */
+bit->void filter BitStream2IntStream() {
+	
+	work pop 8 push 1 {
+  	
+		int some_int = 0;
+		int two_power = 1;
+		println("printing bits");
+		for (int i = 0; i < 8; i++) {
+			// big endian, peek(0) of the byte is the most sig bit
+			int add_int = peek(7-i) * two_power;
+			two_power = two_power * 2;
+			some_int += add_int;
+			print(peek(7-i));
+		}
+		println("now to int value");
+		print(some_int);
+
+		// pop all
+		for (int i=0; i<8; i++) {
+			pop();
+		}
+	
+		//push(some_int);
+	
+	}
+}

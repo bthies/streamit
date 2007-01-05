@@ -40,17 +40,26 @@ void->void pipeline VideoProcessor() {
 	// video parameters, are specified here right now, but
 	// this will have to move to the main pipeline once this
 	// part has been tested
-	int width = 352;
-	int height = 288;
-	int numPictures = 300; 
+	init {
+		int width = 352;
+		int height = 288;
+		int numPictures = 300; 
+	}
+
 	
 	// useful variables
 	// int numOfMacroblocks = (width/16)*(height/16); // number of macroblocks in a frame
-	add FileReader<bit> ("../testvideos/mobile.cif");
-	add BitStream2IntStream();
-	add MacroblockMaker(width, height, numPictures);
-	add FrameBuilder(width, height, numPictures);
-	add FramePrinter();
+	// add FileReader<bit> ("../testvideos/mobile.cif");
+	// add BitStream2IntStream();
+	
+	// for testing macroblockmaker and framebuilder
+	add FakeVideoIntsGenerator();
+	
+	add MacroblockMaker(width, height);
+	add FrameBuilder(width, height);
+	
+	// for testing only
+	add FramePrinter(width, height);
 
 }
 
@@ -68,6 +77,7 @@ void->void pipeline VideoProcessor() {
  * @output An integer stream equivalent to the original 8 bits.
  */
 bit->int filter BitStream2IntStream() {
+	
 	work pop 8 push 1 {
   	
 		int some_int = 0;
@@ -98,7 +108,6 @@ bit->int filter BitStream2IntStream() {
  * format is I420 (see http://www.fourcc.org/)
  * @param width The resolution width of the video.
  * @param height The resolution height of the video.
- * @param numPictures The number of pictures to be put into the video.
  * @input A series of images representing the frames of the video. 
  * 		  Each picture frame is coded in YCbCr 4:2:0 format, where a 
  * 		  2x2 pixel block is represented by, arranged in raster format:
@@ -111,13 +120,16 @@ bit->int filter BitStream2IntStream() {
  * 		  
  * @output A stream of macroblocks (struct).
  */
-int->Macroblock pipeline MacroblockMaker(int width, int height, int numPictures) {
+int->Macroblock pipeline MacroblockMaker(int width, int height) {
 	
 
 	// split inputs into planes;
-	int numOfYValues = width*height;
-	int numOfCbCrValues = width*height/4; // 4:2:0 downsampling scheme
-	int numOfValuesInFrame = numOfYValues + 2*numOfCrCbValues;
+	init {
+		int numOfYValues = width*height;
+		int numOfCbCrValues = width*height/4; // 4:2:0 downsampling scheme
+		int numOfValuesInFrame = numOfYValues + 2*numOfCrCbValues;		
+	}
+
 	add splitjoin {
 		
 		split roundrobin(numOfYValues, numOfCrCbValues, numOfCrCbValues);
@@ -171,6 +183,7 @@ int->Macroblock pipeline MacroblockMaker(int width, int height, int numPictures)
 				for (int row=0; row<16; row++) {
 					for (int col=0; col<16; col++) {
 						newMacroblock.YSamples[row][col] = peek(YCount);
+						
 					}
 				}
 			}
@@ -187,12 +200,12 @@ int->Macroblock pipeline MacroblockMaker(int width, int height, int numPictures)
 			}
 			
 			// (386+16+16)
-			for (int YCount=402; YCount<418; YCount++) {
+			for (int CrCount=402; CrCount<418; CrCount++) {
 				
 				// stuff Cr values
 				for (int row=0; row<8; row++) {
 					for (int col=0; col<8; col++) {
-						newMacroblock.CbSamples[row][col] = peek(CbCount);
+						newMacroblock.CrSamples[row][col] = peek(CrCount);
 					}
 				}
 				
@@ -211,11 +224,10 @@ int->Macroblock pipeline MacroblockMaker(int width, int height, int numPictures)
  * It takes a series of macroblocks in raster sequence and build a frame.
  * @param width The resolution width of the video.
  * @param height The resolution height of the video.
- * @param numPictures The number of pictures to be put into the video.
  * @input A series of macroblocks (see struct) 		  
  * @output A stream of frames (struct) of the orignal video.
  */
-Macroblock->Frame filter FrameBuilder(int width, int height, int numPictures) {
+Macroblock->Frame filter FrameBuilder(int width, int height) {
 	
 	int numOfHBlocks = (width/16); // number of macroblocks in the horizontal direction
 	int numOfVBlocks = (height/16); // number of macroblocks in the vertical direction
@@ -238,11 +250,12 @@ Macroblock->Frame filter FrameBuilder(int width, int height, int numPictures) {
 		}
 		
 		newFrame.frameNumber = frameCount;
+		frameCount++;
 		
 		push(newFrame);
 		
 		// pop all
-		for (int i=0; i<8; i++) {
+		for (int i=0; i<numOfMacroblocks; i++) {
 			pop();
 		}
 		
@@ -258,7 +271,7 @@ Macroblock->Frame filter FrameBuilder(int width, int height, int numPictures) {
  * FOR TESTING PURPOSES
  */
 
-void->int filter fakeVideoIntsGenerator() {
+void->int filter FakeVideoIntsGenerator() {
 	
 	init {
 		int x = 0;
@@ -268,12 +281,63 @@ void->int filter fakeVideoIntsGenerator() {
 	}
 }	
 
-/** TO DO, for testing!!!
-Frame->void filter FramePrinter() {
+/**
+ * This is made to print frames nicely in the console to verify
+ * this all works.
+ */
+Frame->void filter FramePrinter(int width, int height) {
+	
+	init {
+		int numOfHBlocks = (width/16); // number of macroblocks in the horizontal direction
+		int numOfVBlocks = (height/16); // number of macroblocks in the vertical direction
+	}
+	work pop 1 {
+		
+		Frame currentFrame = peek(0);
+		
+		println(" ");
+		print("Frame ");
+		print(currentFrame.frameNumber);
+		println(" ");
+		
+		for (int row=0; row<numOfVBlocks; row++) {
+			for (int col=0; col<numOfVBlocks; col++) {
+				
+				Macroblock currentMacroblock = currentFrame.macroblocks[row][col];
+				
+				println("Y Samples");
+				for (int r=0; r<8; r++) {
+					for (int c=0; c<8; c++) {
+						print(currentMacroblock.YSamples[r][c]);
+					}
+					println(" ");
+				}
+				
+				println("Cb Samples");
+				for (int r=0; r<8; r++) {
+					for (int c=0; c<8; c++) {
+						print(currentMacroblock.CbSamples[r][c]);
+					}
+					println(" ");
+				}
+				
+				println("Cr Samples");
+				for (int r=0; r<8; r++) {
+					for (int c=0; c<8; c++) {
+						print(currentMacroblock.CrSamples[r][c]);
+					}
+					println(" ");
+				}
+				
+				println(" ");
+			}
+		}
+		pop();	
+	}
 	
 }
 
-*/
+
 
 
 
@@ -320,7 +384,7 @@ struct Macroblock {
 	// For clarification, first number will index the row
 	// and second number will index the column
 	int[16][16] YSamples;
-	int[8][8] CrSamples;
 	int[8][8] CbSamples;
+	int[8][8] CrSamples;
 }
 

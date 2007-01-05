@@ -219,6 +219,7 @@ int->Macroblock pipeline MacroblockMaker(int width, int height) {
  */
 Macroblock->Frame filter FrameBuilder(int width, int height) {
 	
+	// why is init {} not working?
 	int numOfHBlocks = (width/16); // number of macroblocks in the horizontal direction
 	int numOfVBlocks = (height/16); // number of macroblocks in the vertical direction
 	int numOfMacroblocks = (width/16)*(height/16); // number of macroblocks in a frame

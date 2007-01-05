@@ -1,7 +1,7 @@
 /**
  * @description
  * This contains all the filters required to rearrange pixel data from a
- * YCrCb 4:2:0 file to macroblocks.
+ * YCbCr 4:2:0 file to macroblocks.
  * 
  * The specification for MPEG-4 (Part 10) used is the ITU-T H-Series 
  * Recommendation for H.264.
@@ -116,7 +116,7 @@ int->Macroblock pipeline MacroblockMaker(int width, int height) {
 	// split inputs into planes;
 	int numOfYValues = width*height;
 	int numOfCbCrValues = width*height/4; // 4:2:0 downsampling scheme
-	int numOfValuesInFrame = numOfYValues + 2*numOfCrCbValues;		
+	int numOfValuesInFrame = numOfYValues + 2*numOfCbCrValues;		
 
 
 	add splitjoin {

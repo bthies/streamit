@@ -227,7 +227,7 @@ Macroblock->Frame filter FrameBuilder(int width, int height) {
 		
 		Frame newFrame;
 		
-		for (int mBlockCount; mBlockCount<numOfMacroblocks; mBlockCount++) {
+		for (int mBlockCount=0; mBlockCount<numOfMacroblocks; mBlockCount++) {
 			for (int row=0; row<numOfHBlocks; row++) {
 				for (int col=0; col<numOfVBlocks; col++) {
 					newFrame.macroblocks[row][col] = peek(mBlockCount);

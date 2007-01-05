@@ -37,11 +37,9 @@ void->void pipeline VideoProcessor() {
 	// video parameters, are specified here right now, but
 	// this will have to move to the main pipeline once this
 	// part has been tested
-	init {
-		int width = 352;
-		int height = 288;
-		int numPictures = 300; 
-	}
+	int width = 352;
+	int height = 288;
+	int numPictures = 300; 
 
 	
 	// useful variables
@@ -116,11 +114,10 @@ int->Macroblock pipeline MacroblockMaker(int width, int height) {
 	
 
 	// split inputs into planes;
-	init {
-		int numOfYValues = width*height;
-		int numOfCbCrValues = width*height/4; // 4:2:0 downsampling scheme
-		int numOfValuesInFrame = numOfYValues + 2*numOfCrCbValues;		
-	}
+	int numOfYValues = width*height;
+	int numOfCbCrValues = width*height/4; // 4:2:0 downsampling scheme
+	int numOfValuesInFrame = numOfYValues + 2*numOfCrCbValues;		
+
 
 	add splitjoin {
 		

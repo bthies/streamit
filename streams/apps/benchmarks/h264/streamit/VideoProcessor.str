@@ -29,9 +29,6 @@
 /**
  * Interprets an input stream of successive frames of the original video in 
  * raw data format, and produces a stream of frames (defined struct).
- * @param width The resolution width of the video.
- * @param height The resolution height of the video.
- * @param numPictures The number of pictures to be put into the video.
  * @input VOID
  * @output A stream of Frames (defined struct).
  */
@@ -49,6 +46,8 @@ void->void pipeline VideoProcessor() {
 	
 	// useful variables
 	// int numOfMacroblocks = (width/16)*(height/16); // number of macroblocks in a frame
+	
+	// commented out for testing
 	// add FileReader<bit> ("../testvideos/mobile.cif");
 	// add BitStream2IntStream();
 	
@@ -104,20 +103,13 @@ bit->int filter BitStream2IntStream() {
 
 /**
  * Interprets an input stream of successive frames of the original video in 
- * raw data format, and produces a stream of frames (defined struct). The input
+ * raw data format, and produces a stream of macroblock (defined struct). The input
  * format is I420 (see http://www.fourcc.org/)
  * @param width The resolution width of the video.
  * @param height The resolution height of the video.
  * @input A series of images representing the frames of the video. 
- * 		  Each picture frame is coded in YCbCr 4:2:0 format, where a 
- * 		  2x2 pixel block is represented by, arranged in raster format:
- * 
- * 		  Y1 Y2 Y3 Y4 Cb Cr
- * 
- * 		  Note that the input is in planor format, so Y, Cb, Cr are stored 
- * 		  in separate arrays.
- * 
- * 		  
+ * 		  Each picture frame is coded in YCbCr 4:2:0 planar format.
+ * 		  Therefore, Y, Cb, Cr are stored in separate arrays.
  * @output A stream of macroblocks (struct).
  */
 int->Macroblock pipeline MacroblockMaker(int width, int height) {
@@ -267,8 +259,12 @@ Macroblock->Frame filter FrameBuilder(int width, int height) {
 
 
 
-/**
+/**********************************************************
  * FOR TESTING PURPOSES
+/**********************************************************/
+
+/**
+ * This is a source of integers
  */
 
 void->int filter FakeVideoIntsGenerator() {

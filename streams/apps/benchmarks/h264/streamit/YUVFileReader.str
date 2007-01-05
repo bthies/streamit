@@ -21,7 +21,7 @@ void->void pipeline YUVFileReader() {
  */
 bit->void filter BitStream2IntStream() {
 	
-	work pop 8 push 1 {
+	work pop 8 {
   	
 		int some_int = 0;
 		int two_power = 1;

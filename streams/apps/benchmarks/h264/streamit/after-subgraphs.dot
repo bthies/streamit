@@ -1,0 +1,10 @@
+digraph streamit {
+subgraph cluster_node1 {
+ label="TopLevel1_FileReader__2_4_8";
+node2 [ label="FileReader__2_4\npush=1\npop=0\npeek =0" ]
+node3 [ label="BitStream2IntStream__9_5\npush=1\npop=8\npeek =8" ]
+node2 -> node3
+node4 [ label="MacroblockMaker__12_6\npush=0\npop=1\npeek =1" ]
+node3 -> node4
+}
+}

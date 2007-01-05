@@ -93,96 +93,187 @@ bit->int filter BitStream2IntStream() {
 
 /**
  * Interprets an input stream of successive frames of the original video in 
- * raw data format, and produces a stream of frames (defined struct).
+ * raw data format, and produces a stream of frames (defined struct). The input
+ * format is I420 (see http://www.fourcc.org/)
  * @param width The resolution width of the video.
  * @param height The resolution height of the video.
  * @param numPictures The number of pictures to be put into the video.
  * @input A series of images representing the frames of the video. 
- * 		  Each picture frame is coded in YCrCb 4:2:0 format, where a 
+ * 		  Each picture frame is coded in YCbCr 4:2:0 format, where a 
  * 		  2x2 pixel block is represented by, arranged in raster format:
  * 
- * 		  Y1 Y2 Y3 Y4 Cr Cb
+ * 		  Y1 Y2 Y3 Y4 Cb Cr
+ * 
+ * 		  Note that the input is in planor format, so Y, Cb, Cr are stored 
+ * 		  in separate arrays.
  * 
  * 		  
- * @output A stream of ints grouped as macroblock units.
+ * @output A stream of macroblocks (struct).
  */
-int->Macroblock splitjoin MacroblockMaker(int width, int height, int numPictures) {
+int->Macroblock pipeline MacroblockMaker(int width, int height, int numPictures) {
 	
 
 	// split inputs into planes;
 	int numOfYValues = width*height;
-	int numOfCrCbValues = width*height/4; // 4:2:0 downsampling scheme
+	int numOfCbCrValues = width*height/4; // 4:2:0 downsampling scheme
 	int numOfValuesInFrame = numOfYValues + 2*numOfCrCbValues;
-
-	split roundrobin(numOfYValues, numOfCrCbValues, numOfCrCbValues);
-
-
-	// reorganizes Y values
 	add splitjoin {
-		split roundrobin(16);
-		for (int i=0; i<(width/16); i++) {
-			add Identity<int>;
+		
+		split roundrobin(numOfYValues, numOfCrCbValues, numOfCrCbValues);
+	
+	
+		// reorganizes Y values
+		add splitjoin {
+			split roundrobin(16);
+			for (int i=0; i<(width/16); i++) {
+				add Identity<int>;
+			}
+			join roundrobin(256);
 		}
-	}
-
-	// reorganizes Y values
-	add splitjoin {
-		split roundrobin(8);
-		for (int i=0; i<(width/16); i++) {
-			add Identity<int>;
+	
+		// reorganizes Cb values
+		add splitjoin {
+			split roundrobin(8);
+			for (int i=0; i<(width/16); i++) {
+				add Identity<int>;
+			}
+			join roundrobin(64);
 		}
-	}
-
-	// reorganizes Y values
-	add splitjoin {
-		split roundrobin(8);
-		for (int i=0; i<(width/16); i++) {
-			add Identity<int>;
+	
+		// reorganizes Cr values
+		add splitjoin {
+			split roundrobin(8);
+			for (int i=0; i<(width/16); i++) {
+				add Identity<int>;
+			}
+			join roundrobin(64);
 		}
+		
+		// collects all samples for a 16x16 macroblock
+		join roundrobin(256,64,64); // 4:2:0 downsampling scheme for a macroblock
+		// at this point, 256+64+64 pixels represent a set of YCbCr values for a macroblock
+		// 256+64+64 = 384
 	}
-
-	join roundrobin(256,64,64); // 4:2:0 downsampling scheme for a macroblock
-	// at this point, 256+64+64 pixels represent a set of YCrCb values for a macroblock
-	// 256+64+64 = 384
 	
 	add filter {
+		
+		// stuff 386 values into a macroblock
 		work pop 386 push 1 {
+			// at each iteration of the work function, 
+			// it will work on the macroblocks, in raster order
 			
-			/////////// TODO
-			// stuff 386 values into a macroblock
+			Macroblock newMacroblock;
+			
+			for (int YCount=0; YCount<386; YCount++) {
+				
+				// stuff Y values into a macroblock struct;
+				for (int row=0; row<16; row++) {
+					for (int col=0; col<16; col++) {
+						newMacroblock.YSamples[row][col] = peek(YCount);
+					}
+				}
+			}
+			
+			// (386+16) = 402
+			for (int CbCount=386; CbCount<402; CbCount++) {
+				
+				// stuff Cb values 
+				for (int row=0; row<8; row++) {
+					for (int col=0; col<8; col++) {
+						newMacroblock.CbSamples[row][col] = peek(CbCount);
+					}
+				}
+			}
+			
+			// (386+16+16)
+			for (int YCount=402; YCount<418; YCount++) {
+				
+				// stuff Cr values
+				for (int row=0; row<8; row++) {
+					for (int col=0; col<8; col++) {
+						newMacroblock.CbSamples[row][col] = peek(CbCount);
+					}
+				}
+				
+			}
+			
+			// pop all
+			for (int i=0; i<386; i++) {
+				pop();
+			}
+			
 		}	
 	}
 }
 
+/**
+ * It takes a series of macroblocks in raster sequence and build a frame.
+ * @param width The resolution width of the video.
+ * @param height The resolution height of the video.
+ * @param numPictures The number of pictures to be put into the video.
+ * @input A series of macroblocks (see struct) 		  
+ * @output A stream of frames (struct) of the orignal video.
+ */
 Macroblock->Frame filter FrameBuilder(int width, int height, int numPictures) {
 	
+	int numOfHBlocks = (width/16); // number of macroblocks in the horizontal direction
+	int numOfVBlocks = (height/16); // number of macroblocks in the vertical direction
 	int numOfMacroblocks = (width/16)*(height/16); // number of macroblocks in a frame
-
+	
+	
+	init {
+		int frameCount;	
+	}
 	work pop numOfMacroblocks push 1 {
 		
-		//////// TODO
-		//println(pop());
 		Frame newFrame;
-		//push(newFrame);
+		
+		for (int mBlockCount; mBlockCount<numOfMacroblocks; mBlockCount++) {
+			for (int row=0; row<numOfCBlocks; row++) {
+				for (int col=0; col<numOfHBlocks; col++) {
+					newFrame.macroblocks[row][col] = peek(mBlockCount);
+				}
+			}
+		}
+		
+		newFrame.frameNumber = frameCount;
+		
+		push(newFrame);
+		
+		// pop all
+		for (int i=0; i<8; i++) {
+			pop();
+		}
+		
+		
 	}
 
 }
+
+
 
 
 /**
  * FOR TESTING PURPOSES
  */
+
+void->int filter fakeVideoIntsGenerator() {
+	
+	init {
+		int x = 0;
+	}
+	work push 1 {
+		push(x++);
+	}
+}	
+
+/** TO DO
 Frame->void filter FramePrinter() {
 	
-
-	work pop numOfValuesInAFrame push 1 {
-		
-		//println(pop());
-		Frame newFrame;
-		//push(newFrame);
-	}
-
 }
+
+*/
+
 
 
 /* ********************************************************
@@ -228,7 +319,7 @@ struct Macroblock {
 	// For clarification, first number will index the row
 	// and second number will index the column
 	int[16][16] YSamples;
-	int[8][8] CbSamples;
 	int[8][8] CrSamples;
+	int[8][8] CbSamples;
 }
 

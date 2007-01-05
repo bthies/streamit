@@ -218,13 +218,11 @@ int->Macroblock pipeline MacroblockMaker(int width, int height) {
  */
 Macroblock->Frame filter FrameBuilder(int width, int height) {
 	
-	
-	init {
-		int numOfHBlocks = (width/16); // number of macroblocks in the horizontal direction
-		int numOfVBlocks = (height/16); // number of macroblocks in the vertical direction
-		int numOfMacroblocks = (width/16)*(height/16); // number of macroblocks in a frame
-		int frameCount = 0;	
-	}
+	int numOfHBlocks = (width/16); // number of macroblocks in the horizontal direction
+	int numOfVBlocks = (height/16); // number of macroblocks in the vertical direction
+	int numOfMacroblocks = (width/16)*(height/16); // number of macroblocks in a frame
+	int frameCount = 0;	
+
 	work pop numOfMacroblocks push 1 {
 		
 		Frame newFrame;

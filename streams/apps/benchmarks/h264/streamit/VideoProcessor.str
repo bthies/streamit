@@ -121,7 +121,7 @@ int->Macroblock pipeline MacroblockMaker(int width, int height) {
 
 	add splitjoin {
 		
-		split roundrobin(numOfYValues, numOfCrCbValues, numOfCrCbValues);
+		split roundrobin(numOfYValues, numOfCbCrValues, numOfCbCrValues);
 	
 	
 		// reorganizes Y values

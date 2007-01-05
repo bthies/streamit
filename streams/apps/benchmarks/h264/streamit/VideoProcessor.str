@@ -352,7 +352,7 @@ Frame->void filter FramePrinter(int width, int height) {
  */
 struct Frame {
 	int frameNumber;
-	int sliceType;
+	// int sliceType;
 	// QCIF 22w x 16h blocks
 	// For clarification, first number will index the row
 	// and second number will index the column

@@ -1,0 +1,352 @@
+/*~~~~~~~~~~
+~~~~FFT2~~~~
+~~~~~~~~~~*/
+
+/* The filter accepts incoming float values and takes as parameters
+ * the width, the height, and the zeropadding values necessary
+ * to make it so that when the actual FFT is taken, it is taken as a
+ * power of 2.  That is, if we have the width FFTM = 11, MZeropad should equal 
+ * the next biggest power of 2 minus 11, or 16 - 11 = 5.  MZeropad
+ * can also equal any power of two minus 11 so long as that power of two
+ * is larger than FFTM.  So MZeropad can also be 32 - 11 = 21,
+ * 64 - 11 = 53, or 1024 - 11 = 1013.  The same concept applies to FFTN
+ * and NZeropad, where we mean the Height of the thing whose FFT we want
+ * to take.  
+ */
+
+void->void pipeline FFT(){
+
+	int FFTM = 11;
+	int FFTN = 12;
+	
+	int MZeroPad = 512-FFTM;
+	int NZeroPad = 512-FFTN;
+ 
+	add FileReader<int>("animal.bin");
+	println("start FFT");
+	add intToFloat();
+	add FFT2(FFTM, FFTN, MZeroPad, NZeroPad);
+	add IFFT2(FFTM, FFTN, MZeroPad, NZeroPad);
+	add floatToInt();
+	println("end   FFT");
+	add FileWriter<int>("outAnimal.bin");
+}
+
+float->float pipeline FFT2(int FFTM, int FFTN, int MZeroPad, int NZeroPad)
+{	
+	add realToComplex();
+	/*//perform 1D FFT's on each of the rows
+	add splitjoin {
+		split roundrobin(2*FFTM);
+		
+		for(int i = 0; i < FFTN; i++)
+		{	
+			add FFT1D(FFTM, MZeroPad);
+		}
+		join roundrobin(2);
+	}
+	//	perform 1D FFT's on each of the cols
+	add splitjoin {
+
+		split roundrobin(2*FFTN);
+		for(int j = 0; j < FFTM+MZeroPad; j++)
+		{
+			add FFT1D(FFTN, NZeroPad);
+		}
+		join roundrobin(2);
+	}*/
+	add FFT1D(FFTM, MZeroPad);
+	add Transpose(FFTM+MZeroPad, FFTN);
+	add FFT1D(FFTN, NZeroPad);
+	add Transpose(FFTN+NZeroPad, FFTM+MZeroPad);
+}
+
+/*~~~~~~~~~~~
+~~~~IFFT2~~~~
+~~~~~~~~~~~*/
+
+float->float pipeline IFFT2(int FFTM, int FFTN, int MZeroPad, int NZeroPad)
+{
+	add IFFT1D(FFTM, MZeroPad);
+	add Transpose(FFTM, FFTN+NZeroPad);
+	add IFFT1D(FFTN, NZeroPad);
+	add Transpose(FFTN, FFTM);
+	
+
+	/*
+	add splitjoin {
+		split roundrobin(2*(FFTM+MZeroPad));
+		for(int i = 0; i < FFTN+NZeroPad; i++)
+		{
+			add IFFT1D(FFTM, MZeroPad);
+		}
+		join roundrobin(2);
+	}
+	//perform 1D FFT's on each of the rows
+	add splitjoin {
+		split roundrobin(2*(FFTN+NZeroPad));
+		for(int j = 0; j < FFTM; j++)
+		{
+			add IFFT1D(FFTN, NZeroPad);
+		}
+		join roundrobin(2);
+	}*/
+	add complexToReal();
+}
+/*~~~~~~~~~~~
+~~~~FFT1D~~~~
+~~~~~~~~~~~*/
+
+//takes in a series of floats on the tape with parameters
+//indicating the number of them we want to take the 1-dimensional
+//FFT for and how much zeropadding it needs to take that number,
+//size, to the next power of two.  so if the size is 11, the
+//value of zeropadding ought to be 5, 21, 53, 117, etc, so that 
+//size+zeropadding equals some power of two like 16, 32, 64, and 128
+//respectively
+
+
+float->float pipeline FFT1D(int size, int zeropadding){
+	add zeroPad(size*2, zeropadding*2);
+	add FFTKernel2(size+zeropadding);
+}
+
+float->float splitjoin zeroPad(int size, int zeropadding){
+	
+	split roundrobin(1,0);
+	add Identity<float>;
+	add generateZeros(zeropadding);//both for real and imag parts
+	join roundrobin(size, zeropadding);
+	
+}
+
+void->float pipeline generateZeros(int zeropadding){
+	add void->float filter {work push zeropadding 
+							{for(int j=0; j<zeropadding; j++) push(0);}};
+}
+
+
+/*~~~~~~~~~~~~
+~~~~IFFT1D~~~~
+~~~~~~~~~~~~*/
+
+//takes in a series of floats on the tape with parameters
+//indicating the number of them we want to take the 1-dimensional
+//IFFT for and how much zeropadding it needs to take that number,
+//size, to the next power of two.  so if the size is 11, the
+//value of zeropadding ought to be 5, 21, 53, 117, etc, so that 
+//size+zeropadding equals some power of two like 16, 32, 64, and 128
+//respectively
+
+float->float pipeline IFFT1D(int size, int zeropadding){
+	add IFFTKernel2(size+zeropadding);
+	add unZeroPad(size*2, zeropadding*2);
+	//unechunZeroPad
+}
+
+float->float splitjoin unZeroPad(int size, int zeropadding){
+		
+	split roundrobin(size, zeropadding);
+	add Identity<float>;
+	add float->void filter {work pop 1{pop();}}
+	join roundrobin(1, 0);
+}
+
+
+
+/*~~~~~~~~~~~~~~~~~~~~~~
+~~~~Helper Filters()~~~~
+~~~~~~~~~~~~~~~~~~~~~~*/
+
+float->float filter realToComplex(){
+	work pop 1 push 2 {
+		push(pop());
+		push(0);		
+	}
+}
+float->float filter complexToReal(){
+	work pop 2 push 1{
+		push(pop());
+		pop();
+	}
+}
+
+float->float splitjoin Transpose(int M, int N) {
+	split roundrobin(2*M);
+	for (int i=0; i<N; i++) {
+		add Identity<float>();
+	}
+	join roundrobin(2);
+}
+
+/*~~~~~~~~~~~~~~~
+~~~~printer()~~~~
+~~~~~~~~~~~~~~~*/
+
+//prints whatever comes across it on the tape
+
+float->float filter printer(){
+	work push 1 pop 1 peek 1
+	{
+		float gerry = peek(0);
+		println(gerry);
+		push(pop());
+	}
+	
+}
+
+/*~~~~~~~~~~~~~~~~
+~~~~intToFloat~~~~
+~~~~~~~~~~~~~~~~*/
+
+int->float filter intToFloat()
+{
+	work pop 1 push 1
+	{
+		push((float)pop());
+	}
+	
+}
+
+/*~~~~~~~~~~~~~~~~
+~~~~floatToInt~~~~
+~~~~~~~~~~~~~~~~*/
+
+float->int filter floatToInt()
+{
+	work pop 1 push 1
+	{
+		push((int)(pop()+0.5));
+	}
+	
+}
+
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~FILTERS FROM 'FIRBANK'~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
+//the filters below, from FFTKernel2 to CombineDFT
+//were taken from the 'firbank' application
+//and the file $STREAMIT_HOME/apps/benchmarks/firbank/streamit/FIRBank.str
+
+float->float pipeline FFTKernel2(int n) {
+
+	add FFTReorder(n);
+    for (int j = 2; j <= n; j *= 2){
+    	add CombineDFT(j);
+    }
+}
+
+
+float->float pipeline FFTReorder(int n) {
+
+
+    for (int i = 1; i< (n/2); i *= 2)
+	  {  
+	  add FFTReorderSimple(n/i);	 
+	 }
+}
+
+
+float->float filter FFTReorderSimple(int n) {
+
+    int totalData;
+    
+    init {
+	  totalData = 2*n; 
+    }
+
+    work push 2*n pop 2*n {
+        for (int i = 0; i < totalData; i+=4) {
+        
+		push(peek(i));
+		push(peek(i+1));
+	  }
+
+        for (int i = 2; i < totalData; i+=4) {
+		push(peek(i));
+		push(peek(i+1));
+	  }
+
+        for (int i = 0; i < n; i++) {
+		pop();
+		pop();
+	  }
+    }
+}
+
+float->float pipeline IFFTKernel2(int N) {
+    add Conjugate();
+    add FFTKernel2(N);
+    add Conjugate();
+    add DivideByN(N);
+}
+
+float->float filter Conjugate() {
+    work pop 2 push 2 {
+        push(pop());
+        push(-pop());
+    }
+}
+
+float->float filter DivideByN(int N) {
+    work push 1 pop 1 {
+        push(pop()/N);
+    }
+}
+
+float->float filter CombineDFT(int n) {
+    // coefficients, real and imaginary interleaved
+    float[n] w;
+	float[2*n] results;
+	float y0_r, y0_i, y1_r, y1_i, weight_real, weight_imag, y1w_r, y1w_i;
+	
+    init {
+	  float wn_r = (float)cos(2 * pi / n); // pi = 3.141592654
+	  float wn_i = (float)sin(-2 * pi / n);
+	  float real = 1;
+	  float imag = 0;
+	  float next_real, next_imag; float y0_r, y0_i, y1_r, y1_i, weight_real, weight_imag, y1w_r, y1w_i;
+ 
+	  for (int i = 0; i < n; i += 2) {
+		w[i] = real;
+		w[i+1] = imag;
+		next_real = real * wn_r - imag * wn_i;
+		next_imag = real * wn_i + imag * wn_r;
+		real = next_real;
+		imag = next_imag;
+	  }
+    }
+    
+    work push 2*n pop 2*n peek 2*n {
+	  
+        for (int i = 0; i < n; i += 2) {
+		
+		y0_r = peek(i);
+        y0_i = peek(i+1);
+            
+		y1_r = peek(n + i);
+        y1_i = peek(n + i + 1);
+		
+		// load into temps to make sure it doesn't got loaded
+		// separately for each load
+		weight_real = w[i];
+		weight_imag = w[i + 1];
+		
+        y1w_r = y1_r * weight_real - y1_i * weight_imag;
+        y1w_i = y1_r * weight_imag + y1_i * weight_real;
+		
+		    results[i] = y0_r + y1w_r;
+            results[i + 1] = y0_i + y1w_i;
+		
+		results[n + i] = y0_r - y1w_r;
+        results[n + i + 1] = y0_i - y1w_i;
+        }
+
+        for (int i = 0; i < 2 * n; i++) {
+		pop();
+		push(results[i]);
+	  }
+    }
+
+}

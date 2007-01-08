@@ -549,6 +549,15 @@ class FusionCode {
                         p.print("    check_messages__" + id + "();\n");
                     p.print("    " + get_work_function(oper) + "(" + steady_int
                             + (mult == 1 ? "" : "*__MULT") + " );");
+
+                    // close files now, since we don't close them later
+                    if (mult == 1) {
+                        if ((node.contents instanceof SIRFileReader) ||
+                            (node.contents instanceof SIRFileWriter)) {
+                            p.print("    "+get_work_function(oper)+"__close();\n");
+                        }
+                    }
+
                 }
 
                 p.newLine();
@@ -596,17 +605,15 @@ class FusionCode {
                         // do an tape / buffer managment needed at beginning of iteration
                         // e.g. copying down read-ahead in a non-circular buffer.
                         p.print(stream.topOfWorkIteration());
-                        }
                     }
 
                     if (rcv_msg) p.print("    check_messages__"+id+"();\n");
                     p.print("    "+get_work_function(oper)+"("+steady_int+"*rem);");
-                    
+
                     if ((node.contents instanceof SIRFileReader) ||
                         (node.contents instanceof SIRFileWriter)) {
                         p.print("    "+get_work_function(oper)+"__close();\n");
                     }
-                    
                 }
 
                 /*
@@ -632,6 +639,7 @@ class FusionCode {
 
                 p.newLine();
             }
+        }
         }
         
         //p.print("  }\n");
@@ -673,8 +681,8 @@ class FusionCode {
         catch (Exception e) {
             System.err.println("Unable to write fusion.cpp");
         }
+    
     }
-
 
 //    private static String get_loop(int times, String code) {
 //        String res = "";

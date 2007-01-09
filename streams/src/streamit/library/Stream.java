@@ -677,7 +677,7 @@ public abstract class Stream extends Operator
     {
         boolean printGraph = true;
         boolean doRun = true;
-        boolean singeappsched = false;
+        boolean sas = false;
         boolean printSDEP = false;
         String sdepTOPString = null, sdepBOTTOMString = null;
         int nIters = -1;
@@ -723,9 +723,9 @@ public abstract class Stream extends Operator
                                 {
                                     doRun = false;
                                 }
-                            else if (args[index].equals("-singeappsched"))
+                            else if (args[index].equals("-sas"))
                                 {
-                                    singeappsched = true;
+                                    sas = true;
                                 }
                             else if (args[index].equals("-finegrained"))
                                 {
@@ -842,7 +842,7 @@ public abstract class Stream extends Operator
                 {
                     Iterator selfIter = new streamit.library.iriter.Iterator(this);
                     streamit.scheduler2.Scheduler scheduler;
-                    if (singeappsched)
+                    if (sas)
                         scheduler =
                             streamit.scheduler2.singleappearance.Scheduler.create(
                                                                                   selfIter);

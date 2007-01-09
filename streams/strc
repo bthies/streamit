@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.110 2006-12-13 17:27:23 dimock Exp $
+# $Id: strc,v 1.111 2007-01-09 16:30:45 thies Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -320,6 +320,7 @@ Usage: strc [options] file.str ...
 + --marksteady        Print * after each steady-state execution
 + --printreps         Print number of times filters execute in schedule
 + --printsched        Print the full program schedule
+* --sas               Run with a single-appearance (not phased) schedule
 * --jcc               Use the JCC library (experimental)
 *
 *Options specific to deprecated uniprocessor backend:
@@ -406,6 +407,7 @@ sub get_options
 			    "doloops!",
 			    "standalone|S",
 			    "rstream|R",
+			    "sas!",
 			    "simpleC",
 			    "server!",
 			    "stats!",
@@ -873,6 +875,7 @@ sub get_lib_opts
     $opts{marksteady} && ($libopts .= " -marksteady");
     $opts{printsched} && ($libopts .= " -printsched");
     $opts{printreps} && ($libopts .= " -printreps");
+    $opts{sas} && ($libopts .= " -sas");
     $opts{jcc} && ($libopts .= " -jcc");
     return $libopts;
   }

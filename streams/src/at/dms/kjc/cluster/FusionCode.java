@@ -549,15 +549,6 @@ class FusionCode {
                         p.print("    check_messages__" + id + "();\n");
                     p.print("    " + get_work_function(oper) + "(" + steady_int
                             + (mult == 1 ? "" : "*__MULT") + " );");
-
-                    // close files now, since we don't close them later
-                    if (mult == 1) {
-                        if ((node.contents instanceof SIRFileReader) ||
-                            (node.contents instanceof SIRFileWriter)) {
-                            p.print("    "+get_work_function(oper)+"__close();\n");
-                        }
-                    }
-
                 }
 
                 p.newLine();
@@ -609,11 +600,6 @@ class FusionCode {
 
                     if (rcv_msg) p.print("    check_messages__"+id+"();\n");
                     p.print("    "+get_work_function(oper)+"("+steady_int+"*rem);");
-
-                    if ((node.contents instanceof SIRFileReader) ||
-                        (node.contents instanceof SIRFileWriter)) {
-                        p.print("    "+get_work_function(oper)+"__close();\n");
-                    }
                 }
 
                 /*
@@ -641,6 +627,32 @@ class FusionCode {
             }
         }
         }
+
+        // close filereaders and filewriters
+        for (int ph = 0; ph < n_phases; ph++) {
+    
+            HashSet<SIROperator> phase = d_sched.getAllOperatorsInPhase(ph);
+            Iterator<SIROperator> iter = phase.iterator();
+
+            while (iter.hasNext()) {
+                SIROperator oper = iter.next();
+                int id = NodeEnumerator.getSIROperatorId(oper);
+                FlatNode node = NodeEnumerator.getFlatNode(id);
+
+                Integer steady = ClusterBackend.steadyExecutionCounts.get(node);
+                int steady_int = 0;
+                if (steady != null) steady_int = (steady).intValue();
+
+                if (steady_int > 0) {
+
+                    if ((node.contents instanceof SIRFileReader) ||
+                        (node.contents instanceof SIRFileWriter)) {
+                        p.print("    "+get_work_function(oper)+"__close();\n");
+                    }
+                }
+            }
+        }
+
         
         //p.print("  }\n");
 

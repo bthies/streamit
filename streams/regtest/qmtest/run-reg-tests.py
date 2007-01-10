@@ -2,7 +2,7 @@
 #
 # run-reg-tests.py: Yet another test to run regression tests
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: run-reg-tests.py,v 1.38 2006-08-21 18:56:05 dimock Exp $
+# $Id: run-reg-tests.py,v 1.39 2007-01-10 22:40:49 dimock Exp $
 #
 # Taking history from run_reg_tests.pl: this is the third implementation
 # of a script to run StreamIt regression tests.  It is written in Python,
@@ -250,6 +250,9 @@ class RunRegTests:
                 if re_pattern.match (line):
                     cpu_count += 1
             f.close()
+            if cpu_count > 1:
+                # set number of cpus to number found
+                cpu_count = cpu_count - 1
         except:
             pass
         run_command = 'qmtest run'

@@ -1,48 +1,78 @@
+
+/* fixed on 1/3 to incorporate the changes made in mosaic.str and
+ * featureExtraction.str, namely that rather than passing a 320x240 matrix
+ * of structs, we send 3 matrices representing the y, i, and q values
+ * 
+ * here, though, the tape sends in imageAndFeatures values rather than the
+ * matrices, which are part of the imageAndFeatures struct
+ */
+
 imageAndFeatures->imageAndFeatures
-		filter correlation(int startx, int starty, 
-					int imageWidth, int imageHeight, int winWidth, int winHeight, 
-					int patchsize, boolean valsOK, int iters, int w)
+		filter correlation(int w)
 {
 	
-	work pop 1 peek 1 push 2
+	work pop 1 peek 2 push 2
 	{
-	
 		int r = (w-1)/2;
 	
-		imageAndFeatures imAndFeat1 = pop();
-		imageAndFeatures imAndFeat2 = peek(0);
+		imageAndFeatures imAndFeat1 = peek(0);
+		imageAndFeatures imAndFeat2 = peek(1);
 		
-		yiqStruct[320][240] im1 = imAndFeat1.myImage;
-		yiqStruct[320][240] im2 = imAndFeat2.myImage;
-
-		bestFeatures[20] feat1 = imAndFeat1.myBest;
-		bestFeatures[20] feat2 = imAndFeat2.myBest;
-
-		float[20][20] corrMatrix = -9999999;
+		float[320][240] y1Matrix = imAndFeat1.yImage;
+		float[320][240] i1Matrix = imAndFeat1.iImage;
+		float[320][240] q1Matrix = imAndFeat1.qImage;
+		
+		float[320][240] y2Matrix = imAndFeat2.yImage;
+		float[320][240] i2Matrix = imAndFeat2.iImage;
+		float[320][240] q2Matrix = imAndFeat2.qImage;
+		
+		bestFeatures[40] feat1 = imAndFeat1.myBest;
+		bestFeatures[40] feat2 = imAndFeat2.myBest;
+		
+		//here is where we take care of sharpening the image, 
+		//which which we do by subtracted a blurred (LPF) image from
+		//the original image.  We blur the image by convolving with 
+		//an averaging filter of size 13x13 (each value is 1/(13x13),
+		//and we convolve by taking the FFT's of the filter and the
+		//image, piece-wise multiplying them, and then taking the IFFT
+		//of that result.  after this, we take the center values (i.e.,
+		//we ignore a border of length 6 around the image
+		
+		
+		
+		float[40][40] corrMatrix;
+		
+		for(int i=0;i<iters;i++)
+		{
+			for(int j=0;j<iters;j++)
+			{
+				corrMatrix[i][j] = -999999;		
+			}
+		}
 		
 		float[w][w] w1;
 		float[w][w] w2;
 
 		//first, calculate the correlation matrix
-		
-		for(int i=1; i<20; i++)
+
+		for(int i=0; i<iters; i++)
 		{ 	if(feat1[i].x>r & feat1[i].x<imageWidth+1-r
-			  &feat1[i].y>r & feat1[i].y<imageHeight+1-r) // check if the feature is in bounds
+			  & feat1[i].y>r & feat1[i].y<imageHeight+1-r) // check if the feature is in bounds
 			{	float stanDevW1 = 0;
 				//make w1, which is a windowof width w around the feature considered in im1
 				for(int m = -r; m <= r; m++)
 				{
 					for(int n = -r; n<= r; n++)
 					{	
-						w1[m+r][n+r] = im1[feat1.x + m][feat1.y + n].y;
+						w1[m+r][n+r] = y1Matrix[feat1[i].x + m][feat1[i].y + n];
 						stanDevW1 = stanDevW1 + w1[m+r][n+r]*w1[m+r][n+r];
 					}
 				}
 				stanDevW1 = sqrt(stanDevW1);
-				for(int j=1; j<20 ; j++)
+				for(int j=0; j<iters ; j++)
 				{	
 					if(feat2[j].x>r & feat2[j].x<imageWidth+1-r
-								  &feat1[i].y>r & feat1[i].y<imageHeight+1-r) // check if the feature is in bounds
+								  & feat1[i].y>r & feat1[i].y<imageHeight+1-r) // check if the feature is in bounds
 					{
 						float stanDevW2 = 0;	
 						//make w2, which is a window of width w around the feature considered in im2 
@@ -50,8 +80,10 @@ imageAndFeatures->imageAndFeatures
 						{
 							  for(int t = -r; t<= r; t++)
 						  	  {	
-								w2[s+r][t+r] = im2[feat2.x + s][feat2.y + j].y;
-								stanDevW2 = stanDevW2 + w2[s+r][t+r]*w2[s+r][t+r];
+								
+								w2[s+r][t+r] = y2Matrix[feat2[j].x + s][feat2[j].y + t];
+								stanDevW2 = stanDevW2 + w2[s+r][t+r]*w2[s+r][t+r];				  	  	
+								
 						  	  }
 						}
 						stanDevW2 = sqrt(stanDevW2);
@@ -63,35 +95,41 @@ imageAndFeatures->imageAndFeatures
 								elementWiseProduct = elementWiseProduct + w1[s+r][t+r]*w2[s+r][t+r];
 							}
 						}
-			
-						corrMatrix[i][j] = elementWiseProduct/stanDevW1/stanDevW2;		
+						corrMatrix[i][j] = elementWiseProduct/(stanDevW1*stanDevW2);		
 					} // ends second 'if' statement
 				} //ends inner j loop
 			} // ends first 'if statement
 		} //ends outer i loop	
-		
+
 		// now, use the correlation matrix to find features that 'like' each other
 		
-		int[20] bestRows = 0;
-		int[20] bestCols = 0;						
+		int[40] bestRows;
+		int[40] bestCols;						
+			
+		for(int i=0; i<iters; i++){
+			
+			bestRows[i] = 0;
+			bestCols[i] = 0;				
+		}
 		
 		float currRowBestVal = 0;
 		float currColBestVal = 0;
 		//find greatest values in each row and their numbers
-		for(int i = 0; i < 20; i++){
+		for(int i = 0; i < iters; i++){
 			currRowBestVal = 0;
-			for(int j = 0; j < 20; j++){
+			for(int j = 0; j < iters; j++){
 				if(corrMatrix[i][j] > currRowBestVal){
 					currRowBestVal = corrMatrix[i][j];
+					//println("currRowBestVal = " + currRowBestVal);
 					bestRows[i] = j;
 				} // end if
 			} // end inner for						
 		} // end outer for
 		
 		//find greatest values in each col and their numbers
-		for(int j = 0; j < 20; j++){
+		for(int j = 0; j < iters; j++){
 			currColBestVal = 0;
-			for(int i = 0; i < 20; i++){
+			for(int i = 0; i < iters; i++){
 				if(corrMatrix[i][j] > currColBestVal){
 					currColBestVal = corrMatrix[i][j];
 					bestCols[j] = i;
@@ -99,21 +137,27 @@ imageAndFeatures->imageAndFeatures
 			} // end inner for						
 		} // end outer for		
 		int badFeatures = 0;
-		for(int h = 0 ; h < 20; h++)
+		println("Feature	Image	Value		X	Y");
+		for(int h = 0 ; h < iters; h++)
 		{
+			//if the features are no good, set their values
+			// to zero
 			if(bestCols[bestRows[h]] != h){
 				feat1[h].val = 0;
 				feat2[h].val = 0;
 				badFeatures = badFeatures + 1;
 			}
+			else{
+				println(h + "\t" + 1 + "\t" + feat1[h].val + "\t" + feat1[h].x + "\t" + feat1[h].y 
+					 +  "\n \t" + 2 + "\t" + feat2[h].val + "\t" + feat2[h].x + "\t" + feat2[h].y);
+			}
 		}
 			
-		println("Number of Bad Features out of the 20 found");
-		println(badFeatures);
-		
+		println("Found " + (iters-badFeatures) + " correlating features out of " + iters);
 		imAndFeat1.myBest = feat1;
 		imAndFeat2.myBest = feat2;
 		
+		pop();
 		push(imAndFeat1);
 		push(imAndFeat2);
 			
@@ -158,4 +202,160 @@ imageAndFeatures->imageAndFeatures
 	 this new sharp image is nice, and we do it for both images (the image taken at step k and at step k+1)	
 	*/
 
+}
+
+imageAndFeatures->imageAndFeatures pipeline sharpen(int w){
+
+	int FFTM = imageWidth;
+	int FFTN = imageHeight;
+	
+	int FFTWidth = 512;
+	int FFTHeight = 256;
+	
+	int MZeroPad = FFTWidth-FFTM;
+	int NZeroPad = FFTHeight-FFTN;
+		
+	int r = (w-1)/2;
+	add splitjoin{
+		split duplicate;
+		add iAFIdentity();
+		add pipeline{
+			add extractMatrix();
+			add unmakeMatrix(); // now we have a stream of floats
+			
+			add splitjoin{
+				split duplicate;
+				add Identity<float>;
+				add float->float pipeline {
+					add splitjoin{
+						split roundrobin(1,0);
+						add FFT2(FFTM, FFTN, FFTWidth, FFTHeight);
+						//now generate the averager and take its fft
+						add pushAverager(w, FFTWidth, FFTHeight);
+						join roundrobin(2);
+					};
+					// multiply the fft of the yImage with that of the averager
+					add float->float filter
+					{
+						float a, b, c, d;
+						work pop 4 push 2
+						{
+								a = pop();
+								b = pop();
+								c = pop();
+								d = pop();
+								push(a*c - b*d);
+								push(a*d + b*c);
+						}
+					};
+				
+					//warning, if MZeroPad > 2r, you might have aliasing problems. come back to this
+				
+					add IFFT2(FFTM+MZeroPad, FFTN+NZeroPad, FFTWidth, FFTHeight);
+					add takeInnerMatrix(FFTM, FFTN, FFTWidth, FFTHeight,  r);
+				}
+				join roundrobin;
+			};
+			
+			add float->float filter 
+			{ work push 1 peek 2 pop 2 
+				{	
+					float temp = peek(0)-peek(1);
+					push(temp); 
+					pop();
+					pop();
+				}
+			};	
+
+			add makeMatrix();
+			add unExtractMatrix();
+		};
+		join roundrobin;
+	};
+	
+	add imageAndFeatures->imageAndFeatures 	filter 
+		{work pop 2 push 1 
+			{
+				imageAndFeatures iAndF1 = pop();
+				imageAndFeatures iAndF2 = pop(); 	
+				iAndF2.myBest = iAndF1.myBest;
+				push(iAndF2);
+			}
+		};
+}
+
+    
+imageAndFeatures->imageAndFeatures filter iAFIdentity(){
+	work pop 1 push 1{
+		push(pop());
+	}	
+}  
+    
+float->float filter takeInnerMatrix(int FFTM, int FFTN, int FFTWidth, int FFTHeight, int r) {
+
+	work pop (FFTWidth)*(FFTHeight) push FFTM*FFTN {
+		for(int j = 0; j < FFTHeight; j++){
+			for(int i = 0; i < FFTWidth; i++){
+				if(i >= r && j >=r && i < (FFTM+r) && j < (FFTN+r)){
+					push(pop());	
+				}
+				else{pop();}
+			}
+		}
+	}
+}
+
+void->float pipeline pushAverager(int w, int FFTWidth, int FFTHeight) {
+	
+	float avgValue;
+	avgValue = (1/(float)w)/(float)w;
+	
+	add void->float filter {work push w*w {for(int i=0;i<w*w;i++){push(avgValue);}}};
+	add FFT2(w, w, FFTWidth, FFTHeight);
+}
+    
+imageAndFeatures->float[320][240] filter extractMatrix()
+{
+	work pop 1 push 1
+	{
+		imageAndFeatures temp = pop();
+		push(temp.yImage);
+	}
+}
+
+float[320][240]->imageAndFeatures filter unExtractMatrix(){
+
+	imageAndFeatures imAndFeat;
+	work pop 1 push 1
+	{
+			imAndFeat.yImage = pop();
+			push(imAndFeat);
+	}
+	
+}
+float->float[320][240] filter makeMatrix(){
+
+	float[320][240] yMatrix;
+	
+	work pop imageHeight*imageWidth push 1
+	{
+		for(int i = 0; i < imageHeight; i++){
+		 for(int  j = 0; j < imageWidth; j++){
+					yMatrix[j][i] = pop();	
+		 }
+		}
+		push(yMatrix);
+	}
+}
+float[320][240]->float filter unmakeMatrix()
+{
+	work pop 1 push imageHeight*imageWidth
+    {
+	  float[320][240] yMatrix = pop();
+	  for(int i = 0; i < imageHeight; i++){
+	   for(int  j = 0; j < imageWidth; j++){
+				  push(yMatrix[j][i]);	
+		}
+	  }
+    }
 }

@@ -13,15 +13,19 @@
 
 /** 
  * List of TODOs
+ * none
  * 
- * testing..
- * update doc
  */
 
 /**
  * What's going on here:
  * 
- * Currently a standalone app for testing purposes.
+ * See version 1.46 for a standalone app for testing this component
+ * The current version now takes a Video and convert it to a Frame
+ * made up of macroblocks. This version is stable.
+ *
+ * The path to the YUV file has been hard coded in BitStream2IntStream
+ * The size of the file has also been hard coded in VideoProcessor()
  */
 
 
@@ -31,7 +35,7 @@
  * @input VOID
  * @output A stream of Frames (defined struct).
  */
-void->void pipeline VideoProcessor() {
+void->Frame pipeline VideoProcessor() {
 	
 	// video parameters, are specified here right now, but
 	// this will have to move to the main pipeline once this
@@ -53,7 +57,7 @@ void->void pipeline VideoProcessor() {
 	add FrameBuilder(width, height);
 	
 	// for testing only
-	add FramePrinter(width, height);
+	//add FramePrinter(width, height); 
 
 }
 
@@ -98,7 +102,7 @@ struct Macroblock {
 struct Frame {
       
       int frameNumber;
-      // int sliceType;
+      int sliceType;
 	// QCIF 22w x 16h blocks
 	// For clarification, first number will index the row
 	// and second number will index the column

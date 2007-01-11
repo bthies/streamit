@@ -1,18 +1,17 @@
 
-
 /*~~~~~~~~~~~~~~~~~~~~~~~
 ~~~~featureExtraction~~~~
 ~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-yiqStruct[320][240]->imageAndFeatures
+float[320][240]->imageAndFeatures
 		pipeline featureExtraction(int startx, int starty, 
 					int imageWidth, int imageHeight, int winWidth, int winHeight, 
-					int patchsize, float iweight, float qweight, int iters, bestFeatures[20] best)
+					float iweight, float qweight, int patchsize)
 {
 	add generateMinorEigs(startx, starty, imageWidth, imageHeight, 
-					winWidth, winHeight,patchsize, iweight, qweight);
+					winWidth, winHeight, iweight, qweight, patchsize);
 
-	add chooseEigsAndHighlight(imageWidth, imageHeight, patchsize, iters, best);
+	add chooseEigsAndHighlight(imageWidth, imageHeight);
 }
 
 /*~~~~~~~~~~~~~~~~~~~~~~~
@@ -22,8 +21,7 @@ yiqStruct[320][240]->imageAndFeatures
 /*the backbone filter of feature detection.  this filter calculates the minor eigenvalue as per 
 the klt (kanade-lucas-tomasi algorithm) for each pixel in the window under consideration 
 (startx to (startx + winWidth), and starty to  (starty + winHeight)).  the minor eigenvalues
-of each pixel in the incoming yiq struct are changed to reflect this, and so the 'return values'
-are embedded within the matrix popped out and pushed in.  
+of each pixel are embedded in the eigenMatrix, and so the 'return value' of meaning here is the eigenMatrix.  
 
 the filter works like this.  first, it computes eigenvalues for the first row of pixels.  In order
 not to waste computation time, we first sum the gradient values for each column of the winWidth +
@@ -57,23 +55,30 @@ row subsequently until finished.
 */
 
 
-yiqStruct[320][240]->yiqStruct[320][240] 
+float[320][240]->float[320][240] 
 		filter generateMinorEigs(int startx, int starty, 
 					int imageWidth, int imageHeight, int winWidth, int winHeight, 
-					int patchsize, float iweight, float qweight)
+					float iweight, float qweight, int patchsize)
 {
 	
 	//check to make sure that the window has a half-patchsize cushion around it plus one.  
 	//actually, since patchsizes are odd, it's half-patchsize - 1/2 cushion plus one). 
-	work pop 1 push 1
+	work pop 3 push 4
 	{
+	
 	Gstruct[320 + patchsize - 1] Garray;
-	yiqStruct[320][240] img = pop();		  	
+	float[320][240] yMatrix = pop();	
+	float[320][240] iMatrix = pop();	
+	float[320][240] qMatrix = pop();		
+	float[320][240] eigenMatrix;
+	
+	int r = (patchsize-1)/2;
+	
 	if(
-		(startx-((patchsize-1)/2 + 1))<0 || 
-		(starty-((patchsize-1)/2 + 1))<0 ||
-	    	((startx + winWidth + (patchsize-1)/2 + 1)>imageWidth) ||
-		((starty + winHeight+ (patchsize-1)/2 + 1)>imageHeight)
+		(startx-(r + 1))<0 || 
+		(starty-(r + 1))<0 ||
+	    ((startx + winWidth + r + 1)>imageWidth) ||
+		((starty + winHeight+ r + 1)>imageHeight)
 	  )
 	{
 		println("Either the window is too big, the patchsize is too big,");
@@ -83,54 +88,57 @@ yiqStruct[320][240]->yiqStruct[320][240]
 	
 	float gx; float gy; float gxi; float gyi; float gxq; float gyq;
 		
-	for(int i = startx-(patchsize-1)/2; i<= (startx+winWidth+(patchsize-1)/2); i++)
+	for(int i = startx-r; i< (startx+winWidth+r); i++)
 	{
-		for(int j = starty-(patchsize-1)/2; j<=(starty+(patchsize-1)/2); j++)
+		for(int j = starty-r; j< (starty+r); j++)
 		{
 			//we calculate gradient values for the y, i, and q dimensions.  then,
 			//we weigh each gradient value based on how important we deem each
 			//and the variables iweight and qweight determine how important they are
 
-			gx = (img[i+1][j].y - img[i-1][j].y)/2;
-			gy = (img[i][j+1].y - img[i][j-1].y)/2;
-			gxi = (img[i+1][j].i - img[i-1][j].i)/2;
-			gyi = (img[i][j+1].i - img[i][j-1].i)/2;
-			gxq = (img[i+1][j].q - img[i-1][j].q)/2;
-			gyq = (img[i][j+1].q - img[i][j-1].q)/2;
-			Garray[i - (startx-(patchsize-1)/2)].gxx+=gx*gx + iweight*gxi*gxi + qweight*gxq*gxq;
-			Garray[i - (startx-(patchsize-1)/2)].gyy+=gy*gy + iweight*gyi*gyi + qweight*gyq*gyq;
-			Garray[i - (startx-(patchsize-1)/2)].gxy+=gx*gy + iweight*gxi*gyi + qweight*gxq*gyq;	
+			gx = (yMatrix[i+1][j] - yMatrix[i-1][j])/2;
+			gy = (yMatrix[i][j+1] - yMatrix[i][j-1])/2;
+			gxi = (iMatrix[i+1][j] - iMatrix[i-1][j])/2;
+			gyi = (iMatrix[i][j+1] - iMatrix[i][j-1])/2;
+			gxq = (qMatrix[i+1][j] - qMatrix[i-1][j])/2;
+			gyq = (qMatrix[i][j+1] - qMatrix[i][j-1])/2;
+			Garray[i - (startx-r)].gxx+=gx*gx + iweight*gxi*gxi + qweight*gxq*gxq;
+			Garray[i - (startx-r)].gyy+=gy*gy + iweight*gyi*gyi + qweight*gyq*gyq;
+			Garray[i - (startx-r)].gxy+=gx*gy + iweight*gxi*gyi + qweight*gxq*gyq;	
 		}
 	}
-	println(Garray[0].gxx);
+	/*println(Garray[0].gxx);
 	println(Garray[0].gxy);
 	println(Garray[0].gyy);
 
 	println(Garray[winWidth + patchsize - 1].gxx);
 	println(Garray[winWidth + patchsize - 1].gxy);
-	println(Garray[winWidth + patchsize - 1].gyy);
+	println(Garray[winWidth + patchsize - 1].gyy);*/
 	
-
-	Gstruct tempSum;		
+	Gstruct tempSum;	
+	tempSum.gxx = 0;	
+	tempSum.gyy = 0;
+	tempSum.gxy = 0;
+	
 	float minorEig;
 	for(int i = 0; i<patchsize; i++){
-		tempSum.gxx=Garray[i].gxx;
-		tempSum.gyy=Garray[i].gyy;
-		tempSum.gxy=Garray[i].gxy;
+		tempSum.gxx+=Garray[i].gxx;
+		tempSum.gyy+=Garray[i].gyy;
+		tempSum.gxy+=Garray[i].gxy;
 	}
 	//go across one row in your window, pixel by pixel, and calcultate the eigen
 	//value there.  then, update the Garray so that the next column is included
 	//and the leftmost column used before is excluded
 
 	for(int i = 0; i < winWidth; i++){
-		img[startx + i][starty].eigen = (tempSum.gxx + tempSum.gyy - 
-			sqrt((tempSum.gxx + tempSum.gyy)*(tempSum.gxx + tempSum.gyy) -
-				4*(tempSum.gxx*tempSum.gyy - tempSum.gyy*tempSum.gyy)))/2;
-	/*	img[startx + i][starty].y = img[startx + i][starty].y*0.99;*/
+		eigenMatrix[startx + i][starty] = (tempSum.gxx + tempSum.gyy - 
+			sqrt((tempSum.gxx - tempSum.gyy)*(tempSum.gxx - tempSum.gyy) +
+				4*(tempSum.gxy*tempSum.gxy)))/2;
+	/*	Matrix[startx + i][starty].y = Matrix[startx + i][starty].y*0.99;*/
 
-		tempSum.gxx+=Garray[i+patchsize+1].gxx - Garray[i].gxx;
-		tempSum.gyy+=Garray[i+patchsize+1].gyy - Garray[i].gyy;
-		tempSum.gxy+=Garray[i+patchsize+1].gxy - Garray[i].gxy;			
+		tempSum.gxx+=(Garray[i+patchsize].gxx - Garray[i].gxx);
+		tempSum.gyy+=(Garray[i+patchsize].gyy - Garray[i].gyy);
+		tempSum.gxy+=(Garray[i+patchsize].gxy - Garray[i].gxy);			
 	}
 
 	int row = starty;
@@ -150,39 +158,43 @@ yiqStruct[320][240]->yiqStruct[320][240]
 
 	for(int j=row; j< starty+winHeight; j++)
 	{	
-		for(int i = startx-(patchsize-1)/2; i<=(startx+winWidth+(patchsize-1)/2); i++)
+		for(int i = startx-r; i< (startx+winWidth+r); i++)
 		{	 	
-			newgx = (img[i+1][j+(patchsize-1)/2].y - img[i-1][j+(patchsize-1)/2].y)/2;
-			newgy = (img[i][j+(patchsize-1)/2+1].y - img[i][j+(patchsize-1)/2-1].y)/2;
-			newgxi = (img[i+1][j+(patchsize-1)/2].i - img[i-1][j+(patchsize-1)/2].i)/2;
-			newgyi = (img[i][j+(patchsize-1)/2+1].i - img[i][j+(patchsize-1)/2-1].i)/2;
-			newgxq = (img[i+1][j+(patchsize-1)/2].q - img[i-1][j+(patchsize-1)/2].q)/2;
-			newgyq = (img[i][j+(patchsize-1)/2+1].q - img[i][j+(patchsize-1)/2-1].q)/2;
+			newgx = (yMatrix[i+1][j+r] - yMatrix[i-1][j+r])/2;
+			newgy = (yMatrix[i][j+r+1] - yMatrix[i][j+r-1])/2;
+			newgxi = (iMatrix[i+1][j+r] - iMatrix[i-1][j+r])/2;
+			newgyi = (iMatrix[i][j+r+1] - iMatrix[i][j+r-1])/2;
+			newgxq = (qMatrix[i+1][j+r] - qMatrix[i-1][j+r])/2;
+			newgyq = (qMatrix[i][j+r+1] - qMatrix[i][j+r-1])/2;
 	
 				
-			oldgx = (img[i+1][j-(patchsize-1)/2-1].y - img[i-1][j-(patchsize-1)/2-1].y)/2;
-			oldgy = (img[i][j-(patchsize-1)/2].y - img[i][j-(patchsize-1)/2 - 2].y)/2;
-			oldgxi = (img[i+1][j-(patchsize-1)/2-1].i - img[i-1][j-(patchsize-1)/2-1].i)/2;
-			oldgyi = (img[i][j-(patchsize-1)/2].i - img[i][j-(patchsize-1)/2 - 2].i)/2;
-			oldgxq = (img[i+1][j-(patchsize-1)/2-1].q - img[i-1][j-(patchsize-1)/2-1].q)/2;
-			oldgyq = (img[i][j-(patchsize-1)/2].q - img[i][j-(patchsize-1)/2 - 2].q)/2;
+			oldgx = (yMatrix[i+1][j-r-1] - yMatrix[i-1][j-r-1])/2;
+			oldgy = (yMatrix[i][j-r] - yMatrix[i][j-r-2])/2;
+			oldgxi = (iMatrix[i+1][j-r-1] - iMatrix[i-1][j-r-1])/2;
+			oldgyi = (iMatrix[i][j-r] - iMatrix[i][j-r-2])/2;
+			oldgxq = (qMatrix[i+1][j-r-1] - qMatrix[i-1][j-r-1])/2;
+			oldgyq = (qMatrix[i][j-r] - qMatrix[i][j-r-2])/2;
 			
 
-			Garray[i - (startx-(patchsize-1)/2)].gxx+=
+			Garray[i - (startx-r)].gxx+=
 			(newgx*newgx+iweight*newgxi*newgxi+qweight*newgxq*newgxq)-
 			 (oldgx*oldgx+iweight*oldgxi*oldgxi+qweight*oldgxq*oldgxq);
-			Garray[i - (startx-(patchsize-1)/2)].gyy+=
+			Garray[i - (startx-r)].gyy+=
 			(newgy*newgy+iweight*newgyi*newgyi+qweight*newgyq*newgyq)-
 			 (oldgy*oldgy+iweight*oldgyi*oldgyi+qweight*oldgyq*oldgyq);
-			Garray[i - (startx-(patchsize-1)/2)].gxy+=
-			(newgx*newgx+iweight*newgxi*newgxi+qweight*newgxq*newgxq)-
-			 (oldgx*oldgx+iweight*oldgxi*oldgxi+qweight*oldgxq*oldgxq);
+			Garray[i - (startx-r)].gxy+=
+			(newgx*newgy+iweight*newgxi*newgyi+qweight*newgxq*newgyq)-
+			 (oldgx*oldgy+iweight*oldgxi*oldgyi+qweight*oldgxq*oldgyq);
 		}			
 		
+		tempSum.gxx = 0;	
+		tempSum.gyy = 0;
+		tempSum.gxy = 0;
+		
 		for(int i = 0; i<patchsize; i++){
-			tempSum.gxx=Garray[i].gxx;
-			tempSum.gyy=Garray[i].gyy;
-			tempSum.gxy=Garray[i].gxy;
+			tempSum.gxx+=Garray[i].gxx;
+			tempSum.gyy+=Garray[i].gyy;
+			tempSum.gxy+=Garray[i].gxy;
 			}
 		
 		//go across one row in your window, pixel by pixel, and calcultate the eigen
@@ -191,19 +203,22 @@ yiqStruct[320][240]->yiqStruct[320][240]
 		
 		for(int i = 0; i < winWidth; i++)
 		{	
-			img[startx + i][j].eigen = (tempSum.gxx + tempSum.gyy - 
-				sqrt((tempSum.gxx + tempSum.gyy)*(tempSum.gxx + tempSum.gyy) -
-					4*(tempSum.gxx*tempSum.gyy - tempSum.gyy*tempSum.gyy)))/2;
-			/*img[startx + i][j].y = img[startx + i][j].y*0.90;*/
-			tempSum.gxx+=Garray[i+patchsize+1].gxx - Garray[i].gxx;
-			tempSum.gyy+=Garray[i+patchsize+1].gyy - Garray[i].gyy;
-			tempSum.gxy+=Garray[i+patchsize+1].gxy - Garray[i].gxy;	
+			eigenMatrix[startx + i][j] = (tempSum.gxx + tempSum.gyy - 
+				sqrt((tempSum.gxx - tempSum.gyy)*(tempSum.gxx - tempSum.gyy) +
+					4*(tempSum.gxy*tempSum.gxy)))/2;
+			/*Matrix[startx + i][j].y = Matrix[startx + i][j].y*0.90;*/
+			tempSum.gxx+=Garray[i+patchsize].gxx - Garray[i].gxx;
+			tempSum.gyy+=Garray[i+patchsize].gyy - Garray[i].gyy;
+			tempSum.gxy+=Garray[i+patchsize].gxy - Garray[i].gxy;	
 		}	
 		
 	
 	}
 	
-	push(img);
+	push(yMatrix);
+	push(iMatrix);
+	push(qMatrix);
+	push(eigenMatrix);
 	println("genMinorEig completed...");
 	}
 }
@@ -215,17 +230,16 @@ yiqStruct[320][240]->yiqStruct[320][240]
 in the main pipeline) set.  now, we have to rank them, and also make sure that the pixels we do pick
 do not exist in overlapping patches.*/
 
-yiqStruct[320][240]->imageAndFeatures
-filter chooseEigsAndHighlight(int imageWidth, int imageHeight, int patchsize, int iters, bestFeatures[20] best)
+float[320][240]->imageAndFeatures
+filter chooseEigsAndHighlight(int imageWidth, int imageHeight)
 {
 
-	work pop 1 push 1
+	work pop 4 push 1 peek 1
 	{
 
-	yiqStruct[320][240] img = pop();
-
+	float[320][240] eigenMatrix = peek(3);
+	bestFeatures[40] best;
 	for(int k = 0; k < iters; k++){	
-		println("beginning the chooseEigs loop one iteration of twenty");
 	for(int j = 0; j< imageHeight; j++){
 		for(int i = 0; i < imageWidth; i++){
 		int h = 0;
@@ -242,16 +256,15 @@ filter chooseEigsAndHighlight(int imageWidth, int imageHeight, int patchsize, in
 			}
 			h++;
 		}	
-		if(img[i][j].eigen > best[k].val && (!inPatch)){
-			best[k].x=i;
-			best[k].y =j;
-			best[k].val = img[i][j].eigen;
+		if(eigenMatrix[i][j] > best[k].val && (!inPatch)){
+			best[k].x = i;
+			best[k].y = j;
+			best[k].val = eigenMatrix[i][j];
 		}
 		
 		}
 		
 	}
-	println("ending the chooseEigs loop one iteration of twenty");
 	}
 /*	println("best values: ");
 	for(int i = 0; i< iters; i++){
@@ -265,83 +278,13 @@ filter chooseEigsAndHighlight(int imageWidth, int imageHeight, int patchsize, in
 	for(int i = 0; i< iters; i++){
 	println(best[i].y);}
 */
-    println("beginn imageAndFeatures define");
 	imageAndFeatures featExtOutput;
-	println("end imageAndFeatures define, begin img transfer");
-	featExtOutput.myImage = img;
-	println("end img transfer, begin best transfer");
+	featExtOutput.yImage = pop();
+	featExtOutput.iImage = pop();
+	featExtOutput.qImage = pop();
+	pop(); //the eigenvalues are no longer necessary
 	featExtOutput.myBest = best;
-	println("end best transfer, begin push");
 	push(featExtOutput);
 	println("chooseEigs completed...");
 	}
-}
-
-imageAndFeatures->imageAndFeatures filter plotFeatures(int patchsize)
-{
-	/* This filter takes in a image and list of coordinates
-	 * and patchsize and returns the same thing but with the image
-	 * highlighted at those coordinates with blue boxes of size patchsize
-	 */
-
-	work pop 1 push 1
-	{
-		imageAndFeatures myImgAndFeat;
-
-		myImgAndFeat = pop();
-		
-		yiqStruct[320][240] img = myImgAndFeat.myImage;
-		bestFeatures[20]   best = myImgAndFeat.myBest;
-		
-		int r = (patchsize-1)/2;
-		
-		for(int k=0; k <iters; k++)
-		{	println("beginning the plotFeatures loop one iteration of twenty");
-			for(int i=best[k].x-r; i<=best[k].x+r; i++)
-			{
-				img[i][best[k].y-r].y = 255*0.114;
-				img[i][best[k].y-r].i = 255*-0.322;
-				img[i][best[k].y-r].q = 255*0.311;
-			}
-			for(int j=best[k].y-r+1; j<=best[k].y+r; j++)
-			{
-				img[best[k].x-r][j].y = 255*0.114;
-				img[best[k].x-r][j].i = 255*-0.322;
-				img[best[k].x-r][j].q = 255*0.311;
-				for(int i=best[k].x-r+1; i<=best[k].x+r; i++)
-				{	
-					img[i][j].y = img[i][j].y*k/20;
-					img[i][j].i = img[i][j].i*k/20;
-					img[i][j].q = img[i][j].q*k/20;
-				}
-				img[best[k].x+r][j].y = 255*0.114;
-				img[best[k].x+r][j].i = 255*-0.322;
-				img[best[k].x+r][j].q = 255*0.311;		
-
-			}
-			
-			for(int i=best[k].x-r; i<=best[k].x+r; i++)
-			{
-				img[i][best[k].y+r].y = 255*0.114;
-				img[i][best[k].y+r].i = 255*-0.322;
-				img[i][best[k].y+r].q = 255*0.311;
-			}
-			println("ending the plotFeatures loop one iteration of twenty");
-		}
-		
-		/*for(int i=0; i <320; i++)
-		{	
-			for(int j=0; j<240; j++)
-			{
-				myImgAndFeat.myImage[i][j].y = img[i][j].y;
-				myImgAndFeat.myImage[i][j].i = img[i][j].i;
-				myImgAndFeat.myImage[i][j].q = img[i][j].q;	
-			}
-		}*/
- 		myImgAndFeat.myImage = img;
-	  	push(myImgAndFeat);
-		println("plotFeatures completed...");
-	    
-	}
-
 }

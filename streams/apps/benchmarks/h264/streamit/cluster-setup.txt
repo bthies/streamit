@@ -1,3 +1,0 @@
-frequency_of_checkpoints 0    // Must be a multiple of 1000 or 0 for disabled.
-outbound_data_buffer 1000     // Number of bytes to buffer before writing to socket. Must be <= 1400 or 0 for disabled
-number_of_iterations 10000    // Number of steady state iterations can be overriden by parameter -i <number>

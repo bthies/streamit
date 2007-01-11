@@ -30,7 +30,7 @@ import java.util.*;
  * false copies.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: GenerateCopies.java,v 1.17 2006-09-25 13:54:54 dimock Exp $
+ * @version $Id: GenerateCopies.java,v 1.18 2007-01-11 05:05:54 thies Exp $
  */
 public class GenerateCopies extends SymbolTableVisitor
 {
@@ -160,12 +160,6 @@ public class GenerateCopies extends SymbolTableVisitor
 
     private void makeCopyArray(Expression from, Expression to, TypeArray type)
     {
-        if (libraryFormat)
-            addStatement(new StmtAssign(to.getContext(), 
-                                        to,
-                                        new ExprJavaConstructor(to.getContext(), 
-                                                                type)));
-
         // We need to generate a for loop, since from our point of
         // view, the array bounds may not be constant.
         String indexName = varGen.nextVar();

@@ -25,7 +25,7 @@
  * made up of macroblocks. This version is stable.
  *
  * The path to the YUV file has been hard coded in BitStream2IntStream
- * The size of the file has also been hard coded in VideoProcessor()
+ * 
  */
 
 
@@ -35,13 +35,13 @@
  * @input VOID
  * @output A stream of Frames (defined struct).
  */
-void->Frame pipeline VideoProcessor() {
+void->Frame pipeline VideoProcessor(int width, int height) {
 	
 	// video parameters, are specified here right now, but
 	// this will have to move to the main pipeline once this
 	// part has been tested
-	int width = 352;
-	int height = 288;
+	// int width = 352;
+	// int height = 288;
 	// int numPictures = 300; 
 
 	

@@ -41,15 +41,13 @@ void->void pipeline VideoProcessor() {
 	// int numPictures = 300; 
 
 	
-	// useful variables
-	// int numOfMacroblocks = (width/16)*(height/16); // number of macroblocks in a frame
-	
-	// commented out for testing
-	// add FileReader<bit> ("../testvideos/mobile.cif");
-	// add BitStream2IntStream();
+
+	// comment out for testing
+	add FileReader<bit> ("../testvideos/mobile.cif");
+	add BitStream2IntStream();
 	
 	// for testing macroblockmaker and framebuilder
-	add FakeVideoIntsGenerator();
+	// add FakeVideoIntsGenerator();
 	
 	add MacroblockMaker(width, height);
 	add FrameBuilder(width, height);
@@ -59,6 +57,56 @@ void->void pipeline VideoProcessor() {
 
 }
 
+
+/* ********************************************************
+ * STRUCTS FOR VARIOUS DATA TYPES
+ * *********************************************************/
+
+
+
+/**
+ * This is the container for a macroblock, used for 4:2:0 sampling scheme.
+ * It may be modified easily for a different sampling scheme.
+ *
+ * @YSamples 16x16 luma samples block
+ * @CbSamples 8x8 blue chroma samples block
+ * @CrSamples 8x8 red chroma samples block
+ */
+struct Macroblock {
+	// For clarification, first number will index the row
+	// and second number will index the column
+	int[16][16] YSamples;
+	int[8][8] CbSamples;
+	int[8][8] CrSamples;
+}
+
+/**
+ * This is the container for a frame, using 4:2:0 sampling scheme.
+ * It may be modified easily for a different sampling scheme.
+ * 
+ * Note that in the StreamIt Language Specification 2.1, user initiated 
+ * parameterized types is listed as a future extension.
+ * 
+ * @param numOfMacroblocks number of macroblocks in a frame is needed 
+ * 						   to size the array for the frame
+ * 						   DEPRECATED, NO PARAMETERIZABLE STRUCTS
+ * 
+ * @frameNumber used for temporal reference
+ * @sliceType labeling of I, P,or B slice types
+ * @macroblock samples coded using 4:2:0 scheme
+ */
+struct Frame {
+      
+      int frameNumber;
+      // int sliceType;
+	// QCIF 22w x 16h blocks
+	// For clarification, first number will index the row
+	// and second number will index the column
+	Macroblock[18][22] macroblocks;
+}
+
+
+
 /** 
  * ORIGINALLY WRITTEN BY MATTHEW DRAKE FROM MPEG2/BINARYFILE.STR.PRE
  * MODIFICATIONS BY SHIRLEY FUNG, changed code to work with values of 
@@ -66,8 +114,8 @@ void->void pipeline VideoProcessor() {
  * 
  * Converts a byte stream into a sequence of integers. A byte represents a value.
  * 
- * Works with unsigned byte representation only, and currently expect that peek(0) reads
- * the most significant bit in the byte.
+ * Works with unsigned byte representation only, and currently expect that 
+ * peek(0) reads the most significant bit in the byte.
  * 
  * @input 8 bits representing bit data to be translated to integers
  * @output An integer stream equivalent to the original 8 bits.
@@ -77,11 +125,14 @@ bit->int filter BitStream2IntStream() {
 	work pop 8 push 1 {
   	
 		int some_int = 0;
+	      // perhaps the 2 powers should be initialized 
+		// to avoid computing it every time the filter iterates
 		int two_power = 1;
-		//println("printing bits");
+		//println("Running BitStream2IntStream...");
 		for (int i = 0; i < 8; i++) {
 			// big endian, peek(0) of the byte is the most sig bit
-			int add_int = peek(7-i) * two_power;
+		      int ZeroOrOne = (int) peek(7-i);
+		      int add_int = ZeroOrOne * two_power;
 			two_power = two_power * 2;
 			some_int += add_int;
 			//print(peek(7-i));
@@ -118,18 +169,21 @@ int->Macroblock pipeline MacroblockMaker(int width, int height) {
 
 	add splitjoin {
 		
+
 		// split inputs into planes;
+	    
 		int numOfYValues = width*height;
-		int numOfCbCrValues = width*height/4; // 4:2:0 downsampling scheme
+		int numOfCbCrValues = (int) width*height/4; // 4:2:0 downsampling scheme
 		int numOfValuesInFrame = numOfYValues + 2*numOfCbCrValues;		
 		
 		split roundrobin(numOfYValues, numOfCbCrValues, numOfCbCrValues);
 	
-	
+		
+		int numOfHBlocks = (int) (width/16);
 		// reorganizes Y values
 		add splitjoin {
 			split roundrobin(16);
-			for (int i=0; i<(width/16); i++) {
+			for (int i=0; i<numOfHBlocks; i++) {
 				add Identity<int>;
 			}
 			join roundrobin(256);
@@ -138,7 +192,7 @@ int->Macroblock pipeline MacroblockMaker(int width, int height) {
 		// reorganizes Cb values
 		add splitjoin {
 			split roundrobin(8);
-			for (int i=0; i<(width/16); i++) {
+			for (int i=0; i<numOfHBlocks; i++) {
 				add Identity<int>;
 			}
 			join roundrobin(64);
@@ -147,65 +201,63 @@ int->Macroblock pipeline MacroblockMaker(int width, int height) {
 		// reorganizes Cr values
 		add splitjoin {
 			split roundrobin(8);
-			for (int i=0; i<(width/16); i++) {
+			for (int i=0; i<numOfHBlocks; i++) {
 				add Identity<int>;
 			}
 			join roundrobin(64);
 		}
 		
 		// collects all samples for a 16x16 macroblock
-		join roundrobin(256,64,64); // 4:2:0 downsampling scheme for a macroblock
-		// at this point, 256+64+64 pixels represent a set of YCbCr values for a macroblock
+		join roundrobin(256,64,64); 
+		// 4:2:0 downsampling scheme for a macroblock
+		// at this point, 256+64+64 pixels represent a set of 
+		// YCbCr values for a macroblock
 		// 256+64+64 = 384
 	}
 	
 	add int->Macroblock filter {
 		
-		// stuff 386 values into a macroblock
-		work pop 386 push 1 {
+	      
+	      
+		// stuff 384 values into a macroblock
+		work pop 384 push 1 {
+		      
 			// at each iteration of the work function, 
 			// it will work on the macroblocks, in raster order
-			
+			//println("Stuffing values into a Macroblock");
 			Macroblock newMacroblock;
 			
-			for (int YCount=0; YCount<386; YCount++) {
+			int pixelCount=0;
 				
-				// stuff Y values into a macroblock struct;
-				for (int row=0; row<16; row++) {
-					for (int col=0; col<16; col++) {
-						newMacroblock.YSamples[row][col] = peek(YCount);
-						
-					}
+			// stuff Y values into a macroblock struct;
+			for (int row=0; row<16; row++) {
+				for (int col=0; col<16; col++) {
+					newMacroblock.YSamples[row][col] = peek(pixelCount);
+					pixelCount++;
+		     		}
+			}
+				
+			// stuff Cb values 
+			for (int row=0; row<8; row++) {
+			      for (int col=0; col<8; col++) {
+				      newMacroblock.CbSamples[row][col] = peek(pixelCount);
+					pixelCount++;
 				}
 			}
 			
-			// (386+16) = 402
-			for (int CbCount=386; CbCount<402; CbCount++) {
-				
-				// stuff Cb values 
-				for (int row=0; row<8; row++) {
-					for (int col=0; col<8; col++) {
-						newMacroblock.CbSamples[row][col] = peek(CbCount);
-					}
-				}
-			}
 			
-			// (386+16+16)
-			for (int CrCount=402; CrCount<418; CrCount++) {
-				
-				// stuff Cr values
-				for (int row=0; row<8; row++) {
-					for (int col=0; col<8; col++) {
-						newMacroblock.CrSamples[row][col] = peek(CrCount);
-					}
+			for (int row=0; row<8; row++) {
+				for (int col=0; col<8; col++) {
+					newMacroblock.CrSamples[row][col] = peek(pixelCount);
+					pixelCount++;
 				}
-				
 			}
+				
 			
 			push(newMacroblock);
 			
 			// pop all
-			for (int i=0; i<386; i++) {
+			for (int i=0; i<384; i++) {
 				pop();
 			}
 			
@@ -222,23 +274,40 @@ int->Macroblock pipeline MacroblockMaker(int width, int height) {
  */
 Macroblock->Frame filter FrameBuilder(int width, int height) {
 	
-	// why is init {} not working?
-	int numOfHBlocks = (width/16); // number of macroblocks in the horizontal direction
-	int numOfVBlocks = (height/16); // number of macroblocks in the vertical direction
-	int numOfMacroblocks = (width/16)*(height/16); // number of macroblocks in a frame
-	int frameCount = 0;	
+      
+	
+      int numOfHBlocks;
+      int numOfVBlocks;
+      int numOfMacroblocks;
+      int frameCount;
+	Frame newFrame;
+	
+	// taking this out for now
+      init {
+	    
+	      numOfHBlocks = (int) (width/16); 
+		// number of macroblocks in the horizontal direction
+		numOfVBlocks = (int) (height/16); 
+		// number of macroblocks in the vertical direction
+		numOfMacroblocks = (int) (width/16)*(height/16); 
+		// number of macroblocks in a frame
+		frameCount = 0;	
+		
+	}
 
-	work pop numOfMacroblocks push 1 {
+	// work pop numOfMacroblocks push 1 {
+	work pop (width/16)*(height/16) push 1 {
 		
-		Frame newFrame;
-		
-		for (int mBlockCount=0; mBlockCount<numOfMacroblocks; mBlockCount++) {
-			for (int row=0; row<numOfHBlocks; row++) {
-				for (int col=0; col<numOfVBlocks; col++) {
-					newFrame.macroblocks[row][col] = peek(mBlockCount);
-				}
+	      //println("Running FrameBuilder...");
+		//Frame newFrame;                                                                                                               
+		for (int row=0; row<numOfVBlocks; row++) {
+	      	      
+		      for (int col=0; col<numOfHBlocks; col++) {
+			    //println(row+" "+col+" "+(row*numOfHBlocks+col)+" ");
+			     	newFrame.macroblocks[row][col] = peek(row*numOfHBlocks+col);
+				
 			}
-		}
+	      }
 		
 		newFrame.frameNumber = frameCount;
 		frameCount++;
@@ -270,7 +339,9 @@ void->int filter FakeVideoIntsGenerator() {
 	int x = 0;
 
 	work push 1 {
+	    
 		push(x++);
+	   
 	}
 }	
 
@@ -280,9 +351,18 @@ void->int filter FakeVideoIntsGenerator() {
  */
 Frame->void filter FramePrinter(int width, int height) {
 	
-	int numOfHBlocks = (width/16); // number of macroblocks in the horizontal direction
-	int numOfVBlocks = (height/16); // number of macroblocks in the vertical direction
+	
+      int numOfHBlocks;
+	int numOfVBlocks;
+	
+	init {
 
+	      numOfHBlocks = (int) (width/16); 
+		// number of macroblocks in the horizontal direction
+		numOfVBlocks = (int) (height/16); 
+		// number of macroblocks in the vertical direction
+	
+	}
 	work pop 1 {
 		
 		Frame currentFrame = peek(0);
@@ -295,12 +375,13 @@ Frame->void filter FramePrinter(int width, int height) {
 		for (int row=0; row<numOfVBlocks; row++) {
 			for (int col=0; col<numOfVBlocks; col++) {
 				
-				Macroblock currentMacroblock = currentFrame.macroblocks[row][col];
-				
+				Macroblock mBlock = currentFrame.macroblocks[row][col];
+				println("printing macroblock: row-"+row+", col-"+col);
+
 				println("Y Samples");
-				for (int r=0; r<8; r++) {
-					for (int c=0; c<8; c++) {
-						print(currentMacroblock.YSamples[r][c]);
+				for (int r=0; r<16; r++) {
+					for (int c=0; c<16; c++) {
+						print(mBlock.YSamples[r][c]+" ");
 					}
 					println(" ");
 				}
@@ -308,7 +389,7 @@ Frame->void filter FramePrinter(int width, int height) {
 				println("Cb Samples");
 				for (int r=0; r<8; r++) {
 					for (int c=0; c<8; c++) {
-						print(currentMacroblock.CbSamples[r][c]);
+						print(mBlock.CbSamples[r][c]+" ");
 					}
 					println(" ");
 				}
@@ -316,7 +397,7 @@ Frame->void filter FramePrinter(int width, int height) {
 				println("Cr Samples");
 				for (int r=0; r<8; r++) {
 					for (int c=0; c<8; c++) {
-						print(currentMacroblock.CrSamples[r][c]);
+						print(mBlock.CrSamples[r][c]+" ");
 					}
 					println(" ");
 				}
@@ -330,53 +411,4 @@ Frame->void filter FramePrinter(int width, int height) {
 }
 
 
-
-
-
-/* ********************************************************
- * STRUCTS FOR VARIOUS DATA TYPES
- * Note: more structs will be needed for intra/inter 
- * prediction to tag the necessary labels for block sizes
- * *********************************************************/
-
-
-/**
- * This is the container for a frame, using 4:2:0 sampling scheme.
- * It may be modified easily for a different sampling scheme.
- * 
- * Note that in the StreamIt Language Specification 2.1, user initiated 
- * parameterized types is listed as a future extension.
- * 
- * @param numOfMacroblocks number of macroblocks in a frame is needed 
- * 						   to size the array for the frame
- * 						   DEPRECATED, NO PARAMETERIZABLE STRUCTS
- * 
- * @frameNumber used for temporal reference
- * @sliceType labeling of I, P,or B slice types
- * @macroblock samples coded using 4:2:0 scheme
- */
-struct Frame {
-	int frameNumber;
-	// int sliceType;
-	// QCIF 22w x 16h blocks
-	// For clarification, first number will index the row
-	// and second number will index the column
-	Macroblock[16][22] macroblocks;
-}
-
-/**
- * This is the container for a macroblock, used for 4:2:0 sampling scheme.
- * It may be modified easily for a different sampling scheme.
- *
- * @YSamples 16x16 luma samples block
- * @CbSamples 8x8 blue chroma samples block
- * @CrSamples 8x8 red chroma samples block
- */
-struct Macroblock {
-	// For clarification, first number will index the row
-	// and second number will index the column
-	int[16][16] YSamples;
-	int[8][8] CbSamples;
-	int[8][8] CrSamples;
-}
 

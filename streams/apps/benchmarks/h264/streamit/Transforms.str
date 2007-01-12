@@ -1,0 +1,219 @@
+/**
+ * @description
+ * This contains all the transform functions used in H.264 Baseline Profile
+ * 
+ * @author <a href="mailto:shirley.mit07@gmail.com">Shirley Fung</a>
+ * @file Transforms.str
+ * @version 1.0
+ */
+
+/**
+ * List of TODOs
+ *
+ */
+
+/**
+ * FOR TESTING: top level stream
+ */
+ 
+void->void pipeline Transforms() {
+    add CoreDCT4x4Transform();
+    add Hadamard4x4();
+    add MatrixPrinter();
+}
+
+/**
+ * NOTES
+ * 3 pipelines:
+ * A: if macroblock block was in 16x16 luma, intra predicted
+ *    --> core transform -> Hadamard
+ * B: if its a chroma block
+ *    --> core transform -> 2x2 transform
+ * C: all other 4x4 blocks
+ *    --> core transform
+ *
+ * quantization matrix
+ *|a^2   ab/2  a^2  ab/2|
+ *|ab/2 b^2/4 ab/2 b^2/4|
+ *|a^2   ab/2  a^2  ab/2|
+ *|ab/2 b^2/4 ab/2 b^2/4|
+ */
+
+
+
+/**
+ * Takes a 4x4 block and performs a 4x4 DCT approximation transform.
+ * This is known as the "core" transform described below:
+ * 
+ * a = 0.5, b = root(2/5)
+ * Y = C [4x4 Block] CT (x) E
+ * 
+ *    |1  1  1  1|             |1  2  1  1| 
+ *    |2  1 -1 -2|             |1  1 -1 -2| 
+ * Y =|1 -1 -1  1| [4x4 Block] |1 -1 -1  2| 
+ *    |1 -2  2 -1|             |1 -2  1 -1| 
+ * 
+ * where (x) denotes element multiplication
+ *
+ * The "core" transform is applied to ALL 4x4 blocks.
+ * 
+ * Reference: 
+ * http://www.vcodex.com 
+ * H.264/MPEG-4 Part 10: Transform & Quantization
+ * 
+ * @input 4x4 matrix to be transformed
+ * @output 4x4 matrix of result
+ */
+void->int[4][4] filter CoreDCT4x4Transform() {    
+
+    // test example
+    int[4][4] EX = {{5,11,8,10},
+			  {9,8,4,12},
+			  {1,10,11,4},
+			  {19,6,15,7}};
+
+    int[4][4] C = {{1, 1, 1, 1},
+			 {2, 1,-1,-2},
+			 {1,-1,-1, 1},
+			 {1,-2, 2,-1}};
+
+    int[4][4] CT = {{1, 2, 1, 1},
+			  {1, 1, -1,-2},
+			  {1,-1,-1, 2},
+			  {1,-2, 1,-1}};
+    
+    work pop 0 push 1 {
+	  
+	  int[4][4] product1;
+	  int[4][4] product2;
+	  
+	  // first matrix multiplication
+	  println("product1");
+	  for (int r=0; r<4; r++) {
+		for (int c=0; c<4; c++) {
+		    int sumOfProducts = 0;
+		    for (int i=0; i<4; i++) {
+			  // peek(0) = 4x4 block to be transformed
+			  //sumOfProducts += C[r][i]*peek(0)[i][c];
+			  sumOfProducts += C[r][i]*EX[i][c];
+
+		    }
+		    product1[r][c] = sumOfProducts;
+		    print(sumOfProducts+" ");
+		}
+		println(" ");
+	  }
+
+	  // pop();
+
+	  // second matrix multiplication
+	  println("product2");
+	  for (int r=0; r<4; r++) {
+		for (int c=0; c<4; c++) {
+		    int sumOfProducts = 0;
+		    for (int i=0; i<4; i++) {
+			  sumOfProducts += product1[r][i]*CT[i][c];
+		    }
+		    product2[r][c] = sumOfProducts;
+		    print(sumOfProducts+" ");
+		}
+		println(" ");
+	  }
+
+	  push(product2);
+	  
+	  /* NOT IN CORE TRANSFORM, THIS ALSO DOES QUANTIZATION
+	  // element multiplication
+	  println("result");
+	  for (int r=0; r<4; r++) {
+		for (int c=0; c<4; c++) {
+		    result[r][c] = (product2[r][c]*E[r][c]);
+		    println("product2[r][c]: "+product2[r][c]);
+		    println("E[r][c]: "+E[r][c]);
+		    print(result[r][c]+" ");
+		}
+		println(" ");
+	  }
+	  */
+	  
+	  
+    }
+
+}
+
+/**
+ * The Hadamard Transform is applied to 4x4 blocks that has been
+ * previously "core" transformed. Only 16x16 luma predicted macroblocks
+ * will use the Hadamard transform
+ * 
+ * @input 4x4 blocks previously "core" transformed
+ * @output 4x4 Hadamard transformed block
+ */
+int[4][4]->int[4][4] filter Hadamard4x4() {
+
+    int[4][4] H = {{1, 1, 1, 1},
+			 {1, 1,-1,-1},
+			 {1,-1,-1, 1},
+			 {1,-1, 1,-1}};
+
+    work pop 1 push 1 {
+
+	  int[4][4] product1;
+	  int[4][4] product2;
+	  
+	  int[4][4] inputMatrix = peek(0);
+	  println("hadamard");
+	  
+	  // first matrix multiplication
+	  println("product1");
+	  for (int r=0; r<4; r++) {
+		for (int c=0; c<4; c++) {
+		    int sumOfProducts = 0;
+		    for (int i=0; i<4; i++) {
+			  // peek(0) = 4x4 block to be transformed
+			  sumOfProducts += H[r][i]*inputMatrix[i][c];
+
+		    }
+		    product1[r][c] = sumOfProducts;
+		    print(sumOfProducts+" ");
+		}
+		println(" ");
+	  }
+
+	  pop();
+
+	  // second matrix multiplication
+	  println("product2");
+	  for (int r=0; r<4; r++) {
+		for (int c=0; c<4; c++) {
+		    int sumOfProducts = 0;
+		    for (int i=0; i<4; i++) {
+			  sumOfProducts += product1[r][i]*H[i][c];
+		    }
+		    product2[r][c] = sumOfProducts;
+		    print(sumOfProducts+" ");
+		}
+		println(" ");
+	  }
+
+	  push(product2);
+    }
+    
+    
+}
+
+int[4][4]->void filter MatrixPrinter() {
+    
+    work pop 1 {
+	  
+	  println("running matrix printer");
+	  for (int r=0; r<4; r++) {
+		for (int c=0; c<4; c++) {
+		    int[4][4] m = peek(0);
+		    print(m[r][c]+" ");
+		}
+		println(" ");
+	  }
+	  pop();
+    }
+}

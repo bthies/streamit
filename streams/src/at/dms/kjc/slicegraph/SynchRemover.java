@@ -14,8 +14,132 @@ public class SynchRemover {
     
     public SynchRemover(Slice topSlice) {
         this.topSlice = topSlice;
+        // combine consecutive splitters and joiners into single "super" splitters
+        // and joiners
+        mergeJoinersAndSplitters(topSlice);
+        // bypass joiner-splitter pairs
         removeJoinerSplitterSynch(topSlice);
     }
+    
+    private void mergeJoinersAndSplitters(Slice current) {
+        if (current == null)
+            return;
+        Edge[] outEdges = current.getTail().getDestList();
+        // If this slice is a joiner
+        if (current.getHead().isJoiner()) {
+            Slice child = outEdges[0].getDest().getParent();
+            // and if the next slice is also a joiner
+            if (child.getHead().isJoiner()) {
+                mergeJoiners(child);    // merge them
+            }
+            // move on to the next slice
+            mergeJoinersAndSplitters(child);
+        }
+        else if (current.getTail().isDuplicateSplitter()) {
+            
+        } else {
+            // If not a splitter or joiner, move on to the children slices
+            for (int i=0; i<outEdges.length; i++) {
+                Edge e = outEdges[i];
+                mergeJoinersAndSplitters(e.getDest().getParent());
+            }
+        }
+    }
+    
+    /**
+     * Combines multiple consecutive joiners into a single joiner. Combines
+     * two levels of joiners at a time. Takes as input the second-level joiner
+     * (i.e. the joiner that joins the other joiners).
+     * @param joiner
+     */
+    private void mergeJoiners(Slice joiner) {
+        // The slices joined by this joiner
+        Edge[] parentEdges = joiner.getHead().getSources();
+        Slice[] parents = joiner.getDependencies();
+        
+        // An array that will store the parent slices of the second joiner
+        Slice[][] grandparents = new Slice[parents.length][];
+
+        // number of times to repeat output to reach a recurrence; default to 1
+        int mult = 1;
+        
+        for (int i=0; i<parents.length; i++) {
+            Edge parentEdge = parentEdges[i];
+            Slice parent = parents[i];
+            if (parent.getHead().isJoiner()) {
+                // number of times this particular parent joiner needs to be
+                // repeated
+                int lcm = lcm(parent.getHead().totalWeights(), joiner.getHead().getWeight(parentEdge));
+                int partialMult = lcm/joiner.getHead().getWeight(parentEdge);
+                mult = lcm(mult, partialMult);
+
+                grandparents[i] = makeRepeatedArray(parent.getDependencies(),
+                        parent.getHead().getWeights(),
+                        parent.getHead().totalWeights(), 1);
+            }
+        }
+        
+        for (int i=0; i<parentEdges.length; i++) {
+            Edge parentEdge = parentEdges[i];
+            Slice parent = parentEdge.getSrc().getParent();
+            int lcm = mult*joiner.getHead().getWeight(parentEdge);
+            if (parent.getHead().isJoiner()) {
+                for (int j=0; j<parent.getHead().getWidth(); j++) {
+                    Slice grandparent = parent.getHead().getSources()[j].getSrc().getParent();
+                    int newWeight = lcm/parent.getHead().totalWeights()*parent.getHead().getWeights()[j];
+                    Edge newEdge = new Edge(grandparent.getTail(), joiner.getHead());
+                    grandparent.getTail().setDests(new Edge[][]{{newEdge}});
+                    grandparent.getTail().setWeights(new int[]{newWeight});
+                }
+            } else {
+                Edge newEdge = new Edge(parent.getTail(), joiner.getHead());
+                int newWeight = mult*joiner.getHead().getWeights()[i];
+                parent.getTail().setDests(new Edge[][]{{newEdge}});
+                parent.getTail().setWeights(new int[]{newWeight});
+            }
+        }
+        
+        int sumWeights = joiner.getHead().totalWeights();
+        Slice[] repeatedOutput = 
+            makeRepeatedArray(parents,
+                    joiner.getHead().getWeights(), 
+                    sumWeights, mult);
+        
+        int offset = 0;
+        for (int i=0; i<parents.length; i++) {
+            Slice parent = parents[i];
+            if (parent.getHead().isJoiner()) {
+                int count = 0;
+                int weight = joiner.getHead().getWeights()[i];
+                Slice[] currGrandparent = grandparents[i];
+                for (int j=0; j<mult; j++) {
+                    for (int k=0; k<weight; k++) {
+                        repeatedOutput[j*sumWeights + offset + k] =
+                            currGrandparent[count%currGrandparent.length];
+                        count++;
+                    }
+                }
+                parent.getHead().setSources(new Edge[0]);
+                parent.getHead().setWeights(new int[0]);
+                parent.getTail().setDests(new Edge[0][]);
+                parent.getTail().setWeights(new int[0]);
+            }
+            offset += joiner.getHead().getWeights()[i];
+        }
+        
+        LinkedList<Integer> newWeights = new LinkedList<Integer>();
+        LinkedList<Slice> newSlices = new LinkedList<Slice>();
+        createNewSlicesWeightsArray(repeatedOutput, newWeights, newSlices);
+        
+        LinkedList<Edge> newEdges = new LinkedList<Edge>();
+        
+        for (Slice s : newSlices) {
+            Edge newEdge = new Edge(s.getTail(), joiner.getHead());
+            newEdges.add(newEdge);
+        }
+        joiner.getHead().set(newWeights, newEdges);
+    }
+   
     
     // -------------------- Joiner-Splitter ----------------------------------
     
@@ -43,6 +167,8 @@ public class SynchRemover {
                     removeJoinerSplitterSynch(grandchildren[i]);
                 }
             }
+//        } else if (current.getFilterNodes()[0].getFilter().getName()) {
+            
         } else { // slice is not a joiner, removeSynch on all the children
             Slice[] children = getChildSlices(current);
             for (int i=0; i<children.length; i++) {
@@ -117,7 +243,7 @@ public class SynchRemover {
                 LinkedList<Slice> newChildren = new LinkedList<Slice>();
                 // Convert the raw list of outputs to the arrays for outgoing edges
                 // and weights
-                createNewEdgesWeightsArray(outputList.toArray(new Slice[0]), 
+                createNewSlicesWeightsArray(outputList.toArray(new Slice[0]), 
                         newWeights, newChildren);
                 LinkedList<LinkedList<Edge>> newEdges = 
                     createNewOutgoingEdges(inSlice.getTail(),
@@ -133,7 +259,7 @@ public class SynchRemover {
                 LinkedList<Slice> newParents = new LinkedList<Slice>();
                 // Convert the raw list of inputs to the arrays for incoming edges
                 // and weights
-                createNewEdgesWeightsArray(inputList.toArray(new Slice[0]), 
+                createNewSlicesWeightsArray(inputList.toArray(new Slice[0]), 
                         newWeights, newParents);
                 LinkedList<Edge> newEdges = 
                     createNewIncomingEdges(outSlice.getHead(),
@@ -234,10 +360,10 @@ public class SynchRemover {
      * 
      * @param repeatedOutput The array of repeated slices
      * @param newWeights The array to store the condensed weights
-     * @param newEdges The array to store the condensed slices
+     * @param newSlices The array to store the condensed slices
      */
-    private static void createNewEdgesWeightsArray(Slice[] repeatedOutput,
-            LinkedList<Integer> newWeights, LinkedList<Slice> newEdges) {
+    private static void createNewSlicesWeightsArray(Slice[] repeatedOutput,
+            LinkedList<Integer> newWeights, LinkedList<Slice> newSlices) {
         
         if (repeatedOutput == null || repeatedOutput.length == 0)
             return;
@@ -254,7 +380,7 @@ public class SynchRemover {
             } else {
                 // The current slice is different from the previous slice
                 // Add the previous group of slices to the edge and weight lists
-                newEdges.add(prev);
+                newSlices.add(prev);
                 newWeights.add(new Integer(count));
                 // Reset prev and count for the next group
                 prev = curr;
@@ -262,7 +388,7 @@ public class SynchRemover {
             }
         }
         // The last group of slices will not be added in the loop. Add it now.
-        newEdges.add(prev);
+        newSlices.add(prev);
         newWeights.add(new Integer(count));
     }
     

@@ -12,7 +12,7 @@
  */
 
 /**
- * List of TODOs
+ * List of TODOsx1
  * - add test results / example calculations
  */
 
@@ -79,10 +79,15 @@ void->void pipeline Transforms() {
 void->int[4][4] filter FactorizedCoreDCT4x4Transform() {    
 
     // test example
-    int[4][4] EX = {{5,11,8,10},
+    int[4][4] EX1 = {{5,11,8,10},
 			  {9,8,4,12},
 			  {1,10,11,4},
 			  {19,6,15,7}};
+
+    int[4][4] EX2 = {{-85,88,127,121},
+			  {-79,70,65,83},
+			  {-80,66,49,43},
+			  {-82,86,97,41}};
 
     int[4][4] C = {{1, 1, 1, 1},
 			 {2, 1,-1,-2},
@@ -108,7 +113,7 @@ void->int[4][4] filter FactorizedCoreDCT4x4Transform() {
 		    for (int i=0; i<4; i++) {
 			  // peek(0) = 4x4 block to be transformed
 			  //sumOfProducts += C[r][i]*peek(0)[i][c];
-			  sumOfProducts += C[r][i]*EX[i][c];
+			  sumOfProducts += C[r][i]*EX1[i][c];
 
 		    }
 		    product1[r][c] = sumOfProducts;
@@ -187,10 +192,13 @@ int[4][4]->int[4][4] filter Factorized4x4Quantization(int QStep) {
 	  int[4][4] result;
 	  for (int r=0; r<4; r++) {
 		for (int c=0; c<4; c++) {
+
 		    float f = inputBlock[r][c]*Q[r][c]/QStep;
-		    //println("inputBlock[r][c]: "+inputBlock[r][c]+" ");
-		    //println("Q[r][c]: "+Q[r][c]+" ");
-		    //println("f: "+f+" ");
+		    //float f = inputBlock[r][c]*Q[r][c]*32768;
+		    //f = f/65536;
+		    //print("inputBlock[r][c]: "+inputBlock[r][c]+" ");
+		    //print("Q[r][c]: "+Q[r][c]+" ");
+		    //print("f: "+f+" ");
 		    result[r][c] = (int) round(f);
 		    print(result[r][c]+" ");
 		}
@@ -205,22 +213,21 @@ int[4][4]->int[4][4] filter Factorized4x4Quantization(int QStep) {
 
 int[4][4]->int[4][4] filter Factorized4x4Rescale(int QStep) {
 
-    float[4][4] Q = {{0.25, 0.158113883, 0.25, 0.158113883},
-			   {0.158113883, 0.1, 0.158113883, 0.1},
-			   {0.25, 0.158113883, 0.25, 0.158113883},
-			   {0.158113883, 0.1, 0.158113883, 0.1}};
+    float[4][4] Q = {{0.25, 0.316227766, 0.25, 0.316227766},
+			   {0.316227766, 0.4, 0.158113883, 0.4},
+			   {0.25, 0.316227766, 0.25, 0.316227766},
+			   {0.316227766, 0.4, 0.316227766, 0.4}};
 
     work pop 1 push 1 {
 	  
 	  println("Factorized4x4Rescale");
 	  int[4][4] inputBlock = peek(0);
 	  int[4][4] result;
+
 	  for (int r=0; r<4; r++) {
 		for (int c=0; c<4; c++) {
+		    //commented out due to loss of precision at this step
 		    float f = inputBlock[r][c]*Q[r][c]*QStep*64;
-		    //println("inputBlock[r][c]: "+inputBlock[r][c]+" ");
-		    //println("Q[r][c]: "+Q[r][c]+" ");
-		    //println("f: "+f+" ");
 		    result[r][c] = (int) round(f);
 		    print(result[r][c]+" ");
 		}

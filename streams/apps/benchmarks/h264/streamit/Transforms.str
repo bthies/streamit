@@ -1,6 +1,10 @@
 /**
  * @description
  * This contains all the transform functions used in H.264 Baseline Profile
+ *
+ * Reference: 
+ * http://www.vcodex.com 
+ * H.264/MPEG-4 Part 10: Transform & Quantization
  * 
  * @author <a href="mailto:shirley.mit07@gmail.com">Shirley Fung</a>
  * @file Transforms.str
@@ -9,7 +13,7 @@
 
 /**
  * List of TODOs
- *
+ * - add test results / example calculations
  */
 
 /**
@@ -17,54 +21,62 @@
  */
  
 void->void pipeline Transforms() {
-    add CoreDCT4x4Transform();
-    add Hadamard4x4();
-    add MatrixPrinter();
+    add FactorizedCoreDCT4x4Transform();
+    add Factorized4x4Quantization(2);
+    add Factorized4x4Rescale(2);
+    add FactorizedCoreInverseDCT4x4Transform();
+    //add Hadamard4x4();
+    add Matrix4x4Printer();
 }
 
 /**
  * NOTES
  * 3 pipelines:
  * A: if macroblock block was in 16x16 luma, intra predicted
- *    --> core transform -> Hadamard
+ *    --> core_f transform -> Hadamard 4x4 on DC coeffs
  * B: if its a chroma block
- *    --> core transform -> 2x2 transform
+ *    --> core_f transform -> Hadamard 2x2 on DC coeffs
  * C: all other 4x4 blocks
- *    --> core transform
+ *    --> core transform (core_f)?
  *
- * quantization matrix
- *|a^2   ab/2  a^2  ab/2|
- *|ab/2 b^2/4 ab/2 b^2/4|
- *|a^2   ab/2  a^2  ab/2|
- *|ab/2 b^2/4 ab/2 b^2/4|
+ * quantization matrix (to be integrated....)
+ * element by element scalar multiplication
+ *
  */
 
-
+/**
+ * TEST RESULTS:
+ * 
+ * original block:
+ * {{5,11,8,10},
+ * {9,8,4,12},
+ * {1,10,11,4},
+ * {19,6,15,7}};
+ * 
+ * 
+ */
 
 /**
  * Takes a 4x4 block and performs a 4x4 DCT approximation transform.
- * This is known as the "core" transform described below:
+ * This is a factorized version of the "core" transform.
  * 
- * a = 0.5, b = root(2/5)
- * Y = C [4x4 Block] CT (x) E
  * 
- *    |1  1  1  1|             |1  2  1  1| 
- *    |2  1 -1 -2|             |1  1 -1 -2| 
- * Y =|1 -1 -1  1| [4x4 Block] |1 -1 -1  2| 
- *    |1 -2  2 -1|             |1 -2  1 -1| 
+ * result = C [4x4 Block] CT
+ * 
+ *          |1  1  1  1|             |1  2  1  1| 
+ *          |2  1 -1 -2|             |1  1 -1 -2| 
+ * result = |1 -1 -1  1| [4x4 Block] |1 -1 -1  2| 
+ *          |1 -2  2 -1|             |1 -2  1 -1| 
  * 
  * where (x) denotes element multiplication
  *
  * The "core" transform is applied to ALL 4x4 blocks.
  * 
- * Reference: 
- * http://www.vcodex.com 
- * H.264/MPEG-4 Part 10: Transform & Quantization
  * 
  * @input 4x4 matrix to be transformed
  * @output 4x4 matrix of result
  */
-void->int[4][4] filter CoreDCT4x4Transform() {    
+void->int[4][4] filter FactorizedCoreDCT4x4Transform() {    
 
     // test example
     int[4][4] EX = {{5,11,8,10},
@@ -87,6 +99,7 @@ void->int[4][4] filter CoreDCT4x4Transform() {
 	  int[4][4] product1;
 	  int[4][4] product2;
 	  
+	  println("Factorized 4x4 DCT Core Transform");
 	  // first matrix multiplication
 	  println("product1");
 	  for (int r=0; r<4; r++) {
@@ -120,33 +133,185 @@ void->int[4][4] filter CoreDCT4x4Transform() {
 		println(" ");
 	  }
 
-	  push(product2);
-	  
-	  /* NOT IN CORE TRANSFORM, THIS ALSO DOES QUANTIZATION
-	  // element multiplication
-	  println("result");
-	  for (int r=0; r<4; r++) {
-		for (int c=0; c<4; c++) {
-		    result[r][c] = (product2[r][c]*E[r][c]);
-		    println("product2[r][c]: "+product2[r][c]);
-		    println("E[r][c]: "+E[r][c]);
-		    print(result[r][c]+" ");
-		}
-		println(" ");
-	  }
-	  */
-	  
-	  
+	  push(product2); 
     }
 
 }
 
 /**
+ * NOTE: THIS IS USED IN CONJUNCTION WITH THE QUANTIZATION.
+ * 
+ * This algorithm here combines the scaling of the result from
+ * the 4x4 DCT approximation with quantization.
+ *
+ * The computation is specified below:
+ * 
+ * The result from FactorizedCoreDCT4x4Transform (x) PF
+ * where PF is... This gives the result from the 4x4 DCT.
+ *      |a^2   ab/2  a^2  ab/2|
+ *      |ab/2 b^2/4 ab/2 b^2/4|
+ * PF = |a^2   ab/2  a^2  ab/2|
+ *      |ab/2 b^2/4 ab/2 b^2/4| 
+ * 
+ * (x) denotes element scalar multiplication
+ * a = 1/2, b = sqrt(2/5)
+ *
+ * Quantization is then applied. The QP and QStep is arbitrarily
+ * chosen to be 10 and 2 respectively. Then, qbits is = 16.
+ * 
+ * The quantization operation is summarized here:
+ * 
+ * result = round( input(i,j) * PF(i,j) / QStep )
+ * 
+ * (algorithm that avoids division, not implemented here)
+ * result = round( input(i,j) * MF(i,j) >> qbits )
+ * where MF = PF * 2^qbits / QStep  (left/right shift can be used)
+ * 
+ * @param QStep value that defines step size of the quantization
+ * @input 4x4 block to be quantized after factorized core transform
+ * @output 4x4 block transformed and quantized (factorized approximation) 
+ */
+
+int[4][4]->int[4][4] filter Factorized4x4Quantization(int QStep) {
+    
+    float[4][4] Q = {{0.25, 0.158113883, 0.25, 0.158113883},
+			   {0.158113883, 0.1, 0.158113883, 0.1},
+			   {0.25, 0.158113883, 0.25, 0.158113883},
+			   {0.158113883, 0.1, 0.158113883, 0.1}};
+    
+    
+    work pop 1 push 1 {
+	  
+	  println("Factorized4x4Quantization");
+	  int[4][4] inputBlock = peek(0);
+	  int[4][4] result;
+	  for (int r=0; r<4; r++) {
+		for (int c=0; c<4; c++) {
+		    float f = inputBlock[r][c]*Q[r][c]/QStep;
+		    //println("inputBlock[r][c]: "+inputBlock[r][c]+" ");
+		    //println("Q[r][c]: "+Q[r][c]+" ");
+		    //println("f: "+f+" ");
+		    result[r][c] = (int) round(f);
+		    print(result[r][c]+" ");
+		}
+		println(" ");
+	  }
+	  
+	  pop();
+	  push(result);
+
+    }
+}
+
+int[4][4]->int[4][4] filter Factorized4x4Rescale(int QStep) {
+
+    float[4][4] Q = {{0.25, 0.158113883, 0.25, 0.158113883},
+			   {0.158113883, 0.1, 0.158113883, 0.1},
+			   {0.25, 0.158113883, 0.25, 0.158113883},
+			   {0.158113883, 0.1, 0.158113883, 0.1}};
+
+    work pop 1 push 1 {
+	  
+	  println("Factorized4x4Rescale");
+	  int[4][4] inputBlock = peek(0);
+	  int[4][4] result;
+	  for (int r=0; r<4; r++) {
+		for (int c=0; c<4; c++) {
+		    float f = inputBlock[r][c]*Q[r][c]*QStep*64;
+		    //println("inputBlock[r][c]: "+inputBlock[r][c]+" ");
+		    //println("Q[r][c]: "+Q[r][c]+" ");
+		    //println("f: "+f+" ");
+		    result[r][c] = (int) round(f);
+		    print(result[r][c]+" ");
+		}
+		println(" ");
+	  }
+	  
+	  pop();
+	  push(result);
+
+    }
+
+}
+
+int[4][4]->int[4][4] filter FactorizedCoreInverseDCT4x4Transform() {    
+
+
+    float[4][4] C = {{1, 1, 1,0.5},
+			 {1,0.5,-1,-1},
+			 {1,-0.5,-1, 1},
+			 {1,-1, 1,-0.5}};
+
+    float[4][4] CT = {{1, 1, 1, 1},
+			  {1,0.5,-0.5,-1},
+			  {1,-1,-1, 1},
+			  {0.5,-1, 1,-0.5}};
+    
+    work pop 1 push 1 {
+	  
+	  float[4][4] product1;
+	  int[4][4] product2;
+	  
+	  int[4][4] inputMatrix = peek(0);
+
+	  println("Factorized 4x4 Inverse DCT Core Transform");
+	  // first matrix multiplication
+	  println("product1");
+	  
+	  for (int r=0; r<4; r++) {
+		for (int c=0; c<4; c++) {
+		    float sumOfProducts = 0;
+		    for (int i=0; i<4; i++) {
+			  // peek(0) = 4x4 block to be transformed
+			  sumOfProducts += C[r][i]*inputMatrix[i][c];
+			  //sumOfProducts += C[r][i]*EX[i][c];
+
+		    }
+		    product1[r][c] = sumOfProducts;
+		    print(sumOfProducts+" ");
+		}
+		println(" ");
+	  }
+
+	  pop();
+
+	  // second matrix multiplication
+	  println("product2");
+	  for (int r=0; r<4; r++) {
+		for (int c=0; c<4; c++) {
+		    float sumOfProducts = 0.0;
+		    for (int i=0; i<4; i++) {
+			  sumOfProducts += product1[r][i]*CT[i][c];
+		    }
+		    product2[r][c] = (int) round(sumOfProducts/64);
+		    print(sumOfProducts+" ");
+		}
+		println(" ");
+	  }
+
+	  push(product2); 
+    }
+
+}
+
+
+/**
  * The Hadamard Transform is applied to 4x4 blocks that has been
  * previously "core" transformed. Only 16x16 luma predicted macroblocks
- * will use the Hadamard transform
+ * will use the Hadamard transform. The Hadamard Transform is symmetrical
+ * and therefore, it can be used for the inverse transform as well. Note 
+ * that the transform is performed on DC coefficients of 16 4x4 blocks
+ * within a macroblock.
  * 
- * @input 4x4 blocks previously "core" transformed
+ *     |1  1  1  1|
+ *     |1  1 -1 -1|
+ * H = |1 -1 -1  1| 
+ *     |1 -1  1 -1|
+ * 
+ * 
+ * 
+ *
+ * @input 4x4 luma blocks previously "core" transformed
  * @output 4x4 Hadamard transformed block
  */
 int[4][4]->int[4][4] filter Hadamard4x4() {
@@ -162,7 +327,7 @@ int[4][4]->int[4][4] filter Hadamard4x4() {
 	  int[4][4] product2;
 	  
 	  int[4][4] inputMatrix = peek(0);
-	  println("hadamard");
+	  println("Hadamard 4x4");
 	  
 	  // first matrix multiplication
 	  println("product1");
@@ -202,7 +367,76 @@ int[4][4]->int[4][4] filter Hadamard4x4() {
     
 }
 
-int[4][4]->void filter MatrixPrinter() {
+/**
+ * The Hadamard Transform is applied to 2x2 chroma blocks that has been
+ * previously "core" transformed. Only 4x4 chroma predicted macroblocks
+ * will use the Hadamard transform. The Hadamard Transform is symmetrical
+ * and therefore, it can be used for the inverse transform as well. Note
+ * that this is performed on the DC coefficients of the 8 4x4 chroma blocks
+ * within a macroblock.
+ * 
+ *     |1  1|
+ * H = |1 -1| 
+ * 
+ * @input 2x2 chroma blocks previously "core" transformed
+ * @output 2x2 Hadamard transformed block
+ */
+int[2][2]->int[2][2] filter Hadamard2x2() {
+
+    int[2][2] H = {{1, 1},
+			 {1,-1}};
+
+    work pop 1 push 1 {
+
+	  int[2][2] product1;
+	  int[2][2] product2;
+	  
+	  int[2][2] inputMatrix = peek(0);
+	  println("Hadamard 2x2");
+	  
+	  // first matrix multiplication
+	  println("product1");
+	  for (int r=0; r<2; r++) {
+		for (int c=0; c<2; c++) {
+		    int sumOfProducts = 0;
+		    for (int i=0; i<2; i++) {
+			  // peek(0) = 4x4 block to be transformed
+			  sumOfProducts += H[r][i]*inputMatrix[i][c];
+
+		    }
+		    product1[r][c] = sumOfProducts;
+		    print(sumOfProducts+" ");
+		}
+		println(" ");
+	  }
+
+	  pop();
+
+	  // second matrix multiplication
+	  println("product2");
+	  for (int r=0; r<2; r++) {
+		for (int c=0; c<2; c++) {
+		    int sumOfProducts = 0;
+		    for (int i=0; i<2; i++) {
+			  sumOfProducts += product1[r][i]*H[i][c];
+		    }
+		    product2[r][c] = sumOfProducts;
+		    print(sumOfProducts+" ");
+		}
+		println(" ");
+	  }
+
+	  push(product2);
+    }
+    
+    
+}
+
+/**
+ * The quantization process of H.264 supports a total of 52 step sizes.
+ */
+
+int[4][4]->void filter Matrix4x4Printer() {
     
     work pop 1 {
 	  
@@ -210,6 +444,22 @@ int[4][4]->void filter MatrixPrinter() {
 	  for (int r=0; r<4; r++) {
 		for (int c=0; c<4; c++) {
 		    int[4][4] m = peek(0);
+		    print(m[r][c]+" ");
+		}
+		println(" ");
+	  }
+	  pop();
+    }
+}
+
+int[2][2]->void filter Matrix2x2Printer() {
+    
+    work pop 1 {
+	  
+	  println("running matrix printer");
+	  for (int r=0; r<2; r++) {
+		for (int c=0; c<2; c++) {
+		    int[2][2] m = peek(0);
 		    print(m[r][c]+" ");
 		}
 		println(" ");

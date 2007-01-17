@@ -18,7 +18,7 @@ public class VectorizeEnable {
     /**
      * Set to true to list sequences of vectorizable filters before fusion and individual vectorizable filters after fusion.
      */
-    public static boolean debugging = true;
+    public static boolean debugging = false;
     /**
      * Set to true to have Vectorizable print out reasons for not vectorizing a filter.
      */

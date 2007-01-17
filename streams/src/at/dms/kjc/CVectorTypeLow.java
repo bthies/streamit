@@ -19,7 +19,7 @@ import at.dms.util.SimpleStringBuffer;
 public class CVectorTypeLow extends CType {
 
     private CNumericType base_type;
-    private int width;
+    private int width; //vector width in bytes
     //private int width_in_base;
 
     /**

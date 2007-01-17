@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.45 2006-12-19 15:22:45 dimock Exp $
+ * $Id: Utils.java,v 1.46 2007-01-17 17:02:10 dimock Exp $
  */
 
 package at.dms.util;
@@ -154,7 +154,8 @@ public abstract class Utils implements Serializable, DeepCloneable {
         ASIN("asin", "asinf", "asinf", "asinf_v"),        // float -> float
         ATAN("atan", "atanf", "atanf", "atanf_v"),        // float -> float
         // not supplied on cell but processed: atan2(x,y) => atanf_v(y/x)
-        ATAN2("atan2", "atan2f", "atan2f", null),         // float X float -> float
+        // in $STREAMIT_HOME/misc/vectorization.h
+        ATAN2("atan2", "atan2f", "atan2f", "atan2f_v"),   // float X float -> float
         CEIL("ceil", "ceilf", "ceilf", "ceilf_v"),
         COS("cos", "cosf", "cosf", "cosf_v"),             // float -> float
         SIN("sin", "sinf", "sinf", "sinf_v"),             // float -> float
@@ -176,7 +177,7 @@ public abstract class Utils implements Serializable, DeepCloneable {
         POW("pow", "powf", "powf", "powf_v"),             // float X float -> float
         // round(x) should be replaced with trunc(x+0.5) to match java behavior
         // will still need casting to int.
-        ROUND("round", "roundf", "roundf", "roundf_v"),   // float X float -> float
+        ROUND("round", "roundf", "roundf", "roundf_v"),   // float -> float
         // had been translated as rintf plus cast...
         RINT("rint", "lrintf", "lrintf", "lrintf_v"),     // float -> int
         SQRT("sqrt", "sqrtf", "sqrtf", "sqrtf_v"),        // float -> float

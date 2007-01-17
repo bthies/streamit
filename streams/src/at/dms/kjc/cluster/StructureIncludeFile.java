@@ -129,6 +129,7 @@ public class StructureIncludeFile {
             fw.write(typedef);
             fw.write("\n");
         }
+        fw.write(CVectorType.miscStrings());
         for (int i = 0; i < structs.length; i++) {
             SIRStructure current = structs[i];
             // write the typedef for the struct.

@@ -146,8 +146,8 @@ public class CommonUtils {
     /**
      * Factor out printing (or misprinting) of SIRStruct typedefs from various backends
      * @param strct a SIRStructure to print
-     * @param hasBoolType  if true then Java 'boolean' becomse 'bool' for C++
-     *                     if false then Java 'boolean' becomse 'int' for C
+     * @param hasBoolType  if true then Java 'boolean' becomes 'bool' for C++
+     *                     if false then Java 'boolean' becomes 'int' for C
      * @return printable C or C++ representation, no final newline.
      */
     public static String structToTypedef(SIRStructure strct, boolean hasBoolType) {

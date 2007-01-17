@@ -31,6 +31,20 @@ import at.dms.util.Utils;
  * @author Allyn Dimock
  *
  */
+
+/*
+ * Changes: version 1.8
+ * (o) Previous: load each field into vector.  
+ *     Now: if stride != 1, copy into aligned buffer that is union of vector and scalar.
+ * (o) Previous: put out one ellement on push and N-1 elements in poke buffer, copy out poke buffer at end.
+ *     Now: if stride != 1, store vectors into aligned buffer, copy out all elements at end (more storage, 
+ *     more copying, but 9% faster in dct kernel on Altivec.
+ * (o) Previous: use union types on temporaries in work function.
+ *     Now: use just vector temporaries in work function.
+ * (o) Found out about IBM implementations of common math functions on Cell: start using them.
+ * (o) In related news: in back ends that can support it, should not attempt to initialize pop and poke
+ *     buffers, nor any vector-valued temp.
+ */
 public class Vectorize {
     /**
      * print out names of variables that are given vector type
@@ -337,6 +351,7 @@ public class Vectorize {
             class fixTypesPeeksPopsPushesVisitor extends StatementQueueVisitor {
                 JExpression lastLhs = null;   // left hand side of assignment being processed or null if not processing rhs of assignment
 //                JExpression lastOldLhs = null; // value before converting.
+                boolean leftHasVectorType = false; // true if in assignment and left has vector type.
                 boolean suppressSelector = false; // true to not refer to as vector
                 boolean replaceStatement = false; // true to discard current statement
                 boolean constantsToVector = false; // rhs should have vector type, so turn constants in rhs into
@@ -363,6 +378,8 @@ public class Vectorize {
                     }
                     return self;
                 }
+                
+                
                 @Override
                 public Object visitPopExpression(SIRPopExpression self,
                         CType tapeType) {
@@ -371,10 +388,10 @@ public class Vectorize {
                         return self;
                     }
                     // e = pop();    =>
-                    // (e).a[0] = pop();
                     // (e).a[1] = peek(1 * inputStride);
                     // (e).a[2] = peek(2 * inputStride);
                     // (e).a[3] = peek(3 * inputStride);
+                    // (e).a[0] = pop();
                     // lastLhs non-null here.
                     
                     JExpression lhs = lastLhs;
@@ -383,20 +400,20 @@ public class Vectorize {
                     assert lhs instanceof JFieldAccessExpression;
                     lhs = ((JFieldAccessExpression)lhs).getPrefix();
                     
-                    this.addPendingStatement(
-                            new JExpressionStatement(
-                                    new JAssignmentExpression(
-                                            CVectorType.asArrayRef(lhs,0),
-                                            new SIRPopExpression(tapeType))));
                     for (int i = 1; i < KjcOptions.vectorize / 4; i++) {
                         this.addPendingStatement(
                                 new JExpressionStatement(
                                         new JAssignmentExpression(
                                                 CVectorType.asArrayRef(lhs,i),
                                                 new SIRPeekExpression(
-                                                        new JIntLiteral(i * inputStride - 1),
+                                                        new JIntLiteral(i * inputStride),
                                                         tapeType))));
                     }
+                    this.addPendingStatement(
+                            new JExpressionStatement(
+                                    new JAssignmentExpression(
+                                            CVectorType.asArrayRef(lhs,0),
+                                            new SIRPopExpression(tapeType))));
                     replaceStatement = true; // throw out statement built with this return value
                     return self;
                 }
@@ -428,6 +445,7 @@ public class Vectorize {
                     replaceStatement = true; // throw out statement built with this return value
                     return self; 
                 }
+                
                 @Override
                 public Object visitPushExpression(SIRPushExpression self,
                         CType tapeType,
@@ -551,7 +569,8 @@ public class Vectorize {
                 // (2b) array of vector values = array of scalar values.
                 // (3) vector_value = expression containing vector value(s);
                 // (4) non_vector = expression;
-                boolean leftHasVectorType = hasVectorType(left, vectorIds);
+                leftHasVectorType = hasVectorType(left, vectorIds);
+                // invariant: leftHasVectorType will be false on return.
                 boolean rightHasVectorType = hasVectorType(right, vectorIds);
                 if (leftHasVectorType && !rightHasVectorType) {
                     // setting a vector value from non-vector.
@@ -596,6 +615,7 @@ public class Vectorize {
                         constantsToVector = false;
                         self.setLeft(newLeft);
                         self.setRight(newRight);
+                        leftHasVectorType = false;
                         return self;
                     } else if (oldType instanceof CArrayType) {
                         // odd case:
@@ -624,7 +644,7 @@ public class Vectorize {
                         //CArrayType arrayType = (CArrayType)oldType;
                         //Had problems with constant prop not propagating dimension into array...
                         //situation came up with arrays from parameters.  Have now hacked frontend
-                        //so have the dimension of the source array (right).
+                        //so have the dimension of the source array (right), but not the dest in that case.
                         CArrayType arrayType = ((CArrayType)right.getType());
                         JExpression[] dims = arrayType.getDims();
                         JVariableDefinition[] dimVars = new JVariableDefinition[dims.length];
@@ -670,6 +690,7 @@ public class Vectorize {
                         }
                         this.addPendingStatement(loopBody);
                         replaceStatement = true;
+                        leftHasVectorType = false;
                         return self;  // must output en expression.
                     } else {
                         JVariableDefinition defn = new JVariableDefinition(
@@ -688,6 +709,7 @@ public class Vectorize {
                                             .asArrayRef(newLeft, i), tmp)));
                         }
                         replaceStatement = true;
+                        leftHasVectorType = false;
                         return self;
                     }
                 }
@@ -702,141 +724,284 @@ public class Vectorize {
                 lastLhs = null;
                 self.setLeft(newLeft);
                 self.setRight(newRight);
+                leftHasVectorType = false;
                 return self;
             }
 
-                private JExpression makeArrayReference(JExpression array, JExpression[] offsets) {
-                   JExpression expr = array;
-                   for (int i = 0; i < offsets.length; i++) {
-                       expr = new JArrayAccessExpression(expr,offsets[i]);
-                   }
-                   // should set type at each level of access expression
-                   return expr;
+            private JExpression makeArrayReference(JExpression array,
+                    JExpression[] offsets) {
+                JExpression expr = array;
+                for (int i = 0; i < offsets.length; i++) {
+                    expr = new JArrayAccessExpression(expr, offsets[i]);
                 }
+                // should set type at each level of access expression
+                return expr;
+            }
                 
-                @Override 
-                public Object visitExpressionStatement(JExpressionStatement self, JExpression expr) {
-                    // Some expressions need to return a statement or block of statments, but need
-                    // to discard the statment in which they occurred in the input.  We expect any
-                    // such expressions to occur inside a JExpressionStatment.  visitors to such
-                    // expressions should use addPendingStatement to add the new statments, and
-                    // should set replaceStatement=true.
-                    //
-                    replaceStatement = false;
-                    Object retval = super.visitExpressionStatement(self, expr);
-                    if (replaceStatement) {
-                        assert retval instanceof JBlock;
-                        JBlock b = (JBlock)retval;
-                        b.removeStatement(0);
-                        return b;
-                    } else {
+            @Override
+            public Object visitExpressionStatement(JExpressionStatement self,
+                    JExpression expr) {
+                // Some expressions need to return a statement or block of
+                // statments, but need
+                // to discard the statment in which they occurred in the input.
+                // We expect any
+                // such expressions to occur inside a JExpressionStatment.
+                // visitors to such
+                // expressions should use addPendingStatement to add the new
+                // statments, and
+                // should set replaceStatement=true.
+                //
+                replaceStatement = false;
+                Object retval = super.visitExpressionStatement(self, expr);
+                if (replaceStatement) {
+                    assert retval instanceof JBlock;
+                    JBlock b = (JBlock) retval;
+                    b.removeStatement(0);
+                    return b;
+                } else {
+                    return retval;
+                }
+            }
+
+            /**
+             * visits a method call. Expect all arguments to be converted
+             * appropriately. <br/>XXX Warning: assumes that any methodcall
+             * expression is the right hand side of an assignment
+             * expression.
+             */
+            @Override
+            public Object visitMethodCallExpression(JMethodCallExpression self,
+                    JExpression prefix, String ident, JExpression[] args) {
+                if (leftHasVectorType == true && KjcOptions.cell_vector_library) {
+
+                    String equivalent_method_name = at.dms.util.Utils
+                            .cellMathEquivalent(prefix, ident);
+                    if (equivalent_method_name != null) {
+                        // we have a vector method to convert to.
+                        boolean old_constantsToVector = constantsToVector;
+                        constantsToVector = true;
+                        // so far all vector methods have vectors for all args.
+                        visitArgs(args); // process args, munging array
+                        constantsToVector = old_constantsToVector;
+                        CType argtype = args[0].getType();
+                        assert argtype instanceof CVectorTypeLow;  //TODO: may need to check for scalar needing SPLAT().
+                        CType retType;
+                        // deal with abs, max, min of integer vectors.
+                        if (((CVectorTypeLow)argtype).getBaseType().isOrdinal()) {
+                            retType = new CVectorTypeLow(CStdType.Integer,KjcOptions.vectorize);
+                            if ("abs".equals(ident)) {
+                                equivalent_method_name = "_abs_v4i";
+                            } else if ("max".equals(ident)) {
+                                equivalent_method_name = "_max_v4i";
+                            } else if ("min".equals(ident)) {
+                                equivalent_method_name = "_min_v4i";
+                            } else {
+                                throw new AssertionError("no integer vector equivalent to math function " + ident);
+                            }
+                        } else {
+                            retType = new CVectorTypeLow(CStdType.Float,KjcOptions.vectorize);
+                        }
+                        JExpression retval = new JMethodCallExpression(self
+                                .getTokenReference(), equivalent_method_name,
+                                args);
+                        retval.setType(retType);
                         return retval;
                     }
+                    
                 }
+                return super.visitMethodCallExpression(self, prefix, ident,
+                        args);
+            }
+                
+                /**
+                 * visits a float literal (what about double if accepted by
+                 * parser?)
+                 */
+            @Override
+            public Object visitFloatLiteral(JFloatLiteral self, float value) {
+                if (constantsToVector) {
+                    return new JVectorLiteral(self);
+                }
+                return self;
+            }
 
                 /**
-                 * visits a float literal  (what about double if accepted by parser?)
+                 * visits a int literal (what about other int types accepted by
+                 * parser?)
                  */
-                @Override
-                public Object visitFloatLiteral(JFloatLiteral self,
-                                                float value)
-                {
-                    if (constantsToVector) {
-                        return new JVectorLiteral(self);
+            @Override
+            public Object visitIntLiteral(JIntLiteral self, int value) {
+                if (constantsToVector) {
+                    return new JVectorLiteral(self);
+                }
+                return self;
+            }
+                
+            @Override
+            public Object visitFieldExpression(JFieldAccessExpression self,
+                    JExpression left, String ident) {
+                if (vectorIds.containsKey(getIdent(self)) && !suppressSelector) {
+                    return CVectorType.asVectorRef(self);
+                } else {
+                    return self;
+                }
+            }
+ 
+            @Override
+            public Object visitLocalVariableExpression(
+                    JLocalVariableExpression self, String ident) {
+                if (vectorIds.containsKey(getIdent(self))) {
+                    if (!(self.getType() instanceof CVectorType)) {
+                        assert self.getVariable() instanceof JVariableDefinition;
+                        JVariableDefinition newDefn = (JVariableDefinition) self
+                                .getVariable().accept(this);
+                        self = new JLocalVariableExpression(self
+                                .getTokenReference(), newDefn);
                     }
+                    if (!suppressSelector) {
+                        return CVectorType.asVectorRef(self);
+                    }
+                }
+                return self;
+            }
+            
+            @Override
+            public Object visitArrayAccessExpression(
+                    JArrayAccessExpression self, JExpression prefix,
+                    JExpression accessor) {
+                prefix.accept(this);
+                // array accessors don't always have correct type.
+                CType prefixType = prefix.getType();
+                assert prefixType instanceof CArrayType;
+                // System.err.print("Array accessor type for " + self + " was "
+                // + self.getType());
+                CArrayType prefixaType = (CArrayType) prefixType;
+                int numDims = prefixaType.getArrayBound();
+                if (numDims == 1) {
+                    self.setType(prefixaType.getBaseType());
+                } else {
+                    JExpression[] dims = prefixaType.getDims();
+                    JExpression[] newDims = null;
+                    if (dims != null) {
+                        newDims = new JExpression[dims.length - 1];
+                        for (int i = 1; i < dims.length; i++)
+                            newDims[i - 1] = dims[i];
+                    }
+                    self.setType(new CArrayType(prefixaType.getBaseType(),
+                            numDims - 1, newDims));
+                }
+                // System.err.println(" ==> " + self.getType());
+
+                // note if recurr into accessor, need to set constantsToVector
+                // temporarily to false
+                if (vectorIds.containsKey(getIdent(self)) && !suppressSelector) {
+                    // does not currently work for array slices, but StreeamIt
+                    // does not currently support array slices
+                    return CVectorType.asVectorRef(self);
+                } else {
+                    return self;
+                }
+            }
+            
+            @Override
+                public Object visitShiftExpression(JShiftExpression self, int oper,
+                    JExpression left, JExpression right) {
+                JExpression newLeft = (JExpression) left.accept(this);
+                self.setLeft(newLeft);
+// do not visit right on a shift expression: always int!
+//                boolean oldConstantsToVector;
+//                oldConstantsToVector = constantsToVector;
+//                constantsToVector = false;
+//                JExpression newRight = (JExpression) right.accept(this);
+//                constantsToVector = oldConstantsToVector;
+                if (KjcOptions.cell_vector_library && newLeft.getType() instanceof CVectorTypeLow) {
+                    JExpression[] args = {newLeft,right};
+                    String ident;
+                    switch (oper) {
+                    //Constants.OPE_SL, Constants.OPE_SR, Constants.OPE_BSR
+                    case Constants.OPE_SL:
+                        ident = "_lsl_v4i"; break;
+                    case Constants.OPE_SR:
+                        ident = "_sra_v4i"; break;
+                    case Constants.OPE_BSR:
+                        ident = "_srl_v4i"; break;
+                    default: throw new AssertionError();
+                    }
+                    JExpression retval = new JMethodCallExpression(self.getTokenReference(), ident, args);
+                    retval.setType(new CVectorTypeLow(CStdType.Integer, KjcOptions.vectorize));
+                    return retval;
+                } else {
+                    return self;
+                }
+            }
+
+            @Override
+            public Object visitBinaryExpression(JBinaryExpression self, String oper,
+                        JExpression left, JExpression right) {
+                JExpression newLeft = (JExpression)left.accept(this);
+                JExpression newRight = (JExpression)right.accept(this);
+                CType leftType = newLeft.getType();
+                CType rightType = newRight.getType();
+ 
+                if (! KjcOptions.cell_vector_library
+                        || oper.equals("+") || oper.equals("-")
+                        || (! (leftType instanceof CVectorTypeLow) && ! (rightType instanceof CVectorTypeLow))) {
+                    self.setLeft(newLeft);
+                    self.setRight(newRight);
+                    return self;
+                }
+                // here if operation is vector % or vector / and cell_vector_library set.
+                // cell_vector_library handles integer division with a macro
+                // because the IBM xlc compiler (as of compiler version 8.1, SDK version 2)
+                // does not recognize division of integer vectors.
+                CVectorTypeLow vtype = (CVectorTypeLow)(leftType != null ? leftType : rightType);
+                if (oper.equals("/") && vtype.getBaseType().isOrdinal()) {
+                    JExpression[] args = {newLeft,newRight};
+                    String ident = "_divide_v4i";
+                    JMethodCallExpression retval = new JMethodCallExpression(self.getTokenReference(),ident,args);
+                    retval.setType(new CVectorTypeLow(CStdType.Integer,KjcOptions.vectorize));
+                    return retval;
+                } else if (oper.equals("%")) {
+                    JExpression[] args = {newLeft,newRight};
+                    String ident;
+                    CType retType;
+                    if (vtype.isOrdinal()) {
+                        ident = "_modulus_v4i";
+                        retType = new CVectorTypeLow(CStdType.Integer,KjcOptions.vectorize);
+                    } else {
+                        ident = "_modulus_v4f";
+                        retType = new CVectorTypeLow(CStdType.Float,KjcOptions.vectorize);
+                    }
+                    JMethodCallExpression retval = new JMethodCallExpression(self.getTokenReference(),ident,args);
+                    retval.setType(retType);
+                    return retval;
+                } else {
+                    // floating division: leave as is
+                    self.setLeft(newLeft);
+                    self.setRight(newRight);
                     return self;
                 }
 
-                /**
-                 * visits a int literal (what about other int types accepted by parser?)
-                 */
-                @Override
-                public Object visitIntLiteral(JIntLiteral self,
-                                              int value)
-                {
-                    if (constantsToVector) {
-                        return new JVectorLiteral(self);
-                    }
-                   return self;
-                }
-                
-                @Override
-                public Object visitFieldExpression(JFieldAccessExpression self,
-                        JExpression left,
-                        String ident) {
-                    if (vectorIds.containsKey(getIdent(self)) && ! suppressSelector) {
-                        return CVectorType.asVectorRef(self);
-                    } else {
-                        return self;
-                    }
-                }
-                @Override
-                public Object visitLocalVariableExpression(JLocalVariableExpression self, String ident) {
-                    if (vectorIds.containsKey(getIdent(self))) {
-                        if (! (self.getType() instanceof CVectorType)) {
-                            assert self.getVariable() instanceof JVariableDefinition;
-                            JVariableDefinition newDefn = (JVariableDefinition)self.getVariable().accept(this);
-                            self = new JLocalVariableExpression(self.getTokenReference(),newDefn);
-                        }
-			if (! suppressSelector) {
-			    return CVectorType.asVectorRef(self);
-			}
-                    }
-		    return self;
-                }
-                @Override
-                public Object visitArrayAccessExpression(JArrayAccessExpression self,
-                        JExpression prefix,
-                        JExpression accessor) {
-                    prefix.accept(this);
-                    // array accessors don't always have correct type.
-                    CType prefixType = prefix.getType();
-                    assert prefixType instanceof CArrayType;
-                    //System.err.print("Array accessor type for " + self + " was " + self.getType());
-                    CArrayType prefixaType = (CArrayType)prefixType;
-                    int numDims = prefixaType.getArrayBound();
-                    if (numDims == 1) {
-                        self.setType(prefixaType.getBaseType());
-                    } else {
-                        JExpression[] dims = prefixaType.getDims();
-                        JExpression[] newDims = null;
-                        if (dims != null) {
-                            newDims = new JExpression[dims.length - 1];
-                            for (int i = 1; i < dims.length; i++)
-                                newDims[i-1] = dims[i];
-                        }
-                        self.setType(new CArrayType(prefixaType.getBaseType(),
-                                numDims - 1, newDims));
-                    }
-                    //System.err.println(" ==> " + self.getType());
-
-                    // note if recurr into accessor, need to set constantsToVector temporarily to false
-                    if (vectorIds.containsKey(getIdent(self)) && ! suppressSelector) {
-                        // XXX does not currently work for array slices
-                        return CVectorType.asVectorRef(self);
-                    } else {
-                        return self;
-                    }
-                }
-                @Override
-                public Object visitShiftExpression(JShiftExpression self,
-                        int oper,    
-                        JExpression left,
-                        JExpression right) {
-                        // do not visit right on a shift expression: always int!
-                        JExpression newLeft = (JExpression)left.accept(this);
-                        self.setLeft(newLeft);
-                        return self;
-                }
             }
+            }   
+
            
-            return (JStatement)methodBody.accept(new fixTypesPeeksPopsPushesVisitor());
+        return (JStatement)methodBody.accept(new fixTypesPeeksPopsPushesVisitor());
         
     }
     
    /** 
     * Check whether an expression refers to a variable or array that should have a vector type.
+    * 
     * <br/>Used to check if a side of an assignment has vector type.
+    * 
+    * <br/>Just checks leaves of expression tree: peek() or pop() has vecttor type, or else
+    * woudn't be running Vectorize. Local Variable, Field, and Array Access expressions are checked
+    * against the vectorIds parameter.
+    * 
+    * <br/>XXX Warning: Implicit assumption is that if any part of expression has a vector type, 
+    * then the whole expression has a vector type.
+    * 
     * @param expr
     * @param vectorIds
     * @return true if expression has vector type.
@@ -949,6 +1114,7 @@ public class Vectorize {
      * peek or pop with the type of an expression (LackWit for StreamIt).  We make no effort to unify types
      * across complex expressions (the user can fix by simplifying the streamit code).  We make no effort to deal
      * with vectorizable fields of structs (the user can not turn vectorization on).
+     * 
      * @param filter whose methods are being checked for need for vectorization.
      * @param vectorizePush a second return value: do vector values reach push(E) expressions?
      * @return an indication as to what variables need to be given vector types.
@@ -1008,6 +1174,7 @@ public class Vectorize {
                         vectorizePush[0] = true;  // push takes a vector type.
                     }
                 }
+                
                 @Override
                 public void visitArrayAccessExpression(
                         JArrayAccessExpression self, JExpression prefix,
@@ -1090,7 +1257,9 @@ public class Vectorize {
                 public void visitCastExpression(JCastExpression self,
                         JExpression expr,
                         CType type) {
-                    return;   // don't look inside cast expression.
+                    // don't look inside cast expression.
+                    // multiple vector types in one module not yet supported.
+                    return;
                 }   
                 
                 @Override
@@ -1099,7 +1268,10 @@ public class Vectorize {
                         JExpression left,
                         JExpression right) {
                         // do not visit right on a shift expression: always int!
-                        left.accept(this);
+                        // left only vectorizable if we have supporting intrinsics. 
+                        if (KjcOptions.cell_vector_library) {
+                            left.accept(this); 
+                        }
                 }
 
                 
@@ -1117,7 +1289,7 @@ public class Vectorize {
 //                    exp instanceof JArrayAccessExpression;
 //                }
 //                
-                // eventually use type to handle array slices, fields of structs, ...
+                // eventually use type to handle structs of arrays, arrays of structs, arrays of arrays, ...
                 // or build up a PathToVec.
                 private void registerv(String v,
                         CType type, CType declType) {

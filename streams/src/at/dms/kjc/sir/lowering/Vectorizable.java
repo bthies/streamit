@@ -336,6 +336,11 @@ public class Vectorizable {
                         if (arrayidents.contains(CommonUtils.lhsBaseExpr(self).getIdent())) {
                             // dereferencing an array with tainted elements.
                             // not checking for the correct number of levels of dereference...
+                            if (delicateLocation > 0) {
+                                // dereferenced array of vectors in a place where 
+                                // vector references are not supported.
+                                hasDepend[0] = true;
+                            }
                             flowsHere = true;
                         }
                         delicateLocation++;
@@ -428,7 +433,7 @@ public class Vectorizable {
                             JSwitchGroup[] body) {
                         String oldReason = null;
                         delicateLocation++;
-                        if (debugging) { oldReason = reason[0]; reason[0] = "while"; }
+                        if (debugging) { oldReason = reason[0]; reason[0] = "switch"; }
                         expr.accept(this);
                         if (debugging) { reason[0] = oldReason; }
                         delicateLocation--;
@@ -437,6 +442,14 @@ public class Vectorizable {
                         }
                     }
  
+
+                    /**
+                     * Do not allow vectors in arguments of method call unless we support it.
+                     * @param self     visited object
+                     * @param prefix   method prefix
+                     * @param ident    method name
+                     * @param args     argument expressions
+                     */
                     @Override
                     public void visitMethodCallExpression(JMethodCallExpression self,
                             JExpression prefix,
@@ -445,15 +458,17 @@ public class Vectorizable {
                         if (prefix != null) {
                             prefix.accept(this);
                         }
-                        // The following commits us to all Math functions.
-                        // could also have "if (at.dms.util.Utils.cellMathEquivalent(prefix, ident) != null)"
-                        // which would leave out some methods.
-                        if (KjcOptions.cell_vector_library && at.dms.util.Utils.isMathMethod(prefix, ident)) {
-                            // OK: 
+                        // Is if compiling for cell and have math method..
+                        if (KjcOptions.cell_vector_library && at.dms.util.Utils.cellMathEquivalent(prefix, ident) != null) {
+                            // OK: (TODO: In fact, args must have vector type!)
                             visitArgs(args);
                         } else {
-                            hasDepend[0] = true;
-                            reason[0] = "Unsupported method call " + ident;
+                            String oldReason = null;
+                            delicateLocation++;
+                            if (debugging) { oldReason = reason[0]; reason[0] = "arg to unsupported method call"; }
+                            visitArgs(args);
+                            if (debugging) { reason[0] = oldReason; }
+                            delicateLocation--;
                         }
                     }
 
@@ -469,24 +484,6 @@ public class Vectorizable {
                         delicateLocation--;
                     }
                     
-                    // From here: look at operations that do not vectorize.
-                    // check: ~ in C
-                    @Override
-                    public void visitBitwiseComplementExpression(JUnaryExpression self,
-                            JExpression expr) {
-                        if (KjcOptions.cell_vector_library) {
-                            super.visitBitwiseComplementExpression(self,expr);
-                        } else { 
-                            String oldReason = null;
-                            delicateLocation++;
-                            if (debugging) { oldReason = reason[0]; reason[0] = "~"; }
-                            super.visitBitwiseComplementExpression(self,expr);
-                            if (debugging) { reason[0] = oldReason; }
-                            delicateLocation--;
-                        }
-                    }
-                    
-                    
                     @Override
                     // gcc does not automatically support shifts, so disallow until 
                     // we develop intrinsics.  (Even so the SSE has some limitations:
@@ -501,7 +498,7 @@ public class Vectorizable {
                         } else {
                             String oldReason = null;
                             delicateLocation++;
-                            if (debugging) { oldReason = reason[0]; reason[0] = "unsupported operation <<, >>, or >>>"; }
+                            if (debugging) { oldReason = reason[0]; reason[0] = "<<, >>, or >>>"; }
                             super.visitShiftExpression(self,oper,left,right);
                             if (debugging) { reason[0] = oldReason; }
                             delicateLocation--;
@@ -523,7 +520,7 @@ public class Vectorizable {
                     }
 
                     // Vectorize does not currently handle casts
-                    // TODO: Vectorize should handle casts between same-width
+                    // TODO: Vectorizable should handle casts between same-width
                     // supported types (meaning 32-bit int and 32-bit float).
                     // The problem is that Vectorize has not been fully adapted to
                     // handle multiple vector types in one method.
@@ -596,10 +593,18 @@ public class Vectorizable {
     }
     
     /**
-     * determine whether a stream may contain useful vector operations.
+     * Determine whether a vectorizable stream may contain useful vector operations.
      * <b/>
-     * Approximates as to whether a vectorizable stream contains any vector 
+     * Approximates as to whether a vectorizable stream contains sufficient vector 
      * arithmetic operations.
+     * <b/>
+     * Currently says that any stream other than an identity filter or
+     * a collapsed splitter or collapsed joiner is useful.  This keeps a few
+     * of filters that are known to degrade in performance when vectorized in
+     * isolation (but not necessarily when vectorized in conjuncrion with
+     * surrounding filters) from being vectorized.
+     * @param str the SIRStream to check, in which all filters are vectorizable.
+     * @return true if we should vectorise the passed stream.
      */
     // internals: anything other than SIRIdentity or splitJoin reorderer
     // is considered useful.
@@ -633,7 +638,7 @@ public class Vectorizable {
                 // an identity filter can contain no useful arithmetic.
                 return false;
             }
-            // TODO: need to tie this back to at.dms.kjc.lowering.CollapseDataParallel pass
+            // TODO: need to tie this string back to at.dms.kjc.lowering.CollapseDataParallel pass
             // dependent on text that it generates.
             if (str1.getName().startsWith("Pre_CollapsedDataParallel")
              || str1.getName().startsWith("Post_CollapsedDataParallel")) {

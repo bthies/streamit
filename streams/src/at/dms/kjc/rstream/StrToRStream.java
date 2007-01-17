@@ -414,6 +414,7 @@ public class StrToRStream {
             sb.append(typedef);
             sb.append('\n');
         }
+        sb.append(CVectorType.miscStrings());
         return sb.toString();
     }
 }

@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.116 2006-12-05 21:51:06 dimock Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.117 2007-01-17 17:02:10 dimock Exp $
 package at.dms.kjc.cluster;
 
 import at.dms.kjc.flatgraph.FlatNode;
@@ -123,6 +123,10 @@ public class ClusterBackend {
         // make arguments to functions be three-address code so can replace max, min, abs
         // and possibly others with macros, knowing that there will be no side effects.
         SimplifyArguments.simplify(str);
+        // Pull pop, push, peek into own statements (must be done eventually before
+        // generating C code, and is best done here while type info is still available
+        // for tmps.
+        SimplifyPopPeekPush.simplify(str);
         
         // Perform propagation on fields from 'static' sections.
         Set<SIRGlobal> statics = new HashSet<SIRGlobal>();

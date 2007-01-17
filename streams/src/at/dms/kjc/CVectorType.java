@@ -5,6 +5,8 @@ package at.dms.kjc;
 
 import at.dms.compiler.UnpositionedError;
 import at.dms.util.SimpleStringBuffer;
+import java.util.*;
+import at.dms.kjc.sir.SIRStructure;
 
 /**
  * Short vectors of base types.
@@ -161,6 +163,45 @@ public class CVectorType extends CType {
         + getBaseType().toString()
         + " a[" + getWidthInBase() + "];} "
         + toString() + ";";
+    }
+    
+    static HashSet<SIRStructure> bufferUnionTypes = new HashSet<SIRStructure>();
+    
+    /**
+     * Returns a collection of SIRStructure's correspoding to C unions for
+     * peek or poke buffers.
+     * @return
+     */
+    public static Iterable<SIRStructure> structDefs() {
+        return bufferUnionTypes;
+    }
+    
+    /**
+     * Add a SIRStructure corresponding to the type of a peek or poke buffer.
+     * @param struct
+     */
+    public static void addBufferStructDef(SIRStructure struct) {
+        bufferUnionTypes.add(struct);
+    }
+    
+    /**
+     * Return vector stuff to be included in a header file (including any final ";" and "\n").
+     * @return strings needed in a header file that aren't from @{link #typedefString() typedefString} but does include definitions from @{link #structDefs()}
+     */
+    public static String miscStrings() {
+        String includeString;
+        includeString = "";
+        if (! KjcOptions.cell_vector_library) {
+            String streamitHome = System.getenv("STREAMIT_HOME");
+            includeString = "#include \"" +
+            ((streamitHome != null) ? streamitHome + "/" : "") +
+            "misc>\"\n";
+        }
+        for (SIRStructure struct : bufferUnionTypes) {
+            includeString += at.dms.kjc.common.CommonUtils.structToTypedef(struct,false);
+            includeString += "\n";
+        }
+        return includeString;
     }
     
     /**

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JShiftExpression.java,v 1.10 2006-10-27 20:48:55 dimock Exp $
+ * $Id: JShiftExpression.java,v 1.11 2007-01-17 17:02:09 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -41,7 +41,7 @@ public class JShiftExpression extends JBinaryArithmeticExpression {
      * Construct a node in the parsing tree
      * This method is directly called by the parser
      * @param   where       the line of this node in the source code
-     * @param   oper        the operator
+     * @param   oper        the operator one of Constants.OPE_SL, Constants.OPE_SR, Constants.OPE_BSR.
      * @param   left        the left operand
      * @param   right       the right operand
      */

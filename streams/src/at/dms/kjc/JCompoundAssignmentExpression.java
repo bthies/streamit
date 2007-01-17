@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JCompoundAssignmentExpression.java,v 1.11 2006-10-27 20:48:54 dimock Exp $
+ * $Id: JCompoundAssignmentExpression.java,v 1.12 2007-01-17 17:02:09 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -40,6 +40,11 @@ public class JCompoundAssignmentExpression extends JAssignmentExpression {
     /**
      * Construct a node in the parsing tree
      * This method is directly called by the parser
+     * 
+     * Supported operators are Constants.OPE_PLUS, Constants.OPE_MINUS,
+     * Constants.OPE_STAR, Constants.OPE_SLASH, Constants.OPE_PERCENT,
+     * Constants.OPE_SL, Constants.OPE_SR, Constants.OPE_BSR,
+     * Constants.OPE_BAND, Constants.OPE_BOR, Constants.OPE_BXOR
      * @param   where       the line of this node in the source code
      * @param   oper        the assignment operator
      * @param   left        the left operand

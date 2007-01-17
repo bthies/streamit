@@ -2,7 +2,7 @@
 #
 # run-reg-tests.py: Yet another test to run regression tests
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: run-reg-tests.py,v 1.39 2007-01-10 22:40:49 dimock Exp $
+# $Id: run-reg-tests.py,v 1.40 2007-01-17 18:14:17 dimock Exp $
 #
 # Taking history from run_reg_tests.pl: this is the third implementation
 # of a script to run StreamIt regression tests.  It is written in Python,
@@ -89,8 +89,8 @@ class RunRegTests:
         self.streamit_home = os.path.join(self.working_dir, 'streams')
         # Are changes to os.environm passed on through spawn and open2?
         os.environ['STREAMIT_HOME'] = self.streamit_home
-        os.environ['TOPDIR'] = os.path.join(self.streamit_home, 'misc', 'raw')
-        #os.environ['TOPDIR'] = '/home/bits6/mgordon/starsearch'
+        #os.environ['TOPDIR'] = os.path.join(self.streamit_home, 'misc', 'raw')
+        os.environ['TOPDIR'] = '/home/bits6/mgordon/starsearch'
         os.environ['PATH'] = self.streamit_home + \
                              ":/usr/uns/jdk1.5.0_01/bin" + \
                              ":/usr/uns/bin:/usr/bin/X11:/bin:/usr/bin"

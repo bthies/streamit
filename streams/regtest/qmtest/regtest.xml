@@ -7,4 +7,5 @@
   <option target="simpleC"/>
   <option target="raw4">-O2</option>
   <option target="cluster">-standalone</option>
+  <option target="raw4">-spacetime</option>
 </regtest>

@@ -191,11 +191,11 @@ public class CVectorType extends CType {
     public static String miscStrings() {
         String includeString;
         includeString = "";
-        if (! KjcOptions.cell_vector_library) {
+        if (KjcOptions.cell_vector_library) {
             String streamitHome = System.getenv("STREAMIT_HOME");
             includeString = "#include \"" +
             ((streamitHome != null) ? streamitHome + "/" : "") +
-            "misc>\"\n";
+            "misc/vectorization.h\"\n";
         }
         for (SIRStructure struct : bufferUnionTypes) {
             includeString += at.dms.kjc.common.CommonUtils.structToTypedef(struct,false);

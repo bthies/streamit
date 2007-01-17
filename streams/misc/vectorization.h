@@ -182,7 +182,8 @@ static __inline vector float _signedOfFirst_v4f (vector float x, vector float y)
   vector unsigned int retval_us = vec_add(y, signbit);
   vector float result = (vector float)retval_us;
   return retval_us;
-#endif}
+#endif
+}
 
 static __inline vector int _modulus_v4i (vector int x, vector int y) {
   vector int quotient = _divide_v4i(x, y);

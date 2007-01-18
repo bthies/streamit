@@ -20,43 +20,9 @@
 
 #include <vec_literal.h>
 
-
-/* include supported vector operations in cell-sdk/src/lib/math */
-
-// libmath.h defines the XXXf_v functions.
-// the individual header files define the _XXXf_v macros with inline expansion.
-#include <libmath.h>
-//#include <acosf_v.h>
-//#include <asinf_v.h>
-//#include <atanf_v.h>
-
-// atan2f_v not supplied.  Compute with extra division and supplied atan
-// rather than computing directly: what accuracy is lost?
-static __inline vector float atan2_v(vector float y, vector float x) {
-  return atan_v(y/x);
-}
-
-//#include <ceilf_v.h>
-//#include <cosf_v.h>
-// coshv_v not currently supplied
-//#include <expf_v.h>
-//#include <fabsf_v.h>
-//#include <floorf_v.h>
-//#include <fmaxf_v.h>
-//#include <fminf_v.h>
-//#include <fmodf_v.h>
-//#include <frexpf_v.h>
-//#include <log10f_v.h>
-//#include <logf_v.h>
-//#include <roundf_v.h>
-//#include <sinf_v.h>
-// sinhf_v not currently supplied.
-//#include <tanf_v.h>
-// tanhf_v.h not currently supplied
-
 /* shift left by integer */
 
-static __inline vector int _lsl_v4i (vector int x, int count) {
+static __inline__ vector int _lsl_v4i (vector int x, int count) {
 #ifdef __SPU__
   return spu_sl(x,count);
 #elif defined __PPU__
@@ -66,7 +32,7 @@ static __inline vector int _lsl_v4i (vector int x, int count) {
 
 /*shift right logical  by integer */
 
-static __inline vector int _srl_v4i (vector int x, int count) {
+static __inline__ vector int _srl_v4i (vector int x, int count) {
 #ifdef __SPU__
   return spu_rlmask(x,count);
 #elif defined __PPU__
@@ -76,7 +42,7 @@ static __inline vector int _srl_v4i (vector int x, int count) {
 
 /* shift right arithmetic by integer */
 
-static __inline vector int _sra_v4i (vector int x, int count) {
+static __inline__ vector int _sra_v4i (vector int x, int count) {
 #ifdef __SPU__
   return spu_rlmaska(x,count);
 #elif defined __PPU__
@@ -85,7 +51,7 @@ static __inline vector int _sra_v4i (vector int x, int count) {
 }
 
 #ifndef fabsf_v
-static __inline vector float fabsf_v(vector float value)
+static __inline__ vector float fabsf_v(vector float value)
 {
 #ifdef __SPU__
   return (vector float)spu_andc((vector unsigned int)(value), 
@@ -96,7 +62,7 @@ static __inline vector float fabsf_v(vector float value)
 }
 #endif
 
-static __inline vector int _min_v4i (vector int x, vector int y) {
+static __inline__ vector int _min_v4i (vector int x, vector int y) {
 #ifdef __SPU__
   vector int pattern = spu_cmpgt(x,y);
   return spu_sel(y,x,pattern);
@@ -105,7 +71,7 @@ static __inline vector int _min_v4i (vector int x, vector int y) {
 #endif
 }
 
-static __inline vector int _max_v4i (vector int x, vector int y) {
+static __inline__ vector int _max_v4i (vector int x, vector int y) {
 #ifdef __SPU__
   vector int pattern = spu_cmpgt(x,y);
   return spu_sel(x,y,pattern);
@@ -114,7 +80,7 @@ static __inline vector int _max_v4i (vector int x, vector int y) {
 #endif
 }
 
-static __inline vector int _abs_v4i (vector int x) {
+static __inline__ vector int _abs_v4i (vector int x) {
 #ifdef __SPU__
   //  vector int zero = spu_splats(0);
   //  vector int minusx = spu_sub(zero,x);
@@ -134,27 +100,29 @@ static __inline vector int _abs_v4i (vector int x) {
 #endif
 }
 
-/* The following algorithm performs an integer division without looping 
- * It is based on the idea that a floating division with one Newton-Raphson
- * iteration gets you almost close enough:
- * 3 * |x| >= (int)((float)|x| / (float)|y|) * |y|  >= |x|
- */
 
-/* not implemented until i have time: correctness proof would also be nice */
+// floating division: not supported as "/" in xlc version 8.1
+// or rather
+static __inline__ vector float _divide_v4f (vector float x, vector float y) {
+#ifdef __GNU__
+  return x / y;
+#else
+#include <divide_v.h>
+  return _divide_v(x,y);
+#endif
+}
 
+
+// integer division: not supportted as "/" in in xlc version 8.1
 // header is cell-sdk-1.1/src/lib/math/divide_i_v.h
 #include <divide_i_v.h>
-static __inline vector int _divide_v4i (vector int x, vector int y) {
-
-  /* Quick & dirty: use supplied routine which loops. 
-   * (but use inlined version.)
-   */
+static __inline__ vector int _divide_v4i (vector int x, vector int y) {
   return _divide_i_v(x,y);
 }
 
 // return second parameter oe negated second parameter such that sign
 // of returned value is same as sign of first parameter
-static __inline vector int _signedOfFirst_v4i (vector int x, vector int y) {
+static __inline__ vector int _signedOfFirst_v4i (vector int x, vector int y) {
 #ifdef __SPU__
   // to be implemented
   return y;
@@ -168,7 +136,7 @@ static __inline vector int _signedOfFirst_v4i (vector int x, vector int y) {
 
 // return second parameter oe negated second parameter such that sign
 // of returned value is same as sign of first parameter
-static __inline vector float _signedOfFirst_v4f (vector float x, vector float y) {
+static __inline__ vector float _signedOfFirst_v4f (vector float x, vector float y) {
 #ifdef __SPU__
   // to be implemented
   return y;
@@ -178,14 +146,14 @@ static __inline vector float _signedOfFirst_v4f (vector float x, vector float y)
   vector unsigned int yu = (vector unsigned int)y;
   vector unsigned int signbit = vec_splat_u32(0x80000000);
   // 0 if same sign, signbit if different.
-  vector unsigned int hibit = vec_and(vec_xor(x,y), signbit);
-  vector unsigned int retval_us = vec_add(y, signbit);
+  vector unsigned int hibit = vec_and(vec_xor(xu,yu), signbit);
+  vector unsigned int retval_us = vec_add(yu, signbit);
   vector float result = (vector float)retval_us;
-  return retval_us;
+  return result;
 #endif
 }
 
-static __inline vector int _modulus_v4i (vector int x, vector int y) {
+static __inline__ vector int _modulus_v4i (vector int x, vector int y) {
   vector int quotient = _divide_v4i(x, y);
   vector int remainder = x - quotient * y;
   /* the above is C semantics: sign not specified.
@@ -194,7 +162,7 @@ static __inline vector int _modulus_v4i (vector int x, vector int y) {
   return _signedOfFirst_v4i(x,remainder);
 }
 
-static __inline vector float _modulus_v4f (vector int x, vector int y) {
+static __inline__ vector float _modulus_v4f (vector int x, vector int y) {
   vector int quotient = x / y;
   vector int remainder = x - quotient * y;
   /* the above is C semantics: sign not specified.
@@ -204,5 +172,38 @@ static __inline vector float _modulus_v4f (vector int x, vector int y) {
 }
 
 
+
+/* include supported vector operations in cell-sdk/src/lib/math */
+
+// libmath.h defines the XXXf_v functions.
+// the individual header files define the _XXXf_v macros with inline expansion.
+#include <libmath.h>
+//#include <acosf_v.h>
+//#include <asinf_v.h>
+//#include <atanf_v.h>
+
+// atan2f_v not supplied.  Compute with extra division and supplied atan
+// rather than computing directly: what accuracy is lost?
+static inline vector float atan2_v(vector float y, vector float x) {
+  return atan_v(_divide_v4f(y,x));
+}
+
+//#include <ceilf_v.h>
+//#include <cosf_v.h>
+// coshv_v not currently supplied
+//#include <expf_v.h>
+//#include <fabsf_v.h>
+//#include <floorf_v.h>
+//#include <fmaxf_v.h>
+//#include <fminf_v.h>
+//#include <fmodf_v.h>
+//#include <frexpf_v.h>
+//#include <log10f_v.h>
+//#include <logf_v.h>
+//#include <roundf_v.h>
+//#include <sinf_v.h>
+// sinhf_v not currently supplied.
+//#include <tanf_v.h>
+// tanhf_v.h not currently supplied
 
 #endif

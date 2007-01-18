@@ -547,7 +547,7 @@ public class SpaceTimeBackend {
         else
             BCFile.generate(spaceTimeSchedule, rawChip, null);
         
-        System.exit(1);
+        System.exit(0);
         
         
         /*

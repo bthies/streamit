@@ -74,7 +74,7 @@ float->int pipeline FilterBank() {
   add IMDCT();
   add float->float filter {
     
-    work push 18 pop 36 peek 36+1152 {
+    work push 18 pop 36 peek 18+1152 {
 
       float future1, future2;
 

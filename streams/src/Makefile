@@ -50,12 +50,12 @@ all: $(JAVA_SRCS)
 	$(MAKE) moreall
 
 moreall:
-	(cd at; javac `find . -name "*.java"`)
 	(cd streamit/frontend; javac `find . -name "*.java"`)
 	(cd streamit/library; javac `find . -name "*.java"`)
 	(cd streamit/misc; javac `find . -name "*.java"`)
 	(cd streamit/scheduler1; javac `find . -name "*.java"`)
 	(cd streamit/scheduler2; javac `find . -name "*.java"`)
+	(cd at; javac `find . -name "*.java"`)
 
 %.class: %.java
 	$(JAVAC) $(JAVAC_FLAGS) $<

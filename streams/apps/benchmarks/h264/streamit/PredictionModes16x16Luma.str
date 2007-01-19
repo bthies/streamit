@@ -72,15 +72,18 @@
  */
 
 void->void pipeline PredictionModes16x16Luma() {
-    add FakeBlockHVXGenerator();
+    add FakeBlockHVXGenerator(); 
+ 
     add splitjoin {
 	  split duplicate;
 	  add Prediction16x16Mode0AndSAE();
 	  add Prediction16x16Mode1AndSAE();
 	  add Prediction16x16Mode2AndSAE();
 	  add Prediction16x16Mode3AndSAE();
-	  join roundrobin(257);
+	  join roundrobin(290);
     }
+
+
     add FindBestPredictionMode16x16();
     add PredictionResultPrinter();
 }
@@ -92,9 +95,6 @@ void->int filter FakeBlockHVXGenerator() {
 	  
 	  for (int row=0; row<16; row++) {
 		for (int col=0; col<16; col++) {
-		    
-		    
-		    
 		    
 		    if (row < 8 && col < 8) {
 			  pushVal = 3;
@@ -133,7 +133,7 @@ void->int filter FakeBlockHVXGenerator() {
 }
 
 int->void filter PredictionResultPrinter() {
-    work pop 257 {
+    work pop 290 {
 	  
 	  println("prediction results, residual");
 
@@ -146,8 +146,13 @@ int->void filter PredictionResultPrinter() {
 
 	  println("best mode "+peek(256));
 	  
+	  println("original HVX");
+	  for (int i=257; i<290; i++) {
+		print(peek(i)+" ");
+	  }
+	  
 	  // pop all
-	  for (int i=0; i<257; i++) {
+	  for (int i=0; i<290; i++) {
 		pop();
 	  }  
     }
@@ -160,28 +165,26 @@ int->void filter PredictionResultPrinter() {
  * the prediction mode. 
  * 
  * @input stream of 16x16 residual values + "sum of absolute errors" 
- *        (mode0 to mode3 in order)
+ *        (mode0 to mode3 in order) + original HVX
  * @output One 16x16 residual block + recommended 16x16 luma prediction mode 
- *         (possible: 0 to 3)
+ *         (possible: 0 to 3) + HVX
  */
 int->int filter FindBestPredictionMode16x16() {
     
-    // 256 * 4 + 4 = 1024 + 4 = 1028 (input)
-    // 256 + 1 = 257 (ouput)
-    work pop 1028 push 257 {
+    // (256 + 1 + 16 + 16 + 1)*4 = 1160 (input)
+    // 256 + 1 + 16 + 16 = 290 (ouput)
+    work pop 1160 push 290 {
 
 	  println("FindBestPredictionMode16x16");
 
 	  int currentMinSAE = peek(256); 
 	  int minPredictionMode = 0;
 
-	  println("current minPredictionMode "+minPredictionMode);
-	  println("sae "+currentMinSAE);
-
-	  for (int i=0; i<=3; i++) {
+	  for (int i=1; i<=3; i++) {
 		// if SAE is the same for 2 or more modes, 
 		// mode 0 is default
-		int sae = peek(257*(i+1)-1);
+		//256*(i+1) + 33i + 1i = 290i + 256
+		int sae = peek(290*i+256);
 		if (currentMinSAE > sae) {
 		    // found new min
 		    minPredictionMode = i;
@@ -199,15 +202,20 @@ int->int filter FindBestPredictionMode16x16() {
 	  // 2: peek(514-769)
 	  // 3: peek(771-1026)
 	  
-	  int start = minPredictionMode*257;
-	  for (int i=start; i<start+256; i++) {
-		push(peek(i));
+	  int start = minPredictionMode*290;
+	  
+	  for (int i=start; i<start+290; i++) {
+		if (i != start + 256) { // no point in pushing the min sae
+		    push(peek(i));
+		} else {
+		    push(minPredictionMode);
+		}
+
 	  }
 		
-	  push(minPredictionMode);
 
 	  // pop all
-	  for (int i=0; i<=1027; i++) {
+	  for (int i=0; i<=1159; i++) {
 		pop();
 	  }  
     }
@@ -224,14 +232,14 @@ int->int filter FindBestPredictionMode16x16() {
  * VERTICAL MODE
  * 
  * @input A stream of 256 original pixels + 'H' + 'V' + 'X'
- * @output A stream of 256 residual values + sum of absolute errors
+ * @output A stream of 256 residual values + sum of absolute errors + H + V + X
  */
 int->int filter Prediction16x16Mode0AndSAE() {
     // original block         peek(0-255)
     // 'H'                    peek(256-271);
     // 'V'				peek(272,287)
     // 'X'                    peek(288)
-    work pop 289 push 257 {
+    work pop 289 push 290 {
 	  
 	  println("Prediction16x16Mode0AndSAE");
 	  int sae = 0; // sum of absolute errors
@@ -246,6 +254,11 @@ int->int filter Prediction16x16Mode0AndSAE() {
 		println(" ");
 	  }
 	  push(sae);
+	  
+	  // pass HVX
+	  for (int i=256; i<=288; i++) {
+		push(peek(i));
+	  }
 	  
 	  for (int i=0; i<=288; i++) {
 		pop();
@@ -265,14 +278,14 @@ int->int filter Prediction16x16Mode0AndSAE() {
  * HORIZONTAL MODE
  * 
  * @input A stream of 256 original pixels + 'H' + 'V' + 'X'
- * @output A stream of 256 residual values + sum of absolute errors
+ * @output A stream of 256 residual values + sum of absolute errors + HVX
  */
 int->int filter Prediction16x16Mode1AndSAE() {
     // original block         peek(0-255)
     // 'H'                    peek(256-271);
     // 'V'				peek(272,287)
     // 'X'                    peek(288)
-    work pop 289 push 257 {
+    work pop 289 push 290 {
 	  println("Prediction16x16Mode1AndSAE");
 	  int sae = 0; // sum of absolute errors
 	  for (int row=0; row<16; row++) {
@@ -286,6 +299,11 @@ int->int filter Prediction16x16Mode1AndSAE() {
 		println(" ");
 	  }
 	  push(sae);
+
+	  // pass HVX
+	  for (int i=256; i<=288; i++) {
+		push(peek(i));
+	  }
 	  
 	  for (int i=0; i<=288; i++) {
 		pop();
@@ -305,14 +323,14 @@ int->int filter Prediction16x16Mode1AndSAE() {
  * some of the H and V samples are not available.
  * 
  * @input A stream of 256 original pixels + 'H' + 'V' + 'X'
- * @output A stream of 256 residual values + sum of absolute errors
+ * @output A stream of 256 residual values + sum of absolute errors + HVX
  */
 int->int filter Prediction16x16Mode2AndSAE() {                                                                                                                              	
     // original block         peek(0-255)
     // 'H'                    peek(256-271);
     // 'V'				peek(272,287)
     // 'X'                    peek(288)
-    work pop 289 push 257 {
+    work pop 289 push 290 {
 	  
 	  println("Prediction16x16Mode2AndSAE");
 	  int DC = 16;
@@ -334,6 +352,10 @@ int->int filter Prediction16x16Mode2AndSAE() {
 	  }
 	  push(sae);
 	  
+	  // pass HVX
+	  for (int i=256; i<=288; i++) {
+		push(peek(i));
+	  }
 	  for (int i=0; i<=288; i++) {
 		pop();
 	  }
@@ -348,7 +370,7 @@ int->int filter Prediction16x16Mode2AndSAE() {
  * ITU specification: 8.3.3.4
  * 
  * @input A stream of 256 original pixels + 'H' + 'V' + 'X'
- * @output A stream of 256 residual values + sum of absolute errors
+ * @output A stream of 256 residual values + sum of absolute errors + HVX
  */
 int->int filter Prediction16x16Mode3AndSAE() {
     
@@ -356,7 +378,7 @@ int->int filter Prediction16x16Mode3AndSAE() {
     // 'H'                    peek(256-271);
     // 'V'				peek(272,287)
     // 'X'                    peek(288)
-    work pop 289 push 257 {
+    work pop 289 push 290 {
 
 	  println("Prediction16x16Mode3AndSAE");
 	  // a = 16 * (p[-1,15]+p[15,-1]) = 16 * (V[15]+H[15])
@@ -366,7 +388,7 @@ int->int filter Prediction16x16Mode3AndSAE() {
 	  // H = sum((x+1)*(H[8+x]-H[6-x]))
 	  // case where x = 7
 	  // 8*(H[15]-H[-1]); H[-1] = 'X'
-	  int H = 8*(peek(271)-peek(288)) ; // 
+	  int H = 8*(peek(271)-peek(288)) ; 
 	  for (int x=0; x<=6; x++) {
 		// H += (x+1)*(peek(256+8+x)-peek(256+6-x));
 		H += (x+1)*(peek(264+x)-peek(262-x));
@@ -376,7 +398,7 @@ int->int filter Prediction16x16Mode3AndSAE() {
 	  // V = sum((y+1)*(V[8+y]-V[6-y]))
 	  // case where y = 7
 	  // 8*(V[15]-V[-1]); V[-1] = 'X'
-	  int V = 8*(peek(287)-peek(288)) ; // 
+	  int V = 8*(peek(287)-peek(288)) ; 
 	  for (int y=0; y<=6; y++) {
 		// V += (y+1)*(peek(272+8+y)-peek(272+6yx));
 		V += (y+1)*(peek(280+y)-peek(278-y));
@@ -409,6 +431,11 @@ int->int filter Prediction16x16Mode3AndSAE() {
 		println(" ");
 	  }	  
 	  push(sae);
+
+	  // pass HVX
+	  for (int i=256; i<=288; i++) {
+		push(peek(i));
+	  }
 	  
 	  for (int i=0; i<=288; i++) {
 		pop();

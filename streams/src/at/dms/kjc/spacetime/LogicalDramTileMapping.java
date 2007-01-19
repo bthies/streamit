@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 
+import at.dms.kjc.slicegraph.ComputeNode;
+
 /**
  * This static class stores the logical mapping between tiles and drams that the 
  * compiler uses to map buffers to drams.  A dram is owned by a tile and all the
@@ -73,11 +75,11 @@ public class LogicalDramTileMapping {
         return dramTileMap.get(dram);
     }
     
-    public static StreamingDram getHomeDram(RawTile tile) {
+    public static StreamingDram getHomeDram(ComputeNode tile) {
         return (StreamingDram)tileDramMap.get(tile);
     }
     
-    public static boolean mustUseGdn(RawTile tile) {
+    public static boolean mustUseGdn(ComputeNode tile) {
         return mustUseGDN.contains(tile);
     }
 }

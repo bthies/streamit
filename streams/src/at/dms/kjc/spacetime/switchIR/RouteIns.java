@@ -8,17 +8,17 @@ import at.dms.kjc.spacetime.*;
 //FullIns should usually suffice
 public class RouteIns implements SwitchIns {
     Vector<Object> sources;
-    Vector<ComputeNode> dests;
+    Vector<RawComputeNode> dests;
     RawTile tile;
 
     public RouteIns(RawTile tile) {
         //super("route");
         sources = new Vector<Object>();
-        dests = new Vector<ComputeNode>();
+        dests = new Vector<RawComputeNode>();
         this.tile = tile;
     }
 
-    public void addRoute(ComputeNode source, ComputeNode dest) {
+    public void addRoute(RawComputeNode source, RawComputeNode dest) {
         if (source == null || dest == null) 
             Utils.fail("Trying to add a null source or dest to route instruction");
         //check if the source,dest pair exists
@@ -31,7 +31,7 @@ public class RouteIns implements SwitchIns {
         dests.add(dest);
     }
 
-    public void addRoute(SwitchSrc source, ComputeNode dest) 
+    public void addRoute(SwitchSrc source, RawComputeNode dest) 
     {
         assert (source != null && dest != null) :
             "Trying to add a null source or dest to route instruction";
@@ -53,8 +53,8 @@ public class RouteIns implements SwitchIns {
             //append the src, then ->, then dst
             String dir;
         
-            if (sources.get(i) instanceof ComputeNode) {
-                dir = tile.getRawChip().getDirection(tile, (ComputeNode)sources.get(i));
+            if (sources.get(i) instanceof RawComputeNode) {
+                dir = tile.getRawChip().getDirection(tile, (RawComputeNode)sources.get(i));
                 if (dir.equals("st"))
                     ins += "$c" + dir + "o";
                 else 

@@ -321,7 +321,7 @@ public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout {
         //buffer edges are assigned drams by the buffer dram assignment,
         //so we can get a fairly accurate picture of the communication
         //of the graph...
-        HashSet<ComputeNode> routersUsed = new HashSet<ComputeNode>();
+        HashSet<RawComputeNode> routersUsed = new HashSet<RawComputeNode>();
         
         for (int i = 0; i < slices.length; i++) {
             Slice slice = slices[i];
@@ -345,9 +345,9 @@ public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout {
                     StreamingDram outputDRAM = 
                         IntraSliceBuffer.getBuffer(output.getPrevFilter(), output).getDRAM();
                     
-                    Iterator<ComputeNode> route = router.getRoute(outputDRAM, bufDRAM).iterator();
+                    Iterator<RawComputeNode> route = router.getRoute(outputDRAM, bufDRAM).iterator();
                     while (route.hasNext()) {
-                        ComputeNode hop = route.next();
+                        RawComputeNode hop = route.next();
                         if (routersUsed.contains(hop)) 
                             crossed++;
                         else 
@@ -358,9 +358,9 @@ public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout {
                 if (!IntraSliceBuffer.unnecessary(input)) {
                     StreamingDram inputDRAM = 
                         IntraSliceBuffer.getBuffer(input, input.getNextFilter()).getDRAM();
-                    Iterator<ComputeNode>route = router.getRoute(bufDRAM, inputDRAM).iterator();
+                    Iterator<RawComputeNode>route = router.getRoute(bufDRAM, inputDRAM).iterator();
                     while (route.hasNext()) {
-                        ComputeNode hop = route.next();
+                        RawComputeNode hop = route.next();
                         if (routersUsed.contains(hop)) 
                             crossed++;
                         else 

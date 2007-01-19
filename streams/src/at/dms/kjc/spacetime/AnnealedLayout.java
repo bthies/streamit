@@ -3,6 +3,7 @@ package at.dms.kjc.spacetime;
 import at.dms.kjc.KjcOptions;
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.common.SimulatedAnnealing;
+import at.dms.kjc.slicegraph.ComputeNode;
 import at.dms.kjc.slicegraph.DataFlowOrder;
 import at.dms.kjc.slicegraph.Edge;
 import at.dms.kjc.slicegraph.FilterSliceNode;
@@ -324,7 +325,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
 	    if (fileWriters.contains(node.getPrevious()) &&
 		!legalFileWriterTile
 		(node.getPrevious().getAsFilter(), 
-		 (RawTile)assignment.get(node.getPrevious())))
+		 (ComputeNode)assignment.get(node.getPrevious())))
 		return false;;       
             return true;
 	}
@@ -425,13 +426,13 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
      * @return false if there are other file readers mapped to this tile.
      */
     private boolean legalFileReaderTile(FilterSliceNode filter,
-            RawTile tile) {
+            ComputeNode tile) {
 	Iterator frs = fileReaders.iterator();
         while (frs.hasNext()) {
             FilterSliceNode current = (FilterSliceNode)frs.next();
             if (current == filter) 
                 continue;
-            RawTile occupied = (RawTile)assignment.get(current);
+            ComputeNode occupied = (ComputeNode)assignment.get(current);
             //see if we have a mapping for this file reader filter yet
             if (occupied == null)
                 continue;
@@ -460,13 +461,13 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
      * mapped to tile.
      */
     private boolean legalFileWriterTile(FilterSliceNode filter, 
-            RawTile tile) {
+            ComputeNode tile) {
 	Iterator fws = fileWriters.iterator();
 	while (fws.hasNext()) {
 	    FilterSliceNode current = (FilterSliceNode)fws.next();
 	    if (current == filter)
 		continue;
-	    RawTile occupied = (RawTile)assignment.get(current);
+	    ComputeNode occupied = (ComputeNode)assignment.get(current);
 	    //see if we have a mapping for this file reader filter yet
 	    if (occupied == null)
 		continue;
@@ -563,15 +564,15 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
      * 
      * @return A metric of the latency of the Edge edge.
      */
-    private HashMap<ComputeNode, Integer> distanceLatency
-         (HashSet<ComputeNode> bigWorkers, Edge edge) {
+    private HashMap<RawComputeNode, Integer> distanceLatency
+         (HashSet<RawComputeNode> bigWorkers, Edge edge) {
         
         //get the port that source is writing to
         RawTile srcTile = (RawTile)assignment.get(edge.getSrc().getPrevFilter());
         RawTile dstTile = (RawTile)assignment.get(edge.getDest().getNextFilter());
         int multipler = 1;
-        HashMap <ComputeNode, Integer> cost = 
-            new HashMap<ComputeNode, Integer>();
+        HashMap <RawComputeNode, Integer> cost = 
+            new HashMap<RawComputeNode, Integer>();
             
         //we only care about the tiles that do a bunch of work!
         if (bigWorkers.contains(srcTile) || bigWorkers.contains(dstTile)) {
@@ -600,7 +601,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
         return cost;
     }    
     
-    private double commCost(int[] tileCosts, RawTile tile) {
+    private double commCost(int[] tileCosts, ComputeNode tile) {
         Slice[] slices = partitioner.getSliceGraph();
         
         assignBuffers.run(spaceTime, this);
@@ -633,24 +634,24 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
                     StreamingDram outputDRAM = 
                         IntraSliceBuffer.getBuffer(output.getPrevFilter(), output).getDRAM();
                     
-                    Iterator<ComputeNode> route = router.getRoute(outputDRAM, bufDRAM).iterator();
+                    Iterator<RawComputeNode> route = router.getRoute(outputDRAM, bufDRAM).iterator();
                     while (route.hasNext()) {
-                        ComputeNode hop = route.next();
+                        RawComputeNode hop = route.next();
                         if (hop instanceof RawTile)
                             commCosts.put((RawTile)hop, 
-                                    commCosts.get((RawTile)hop) + edge.steadyItems());
+                                    commCosts.get((ComputeNode)hop) + edge.steadyItems());
                     }
                 }
                 
                 if (!IntraSliceBuffer.unnecessary(input)) {
                     StreamingDram inputDRAM = 
                         IntraSliceBuffer.getBuffer(input, input.getNextFilter()).getDRAM();
-                    Iterator<ComputeNode>route = router.getRoute(bufDRAM, inputDRAM).iterator();
+                    Iterator<RawComputeNode>route = router.getRoute(bufDRAM, inputDRAM).iterator();
                     while (route.hasNext()) {
-                        ComputeNode hop = route.next();
+                        RawComputeNode hop = route.next();
                         if (hop instanceof RawTile)
                             commCosts.put((RawTile)hop, 
-                                    commCosts.get((RawTile)hop) + edge.steadyItems());
+                                    commCosts.get((ComputeNode)hop) + edge.steadyItems());
                     }
                 }
             }
@@ -688,7 +689,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
         //buffer edges are assigned drams by the buffer dram assignment,
         //so we can get a fairly accurate picture of the communication
         //of the graph...
-        HashSet<ComputeNode> routersUsed = new HashSet<ComputeNode>();
+        HashSet<RawComputeNode> routersUsed = new HashSet<RawComputeNode>();
         
         for (int i = 0; i < slices.length; i++) {
             Slice slice = slices[i];
@@ -712,9 +713,9 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
                     StreamingDram outputDRAM = 
                         IntraSliceBuffer.getBuffer(output.getPrevFilter(), output).getDRAM();
                     
-                    Iterator<ComputeNode> route = router.getRoute(outputDRAM, bufDRAM).iterator();
+                    Iterator<RawComputeNode> route = router.getRoute(outputDRAM, bufDRAM).iterator();
                     while (route.hasNext()) {
-                        ComputeNode hop = route.next();
+                        RawComputeNode hop = route.next();
                         if (routersUsed.contains(hop)) 
                             crossed++;
                         else 
@@ -725,9 +726,9 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
                 if (!IntraSliceBuffer.unnecessary(input)) {
                     StreamingDram inputDRAM = 
                         IntraSliceBuffer.getBuffer(input, input.getNextFilter()).getDRAM();
-                    Iterator<ComputeNode>route = router.getRoute(bufDRAM, inputDRAM).iterator();
+                    Iterator<RawComputeNode>route = router.getRoute(bufDRAM, inputDRAM).iterator();
                     while (route.hasNext()) {
-                        ComputeNode hop = route.next();
+                        RawComputeNode hop = route.next();
                         if (routersUsed.contains(hop)) 
                             crossed++;
                         else 
@@ -820,12 +821,12 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
      * @param map1
      * @param map2
      */
-    private void addHashMaps(HashMap<ComputeNode, Integer> map1, 
-            HashMap<ComputeNode, Integer> map2) {
+    private void addHashMaps(HashMap<RawComputeNode, Integer> map1, 
+            HashMap<RawComputeNode, Integer> map2) {
         
-        Iterator<ComputeNode> it = map2.keySet().iterator();
+        Iterator<RawComputeNode> it = map2.keySet().iterator();
         while (it.hasNext()) {
-            ComputeNode key = it.next();
+            RawComputeNode key = it.next();
             if (map1.containsKey(key)) {
                 map1.put(key, map1.get(key).intValue() + map2.get(key).intValue());
             }
@@ -1100,7 +1101,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
      * 
      * @return See method description.
      */
-    public boolean otherSplitFiltersMapped(FilterSliceNode node, RawTile tile) {
+    public boolean otherSplitFiltersMapped(FilterSliceNode node, ComputeNode tile) {
         
         assert node.getPrevious().isInputSlice();
         InputSliceNode input = node.getPrevious().getAsInput();

@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.io.*;
 import at.dms.compiler.*;
 import at.dms.kjc.sir.lowering.*;
+import at.dms.kjc.slicegraph.ComputeNode;
 import at.dms.kjc.spacedynamic.Util;
 
 import java.util.Hashtable;
@@ -40,9 +41,9 @@ public class TraceIRtoC extends ToC
     public static final String DUMMY_VOLATILE = "__dummy_volatile";
     
     //the raw tile we are generating code for
-    private RawTile tile;
+    private ComputeNode tile;
     
-    public TraceIRtoC(RawTile tile) 
+    public TraceIRtoC(ComputeNode tile) 
     {
         super();
         this.tile = tile;

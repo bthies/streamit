@@ -5,6 +5,7 @@ import java.util.Iterator;
 
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.sir.*;
+import at.dms.kjc.slicegraph.ComputeNode;
 import at.dms.kjc.slicegraph.Edge;
 import at.dms.kjc.slicegraph.FilterInfo;
 import at.dms.kjc.slicegraph.FilterSliceNode;
@@ -103,17 +104,17 @@ public class Rawify {
         traces = schedule.getInitSchedule();
         iterateInorder(traces, true, false, rawChip);
 //      make sure all the dram command are completed before moving on
-        ComputeCodeStore.presynchAllDramsInInit();
+        RawComputeCodeStore.presynchAllDramsInInit();
         //the prime pump stage!!
         traces = schedule.getPrimePumpScheduleFlat();
         iterateInorder(traces, false, true, rawChip);
 //      make sure all the dram command are completed before moving on
-        ComputeCodeStore.presynchAllDramsInInit();
+        RawComputeCodeStore.presynchAllDramsInInit();
         //the steady-state!!
         traces = schedule.getSchedule();
         
         if (SpaceTimeBackend.NO_SWPIPELINE) {
-            ComputeCodeStore.barrier(rawChip, false, false);
+            RawComputeCodeStore.barrier(rawChip, false, false);
             iterateNoSWPipe(schedule.getScheduleList(), false, false, rawChip);
         } else {
             //iterate over the joiners then the filters then 
@@ -121,7 +122,7 @@ public class Rawify {
             //stage between the iterations that will improve performance 
             iterateJoinFiltersSplit(traces, false, false, rawChip);
         }
-        ComputeCodeStore.presynchEmptyTilesInSteady();
+        RawComputeCodeStore.presynchEmptyTilesInSteady();
     }
    
     /**
@@ -367,7 +368,7 @@ public class Rawify {
                 // }
                 
                 // tell the tile was is mapped to it!!
-                tile.addFilterTrace(init, primepump, filterNode);
+                tile.addSliceNode(init, primepump, filterNode);
                 // this must come after createswitch code because of
                 // compression
                 addComputeCode(init, primepump, tile, filterInfo);
@@ -444,7 +445,7 @@ public class Rawify {
      * @param filterInfo
      */
     private static void addComputeCode(boolean init, boolean primepump,
-                                       RawTile tile, FilterInfo filterInfo) {
+                                       ComputeNode tile, FilterInfo filterInfo) {
         if (init)
             tile.getComputeCode().addSliceInit(filterInfo, layout);
         else if (primepump)
@@ -796,7 +797,7 @@ public class Rawify {
         //generate the switch code to send the item from the owner 
         //to the srcTile of the data
         SwitchCodeStore.generateSwitchCode(router, buffer.getOwner(), 
-                new ComputeNode[]{srcTile}, ((init || primepump) ? 1 : 2));
+                new RawComputeNode[]{srcTile}, ((init || primepump) ? 1 : 2));
     }
     
     /**
@@ -926,7 +927,7 @@ public class Rawify {
             // create a loop to compress the switch code
 
             // find all the tiles used in this join
-            HashSet<ComputeNode> tiles = new HashSet<ComputeNode>();
+            HashSet<RawComputeNode> tiles = new HashSet<RawComputeNode>();
             for (int j = 0; j < traceNode.getWeights().length; j++) {
                 // get the source buffer, pass thru redundant buffer(s)
                 StreamingDram source = InterSliceBuffer.getBuffer(
@@ -1058,7 +1059,7 @@ public class Rawify {
         // see if we want to compress (loop) the switch instructions, we cannot
         if (SWITCH_COMP && iterations > SC_THRESHOLD) {
             assert iterations > 1;
-            Iterator<ComputeNode> tiles = getTilesUsedInSplit(traceNode,
+            Iterator<RawComputeNode> tiles = getTilesUsedInSplit(traceNode,
                                                  IntraSliceBuffer.getBuffer(filter, traceNode).getDRAM())
                 .iterator();
 
@@ -1169,7 +1170,7 @@ public class Rawify {
                 for (int j = 0; j < traceNode.getWeights().length; j++) {
                     for (int k = 0; k < traceNode.getWeights()[j]; k++) {
                         // generate the array of compute node dests
-                        ComputeNode dests[] = new ComputeNode[traceNode
+                        RawComputeNode dests[] = new RawComputeNode[traceNode
                                                               .getDests()[j].length];
                         for (int d = 0; d < dests.length; d++)
                             dests[d] = InterSliceBuffer.getBuffer(
@@ -1229,14 +1230,14 @@ public class Rawify {
      * @param sourcePort
      * @return Set of tiles used in the splitting
      */
-    public static HashSet<ComputeNode> getTilesUsedInSplit(OutputSliceNode traceNode,
+    public static HashSet<RawComputeNode> getTilesUsedInSplit(OutputSliceNode traceNode,
                                               StreamingDram sourcePort) {
         // find all the tiles used in the split
-        HashSet<ComputeNode> tiles = new HashSet<ComputeNode>();
+        HashSet<RawComputeNode> tiles = new HashSet<RawComputeNode>();
         for (int j = 0; j < traceNode.getWeights().length; j++) {
             for (int k = 0; k < traceNode.getWeights()[j]; k++) {
                 // generate the array of compute node dests
-                ComputeNode dests[] = new ComputeNode[traceNode.getDests()[j].length];
+                RawComputeNode dests[] = new RawComputeNode[traceNode.getDests()[j].length];
                 for (int d = 0; d < dests.length; d++)
                     dests[d] = InterSliceBuffer.getBuffer(traceNode.getDests()[j][d]).getDRAM();
                 tiles.addAll(SwitchCodeStore.getTilesInRoutes(router, sourcePort, dests));
@@ -1259,7 +1260,7 @@ public class Rawify {
                                                    FilterInfo filterInfo, int mult, int buffer, RawTile tile,
                                                    RawChip rawChip) {
         System.err.println("Creating switchcode linear: " + node + " " + mult);
-        ComputeNode sourceNode = null;
+        RawComputeNode sourceNode = null;
         // Get sourceNode and input port
         if (node.getPrevious().isFilterSlice())
             sourceNode = layout.getTile(((FilterSliceNode) node.getPrevious()));
@@ -1277,7 +1278,7 @@ public class Rawify {
         SwitchIPort src2 = rawChip.getIPort2(sourceNode, tile);
         sourceNode = null;
         // Get destNode and output port
-        ComputeNode destNode = null;
+        RawComputeNode destNode = null;
         if (node.getNext().isFilterSlice())
             destNode = layout.getTile(((FilterSliceNode) node.getNext()));
         else {
@@ -1436,7 +1437,7 @@ public class Rawify {
     private static void createLinearSwitchCode(FilterSliceNode node,
                                                FilterInfo filterInfo, int mult, RawTile tile, RawChip rawChip) {
         System.err.println("Creating switchcode linear: " + node + " " + mult);
-        ComputeNode sourceNode = null;
+        RawComputeNode sourceNode = null;
         // Get sourceNode and input port
         if (node.getPrevious().isFilterSlice())
             sourceNode = layout.getTile(((FilterSliceNode) node.getPrevious()));
@@ -1454,7 +1455,7 @@ public class Rawify {
         SwitchIPort src2 = rawChip.getIPort2(sourceNode, tile);
         sourceNode = null;
         // Get destNode and output port
-        ComputeNode destNode = null;
+        RawComputeNode destNode = null;
         if (node.getNext().isFilterSlice())
             destNode = layout.getTile(((FilterSliceNode) node.getNext()));
                                       
@@ -2175,7 +2176,7 @@ public class Rawify {
                                                   int itemsReceiving, FilterInfo filterInfo, boolean init,
                                                   boolean primePump, RawTile tile, RawChip rawChip) {
         // the source of the data, either a device or another raw tile
-        ComputeNode sourceNode = null;
+        RawComputeNode sourceNode = null;
 
         assert itemsReceiving > 0;
         
@@ -2235,7 +2236,7 @@ public class Rawify {
         if (items == 0)
             return 0;
 
-        ComputeNode destNode = null;
+        RawComputeNode destNode = null;
 
         if (node.getNext().isFilterSlice())
             destNode = layout.getTile(((FilterSliceNode) node.getNext()));

@@ -1,9 +1,10 @@
 package at.dms.kjc.spacetime;
 
+import at.dms.kjc.slicegraph.ComputeNode;
 import at.dms.util.Utils;
 import java.util.Vector;
 
-public abstract class IODevice extends ComputeNode
+public abstract class IODevice extends RawComputeNode
 {
     protected int port;
     protected Vector<RawTile> tiles;
@@ -59,7 +60,7 @@ public abstract class IODevice extends ComputeNode
         return tiles.toArray(new RawTile[0]);
     }
 
-    public RawTile getTile() 
+    public ComputeNode getTile() 
     {
         return tiles.get(0);
     }

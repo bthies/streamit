@@ -8,6 +8,7 @@ import java.util.LinkedList;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import at.dms.kjc.slicegraph.ComputeNode;
 import at.dms.kjc.slicegraph.Edge;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
@@ -344,7 +345,7 @@ public class ScheduleModel {
                    continue;
                FilterSliceNode upStream = edge.getSrc().getPrevFilter();
                
-               RawTile upTile = layout.getTile(upStream);
+               ComputeNode upTile = layout.getTile(upStream);
                assert endTime.containsKey(upStream);
                if (endTime.get(upStream).doubleValue() > maxDepStartTime)
                    maxDepStartTime = endTime.get(upStream);

@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.Random;
 import at.dms.kjc.*;
 import at.dms.kjc.common.CommonUtils;
+import at.dms.kjc.slicegraph.ComputeNode;
 
 /**
  * This class will generate code to allocate the off chip buffers on the necessary
@@ -65,7 +66,7 @@ public class CommunicateAddrs
      * @return For <pre>tile</pre> return the fields that represent the buffers as 
      * C variable declarations.
      */
-    public static String getFields(RawTile tile) 
+    public static String getFields(ComputeNode tile) 
     {
         return commAddrs.fields.get(tile).toString();
     }
@@ -231,7 +232,7 @@ public class CommunicateAddrs
      * @return the c code that will setup the rotation structure for buffer
      * assign to tile. 
      */
-    private String setupRotation(OffChipBuffer buffer, RawTile tile) {
+    private String setupRotation(OffChipBuffer buffer, ComputeNode tile) {
                 
         StringBuffer buf = new StringBuffer();
         String temp = "__temp__";
@@ -299,7 +300,7 @@ public class CommunicateAddrs
      * @param tile The tile
      * @return The c function.
      */
-    public static String getRotSetupFunct(RawTile tile) {
+    public static String getRotSetupFunct(ComputeNode tile) {
         StringBuffer buf = new StringBuffer();
         buf.append("\nvoid " + rotationSetupFunction + "() {\n");
         buf.append(commAddrs.rotationFunctions.get(tile));
@@ -314,7 +315,7 @@ public class CommunicateAddrs
      * 
      * @return For <pre>tile</pre> return a function that will free the buffer memory.
      */
-    public static String getFreeFunction(RawTile tile) 
+    public static String getFreeFunction(ComputeNode tile) 
     {
         StringBuffer buf = new StringBuffer();
 
@@ -337,7 +338,7 @@ public class CommunicateAddrs
      * @return For <pre>tile</pre> return the function that will allocate the buffers or 
      * get the addresses from the static network.
      */
-    public static String getFunction(RawTile tile) 
+    public static String getFunction(ComputeNode tile) 
     {
         StringBuffer buf = new StringBuffer();
 

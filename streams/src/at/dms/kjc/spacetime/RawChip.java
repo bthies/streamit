@@ -73,7 +73,7 @@ public class RawChip {
         return tiles[x][y];
     }
 
-    public ComputeNode getComputeNode(int x, int y) {
+    public RawComputeNode getComputeNode(int x, int y) {
         assert !(x > gXSize || y > gYSize || x < -1 || y < -1) : "out of bounds in getComputeNode() of RawChip";
 
         if (x == gXSize || y == gYSize || x == -1 || y == -1) {
@@ -107,7 +107,7 @@ public class RawChip {
     }
 
     // returns "E", "N", "S", "W", or "st" if src == dst
-    public String getDirection(ComputeNode from, ComputeNode to) {
+    public String getDirection(RawComputeNode from, RawComputeNode to) {
         if (from == to)
             return "st";
 
@@ -141,7 +141,7 @@ public class RawChip {
 
     // Same as getDirection(ComputeNode from, ComputeNode to) except returns
     // SwitchOPort
-    public SwitchOPort getOPort(ComputeNode from, ComputeNode to) {
+    public SwitchOPort getOPort(RawComputeNode from, RawComputeNode to) {
         System.out.println("Get Out: " + from + " " + to);
         if (from == to)
             return SwitchOPort.CSTI;
@@ -169,7 +169,7 @@ public class RawChip {
 
     // Same as getOPort(ComputeNode from, ComputeNode to) except use static net
     // 2
-    public SwitchOPort getOPort2(ComputeNode from, ComputeNode to) {
+    public SwitchOPort getOPort2(RawComputeNode from, RawComputeNode to) {
         System.out.println("Get Out: " + from + " " + to);
         if (from == to)
             return SwitchOPort.CSTI2;
@@ -197,7 +197,7 @@ public class RawChip {
 
     // Same as getDirection(ComputeNode from, ComputeNode to) except returns
     // SwitchIPort
-    public SwitchIPort getIPort(ComputeNode from, ComputeNode to) {
+    public SwitchIPort getIPort(RawComputeNode from, RawComputeNode to) {
         // System.out.println("Get In: "+from+" "+to);
         if (from == to)
             return SwitchIPort.CSTO;
@@ -225,7 +225,7 @@ public class RawChip {
 
     // Same as getIPort2(ComputeNode from, ComputeNode to) except returns static
     // net 2 port
-    public SwitchIPort getIPort2(ComputeNode from, ComputeNode to) {
+    public SwitchIPort getIPort2(RawComputeNode from, RawComputeNode to) {
         // System.out.println("Get In: "+from+" "+to);
         if (from == to)
             return SwitchIPort.CSTO;
@@ -321,7 +321,7 @@ public class RawChip {
      * @param tile2
      * @return True if <pre>tile1</pre> neighbors <pre>tile2</pre>.
      */
-    public boolean areNeighbors(ComputeNode tile1, ComputeNode tile2) {
+    public boolean areNeighbors(RawComputeNode tile1, RawComputeNode tile2) {
         if (tile1 == tile2)
             return false;
         if (tile1.getY() == tile2.getY())
@@ -338,7 +338,7 @@ public class RawChip {
      * get the direction in X from src to dst, -1 for west 0 for same X, and 1
      * for east
      **************************************************************************/
-    public int getXDir(ComputeNode src, ComputeNode dst) {
+    public int getXDir(RawComputeNode src, RawComputeNode dst) {
         if (dst.getX() - src.getX() < 0)
             return -1;
         if (dst.getX() - src.getX() > 0)
@@ -350,7 +350,7 @@ public class RawChip {
      * get the direction in Y from src to dst, -1 for North 0 for same and 1 for
      * south.
      */
-    public int getYDir(ComputeNode src, ComputeNode dst) {
+    public int getYDir(RawComputeNode src, RawComputeNode dst) {
         if (dst.getY() - src.getY() < 0)
             return -1;
         if (dst.getY() - src.getY() > 0)
@@ -380,7 +380,7 @@ public class RawChip {
             assert false : "Calling getTile() with a bad direction char.";
         
         //get the node in the specified direction...        
-        ComputeNode node =  
+        RawComputeNode node =  
             getComputeNode(tile.getX() + dirX , tile.getY() + dirY);
         
         //now if it is a tile, return it, otherwise return null
@@ -395,8 +395,8 @@ public class RawChip {
      * @param n2
      * @return The hops between <pre>n1</pre> and <pre>n2</pre>.
      */
-    public int manhattanDistance(ComputeNode n1, 
-            ComputeNode n2) {
+    public int manhattanDistance(RawComputeNode n1, 
+            RawComputeNode n2) {
         //now compute the manhattan distance from the source and from the
         //dest
         int dist = Math.abs(n1.getX() - n2.getX()) + 

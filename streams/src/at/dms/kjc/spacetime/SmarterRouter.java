@@ -20,10 +20,10 @@ public class SmarterRouter implements Router {
         this.rawChip = chip;
     }
     
-    public LinkedList<ComputeNode> getRoute(ComputeNode src, ComputeNode dst) {
+    public LinkedList<RawComputeNode> getRoute(RawComputeNode src, RawComputeNode dst) {
         //set this to the dst if the dst is an IODevice so we can
         //add it to the end of the route
-        ComputeNode realDst = null, realSrc = null;
+        RawComputeNode realDst = null, realSrc = null;
     
         //we cannot route between IODevices so first route to neighbor
         if (src instanceof IODevice) {
@@ -57,7 +57,7 @@ public class SmarterRouter implements Router {
      */
     private RouteAndHopWork findBestRoute(RawTile src, RawTile dst) 
     {
-        LinkedList<ComputeNode> route = new LinkedList<ComputeNode>();
+        LinkedList<RawComputeNode> route = new LinkedList<RawComputeNode>();
     
 
         //if the source == dst just add the dest and return, the end of the recursion
@@ -73,11 +73,11 @@ public class SmarterRouter implements Router {
         //initialize the work count to a large integer that can never be 
         //obtained
         RouteAndHopWork takeX = 
-            new RouteAndHopWork(new LinkedList<ComputeNode>(),
+            new RouteAndHopWork(new LinkedList<RawComputeNode>(),
                                       Integer.MAX_VALUE);
     
         RouteAndHopWork takeY = 
-            new RouteAndHopWork(new LinkedList<ComputeNode>(),
+            new RouteAndHopWork(new LinkedList<RawComputeNode>(),
                                       Integer.MAX_VALUE);
 //      only try the x direction if we need to route in that direction
         if (xDir != 0) {
@@ -107,7 +107,7 @@ public class SmarterRouter implements Router {
     }
     
     
-    public int distance(ComputeNode src, ComputeNode dst) {
+    public int distance(RawComputeNode src, RawComputeNode dst) {
         return getRoute(src, dst).size();
     }
    
@@ -116,9 +116,9 @@ public class SmarterRouter implements Router {
 
 class RouteAndHopWork {
     public int hopWork;
-    public LinkedList<ComputeNode> route;
+    public LinkedList<RawComputeNode> route;
 
-    public RouteAndHopWork(LinkedList<ComputeNode> r, int hw) {
+    public RouteAndHopWork(LinkedList<RawComputeNode> r, int hw) {
         this.route = r;
         this.hopWork = hw;
     }

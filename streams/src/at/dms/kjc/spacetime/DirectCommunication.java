@@ -232,7 +232,7 @@ public class DirectCommunication extends RawExecutionCode
      * generated code.
      * <p>
      * This does not include the call to the init function of the filter.
-     * That is done in {@link ComputeCodeStore#addInitFunctionCall}. 
+     * That is done in {@link RawComputeCodeStore#addInitFunctionCall}. 
      * 
      * @return The method that implements the init stage for this filter.
      */

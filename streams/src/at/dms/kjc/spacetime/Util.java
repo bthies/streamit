@@ -7,6 +7,7 @@ import at.dms.kjc.sir.*;
 import at.dms.util.Utils;
 import java.util.Collection;
 //import at.dms.kjc.sir.lowering.*;
+import at.dms.kjc.slicegraph.ComputeNode;
 import at.dms.kjc.slicegraph.Edge;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
@@ -213,7 +214,7 @@ public class Util {
      * @return True if <pre>trace</pre> has a filter that is mapped to <pre>tile</pre>.
      */
     public static boolean doesSliceUseTile(Slice slice, 
-            RawTile tile, Layout layout) {
+            ComputeNode tile, Layout layout) {
         SliceNode node = slice.getHead().getNext();
         //cycle thru the nodes and see if we can find a match 
         //of the coordinates for the tile and a filter trace

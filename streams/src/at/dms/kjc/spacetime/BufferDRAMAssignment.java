@@ -13,7 +13,6 @@ import java.util.Set;
 
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.slicegraph.*;
-import at.dms.kjc.slicegraph.Edge;  // for some reason javac 1.5.0_01 was not getting Edge from at.dms.kjc.slicegraph.*
 
 /**
  * This class will assign the offchip-rotating buffers to DRAM banks of the
@@ -232,7 +231,7 @@ public class BufferDRAMAssignment {
      * @param tile The raw tile.
      * @return the home DRAM that is controlled by tile.
      */
-    private StreamingDram getHomeDevice(RawTile tile) {
+    private StreamingDram getHomeDevice(ComputeNode tile) {
         return LogicalDramTileMapping.getHomeDram(tile);
     }
     
@@ -335,7 +334,7 @@ public class BufferDRAMAssignment {
         
         //if we are splitting this output then assign the intraslicebuffer
         //to the home base of the dest filter
-        RawTile tile = layout.getTile(output.getPrevFilter());
+        ComputeNode tile = layout.getTile(output.getPrevFilter());
         IntraSliceBuffer buf = IntraSliceBuffer.getBuffer(output.getPrevFilter(), output);
         buf.setDRAM(getHomeDevice(tile));
         buf.setStaticNet(tile == getHomeDevice(tile).getNeighboringTile());
@@ -351,7 +350,7 @@ public class BufferDRAMAssignment {
     private void singleOutputAssignment(OutputSliceNode output) {
 
         //get the upstream tile
-        RawTile upTile = layout.getTile(output.getPrevFilter());
+        ComputeNode upTile = layout.getTile(output.getPrevFilter());
         //the downstream slice is a single input slice
         IntraSliceBuffer buf = IntraSliceBuffer.getBuffer(output.getPrevFilter(), 
                 output);
@@ -369,7 +368,7 @@ public class BufferDRAMAssignment {
         if (output.getSingleEdge().getDest().oneInput()) {
           
             //get the tile that the downstream filter is assigned to
-            RawTile dsTile = layout.getTile(output.getSingleEdge().getDest().getNextFilter());   
+            ComputeNode dsTile = layout.getTile(output.getSingleEdge().getDest().getNextFilter());   
             buf.setDRAM(getHomeDevice(dsTile));
             
             //should we use the dynamic network
@@ -555,7 +554,7 @@ public class BufferDRAMAssignment {
     private void inputFilterAssignment(InputSliceNode input) {
         FilterSliceNode filter = input.getNextFilter();
         
-        RawTile tile = layout.getTile(filter);
+        ComputeNode tile = layout.getTile(filter);
         // the neighboring dram of the tile we are assigning this buffer to
         StreamingDram dram = getHomeDevice(tile);
         // assign the buffer to the dram

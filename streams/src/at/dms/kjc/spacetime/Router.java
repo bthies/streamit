@@ -5,7 +5,7 @@ import at.dms.util.Utils;
 
 public interface Router
 {
-    public LinkedList<ComputeNode> getRoute(ComputeNode src, ComputeNode dst);
-    public int distance(ComputeNode src, ComputeNode dst); 
+    public LinkedList<RawComputeNode> getRoute(RawComputeNode src, RawComputeNode dst);
+    public int distance(RawComputeNode src, RawComputeNode dst); 
 }
 

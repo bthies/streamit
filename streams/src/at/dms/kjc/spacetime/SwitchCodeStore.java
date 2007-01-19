@@ -93,11 +93,11 @@ public class SwitchCodeStore {
     //create the header of a switch loop on all the tiles in <pre>tiles</pre> and 
     //first send mult from the compute processor to the switch
     //returns map of tile->Label
-    public static HashMap<RawTile, Label> switchLoopHeader(HashSet<ComputeNode> tiles, int mult, boolean init, boolean primePump) 
+    public static HashMap<RawTile, Label> switchLoopHeader(HashSet<RawComputeNode> tiles, int mult, boolean init, boolean primePump) 
     {
         assert mult > 1;
         HashMap<RawTile, Label> labels = new HashMap<RawTile, Label>();
-        Iterator<ComputeNode> it = tiles.iterator();
+        Iterator<RawComputeNode> it = tiles.iterator();
         while (it.hasNext()) {
             RawTile tile = (RawTile)it.next();
             Util.sendConstFromTileToSwitch(tile, mult - 1, init, primePump, SwitchReg.R2);
@@ -127,18 +127,18 @@ public class SwitchCodeStore {
     
     
     //return a list of all the raw tiles used in routing from source to dests
-    public static HashSet<ComputeNode> getTilesInRoutes(Router router, ComputeNode source, ComputeNode[] dests) 
+    public static HashSet<RawComputeNode> getTilesInRoutes(Router router, RawComputeNode source, RawComputeNode[] dests) 
     {
-        HashSet<ComputeNode> tiles = new HashSet<ComputeNode>();
+        HashSet<RawComputeNode> tiles = new HashSet<RawComputeNode>();
 
         for (int i = 0; i < dests.length; i++) {
-            ComputeNode dest = dests[i];
+            RawComputeNode dest = dests[i];
 
             LinkedList route = router.getRoute(source, dest);
 
             Iterator it = route.iterator();
             while (it.hasNext()) {
-                ComputeNode current = (ComputeNode)it.next();
+                RawComputeNode current = (RawComputeNode)it.next();
                 if (current instanceof RawTile) {
                     tiles.add(current);
                 }
@@ -162,28 +162,28 @@ public class SwitchCodeStore {
      * 2 is steady-state
      */
     public static void generateSwitchCode(Router router, 
-            ComputeNode source, ComputeNode[] dests,
+            RawComputeNode source, RawComputeNode[] dests,
             int stage)
     {
         RouteIns[] ins = new RouteIns[source.getRawChip().getXSize() *
                                       source.getRawChip().getYSize()];
     
         for (int i = 0; i < dests.length; i++) {
-            ComputeNode dest = dests[i];
+            RawComputeNode dest = dests[i];
         
-            LinkedList<ComputeNode> route = router.getRoute(source, dest);
+            LinkedList<RawComputeNode> route = router.getRoute(source, dest);
             //append the dest again to the end of route 
             //so we can place the item in the processor queue
             route.add(dest);
-            Iterator<ComputeNode> it = route.iterator();
+            Iterator<RawComputeNode> it = route.iterator();
             if (!it.hasNext()) {
                 System.err.println("Warning sending item to itself");
                 continue;
             }
         
-            ComputeNode prev = it.next();
-            ComputeNode current = prev;
-            ComputeNode next;
+            RawComputeNode prev = it.next();
+            RawComputeNode current = prev;
+            RawComputeNode next;
         
             while (it.hasNext()) {
                 next = it.next();

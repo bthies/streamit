@@ -32,7 +32,7 @@ import at.dms.kjc.slicegraph.FilterInfo;
  * calculating and retrieving the init, prime pump, and steady-state methods
  * for the given filter of the slice that this object is used for. 
  * 
- * {@link at.dms.kjc.spacetime.ComputeCodeStore} uses this when it is 
+ * {@link at.dms.kjc.spacetime.RawComputeCodeStore} uses this when it is 
  * constructing each tile's compute code.
  * 
  * @author mgordon
@@ -448,7 +448,7 @@ public class BufferedCommunication extends RawExecutionCode
      * generated code.
      * <p>
      * This does not include the call to the init function of the filter.
-     * That is done in {@link ComputeCodeStore#addInitFunctionCall}. 
+     * That is done in {@link RawComputeCodeStore#addInitFunctionCall}. 
      * 
      * @return The method that implements the init stage for this filter.
      */

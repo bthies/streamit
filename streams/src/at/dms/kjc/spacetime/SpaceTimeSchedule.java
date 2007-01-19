@@ -13,7 +13,7 @@ import at.dms.kjc.slicegraph.Slice;
  * including both the steady state and the initialization stage.
  * It is operated on by other classes to generate these schedules.
  * 
- * See {@link BasicSpaceTimeSchedule} for scehdule itself.
+ * See {@link BasicSpaceTimeSchedule} for schedule itself.
  * This class combines the schedule with a rawChip and a Partitioner
  * for easy scheduling on RAW.
  * 

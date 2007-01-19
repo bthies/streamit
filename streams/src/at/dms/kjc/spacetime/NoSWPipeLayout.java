@@ -6,6 +6,7 @@ package at.dms.kjc.spacetime;
 import java.util.*;
 
 import at.dms.kjc.common.*;
+import at.dms.kjc.slicegraph.ComputeNode;
 import at.dms.kjc.slicegraph.DataFlowOrder;
 import at.dms.kjc.slicegraph.Edge;
 import at.dms.kjc.slicegraph.FilterSliceNode;
@@ -123,7 +124,7 @@ public class NoSWPipeLayout extends SimulatedAnnealing implements Layout {
                     continue;
                 FilterSliceNode upStream = edge.getSrc().getPrevFilter();
                 
-                RawTile upTile = getTile(upStream);
+                ComputeNode upTile = getTile(upStream);
                 assert endTime.containsKey(upStream);
                 if (endTime.get(upStream).doubleValue() > maxDepStartTime)
                     maxDepStartTime = endTime.get(upStream).doubleValue();

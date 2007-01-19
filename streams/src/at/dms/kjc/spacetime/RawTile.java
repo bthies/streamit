@@ -13,7 +13,7 @@ import java.util.Vector;
  * @author mgordon
  *
  */
-public class RawTile extends ComputeNode {
+public class RawTile extends RawComputeNode {
     private int tileNumber;
 
     /** true if this tile has switch code */
@@ -27,19 +27,11 @@ public class RawTile extends ComputeNode {
 
     private SwitchCodeStore switchCode;
 
-    private ComputeCodeStore computeCode;
-
     private StreamingDram dram;
 
     private IODevice[] IODevices;
 
     private HashSet<OffChipBuffer> offChipBuffers;
-
-    private Vector<FilterSliceNode> initFilters;
-
-    private Vector<FilterSliceNode> primepumpFilters;
-
-    private Vector<FilterSliceNode> steadyFilters;
 
     public RawTile(int x, int y, RawChip rawChip) {
         super(rawChip);
@@ -50,12 +42,9 @@ public class RawTile extends ComputeNode {
         mapped = false;
         switches = false;
         switchCode = new SwitchCodeStore(this);
-        computeCode = new ComputeCodeStore(this);
+        computeCode = new RawComputeCodeStore(this);
         IODevices = new IODevice[0];
         offChipBuffers = new HashSet<OffChipBuffer>();
-        initFilters = new Vector<FilterSliceNode>();
-        primepumpFilters = new Vector<FilterSliceNode>();
-        steadyFilters = new Vector<FilterSliceNode>();
     }
 
     public String toString() {
@@ -141,10 +130,6 @@ public class RawTile extends ComputeNode {
         return switchCode;
     }
 
-    public ComputeCodeStore getComputeCode() {
-        return computeCode;
-    }
-
     // this is set by SwitchCodeStore
     public void setSwitches() {
         switches = true;
@@ -188,25 +173,6 @@ public class RawTile extends ComputeNode {
             for (int x = 0; x < chip.getXSize(); x++)
                 for (int y = 0; y < chip.getYSize(); y++)
                     chip.getTile(x, y).printDram();
-    }
-
-    public void addFilterTrace(boolean init, boolean primepump,
-                               FilterSliceNode filter) {
-        if (init)
-            initFilters.add(filter);
-        else if (primepump)
-            primepumpFilters.add(filter);
-        else
-            steadyFilters.add(filter);
-    }
-
-    public Vector<FilterSliceNode> getFilters(boolean init, boolean primepump) {
-        if (init)
-            return initFilters;
-        else if (primepump)
-            return primepumpFilters;
-        else
-            return steadyFilters;
     }
 
     public Vector<RawTile> getNeighborTiles() {

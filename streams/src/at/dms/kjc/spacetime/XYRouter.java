@@ -15,13 +15,13 @@ public class XYRouter implements Router {
    
     //return the route from src to dest (including both)
     //first x then y
-    public LinkedList<ComputeNode> getRoute(ComputeNode src, ComputeNode dst) 
+    public LinkedList<RawComputeNode> getRoute(RawComputeNode src, RawComputeNode dst) 
     {
-        LinkedList<ComputeNode> route = new LinkedList<ComputeNode>();
+        LinkedList<RawComputeNode> route = new LinkedList<RawComputeNode>();
         RawChip chip = src.getRawChip();
         //set this to the dst if the dst is an IODevice so we can
         //add it to the end of the route
-        ComputeNode realDst = null;
+        RawComputeNode realDst = null;
     
         //route x then y
         route.add(src);
@@ -81,7 +81,7 @@ public class XYRouter implements Router {
         return route;
     }
     
-    public int distance(ComputeNode src, ComputeNode dst) 
+    public int distance(RawComputeNode src, RawComputeNode dst) 
     {  //return the manhattan distance for the simple router above
         return getRoute(src, dst).size();
     }

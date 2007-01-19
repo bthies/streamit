@@ -17,12 +17,18 @@ import at.dms.util.Utils;
 public class DataFlowOrder {
     
     /**
-     * Generate a list of slices in data-flow order (don't add I/O slices to the traversal).
-     * 
+     * Generate a list of slices in data-flow order.
+     * <p>
+     * TODO: need to add markers for feedbackloops in original graph.
+     * Order would be: (1) fake node with just a preWork to push enqueued.
+     * (2) The body in order.  (3) The loop in order.
+     * (one (bad) model would be {@link at.dms.kjc.cluster.DiscoverSchedule}.)
+     * </p>
      * @param topSlices The slice forest.
-     * 
      * @return A LinkedList of slices in data-flow order
      */
+//  (don't add I/O slices to the traversal).  // no longer true
+
     public static LinkedList<Slice> getTraversal(Slice[] topSlices) {
         LinkedList<Slice> schedule = new LinkedList<Slice>();
         HashSet<Slice> visited = new HashSet<Slice>();
@@ -33,18 +39,13 @@ public class DataFlowOrder {
                 Slice slice = queue.removeFirst();
                 if (!visited.contains(slice)) {
                     visited.add(slice);
-                    Iterator dests = slice.getTail().getDestSet().iterator();
-                    while (dests.hasNext()) {
-                        Slice current = ((Edge) dests.next()).getDest()
-                            .getParent();
+                    for (Edge destEdge : slice.getTail().getDestSet()) {
+                        Slice current = destEdge.getDest().getParent();
                         if (!visited.contains(current)) {
                             // only add if all sources has been visited
-                            Iterator sources = current.getHead().getSourceSet()
-                                .iterator();
                             boolean addMe = true;
-                            while (sources.hasNext()) {
-                                if (!visited.contains(((Edge) sources.next())
-                                                      .getSrc().getParent())) {
+                            for (Edge oneSource : current.getHead().getSourceSet()) {
+                                if (!visited.contains(oneSource.getSrc().getParent())) {
                                     addMe = false;
                                     break;
                                 }

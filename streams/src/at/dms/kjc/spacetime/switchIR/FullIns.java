@@ -2,22 +2,22 @@ package at.dms.kjc.spacetime.switchIR;
 
 import java.util.*;
 import at.dms.util.Utils;
-import at.dms.kjc.spacetime.RawTile;
+import at.dms.kjc.slicegraph.ComputeNode;
 
 //SwitchProcessorIns to Route Instructions
 public class FullIns extends SwitchProcessorIns {
     private SwitchProcessorIns procIns;
     private Vector<SwitchSrc> srcs;
     private ArrayList<SwitchOPort> dests;
-    private RawTile tile;
+    private ComputeNode tile;
     
-    public FullIns(RawTile tile) {
+    public FullIns(ComputeNode tile) {
         this.tile=tile;
         srcs=new Vector<SwitchSrc>();
         dests=new ArrayList<SwitchOPort>();
     }
     
-    public FullIns(RawTile tile,SwitchProcessorIns procIns) {
+    public FullIns(ComputeNode tile,SwitchProcessorIns procIns) {
         this.tile=tile;
         this.procIns=procIns;
         srcs=new Vector<SwitchSrc>();

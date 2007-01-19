@@ -16,13 +16,13 @@ public class RandomRouter implements Router {
     
     //return the route from src to dest (including both)
     //first x then y
-    public LinkedList<ComputeNode> getRoute(ComputeNode src, ComputeNode dst) 
+    public LinkedList<RawComputeNode> getRoute(RawComputeNode src, RawComputeNode dst) 
     {
-        LinkedList<ComputeNode> route = new LinkedList<ComputeNode>();
+        LinkedList<RawComputeNode> route = new LinkedList<RawComputeNode>();
         RawChip chip = src.getRawChip();
         //set this to the dst if the dst is an IODevice so we can
         //add it to the end of the route
-        ComputeNode realDst = null;
+        RawComputeNode realDst = null;
     
         //route x then y
         route.add(src);
@@ -46,7 +46,7 @@ public class RandomRouter implements Router {
         if (src == null || dst == null)
             Utils.fail("Trying to route from/to null");
 
-        ComputeNode current = src;
+        RawComputeNode current = src;
         //while we have a decision, choose it randomly
         while (chip.getXDir(current, dst) != 0 &&
                 chip.getYDir(current, dst) != 0) {
@@ -83,7 +83,7 @@ public class RandomRouter implements Router {
         return route;
     }
     
-    public int distance(ComputeNode src, ComputeNode dst) 
+    public int distance(RawComputeNode src, RawComputeNode dst) 
     {  //return the manhattan distance for the simple router above
         return getRoute(src, dst).size();
     }

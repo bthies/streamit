@@ -7,6 +7,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 
+import at.dms.kjc.slicegraph.ComputeNode;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.slicegraph.SliceNode;
@@ -84,7 +85,7 @@ public class ManualSliceLayout implements Layout {
         // the tile number we are assigning
         int tileNumber;
         String str = "";
-        RawTile tile;
+        ComputeNode tile;
         
         System.out.println("Enter layout for trace: " + slice);
         

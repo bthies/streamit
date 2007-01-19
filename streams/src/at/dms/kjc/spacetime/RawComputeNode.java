@@ -15,7 +15,7 @@ import at.dms.kjc.*;
  * @author mgordon
  *
  */
-public abstract class ComputeNode 
+public class RawComputeNode extends at.dms.kjc.slicegraph.ComputeNode<RawComputeCodeStore>
 {
     /** the x coordinate */
     protected int X;
@@ -29,7 +29,7 @@ public abstract class ComputeNode
      * 
      * @param chip The parent RawChip.
      */
-    public ComputeNode(RawChip chip) 
+    public RawComputeNode(RawChip chip) 
     {
         this.rawChip = chip;
     }

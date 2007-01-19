@@ -1,10 +1,10 @@
 package at.dms.kjc.spacetime;
 
 import java.io.FileWriter;
-import java.util.Vector;
 import java.util.Iterator;
 import java.util.HashMap;
-import at.dms.kjc.common.*;
+import at.dms.kjc.slicegraph.ComputeNode;
+import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.FilterInfo;
 import at.dms.kjc.slicegraph.SliceNode;
 import at.dms.kjc.slicegraph.Util;
@@ -35,7 +35,7 @@ public class LayoutDot
         while (nodes.hasNext()) {
             SliceNode node = nodes.next();
             if (node.isFilterSlice()) {
-                RawTile tile = 
+                ComputeNode tile = 
                     layout.getTile(node.getAsFilter());
                 assignment.put(node, tile);
             }
@@ -73,27 +73,24 @@ public class LayoutDot
                     fw.write("TILE " + tile.getTileNumber() + "(" + tile.getX() +
                              ", " + tile.getY() + ")\\n");
                     fw.write("Init:\\n");
-                    for (int t = 0; t < tile.getFilters(true, false).size(); t++) {
-                        FilterInfo fi = 
-                            FilterInfo.getFilterInfo(tile.getFilters(true, false).get(t));
+                    for (SliceNode fs : tile.getSliceNodes(true, false)) {
+                        FilterInfo fi = FilterInfo.getFilterInfo((FilterSliceNode)fs);
             
                         fw.write(fi.filter.toString() + "(" + 
                                  fi.initMult + ")\\n");
                     }
             
                     fw.write("Prime Pump:\\n");
-                    for (int t = 0; t < tile.getFilters(false, true).size(); t++) {
-                        FilterInfo fi = 
-                            FilterInfo.getFilterInfo(tile.getFilters(false, true).get(t));
+                    for (SliceNode fs : tile.getSliceNodes(false, true)) {
+                        FilterInfo fi = FilterInfo.getFilterInfo((FilterSliceNode)fs);
             
                         fw.write(fi.filter.toString() + "(" + 
                                  spaceTime.getPrimePumpTotalMult(fi) + ")\\n");
                     }
             
                     fw.write("Steady:\\n");
-                    for (int t = 0; t < tile.getFilters(false, false).size(); t++) {
-                        FilterInfo fi = 
-                            FilterInfo.getFilterInfo(tile.getFilters(false, false).get(t));
+                    for (SliceNode fs : tile.getSliceNodes(false, false)) {
+                        FilterInfo fi = FilterInfo.getFilterInfo((FilterSliceNode)fs);
             
                         fw.write(fi.filter.toString() + "(" + 
                                  fi.steadyMult + ")\\n");

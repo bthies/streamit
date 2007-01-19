@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import at.dms.kjc.*;
 import at.dms.kjc.common.CommonUtils;
+import at.dms.kjc.slicegraph.ComputeNode;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.OutputSliceNode;
@@ -24,7 +25,7 @@ import at.dms.kjc.slicegraph.SliceNode;
  */
 public abstract class OffChipBuffer {
     /** The sending or receiving tile*/
-    protected RawTile owner;
+    protected ComputeNode owner;
     /** unique ident for the buffer */
     protected String ident;
     protected static int unique_id;

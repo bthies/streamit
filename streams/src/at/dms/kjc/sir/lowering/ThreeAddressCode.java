@@ -57,6 +57,27 @@ import streamit.misc.Pair;
  */
 public class ThreeAddressCode {
     
+    /** If using  ThreeAddressCode to convert just parts of the code
+     *  you will want to override ThreeAddressExpressionCheck 
+     */
+    protected final Set<JExpression> exprsToExpand;
+    
+    /**
+     * Statement on latest call to shouldConvertStatement.
+     * If you override shouldConvertStatement, keep this up-to-date.
+     * Is final, and value is kept as a one-element array in case
+     * it is needed in an inner class.
+     */
+    protected final JStatement[] statementBeingChecked = {null};
+    
+    /**
+     * Constructor, initializes @{link #exprsToExpand}.
+     */
+    public ThreeAddressCode() {
+        exprsToExpand = new HashSet<JExpression> ();
+    }
+    
+    
     /**
      * Turn all filters in stream into three-address code.
      * @param str : stream in which all filters are processed.
@@ -123,34 +144,42 @@ public class ThreeAddressCode {
     }
     
     /**
-     * Determine whether to convert a statment to 3-address code.
+     * Determine whether to convert a statement to 3-address code.
      * <br/>
      * Should be overridable for your needs, but you are more likely to override 
      * shouldConvertExpression(JExpression).
      * 
      * Returns that a statement should be converted if any expression directly
      * under the statement in the AST should be converted.  For instance, a "for"
-     * statement should be cinverted if its initialization of check needs conversion;
+     * statement should be converted if its initialization of check needs conversion;
      * but does not check the sub-statements that are the "for" body or the update, 
      * since these could be converted directly.
+     * 
+     * If overriding, make sure that you keep statementBeingChecked[0] up-to-date.
+     * 
+     * One statement that you may want to override: ExpressionListStatement should
+     * be converted unless it has a single expression which is simple or should
+     * not be converted. 
      * 
      * @param exp : Statement to check as to whether to convert to 3-address code.
      * @return true : override this to return what you need.
      */
     protected boolean shouldConvertStatement(JStatement stmt) {
+        statementBeingChecked[0] = stmt;
+
         // statements mixing other statements and expressions:
         // just check if the top-level expressions need conversion
         if (stmt instanceof JIfStatement) {
             JExpression cond = ((JIfStatement)stmt).getCondition();
-            return ! simpleExpression(cond) && shouldConvertExpression(cond);
+            return shouldConvertTopExpression(cond);
         }
         if (stmt instanceof JWhileStatement) {
             JExpression cond = ((JWhileStatement)stmt).getCond();
-            return ! simpleExpression(cond) && shouldConvertExpression(cond);
+            return shouldConvertTopExpression(cond);
         }
         if (stmt instanceof JDoStatement) {
             JExpression cond = ((JDoStatement)stmt).getCondition();
-            return ! simpleExpression(cond) && shouldConvertExpression(cond);
+            return shouldConvertTopExpression(cond);
       
         }
         if (stmt instanceof JForStatement) {
@@ -159,59 +188,108 @@ public class ThreeAddressCode {
             // TODO: check. if code generation handles a CompoundStatement in 'init' then no need to convert whole 'for'
             JStatement init = forstmt.getInit();
             JStatement incr = forstmt.getIncrement();
-            if (! simpleExpression(cond) && shouldConvertExpression(cond)) { return true; }
+            if (shouldConvertTopExpression(cond)) { 
+                return true; 
+            }
             return shouldConvertStatement(init) || shouldConvertStatement(incr);
+//            // expanded below for breakpoints when debugging
+//            if (shouldConvertStatement(init)) {
+//                return true;
+//            }
+//            if (shouldConvertStatement(incr)) {
+//                return true;
+//            }
+//            return false;
         }
         if (stmt instanceof JExpressionStatement) {
             // often in init or incl position of a 'for' statement.
             JExpression expr = ((JExpressionStatement)stmt).getExpression();
-            return ! simpleExpression(expr) && shouldConvertExpression(expr);
+            return shouldConvertTopExpression(expr);
         }
         if (stmt instanceof JVariableDeclarationStatement) {
-            // occurs in init of for: if simple enough don't convert.
-            JVariableDefinition[] vars = ((JVariableDeclarationStatement)stmt).getVars();
-            if (vars.length == 1) {
-                JVariableDefinition var = vars[0];
-                if (var.getValue() == null) {
-                    return false;
-                } else {
-                    JExpression ini = var.getValue();
-                    return ! simpleExpression(ini) && shouldConvertExpression(ini); 
-                } 
-            } else {
-                return true; // complex enough to not affect to many for statements.
+            // convert JVariableDeclarationStatement if any initializer
+            // needs to be converted.
+            boolean needToConvert = false;
+            for (JVariableDefinition def : ((JVariableDeclarationStatement)stmt).getVars()) {
+                JExpression initial = def.getValue();
+                needToConvert |= (initial != null && shouldConvertTopExpression(def.getValue()));
             }
+            return needToConvert;
+        }
+        if (stmt instanceof JExpressionListStatement) {
+            JExpression[] exprs = ((JExpressionListStatement)stmt).getExpressions();
+            return exprs.length != 1
+             || shouldConvertTopExpression(exprs[0]);
         }
         // mark all others to require conversion, and let calls in S
-        // to shouldConvertExpression sort out what actually needs conversion.
+        // to shouldConvertTopExpression sort out what actually needs conversion.
         return true;
     }
- 
+     
+    /**
+     * Determine if should convert expression directly under statement level.
+     * If overriding this statement, you need to pass the expression to a
+     * subclass of ThreeAddressExpressionCheck that (1) clears any old contents
+     * of @{link #exprsToExpand}, (2) Walks the expression and decides whether there are
+     * any expressions that it needs to expand, and (3) adds all such expressions
+     * to @{link #exprsToExpand}.
+     * 
+     * ThreeAddressCode will then call another visitor to expand the expressions to
+     * three-address code.  Note: if you require an expression to be expanded, then 
+     * you should also require all expressions in its context to be expanded, otherwise
+     * ThreeAddressCode may (will) produce incorrect code.
+     * @param expr Expression to check for expansion
+     * @return true if the top-level expression or any subexpressions (recursively) need expanding.
+     */
+    protected boolean shouldConvertTopExpression(JExpression expr) {
+        // case: expression is too simple to ever want to convert.
+        if (simpleExpression(expr)) {
+            return false;
+        }
+        ThreeAddressExpressionCheck markSubexprsToConvert = 
+            new ThreeAddressExpressionCheck(){
+            @Override
+            protected Object preCheck(Stack<JExpression> context, JExpression self) {
+                if (! simpleExpression(self)) {
+                    exprsToExpand.add(self);
+                }
+                return null;
+            }
+        };
+        exprsToExpand.clear();
+        expr.accept(markSubexprsToConvert,new Stack<JExpression>());
+        return ! exprsToExpand.isEmpty();
+    }
     
     /**
      * Determine whether to convert an expression to 3-address code.
      * <br/>
-     * Should be overridable for your needs -- which is the only reason this
-     * class is not static.
+     * Is overridable for your needs, but you are more likely to just
+     * override the shouldConvertTopExpression and leave shouldConvertExpression alone.
      * 
-     * The default case claims that every expression should be converted unless
-     * it is an assignment from a simpleExpression() to a simpleExpression().
+     * The default case claims that every expression in exprsToExpand
+     * should be converted unless it is an assignment from a simpleExpression() 
+     * to a simpleExpression().
      * 
      * @param exp : Expression to check as to whether to convert to 3-address code.
      * @return true : override this to return what you need.
      */
     protected boolean shouldConvertExpression(JExpression exp) {
-        // do not want to xlate "field = simpleexpr" 
-        // into "tmp = simpleexpr; field = tmp"
-        if (exp instanceof JAssignmentExpression) {
-            return ! (simpleExpression(((JAssignmentExpression)exp).getLeft())
-                      && simpleExpression(((JAssignmentExpression)exp).getRight()));
-        }
-        if (exp instanceof JCompoundAssignmentExpression) {
-            return ! (simpleExpression(((JCompoundAssignmentExpression)exp).getLeft())
-                      && simpleExpression(((JCompoundAssignmentExpression)exp).getRight()));
-        }
-        return true;
+//        // do not want to xlate "field = simpleexpr" 
+//        // into "tmp = simpleexpr; field = tmp"
+//        if (exp instanceof JAssignmentExpression) {
+//            return ! (simpleExpression(((JAssignmentExpression)exp).getLeft())
+//                      && simpleExpression(((JAssignmentExpression)exp).getRight()));
+//        }
+//        if (exp instanceof JCompoundAssignmentExpression) {
+//            return ! (simpleExpression(((JCompoundAssignmentExpression)exp).getLeft())
+//                      && simpleExpression(((JCompoundAssignmentExpression)exp).getRight()));
+//        }
+//        if (exp instanceof JParenthesedExpression) {
+//            return shouldConvertExpression(((JParenthesedExpression)exp).getExpr());
+//        }
+//        return true;
+        return exprsToExpand.contains(exp);
     }
 
     /**
@@ -226,15 +304,19 @@ public class ThreeAddressCode {
         if (exp instanceof JLocalVariableExpression) return true;
         if (exp instanceof JNameExpression) return true;
         if (exp instanceof JThisExpression) return true;
+
+        /* In case of accessing arrays / fields of arrays / fields want to decompose outer accesses
+         * so only innermost accesses are considered simple. */
+
         if (exp instanceof JFieldAccessExpression) {
-            return  simpleExpression(((JFieldAccessExpression)exp).getPrefix());
+            return  literalOrVariable(((JFieldAccessExpression)exp).getPrefix());
         }
         if (exp instanceof JClassExpression) {
             return simpleExpression(((JClassExpression)exp).getPrefix());
         }
         if (exp instanceof JArrayAccessExpression) {
-            return simpleExpression(((JArrayAccessExpression)exp).getAccessor())
-                && simpleExpression(((JArrayAccessExpression)exp).getPrefix());
+            return literalOrVariable(((JArrayAccessExpression)exp).getAccessor())
+                && literalOrVariable(((JArrayAccessExpression)exp).getPrefix());
         }
         if (exp instanceof SIRDynamicToken) {
             return true;
@@ -250,6 +332,18 @@ public class ThreeAddressCode {
         return false;
     }
 
+    /**
+     * is an expression a literal or a variable?
+     * @param exp
+     * @return
+     */
+    public boolean literalOrVariable(JExpression exp) {
+        if (exp instanceof JLiteral) return true;
+        if (exp instanceof JLocalVariableExpression) return true;
+        if (exp instanceof JNameExpression) return true;
+        if (exp instanceof JThisExpression) return true;
+        return false;
+    }
 
     private static int lastTemp = 0;
     /**
@@ -262,10 +356,47 @@ public class ThreeAddressCode {
     }
     
     /**
-     * Return list of statements from a single statement by opening up a block body.
-     * Also works with a JCompoundStatement.
-     * <br/>Warning: side effects to statements will show up in original block.
-     * @param maybeBlock a block, or other single statement, or null.
+     * utility to create a statement assigning an expression to a variable.
+     * @param tmp
+     * @param expr
+     * @return
+     */
+    private static final JStatement newAssignment(JLocalVariableExpression tmp,
+            JExpression expr) {
+        return new JExpressionStatement(new JAssignmentExpression(tmp, expr));
+    }
+    
+    /**
+     * utility to create a statement list assigning an expression to a variable.
+     * @param tmp
+     * @param expr
+     * @return
+     */
+    private static final List<JStatement> newAssignmentAsList(JLocalVariableExpression tmp,
+            JExpression expr) {
+        return singletonStatementList(newAssignment(tmp, expr));
+    }
+    
+    /** 
+     * Create a list with a single statement.
+     * The list may be added to, later 
+     * @param s
+     * @return
+     */
+    private static List<JStatement> singletonStatementList(JStatement s) {
+        List<JStatement> stmts = new LinkedList<JStatement>();
+        stmts.add(s);
+        return stmts;
+    }
+
+    
+    /**
+     * Return list of statements from a single statement by opening up a block
+     * body. Also works with a JCompoundStatement. <br/>Warning: side effects to
+     * statements will show up in original block.
+     * 
+     * @param maybeBlock
+     *            a block, or other single statement, or null.
      * @return a list of 0 or more statements.
      */
     public static List<JStatement> destructureOptBlock (JStatement maybeBlock) {
@@ -319,7 +450,7 @@ public class ThreeAddressCode {
      * Copy TokenReference and JavaStyleComments from one statement to another and return the munged statement.
      * @param old   : statement that has TokenReference and JavaStyleComments that we wish to preserve
      * @param newer : statement that will be munged to have old's TokenReference and JavaStyleComments
-     * @return : the munged (newer) statment as a convenience.
+     * @return : the munged (newer) statement as a convenience.
      */
     JStatement setWhereAndComments(JStatement old, JStatement newer) {
         if (old != null) {
@@ -340,12 +471,7 @@ public class ThreeAddressCode {
         public abstract JExpression mk(JExpression oldSelf, JExpression e1, JExpression e2);
     }
    
-    private List<JStatement> singletonStatementList(JStatement s) {
-        List<JStatement> stmts = new LinkedList<JStatement>();
-        stmts.add(s);
-        return stmts;
-    }
-    
+   
    /**
     * Expression visitor.  Only visit when sure that expression requires conversion.
     * E[[expr]](tmp)  ==> list of statements. 
@@ -358,16 +484,19 @@ public class ThreeAddressCode {
         /**
          * Constructor
          */
-        E() { redispatchLiteral = true; }
+        E() {
+            // all subtypes of Literal act as if visiting Literal.
+            redispatchLiteral = true; 
+        }
         
         /**
          * Convert a list of expressions to 3-address code.
-         * Converts using recurrTopExpression.
+         * Converts using recurrTopExpression (creates a new tmp for expression evaluation if converting)
          * @param exprs a list of expressions to convert.
          * @return a Pair of a list of statements to preceed the list and a list of expressions to replace the list.
          */
         
-        Pair<List<JStatement>,List<JExpression>> recurrExpressions(List<JExpression> exprs) {
+        private Pair<List<JStatement>,List<JExpression>>  recurrExpressions (List<JExpression> exprs) {
             List<JStatement> stmts = new LinkedList<JStatement>();
             List<JExpression> newexprs = new LinkedList<JExpression>();
             for (JExpression expr : exprs) {
@@ -380,12 +509,12 @@ public class ThreeAddressCode {
         
         /**
          * Convert an array of expressions to 3-address code.
-         * Converts using recurrTopExpression.
+         * Converts using recurrTopExpression. (creates a new tmp for expression evaluation if converting)
          * @param exprs an array of expressions to convert.
          * @return a Pair of a list of statements to preceed the list and a list of expressions to replace the list.
          */
         
-        Pair<List<JStatement>,List<JExpression>> recurrExpressionsArr(JExpression[] exprs) {
+        private Pair<List<JStatement>,List<JExpression>>  recurrExpressionsArr (JExpression[] exprs) {
             List<JStatement> stmts = new LinkedList<JStatement>();
             List<JExpression> newexprs = new LinkedList<JExpression>();
             for (JExpression expr : exprs) {
@@ -400,16 +529,16 @@ public class ThreeAddressCode {
          * Convert a top-level expression to 3-address code.
          * Checks shouldConvertExpression(expr). 
          * If false returns empty list and passed expression.
-         * If true, creates a temp, and returns statments declaring temp and converting into temp,
+         * If true, creates a temp, and returns statements declaring temp and converting into temp,
          * and returns an expression referencing the created temp.
          * @param an expression to convert.
          * @return a Pair of a list of statements to preceed the converted expression and the converted expression.
          */
         
-        Pair<List<JStatement>,JExpression> recurrTopExpression (JExpression expr) {
+        private Pair<List<JStatement>,JExpression> recurrTopExpression (JExpression expr) {
             List<JStatement> stmts = new LinkedList<JStatement>();
-            if (simpleExpression(expr) || ! shouldConvertExpression(expr)) {
-                return new Pair(stmts,expr);
+            if (! shouldConvertExpression(expr)) {
+                return new Pair<List<JStatement>,JExpression>(stmts,expr);
             } else {
                 JVariableDefinition tmp = new JVariableDefinition(expr.getType(), 
                         nextTemp());
@@ -420,90 +549,69 @@ public class ThreeAddressCode {
                 List<JStatement> newstmts = new LinkedList<JStatement>();
                 newstmts.add(decl);
                 newstmts.addAll(recurrExpression(expr,v));
-                return new Pair(newstmts,v);
+                return new Pair<List<JStatement>,JExpression>(newstmts,v);
             }
         }   
         
         /**
          * Convert an expression to 3-address code.
-         * Checks for simpleExpression() (but not for shouldConvertExpression)
-         * If false returns empty list and passed expression.
-         * If true, creates a temp, and returns statments declaring temp and converting into temp,
-         * and returns an expression referencing the created temp.
          * @param an expression to convert.
-         * @return a Pair of a list of statements to preceed the converted expression and the converted expression.
+         * @param a temporary to get the value of the converted expression.
+         * @return a list of statements to calculate the value of the expression into the temporary.
          */
         
-        List<JStatement> recurrExpression(JExpression expr, JLocalVariableExpression tmp) {
-            if (simpleExpression(expr)) {
-                return singletonStatementList((JStatement)
-                        (new JExpressionStatement(
-                                new JAssignmentExpression(tmp, expr))));
-            } else {
-                return ((List<JStatement>)expr.accept(this,tmp));
-            }
+        private List<JStatement> recurrExpression(JExpression expr, JLocalVariableExpression tmp) {
+            // convenient place to hang a breakpoint on top-level conversion.
+            return ((List<JStatement>)expr.accept(this,tmp));
         }
 
         /**
          * Create statement list for an expression with a single subexpression.
-         * Performs check for simpleExpression and shouldConvertExpression as part of conversion.
+         * Performs shouldConvertExpression as part of conversion.
          * @param tmp : temporary variable that is result of evaluating expression
          * @param subexpr : sub-expression that needs to be translated into statements first.
          * @param expr : the whole expression
          * @param constructor : a C1 with mk overridden to create a new expression of the correct type.
-         * @return List of statments for subexpr, followed by creation of new expression and assignment to tmp
+         * @return List of statements for subexpr, followed by creation of new expression and assignment to tmp
          */
-        List<JStatement> recurrOneExpr(JLocalVariableExpression tmp,
+        private List<JStatement> recurrOneExpr(JLocalVariableExpression tmp,
                 JExpression subexpr, JExpression expr, C1 constructor) {
-            if (simpleExpression(subexpr) || !shouldConvertExpression(subexpr)) {
-                return singletonStatementList((JStatement) 
-                        new JExpressionStatement(
-                                new JAssignmentExpression(tmp, expr)));
+            if (!shouldConvertExpression(expr)) {
+                return newAssignmentAsList(tmp,expr);
             } else {
                 List<JStatement> newstmts = new LinkedList<JStatement>();
-                JExpression v = convertOneExpr(newstmts, subexpr);
+                JExpression v = maybeConvertOneExpr(newstmts, subexpr);
                 JExpression newexpr = constructor.mk(expr,v);
                 newexpr.setType(expr.getType());
-                newstmts.add(new JExpressionStatement(
-                        new JAssignmentExpression(tmp, newexpr)));
+                newstmts.add(newAssignment(tmp, newexpr));
                 return newstmts;
             }
         }
         
         /**
-         * Create statement list for an expression with a single subexpression.
-         * Performs check for simpleExpression and shouldConvertExpression as part of conversion.
+         * Create statement list for an expression with two subexpressions.
+         * Performs check for shouldConvertExpression as part of conversion.
          * @param tmp : temporary variable that is result of evaluating expression
          * @param subexp1 : sub-expression that needs to be translated into statements first.
          * @param subexp2 : sub-expression that needs to be translated into statements first.
          * @param expr : the whole expression
          * @param constructor : a C2 with mk overridden to create a new expression of the correct type.
-         * @return List of statments for subexpr 1,2; followed by creation of new expression and assignment to tmp
+         * @return List of statements for subexpr 1,2; followed by creation of new expression and assignment to tmp
          */
-         List<JStatement> recurrTwoExprs(JLocalVariableExpression tmp,
+         private List<JStatement> recurrTwoExprs(JLocalVariableExpression tmp,
                 JExpression subexp1, JExpression subexp2, JExpression expr, C2 constructor) {
-            boolean convert1 = ! simpleExpression(subexp1) && shouldConvertExpression(subexp1);
-            boolean convert2 = ! simpleExpression(subexp2) && shouldConvertExpression(subexp2);
-            if (! convert1 && ! convert2) {
-                return singletonStatementList((JStatement) 
-                        new JExpressionStatement(
-                                new JAssignmentExpression(tmp, expr)));
+            if (! shouldConvertExpression(expr)) {
+                return newAssignmentAsList(tmp, expr);
             } else {
                 List<JStatement> newstmts = new LinkedList<JStatement>();
 
-                JExpression cvt1 = convert1 ?
-                        convertOneExpr(newstmts,subexp1)
-                        : subexp1;
-                
-                JExpression cvt2 = convert2 ?
-                        convertOneExpr(newstmts,subexp2)
-                        : subexp2;
-                
+                JExpression cvt1 = maybeConvertOneExpr(newstmts,subexp1);
+                JExpression cvt2 = maybeConvertOneExpr(newstmts,subexp2);
+
                 JExpression newexpr = constructor.mk(expr,cvt1,cvt2);
                 newexpr.setType(expr.getType());
                
-                newstmts.add(new JExpressionStatement(
-                        new JAssignmentExpression(tmp, newexpr)));
+                newstmts.add(newAssignment(tmp, newexpr));
                 return newstmts;
             }
         }
@@ -514,7 +622,7 @@ public class ThreeAddressCode {
           * @param exp : JExpression to convert (not null)
           * @return an expression to replace the existing expression.
           */
-         JExpression convertOneExpr(List<JStatement>stmts, JExpression exp) {
+         private JExpression convertOneExpr(List<JStatement>stmts, JExpression exp) {
              JVariableDefinition defn = new JVariableDefinition(exp.getType(), nextTemp());
              JVariableDeclarationStatement decl = 
                  new JVariableDeclarationStatement(defn);
@@ -525,27 +633,39 @@ public class ThreeAddressCode {
          }
          
          /**
+          * Utility: check and convert expression if it should be converted.
+          * @param stmts
+          * @param exp
+          * @return
+          */
+         private JExpression maybeConvertOneExpr(List<JStatement>stmts, JExpression exp) {
+             if (shouldConvertExpression(exp)) {
+                 return convertOneExpr(stmts,exp);
+             } else {
+                 return exp;
+             }
+         }
+         
+         /**
           * Create singleton statement list for an expression with no subexpressions needing conversion.
-          * Performs check for simpleExpression and shouldConvertExpression as part of conversion.
           * @param tmp : temporary variable that is result of evaluating expression
           * @param expr : the expression
           * @return creation of new expression and assignment to tmp
           */
   
-        List<JStatement> recurrBase(JLocalVariableExpression tmp, JExpression expr) {
-            return singletonStatementList((JStatement)
-                    new JExpressionStatement(
-                            new JAssignmentExpression(tmp, expr)));
+        private List<JStatement> recurrBase(JLocalVariableExpression tmp, JExpression expr) {
+            return newAssignmentAsList(tmp, expr);
         }
 
 
-     
+        @Override
         public List<JStatement> visitAdd(JAddExpression self, JLocalVariableExpression tmp) {
             return recurrTwoExprs(tmp,self.getLeft(),self.getRight(),self,
                     new C2(){public JExpression mk(JExpression self, JExpression left, JExpression right)
                     {return new JAddExpression(self.getTokenReference(),left,right);}});                    
         }
 
+        @Override
         public List<JStatement> visitArrayAccess(JArrayAccessExpression self, JLocalVariableExpression tmp) {
             return recurrTwoExprs(tmp,self.getPrefix(), self.getAccessor(),self,
                     new C2(){public JExpression mk(JExpression self, JExpression prefix, JExpression accessor) 
@@ -555,25 +675,27 @@ public class ThreeAddressCode {
 
         // No: we should not do this since will fall outside form of C array initializer if
         // tries to init with temps.  Fix by special case in visitArrayDeclaration.
+        @Override
         public List<JStatement> visitArrayInitializer(JArrayInitializer self, JLocalVariableExpression tmp) {
             JExpression[] elemArray = self.getElems();
             assert false: "Should not descend into array initializer";
             Pair<List<JStatement>,List<JExpression>> elemresults = this.recurrExpressionsArr(elemArray);
             List<JStatement> newstmts = elemresults.getFirst();
             List<JExpression> newelems = elemresults.getSecond();
-            newstmts.add(new JExpressionStatement(
-                    new JAssignmentExpression(tmp, 
+            newstmts.add(newAssignment(tmp, 
                             new JArrayInitializer(self.getTokenReference(),
-                                    newelems.toArray(new JExpression[newelems.size()])))));
+                                    newelems.toArray(new JExpression[newelems.size()]))));
             return newstmts;
         }
 
+        @Override
         public List<JStatement> visitArrayLength(JArrayLengthExpression self, JLocalVariableExpression tmp) {
             return recurrOneExpr(tmp,self.getPrefix(),self,
                     new C1(){public JExpression mk(JExpression self, JExpression prefix) 
                         {return new JArrayLengthExpression(self.getTokenReference(), prefix);}});
         }
 
+        @Override
         public List<JStatement> visitAssignment(JAssignmentExpression self, JLocalVariableExpression tmp) {
             assert false : "Assignment should be handled at statement level";
             return recurrTwoExprs(tmp,self.getLeft(), self.getRight(),self,
@@ -582,16 +704,19 @@ public class ThreeAddressCode {
 
         }
 
+        @Override
         public List<JStatement> visitBinary(JBinaryExpression self, JLocalVariableExpression tmp) {
             assert false : "BinaryExpression should be handled at subtypes";
             return null;
         }
 
+        @Override
         public List<JStatement> visitBinaryArithmetic(JBinaryArithmeticExpression self, JLocalVariableExpression tmp) {
             assert false : "BinaryArithmeticExpression should be handled at subtypes";
             return null;
         }
 
+        @Override
         public List<JStatement> visitBitwise(JBitwiseExpression self, JLocalVariableExpression tmp) {
             return recurrTwoExprs(tmp,self.getLeft(),self.getRight(),self,
                     new C2(){public JExpression mk(JExpression self, JExpression left, JExpression right)
@@ -599,12 +724,14 @@ public class ThreeAddressCode {
                             ((JBitwiseExpression)self).getOper(),left,right);}});                    
         }
 
+        @Override
         public List<JStatement> visitBitwiseComplement(JBitwiseComplementExpression self, JLocalVariableExpression tmp) {
             return recurrOneExpr(tmp,self.getExpr(),self,
                     new C1(){public JExpression mk(JExpression self, JExpression expr) 
                         {return new JBitwiseComplementExpression(self.getTokenReference(), expr);}});
         }
 
+        @Override
         public List<JStatement> visitCast(JCastExpression self, JLocalVariableExpression tmp) {
             return recurrOneExpr(tmp,self.getExpr(),self,
                     new C1(){public JExpression mk(JExpression self, JExpression expr) 
@@ -612,16 +739,19 @@ public class ThreeAddressCode {
                                 ((JCastExpression)self).getType());}});
         }
 
+        @Override
         public List<JStatement> visitChecked(JCheckedExpression self, JLocalVariableExpression tmp) {
             assert false: "Unexpected expression Checked";
             return null;
         }
 
+        @Override
         public List<JStatement> visitClass(JClassExpression self, JLocalVariableExpression tmp) {
             assert false: "Unexpected expression Class";
             return null;
         }
 
+        @Override
         public List<JStatement> visitCompoundAssignment(JCompoundAssignmentExpression self, JLocalVariableExpression tmp) {
             assert false : "CompoundAssignment should be handled at statement level";
             return recurrTwoExprs(tmp,self.getLeft(),self.getRight(),self,
@@ -636,18 +766,19 @@ public class ThreeAddressCode {
          * @param tmp a location for the result of evaluating the expression
          * @return
          */
+        @Override
         public List<JStatement> visitConditional(JConditionalExpression self, JLocalVariableExpression tmp) {
-            JExpression econd = self.getCond();
-            JExpression left = self.getLeft();
-            JExpression right = self.getRight();
-            boolean convertecond = ! simpleExpression(econd) && shouldConvertExpression(econd);
-            boolean convertleft = ! simpleExpression(left) && shouldConvertExpression(left);
-            boolean convertright = ! simpleExpression(right) && shouldConvertExpression(right);
-            
-            if (! (convertecond || convertleft || convertright)) {
+            if (! shouldConvertExpression(self)) {
                 return recurrBase(tmp,self);
             }
 
+            JExpression econd = self.getCond();
+            JExpression left = self.getLeft();
+            JExpression right = self.getRight();
+            boolean convertecond =  shouldConvertExpression(econd);
+            boolean convertleft = shouldConvertExpression(left);
+            boolean convertright = shouldConvertExpression(right);
+            
             List<JStatement> newstmts = new LinkedList<JStatement>();
 
             JExpression cond;
@@ -689,17 +820,17 @@ public class ThreeAddressCode {
          * @param tmp   a boolean variable
          * @return
          */
+        @Override
         public List<JStatement> visitConditionalAnd(JConditionalAndExpression self, JLocalVariableExpression tmp) {
-            JExpression subexp1 = self.getLeft();
-            JExpression subexp2 = self.getRight();
-            boolean convert1 = ! simpleExpression(subexp1) && shouldConvertExpression(subexp1);
-            boolean convert2 = ! simpleExpression(subexp2) && shouldConvertExpression(subexp2);
-            if (! convert1 && ! convert2) {
+            if (! shouldConvertExpression(self)) {
                 // nothing to convert: tmp = self;
-                return singletonStatementList((JStatement) 
-                        new JExpressionStatement(
-                                new JAssignmentExpression(tmp, self)));
+                return newAssignmentAsList(tmp, self);
             } else {
+                JExpression subexp1 = self.getLeft();
+                JExpression subexp2 = self.getRight();
+                boolean convert1 = shouldConvertExpression(subexp1);
+                boolean convert2 = shouldConvertExpression(subexp2);
+
                 List<JStatement> newstmts = new LinkedList<JStatement>();
                 JExpression cond;
                 JStatement elseBranch;
@@ -712,18 +843,13 @@ public class ThreeAddressCode {
                 } else {
                     // no need to convert first => if (subexpr1) then ... else {tmp = false;}
                     cond = subexp1;
-                    elseBranch = 
-                        new JExpressionStatement(
-                                new JAssignmentExpression(tmp,
-                                        new JBooleanLiteral(null,false)));
+                    elseBranch = newAssignment(tmp, new JBooleanLiteral(null,false));
                 }
                 if (convert2) {
                     // second subexpression also converts into tmp.
                     thenBranch = structureOptBlock((List<JStatement>)subexp2.accept(this,tmp));
                 } else {
-                    thenBranch  = 
-                        new JExpressionStatement(
-                                new JAssignmentExpression(tmp,subexp2));
+                    thenBranch = newAssignment(tmp,subexp2);
                 }
                 newstmts.add(
                         new JIfStatement(self.getTokenReference(),cond,thenBranch,elseBranch,null));
@@ -737,17 +863,17 @@ public class ThreeAddressCode {
          * @param tmp   a boolean variable
          * @return
          */
+        @Override
         public List<JStatement> visitConditionalOr(JConditionalOrExpression self, JLocalVariableExpression tmp) {
-            JExpression subexp1 = self.getLeft();
-            JExpression subexp2 = self.getRight();
-            boolean convert1 = ! simpleExpression(subexp1) && shouldConvertExpression(subexp1);
-            boolean convert2 = ! simpleExpression(subexp2) && shouldConvertExpression(subexp2);
-            if (! convert1 && ! convert2) {
+            if (! shouldConvertExpression(self)) {
                 // nothing to convert: tmp = self;
-                return singletonStatementList((JStatement) 
-                        new JExpressionStatement(
-                                new JAssignmentExpression(tmp, self)));
+                return newAssignmentAsList(tmp, self);
             } else {
+                JExpression subexp1 = self.getLeft();
+                JExpression subexp2 = self.getRight();
+                boolean convert1 = ! simpleExpression(subexp1) && shouldConvertExpression(subexp1);
+                boolean convert2 = ! simpleExpression(subexp2) && shouldConvertExpression(subexp2);
+
                 List<JStatement> newstmts = new LinkedList<JStatement>();
                 JExpression cond;
                 JStatement elseBranch;
@@ -760,18 +886,13 @@ public class ThreeAddressCode {
                 } else {
                     // no need to convert first => if (subexpr1) then {tmp = true} else ...
                     cond = subexp1;
-                    thenBranch = 
-                        new JExpressionStatement(
-                                new JAssignmentExpression(tmp,
-                                        new JBooleanLiteral(null,true)));
+                    thenBranch = newAssignment(tmp, new JBooleanLiteral(null,true));
                 }
                 if (convert2) {
                     // second subexpression also converts into tmp.
                     elseBranch = structureOptBlock((List<JStatement>)subexp2.accept(this,tmp));
                 } else {
-                    elseBranch  = 
-                        new JExpressionStatement(
-                                new JAssignmentExpression(tmp,subexp2));
+                    elseBranch = newAssignment(tmp,subexp2);
                 }
                 newstmts.add(
                         new JIfStatement(self.getTokenReference(),cond,thenBranch,elseBranch,null));
@@ -779,25 +900,30 @@ public class ThreeAddressCode {
             }
         }
 
+        @Override
         public List<JStatement> visitConstructorCall(JConstructorCall self, JLocalVariableExpression tmp) {
             assert false: "Unexpected expression ConstructorCall";
             return null;
         }
 
+        @Override
         public List<JStatement> visitCreatePortal(SIRCreatePortal self, JLocalVariableExpression tmp) {
             return recurrBase(tmp,self);
         }
 
+        @Override
         public List<JStatement> visitDivide(JDivideExpression self, JLocalVariableExpression tmp) {
             return recurrTwoExprs(tmp,self.getLeft(),self.getRight(),self,
                     new C2(){public JExpression mk(JExpression self, JExpression left, JExpression right)
                     {return new JDivideExpression(self.getTokenReference(),left,right);}});                    
         }
 
+        @Override
         public List<JStatement> visitDynamicToken(SIRDynamicToken self, JLocalVariableExpression tmp) {
             return recurrBase(tmp,self);
         }
 
+        @Override
         public List<JStatement> visitEquality(JEqualityExpression self, JLocalVariableExpression tmp) {
             return recurrTwoExprs(tmp,self.getLeft(),self.getRight(),self,
                     new C2(){public JExpression mk(JExpression self, JExpression left, JExpression right)
@@ -805,6 +931,7 @@ public class ThreeAddressCode {
                             ((JEqualityExpression)self).getEqual(),left,right);}});                    
         }
 
+        @Override
         public List<JStatement> visitFieldAccess(JFieldAccessExpression self, JLocalVariableExpression tmp) {
             return recurrOneExpr(tmp,self.getPrefix(),self,
                     new C1(){public JExpression mk(JExpression self, JExpression prefix) 
@@ -812,24 +939,29 @@ public class ThreeAddressCode {
                                 self.getIdent());}});
         }
 
+        @Override
         public List<JStatement> visitInstanceof(JInstanceofExpression self, JLocalVariableExpression tmp) {
             assert false: "Unexpected expression Instanceof";
             return null;
         }
 
+        @Override
         public List<JStatement> visitInterfaceTable(SIRInterfaceTable self, JLocalVariableExpression tmp) {
             assert false: "Unexpected expression InterfaceTable";
             return null;
         }
 
+        @Override
         public List<JStatement> visitLiteral(JLiteral self, JLocalVariableExpression tmp) {
             return recurrBase(tmp,self);
         }
 
+        @Override
         public List<JStatement> visitLocalVariable(JLocalVariableExpression self, JLocalVariableExpression tmp) {
             return recurrBase(tmp,self);
         }
 
+        @Override
         public List<JStatement> visitLogicalComplement(JLogicalComplementExpression self, JLocalVariableExpression tmp) {
             return recurrOneExpr(tmp,self.getExpr(),self,
                     new C1(){public JExpression mk(JExpression self, JExpression expr) 
@@ -837,7 +969,12 @@ public class ThreeAddressCode {
         }
 
 
+        @Override
         public List<JStatement> visitMethodCall(JMethodCallExpression self, JLocalVariableExpression tmp) {
+            if (! shouldConvertExpression(self)) {
+                // nothing to convert: tmp = self;
+                return newAssignmentAsList(tmp, self);
+            }
             List<JExpression> exprs = Arrays.asList(self.getArgs());
             Pair<List<JStatement>,List<JExpression>> cvtdexprs = this.recurrExpressions(exprs);
             List<JStatement> newstmts = cvtdexprs.getFirst();
@@ -845,34 +982,42 @@ public class ThreeAddressCode {
             JMethodCallExpression newself = new JMethodCallExpression(self.getTokenReference(),
                     self.getPrefix(),self.getIdent(),newexprs.toArray(new JExpression[newexprs.size()]));
             newself.setType(self.getType());
-            newstmts.add(new JExpressionStatement(new JAssignmentExpression(tmp,newself)));
+            newstmts.add(newAssignment(tmp,newself));
             return newstmts;
         }
 
+        @Override
         public List<JStatement> visitMinus(JMinusExpression self, JLocalVariableExpression tmp) {
             return recurrTwoExprs(tmp,self.getLeft(),self.getRight(),self,
                     new C2(){public JExpression mk(JExpression self, JExpression left, JExpression right)
                     {return new JMinusExpression(self.getTokenReference(),left,right);}});                    
         }
 
+        @Override
         public List<JStatement> visitModulo(JModuloExpression self, JLocalVariableExpression tmp) {
             return recurrTwoExprs(tmp,self.getLeft(),self.getRight(),self,
                     new C2(){public JExpression mk(JExpression self, JExpression left, JExpression right)
                     {return new JModuloExpression(self.getTokenReference(),left,right);}});                    
         }
 
+        @Override
         public List<JStatement> visitMult(JMultExpression self, JLocalVariableExpression tmp) {
             return recurrTwoExprs(tmp,self.getLeft(),self.getRight(),self,
                     new C2(){public JExpression mk(JExpression self, JExpression left, JExpression right)
                     {return new JMultExpression(self.getTokenReference(),left,right);}});                    
         }
 
+        @Override
         public List<JStatement> visitName(JNameExpression self, JLocalVariableExpression tmp) {
             return recurrBase(tmp,self);
         }
 
+        @Override
         public List<JStatement> visitNewArray(JNewArrayExpression self, JLocalVariableExpression tmp) {
-            // recur into initializer at this level to keep from using additional temps if the
+            if (! shouldConvertExpression(self)) {
+                // nothing to convert: tmp = self;
+                return newAssignmentAsList(tmp, self);
+            }            // recur into initializer at this level to keep from using additional temps if the
             // initialization is simple.
             Pair<List<JStatement>,List<JExpression>> cvtddims = recurrExpressionsArr(self.getDims());
             List<JStatement> newstmts = cvtddims.getFirst();
@@ -896,25 +1041,28 @@ public class ThreeAddressCode {
 //                        new JArrayInitializer(init.getTokenReference(),
 //                                initexprs.toArray(new JExpression[initexprs.size()])));
 //            }
-            newstmts.add(new JExpressionStatement(
-                    new JAssignmentExpression(tmp,newarray)));
+            newstmts.add(newAssignment(tmp,newarray));
             return newstmts;
                     
         }
 
+        @Override
         public List<JStatement> visitParenthesed(JParenthesedExpression self, JLocalVariableExpression tmp) {
             return (List<JStatement>)self.getExpr().accept(this,tmp);
         }
 
+        @Override
         public List<JStatement> visitPeek(SIRPeekExpression self, JLocalVariableExpression tmp) {
             return recurrOneExpr(tmp,self.getArg(),self,
                     new C1(){public JExpression mk(JExpression self, JExpression v) {return new SIRPeekExpression(v);}});
         }
 
+        @Override
         public List<JStatement> visitPop(SIRPopExpression self, JLocalVariableExpression tmp) {
             return recurrBase(tmp,self);
         }
 
+        @Override
         public List<JStatement> visitPostfix(JPostfixExpression self, JLocalVariableExpression tmp) {
             return recurrOneExpr(tmp,self.getExpr(),self,
                     new C1(){public JExpression mk(JExpression self, JExpression v) 
@@ -922,6 +1070,7 @@ public class ThreeAddressCode {
                             ((JPostfixExpression)self).getOper(),v);}});
         }
 
+        @Override
         public List<JStatement> visitPrefix(JPrefixExpression self, JLocalVariableExpression tmp) {
             return recurrOneExpr(tmp,self.getExpr(),self,
                     new C1(){public JExpression mk(JExpression self, JExpression v) 
@@ -929,60 +1078,46 @@ public class ThreeAddressCode {
                             ((JPrefixExpression)self).getOper(),v);}});
        }
 
+        @Override
         public List<JStatement> visitPush(SIRPushExpression self, JLocalVariableExpression tmp) {
-            assert false : "Push should be handled at statment level";
+            assert false : "Push should be handled at statement level";
             return recurrOneExpr(tmp,self.getArg(),self,
                     new C1(){public JExpression mk(JExpression self, JExpression v) 
                     {return new SIRPushExpression(v,
                             ((SIRPushExpression)self).getTapeType());}});
        }
 
+        @Override
         public List<JStatement> visitQualifiedAnonymousCreation(JQualifiedAnonymousCreation self, JLocalVariableExpression tmp) {
             assert false: "Unexpected expression QualifiedAnonymousCreation";
             return null;
         }
 
+        @Override
         public List<JStatement> visitQualifiedInstanceCreation(JQualifiedInstanceCreation self, JLocalVariableExpression tmp) {
             assert false: "Unexpected expression QualifiedInstanceCreation";
             return null;
         }
 
+        @Override
         public List<JStatement> visitRange(SIRRangeExpression self, JLocalVariableExpression tmp) {
-            JExpression min = self.getMin();
-            JExpression ave = self.getAve();
-            JExpression max = self.getMax();
-            boolean convertMin = ! simpleExpression(min) && shouldConvertExpression(min);
-            boolean convertAve = ! simpleExpression(ave) && shouldConvertExpression(ave);
-            boolean convertMax = ! simpleExpression(max) && shouldConvertExpression(max);
-            if (! (convertMin || convertAve || convertMax)) {
-                return recurrBase(tmp,self);
+            if (! shouldConvertExpression(self)) {
+                // nothing to convert: tmp = self;
+                return newAssignmentAsList(tmp, self);
             }
-            List<JStatement> newstmts =  new LinkedList<JStatement>();
-            JExpression newmin = min;
-            JExpression newave = ave;
-            JExpression newmax = max;
-            if (convertMin) {
-                Pair<List<JStatement>,JExpression> cvtdmin = recurrTopExpression(min);
-                newstmts.addAll(cvtdmin.getFirst());
-                newmin = cvtdmin.getSecond();
-            }
-            if (convertAve) {
-                Pair<List<JStatement>,JExpression> cvtdave = recurrTopExpression(ave);
-                newstmts.addAll(cvtdave.getFirst());
-                newave = cvtdave.getSecond();
-            }
-            if (convertMax) {
-                Pair<List<JStatement>,JExpression> cvtdmax = recurrTopExpression(max);
-                newstmts.addAll(cvtdmax.getFirst());
-                newmax = cvtdmax.getSecond();
-            }
+            
+            List<JStatement> newstmts = new LinkedList<JStatement>(); 
+            
+            JExpression newmin = maybeConvertOneExpr(newstmts,self.getMin());
+            JExpression newave = maybeConvertOneExpr(newstmts,self.getAve());
+            JExpression newmax = maybeConvertOneExpr(newstmts,self.getMax());
             newstmts.add(
-                    new JExpressionStatement(
-                            new JAssignmentExpression(tmp,
-                                    new SIRRangeExpression(newmin,newave,newmax))));
+                    newAssignment(tmp,
+                            new SIRRangeExpression(newmin,newave,newmax)));
             return newstmts;
         }
 
+        @Override
         public List<JStatement> visitRelational(JRelationalExpression self, JLocalVariableExpression tmp) {
             return recurrTwoExprs(tmp,self.getLeft(),self.getRight(),self,
                     new C2(){public JExpression mk(JExpression self, JExpression left, JExpression right)
@@ -990,55 +1125,64 @@ public class ThreeAddressCode {
                             ((JRelationalExpression)self).getOper(),left,right);}});                    
         }
 
+        @Override
         public List<JStatement> visitShift(JShiftExpression self, JLocalVariableExpression tmp) {
-            final JShiftExpression finalself = self;
             return recurrTwoExprs(tmp,self.getLeft(),self.getRight(),self,
                     new C2(){public JExpression mk(JExpression self, JExpression left, JExpression right)
                     {return new JShiftExpression(self.getTokenReference(),
                             ((JShiftExpression)self).getOper(),left,right);}});                    
         }
 
+        @Override
         public List<JStatement> visitSuper(JSuperExpression self, JLocalVariableExpression tmp) {
             assert false: "Unexpected expression Super";
             return null;
         }
 
+        @Override
         public List<JStatement> visitThis(JThisExpression self, JLocalVariableExpression tmp) {
             // there can actually be an expression inside of this "p.this" but shoud not ocur in StreamIt.
             return recurrBase(tmp,self); 
         }
 
+        @Override
         public List<JStatement> visitTypeName(JTypeNameExpression self, JLocalVariableExpression tmp) {
             return recurrBase(tmp,self); 
         }
 
+        @Override
         public List<JStatement> visitUnary(JUnaryExpression self, JLocalVariableExpression tmp) {
             assert false : "Unary should be handled at its subtypes";
             return null;
         }
 
+        @Override
         public List<JStatement> visitUnaryMinus(JUnaryMinusExpression self, JLocalVariableExpression tmp) {
             return recurrOneExpr(tmp,self.getExpr(),self,
                     new C1(){public JExpression mk(JExpression self, JExpression expr) 
                         {return new JUnaryMinusExpression(self.getTokenReference(), expr);}});
         }
 
+        @Override
         public List<JStatement> visitUnaryPlus(JUnaryPlusExpression self, JLocalVariableExpression tmp) {
             return recurrOneExpr(tmp,self.getExpr(),self,
                     new C1(){public JExpression mk(JExpression self, JExpression expr) 
                         {return new JUnaryPlusExpression(self.getTokenReference(), expr);}});
         }
 
+        @Override
         public List<JStatement> visitUnaryPromote(JUnaryPromote self, JLocalVariableExpression tmp) {
             return recurrOneExpr(tmp,self.getExpr(),self,
                     new C1(){public JExpression mk(JExpression self, JExpression expr) 
                         {return new JUnaryPromote(expr, self.getType());}});        }
 
+        @Override
         public List<JStatement> visitUnqualifiedAnonymousCreation(JUnqualifiedAnonymousCreation self, JLocalVariableExpression tmp) {
             assert false: "Unexpected expression UnqualifiedAnonymousCreation";        
             return null;
         }
 
+        @Override
         public List<JStatement> visitUnqualifiedInstanceCreation(JUnqualifiedInstanceCreation self, JLocalVariableExpression tmp) {
             // "new Complex()"  -- should be handled be simpleExpression
             assert false: "UnqualifiedInstanceCreation should be handled before getting here";
@@ -1063,14 +1207,14 @@ public class ThreeAddressCode {
          * Convert a top-level expression to 3-address code.
          * Checks shouldConvertExpression(expr). 
          * If false returns empty list and passed expression.
-         * If true, creates a temp, and returns statments declaring temp and converting into temp,
+         * If true, creates a temp, and returns statements declaring temp and converting into temp,
          * and returns an expression referencing the created temp.
          * @param an expression to convert.
          * @return a Pair of a list of statements to preceed the converted expression and the converted expression.
          */
         
         Pair<List<JStatement>,JExpression> recurrTopExpressionL (JExpression expr) {
-            if (simpleExpression(expr) || ! shouldConvertExpression(expr)) {
+            if (! shouldConvertExpression(expr)) {
                 return new Pair(new LinkedList<JStatement>(),expr);
             } else {
                 return new Pair((List<JStatement>)expr.accept(this,null), expr);
@@ -1087,8 +1231,8 @@ public class ThreeAddressCode {
         public List<JStatement> visitArrayAccess(JArrayAccessExpression self, JLocalVariableExpression tmp) {
             JExpression  prefix = self.getPrefix();
             JExpression  accessor = self.getAccessor();
-            boolean convert1 = ! simpleExpression(prefix) && shouldConvertExpression(prefix);
-            boolean convert2 = ! simpleExpression(accessor) && shouldConvertExpression(accessor);
+            boolean convert1 = shouldConvertExpression(prefix);
+            boolean convert2 = shouldConvertExpression(accessor);
             if (! convert1 && ! convert2) {
                 return new LinkedList<JStatement>();
             }
@@ -1131,12 +1275,12 @@ public class ThreeAddressCode {
         
         
         /**
-         * Given a block or compound statment, recurr.
+         * Given a block or compound statement, recurr.
          * If passed a JCompoundStatement and recursion produces > 1 statement
          * then returns a JCompoundStatement.
          * Else if recursion produces > 1 statement returns a JBlock.
          * @param s : a single statement.
-         * @return : a statment
+         * @return : a statement
          */
         public JStatement recurrStmt(JStatement s) {
             List<JStatement> ss = destructureOptBlock(s);
@@ -1159,7 +1303,7 @@ public class ThreeAddressCode {
         public List<JStatement> recurrStmts(List<JStatement> ss) {
             List<JStatement> cvtd = new LinkedList<JStatement>();
             for (JStatement s : ss) {
-                cvtd.addAll((List<JStatement>)s.accept(this));
+                    cvtd.addAll((List<JStatement>)s.accept(this));
             }
             return cvtd;
         }
@@ -1272,7 +1416,7 @@ public class ThreeAddressCode {
                 newstmts.add(newmsg);
                 return newstmts;
             } else {
-                return singletonStatementList((JStatement) self);
+                return singletonStatementList((JStatement)self);
             }
         }
 
@@ -1586,7 +1730,7 @@ public class ThreeAddressCode {
          * S[[ do S while E ]] = boolean v do S[[ {S, E[[E]](v)} ]] while v
          */
         public List<JStatement> visitDoStatement(JDoStatement self, JExpression cond, JStatement body) {
-            if (! simpleExpression(cond) && shouldConvertStatement(self)) {
+            if (shouldConvertStatement(self)) {
                 JVariableDefinition tmp = new JVariableDefinition(CStdType.Boolean, nextTemp());
                 JVariableDeclarationStatement decl = new JVariableDeclarationStatement(tmp);
                 JLocalVariableExpression v = new JLocalVariableExpression(tmp);
@@ -1645,13 +1789,14 @@ public class ThreeAddressCode {
          * S[[E]] = type v; E[[E]](v)
          */
         public List<JStatement> visitExpressionStatement(JExpressionStatement self, JExpression expr) {
-            if (! simpleExpression(expr) && shouldConvertStatement(self) && shouldConvertExpression(expr)) {
+            if (shouldConvertStatement(self)) {
                 List<JStatement> newstmts = new LinkedList<JStatement>();
                 if (expr instanceof SIRPushExpression) {
                     // Push should have been a statement.
                     SIRPushExpression pexpr = (SIRPushExpression)expr;
                     JExpression subexpr = pexpr.getArg();
-                    if (! simpleExpression(subexpr) && shouldConvertExpression(subexpr)) {
+                    // Decide on converting whole push expression, not just its argument.
+                    if (shouldConvertTopExpression(pexpr)) {
                         JExpression v = (new E()).convertOneExpr(newstmts,subexpr);
                         newstmts.add(new JExpressionStatement(self.getTokenReference(),
                                 new SIRPushExpression(v,pexpr.getTapeType()),
@@ -1669,7 +1814,7 @@ public class ThreeAddressCode {
  
                 if (expr instanceof JAssignmentExpression) {
                     // assignment used at statement level.
-                    // (only usable at statment level since it has void type!)
+                    // (only usable at statement level since it has void type!)
                     if (expr instanceof JCompoundAssignmentExpression) {
                         // "compound assignment" = assignment + unary operation.
                         JCompoundAssignmentExpression aexpr = (JCompoundAssignmentExpression)expr;
@@ -1762,7 +1907,7 @@ public class ThreeAddressCode {
          * S[[if E then S1 else S2]] = boolean v; E[[E]](v); if v then S[[S1]] else S[[S2]]
          */
         public List<JStatement> visitIfStatement(JIfStatement self, JExpression cond, JStatement thenClause, JStatement elseClause) {
-            if (! simpleExpression(cond) && shouldConvertStatement(self)) {
+            if (shouldConvertStatement(self)) {
                 Pair<List<JStatement>,JExpression> xlateCond = (new E()).recurrTopExpression(cond);
                 List<JStatement> newstmts = xlateCond.getFirst();
                 JExpression newexpr = xlateCond.getSecond();
@@ -1896,7 +2041,7 @@ public class ThreeAddressCode {
         }
 
         public List<JStatement> visitReturnStatement(JReturnStatement self, JExpression expr) {
-            if (! simpleExpression(expr) && shouldConvertStatement(self)) {
+            if (shouldConvertStatement(self)) {
                 Pair<List<JStatement>,JExpression> xlateCond = (new E()).recurrTopExpression(expr);
                 List<JStatement> newstmts = xlateCond.getFirst();
                 JExpression newexpr = xlateCond.getSecond();
@@ -2011,20 +2156,11 @@ public class ThreeAddressCode {
          * single declaration, but this is not guaranteed.
          */
         public List<JStatement> visitVariableDeclarationStatement(JVariableDeclarationStatement self, JVariableDefinition[] vars) {
-            boolean shouldConvert = false;
-            for (JVariableDefinition var : vars) {
-                JExpression initializer = var.getValue();
-                if (initializer != null && ! simpleExpression(initializer) && shouldConvertExpression(initializer)) {
-                    shouldConvert = true; 
-                    break;
-                }
-            }
-            
-            if (shouldConvert) {
+            if (shouldConvertStatement(self)) {
                 List<JStatement> newstmts = new LinkedList<JStatement>();
                 for (JVariableDefinition var : vars) {
                     JExpression initializer = var.getValue();
-                    if (initializer != null && ! simpleExpression(initializer) && shouldConvertExpression(initializer)
+                    if (initializer != null && shouldConvertExpression(initializer)
                             // this final check is because C can only initialize an array at declaration time.
                             && ! (initializer instanceof JArrayInitializer)) {
                         
@@ -2059,12 +2195,12 @@ public class ThreeAddressCode {
          * S[[while (E) S]] = E[[E]](tmp); while (tmp) {S[[S]]; E[[E]](tmp)}
          * 
          * problem with "if ! E then break" being removed by Propagator in some
-         * odd circumstances (examples/cookbook/BPFProgram).
-         * Try  S[[while (E) S]] = while (true) { if ! E then break; S } to
-         * check Propagator behavior.
+         * odd circumstances (examples/cookbook/BPFProgram) inside "do".
+         * S[[while (E) S]] = while (true) { if ! E then break; S } to
+         * seems to work with propagator, so using that.
          */
         public List<JStatement> visitWhileStatement(JWhileStatement self, JExpression cond, JStatement body) {
-            if (! simpleExpression(cond) && shouldConvertStatement(self)) {
+            if (shouldConvertStatement(self)) {
                 
 //                JBreakStatement brk = new JBreakStatement(null,null,null);
 //                JLogicalComplementExpression notE = new JLogicalComplementExpression(null,cond);

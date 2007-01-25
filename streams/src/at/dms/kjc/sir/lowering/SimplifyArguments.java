@@ -88,7 +88,7 @@ public class SimplifyArguments {
                 }
             };
             exprsToExpand.clear();
-            expr.accept(markSubexprsToConvert,new Stack<JExpression>());
+            if (expr != null) expr.accept(markSubexprsToConvert,new Stack<JExpression>());
             return ! exprsToExpand.isEmpty();
         }
         

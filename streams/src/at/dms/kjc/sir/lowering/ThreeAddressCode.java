@@ -243,7 +243,7 @@ public class ThreeAddressCode {
      */
     protected boolean shouldConvertTopExpression(JExpression expr) {
         // case: expression is too simple to ever want to convert.
-        if (simpleExpression(expr)) {
+        if (expr == null || simpleExpression(expr)) {
             return false;
         }
         ThreeAddressExpressionCheck markSubexprsToConvert = 

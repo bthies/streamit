@@ -476,4 +476,22 @@ public class Util {
         
         return false;
     }
+
+    /**
+     * @param outNode OutputSliceNode
+     * @return True if this output slice node has only one output and
+     * that output is directly writing to a file reader with no non-redundant
+     * buffers in between.
+     */
+    public static boolean onlyWritingToAFile(OutputSliceNode outNode) {
+        if (outNode.oneOutput()
+                && OffChipBuffer.unnecessary(outNode)
+                && outNode.getSingleEdge().getDest().isFileOutput()
+                && OffChipBuffer.unnecessary(outNode.getSingleEdge()
+                                     .getDest())) {
+            return true;
+        }
+        return false;
+                                   
+    }
 }

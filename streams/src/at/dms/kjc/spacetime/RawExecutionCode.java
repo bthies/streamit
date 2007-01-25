@@ -509,7 +509,7 @@ public abstract class RawExecutionCode
             
             //first make sure that we are not writing eventually to a file writer
             //file writers don't need to be aligned
-            if (!output.onlyWritingToAFile() && wordsSent > 0 &&
+            if (!Util.onlyWritingToAFile(output) && wordsSent > 0 &&
                     wordsSent % RawChip.cacheLineWords != 0) {
                 int sendAlignWords = RawChip.cacheLineWords - 
                 ((wordsSent) % RawChip.cacheLineWords);

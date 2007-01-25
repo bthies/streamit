@@ -729,14 +729,14 @@ public class Rawify {
                 if (!buffer.isStaticNet() && 
                         !Util.doesSliceUseTile(filterNode.getParent(),
                                 nonRedBuffer.getOwner(), layout)) {
-                    gdnStoreCommandWithSynch(init, primepump, output.onlyWritingToAFile(),
+                    gdnStoreCommandWithSynch(init, primepump, Util.onlyWritingToAFile(output),
                             words, nonRedBuffer);
                     return;
                 }
                     
                 //otherwise, the is a normal dram command that does not
                 //need to be synchronized
-                if (output.onlyWritingToAFile())
+                if (Util.onlyWritingToAFile(output))
                     nonRedBuffer.getOwner().getComputeCode().addFileCommand(false,
                             init || primepump, words, nonRedBuffer, buffer.isStaticNet());
                 else {
@@ -1921,7 +1921,7 @@ public class Rawify {
             OutputSliceNode output = (OutputSliceNode) node.getNext();
             //don't cache align the dest if the true dest is a file writer
             //that is not split
-            if (output.onlyWritingToAFile())
+            if (Util.onlyWritingToAFile(output))
                 cacheAlignDest = false;
             
             //don't generate switch code for sending if the buffer is 

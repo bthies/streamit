@@ -1,7 +1,6 @@
 package at.dms.kjc.slicegraph;
 
 import at.dms.kjc.*;
-import at.dms.kjc.spacetime.OffChipBuffer;
 import at.dms.kjc.spacetime.Util;
 
 import java.util.Set;
@@ -398,22 +397,6 @@ public class OutputSliceNode extends SliceNode {
                 fileOutputs.add(edge.getDest());
         }
         return fileOutputs;
-    }
-
-    /**
-     * @return True if this output slice node has only one output and
-     * that output is directly writing to a file reader with no non-redundant
-     * buffers in between.
-     */
-    public boolean onlyWritingToAFile() {
-        if (oneOutput()
-                && OffChipBuffer.unnecessary(this)
-                && getSingleEdge().getDest().isFileOutput()
-                && OffChipBuffer.unnecessary(getSingleEdge()
-                                     .getDest()))
-            return true;
-        return false;
-                                   
     }
     
     /*

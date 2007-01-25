@@ -10,14 +10,12 @@ import java.util.ArrayList;
  */
 public class Slice {
     //The head of the slice.
-    private InputSliceNode head;
+    protected InputSliceNode head;
     //the Tail of the slice.
-    private OutputSliceNode tail;
+    protected OutputSliceNode tail;
     //The length of the slice.
-    private int len;
-    //This should be deleted, not used anymore!
-//    private int primePump;
-    private FilterSliceNode[] filterNodes;
+    protected int len;
+    protected FilterSliceNode[] filterNodes;
     
     /*
      * public Slice (Slice[] edges, Slice[] depends, InputSliceNode head) { if
@@ -29,14 +27,23 @@ public class Slice {
      * depends; len=-1; }
      */
 
+    /**
+     * Create slice with an InputSliceNode.
+     * "head" is expected to be linked to a FilterSliceNode by the time finish is called.
+     * @{link {@link #finish() finish} will tack on an OutputSliceNode if missing.
+     * @param head  the InputSliceNode
+     */
     public Slice(InputSliceNode head) {
         this.head = head;
         head.setParent(this);
-        // depends = new Slice[0];
-        // edges = new Slice[0];
         len = -1;
     }
 
+    /**
+     * Create slice with a FilterSliceNode.
+     * Creates an InputSliceNode automatically and links it with the FilterSliceNode.
+     * @param node
+     */
     public Slice(SliceNode node) {
         if (!(node instanceof FilterSliceNode))
             Utils.fail("FilterSliceNode expected: " + node);
@@ -44,21 +51,21 @@ public class Slice {
         head.setParent(this);
         head.setNext(node);
         node.setPrevious(head);
-        // depends = new Slice[0];
-        // edges = new Slice[0];
         len = -1;
     }
 
+    protected Slice() {
+    }
+    
     /**
      * Finishes creating Slice.
-     *  
+     * Expects the slice to have an InputSliceNode, and 1 or more FilterliceNodes. 
+     * Creates an OutputSliceNode if necessary.
      * @return The number of FilterSliceNodes.
      */
     public int finish() {
         int size = 0;
-        SliceNode node = head;
-        if (node instanceof InputSliceNode)
-            node = node.getNext();
+        SliceNode node = head.getNext();
         SliceNode end = node;
         while (node != null && node instanceof FilterSliceNode) {
             node.setParent(this);
@@ -153,18 +160,6 @@ public class Slice {
         return "Slice: " + head + "->" + head.getNext() + "->...";
     }
 
-//    public void setPrimePump(int pp) {
-//        primePump = pp;
-//        /*
-//         * SliceNode cur=head.getNext(); while(cur instanceof FilterSliceNode) {
-//         * ((FilterSliceNode)cur).getFilter().setPrimePump(pp);
-//         * cur=cur.getNext(); }
-//         */
-//    }
-
-//    public int getPrimePump() {
-//        return primePump;
-//    }
 
     // return the number of filters in the slice
     public int getNumFilters() {

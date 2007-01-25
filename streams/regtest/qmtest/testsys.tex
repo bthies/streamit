@@ -11,7 +11,7 @@
 \usepackage{streamit}
 
 \title{A QMTest-Based Test System for StreamIt}
-\author{David Maze\\\texttt{dmaze@cag.lcs.mit.edu}}
+\author{David Maze\\revised and expanded: Allyn Dimock}
 
 \begin{document}
 
@@ -77,7 +77,7 @@ no ``id'' attribute.
 The QMTest name for a particular test then consists of the path to the
 XML file, the implementation name, the backend/optimization name, and
 then the name of the actual test.  So, for example,
-\textsf{apps.benchmarks.fm.impl1.raw4\_o2.run} would be the QMTest test
+\url{apps.benchmarks.fm.impl1.raw4\_o2.run} would be the QMTest test
 that runs the code produced by \texttt{strc -{}-raw 4 -O2} on the only
 implementation in \textsf{apps/benchmarks/fm}.  The test components
 are named \textsf{compile}, \textsf{run}, and \textsf{verify}.
@@ -238,7 +238,12 @@ output to verify.  If this is not specified, then the tested program is
 expected to produce any output to be verified to {\tt stdout}.
 Default output to stdout is stored in the file {\tt output} between the run
 phase and the verification phase.
-\item {\tt output\_type} Type of output.  Legitimate values are {\tt ASCII}, {\tt int}, and {\tt float} where {\tt int}, and {\tt float} refer to 32-bit integers and 32-bit floats, and ASCII is a series of lines with one formatted integer or floating point value per line. 
+Not supported yet.)
+\item {\tt output\_type} Type of output.  Legitimate values are {\tt
+  ASCII}, {\tt int}, and {\tt float} where {\tt int}, and {\tt float}
+  refer to 32-bit integers and 32-bit floats, and ASCII is a series of
+  lines with one formatted integer or floating point value per line.
+(Not supported yet.)
 \item {\tt compile\_time} Time in seconds to override default compile time of 20 minutes.
 \item {\tt run\_time} Time in seconds to override default run time of 20 minutes.
 In case of compile-and-go situation like library compiler, use {\tt compile\_time}, not {\tt run\_time}.
@@ -338,7 +343,7 @@ difference: QM requires that all letters are lowercase and that
 hyphens and other odd characters in directory and file names be
 removed.
 
-At the leaf of a  ``streams/apps.qms'' directory, find: 
+At the leaf of a  {\tt streams/apps.qms} directory, find: 
 \begin{itemize}
 \item a {\tt .str} file to test
 \item optionally, an output file to verify the results of running the 
@@ -349,12 +354,12 @@ This includes the name of the class that performs the test, the test
 name, any arguments needed to run the test, and any prerequisites
 needed to order tests correctly.
 \end{itemize}
-{\tt build-qmtest.py} creates the ``apps.qms'' directory structure and
+{\tt build-qmtest.py} creates the {\tt apps.qms} directory structure and
 the {\tt .qmt} files based on {\tt impl} fields in a {\tt benchmark.xml}
 file and {\tt option}s in the {\tt regtest.xml} file.
 
 Recently an evil hack has been added so that {\tt run-reg-tests.py} builds 
-/home/public/streamit/latest\_javadoc and /home/public/streamit/latest\_doccheck.
+\url{/home/public/streamit/latest\_javadoc} and \url{/home/public/streamit/latest\_doccheck}.
 This behavior (going outside of the subdirectory structure) should be on a switch
 and the switch should be off by default!
 
@@ -365,27 +370,28 @@ Extends / overrides some QM methods, and contains a few utility routines.
 
 The current version includes its own version of ``TimedExecutable''
 since that was not supplied in QMTest 2.0 (It appears in later
-versions).  This version of TimedExecutable does not work with
-``process targets'':
-\begin{verbatim}
-qmtest create-target -a processes=4 p4 process_target.ProcessTarget
-qmtest run
-\end{verbatim}
-will occasionally come up withe an EACCESS error (Error 13) when the
-process target performs some exec functions before TimedExecutable can
-perform a setpgid.
+versions).  
+%% This version of TimedExecutable does not work with
+%% ``process targets'':
+%% \begin{verbatim}
+%% qmtest create-target -a processes=4 p4 process_target.ProcessTarget
+%% qmtest run
+%% \end{verbatim}
+%% will occasionally come up withe an EACCESS error (Error 13) when the
+%% process target performs some exec functions before TimedExecutable can
+%% perform a setpgid.
 
-The three Run methods: RunStrcTest, which compiles; RunProgramTest,
-which executes; and CompareResultsTest, which verifies output
-all currently require that a chdir is made to the proper test
-directory.
-This makes it impossible to use a thread target
-\begin{verbatim}
-qmtest run -j4
-\end{verbatim}
-since threads and chdir do not interact well.
-A common symptom of attempting this is verification errors trying to
-verify one test's output against another test's expected output file.
+%% The three Run methods: RunStrcTest, which compiles; RunProgramTest,
+%% which executes; and CompareResultsTest, which verifies output
+%% all currently require that a chdir is made to the proper test
+%% directory.
+%% This makes it impossible to use a thread target
+%% \begin{verbatim}
+%% qmtest run -j4
+%% \end{verbatim}
+%% since threads and chdir do not interact well.
+%% A common symptom of attempting this is verification errors trying to
+%% verify one test's output against another test's expected output file.
 
 \subsubsection{run-reg-tests.py}
 \begin{itemize}
@@ -396,7 +402,8 @@ verify one test's output against another test's expected output file.
 \item use streamitqm / run-reg-tests.py to convert from our .xml files to QM
   files,
 \item run QM,  ({\tt qmtest run} followed by  {\tt qmtest report})
-\item run summarize\_xml\_results to create summary report and mail it to all.
+\item run {\tt summarize\_xml\_results} to create summary report and
+  mail it to all. 
 \item run rt-results to build files usable by RT for detailed
   reporting of the results,
 \item and set the directory built by this run to be the ``latest'' results.
@@ -404,27 +411,33 @@ verify one test's output against another test's expected output file.
 
 \subsubsection{streamitqm}
 Shell script used to get from run-reg-tests.py to 
-./regtest/qmtest/build-qmtest.py
-plus some file handling.  run-reg-tests.py expects this file to be in 
-\$STREAMIT\_HOME/regtest/qmtest/streamitqm.
+\url{./regtest/qmtest/build-qmtest.py}
+plus some file handling.  {\tt run-reg-tests.py} expects this file to be in 
+\url{$STREAMIT\_HOME/regtest/qmtest/streamitqm}. % $
 
 \subsubsection{build-qmtest.py}
 Executable, invoked with 1 parameter: the complete path and file name for the 
-regtest.xml file.  streamitqm expects this file to be in './regtest/qmtest'.
+regtest.xml file.  streamitqm expects this file to be in \url{./regtest/qmtest}.
 Creates files {\tt compile.qmt}, {\tt run.qmt}, and {\tt verify.qmt}
 for each combination of backend and options.
 
 \subsubsection{summarize\_xml\_results}
 Executable, invoked from run-reg-tests.py to produce a brief report based on
 the current QMTest results.xml file, and differences from the ``latest''
-QMTest results.xml file if one exists. The first parameter is the path to
-the current QMTest results.xml file, the second parameter is the path to
-the latest QMtest results.xml file.
+QMTest \url{results.xml} file if one exists. The first parameter is the path to
+the current QMTest \url{results.xml} file, the second parameter is the path to
+the latest QMtest \url{results.xml} file. 
+This program does not work directly on the {\tt .xml} files, but
+rather on a summary of the test outcomes produced by {\tt  status\_summary.xsl}.
+
+{\tt summarize\_xml\_results} is an older version that attempted to
+work directlry off the {\tt .xml} files.  It proved too slow.
+
 
 \subsubsection{rt-results}
-Executable, invoked with 2 parameters: path to the results.xml file (defaults
-to results.xml if not given), 
-and path to place to put reports (defaults to '.' if not given).
+Executable, invoked with 2 parameters: path to the \url{results.xml} file (defaults
+to \url{results.xml} if not given), 
+and path to place to put reports (defaults to ``.'' if not given).
 Creates files 
 {\tt Summary}, 
 {\tt RegtestItem}, 
@@ -435,54 +448,125 @@ These files are used to show the latest QMtest results on the
 RT ticket tracking system. 
  The files are not very readable on their own.
 
+\subsection{pbs\_regtest\_nightly}
+This is a script to run {\tt run-reg-tests.py} as a PBS job.
+See \url{ttps://www2.cag.csail.mit.edu/cagwiki/index.php?title=Batch_Queuing}
+for notes on using PBS.
 
-\section{Running your own regression test}
-
-Modified from Bill Thies' mail message of  Wed, 14 Sep 2005.
+There should be a {\tt cron} job someplace that looks a bit like
+{\small{
 \begin{verbatim}
-1. Edit $STREAMIT_HOME/regtest/qmtest/regtest.xml to test the
-   directory tree ("test root") and options that you want.
+[cagfarm-49:~] crontab -l
+...
+# run regression test daily at 8:00PM
+00 20 * * * /usr/uns/bin/qsub /u/dimock/streams/regtest/qmtest/pbs_regtest_nightly
+\end{verbatim}
+}}
+\subsection{delete\_old\_regtests}
+The regression tests generate a massive amount of data: 
+a full checkout of the streams directory, with portions of the {\tt apps} 
+directories duplicated once per test type (back end + flags), plus all 
+{\tt stdout} and {\tt stderr} from each test. ({\tt stdout} of test occurrs
+in test directory.  Both {\tt stdout} and {\tt stderr} are captured in 
+\url{/home/bits8/streamit/regtest/[date]/streams/results.qmr}
+and \url{/home/bits8/streamit/regtest/[date]/streams/results.xml}
 
-   All benchmarks with a benchmark.xml file under the test root
-   specified will be tested.
+{\tt delete\_old\_regtests} is a script that copies a bzip'd regtest.xml
+into \url{/home/bits8/streamit/old_regtest_results} and deletes the
+corresponding regtest directory.
+It leaves 8 days of complete regtest results.  If
+\url{old_regtest_results} exceeds 100Mb, then it also removes every
+second file in \url{old_regtest_results}, resulting in exponential
+decay in in the stored regression test results over time.
 
-2. Do the following commands:
+{\tt delete\_old\_regtests} should be run on a regular basis, for
+instance:
+{\small{
+\begin{verbatim}
+[cagfarm-49:~] crontab -l
+...
+# run regression test daily at 8:00PM
+00 20 * * * /usr/uns/bin/qsub /u/dimock/streams/regtest/qmtest/delete_old_regtests
+\end{verbatim}
+}}
 
-   cd $STREAMIT_HOME
-   ./regtest/qmtest/streamitqm clean   # remove evidence of previous regtest
-   ./regtest/qmtest/streamitqm setup   # create directories and xml for regtest
-   setenv QMTEST_CLASS_PATH $STREAMIT_HOME/QMTest  # tell QM where files are
-   qmtest run                          # run regression test
+\subsection{status\_files.xsl and files\_check\_timout.pl}
+{\tt status\_files.xsl} breaks a {\tt results.xml} file up into
+individual files for each test with an outcome other than
+``UNTESTED''. 
+{\tt files\_check\_timout.pl \*.xml} takes a directory of {\tt .xml}
+files produced from  {\tt results.xml} by {\tt status\_files.xsl} and
+reports the running time of each file that exited with a
+signal. (Running out of time on compiling or runnign results in a test
+being killed with signal 9.)  The user can then decide as to whether
+to give a test more compile or run time.
+More time can be allowed by changing the {\tt compile\_time}
+or {\tt run\_time} attribute values on an {\tt impl} line in a 
+{\tt benchmark.xml} file.
 
+\section{Running Tests manually}
+
+There are times when you may want to set up a script that runs some
+subset of tests, or you may want to run a few tests from your
+terminal.
+Here is what to do.
+
+\begin{itemize}
+\item Set up a file based on \url{$STREAMIT\_HOME/regtest/qmtest/regtest.xml} %$
+specifying the back ends, switch combinations, and the roots of a forest of
+directories under {\tt apps/} that you wish to test.
+
+All benchmarks with a {\tt benchmark.xml} file under a specified test root 
+will be tested.
+
+In the following, assume that the file you create is called {\url my\_tests.xml}
+
+\item Type the following commands:
+{\small{
+\begin{verbatim}
+ cd $STREAMIT_HOME
+               # remove evidence of previous regtest
+ ./regtest/qmtest/streamitqm clean
+               # create directories and xml for regtest
+ ./regtest/qmtest/streamitqm setup my_tests.xml
+               # tell QM where its control files are
+ setenv QMTEST_CLASS_PATH $STREAMIT_HOME/QMTest
+               # run regression test
+ qmtest run
+\end{verbatim}
+}}
 This will start a regtest running with your local copy of the source
 tree and outputting the results to the screen.  The applications and
-compile options being tested are stored under $STREAMIT_HOME/apps.qms.
+compile options being tested are stored under
+\url{$STREAMIT_HOME/apps.qms}. % $
 
-If you want to set up for something other than ./regtest/qmtest/regtest.xml
-then use 
-  ./regtest/qmtest/streamitqm setup mytest.xml
-where mytest.xml 
+\item You may be able to get the information that you want directly from the
+{\tt qmtest} output.
 
-When done, you can see a summary report similar to that from the
-nightly regression test using the commands:
-   qmtest report  -o ./results.xml ./results.qmr 
-   xsltproc -o summary_tmp  --novalid ./regtest/qmtest/status_summary.xsl \
-      ./results.xml
-   ./regtest/qmtest/status_summary.pl summary_tmp > summary.txt
-It may be sufficient to just capture the results of "qmtest run" to a file.
-
-If you run a complete test and want to compare it to a standard
-regression test for some date, try:
-   qmtest report -o ./results.xml ./results.qmr 
-   xsltproc -o summary_tmp  --novalid ./regtest/qmtest/status_summary.xsl \
-      ./results.xml
-   xsltproc -o summary_tmp2  --novalid ./regtest/qmtest/status_summary.xsl \
-      /home/bits8/streamit/regtest/latest/streams/results.xml
-   ./regtest/qmtest/status_summary.pl summary_tmp summary_tmp2 > summary.txt
-to compare with most recent regtest, or replace 'latest' with a
-directory name in /home/bits8/streamit/regtest to compare with tests
-for a particular date.
+If the output from {\tt qmtest} is too verbose, you can see a summary
+report similar to that from the nightly regression test using the commands:
+{\small{
+\begin{verbatim}
+ qmtest report  -o ./results.xml ./results.qmr 
+ xsltproc -o summary_tmp  --novalid ./regtest/qmtest/status_summary.xsl \
+    ./results.xml
+ ./regtest/qmtest/status_summary.pl summary_tmp > summary.txt
 \end{verbatim}
+}}
+
+If you want to compare the results of your test with the latest
+nightly regression test, try:
+{\small{
+\begin{verbatim}
+ qmtest report -o ./results.xml ./results.qmr 
+ xsltproc -o summary_tmp  --novalid ./regtest/qmtest/status_summary.xsl \
+    ./results.xml
+ xsltproc -o summary_tmp2  --novalid ./regtest/qmtest/status_summary.xsl \
+    /home/bits8/streamit/regtest/latest/streams/results.xml
+ ./regtest/qmtest/status_summary.pl summary_tmp summary_tmp2 > summary.txt
+\end{verbatim}
+}}
+\end{itemize}
 % note to self: create-target format
 % qmtest create-target -a processes=5 p5 process_target.ProcessTarget p
 \end{document}

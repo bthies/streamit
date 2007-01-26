@@ -7,7 +7,7 @@
   element.
   </description>
   <implementations>  
-    <impl lang="StreamIt">
+    <impl lang="StreamIt" compile_time ="2400">
       <file class="source">ComparisonCounting.str</file>
       <file class="output">ComparisonCounting.out</file>
     </impl>   

@@ -30,11 +30,16 @@ static {
 					// the size of each feature square's side
 	int imageWidth = 320; // width of the ppm image
 	int imageHeight = 240; // height of the ppm image
-	int iters = 40;
+	int iters = 60;
 	int numImages = 2; //this is fixed for now, but eventually we want to 
 					  // change the program so as to take an indeterminate number
 	float iweight = 0.0; 
 	float qweight = 0.0;
+	float ransacThreshold = .001;	
+	float probOutliers = .99; //desired probability of choosing at least one sample free from outliers
+	int maxTrials = 100; //maximum number of trials before we give up
+	int maxDataTrials = 100; //max number of attempts to select a non-degenerate data set
+	int s = 8;
 		init {}
 
 }
@@ -63,8 +68,43 @@ struct bestFeatures{
 
 	int x;
 	int y;
+	int z;
 	float val;
 
+}
+
+struct featureListPair{
+
+	bestFeatures[60] x1;
+	bestFeatures[60] x2;
+	int firstZeroIndex;
+	
+	float frame1scaleInd;
+	float frame1c1Ind;
+	float frame1c2Ind;
+	float frame2scaleInd;
+	float frame2c1Ind;
+	float frame2c2Ind;
+	
+	float frame1scaleFeat;
+	float frame1c1Feat;
+	float frame1c2Feat;
+	float frame2scaleFeat;
+	float frame2c1Feat;
+	float frame2c2Feat;
+	
+	float[3][3] bestF;
+	float[3][3] tempF;
+	int[8] ind; // s = 8
+	int[60] bestInliers;
+	int[60] tempInliers;
+	float[60] d;
+	int ninliers;
+	int bestScore;
+	int trialCount;
+	int N;
+
+	
 }
 
 struct imageAndFeatures{
@@ -72,7 +112,8 @@ struct imageAndFeatures{
 	float[320][240] yImage;
 	float[320][240] iImage;
 	float[320][240] qImage;
-	bestFeatures[40] myBest;
+	bestFeatures[60] myBest;
+	int goodPts;
 
 }
 /*this struct is for gradient sums.  each pixel has a corresponding patch for which
@@ -109,10 +150,11 @@ void->void pipeline mosaic{
     int winWidth  = imageWidth - patchsize - startx - 1; 
 	int winHeight = imageHeight - patchsize - starty - 1;
 	int corrWindowSize = patchsize;
-	
+
 	//  initial work
 	
 	add fileRead();
+	
 	add RGB2YIQ();
 	add makeMatrices();
 	
@@ -144,13 +186,15 @@ void->void pipeline mosaic{
 			push(temp3);
 		}
 	};
-	
+	add makeFeatureListPairs();
+	add ransac();
 	add plotFeatures(patchsize);	
 		
 	//  finishing work 
 	add backToJustMatrices();
 	add unmakeMatrices();
 	add YIQ2RGB();
+	
 	add fileWrite();
 	//add FileWriter<int>("1out.bin");
 }
@@ -326,7 +370,7 @@ imageAndFeatures->imageAndFeatures filter plotFeatures(int patchsize)
 		float[320][240] iMatrix = myImgAndFeat.iImage;
 		float[320][240] qMatrix = myImgAndFeat.qImage;
 		
-		bestFeatures[40]   best = myImgAndFeat.myBest;
+		bestFeatures[60]   best = myImgAndFeat.myBest;
 		
 		int r = (patchsize-1)/2;
 		
@@ -373,5 +417,36 @@ imageAndFeatures->imageAndFeatures filter plotFeatures(int patchsize)
 		push(myImgAndFeat);
 		println("plotFeatures completed...");
 	    
+	}
+}
+
+imageAndFeatures->featureListPairs filter makeFeatureListPairs(){
+	
+	work pop 2 push 1{
+		
+		boolean zeroIndexSet = 0;
+		
+		imageAndFeatures temp1 = pop();
+		imageAndFeatures temp2 = pop();
+		
+		featureAndListPairs newGuy;
+		
+		newGuy.x1 = temp1.myBest;
+		newGuy.x2 = temp2.myBest;
+		
+		//set all z values to 1 and set how many features were 'good' but marking the first point where
+		//we have bad values
+		
+		for(int i = 0; i<iters; i++{
+			newGuy.x1[i].z = 1;
+			newGuy.x2[i].z = 1;
+			if(newGuy.x1[i].x==newGuy.x1[i].y && newGuy.x1[i].x==0 && !zeroIndexSet)
+			{
+				newGuy.firstZeroIndex = i;
+				zeroIndexSet = 1;
+			}
+		}
+		push(newGuy);
+		
 	}
 }

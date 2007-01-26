@@ -1,0 +1,216 @@
+
+featuresListPairs->featuresListPairs pipeline ransac(){
+	
+	portal<selectIndices> pop1or2;
+	portal<gateOfEntry> pop1orNone;
+	portal<gateOfExit> push1orNone;
+	
+	add normalizeFeaturePts();
+	add gateOfEntry();
+	
+	add featureListPair->featureListPair feedbackloop (){
+		join roundrobin(1,1);
+		body pipeline {		
+			add selectIndices();
+		    add fundMatrix();
+		    add findInliers(pop1or2,pop1orNone,push1orNone);
+		}
+		loop {}
+		split duplicate;		
+	}
+    add gateOfExit();
+	add splitjoin{
+			add Identity<featureListPair>;
+			add pipeline{
+						add featureListPair->float filter{
+							featureListPair feat;
+							work pop 1 push 9{
+								feat = pop();
+								for(int j = 0; j < 3; j++){
+									for(int i = 0; i < 3; i++){										
+										push(feat.bestF[i][j]);
+									}
+								}							
+							}						
+						}
+						add denormalizeF();						
+			}
+	join roundrobin(1,1);
+	add featureListPair->featureListPair filter {
+		work pop 2 push 1{	
+			featureListPair feat1 = pop();	
+			featureListPair feat2 = pop();
+			feat1.tempF = feat2.tempF;
+			push(feat1);
+		}		
+	}	
+    add denormalizeFeaturePts();
+    
+}
+
+featureListPair->featureListPair filter gateOfEntry{
+	boolean nextPair;
+	featureListPair tempFeat;
+	init{	nextPair = 1;	}
+	work pop [0,1] push 1{
+			
+		if(nextPair){
+			tempFeat = pop();
+			tempFeat.trialCount = 0;
+			tempFeat.bestScore  = 0;
+			tempFeat.N		    = 1;
+		}
+		push(tempFeat);
+		
+	}
+	handler setVal(boolean val){
+		nextPair = val;	
+	}
+}
+
+featureListPair->featureListPair filter selectIndices(){
+	boolean feedback;
+	featureListPair tempFLP;
+	init{
+		feedback = 0;	
+	}
+	
+	work pop 2 push 1{
+		
+		featureListPair tempFromInput = pop();
+		featurelistPair tempFromFeedbackLoop = pop();
+		
+		if(feedback){	 tempFLP = tempFromFeedBackLoop;	}
+		else		{	 tempFLP = tempFromInput;			}
+		
+		int indFill;
+		int tempRand;
+		boolean rndNumInIndex = 0;
+		boolean degenerate = 1;
+		while(degenerate){
+			// Generate s random indices in the range 1..npts
+			indFill = 0;
+			while(indFill < s){
+				 tempRand = (int)(round(random()*(tempFLP.firstZeroIndex-1)));
+				 //now check to see if tempRand is already an established index
+				 int g=0;
+				 while(g<indFill){
+					 if(tempFLP.ind[g]==tempRand){
+						 rndNumInIndex = 1;
+						 g=indFill;
+					 }
+					 else{g++;}		  	    		
+				 }
+				 if(rndNumInIndex) {	rndNumInIndex = 0;	    }
+				 else{	tempFLP.ind[indFill] = tempRand; indFill++;	 }
+			}
+	        
+			// Test that these points are not a degenerate configuration.
+			/*degenerate = feval(degenfn, x(:,ind));
+			degenerate = 0; //assume for the time being that we don't reach the 
+						 // degenerate case
+			// Safeguard against being stuck in this loop forever
+			count = count + 1;
+			if(count > maxDataTrials){
+				println("Unable to select a nondegenerate data set");
+				break;}
+			*/
+		}
+		
+		push(tempFLP);
+	}
+	handler setVal(boolean val){
+		feedback = val;	
+	}
+}
+
+featureListPair->featureListPair filter findInliers(portal<selectIndices> pop1or2,
+													portal<gateOfEntry> pop1orNone,
+													portal<gateOfExit> push1orNone){
+	
+	work pop 1 push 1{
+	
+	float[60] x2tFx1;
+	float fracinliers, pNoOutliers;
+	bestFeatures[60] Fx1, Ftx2;
+		
+	featureListPair feat = pop();
+	
+	for(int i = 0; i< feat.firstZeroIndex; i++){
+		
+		//x2tFx1 = x2'*F*x1
+
+		x2tFx1[i] = (feat.x2[i].x*feat.tempF[0][0] + feat.x2[i].y*feat.tempF[1][0] + feat.x2[i].z*feat.tempF[2][0])*feat.x1[i].x +
+			    	(feat.x2[i].x*feat.tempF[0][1] + feat.x2[i].y*feat.tempF[1][1] + feat.x2[i].z*feat.tempF[2][1])*feat.x1[i].y +
+			   		(feat.x2[i].x*feat.tempF[0][2] + feat.x2[i].y*feat.tempF[1][2] + feat.x2[i].z*feat.tempF[2][2])*feat.x1[i].z ;
+
+		//Fx1 = F*x1
+
+		Fx1[i].x = feat.tempF[0][0]*feat.x1[i].x + feat.tempF[0][1]*feat.x1[i].y + feat.tempF[0][2]*feat.x1[i].z;
+		Fx1[i].y = feat.tempF[1][0]*feat.x1[i].x + feat.tempF[1][1]*feat.x1[i].y + feat.tempF[1][2]*feat.x1[i].z;
+		Fx1[i].z = feat.tempF[2][0]*feat.x1[i].x + feat.tempF[2][1]*feat.x1[i].y + feat.tempF[2][2]*feat.x1[i].z;
+
+		//Ftx2 = F'*x2
+
+		Ftx2[i].x = feat.tempF[0][0]*feat.x2[i].x + feat.tempF[1][0]*feat.x2[i].y + feat.tempF[2][0]*feat.x2[i].z;
+		Ftx2[i].y = feat.tempF[0][1]*feat.x2[i].x + feat.tempF[1][1]*feat.x2[i].y + feat.tempF[2][1]*feat.x2[i].z;
+		Ftx2[i].z = feat.tempF[0][2]*feat.x2[i].x + feat.tempF[1][2]*feat.x2[i].y + feat.tempF[2][2]*feat.x2[i].z;
+
+		//d(i) = x2tFx1[i]^2 / (Fx1[i].x^2 + Fx1[i].y^2 + Ftx2[i].x^2 + Ftx2[i].y^2)
+
+		feat.d[i] = x2tFx1[i]*x2tFx1[i]/(Fx1[i].x*Fx1[i].x + Fx1[i].y*Fx1[i].y + Fx2[i].x*Fx2[i].x + Fx2[i].y*Fx2[i].y);		
+
+				
+		feat.ninliers = 0;
+
+		if(abs(feat.d[i])<ransacThreshold){
+
+			feat.tempInliers[feat.ninliers] = i;
+			feat.ninliers++;				
+		}	
+	}
+	if(feat.ninliers>feat.bestScore){
+		
+		feat.bestScore = feat.ninliers;
+		feat.bestInliers = feat.tempInliers;
+		feat.bestF = feat.tempF;
+			
+		//now update N
+		
+		fracinliers = feat.ninliers/feat.firstZeroIndex;	
+		pNoOutliers = 1-fracinliers^s;
+		if(pNoOutliers==0){			
+			println("ransac stage found no inliers");
+		}
+		else{feat.N = log(1-probOutliers)/log(pNoOutliers);}		
+	}
+	if(feat.N<=feat.trialCount||feat.trialCount>maxTrials){
+		pop1or2.setVal(1) [:];
+		pop1orNone.setVal(1) [:];
+		push1orNone.setVal(1) [:];
+	}
+	else{
+		pop1or2.setVal(0) [:];
+		pop1orNone.setVal(0) [:];
+		push1orNone.setVal(0) [:];
+	}
+	push(feat);	
+	
+	}	
+}
+
+featureListPair->featureListPair filter gateOfExit{
+	boolean nextPair;
+	init{	nextPair = 0;	}
+	work pop 1 push [0,1]{	
+		if(nextPair){
+			push(pop());	
+		}
+		else{
+		 pop();
+		}	
+	}
+	handler setVal(boolean val){
+		nextPair = val;	
+	}
+}

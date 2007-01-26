@@ -1,1 +1,615 @@
 //filter that calculates the fundamental matrix of two sets of points
+
+
+/* TODO
+ *  make portal for goodFeatures -> make it work with svd's (two svd's called)
+ * make portal for indices
+ * make portal for fundamental matrix
+ *
+ * make portal for 'continue'
+ * make feedback loop with variable RR rates?
+ * make gate filters
+ * make it frickin work man
+ */
+
+//coming in are lists of x correlated features in an array of size
+//iters.  60-x entries of the array are to be 0.
+
+featureListPair->featureListPair pipeline makeFundMatrix()
+{
+
+	float t0,t1,t2,t3,t4,t5,t6,t7,t8;
+	add normalizeIndices();
+	add splitjoin{
+		add Identity<featureListPair>;
+		add pipeline{
+					add makeConstraintMatrix();
+					add svd(s, 9);
+					add float->float filter{			
+						work pop (s*9 + 9 + 81) push 9 {
+							for(int i = 0;i < (s*9 + 9 + (81-9));i++){pop();}
+						 	for(int i = 0;i < 9				  ;i++){push(pop());}	
+							}
+					}
+					add svd(3,3);
+					add newF();
+					add denormalizeF();						
+		}
+	join roundrobin(1,1);
+	add featureListPair->featureListPair filter {
+		work pop 2 push 1{	
+			featureListPair feat1 = pop();	
+			featureListPair feat2 = pop();
+			feat1.tempF = feat2.tempF;
+			push(feat1);
+		}		
+	}		
+	add denormalizeIndices();
+}
+float->featureListPair filter denormalizeF(){
+	
+	work pop 9 peek 8 push 1{
+							
+		featureListPair feat;
+	
+		temp.frame1scaleInd
+		temp.frame1c1Ind
+		temp.frame1c2Ind
+		temp.frame2scaleInd
+		temp.frame2c1Ind
+		temp.frame2c2Ind
+		//first find T2'*F
+		t0 = temp.frame2scaleInd*peek(0);
+		t1 = temp.frame2scaleInd*peek(1);
+		t2 = -temp.frame2scaleInd*temp.frame2c1Ind*peek(0) - temp.frame2scaleInd*temp.frame2c2Ind*peek(1) + peek(2);	
+		t3 = temp.frame2scaleInd*peek(3);
+		t4 = temp.frame2scaleInd*peek(4);
+		t5 = -temp.frame2scaleInd*temp.frame2c1Ind*peek(3) - temp.frame2scaleInd*temp.frame2c2Ind*peek(4) + peek(5);		
+		t6 = temp.frame2scaleInd*peek(6);
+		t7 = temp.frame2scaleInd*peek(7);
+		t8 = -temp.frame2scaleInd*temp.frame2c1Ind*peek(6) - temp.frame2scaleInd*temp.frame2c2Ind*peek(7) + peek(8);
+	
+		feat.tempF[0][0] = t0*temp.frame1scaleInd;
+		feat.tempF[0][1] = t3*temp.frame1scaleInd;
+		feat.tempF[0][2] = t0*(-temp.frame1c1Ind*temp.frame1scaleInd) + t3*(-temp.frame1c2Ind*temp.frame1scaleInd) + t6;	
+		feat.tempF[1][0] = t1*temp.frame1scaleInd;
+		feat.tempF[1][1] = t4*temp.frame1scaleInd;
+		feat.tempF[1][2] = t1*(-temp.frame1c1Ind*temp.frame1scaleInd) + t4*(-temp.frame1c2Ind*temp.frame1scaleInd) + t7;
+		feat.tempF[2][0] = t2*temp.frame1scaleInd;
+		feat.tempF[2][1] = t5*temp.frame1scaleInd;
+		feat.tempF[2][2] = t2*(-temp.frame1c1Ind*temp.frame1scaleInd) + t5*(-temp.frame1c2Ind*temp.frame1scaleInd) + t8;
+	
+		push(feat);
+	
+		for(int i=0;i<9;i++){
+			pop();
+		}
+	}
+}
+	
+		
+}
+featureListPair->featureListPair filter denormalizeFeaturePts(){
+	
+	work pop 1 push 1{		
+	
+		featureListPair feat = pop();
+		
+		for(int i=0;i<feat.firstZeroIndex;i++){
+			feat.x1[i].x/=feat.frame1scaleFeat;
+			feat.x1[i].y/=feat.frame1scaleFeat;
+			feat.x1[i].x+=feat.frame1c1Feat;
+			feat.x1[i].y+=feat.frame1c2Feat;
+			feat.x2[i].x/=feat.frame2scaleFeat;
+			feat.x2[i].y/=feat.frame2scaleFeat;	
+			feat.x2[i].x+=feat.frame2c1Feat;
+			feat.x2[i].y+=feat.frame2c2Feat;
+		}	
+	
+		push(feat);
+	}
+}
+featureListPair->featureListPair filter normalizeFeaturePts()
+{
+	work pop 1 push 1{
+	
+		featureListPair feat = pop();
+		
+		//bestFeaturesAndNormData pushedData;
+		
+		float runningSumX1 = 0;
+		float runningSumY1 = 0;
+		float runningSumX2 = 0;
+		float runningSumY2 = 0;
+		float runningSumDist1 = 0;
+		float runningSumDist2 = 0;
+		
+		float muX1, muX2;
+		float muY1, muY2;
+		float stDevFactor1, stDevFactor2;
+		
+		for(int i = 0; i < feat.firstZeroIndex; i++){
+			runningSumX1+=feat.x1[i].x;
+			runningSumY1+=feat.x1[i].y;	
+			runningSumX2+=feat.x2[i].x;
+			runningSumY2+=feat.x2[i].y;				
+		}
+		muX1 = runningSumX1/feat.firstZeroIndex;
+		muY1 = runningSumY1/feat.firstZeroIndex;
+		muX2 = runningSumX2/feat.firstZeroIndex;
+		muY2 = runningSumY2/feat.firstZeroIndex;	
+	
+		for(int i = 0; i < feat.firstZeroIndex; i++){
+			feat.x1[i].x-= muX1;
+			feat.x1[i].y-= muY1;
+			runningSumDist1+= sqrt(feat.x1[i].x*feat.x1[i].x + feat.x1[i].y*feat.x1[i].y);	
+			feat.x2[i].x-= muX2;
+			feat.x2[i].y-= muY2;
+			runningSumDist2+= sqrt(feat.x2[i].x*feat.x2[i].x + feat.x2[i].y*feat.x2[i].y);					
+		}
+		stDevFactor1 = sqrt(2)/(runningSumDist1/feat.firstZeroIndex);
+		stDevFactor2 = sqrt(2)/(runningSumDist2/feat.firstZeroIndex);
+		for(int i = 0; i < feat.firstZeroIndex; i++){
+			
+			feat.x1[i].x*= stDevFactor1;
+			feat.x1[i].y*= stDevFactor1;
+			feat.x2[i].x*= stDevFactor2;
+			feat.x2[i].y*= stDevFactor2;	
+		}
+		
+		feat.frame1scaleFeat = stDevFactor1;
+		feat.frame1c1Feat = muX1;
+		feat.frame1c2Feat = muY1;
+		feat.frame2scaleFeat = stDevFactor2;
+		feat.frame2c1Feat = muX2;
+		feat.frame2c2Feat = muY2;	
+		
+		push(feat);
+	}
+}
+
+featureListPair->featureListPair filter denormalizeIndices(){
+	work pop 1 push 1{		
+	
+		featureListPair feat = pop();
+		
+		for(int i=0;i<s;i++){
+			
+			feat.x1[feat.ind[i]].x/=feat.frame1scaleInd; //how do we unscale?  where should we?  should we?
+			feat.x1[feat.ind[i]].y/=feat.frame1scaleInd;
+			feat.x1[feat.ind[i]].x+=feat.frame1c1Ind;
+			feat.x1[feat.ind[i]].y+=feat.frame1c2Ind;
+			feat.x2[feat.ind[i]].x/=feat.frame2scaleInd;
+			feat.x2[feat.ind[i]].y/=feat.frame2scaleInd;	
+			feat.x2[feat.ind[i]].x+=feat.frame2c1Ind;
+			feat.x2[feat.ind[i]].y+=feat.frame2c2Ind;
+
+		}	
+		
+		push(feat);
+	}
+}
+
+featureListPair->featureListPair filter normalizeIndices()
+{
+	work pop 1 push 1{
+	
+		featureListPair feat = pop();
+		
+		//bestFeaturesAndNormData pushedData;
+		
+		float runningSumX1 = 0;
+		float runningSumY1 = 0;
+		float runningSumX2 = 0;
+		float runningSumY2 = 0;
+		float runningSumDist1 = 0;
+		float runningSumDist2 = 0;
+		
+		float muX1, muX2;
+		float muY1, muY2;
+		float stDevFactor1, stDevFactor2;
+		
+		for(int i = 0; i < s; i++){
+			runningSumX1+=feat.x1[feat.ind[i]].x;
+			runningSumY1+=feat.x1[feat.ind[i]].y;	
+			runningSumX2+=feat.x2[feat.ind[i]].x;
+			runningSumY2+=feat.x2[feat.ind[i]].y;				
+		}
+
+		muX1 = runningSumX1/s;
+		muY1 = runningSumY1/s;
+		muX2 = runningSumX2/s;
+		muY2 = runningSumY2/s;	
+	
+		for(int i = 0; i < s; i++){
+			
+			feat.x1[feat.ind[i]].x-= muX1;
+			feat.x1[feat.ind[i]].y-= muY1;			
+			runningSumDist1+= sqrt(feat.x1[feat.ind[i]].x*feat.x1[feat.ind[i]].x + feat.x1[feat.ind[i]].y*feat.x1[feat.ind[i]].y);	
+			feat.x2[feat.ind[i]].x-= muX2;
+			feat.x2[feat.ind[i]].y-= muY2;
+			runningSumDist2+= sqrt(feat.x2[feat.ind[i]].x*feat.x2[feat.ind[i]].x + feat.x2[feat.ind[i]].y*feat.x2[feat.ind[i]].y);					
+		}
+		stDevFactor1 = sqrt(2)/(runningSumDist1/s);
+		stDevFactor2 = sqrt(2)/(runningSumDist2/s);
+		for(int i = 0; i < s; i++){
+			feat.x1[feat.ind[i]].x*= stDevFactor1;
+			feat.x1[feat.ind[i]].y*= stDevFactor1;	
+			feat.x2[feat.ind[i]].x*= stDevFactor2;
+			feat.x2[feat.ind[i]].y*= stDevFactor2;	
+		}
+		
+		feat.frame1scaleInd = stDevFactor1;
+		feat.frame1c1Ind = muX1;
+		feat.frame1c2Ind = muY1;
+		feat.frame2scaleInd = stDevFactor2;
+		feat.frame2c1Ind = muX2;
+		feat.frame2c2Ind = muY2;
+		
+		push(feat);
+	}
+	
+}
+
+float->float pipeline newF(){
+
+	float d1;
+	float d2;
+
+	add splitjoin{
+		split roundrobin(12,9);
+		add float->float filter {
+		
+			work pop 12 peek 10 push 9{
+				d1 = peek(9);
+				d2 = peek(10);
+				push(d1*peek(0));
+				push(d1*peek(1));
+				push(d1*peek(2));
+				push(d2*peek(3));
+				push(d2*peek(4));
+				push(d2*peek(5));
+				push(0);
+				push(0);
+				push(0);
+				for(int i=0;i<12;i++){pop();}				
+			}				
+		}
+		add Transpose(3,3);
+		join roundrobin(9,9);
+	}
+	add MatrixMultiply(3,3,3,3);
+	
+	//sends everything out column after column
+}
+
+
+
+featureListPair->float filter makeConstraintMatrix(){	
+
+		work pop 1 push s*9{
+		
+			featureListPair temp = pop();
+			bestFeatures[60] feat1 = temp.x1;
+			bestFeatures[60] feat2 = temp.x2;
+			
+			for(int i=0; i<s; i++{	
+				push(feat2[temp.ind[i]].x*feat1[temp.ind[i]].x);			
+			}
+			for(int i=0; i<s; i++{	
+				push(feat2[temp.ind[i]].x*feat1[temp.ind[i]].y);			
+			}
+			for(int i=0; i<s; i++{	
+				push(feat2[temp.ind[i]].x);			
+			}
+			for(int i=0; i<s; i++{	
+				push(feat2[temp.ind[i]].y*feat1[temp.ind[i]].x);			
+			}
+			for(int i=0; i<s; i++{	
+				push(feat2[temp.ind[i]].y*feat1[temp.ind[i]].y);			
+			}
+			for(int i=0; i<s; i++{	
+				push(feat2[temp.ind[i]].y);			
+			}
+			for(int i=0; i<s; i++{	
+				push(feat1[temp.ind[i]].x);			
+			}
+			for(int i=0; i<s; i++{	
+				push(feat1[temp.ind[i]].y);			
+			}
+			for(int i=0; i<s; i++{	
+				push(1);			
+			}			
+		}
+	
+}
+
+float->float filter svd(int aheight, int awidth){
+	//svd code taken from the online version of the book 'numerical recipes in c', the part on 
+	//singular value decomposition.
+	/*Given a matrix a[1..m][1..n], this routine computes its singular value decomposition, A =
+		U*W*V T. Thematrix U replaces a on output. The diagonal matrix of singular values W is output
+		as a vector w[1..n]. ThematrixV (not the transpose V T ) is output as v[1..n][1..n].
+	*/
+	
+	int flag,i,its,j,jj,k,l,nm,imintemp, goodFeatures;
+	float anorm,c,f,g,h,s,scale,x,y,z,sgn;
+	
+	int m = aheight;
+	int n = awidth;
+	
+	work pop m*n push (m*n + n + n*n){
+		
+	float[m][n] a;
+	float [n] w;
+	float [n][n] v;
+	for(int i=0; i<n; i++){
+		for(int j=0; j<m ;j++){
+				a[j][i] = pop();
+		}
+	}
+	
+	
+	float[n] rv1;//rv1=vector(1,n);
+	g=scale=anorm=0.0; //Householder reduction to bidiagonal form.
+	for (i=1;i<=n;i++) {
+		l=i+1;
+		rv1[i]=scale*g;
+		g=s=scale=0.0;
+		if (i <= m) {
+			for (k=i;k<=m;k++) scale += abs(a[k][i]);
+			if (scale) {
+				for (k=i;k<=m;k++) {
+					a[k][i] /= scale;
+					s += a[k][i]*a[k][i];
+				}
+				f=a[i][i];
+				
+				//3 lines below replaced the original: g = -SIGN(sqrt(s),f);
+				if(f>=0) g = abs(sqrt(s)); else g = -abs(sqrt(s));
+
+				h=f*g-s;
+				a[i][i]=f-g;
+				for (j=l;j<=n;j++) {
+					for (s=0.0,k=i;k<=m;k++) s += a[k][i]*a[k][j];
+					f=s/h;
+					for (k=i;k<=m;k++) a[k][j] += f*a[k][i];
+				}
+				for (k=i;k<=m;k++) a[k][i] *= scale;
+			}
+		}
+		w[i]=scale*g;
+		g=s=scale=0.0;
+		if (i <= m && i != n) {
+			for (k=l;k<=n;k++) scale += abs(a[i][k]);
+			if (scale) {
+			
+			for (k=l;k<=n;k++) {
+				a[i][k] /= scale;
+				s += a[i][k]*a[i][k];
+			}
+			f=a[i][l];
+			// replaced this: g = -SIGN(sqrt(s),f); with the following line
+			if(f>=0) g = -abs(sqrt(s)); else g = abs(sqrt(s));
+			h=f*g-s;
+			a[i][l]=f-g;
+			for (k=l;k<=n;k++) rv1[k]=a[i][k]/h;
+			for (j=l;j<=m;j++) {
+			for (s=0.0,k=l;k<=n;k++) s += a[j][k]*a[i][k];
+			for (k=l;k<=n;k++) a[j][k] += s*rv1[k];
+			}
+			for (k=l;k<=n;k++) a[i][k] *= scale;
+			}
+		}if((abs(w[i]) + abs(rv1[i]))>anorm) anorm = (abs(w[i]) + abs(rv1[i]));
+		//anorm=FMAX(anorm,(abs(w[i])+abs(rv1[i])));
+	}
+	for (i=n;i>=1;i--) { //Accumulation of right-hand transformations.
+		if (i < n) {
+			if (g) {
+				for (j=l;j<=n;j++) //Double division to avoid possible underflow.
+				v[j][i]=(a[i][j]/a[i][l])/g;
+				for (j=l;j<=n;j++) {
+				for (s=0.0,k=l;k<=n;k++) s += a[i][k]*v[k][j];
+				for (k=l;k<=n;k++) v[k][j] += s*v[k][i];
+				}
+			}
+			for (j=l;j<=n;j++) v[i][j]=v[j][i]=0.0;
+		}
+		v[i][i]=1.0;
+		g=rv1[i];
+		l=i;
+	}
+	if(m<n) imintemp = m; else imintemp = n;
+	for (i=imintemp;i>=1;i--) { //Accumulation of left-hand transformations.
+		l=i+1;
+		g=w[i];
+		for (j=l;j<=n;j++) a[i][j]=0.0;
+		if (g) {
+			g=1.0/g;
+			for (j=l;j<=n;j++) {
+				for (s=0.0,k=l;k<=m;k++) s += a[k][i]*a[k][j];
+				f=(s/a[i][i])*g;
+				for (k=i;k<=m;k++) a[k][j] += f*a[k][i];
+			}
+			for (j=i;j<=m;j++) a[j][i] *= g;
+		} else for (j=i;j<=m;j++) a[j][i]=0.0;
+		++a[i][i];
+	}
+	for (k=n;k>=1;k--) { //Diagonalization of the bidiagonal form: Loop over
+						 //singular values, and over
+		 for (its=1;its<=30;its++) { //allowed iterations.
+			flag=1;
+			for (l=k;l>=1;l--) { //Test for splitting.
+				nm=l-1; 	// Note that rv1[1] is always zero.
+				if ((float)(abs(rv1[l])+anorm) == anorm) {
+					flag=0;
+					break;
+				}
+				if ((float)(abs(w[nm])+anorm) == anorm) break;
+			}
+			if (flag) {
+				c=0.0; //Cancellation of rv1[l], if l > 1.
+				s=1.0;
+				for (i=l;i<=k;i++) {
+					f=s*rv1[i];
+					rv1[i]=c*rv1[i];
+					if ((float)(abs(f)+anorm) == anorm) break;
+					g=w[i];
+					//substituted below for h=pythag(f,g);
+					h = sqrt(f*f + g*g);
+					w[i]=h;
+					h=1.0/h;
+					c=g*h;
+					s = -f*h;
+					for (j=1;j<=m;j++) {
+						y=a[j][nm];
+						z=a[j][i];
+						a[j][nm]=y*c+z*s;
+						a[j][i]=z*c-y*s;
+					}
+				}
+			}
+			z=w[k];
+			if (l == k) { //Convergence.
+				if (z < 0.0) { //Singular value is made nonnegative.
+					w[k] = -z;
+					for (j=1;j<=n;j++) v[j][k] = -v[j][k];
+				}
+				break;
+			}
+			if (its == 30) nrerror("no convergence in 30 svdcmp iterations");
+			x=w[l]; //Shift from bottom 2-by-2 minor.
+			nm=k-1;
+			y=w[nm];
+			g=rv1[nm];
+			h=rv1[k];
+			f=((y-z)*(y+z)+(g-h)*(g+h))/(2.0*h*y);
+			//	substituting the pythagorean function for g=pythag(f,1.0);
+			g = sqrt(f*f + 1);
+			// another replacement for SIGN (...)
+			if(f>=0) sgn = abs(g); else sgn = -abs(g);
+			f=((x-z)*(x+z)+h*((y/(f+sgn)-h))/x;
+			c=s=1.0; //Next QR transformation:
+			for (j=l;j<=nm;j++) {
+				i=j+1;
+				g=rv1[i];
+				y=w[i];
+				h=s*g;
+				g=c*g;
+				//substituting the pythagorean function for z=pythag(f,h);
+				z = sqrt(f*f + h*h);
+		
+				rv1[j]=z;
+				c=f/z;
+				s=h/z;
+				f=x*c+g*s;
+				g = g*c-x*s;
+				h=y*s;
+				y *= c;
+				for (jj=1;jj<=n;jj++) {
+					x=v[jj][j];
+					z=v[jj][i];
+					v[jj][j]=x*c+z*s;
+					v[jj][i]=z*c-x*s;
+				}
+				//	substituting the pythagorean function for z=pythag(f,h);
+				z = sqrt(f*f + h*h);
+				w[j]=z; //Rotation can be arbitrary if z = 0.
+				if (z) {
+					z=1.0/z;
+					c=f*z;
+					s=h*z;
+				}
+				f=c*g+s*y;
+				x=c*y-s*g;
+				for (jj=1;jj<=m;jj++) {
+					y=a[jj][j];
+					z=a[jj][i];
+					a[jj][j]=y*c+z*s;
+					a[jj][i]=z*c-y*s;
+				}
+			}
+			rv1[l]=0.0;
+			rv1[k]=f;
+			w[k]=x;
+			}
+		}
+	}
+	for(int i=0; i<n; i++){
+		for(int j=0; j<m ;j++){
+				push(a[j][i]);
+		}
+	}
+	for(int i=0; i<n ;i++){
+		push(w[i]);
+	}
+	for(int i=0; i<n; i++){
+		for(int j=0; j<n ;j++){
+				push(v[j][i]);
+		}
+	}
+	
+}
+
+//matrix multiplication filter and associated filters
+
+float->float pipeline MatrixMultiply(int x0, int y0, int x1, int y1) {
+	// rearrange and duplicate the matrices as necessary:
+	add RearrangeDuplicateBoth(x0, y0, x1, y1);
+	add MultiplyAccumulateParallel(x0, x0);
+}
+
+float->float splitjoin RearrangeDuplicateBoth(int x0, int y0, 
+	int x1, int y1) {
+	split roundrobin(x0 * y0, x1 * y1);
+	// the first matrix just needs to get duplicated 
+	add DuplicateRows(x1, x0);
+        
+	// the second matrix needs to be transposed first
+	// and then duplicated:
+	add RearrangeDuplicate(x0, y0, x1, y1);
+	join roundrobin;
+}
+
+float->float pipeline RearrangeDuplicate(int x0, int y0, int x1, int y1) {
+	add TransposeM(x1, y1);
+	add DuplicateRows(y0, x1*y1);
+}
+
+float->float splitjoin TransposeM(int x, int y) {
+	split roundrobin;
+	for (int i = 0; i < x; i++) add Identity<float>();
+	join roundrobin(y);
+}
+
+float->float splitjoin MultiplyAccumulateParallel(int x, int n) {
+	split roundrobin(x*2);
+	for (int i = 0; i < n; i++) add MultiplyAccumulate(x);
+	join roundrobin(1);
+}
+
+float->float filter MultiplyAccumulate(int rowLength) {
+	work pop rowLength*2 push 1 {
+		float result = 0;
+		for (int x = 0; x < rowLength; x++) {
+			result += (peek(0) * peek(1));
+			pop();
+			pop();
+		}
+		push(result);
+	}
+}
+
+float->float pipeline DuplicateRows(int x, int y) {
+	add DuplicateRowsInternal(x, y);
+}
+
+float->float splitjoin DuplicateRowsInternal(int times, int length) {
+   split duplicate;
+   for (int i = 0; i < times; i++) add Identity<float>();
+   join roundrobin(length);
+}
+
+
+
+

@@ -19,6 +19,7 @@ package streamit.scheduler2.print;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.DataOutputStream;
+import streamit.library.Filter;
 import streamit.scheduler2.iriter.FilterIter;
 import streamit.scheduler2.iriter.PipelineIter;
 import streamit.scheduler2.iriter.SplitJoinIter;
@@ -34,6 +35,11 @@ public class PrintGraph extends streamit.misc.AssertedClass
      * The maximum number of phases to show (for split/join).
      */
     private static final int MAX_PHASES_TO_SHOW = 16;
+    /**
+     * Whether or not we are printing I/O rates.
+     */
+    private static boolean PRINTING_IO_RATES = true;
+
 
     public void printProgram(Iterator iter)
     {
@@ -47,20 +53,28 @@ public class PrintGraph extends streamit.misc.AssertedClass
         FileOutputStream fileOutputStream;
         DataOutputStream outputStream;
 
-        try
-            {
-                outputFile = new File(getName(iter) + ".dot");
-                fileOutputStream = new FileOutputStream(outputFile);
-                outputStream = new DataOutputStream(fileOutputStream);
+        // print a graph both with and without I/O rates
+        String[] filenames = { getName(iter) + ".dot",
+                               getName(iter) + "-rates.dot" };
+        boolean[] printingIORates = { false, true };
+        for (int i=0; i<2; i++) {
 
-                outputStream.writeBytes("digraph streamit {\nsize=\"7.5,10\";");
-                printStream(iter, outputStream);
-                outputStream.writeBytes("}\n");
-            }
-        catch (Throwable e)
-            {
-                ERROR(e);
-            }
+            try
+                {
+                    outputFile = new File(filenames[i]);
+                    PRINTING_IO_RATES = printingIORates[i];
+                    fileOutputStream = new FileOutputStream(outputFile);
+                    outputStream = new DataOutputStream(fileOutputStream);
+                    
+                    outputStream.writeBytes("digraph streamit {\nsize=\"7.5,10\";");
+                    printStream(iter, outputStream);
+                    outputStream.writeBytes("}\n");
+                }
+            catch (Throwable e)
+                {
+                    ERROR(e);
+                }
+        }
     }
 
     void printStream(Iterator iter, DataOutputStream outputStream)
@@ -100,15 +114,42 @@ public class PrintGraph extends streamit.misc.AssertedClass
         // to label the anonymous nodes, so just return empty in this
         // case.
         if (name.indexOf("$")>-1) {
-            return "";
+            name = "";
         } else {
-            return name
+            name = name
                 .replace('@', '_')
                 .replace('.', '_')
                 .replace(' ', '_')
                 .replace('=', '_')
                 .replace(',', '_');
         }
+
+        // add the I/O rates
+        if (PRINTING_IO_RATES && obj instanceof Filter) {
+            Filter filter = (Filter)obj;
+
+            // add init rates
+            if (filter.getNumInitPhases() > 0) {
+                int initPop = filter.getInitPopSummary();
+                int initPeek = filter.getInitPeekSummary();
+                int initPush = filter.getInitPushSummary();
+                name += ("_" + 
+                         "initPop_" + initPop + "_" +
+                         (initPop==initPeek ? "" : "initPeek_" + initPeek + "_") +
+                         "initPush_" + initPush);
+            }
+
+            // add steady rates
+            int pop = filter.getSteadyPopSummary();
+            int peek = filter.getSteadyPeekSummary();
+            int push = filter.getSteadyPushSummary();
+            name += ("_" + 
+                     "pop_" + pop + "_" +
+                     (pop==peek ? "" : "peek_" + peek + "_") +
+                     "push_" + push);
+        }
+
+        return name;
     }
 
     String getName(IteratorBase iter)

@@ -72,9 +72,9 @@ Someone want to write a detailed description?
       <file class="output">Test_Upstream.out</file>
     </impl>
     <impl lang="StreamIt" id="test_dynamic">
-      <desc>Someone want to write a description of this test? 
-            No output: -library does not seem to terminate</desc>
+      <desc>Someone want to write a description of this test?</desc>
       <file class="source">Test_dynamic.str</file>
+      <file class="output">Test_dynamic.out</file>
     </impl>
   </implementations>
 </benchmark>

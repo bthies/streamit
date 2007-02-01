@@ -228,10 +228,11 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
                                         targets.remove(var);
                                         unsafe.add(var.getIdent());
                                     }
-                                // if not processing init() and not unsafe field, add this.name[int] to targetsField
-                            } else if(!init&&(prefix instanceof JFieldAccessExpression)&&(((JFieldAccessExpression)prefix).getPrefix() instanceof JThisExpression)) {
+                                // if not unsafe field, add this.name[int] to targetsField
+                            } else if((prefix instanceof JFieldAccessExpression)
+                                    && (((JFieldAccessExpression)prefix).getPrefix() instanceof JThisExpression)) {
                                 String ident=((JFieldAccessExpression)prefix).getIdent();
-                                if(!unsafeField.contains(ident))
+                                if(!unsafeField.contains(ident)) {
                                     if(accessor instanceof JIntLiteral) {
                                         HashMap<Integer, Boolean> map=targetsField.get(ident);
                                         if(map==null) {
@@ -242,6 +243,7 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
                                     } else {
                                         unsafeField.add(ident);
                                     }
+                                }
                             } else {
                                 deadend=true;
                                 prefix.accept(this);

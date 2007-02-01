@@ -4,6 +4,9 @@
 package at.dms.kjc.cluster;
 
 import at.dms.kjc.CType;
+import at.dms.kjc.CArrayType;
+import at.dms.kjc.JExpression;
+import at.dms.kjc.JIntLiteral;
 
 /**
  * @author dimock
@@ -70,9 +73,23 @@ public class TapeFixedCircular extends TapeFixedBase implements Tape {
      */
     @Override
     public String dataDeclaration() {
-        String typ = ClusterUtils.CTypeToString(type);
+        if (type instanceof CArrayType) {
+            CArrayType typa = (CArrayType)type;
+            String retval = "";
+            retval += typa.getBaseType();
+            retval += " " + bufferName
+            + "[__BUF_SIZE_MASK_" + src + "_" + dst
+            + " + 1]";
+            for (JExpression d : typa.getDims()) {
+                retval += "[" + ((JIntLiteral)d).intValue() + "]";
+            }
+            retval += ";\n"
+                + "int " + headName + " = 0;\n"
+                + "int " + tailName + " = 0;\n";
+            return retval;
+        }
         return 
-            typ + " " + bufferName
+            typeString + " " + bufferName
                 + "[__BUF_SIZE_MASK_" + src + "_" + dst
                 + " + 1];\n"
                 + "int " + headName + " = 0;\n"

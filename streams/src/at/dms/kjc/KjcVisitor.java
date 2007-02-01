@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcVisitor.java,v 1.4 2006-01-25 17:01:23 thies Exp $
+ * $Id: KjcVisitor.java,v 1.5 2007-02-01 21:11:31 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -498,6 +498,11 @@ public interface KjcVisitor {
                                     JExpression prefix,
                                     JExpression accessor);
 
+    /**
+     * 
+     */
+    void visitEmittedTextExpression(JEmittedTextExpression self, Object[] parts);
+    
     /**
      * visits an array length expression
      */

@@ -43,8 +43,11 @@ public class FlatIRToCluster extends InsertTimers implements
     // true if generating code for global struct
     protected boolean global = false;
 
-    // true if push and pop from provided buffers *(___in++) and *(___out++)
-    protected boolean mod_push_pop = false;
+// code based on this not tested and not maintained.
+// If re-enabled in this class, need to uncomment some
+// lines in FusionCode.java
+//    // true if push and pop from provided buffers *(___in++) and *(___out++)
+//    protected boolean mod_push_pop = false;
 
     // ?? set up in ClusterCode.generateGlobal
     public String helper_package = null;
@@ -439,51 +442,52 @@ public class FlatIRToCluster extends InsertTimers implements
         // | Work Function (int ____n) |
         // +=============================+
 
-        boolean printed_BUFFER_MERGE = false;
-        
-        if (!(self instanceof SIRFileReader) &&
-            !(self instanceof SIRFileWriter) &&
-            (in != null && out != null)) {
-            
-            if (! printed_BUFFER_MERGE) {
-                p.println("\n\n#ifdef BUFFER_MERGE\n");
-                printed_BUFFER_MERGE = true;
-            }
-            p.println();
-            p.println("void "+work.getName()+"__"+selfID+"__mod(int ____n, "+input_type+" *____in, "+output_type+" *____out) {");
-            p.print("  for (; (0 < ____n); ____n--)\n");
-            
-            mod_push_pop = true;
-            work.getBody().accept(this);
-            mod_push_pop = false;
-            
-            p.println("}\n");
-            
-        }
-        
-        if (!(self instanceof SIRFileReader) &&
-            !(self instanceof SIRFileWriter) &&
-            (in != null && out != null)) {
-            
-            if (! printed_BUFFER_MERGE) {
-                p.println("\n\n#ifdef BUFFER_MERGE\n");
-                printed_BUFFER_MERGE = true;
-            }
-            p.println();
-            p.println("void "+work.getName()+"__"+selfID+"__mod2(int ____n, "+input_type+" *____in, "+output_type+" *____out, int s1, int s2) {");
-            p.print("  for (; (0 < ____n); (____n--, ____in+=s1, ____out+=s2))\n");
-            
-            mod_push_pop = true;
-            work.getBody().accept(this);
-            mod_push_pop = false;
-            
-            p.println("}\n");
-            
-        }
-        
-        if (printed_BUFFER_MERGE) {
-        p.println("\n#endif // BUFFER_MERGE\n\n");
-        }
+// produced code was never tested, and has not been maintained.
+//        boolean printed_BUFFER_MERGE = false;
+//        
+//        if (!(self instanceof SIRFileReader) &&
+//            !(self instanceof SIRFileWriter) &&
+//            (in != null && out != null)) {
+//            
+//            if (! printed_BUFFER_MERGE) {
+//                p.println("\n\n#ifdef BUFFER_MERGE\n");
+//                printed_BUFFER_MERGE = true;
+//            }
+//            p.println();
+//            p.println("void "+work.getName()+"__"+selfID+"__mod(int ____n, "+input_type+" *____in, "+output_type+" *____out) {");
+//            p.print("  for (; (0 < ____n); ____n--)\n");
+//            
+//            mod_push_pop = true;
+//            work.getBody().accept(this);
+//            mod_push_pop = false;
+//            
+//            p.println("}\n");
+//            
+//        }
+//        
+//        if (!(self instanceof SIRFileReader) &&
+//            !(self instanceof SIRFileWriter) &&
+//            (in != null && out != null)) {
+//            
+//            if (! printed_BUFFER_MERGE) {
+//                p.println("\n\n#ifdef BUFFER_MERGE\n");
+//                printed_BUFFER_MERGE = true;
+//            }
+//            p.println();
+//            p.println("void "+work.getName()+"__"+selfID+"__mod2(int ____n, "+input_type+" *____in, "+output_type+" *____out, int s1, int s2) {");
+//            p.print("  for (; (0 < ____n); (____n--, ____in+=s1, ____out+=s2))\n");
+//            
+//            mod_push_pop = true;
+//            work.getBody().accept(this);
+//            mod_push_pop = false;
+//            
+//            p.println("}\n");
+//            
+//        }
+//        
+//        if (printed_BUFFER_MERGE) {
+//        p.println("\n#endif // BUFFER_MERGE\n\n");
+//        }
         
         JBlock block = new JBlock(null, new JStatement[0], null);
         
@@ -527,8 +531,7 @@ public class FlatIRToCluster extends InsertTimers implements
                                                      new JIntLiteral(0), new JLocalVariableExpression(null, counter));
 
         if (self instanceof SIRPredefinedFilter) {
-            BuiltinsCodeGen.predefinedFilterWork((SIRPredefinedFilter) self,
-                                                 selfID, p);
+            BuiltinsCodeGen.predefinedFilterWork((SIRPredefinedFilter) self, selfID, p);
         } else {
 
             block.addStatement(new JForStatement(null, init, cond, 
@@ -1398,12 +1401,46 @@ public class FlatIRToCluster extends InsertTimers implements
             return;
         }
 
+        if (right instanceof SIRPopExpression) {
+            CodegenPrintWriter oldWriter = p;
+            p = new CodegenPrintWriter();
+            left.accept(this);
+            String leftString = p.getString();
+            p = oldWriter;
+            // note following line does not work with mod_push_pop
+            // but mod_push_pop does not work with arrays over tapes.
+            p.print(RegisterStreams.getFilterInStream(filter).assignPopToVar(leftString));
+            return;
+        }
+
+        if (right instanceof SIRPeekExpression) {
+            CodegenPrintWriter oldWriter = p;
+            p = new CodegenPrintWriter();
+            left.accept(this);
+            String leftString = p.getString();
+            p = new CodegenPrintWriter();
+            ((SIRPeekExpression)right).getArg().accept(this);
+            String argstring = p.getString();
+            p = oldWriter;
+            // note following line does not work with mod_push_pop
+            // but mod_push_pop does not work with arrays over tapes.
+            p.print(RegisterStreams.getFilterInStream(filter).assignPeekToVar(leftString,argstring));
+            return;
+        }
+
+        
         // copy arrays element-wise
         boolean arrayType = ((left.getType()!=null && left.getType().isArrayType()) ||
                              (right.getType()!=null && right.getType().isArrayType()));
         if (arrayType && !(right instanceof JNewArrayExpression)) {
-
-            CArrayType type = (CArrayType)right.getType();
+            CArrayType type;
+            try {
+                type = (CArrayType)right.getType();
+            } catch (ClassCastException e) {
+                System.err.println("Warning: copy from non-array type to array type.");
+                p.println("/* Warning: copy from non-array type to array type. */");
+                type = (CArrayType)left.getType();
+            }
             String dims[] = this.makeArrayStrings(type.getDims());
 
             // dims should never be null now that we have static array
@@ -1783,14 +1820,15 @@ public class FlatIRToCluster extends InsertTimers implements
         //Tape in = RegisterStreams.getFilterInStream(filter);
         //print(in.consumer_name()+".peek(");
 
-        if (mod_push_pop) {
-            p.print("(*(____in+");
-            num.accept(this);
-            p.print("))");
-            return;
-        }
+//        if (mod_push_pop) {
+//            p.print("(*(____in+");
+//            num.accept(this);
+//            p.print("))");
+//            return;
+//        }
 
-        p.print(ClusterUtils.peekName(selfID) + "(");
+        p.print(RegisterStreams.getFilterInStream(filter).getPeekName());
+        p.print("(");
         num.accept(this);
         p.print(")");
 
@@ -1801,16 +1839,19 @@ public class FlatIRToCluster extends InsertTimers implements
 
         //Tape in = RegisterStreams.getFilterInStream(filter);
         if (self.getNumPop() == 1)  {
-            if (mod_push_pop) {
-                p.print("(*____in++)");
-                return;
-            }
-            p.print("__pop__" + selfID + "()");
+//            if (mod_push_pop) {
+//                p.print("(*____in++)");
+//                return;
+//            }
+            p.print(RegisterStreams.getFilterInStream(filter).getPopName());
+            p.print("()");
         } else {
-            if (mod_push_pop) {
-                p.print("assert(false);");
-            }
-            p.print("__pop__" + selfID + "(" + self.getNumPop() + ")");
+//            if (mod_push_pop) {
+//                p.print("in += " + self.getNumPop() + ";\n");
+//                return;
+//            }
+            p.print(RegisterStreams.getFilterInStream(filter).getPopName());
+            p.print("(" + self.getNumPop() + ")");
         }
     }
 
@@ -1818,68 +1859,67 @@ public class FlatIRToCluster extends InsertTimers implements
 
     private void pushScalar(SIRPushExpression self, CType tapeType,
                             JExpression val) {
-        if (mod_push_pop) {
-            p.print("((*____out++)=");
-            val.accept(this);
-            p.print(")");
-            return;
-        }
+//        if (mod_push_pop) {
+//            p.print("((*____out++)=");
+//            val.accept(this);
+//            p.print(")");
+//            return;
+//        }
 
-        p.print(ClusterUtils.pushName(selfID) + "(");
+        p.print(RegisterStreams.getFilterOutStream(filter).getPushName());
+        p.print("(");
         val.accept(this);
         p.print(")");
-
-        //Tape out = RegisterStreams.getFilterOutStream(filter);
-        //p.print(out.producer_name()+".push(");
-
-        //p.print(Util.staticNetworkSendPrefix(tapeType));
-        //p.print(Util.staticNetworkSendSuffix());
 
     }
 
     public void pushClass(SIRPushExpression self, CType tapeType,
                           JExpression val) {
 
-        p.print(ClusterUtils.pushName(selfID) + "(");
+        p.print(RegisterStreams.getFilterOutStream(filter).getPushName());
+        p.print("(");
+        val.accept(this);
+        p.print(")");
+    }
+    
+    private void pushArray(SIRPushExpression self, CType tapeType,
+                           JExpression val) {
+        // following commented-out code never worked.
+        // push as if scalar and let the TapeXXXX.java functions
+        // handle generation of push for arrays.
+        p.print(RegisterStreams.getFilterOutStream(filter).getPushName());
+        p.print("(");
         val.accept(this);
         p.print(")");
 
-        //turn the push statement into a call of
-        //the structure's push method
-        //p.print("push" + tapeType + "(&");
-        //val.accept(this);
-        //p.print(")");
-    }
-
-    private void pushArray(SIRPushExpression self, CType tapeType,
-                           JExpression val) {
-        CType baseType = ((CArrayType) tapeType).getBaseType();
-        String dims[] = this.makeArrayStrings(((CArrayType)tapeType).getDims());
-
-        for (int i = 0; i < dims.length; i++) {
-            p.print("for (" + CommonConstants.ARRAY_INDEX + i + " = 0; "
-                    + CommonConstants.ARRAY_INDEX + i + " < " + dims[i]
-                    + " ; " + CommonConstants.ARRAY_INDEX + i + "++)\n");
-        }
-
-        // AD: never tested to my knowledge.  Also, decoupled is only defined for RAW backends
-        //        if (KjcOptions.altcodegen || KjcOptions.decoupled) {
-        //            p.print("{\n");
-        //            // p.print(Util.CSTOVAR + " = ");
-        //            val.accept(this);
-        //            for (int i = 0; i < dims.length; i++) {
-        //                p.print("[" + CommonConstants.ARRAY_INDEX + i + "]");
-        //            }
-        //            p.print(";\n}\n");
-        //        } else {
-        p.print("{");
-        p.print("static_send((" + baseType + ") ");
-        val.accept(this);
-        for (int i = 0; i < dims.length; i++) {
-            p.print("[" + CommonConstants.ARRAY_INDEX + i + "]");
-        }
-        p.print(");\n}\n");
-        //        }
+// AD: never worked to my knowledge
+//        CType baseType = ((CArrayType) tapeType).getBaseType();
+//        String dims[] = this.makeArrayStrings(((CArrayType)tapeType).getDims());
+//
+//        for (int i = 0; i < dims.length; i++) {
+//            p.print("for (" + CommonConstants.ARRAY_INDEX + i + " = 0; "
+//                    + CommonConstants.ARRAY_INDEX + i + " < " + dims[i]
+//                    + " ; " + CommonConstants.ARRAY_INDEX + i + "++)\n");
+//        }
+//
+//        // AD: never tested to my knowledge.  Also, decoupled is only defined for RAW backends
+//        //        if (KjcOptions.altcodegen || KjcOptions.decoupled) {
+//        //            p.print("{\n");
+//        //            // p.print(Util.CSTOVAR + " = ");
+//        //            val.accept(this);
+//        //            for (int i = 0; i < dims.length; i++) {
+//        //                p.print("[" + CommonConstants.ARRAY_INDEX + i + "]");
+//        //            }
+//        //            p.print(";\n}\n");
+//        //        } else {
+//        p.print("{");
+//        p.print("static_send((" + baseType + ") ");
+//        val.accept(this);
+//        for (int i = 0; i < dims.length; i++) {
+//            p.print("[" + CommonConstants.ARRAY_INDEX + i + "]");
+//        }
+//        p.print(");\n}\n");
+//        //        }
     }
 
     public void visitPushExpression(SIRPushExpression self, CType tapeType,

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcEmptyVisitor.java,v 1.9 2006-01-25 17:01:23 thies Exp $
+ * $Id: KjcEmptyVisitor.java,v 1.10 2007-02-01 21:11:31 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -776,6 +776,15 @@ public class KjcEmptyVisitor implements Constants, KjcVisitor {
                                            JExpression accessor) {
         prefix.accept(this);
         accessor.accept(this);
+    }
+
+    /** visiting emitted text with possible embedded expressions. */
+    public void visitEmittedTextExpression(JEmittedTextExpression self, Object[] parts) {
+        for (Object part : parts) {
+            if (part instanceof JExpression) {
+                ((JExpression)part).accept(this);
+            }
+        }
     }
 
     /**

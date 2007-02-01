@@ -82,6 +82,19 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
         }
     }
     
+    public Object visitVariableDefinition(JVariableDefinition self,
+            int modifiers,
+            CType type,
+            String ident,
+            JExpression expr) {
+        Object retval = super.visitVariableDefinition(self,modifiers,type,ident,expr);
+        if (type.isArrayType() && ((CArrayType)type).getDims().length != 1) {
+            unsafeField.add(ident);
+        }
+        return retval;
+    }
+    
+    
     public Object visitMethodDeclaration(JMethodDeclaration self,
                                          int modifiers,
                                          CType returnType,
@@ -100,10 +113,26 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
         }
         if (body != null) {
             // XXX: seems to reuse targets with multiple key types: Integer, JLocalVariable, JExpression...
-            final HashMap<JLocalVariable, HashMap<Integer, Boolean>> targets=new HashMap<JLocalVariable, HashMap<Integer, Boolean>>();
-            final HashMap<Serializable, Boolean> unsafe=new HashMap<Serializable, Boolean>();
+            final Map<JLocalVariable, HashMap<Integer, Boolean>> targets=new HashMap<JLocalVariable, HashMap<Integer, Boolean>>();
+            final Set<String> unsafe=new HashSet<String>();
             body.accept(new SLIRReplacingVisitor() {
                     HashMap<JLocalVariable, Boolean> declared=new HashMap<JLocalVariable, Boolean>();
+
+                    /**
+                     * Eliminate all multidimensional arrays from consideration since
+                     * we can not deal with them.
+                     */
+                    public Object visitVariableDefinition(JVariableDefinition self,
+                            int modifiers,
+                            CType type,
+                            String ident,
+                            JExpression expr) {
+                        Object retval = super.visitVariableDefinition(self,modifiers,type,ident,expr);
+                        if (type.isArrayType() && ((CArrayType)type).getDims().length != 1) {
+                            unsafe.add(ident);
+                        }
+                        return retval;
+                    }
 
                     /**
                      * If vars used in any way except in array access then remove from targets
@@ -111,19 +140,20 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
                     public Object visitLocalVariableExpression(JLocalVariableExpression self2,
                                                                String ident2) {
                         targets.remove(((JLocalVariableExpression)self2).getVariable());
-                        unsafe.put(((JLocalVariableExpression)self2).getVariable(),Boolean.TRUE);
+                        unsafe.add(((JLocalVariableExpression)self2).getVariable().getIdent());
                         return self2;
                     }
 
                     /**
-                     * If fields used in any way except in array access then remove from targets
+                     * If fields used in any way except in array access then remove from targets.
+                     * Use of fields in array access checked below in visitArrayAccessExpression.
                      */
                     public Object visitFieldExpression(JFieldAccessExpression self,
                                                        JExpression left,
                                                        String ident) {
                         if(!init) {
                             targetsField.remove(self.getIdent());
-                            unsafe.put(self.getIdent(),Boolean.TRUE);
+                            unsafe.add(self.getIdent());
                             return self;
                         }
                         return self;
@@ -183,10 +213,10 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
                                                              JExpression accessor) {
                         if(!deadend) {
                             accessor.accept(this);
-                            //if((prefix instanceof JLocalVariableExpression)&&(!unsafe.containsKey(((JLocalVariableExpression)prefix).getVariable())))
+                            // if local[int] (but not argument[int]) and not unsafe, add to targets
                             if(prefix instanceof JLocalVariableExpression) {
                                 JLocalVariable var=((JLocalVariableExpression)prefix).getVariable();
-                                if(!(unsafe.containsKey(var) || (var instanceof JFormalParameter)))
+                                if(!(unsafe.contains(var.getIdent()) || (var instanceof JFormalParameter)))
                                     if(accessor instanceof JIntLiteral) {
                                         HashMap<Integer, Boolean> map=targets.get(var);
                                         if(map==null) {
@@ -196,8 +226,9 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
                                         map.put(new Integer(((JIntLiteral)accessor).intValue()),Boolean.TRUE);
                                     } else {
                                         targets.remove(var);
-                                        unsafe.put(var,Boolean.TRUE);
+                                        unsafe.add(var.getIdent());
                                     }
+                                // if not processing init() and not unsafe field, add this.name[int] to targetsField
                             } else if(!init&&(prefix instanceof JFieldAccessExpression)&&(((JFieldAccessExpression)prefix).getPrefix() instanceof JThisExpression)) {
                                 String ident=((JFieldAccessExpression)prefix).getIdent();
                                 if(!unsafeField.contains(ident))
@@ -216,7 +247,7 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
                                 prefix.accept(this);
                                 deadend=false;
                             }
-                        } else {
+                        } else /* deadend == true */ {
                             prefix.accept(this);
                             accessor.accept(this);
                         }
@@ -290,7 +321,8 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
             // the offsets or else we will find more bugs)
             Set<Integer> keySet = targetsField.get(name).keySet();
             int top = Collections.max(keySet);
-            assert top + 1 == keySet.size();
+// assertion in next line not true for tde.str where only offsets 0, 4, 8, .. of bitr are used.
+//            assert top + 1 == keySet.size();
             // will be filled with names of fields guaranteed to be constant
             String[] newFields=new String[top+1];
 
@@ -304,6 +336,7 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
         }
         
         // Iterate over all methods, updating references to constant fields.
+        // (Using visitArrayReference below.)
         for(JMethodDeclaration method : unit.getMethods()) {
             method.getBody().accept(this);
         }
@@ -355,6 +388,16 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
                         init_vals == null? null : init_vals[idx]),  null,null);
     }
 
+    /*
+     * This depends critically on timing: will  replaced  / replacedFields be stable by time array access
+     * is reached?
+     * 
+     * Relies on replaced being set up in visitmethodDeclaration.  Recursion into method not done
+     * until after visitmethodDeclaration, so OK for local arrays.
+     * 
+     * replacedFields set up in destroyFieldArrays, and then every method required to accetp(this) 
+     * which will cause replacement to happen at correct time.
+     */
     public Object visitArrayAccessExpression(JArrayAccessExpression self,
                                              JExpression prefix,
                                              JExpression accessor) {

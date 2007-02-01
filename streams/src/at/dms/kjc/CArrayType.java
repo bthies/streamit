@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CArrayType.java,v 1.19 2006-06-16 19:06:07 thies Exp $
+ * $Id: CArrayType.java,v 1.20 2007-02-01 21:11:31 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -61,6 +61,7 @@ public class CArrayType extends CClassType {
         if (dims==null) {
             dims = new JExpression[arrayBound];
         }
+        assert dims.length == arrayBound;
         this.dims = dims;
         
         if (baseType.isArrayType()) {
@@ -68,6 +69,15 @@ public class CArrayType extends CClassType {
             this.arrayBound = arrayBound + ((CArrayType)baseType).arrayBound;
             this.baseType = ((CArrayType)baseType).baseType;
             
+            JExpression[] oldDims = ((CArrayType)baseType).getDims();
+            JExpression[] newDims = new JExpression[arrayBound + oldDims.length];
+            for (int i = 0; i < arrayBound; i++) {
+                newDims[i] = dims[i];
+            }
+            for (int i = 0; i < oldDims.length; i++) {
+                newDims[i + arrayBound] = oldDims[i];
+            }
+            this.dims = newDims;
         } else {
             this.arrayBound = arrayBound;
             this.baseType = baseType;

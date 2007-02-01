@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterCodeGenerator.java,v 1.64 2006-09-25 13:54:36 dimock Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterCodeGenerator.java,v 1.65 2007-02-01 21:11:32 dimock Exp $
 package at.dms.kjc.cluster;
 
 import java.util.*;
@@ -248,11 +248,11 @@ class ClusterCodeGenerator {
                         && ((SIRFeedbackLoop)oper.getParent()).getDelayInt() > 0
                         && NodeEnumerator.getFlatNode(in.getSource()) ==
                             node.incoming[1]) {
-                    p.println("consumer2p<"+ClusterUtils.CTypeToString(in.getType())+"> "+((TapeCluster)in).getConsumerName()+";");
+                    p.println("consumer2p<"+CommonUtils.CTypeToStringA(in.getType(),true)+"> "+((TapeCluster)in).getConsumerName()+";");
                 } else {
-                    p.println("consumer2<"+ClusterUtils.CTypeToString(in.getType())+"> "+((TapeCluster)in).getConsumerName()+";");
+                    p.println("consumer2<"+CommonUtils.CTypeToStringA(in.getType(),true)+"> "+((TapeCluster)in).getConsumerName()+";");
                 }
-                p.println("extern "+ClusterUtils.CTypeToString(in.getType())+" "+((TapeCluster)in).getPopName()+"();");
+                p.println("extern "+CommonUtils.CTypeToStringA(in.getType(),true)+" "+((TapeCluster)in).getPopName()+"();");
             /*
               if (oper instanceof SIRFilter) {
               String type = ((SIRFilter)oper).getInputType().toString();
@@ -266,8 +266,8 @@ class ClusterCodeGenerator {
         for (Tape out : data_out) {
           if (out != null && out instanceof TapeCluster) {
             if (! FixedBufferTape.isFixedBuffer(out.getSource(),out.getDest())) {
-                p.println("producer2<"+ClusterUtils.CTypeToString(out.getType())+"> "+((TapeCluster)out).getProducerName()+";");
-                p.println("extern void "+((TapeCluster)out).getPushName()+"("+ClusterUtils.CTypeToString(out.getType())+");");
+                p.println("producer2<"+CommonUtils.CTypeToStringA(out.getType(),true)+"> "+((TapeCluster)out).getProducerName()+";");
+                p.println("extern void "+((TapeCluster)out).getPushName()+"("+CommonUtils.CTypeToStringA(out.getType(),true)+");");
                 p.println("    // this-part:"+ClusterFusion.getPartition(node)+" dst-part:"+ClusterFusion.getPartition(NodeEnumerator.getFlatNode(out.getDest()))+"");
             }
           }
@@ -367,9 +367,9 @@ class ClusterCodeGenerator {
                 } catch (NumberFormatException ex) {
                     System.out.println("Warning! Could not estimate size of an array: "+ident);
                 }
-                p.println("  buf->write("+ident+"__"+id+", "+size+" * sizeof("+ClusterUtils.CTypeToString(base)+"));");
+                p.println("  buf->write("+ident+"__"+id+", "+size+" * sizeof("+CommonUtils.CTypeToStringA(base,true)+"));");
             } else {
-                p.println("  buf->write(&"+ident+"__"+id+", sizeof("+ClusterUtils.CTypeToString(type)+"));");
+                p.println("  buf->write(&"+ident+"__"+id+", sizeof("+CommonUtils.CTypeToStringA(type,true)+"));");
             }
         }
 
@@ -421,9 +421,9 @@ class ClusterCodeGenerator {
                 } catch (NumberFormatException ex) {
                     System.out.println("Warning! Could not estimate size of an array: "+ident);
                 }
-                p.println("  buf->read("+ident+"__"+id+", "+size+" *  sizeof("+ClusterUtils.CTypeToString(base)+"));");
+                p.println("  buf->read("+ident+"__"+id+", "+size+" *  sizeof("+CommonUtils.CTypeToStringA(base,true)+"));");
             } else {
-                p.println("  buf->read(&"+ident+"__"+id+", sizeof("+ClusterUtils.CTypeToString(type)+"));");
+                p.println("  buf->read(&"+ident+"__"+id+", sizeof("+CommonUtils.CTypeToStringA(type,true)+"));");
             }
         }
 

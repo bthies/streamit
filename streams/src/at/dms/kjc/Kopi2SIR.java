@@ -1309,10 +1309,6 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
         return self;
     }
 
-    public Object visitEmittedText(JEmittedText self) {
-        assert false: "Did not expect JEmittedText: " + self;
-        return self;
-    }
     /**
      * visits a do statement
      */
@@ -2839,6 +2835,11 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
         return self;
     }
 
+
+    public Object visitEmittedTextExpression(JEmittedTextExpression self, Object[] parts) {
+        throw new AssertionError("Didn's expect JEmittedTextExpression");
+    }
+
     /**
      * visits an array length expression
      */
@@ -2918,6 +2919,5 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
         other.methodToPopRate = this.methodToPopRate;
         other.methodToPeekRate = this.methodToPeekRate;
     }
-
     /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

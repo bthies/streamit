@@ -323,10 +323,11 @@ class FusionCode {
 		String input_type = CommonUtils.CTypeToString(((SIRFilter)node.contents).getInputType(),true);
 		String output_type = CommonUtils.CTypeToString(((SIRFilter)node.contents).getOutputType(), true);
 
-                p.println("#ifdef BUFFER_MERGE");
-		p.println("extern void "+get_work_function(node.contents)+"__mod(int ____n, "+input_type+" *____in, "+output_type+" *____out);");
-		p.println("extern void "+get_work_function(node.contents)+"__mod2(int ____n, "+input_type+" *____in, "+output_type+" *____out, int s1, int s2);");
-		p.println("#endif");
+// headers supporting the de-supported mod_push_pop code in FlatIRToCluster.java
+//      p.println("#ifdef BUFFER_MERGE");
+//		p.println("extern void "+get_work_function(node.contents)+"__mod(int ____n, "+input_type+" *____in, "+output_type+" *____out);");
+//		p.println("extern void "+get_work_function(node.contents)+"__mod2(int ____n, "+input_type+" *____in, "+output_type+" *____out, int s1, int s2);");
+//		p.println("#endif");
 	    }
 
             /*

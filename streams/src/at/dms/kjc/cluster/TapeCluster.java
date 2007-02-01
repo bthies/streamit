@@ -4,11 +4,12 @@
 package at.dms.kjc.cluster;
 
 import at.dms.kjc.CType;
-import at.dms.kjc.CStdType;
+//import at.dms.kjc.CStdType;
+import at.dms.kjc.CArrayType;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.common.CommonUtils;
-import java.util.*;
+//import java.util.*;
 
 /**
  * Janis' code for cluster edges pulled out
@@ -16,10 +17,6 @@ import java.util.*;
  *
  */
 public class TapeCluster extends TapeBase implements Tape {
-    /** name of push routine (upstream) */
-    protected final String push_name;
-    /** name of pop routine (downstream) */
-    protected final String pop_name;
     /** name of pop buffer */
     protected final String pop_buffer;
     /** name of push buffer */
@@ -34,8 +31,6 @@ public class TapeCluster extends TapeBase implements Tape {
     
     TapeCluster(int source, int dest, CType type) {
         super(source,dest,type);
-        push_name = "__push_"+source+"_"+dest;
-        pop_name = "__pop_"+source+"_"+dest;
         push_buffer = "__push_buffer_"+source+"_"+dest;
         pop_buffer = "__pop_buffer_"+source+"_"+dest;
         push_index = "__push_index_"+source+"_"+dest;
@@ -53,14 +48,6 @@ public class TapeCluster extends TapeBase implements Tape {
         return consumer_name;
     }
     
-    public String getPushName() {
-        return push_name;
-    }
-    
-    public String getPopName() {
-        return pop_name;
-    }
-
     /**
      * Consumer name for init code in ClusterCodeGeneration.
      * Do not use elsewhere.
@@ -182,7 +169,7 @@ public class TapeCluster extends TapeBase implements Tape {
               + "  int i = 0, offs = " + tailName + ";\n"
               + "  while (offs != " + headName + ") {\n"
               + "    buf->write(&" + bufName + "[offs], sizeof("
-                  + typeString
+                  + CommonUtils.declToString(type, "", true)
                   + "));\n    offs++;\n    offs&=" + (peek_buf_size - 1)
                   + ";\n    i++;\n"
               + "  }\n");
@@ -197,11 +184,11 @@ public class TapeCluster extends TapeBase implements Tape {
             if (extra > 1) {
                 s.append("  for (int i = 0; i < " + extra + "; i++) {\n");
                 s.append("     buf->read(&" + bufName + "[i] , sizeof("
-                        + typeString + "));\n");
+                        + CommonUtils.declToString(type, "", true) + "));\n");
                 s.append("  }\n");
             } else {
                 s.append("     buf->read(&" + bufName + "[0] , sizeof("
-                        + typeString + "));\n");
+                        + CommonUtils.declToString(type, "", true) + "));\n");
             }
         }
         s.append("  " + tailName + "=0;\n");
@@ -260,7 +247,7 @@ public class TapeCluster extends TapeBase implements Tape {
         s.append("\n");
 
         s.append("inline " + typeString + " "
-                + ClusterUtils.popName(dst) + "() {\n");
+                + /*ClusterUtils.popName(dst)*/ pop_name + "() {\n");
         //p.indent();
         if (peek_n <= pop_n) {
             s.append("return __pop_buf__" + dst + "[__tail__"
@@ -280,30 +267,32 @@ public class TapeCluster extends TapeBase implements Tape {
 
         // pop with argument (the source is not fused)
 
-        s.append("inline " + typeString + " "
-                + ClusterUtils.popName(dst) + "(int n) {\n");
+        s.append("inline " + "void" /*typeString*/ + " "
+                + /*ClusterUtils.popName(dst)*/ pop_name + "(int n) {\n");
         //p.indent();
         if (peek_n <= pop_n) {
-            s.append("" + typeString
-                    + " result = __pop_buf__" + dst + "[__tail__"
-                    + dst + "];\n");
+//            s.append("" + typeString
+//                    + " result = __pop_buf__" + dst + "[__tail__"
+//                    + dst + "];\n");
             s.append("__tail__" + dst + "+=n;\n");
-            s.append("return result;\n");
+//            s.append("return result;\n");
+            s.append("return;\n");
         } else {
-            s.append(typeString
-                    + " res=__pop_buf__" + dst + "[__tail__"
-                    + dst + "];");
+//            s.append(typeString
+//                    + " res=__pop_buf__" + dst + "[__tail__"
+//                    + dst + "];");
             s.append("__tail__" + dst + "+=n;");
             s.append("__tail__" + dst + "&=" + (peek_buf_size - 1)
                     + ";\n");
-            s.append("return res;\n");
+//            s.append("return res;\n");
+            s.append("return;\n");
         }
         //p.outdent();
         s.append("}\n");
         s.append("\n");
 
         s.append("inline " + typeString
-                + " " + ClusterUtils.peekName(dst)
+                + " " + peek_name
                 + "(int offs) {\n");
         //p.indent();
         if (peek_n <= pop_n) {
@@ -321,52 +310,59 @@ public class TapeCluster extends TapeBase implements Tape {
         s.append("\n");
       } else if (my_node.contents instanceof SIRSplitter) {
           
-          // Splitter: push through from upstream to output tapes.
-          SIRSplitter splitter = (SIRSplitter)my_node.contents;
-          int sum_of_weights = splitter.getSumOfWeights();
-          
-          // List of tapes with upstream end == downstream end of this.
-          List<Tape> out = RegisterStreams.getNodeOutStreams(my_node.contents);
-
-          if (splitter.getType().equals(SIRSplitType.DUPLICATE)) {
-              // Duplicate splitter: push routine pushes "data"
-              // on every output tape.
-              s.append("void " + push_name +"("+ typeString +" data) {\n");
-              for (Tape to : out) {
-                if (s != null) {      
-                  s.append("  " + to.pushPrefix() + "data" + to.pushSuffix() + ";\n");
-                }
-              }       
-              s.append("}\n");
-              s.append("\n");
-          } else {
-              // RoundRobin splitter: push routine puts data in push_buffer
-              // if push_buffer is full then copies correct portion to each output tapes.
-              s.append(typeString + " " + push_buffer + "[" + sum_of_weights + "];\n");
-              s.append("int " + push_index + " = 0;\n");
-              s.append("\n");
-              s.append("void " + push_name +"("+ typeString +" data) {\n");
-              s.append("  " + push_buffer + "[" + push_index + "++] = data;\n");
-              s.append("  if (" + push_index + " == " + sum_of_weights + ") {\n");
-              int offs = 0;
-          
-              for (int i = 0; i < out.size(); i++) {
-                int num = splitter.getWeight(i);
-                if (num != 0) {
-                  Tape to = out.get(i);
-
-                  s.append(to.pushManyItems(push_buffer,offs,num));
-                  s.append("\n");
-                  offs += num;
-                }
-              }
-
-              s.append("    " + push_index + " = 0;\n");
-              s.append("  }\n");
-              s.append("}\n");
-          }
+//          // Splitter: push through from upstream to output tapes.
+//          SIRSplitter splitter = (SIRSplitter)my_node.contents;
+//          int sum_of_weights = splitter.getSumOfWeights();
+//          
+//          // List of tapes with upstream end == downstream end of this.
+//          List<Tape> out = RegisterStreams.getNodeOutStreams(my_node.contents);
+//
+//          if (splitter.getType().equals(SIRSplitType.DUPLICATE)) {
+//              // Duplicate splitter: push routine pushes "data"
+//              // on every output tape.
+//              s.append("void " + push_name +"("+ typeString + " data" + ") {\n");
+//              for (Tape to : out) {
+//                if (s != null) {      
+//                  s.append("  " + to.pushPrefix() + "data" + to.pushSuffix() + ";\n");
+//                }
+//              }       
+//              s.append("}\n");
+//              s.append("\n");
+//          } else {
+//              // RoundRobin splitter: push routine puts data in push_buffer
+//              // if push_buffer is full then copies correct portion to each output tapes.
+//              s.append(CommonUtils.declToString(type,  push_buffer + "[" + sum_of_weights + "]", true) + ";\n");
+//              s.append("int " + push_index + " = 0;\n");
+//              s.append("\n");
+//              s.append("void " + push_name +"("+ typeString + " data" + ") {\n");
+//              s.append("  " + push_buffer + "[" + push_index + "++] = data;\n");
+//              s.append("  if (" + push_index + " == " + sum_of_weights + ") {\n");
+//              int offs = 0;
+//          
+//              for (int i = 0; i < out.size(); i++) {
+//                int num = splitter.getWeight(i);
+//                if (num != 0) {
+//                  Tape to = out.get(i);
+//
+//                  s.append(to.pushManyItems(push_buffer,offs,num));
+//                  s.append("\n");
+//                  offs += num;
+//                }
+//              }
+//
+//              s.append("    " + push_index + " = 0;\n");
+//              s.append("  }\n");
+//              s.append("}\n");
+//          }
       }
       
+      if (my_node.contents instanceof SIRSplitter || my_node.contents instanceof SIRJoiner) {
+          // Janis had simple pop for splitters / joiners coded inline.
+          s.append("inline " + typeString + " " + pop_name + "() {\n");
+          s.append("  return " + popExpr() + ";\n");
+          s.append("}\n");
+        
+      }
         
       return s.toString();
     }
@@ -419,56 +415,57 @@ public class TapeCluster extends TapeBase implements Tape {
               + "int " + pop_index + " = "
               + (out_pop_num_iters * push_n) + ";\n");
             
-            s.append("inline void " + ClusterUtils.pushName(src) + "("
-                    + typeString
-                    + " data) {\n");
+            s.append("inline void " + push_name + "("
+                    + CommonUtils.declToString(type, "data", true)
+                    + ") {\n");
             //p.indent();
            
             // slight difference in body between cluster and cluster fusion
             createPushRoutineBody(s, "data");
             //p.outdent();
             s.append("}\n");
-            
-            // W.T.F: why define a pop routine at the 
-            // upstream end of the tape?  Presumably to
-            // to check messages.
-            s.append(typeString + " " + pop_name + "() {\n");
-            s.append("  int _tmp;\n");
 
-             s.append("  if (" + pop_index + " == "
-                    + (out_pop_num_iters * push_n) + ") {\n");
-
-            s.append("    " + pop_index + " = 0;\n");
-
-            if (out_pop_num_iters > 0) {
-                if (out_pop_num_iters > 1) {
-                    s.append("    for (_tmp = 0; _tmp < " + out_pop_num_iters
-                            + "; _tmp++) {\n");
-                }
-                s.append("      //check_status__" + src + "();\n");
-                if (SIRPortal.getPortalsWithReceiver(f).length > 0) {
-                    s.append("      check_messages__" + src + "();\n");
-                }
-                if (node.inputs > 0 && node.incoming[0] != null && CommonUtils.getOutputType(node.incoming[0]) != CStdType.Void) {
-                    s.append("      __update_pop_buf__" + src + "();\n");
-                }
-                s.append("      " + ClusterUtils.getWorkName(f, src)
-                        + "(1);\n");
-                s.append("      //send_credits__" + src + "();\n");
-                if (out_pop_num_iters > 1) {
-                    s.append("    }\n");
-                }
-            }
-            
-            s.append("    " + pop_index + " = 0;\n");
-
-             s.append("  }\n");
-
-            s.append("  return " + pop_buffer + "[" + pop_index
-                    + "++];\n");
-
-            s.append("}\n");
-            s.append("\n");
+// (1) WTF. (2) can not use pop_name if pop routine at downstream end uses pop_name
+//            // W.T.F: why define a pop routine at the 
+//            // upstream end of the tape?  Presumably to
+//            // to check messages.
+//            s.append(typeString + " " + pop_name + "() {\n");
+//            s.append("  int _tmp;\n");
+//
+//             s.append("  if (" + pop_index + " == "
+//                    + (out_pop_num_iters * push_n) + ") {\n");
+//
+//            s.append("    " + pop_index + " = 0;\n");
+//
+//            if (out_pop_num_iters > 0) {
+//                if (out_pop_num_iters > 1) {
+//                    s.append("    for (_tmp = 0; _tmp < " + out_pop_num_iters
+//                            + "; _tmp++) {\n");
+//                }
+//                s.append("      //check_status__" + src + "();\n");
+//                if (SIRPortal.getPortalsWithReceiver(f).length > 0) {
+//                    s.append("      check_messages__" + src + "();\n");
+//                }
+//                if (node.inputs > 0 && node.incoming[0] != null && CommonUtils.getOutputType(node.incoming[0]) != CStdType.Void) {
+//                    s.append("      __update_pop_buf__" + src + "();\n");
+//                }
+//                s.append("      " + ClusterUtils.getWorkName(f, src)
+//                        + "(1);\n");
+//                s.append("      //send_credits__" + src + "();\n");
+//                if (out_pop_num_iters > 1) {
+//                    s.append("    }\n");
+//                }
+//            }
+//            
+//            s.append("    " + pop_index + " = 0;\n");
+//
+//             s.append("  }\n");
+//
+//            s.append("  return " + pop_buffer + "[" + pop_index
+//                    + "++];\n");
+//
+//            s.append("}\n");
+//            s.append("\n");
  
             
         } else if (node.isSplitter()) {
@@ -535,41 +532,51 @@ public class TapeCluster extends TapeBase implements Tape {
 //            }
         } else {
             assert node.isJoiner();
-            SIRJoiner joiner = (SIRJoiner)node.contents;
-            int sum_of_weights = joiner.getSumOfWeights();
-
-            // All tapes having joiner as their downstream end
-            List<Tape> in = RegisterStreams.getNodeInStreams(joiner);
-
-            // pop routine for downstream node popping from joiner.
-            // Refills buffer from joiner's input tapes when empty.
-            s.append(typeString + " "+ pop_buffer + "[" + sum_of_weights + "];\n");
-            s.append("int " + pop_index + " = " + sum_of_weights + ";\n");
-            s.append("\n");
-
-            s.append(typeString + " " + pop_name + "() {\n");
-
-            s.append("  if (" + pop_index + " == " + sum_of_weights + ") {\n");
-            int _offs = 0;
-            
-            //int ways = joiner.getWays();
-            for (int i = 0; i < in.size(); i++) {
-              int num = joiner.getWeight(i);
-              if (num != 0) {  
-                Tape ti = in.get(i);
-                s.append("    " + ti.popManyItems(pop_buffer, _offs, num));
-                _offs += num;
-              }
-            }
-            s.append("    " + pop_index + " = 0;\n");
-            s.append("  }\n");
-        
-            s.append("  return " + pop_buffer + "[" + pop_index + "++];\n");
-            s.append("}\n");
-            s.append("\n");
-          
+// This code seems redundant with code created in ClusterCode for joiner work
+//            SIRJoiner joiner = (SIRJoiner)node.contents;
+//            int sum_of_weights = joiner.getSumOfWeights();
+//
+//            // All tapes having joiner as their downstream end
+//            List<Tape> in = RegisterStreams.getNodeInStreams(joiner);
+//
+//            // pop routine for downstream node popping from joiner.
+//            // Refills buffer from joiner's input tapes when empty.
+//            s.append(typeString + " "+ pop_buffer + "[" + sum_of_weights + "];\n");
+//            s.append("int " + pop_index + " = " + sum_of_weights + ";\n");
+//            s.append("\n");
+//
+//            s.append(typeString + " " + pop_name + "() {\n");
+//
+//            s.append("  if (" + pop_index + " == " + sum_of_weights + ") {\n");
+//            int _offs = 0;
+//            
+//            //int ways = joiner.getWays();
+//            for (int i = 0; i < in.size(); i++) {
+//              int num = joiner.getWeight(i);
+//              if (num != 0) {  
+//                Tape ti = in.get(i);
+//                s.append("    " + ti.popManyItems(pop_buffer, _offs, num));
+//                _offs += num;
+//              }
+//            }
+//            s.append("    " + pop_index + " = 0;\n");
+//            s.append("  }\n");
+//        
+//            s.append("  return " + pop_buffer + "[" + pop_index + "++];\n");
+//            s.append("}\n");
+//            s.append("\n");
+//          
         }
         
+        if (node.isSplitter() || node.isJoiner()) {
+            // Janis had simple push for splitters / joiners coded inline.
+            s.append("inline void " + /*ClusterUtils.pushName(src)*/ push_name + "("
+                    + typeString + " data"
+                    + ") {\n");
+            createPushRoutineBody(s, "data");
+            s.append("}\n");
+        }
+         
         return s.toString();
     }
     
@@ -693,4 +700,24 @@ public class TapeCluster extends TapeBase implements Tape {
     public String pushbackCleanup() {
         return "";
     }
+    
+    public String assignPopToVar(String varName) {
+        if (type instanceof CArrayType) {
+            return "memcpy(" + varName
+            + ", " + pop_name + "(), " + "sizeof(" + varName + "));\n";
+        } else {
+            return varName + " = " + pop_name + "()" + ";\n";
+        }
+    }
+    
+    public String assignPeekToVar(String varName, String offset) {
+        if (type instanceof CArrayType) {
+            return "memcpy(" + varName
+            + ", " + peek_name + "(" + offset + "), " + "sizeof(" + varName + "));\n";
+        } else {
+            return varName + " = " + peek_name + "(" + offset + ")" + ";\n";
+        }
+    }
+    
+    
 }

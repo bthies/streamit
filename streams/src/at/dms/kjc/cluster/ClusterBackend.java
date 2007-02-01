@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.117 2007-01-17 17:02:10 dimock Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.118 2007-02-01 21:11:32 dimock Exp $
 package at.dms.kjc.cluster;
 
 import at.dms.kjc.flatgraph.FlatNode;
@@ -335,7 +335,7 @@ public class ClusterBackend {
                 System.err.println("Running Partitioning... target number of threads: "+hosts);
                 // if these are turned on, then fuse filters as if
                 // targeting a multiprocessor
-                // TODO: cah we use curcount (param2) and targetCount (param3) to make partitioning
+                // TODO: can we use curcount (param2) and targetCount (param3) to make partitioning
                 // interact with dynamic regions?
                 ssg.setTopLevelSIR(Partitioner.doit(ssg.getTopLevelSIR(), 0, hosts, false, false, false));
                 // from now on, 'hosts' is used to count the number of

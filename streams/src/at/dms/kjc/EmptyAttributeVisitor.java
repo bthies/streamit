@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: EmptyAttributeVisitor.java,v 1.12 2006-10-11 17:49:42 dimock Exp $
+ * $Id: EmptyAttributeVisitor.java,v 1.13 2007-02-01 21:11:31 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -426,12 +426,6 @@ public class EmptyAttributeVisitor implements Constants, AttributeVisitor<Object
         return self;
     }
     
-    /** visiting emitted tex. */
-    public Object visitEmittedText(JEmittedText self) {
-        return self;
-    }
-   
-
     /**
      * prints a do statement
      */
@@ -853,6 +847,16 @@ public class EmptyAttributeVisitor implements Constants, AttributeVisitor<Object
         return self;
     }
 
+    /** visiting emitted text with possible embedded expressions. */
+    public Object visitEmittedTextExpression(JEmittedTextExpression self, Object[] parts) {
+        for (Object part : parts) {
+            if (part instanceof JExpression) {
+                ((JExpression)part).accept(this);
+            }
+        }
+        return self;
+    }
+   
     /**
      * prints an array length expression
      */

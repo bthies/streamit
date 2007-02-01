@@ -6,6 +6,7 @@ import at.dms.kjc.JExpression;
 import at.dms.kjc.CType;
 import at.dms.kjc.CBitType;
 import at.dms.kjc.CArrayType;
+import at.dms.kjc.CEmittedTextType;
 import at.dms.kjc.JArrayAccessExpression;
 import at.dms.kjc.JClassExpression;
 import at.dms.kjc.JFieldDeclaration;
@@ -62,6 +63,10 @@ public class CommonUtils {
 
     /**
      * Turn a CType into a string for inclusion in C or C++ code generation.
+     * N-dimensional arrays have N "*" in type, this is the type needed if
+     * as a return type for a N-dimensional array if you are going to copy it
+     * element-wise.
+     * Note: SIRStructure type is not handled (and is not a CType)
      *
      * @param s            a CType.
      * @param hasBoolType  if true then Java 'boolean' becomse 'bool' for C++
@@ -70,11 +75,7 @@ public class CommonUtils {
      */
     public static String CTypeToString(CType s, boolean hasBoolType) {
         if (s instanceof CArrayType){
-            // if multi-dimensional arrays in C, then why not getBaseType?
-            // getElementType() assumes that multi-dimensional arrays are 
-            // arrays of arrays and is going to give one '*' per dimension.
-            // For some reason the uni backend POP_DEFAULTB macro gives an
-            // error if a 2-d array is float* rather than float** 
+            // getElementType rather than getBaseType to go one dimension at a time.
             return CTypeToString(((CArrayType)s).getElementType(), hasBoolType)  + "*";
         } else if (s.getTypeID() == CType.TID_BOOLEAN) {
             return hasBoolType ? "bool" : "int";
@@ -84,6 +85,63 @@ public class CommonUtils {
         } else if (s instanceof CBitType) {
             // for now convert bit's to int's
             return "int";
+        } else if (s instanceof CEmittedTextType) {
+            String typ = "";
+            for (Object part : ((CEmittedTextType)s).getParts()) {
+                if (part instanceof String) {
+                    typ += (String)part;
+                } else if (part instanceof CType) {
+                    typ += CTypeToString(s,hasBoolType);
+                } else {
+                    throw new AssertionError("object has unexpected type " + part);
+                }
+            }
+            return typ;
+        } else {
+            return s.toString();
+        }
+    } 
+    /**
+     * Turn a CType into a string for inclusion in C or C++ code generation.
+     * (multi-dimensional arrays have a single "*" in type.)
+     * Note: SIRStructure type is not handled (and is not a CType)
+     *
+     * These types are useful for C or C++ return types you get e.g. 
+     * int* rather than int[4][4].   This is the correct C++ type for 
+     * returning an array pointer (actually for returning &array[0][0]).
+     * 
+     * If you want the array type with dimensions, (for a argument type in C++)
+     * use {@link #declToString(CType, String, boolean) declToString} as
+     *     declToString(type, "", tf)
+     *
+     * @param s            a CType.
+     * @param hasBoolType  if true then Java 'boolean' becomse 'bool' for C++
+     *                     if false then Java 'boolean' becomse 'int' for C
+     * @return A string representation suitable for C or C++ return types.
+     */
+    public static String CTypeToStringA(CType s, boolean hasBoolType) {
+        if (s instanceof CArrayType){
+            return CTypeToString(((CArrayType)s).getBaseType(), hasBoolType)  + "*";
+        } else if (s.getTypeID() == CType.TID_BOOLEAN) {
+            return hasBoolType ? "bool" : "int";
+        } else if (s.toString().endsWith("Portal")) {
+            // ignore the specific type of portal in the C library
+            return "portal";
+        } else if (s instanceof CBitType) {
+            // for now convert bit's to int's
+            return "int";
+        } else if (s instanceof CEmittedTextType) {
+            String typ = "";
+            for (Object part : ((CEmittedTextType)s).getParts()) {
+                if (part instanceof String) {
+                    typ += (String)part;
+                } else if (part instanceof CType) {
+                    typ += CTypeToString(s,hasBoolType);
+                } else {
+                    throw new AssertionError("object has unexpected type " + part);
+                }
+            }
+            return typ;
         } else {
             return s.toString();
         }

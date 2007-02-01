@@ -79,15 +79,19 @@ public class ClusterCode {
     /**
      * Generate code to copy an element from one tape to another, advancing both tapes.
      * @param p     : a CodegenPrintWriter to collect / emit the generated code.
-     * @param from  : tape veing popped from
+     * @param from  : tape being popped from
      * @param to    : tape being pushed to
      */
     private static void printCopyTapeElement(CodegenPrintWriter p, Tape from, Tape to) {
-        p.print(to.pushPrefix());
-        p.print(from.popExprNoCleanup());
-        p.print(to.pushSuffix());
-        p.print(from.popExprCleanup());
+        p.print(to.getPushName() + "(" + from.getPopName() + "())" );
         p.print(";\n");
+
+// previous code, did not deal with arrays.        
+//        p.print(to.pushPrefix());
+//        p.print(from.popExprNoCleanup());
+//        p.print(to.pushSuffix());
+//        p.print(from.popExprCleanup());
+//        p.print(";\n");
     }
     
     /**
@@ -189,12 +193,12 @@ public class ClusterCode {
     
         // work function for DUPLICATE:  pop into tmp, push to all outputs
         if (splitter.getType().equals(SIRSplitType.DUPLICATE)) {
-            p.print("  " + baseType.toString() + " tmp;\n");
-            p.print("  tmp = " + in.popExpr() + ";\n");
+            p.print("  " + CommonUtils.declToString(baseType, "tmp", true) + ";\n");
+            p.print("  " + in.assignPopToVar("tmp") + ";\n");
 
             for (Tape s : out) {
                 if (s != null) {
-                p.print("  " + s.pushPrefix() + "tmp" + s.pushSuffix() + ";\n");
+                p.print("  " + s.getPushName() + "(tmp);\n");
                 }
             }
         
@@ -335,19 +339,19 @@ public class ClusterCode {
 //        p.newLine();
 
 
-        // declare any external data needed for input and output tapes.
-        out.upstreamDeclarationExtern();
-        for (Tape ns : in) {
-          if (ns != null) {
-              ns.downstreamDeclarationExtern();
-          }
-        }
+//        // declare any external data needed for input and output tapes.
+//        p.print(out.upstreamDeclarationExtern());
+//        for (Tape ns : in) {
+//          if (ns != null) {
+//              p.print(ns.downstreamDeclarationExtern());
+//          }
+//        }
 
         // declare pop routine for cluster tapes.
-        out.upstreamDeclaration();
+        p.print(out.upstreamDeclaration());
         for (Tape ns : in) {
            if (ns != null) {
-               ns.downstreamDeclaration();
+               p.print(ns.downstreamDeclaration());
            }
          }
        

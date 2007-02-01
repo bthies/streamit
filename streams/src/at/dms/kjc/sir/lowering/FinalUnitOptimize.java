@@ -56,7 +56,11 @@ public class FinalUnitOptimize {
             method.accept(arrayDest);
             method.accept(new VarDeclRaiser());
         }
+        // Global optimizations over all methods.
         if (KjcOptions.destroyfieldarray) {
+            for (JFieldDeclaration field : unit.getFields()) {
+                field.accept(arrayDest);
+            }
             arrayDest.destroyFieldArrays(unit);
         }
         DeadCodeElimination.doit(unit);

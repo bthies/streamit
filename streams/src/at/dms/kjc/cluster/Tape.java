@@ -45,7 +45,7 @@ public interface Tape {
     /**
      * Destination of tape.
      * 
-     * @return unique indicator for destinatoin SIROperator of tape
+     * @return unique indicator for destination SIROperator of tape
      */
     public int getDest();
     
@@ -55,6 +55,23 @@ public interface Tape {
      * @return The type of objects communicated over the tape
      */
     public CType getType();
+    
+    /**
+     * name of routine to push an item onto the tape.
+     */
+    public String getPushName();
+    
+    /**
+     * name of routine to pop an item from the tape,
+     * or in case of an array, the address of an item...
+     */
+    public String getPopName();
+    
+    /**
+     * name of routine to peek an item from the tape,
+     * or in case of an array, the address of an item...
+     */
+    public String getPeekName();
     
     /**
      * Data declaration: in .h file if needed else noop.
@@ -126,6 +143,11 @@ public interface Tape {
     public String pushManyItems(String sourceBuffer, int sourceOffset, int numItems);
     public String popManyItems(String destBuffer, int destOffset, int numItems);
 
+    /**
+     * Statement, but no ";" to pop an item into a variable.
+     * Useful since C can not handle arrays over tapes by simple assignment.
+     */
+    public String assignPopToVar(String varName);
     
     /**
      * expression to pop an item: to end of statement.
@@ -148,8 +170,23 @@ public interface Tape {
      * prefix to pop N items discarding them.
      * @return TODO
      */
-    public String popNStmt(int N);
-   /**
+    public String popNStmt(int n);
+
+//    /**
+//     * name of routine to peek item N from tape (or addresso of item in case of array).
+//     */
+//    
+//    public String peekRoutineName(int n);
+ 
+    /**
+     * Assign the result of peeking.
+     * Must deal with peeking an array.
+     * @param varName 
+     * @param offset 
+     * @return 
+     */
+    public String assignPeekToVar(String varName, String offset);
+    /**
     * prefix to peek expression
     * @return TODO
     */

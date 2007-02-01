@@ -508,11 +508,22 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
     }
 
     /**
-     * Code generation for JEmittedText is the text itself.
+     * Code generation for JEmittedTextExpression: bits of text, types, subexpressions emitted in order.
      * @param self
      */
-    public void visitEmittedText(JEmittedText self) {
-        p.print(self.getText());
+    @Override
+    public void visitEmittedTextExpression(JEmittedTextExpression self, Object[] parts) {
+        for (Object part : parts) {
+            if (part instanceof String) {
+                p.print((String)part);
+            } else if (part instanceof CType) {
+                printType((CType)part);
+            } else if (part instanceof JExpression) {
+                ((JExpression)part).accept(this);
+            } else {
+                throw new AssertionError("unexpected object type " + part.toString());
+            }
+        }
     }
     
     // ----------------------------------------------------------------------

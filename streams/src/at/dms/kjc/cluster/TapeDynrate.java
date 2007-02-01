@@ -74,12 +74,12 @@ public class TapeDynrate extends TapeBase implements Tape {
 
         // pop one
         s.append("inline " + typeString + " "
-                + ClusterUtils.popName(dst) + "() {\n");
+                + pop_name + "() {\n");
         s.append("  return " + tapeName + ".pop();\n");
         s.append("}\n\n");
         
         // pop many
-        s.append("inline " + typeString + " " + ClusterUtils.popName(dst) + "(int n) {\n");
+        s.append("inline " + typeString + " " + pop_name + "(int n) {\n");
         // p.indent();
         s.append("  while (--n >= 0) {\n");
         s.append("    " + tapeName + ".pop();\n");
@@ -87,7 +87,7 @@ public class TapeDynrate extends TapeBase implements Tape {
         s.append("}\n\n");
         
         // peek
-        s.append("inline " + typeString + " " + ClusterUtils.peekName(dst)
+        s.append("inline " + typeString + " " + peek_name
                 + "(int offs) {\n");
         s.append("  return " + tapeName + ".peek(offs);\n");
         s.append("}\n\n");
@@ -115,7 +115,7 @@ public class TapeDynrate extends TapeBase implements Tape {
         if (NodeEnumerator.getFlatNode(src).isFilter()) {
             s.append("\n");
 
-            s.append("inline void " + ClusterUtils.pushName(src) + "("
+            s.append("inline void " + push_name + "("
                     + typeString
                     + " data) {\n");
             s.append("  " + tapeName + ".push(data);\n");
@@ -221,6 +221,16 @@ public class TapeDynrate extends TapeBase implements Tape {
     public String pushbackCleanup() {
         // TODO Auto-generated method stub
         return "// pushbackCleanup " + tapeName + "\n";
+    }
+    
+    @Override
+    public String assignPopToVar(String varName) {
+        return varName + " = " + pop_name + "();\n";
+    }
+    
+    @Override
+    public String assignPeekToVar(String varName, String offset) {
+        return varName + " = " + peek_name + "(" + offset + ");\n";
     }
 
 }

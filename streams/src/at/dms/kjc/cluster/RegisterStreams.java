@@ -58,14 +58,14 @@ public class RegisterStreams {
 
                 try {
                     if (operator instanceof SIRJoiner) {
-                        input_t = CommonUtils.getBaseType(CommonUtils.getJoinerType(node));
+                        input_t = CommonUtils.getJoinerType(node);
                         output_t = input_t;
                     }
                 } catch (Exception ex) {}
 
                 try {
                     if (operator instanceof SIRSplitter) {
-                        input_t = CommonUtils.getBaseType(CommonUtils.getOutputType(node));
+                        input_t = CommonUtils.getOutputType(node);
                         output_t = input_t;
                     }
                 } catch (Exception ex) {}

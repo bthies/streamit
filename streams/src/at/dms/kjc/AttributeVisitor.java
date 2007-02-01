@@ -259,9 +259,6 @@ public interface AttributeVisitor<T> {
     T visitTypeDeclarationStatement(JTypeDeclarationStatement self,
                                          JTypeDeclaration decl);
     
-    /** Visit text to be emitted unchanged in a compiler backend. */
-    T visitEmittedText(JEmittedText self);
-
     // ----------------------------------------------------------------------
     // EXPRESSION
     // ----------------------------------------------------------------------
@@ -492,6 +489,13 @@ public interface AttributeVisitor<T> {
     T visitArrayAccessExpression(JArrayAccessExpression self,
                                       JExpression prefix,
                                       JExpression accessor);
+
+
+    /** Visit text to be emitted unchanged in a compiler backend. 
+     * @param parts a list of embedded objects which might include JExpressions.
+     */
+    T visitEmittedTextExpression(JEmittedTextExpression self, Object[] parts);
+
 
     /**
      * visits an array length expression

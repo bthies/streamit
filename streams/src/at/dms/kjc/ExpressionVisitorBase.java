@@ -625,4 +625,8 @@ public class ExpressionVisitorBase<S,T> implements ExpressionVisitor<S,T> {
         throw new UnsupportedOperationException(this.toString());
          
     }
+
+    public S visitEmittedText(JEmittedTextExpression self, T otherData) {
+        throw new UnsupportedOperationException(this.toString());
+    }
 }

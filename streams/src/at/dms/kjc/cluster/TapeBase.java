@@ -4,7 +4,8 @@
 package at.dms.kjc.cluster;
 
 import at.dms.kjc.CType;
-import at.dms.kjc.common.CodegenPrintWriter;
+//import at.dms.kjc.common.CodegenPrintWriter;
+import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.KjcOptions;
 import at.dms.kjc.flatgraph.FlatNode;
 
@@ -14,6 +15,12 @@ import at.dms.kjc.flatgraph.FlatNode;
  *
  */
 public abstract class TapeBase implements Tape {
+    /** name of push routine (upstream) */
+    protected final String push_name;
+    /** name of pop routine (downstream) */
+    protected final String pop_name;
+    /** name of peek routine (downstream) */
+    protected final String peek_name;
     /** unique id of upstream node from NodeEnumerator */
     protected int src;
     /** unique id of downstream node from NodeEnumerator */
@@ -34,7 +41,10 @@ public abstract class TapeBase implements Tape {
         this.src = source;
         this.dst = dest;
         this.type = type;
-        this.typeString = ClusterUtils.CTypeToString(type);
+        this.typeString = CommonUtils.CTypeToStringA(type,true);
+        push_name = "__push_"+source+"_"+dest;
+        pop_name = "__pop_"+source+"_"+dest;
+        peek_name = "__peek_"+source+"_"+dest;
     }
 
 
@@ -119,6 +129,30 @@ public abstract class TapeBase implements Tape {
         return type;
     }
 
+    /**
+     * get name of push(val) routine for upstream end of tape.
+     * @return
+     */
+    public String getPushName() {
+        return push_name;
+    }
+    
+    /**
+     * get name of pop() routine for downstream end of tape.
+     * @return
+     */
+     public String getPopName() {
+        return pop_name;
+    }
+
+     /**
+      * get name of peek(int) routine for downstream end of tape.
+      * @return
+      */
+    public String getPeekName() {
+        return peek_name;
+    }
+
     /* (non-Javadoc)
      * @see at.dms.kjc.cluster.Tape#dataDeclarationH(at.dms.kjc.common.CodegenPrintWriter)
      */
@@ -200,6 +234,7 @@ public abstract class TapeBase implements Tape {
     }
 
 
+    public abstract String assignPopToVar(String varName);
     /* (non-Javadoc)
      * @see at.dms.kjc.cluster.Tape#popExpr(at.dms.kjc.common.CodegenPrintWriter)
      */
@@ -214,7 +249,8 @@ public abstract class TapeBase implements Tape {
      */
     public abstract String popNStmt(int N);
 
-    /* (non-Javadoc)
+    public abstract String assignPeekToVar(String varName, String offset);
+   /* (non-Javadoc)
      * @see at.dms.kjc.cluster.Tape#peekPrefix(at.dms.kjc.common.CodegenPrintWriter)
      */
     public abstract String peekPrefix();

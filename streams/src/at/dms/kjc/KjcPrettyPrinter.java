@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcPrettyPrinter.java,v 1.10 2006-03-24 22:45:15 dimock Exp $
+ * $Id: KjcPrettyPrinter.java,v 1.11 2007-02-01 21:11:31 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -1565,6 +1565,20 @@ public class KjcPrettyPrinter extends at.dms.util.Utils implements Constants, Kj
             elems[i].accept(this);
         }
         print("}");
+    }
+
+    public void visitEmittedTextExpression(JEmittedTextExpression self, Object[] parts) {
+        for (Object part : parts) {
+            if (part instanceof String) {
+                print((String)part);
+            } else if (part instanceof CType) {
+                print((CType)part);
+            } else if (part instanceof JExpression) {
+                ((JExpression)part).accept(this);
+            } else {
+                throw new AssertionError("unexpected object type " + part.toString());
+            }
+        }
     }
 
     // ----------------------------------------------------------------------

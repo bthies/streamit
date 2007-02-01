@@ -9,6 +9,7 @@ import java.io.*;
 import java.util.List;
 import java.util.ListIterator;
 
+import at.dms.kjc.JEmittedTextExpression;
 import at.dms.kjc.JLiteral;
 import at.dms.kjc.JStatement;
 import at.dms.kjc.SLIRVisitor;
@@ -2087,5 +2088,21 @@ public class IRPrinter extends Utils implements SLIRVisitor
         blockStart("VectorLiteral");
         scalar.accept(this);
         blockEnd();
+    }
+
+    public void visitEmittedTextExpression(JEmittedTextExpression self, Object[] parts) {
+        blockStart("Text");
+        for (Object part : parts) {
+            if (part instanceof JExpression) {
+                ((JExpression)part).accept(this);
+            } else if (part instanceof CType) {
+                attrPrint("type", ((CType)part).toString());
+            } else {
+                assert part instanceof String;
+                attrPrint("text", (String)part);
+            }
+        }
+        blockEnd();
+        
     }
 }

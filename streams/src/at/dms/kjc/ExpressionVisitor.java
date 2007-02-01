@@ -46,6 +46,7 @@ public interface ExpressionVisitor<S,T> {
     S visitClass(JClassExpression self, T otherData);
     S visitConditional(JConditionalExpression self, T otherData);
     S visitConstructorCall(JConstructorCall self, T otherData);
+    S visitEmittedText(JEmittedTextExpression self, T otherData);
     S visitFieldAccess(JFieldAccessExpression self, T otherData);
     S visitInstanceof(JInstanceofExpression self, T otherData);
     S visitLiteral(JLiteral self, T otherData); // could redirect individual literals here.

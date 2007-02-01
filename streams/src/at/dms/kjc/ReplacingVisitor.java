@@ -776,6 +776,24 @@ public class ReplacingVisitor extends EmptyAttributeVisitor {
     }
 
     /**
+     * Replaces all replacable subexpressions of expression contaiing uninterpretable text
+     */
+    @Override
+    public Object visitEmittedTextExpression(JEmittedTextExpression self, Object[] parts) {
+        for (int i = 0; i < parts.length; i++) {
+            if (parts[i] instanceof JExpression) {
+                JExpression newExp = (JExpression)((JExpression)parts[i]).accept(this);
+                if (newExp!=null && newExp!=parts[i]) {
+                    parts[i] = newExp;
+                } else {
+                    assert parts[i] instanceof String || parts[i] instanceof CType;
+                }
+            }
+        }
+        return self;
+    }
+
+    /**
      * prints an array length expression
      */
     public Object visitSwitchLabel(JSwitchLabel self,

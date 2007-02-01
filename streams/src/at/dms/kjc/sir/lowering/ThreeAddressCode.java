@@ -2254,12 +2254,10 @@ public class ThreeAddressCode {
             return null;
         }
 
-        /**
-         * S[[statement text]] = statement text
-         */
-        public List<JStatement> visitEmittedText(JEmittedText self) {
-            return singletonStatementList((JStatement)self);
+        public List<JStatement> visitEmittedTextExpression(JEmittedTextExpression self, Object[] parts) {
+            throw new AssertionError("Not a statement");
         }
+
 
         public List<JStatement> visitFloatLiteral(JFloatLiteral self, float value) {
             assert false: "Not a statement";

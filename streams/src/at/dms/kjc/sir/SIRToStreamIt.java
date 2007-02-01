@@ -14,7 +14,7 @@ import at.dms.kjc.common.CodeGenerator;
  * Dump an SIR tree into a StreamIt program.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SIRToStreamIt.java,v 1.40 2006-11-15 19:19:55 dimock Exp $
+ * @version $Id: SIRToStreamIt.java,v 1.41 2007-02-01 21:11:32 dimock Exp $
  */
 public class SIRToStreamIt
     implements Constants, SLIRVisitor, AttributeStreamVisitor, CodeGenerator
@@ -2864,5 +2864,18 @@ public class SIRToStreamIt
             }
         else
             p.print(s.toString());
+    }
+
+    public void visitEmittedTextExpression(JEmittedTextExpression self, Object[] parts) {
+        for (Object part : parts) {
+            if (part instanceof JExpression) {
+                ((JExpression)part).accept(this);
+            } else if (part instanceof CType) {
+                printType((CType)part);
+            } else {
+                assert part instanceof String;
+                p.print((String)part);
+            }
+        }
     }
 }

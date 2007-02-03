@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.112 2007-01-17 16:59:17 dimock Exp $
+# $Id: strc,v 1.113 2007-02-03 01:52:09 thies Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -317,6 +317,7 @@ Usage: strc [options] file.str ...
 +Options specific to Java library backend:
 * --norun             Schedule but do not run the program
 + --nosched           Run the program in pull mode, not under the scheduler
++ --finegrained       With -nosched, executes fine-grained splitters/joiners
 + --marksteady        Print * after each steady-state execution
 + --printreps         Print number of times filters execute in schedule
 + --printsched        Print the full program schedule
@@ -360,6 +361,7 @@ sub get_options
 			    "debug!",
 			    "decoupled",
 			    "dpscaling",
+			    "finegrained",
 			    "fission=i",
 			    "frequencyreplacement|F",
 			    "forceunroll",
@@ -871,6 +873,7 @@ sub get_lib_opts
     my $libopts = '';
     $opts{iterations} && ($libopts .= " -i " . $opts{iterations});
     $opts{nosched} && ($libopts .= " -nosched");
+    $opts{finegrained} && ($libopts .= " -finegrained");
     $opts{norun} && ($libopts .= " -norun");
     $opts{marksteady} && ($libopts .= " -marksteady");
     $opts{printsched} && ($libopts .= " -printsched");

@@ -461,7 +461,7 @@ public class RawExecutionCode extends at.dms.util.Utils
             JVariableDefinition recvBufVar = 
                 new JVariableDefinition(null, 
                                         at.dms.kjc.Constants.ACC_FINAL, //?????????
-                                        new CArrayType(filter.getInputType(), 
+                                        new CArrayType(CommonUtils.getBaseType(filter.getInputType()), 
                                                        dim /* dimension */ ,
                                                        bufferDims(filter, filter.getInputType(), buffersize)),
                                         recvBuffer,

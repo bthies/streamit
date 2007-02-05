@@ -235,12 +235,13 @@ public class BufferedCommunication extends RawExecutionCode
             }
             */
 
+            JExpression[] recvBufDims = bufferDims(filter, filter.getInputType(), buffersize);
             JVariableDefinition recvBufVar = 
                 new JVariableDefinition(null, 
                                         at.dms.kjc.Constants.ACC_FINAL, //?????????
-                                        new CArrayType(filter.getInputType(), 
-                                                       1 /* dimension */ ,
-                                                       bufferDims(filter, filter.getInputType(), buffersize)),
+                                        new CArrayType(CommonUtils.getBaseType(filter.getInputType()), 
+                                                       recvBufDims.length /* dimension */ ,
+                                                       recvBufDims),
                                         recvBuffer + filterInfo.filter.getName(),
                                         null);
         

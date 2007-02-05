@@ -295,7 +295,7 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
 
             JVariableDefinition recvBufVar = new JVariableDefinition(null,
                                                                      at.dms.kjc.Constants.ACC_FINAL, // ?????????
-                                                                     new CArrayType(filter.getInputType(), dim /* dimension */,
+                                                                     new CArrayType(CommonUtils.getBaseType(filter.getInputType()), dim /* dimension */,
                                                                                     bufferDims(filter, filter.getInputType(),
                                                                                                buffersize)), RawExecutionCode.recvBuffer,
                                                                      null);

@@ -12,7 +12,7 @@ import at.dms.kjc.*;
 public class InputSliceNode extends SliceNode {
     private int[] weights;
 
-    private Edge[] sources;
+    private InterSliceEdge[] sources;
 
     private static int unique = 0;
 
@@ -20,10 +20,10 @@ public class InputSliceNode extends SliceNode {
 
     private static int[] EMPTY_WEIGHTS = new int[0];
 
-    private static Edge[] EMPTY_SRCS = new Edge[0];
+    private static InterSliceEdge[] EMPTY_SRCS = new InterSliceEdge[0];
 
     /** Creator */
-    public InputSliceNode(int[] weights, Edge[] sources) {
+    public InputSliceNode(int[] weights, InterSliceEdge[] sources) {
         // this.parent = parent;
         if (weights.length != sources.length)
             Utils.fail("Add comment later");
@@ -42,9 +42,9 @@ public class InputSliceNode extends SliceNode {
         if (weights.length != sources.length)
             Utils.fail("Add comment later");
         // this.sources = sources;
-        this.sources = new Edge[sources.length];
+        this.sources = new InterSliceEdge[sources.length];
         for (int i = 0; i < sources.length; i++)
-            this.sources[i] = new Edge(sources[i], this);
+            this.sources[i] = new InterSliceEdge(sources[i], this);
         
         if (weights.length == 1)
             this.weights = new int[]{1};
@@ -88,7 +88,7 @@ public class InputSliceNode extends SliceNode {
             return;
         
         LinkedList<Integer> newWeights = new LinkedList<Integer>();
-        LinkedList<Edge> newEdges = new LinkedList<Edge>();
+        LinkedList<InterSliceEdge> newEdges = new LinkedList<InterSliceEdge>();
 
         //add the first edge and weight
         newWeights.add(new Integer(weights[0]));
@@ -140,7 +140,7 @@ public class InputSliceNode extends SliceNode {
      * @param edge The edge to query.
      * @return The number of items passing on the edge.
      */
-    public int getItems(Edge edge) {
+    public int getItems(InterSliceEdge edge) {
         int items = 0;
         
         for (int i = 0; i < sources.length; i++) {
@@ -158,7 +158,7 @@ public class InputSliceNode extends SliceNode {
     }
 
     /** @return array of edges */
-    public Edge[] getSources() {
+    public InterSliceEdge[] getSources() {
         return sources;
     }
 
@@ -170,14 +170,14 @@ public class InputSliceNode extends SliceNode {
      * @param edges The list of edges.
      */
     public void set(LinkedList<Integer> weights, 
-            LinkedList<Edge> edges) {
+            LinkedList<InterSliceEdge> edges) {
         int[] intArr = new int[weights.size()]; 
         
         for (int i = 0; i < weights.size(); i++)
             intArr[i] = weights.get(i).intValue();
         setWeights(intArr);
         
-        setSources(edges.toArray(new Edge[edges.size()]));
+        setSources(edges.toArray(new InterSliceEdge[edges.size()]));
     }
     
     /**
@@ -193,7 +193,7 @@ public class InputSliceNode extends SliceNode {
     }
     
     /** Set the source edges. (shares, does not copy.) */
-    public void setSources(Edge[] sources) {
+    public void setSources(InterSliceEdge[] sources) {
         this.sources = sources;
     }
 
@@ -236,7 +236,7 @@ public class InputSliceNode extends SliceNode {
      * Must have only one input in sources.
      * @return the edge, or throw AssertionError
      */
-    public Edge getSingleEdge() {
+    public InterSliceEdge getSingleEdge() {
         assert oneInput() : "Calling getSingeEdge() on InputSlice with less/more than one input";
         return sources[0];
     }
@@ -257,7 +257,7 @@ public class InputSliceNode extends SliceNode {
         return sources.length == 0;
     }
 
-    /** return ratio of weight of iege to totalWeights().
+    /** return ratio of weight of edge to totalWeights().
      * 
      * @param edge
      * @return  0.0 if totalWeights() == 0, else ratio.
@@ -275,8 +275,8 @@ public class InputSliceNode extends SliceNode {
      * 
      * @return The list.
      */
-    public LinkedList<Edge> getSourceSequence() {
-        LinkedList<Edge> list = new LinkedList<Edge>();
+    public LinkedList<InterSliceEdge> getSourceSequence() {
+        LinkedList<InterSliceEdge> list = new LinkedList<InterSliceEdge>();
         for (int i = 0; i < sources.length; i++) {
             if (!list.contains(sources[i]))
                 list.add(sources[i]);
@@ -289,15 +289,15 @@ public class InputSliceNode extends SliceNode {
      * 
      * @return The linked list of the sources pattern.
      */
-    public LinkedList<Edge> getSourceList() {
-       LinkedList<Edge> list = new LinkedList<Edge>();
+    public LinkedList<InterSliceEdge> getSourceList() {
+       LinkedList<InterSliceEdge> list = new LinkedList<InterSliceEdge>();
        for (int i = 0; i < sources.length; i++)
            list.add(sources[i]);
        return list;
     }
     
-    public Set<Edge> getSourceSet() {
-        HashSet<Edge> set = new HashSet<Edge>();
+    public Set<InterSliceEdge> getSourceSet() {
+        HashSet<InterSliceEdge> set = new HashSet<InterSliceEdge>();
         for (int i = 0; i < sources.length; i++)
             set.add(sources[i]);
         return set;
@@ -340,7 +340,7 @@ public class InputSliceNode extends SliceNode {
      * @param oldEdge The edge to replace.
      * @param newEdge The edge to install.
      */
-    public void replaceEdge(Edge oldEdge, Edge newEdge) {
+    public void replaceEdge(InterSliceEdge oldEdge, InterSliceEdge newEdge) {
         for (int i = 0; i < sources.length; i++) {
             if (sources[i] == oldEdge)
                 sources[i] = newEdge;

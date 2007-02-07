@@ -2,31 +2,49 @@ package at.dms.kjc.slicegraph;
 
 
 /**
- * 
+ * SliceNode's are a doubly-linked list with a parent pointer to a Slice.
+ * They can be specialized into {@link InputSliceNode}, {@link FilterSliceNode}, or {@link OutputSliceNode}. 
  */
-abstract public class SliceNode {
-    private SliceNode next;
-
-    private SliceNode previous;
+public class SliceNode {
+    private Edge toNext;  // internal to slice: may be null for OutputSliceNode
+    private Edge toPrev;  // internal to slice: may be null for InputSliceNode
 
     private Slice parent;
 
     public SliceNode getNext() {
-        return next;
+        return (toNext == null)? null : toNext.getDest();
     }
 
     public SliceNode getPrevious() {
-        return previous;
+        return (toPrev == null)? null : toPrev.getSrc();
     }
 
     public void setPrevious(SliceNode prev) {
-        previous = prev;
+        assert ! (this instanceof InputSliceNode);
+        if (toPrev == null) { 
+            toPrev = new Edge(prev,this); 
+        } else {
+            toPrev.setSrc(prev);
+        }
     }
 
     public void setNext(SliceNode next) {
-        this.next = next;
+        assert ! (this instanceof OutputSliceNode);
+        if (toNext == null) {
+            toNext = new Edge(this,next);
+        } else {
+            toNext.setDest(next);
+        }
     }
 
+    public Edge getEdgeToNext() {
+        return toNext;
+    }
+    
+//    public Edge getEdgeToPrev() {
+//        return toPrev;
+//    }
+    
     public boolean isInputSlice() {
         return this instanceof InputSliceNode;
     }
@@ -49,6 +67,14 @@ abstract public class SliceNode {
     
     public FilterSliceNode getAsFilter() {
         return (FilterSliceNode) this;
+    }
+    
+    /**
+     * Had been some assertion checking: removed.
+     * Now does nothing.
+     *
+     */
+    protected SliceNode() {
     }
     
     public void setParent(Slice par) {

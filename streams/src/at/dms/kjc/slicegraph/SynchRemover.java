@@ -24,7 +24,7 @@ public class SynchRemover {
     private void mergeJoinersAndSplitters(Slice current) {
         if (current == null)
             return;
-        Edge[] outEdges = current.getTail().getDestList();
+        InterSliceEdge[] outEdges = current.getTail().getDestList();
         // If this slice is a joiner
         if (current.getHead().isJoiner()) {
             Slice child = outEdges[0].getDest().getParent();
@@ -40,7 +40,7 @@ public class SynchRemover {
         } else {
             // If not a splitter or joiner, move on to the children slices
             for (int i=0; i<outEdges.length; i++) {
-                Edge e = outEdges[i];
+                InterSliceEdge e = outEdges[i];
                 mergeJoinersAndSplitters(e.getDest().getParent());
             }
         }
@@ -54,7 +54,7 @@ public class SynchRemover {
      */
     private void mergeJoiners(Slice joiner) {
         // The slices joined by this joiner
-        Edge[] parentEdges = joiner.getHead().getSources();
+        InterSliceEdge[] parentEdges = joiner.getHead().getSources();
         Slice[] parents = joiner.getDependencies();
         
         // An array that will store the parent slices of the second joiner
@@ -64,7 +64,7 @@ public class SynchRemover {
         int mult = 1;
         
         for (int i=0; i<parents.length; i++) {
-            Edge parentEdge = parentEdges[i];
+            InterSliceEdge parentEdge = parentEdges[i];
             Slice parent = parents[i];
             if (parent.getHead().isJoiner()) {
                 // number of times this particular parent joiner needs to be
@@ -80,21 +80,21 @@ public class SynchRemover {
         }
         
         for (int i=0; i<parentEdges.length; i++) {
-            Edge parentEdge = parentEdges[i];
+            InterSliceEdge parentEdge = parentEdges[i];
             Slice parent = parentEdge.getSrc().getParent();
             int lcm = mult*joiner.getHead().getWeight(parentEdge);
             if (parent.getHead().isJoiner()) {
                 for (int j=0; j<parent.getHead().getWidth(); j++) {
                     Slice grandparent = parent.getHead().getSources()[j].getSrc().getParent();
                     int newWeight = lcm/parent.getHead().totalWeights()*parent.getHead().getWeights()[j];
-                    Edge newEdge = new Edge(grandparent.getTail(), joiner.getHead());
-                    grandparent.getTail().setDests(new Edge[][]{{newEdge}});
+                    InterSliceEdge newEdge = new InterSliceEdge(grandparent.getTail(), joiner.getHead());
+                    grandparent.getTail().setDests(new InterSliceEdge[][]{{newEdge}});
                     grandparent.getTail().setWeights(new int[]{newWeight});
                 }
             } else {
-                Edge newEdge = new Edge(parent.getTail(), joiner.getHead());
+                InterSliceEdge newEdge = new InterSliceEdge(parent.getTail(), joiner.getHead());
                 int newWeight = mult*joiner.getHead().getWeights()[i];
-                parent.getTail().setDests(new Edge[][]{{newEdge}});
+                parent.getTail().setDests(new InterSliceEdge[][]{{newEdge}});
                 parent.getTail().setWeights(new int[]{newWeight});
             }
         }
@@ -119,9 +119,9 @@ public class SynchRemover {
                         count++;
                     }
                 }
-                parent.getHead().setSources(new Edge[0]);
+                parent.getHead().setSources(new InterSliceEdge[0]);
                 parent.getHead().setWeights(new int[0]);
-                parent.getTail().setDests(new Edge[0][]);
+                parent.getTail().setDests(new InterSliceEdge[0][]);
                 parent.getTail().setWeights(new int[0]);
             }
             offset += joiner.getHead().getWeights()[i];
@@ -131,10 +131,10 @@ public class SynchRemover {
         LinkedList<Slice> newSlices = new LinkedList<Slice>();
         createNewSlicesWeightsArray(repeatedOutput, newWeights, newSlices);
         
-        LinkedList<Edge> newEdges = new LinkedList<Edge>();
+        LinkedList<InterSliceEdge> newEdges = new LinkedList<InterSliceEdge>();
         
         for (Slice s : newSlices) {
-            Edge newEdge = new Edge(s.getTail(), joiner.getHead());
+            InterSliceEdge newEdge = new InterSliceEdge(s.getTail(), joiner.getHead());
             newEdges.add(newEdge);
         }
         joiner.getHead().set(newWeights, newEdges);
@@ -151,7 +151,7 @@ public class SynchRemover {
         if (current == null)
             return;
         if (current.getHead().isJoiner()) {
-            Edge[] outEdges = current.getTail().getDestList();
+            InterSliceEdge[] outEdges = current.getTail().getDestList();
             // no child => done with branch, return
             if (outEdges == null || outEdges.length == 0)
                 return;
@@ -245,7 +245,7 @@ public class SynchRemover {
                 // and weights
                 createNewSlicesWeightsArray(outputList.toArray(new Slice[0]), 
                         newWeights, newChildren);
-                LinkedList<LinkedList<Edge>> newEdges = 
+                LinkedList<LinkedList<InterSliceEdge>> newEdges = 
                     createNewOutgoingEdges(inSlice.getTail(),
                                            newChildren,
                                            true /* isRR */);
@@ -261,7 +261,7 @@ public class SynchRemover {
                 // and weights
                 createNewSlicesWeightsArray(inputList.toArray(new Slice[0]), 
                         newWeights, newParents);
-                LinkedList<Edge> newEdges = 
+                LinkedList<InterSliceEdge> newEdges = 
                     createNewIncomingEdges(outSlice.getHead(),
                                            newParents);
                 outSlice.getHead().set(newWeights, newEdges);
@@ -271,11 +271,11 @@ public class SynchRemover {
             // Update incoming edges and weights for the output slices
             for (int i=0; i<outputs.length; i++) {
                 Slice output = outputs[i];
-                LinkedList<Edge> newEdges = new LinkedList<Edge>();
+                LinkedList<InterSliceEdge> newEdges = new LinkedList<InterSliceEdge>();
                 LinkedList<Integer> newWeights = new LinkedList<Integer>();
                 for (int j=0; j<inputs.length; j++) {
                     Slice input = inputs[j];
-                    Edge e = new Edge(input.getTail(), output.getHead());
+                    InterSliceEdge e = new InterSliceEdge(input.getTail(), output.getHead());
                     newEdges.add(e);
                     newWeights.add(new Integer(inWeights[j]));
                 }
@@ -285,28 +285,28 @@ public class SynchRemover {
             // Update outgoing edges and weights for the input slices
             for (int i=0; i<inputs.length; i++) {
                 Slice input = inputs[i];
-                LinkedList<Edge> edges = new LinkedList<Edge>();
+                LinkedList<InterSliceEdge> edges = new LinkedList<InterSliceEdge>();
                 for (int j=0; j<outputs.length; j++) {
                     Slice output = outputs[j];
-                    Edge e = new Edge(input.getTail(), output.getHead());
+                    InterSliceEdge e = new InterSliceEdge(input.getTail(), output.getHead());
                     edges.add(e);
                 }
                 LinkedList<Integer> newWeights = new LinkedList<Integer>();
                 newWeights.add(new Integer(1));
-                LinkedList<LinkedList<Edge>> newEdges = new LinkedList<LinkedList<Edge>>();
+                LinkedList<LinkedList<InterSliceEdge>> newEdges = new LinkedList<LinkedList<InterSliceEdge>>();
                 newEdges.add(edges);
                 input.getTail().set(newWeights, newEdges);
             }
         }
         
         // clear the joiner and splitter slices because they're no longer needed
-        joiner.getHead().setSources(new Edge[0]);
+        joiner.getHead().setSources(new InterSliceEdge[0]);
         joiner.getHead().setWeights(new int[0]);
-        joiner.getTail().setDests(new Edge[0][0]);
+        joiner.getTail().setDests(new InterSliceEdge[0][0]);
         joiner.getTail().setWeights(new int[0]);
-        splitter.getHead().setSources(new Edge[0]);
+        splitter.getHead().setSources(new InterSliceEdge[0]);
         splitter.getHead().setWeights(new int[0]);
-        splitter.getTail().setDests(new Edge[0][0]);
+        splitter.getTail().setDests(new InterSliceEdge[0][0]);
         splitter.getTail().setWeights(new int[0]);
     }
     
@@ -401,21 +401,21 @@ public class SynchRemover {
      * @param isRR
      * @return
      */
-    private static LinkedList<LinkedList<Edge>> createNewOutgoingEdges(
+    private static LinkedList<LinkedList<InterSliceEdge>> createNewOutgoingEdges(
             OutputSliceNode slice, LinkedList<Slice> outputs, boolean isRR) {
-        LinkedList<LinkedList<Edge>> newEdges = new LinkedList<LinkedList<Edge>>();
+        LinkedList<LinkedList<InterSliceEdge>> newEdges = new LinkedList<LinkedList<InterSliceEdge>>();
         
         if (isRR) {
             for (Slice output : outputs) {
-                LinkedList<Edge> temp = new LinkedList<Edge>();
-                Edge e = new Edge(slice, output.getHead());
+                LinkedList<InterSliceEdge> temp = new LinkedList<InterSliceEdge>();
+                InterSliceEdge e = new InterSliceEdge(slice, output.getHead());
                 temp.add(e);
                 newEdges.add(temp);
             }
         } else {
-            LinkedList<Edge> temp = new LinkedList<Edge>();
+            LinkedList<InterSliceEdge> temp = new LinkedList<InterSliceEdge>();
             for (Slice output : outputs) {
-                Edge e = new Edge(slice, output.getHead());
+                InterSliceEdge e = new InterSliceEdge(slice, output.getHead());
                 temp.add(e);
             }
             newEdges.add(temp);
@@ -431,12 +431,12 @@ public class SynchRemover {
      * @param inputs
      * @return
      */
-    private static LinkedList<Edge> createNewIncomingEdges(InputSliceNode slice,
+    private static LinkedList<InterSliceEdge> createNewIncomingEdges(InputSliceNode slice,
             LinkedList<Slice> inputs) {
-        LinkedList<Edge> newEdges = new LinkedList<Edge>();
+        LinkedList<InterSliceEdge> newEdges = new LinkedList<InterSliceEdge>();
         
         for (Slice input : inputs) {
-            Edge e = new Edge(input.getTail(), slice);
+            InterSliceEdge e = new InterSliceEdge(input.getTail(), slice);
             newEdges.add(e);
         }
         
@@ -450,9 +450,9 @@ public class SynchRemover {
      */
     private static Slice[] getParentSlices(Slice slice) {
         LinkedList<Slice> parents = new LinkedList<Slice>();
-        LinkedList<Edge> inEdges = slice.getHead().getSourceList();
+        LinkedList<InterSliceEdge> inEdges = slice.getHead().getSourceList();
         
-        for (Edge e : inEdges) {
+        for (InterSliceEdge e : inEdges) {
             Slice parent = e.getSrc().getParent();
             parents.add(parent);
         }
@@ -467,7 +467,7 @@ public class SynchRemover {
      */
     private static Slice[] getChildSlices(Slice slice) {
         LinkedList<Slice> children = new LinkedList<Slice>();
-        Edge[] outEdges = slice.getTail().getDestList();
+        InterSliceEdge[] outEdges = slice.getTail().getDestList();
         
         for (int i=0; i<outEdges.length; i++) {
             Slice child = outEdges[i].getDest().getParent();

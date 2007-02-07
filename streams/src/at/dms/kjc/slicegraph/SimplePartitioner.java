@@ -45,7 +45,7 @@ public class SimplePartitioner extends Partitioner {
         HashSet<UnflatFilter> topUnflat = new HashSet<UnflatFilter>();
 
         // map unflatEdges -> Edge?
-        HashMap<UnflatEdge, Edge> edges = new HashMap<UnflatEdge, Edge>();
+        HashMap<UnflatEdge, InterSliceEdge> edges = new HashMap<UnflatEdge, InterSliceEdge>();
         // add the top filters to the queue
         for (int i = 0; i < topFilters.length; i++) {
             topUnflat.add(topFilters[i]);
@@ -71,16 +71,16 @@ public class SimplePartitioner extends Partitioner {
 
                 // create the input slice node
                 if (unflatFilter.in != null && unflatFilter.in.length > 0) {
-                    Edge[] inEdges = new Edge[unflatFilter.in.length];
+                    InterSliceEdge[] inEdges = new InterSliceEdge[unflatFilter.in.length];
                     node = new InputSliceNode(unflatFilter.inWeights, inEdges);
                     for (int i = 0; i < unflatFilter.in.length; i++) {
                         UnflatEdge unflatEdge = unflatFilter.in[i];
                         // get the edge
-                        Edge edge = edges.get(unflatEdge);
+                        InterSliceEdge edge = edges.get(unflatEdge);
                         // we haven't see the edge before
                         if (edge == null) { // set dest?, wouldn't this always
                                             // be the dest
-                            edge = new Edge((InputSliceNode) node);
+                            edge = new InterSliceEdge((InputSliceNode) node);
                             edges.put(unflatEdge, edge);
                         } else
                             // we've seen this edge before, set the dest to this
@@ -220,14 +220,14 @@ public class SimplePartitioner extends Partitioner {
 
                 // we are finished the current slice, create the outputslicenode
                 if (unflatFilter.out != null && unflatFilter.out.length > 0) {
-                    Edge[][] outEdges = new Edge[unflatFilter.out.length][];
+                    InterSliceEdge[][] outEdges = new InterSliceEdge[unflatFilter.out.length][];
                     OutputSliceNode outNode = new OutputSliceNode(
                                                                   unflatFilter.outWeights, outEdges);
                     node.setNext(outNode);
                     outNode.setPrevious(node);
                     for (int i = 0; i < unflatFilter.out.length; i++) {
                         UnflatEdge[] inner = unflatFilter.out[i];
-                        Edge[] innerEdges = new Edge[inner.length];
+                        InterSliceEdge[] innerEdges = new InterSliceEdge[inner.length];
                         outEdges[i] = innerEdges;
                         for (int j = 0; j < inner.length; j++) {
                             UnflatEdge unflatEdge = inner[j];
@@ -235,9 +235,9 @@ public class SimplePartitioner extends Partitioner {
                             // if we didn't visit one of the dests, add it
                             if (!visited.contains(dest))
                                 queue.add(dest);
-                            Edge edge = edges.get(unflatEdge);
+                            InterSliceEdge edge = edges.get(unflatEdge);
                             if (edge == null) {
-                                edge = new Edge(outNode);
+                                edge = new InterSliceEdge(outNode);
                                 edges.put(unflatEdge, edge);
                             } else
                                 edge.setSrc(outNode);

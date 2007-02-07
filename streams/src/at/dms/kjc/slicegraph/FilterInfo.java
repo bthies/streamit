@@ -157,7 +157,7 @@ public class FilterInfo {
 
             // add all the upstream filters items that reach this filter
             for (int i = 0; i < in.getWeights().length; i++) {
-                Edge incoming = in.getSources()[i];
+                InterSliceEdge incoming = in.getSources()[i];
                 FilterContent filterC = ((FilterSliceNode) incoming.getSrc()
                                          .getPrevious()).getFilter();
                 // calculate the init items sent by the upstream filter
@@ -268,9 +268,9 @@ public class FilterInfo {
             if (debug)
                 System.out.println(" Upstream input node:");
             // add all the upstream filters items that reach this filter
-            Iterator<Edge> edges = in.getSourceSet().iterator();
+            Iterator<InterSliceEdge> edges = in.getSourceSet().iterator();
             while (edges.hasNext()) {
-                Edge incoming = edges.next();
+                InterSliceEdge incoming = edges.next();
                 upStreamItems += 
                     (int) 
                     ((double)FilterInfo.getFilterInfo((FilterSliceNode)incoming.getSrc().getPrevious())

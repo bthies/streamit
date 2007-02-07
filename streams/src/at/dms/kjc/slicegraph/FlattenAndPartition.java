@@ -26,7 +26,7 @@ import at.dms.kjc.common.CommonUtils;
 public class FlattenAndPartition extends Partitioner {
     private SIRToSliceNodes sliceNodes;
 
-    private HashMap<OutputSliceNode, HashMap<InputSliceNode, Edge>> edges;
+    private HashMap<OutputSliceNode, HashMap<InputSliceNode, InterSliceEdge>> edges;
 
     private Slice topSlice;
 
@@ -53,7 +53,7 @@ public class FlattenAndPartition extends Partitioner {
         sliceList = new LinkedList<Slice>();
         ioList = new LinkedList<Slice>();
         work = WorkEstimate.getWorkEstimate(str);
-        edges = new HashMap<OutputSliceNode, HashMap<InputSliceNode, Edge>>();
+        edges = new HashMap<OutputSliceNode, HashMap<InputSliceNode, InterSliceEdge>>();
 
         flattenInternal(fg.top);
 
@@ -93,13 +93,13 @@ public class FlattenAndPartition extends Partitioner {
                 
                 // set up the i/o arcs
                 // set up the splitting...
-                LinkedList<Edge> outEdges = new LinkedList<Edge>();
+                LinkedList<InterSliceEdge> outEdges = new LinkedList<InterSliceEdge>();
                 LinkedList<Integer> outWeights = new LinkedList<Integer>();
-                HashMap<InputSliceNode, Edge> newEdges = new HashMap<InputSliceNode, Edge>();
+                HashMap<InputSliceNode, InterSliceEdge> newEdges = new HashMap<InputSliceNode, InterSliceEdge>();
                 for (int i = 0; i < node.ways; i++) {
                     if (node.weights[i] == 0)
                         continue;
-                    Edge edge = new Edge(output, sliceNodes.inputNodes
+                    InterSliceEdge edge = new InterSliceEdge(output, sliceNodes.inputNodes
                             .get(node.edges[i].contents));
                     newEdges.put(sliceNodes.inputNodes
                             .get(node.edges[i].contents), edge);
@@ -108,14 +108,14 @@ public class FlattenAndPartition extends Partitioner {
                 }
                 edges.put(output, newEdges);
                 
-                LinkedList<LinkedList<Edge>>translatedEdges = new LinkedList<LinkedList<Edge>>();
+                LinkedList<LinkedList<InterSliceEdge>>translatedEdges = new LinkedList<LinkedList<InterSliceEdge>>();
                 if (node.isDuplicateSplitter()) {
                     outWeights = new LinkedList<Integer>();
                     outWeights.add(new Integer(1));
                     translatedEdges.add(outEdges);
                 } else {
                     for (int i = 0; i < outEdges.size(); i++) {
-                        LinkedList<Edge> link = new LinkedList<Edge>();
+                        LinkedList<InterSliceEdge> link = new LinkedList<InterSliceEdge>();
                         link.add(outEdges.get(i));
                         translatedEdges.add(link);
                     }
@@ -125,13 +125,13 @@ public class FlattenAndPartition extends Partitioner {
             } else {
                 // no outputs
                 output.setWeights(new int[0]);
-                output.setDests(new Edge[0][0]);
+                output.setDests(new InterSliceEdge[0][0]);
             }
 
             if (node.isFilter()) {
                 if (node.getFilter().getPushInt() == 0) {
                     output.setWeights(new int[0]);
-                    output.setDests(new Edge[0][0]);
+                    output.setDests(new InterSliceEdge[0][0]);
                 }
             }
             
@@ -142,7 +142,7 @@ public class FlattenAndPartition extends Partitioner {
                         && node.inputs == node.incomingWeights.length;
 
                 LinkedList<Integer> inWeights = new LinkedList<Integer>();
-                LinkedList<Edge> inEdges = new LinkedList<Edge>();
+                LinkedList<InterSliceEdge> inEdges = new LinkedList<InterSliceEdge>();
                 for (int i = 0; i < node.inputs; i++) {
                     if (node.incomingWeights[i] == 0)
                         continue;
@@ -154,12 +154,12 @@ public class FlattenAndPartition extends Partitioner {
                 input.set(inWeights, inEdges);
             } else {
                 input.setWeights(new int[0]);
-                input.setSources(new Edge[0]);
+                input.setSources(new InterSliceEdge[0]);
             }
 
             if (node.isFilter() && node.getFilter().getPopInt() == 0) {
                 input.setWeights(new int[0]);
-                input.setSources(new Edge[0]);
+                input.setSources(new InterSliceEdge[0]);
             }
             
             // set up the work hashmaps

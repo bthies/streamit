@@ -138,10 +138,18 @@ public class Slice {
         node.setParent(this);
     }
 
+    /**
+     * get the InputSliceNode of the Slice containing this node.
+     * @return
+     */
     public InputSliceNode getHead() {
         return head;
     }
 
+    /**
+     * get the OutputSliceNode of the Slice containing this node.
+     * @return
+     */
     // finish() must have been called
     public OutputSliceNode getTail() {
         return tail;

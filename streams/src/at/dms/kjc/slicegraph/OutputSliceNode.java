@@ -27,7 +27,7 @@ public class OutputSliceNode extends SliceNode {
     // round-robin splitter (by synch removal).
     // A round-robin splitter of size n would be an Edge[n][1]
     // A duplicate splitter of size n would be an Edge[1][n]
-    private Edge[][] dests;
+    private InterSliceEdge[][] dests;
 
     private String ident;
 
@@ -35,7 +35,7 @@ public class OutputSliceNode extends SliceNode {
 
     private static int[] EMPTY_WEIGHTS = new int[0];
 
-    private static Edge[][] EMPTY_DESTS = new Edge[0][0];
+    private static InterSliceEdge[][] EMPTY_DESTS = new InterSliceEdge[0][0];
 
     private List sortedOutputs;
 
@@ -48,7 +48,7 @@ public class OutputSliceNode extends SliceNode {
      * @param dests The array of dests.
      */
 
-    public OutputSliceNode(int[] weights, Edge[][] dests) {
+    public OutputSliceNode(int[] weights, InterSliceEdge[][] dests) {
         // this.parent = parent;
         assert weights.length == dests.length : "weights must equal sources";
         ident = "output" + unique;
@@ -68,7 +68,7 @@ public class OutputSliceNode extends SliceNode {
      * @param dests The list of dests.
      */
     public OutputSliceNode(LinkedList<Integer> weights, 
-            LinkedList<LinkedList<Edge>> dests) {
+            LinkedList<LinkedList<InterSliceEdge>> dests) {
         assert weights.size() == dests.size();
         ident = "output" + unique++;
         //convert the weights list
@@ -117,7 +117,7 @@ public class OutputSliceNode extends SliceNode {
      * @param dests List of Lists of Edge for splitting pattern.
      */
     public void set(LinkedList<Integer> weights, 
-            LinkedList<LinkedList<Edge>> dests) {
+            LinkedList<LinkedList<InterSliceEdge>> dests) {
         if (weights.size() == 1) 
             this.weights = new int[]{1};
         else {
@@ -126,9 +126,9 @@ public class OutputSliceNode extends SliceNode {
                 this.weights[i] = weights.get(i).intValue();
         }
         //convert the dests list
-        this.dests = new Edge[dests.size()][];
+        this.dests = new InterSliceEdge[dests.size()][];
         for (int i = 0; i < dests.size(); i++) 
-            this.dests[i] = dests.get(i).toArray(new Edge[0]);
+            this.dests[i] = dests.get(i).toArray(new InterSliceEdge[0]);
     }
         
     /** @return the weights */
@@ -142,12 +142,12 @@ public class OutputSliceNode extends SliceNode {
     }
 
     /** @return dests */
-    public Edge[][] getDests() {
+    public InterSliceEdge[][] getDests() {
         return dests;
     }
 
     /** Set dests */
-    public void setDests(Edge[][] dests) {
+    public void setDests(InterSliceEdge[][] dests) {
         this.dests = dests;
     }
 
@@ -174,10 +174,10 @@ public class OutputSliceNode extends SliceNode {
     public void canonicalize() {
         if (weights.length == 0)
             return;
-        LinkedList<LinkedList<Edge>> edges = new LinkedList<LinkedList<Edge>>();
+        LinkedList<LinkedList<InterSliceEdge>> edges = new LinkedList<LinkedList<InterSliceEdge>>();
         LinkedList<Integer> newWeights = new LinkedList<Integer>();
         //add the first port to the new edges and weights
-        LinkedList<Edge> port = new LinkedList<Edge>();
+        LinkedList<InterSliceEdge> port = new LinkedList<InterSliceEdge>();
         Util.add(port, dests[0]);
         edges.add(port);
         newWeights.add(new Integer(weights[0]));
@@ -192,7 +192,7 @@ public class OutputSliceNode extends SliceNode {
             }
             else {
                 //not equal, so create a new port and add it and the weight
-                port = new LinkedList<Edge>();
+                port = new LinkedList<InterSliceEdge>();
                 Util.add(port, dests[i]);
                 edges.add(port);
                 newWeights.add(new Integer(weights[i]));
@@ -221,8 +221,8 @@ public class OutputSliceNode extends SliceNode {
      * 
      * @return The list.
      */
-    public LinkedList<Edge> getDestSequence() {
-        LinkedList<Edge> list = new LinkedList<Edge>();
+    public LinkedList<InterSliceEdge> getDestSequence() {
+        LinkedList<InterSliceEdge> list = new LinkedList<InterSliceEdge>();
         for (int i = 0; i < dests.length; i++) {
             for (int j = 0; j < dests[i].length; j++) 
                 if (!list.contains(dests[i][j]))
@@ -234,7 +234,7 @@ public class OutputSliceNode extends SliceNode {
     /**
      * return the number of items sent by this output slice node on all instances of a particular edge.
      */
-    public int getWeight(Edge in) {
+    public int getWeight(InterSliceEdge in) {
         int sum = 0;
 
         for (int i = 0; i < dests.length; i++) {
@@ -263,13 +263,13 @@ public class OutputSliceNode extends SliceNode {
      * @return A list of the dests in round-robin order flattening
      * the duplicates.  
      */ 
-    public Edge[] getDestList() {
-        LinkedList<Edge> edges = new LinkedList<Edge>();
+    public InterSliceEdge[] getDestList() {
+        LinkedList<InterSliceEdge> edges = new LinkedList<InterSliceEdge>();
         for (int i = 0; i < dests.length; i++) {
             for (int j = 0; j < dests[i].length; j++)
                 edges.add(dests[i][j]);
         }
-        return edges.toArray(new Edge[edges.size()]);
+        return edges.toArray(new InterSliceEdge[edges.size()]);
     }
     
     /**
@@ -277,8 +277,8 @@ public class OutputSliceNode extends SliceNode {
      * 
      * @return The set of the outgoing edges of this OutputSliceNode.
      */
-    public Set<Edge> getDestSet() {
-        HashSet<Edge> set = new HashSet<Edge>();
+    public Set<InterSliceEdge> getDestSet() {
+        HashSet<InterSliceEdge> set = new HashSet<InterSliceEdge>();
         for (int i = 0; i < dests.length; i++) {
             for (int j = 0; j < dests[i].length; j++)
                 set.add(dests[i][j]);
@@ -290,7 +290,7 @@ public class OutputSliceNode extends SliceNode {
         return (weights.length == 1 && dests[0].length == 1);
     }
 
-    public Edge getSingleEdge() {
+    public InterSliceEdge getSingleEdge() {
         assert oneOutput() : "Calling getSingleEdge() on OutputSlice with less/more than one output";
         return dests[0][0];
     }
@@ -315,7 +315,7 @@ public class OutputSliceNode extends SliceNode {
      * return an iterator that iterates over the inputslicenodes in descending
      * order of the number of items sent to the inputslicenode
      */
-    public List<Edge> getSortedOutputs() {
+    public List<InterSliceEdge> getSortedOutputs() {
         if (sortedOutputs == null) {
             // if there are no dest just return an empty iterator
             if (weights.length == 0) {
@@ -324,21 +324,21 @@ public class OutputSliceNode extends SliceNode {
             }
             // just do a simple linear insert over the dests
             // only has to be done once
-            Vector<Edge> sorted = new Vector();
-            Iterator<Edge> dests = getDestSet().iterator();
+            Vector<InterSliceEdge> sorted = new Vector();
+            Iterator<InterSliceEdge> dests = getDestSet().iterator();
             // add one element
             sorted.add(dests.next());
             while (dests.hasNext()) {
-                Edge current = (Edge) dests.next();
+                InterSliceEdge current = (InterSliceEdge) dests.next();
                 // add to end if it is less then everything
-                if (getWeight(current) <= getWeight((Edge) sorted.get(sorted
+                if (getWeight(current) <= getWeight((InterSliceEdge) sorted.get(sorted
                                                                       .size() - 1)))
                     sorted.add(current);
                 else { // otherwise find the correct place to add it
                     for (int i = 0; i < sorted.size(); i++) {
                         // if this is the correct place to insert it,
                         // add it and break
-                        if (getWeight(current) > getWeight((Edge) sorted.get(i))) {
+                        if (getWeight(current) > getWeight((InterSliceEdge) sorted.get(i))) {
                             sorted.add(i, current);
                             break;
                         }
@@ -356,7 +356,7 @@ public class OutputSliceNode extends SliceNode {
         return (FilterSliceNode) getPrevious();
     }
 
-    public double ratio(Edge edge) {
+    public double ratio(InterSliceEdge edge) {
         if (totalWeights() == 0)
             return 0.0;
         return ((double) getWeight(edge) / (double) totalWeights());
@@ -382,7 +382,7 @@ public class OutputSliceNode extends SliceNode {
     public boolean hasFileOutput() {
         Iterator dests = getDestSet().iterator();
         while (dests.hasNext()) {
-            if (((Edge) dests.next()).getDest().isFileOutput())
+            if (((InterSliceEdge) dests.next()).getDest().isFileOutput())
                 return true;
         }
         return false;
@@ -392,7 +392,7 @@ public class OutputSliceNode extends SliceNode {
         HashSet<InputSliceNode> fileOutputs = new HashSet<InputSliceNode>();
         Iterator dests = getDestSet().iterator();
         while (dests.hasNext()) {
-            Edge edge = (Edge) dests.next();
+            InterSliceEdge edge = (InterSliceEdge) dests.next();
             if (edge.getDest().isFileOutput())
                 fileOutputs.add(edge.getDest());
         }

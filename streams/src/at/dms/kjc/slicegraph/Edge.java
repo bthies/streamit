@@ -1,27 +1,58 @@
 package at.dms.kjc.slicegraph;
 
-import at.dms.kjc.*;
+import at.dms.kjc.CType;
 
 /**
- *  This class represents an edge in the partitioned stream graph between slices (traces).
- *  But it actually connectes <pre>OutputSliceNodes</pre> to <pre>InputSliceNodes</pre>.
- * 
+ * An Edge connects two {@link SliceNode}s.
+ * Edges can be differentiated into {@link InterSliceEdge}s that connect the OutputSliceNode of a slice
+ * and the InputSliceNode of a slice, and <pre>Intra-Slice Edges</pre> that connect two SliceNodes in
+ * the same slice.
  * @author mgordon
  *
  */
+
 public class Edge {
-    private OutputSliceNode src;
 
-    private InputSliceNode dest;
+    /**
+     * Source of directed edge in Slice graph
+     */
+    protected SliceNode src;
 
+    /**
+     * Destination of directed edge in Slice graph
+     */
+    protected SliceNode dest;
+
+    /**
+     * Caches type for {@link #getType()} calls
+     */
     private CType type;
 
-    public Edge(OutputSliceNode src, InputSliceNode dest) {
-        assert src != null : "Source Null!";
-        assert dest != null : "Dest Null!";
+    /**
+     * Full constructor, (type will be inferred from src / dest).
+     * @param src   Source assumed to be an OutputSliceNode or a FilterSliceNode.
+     * @param dest  Dest assumed to be an InputSliceNode or a FilterSliceNode.
+     */
+    public Edge(SliceNode src, SliceNode dest) {
+        assert src != null;
+        assert dest != null;
         this.src = src;
         this.dest = dest;
         type = null;
+    }
+
+    /**
+     * Partial constructor, for subclasses.
+     *
+     */
+    protected Edge() { }
+    
+    
+    /**
+     * @return source SliceNode
+     */
+    public SliceNode getSrc() {
+        return src;
     }
 
     public Edge(OutputSliceNode src) {
@@ -33,114 +64,100 @@ public class Edge {
     }
 
     public CType getType() {
-        if (type != null)
+        if (type != null) {
             return type;
-        assert src.getPrevFilter().getFilter().getOutputType() == dest
-        .getNextFilter().getFilter().getInputType() : "Error calculating type: " + 
-        src.getPrevFilter().getFilter() + " -> " + 
-        dest.getNextFilter().getFilter();
+        }
+        // inter-slice edge
+        if (src instanceof OutputSliceNode && dest instanceof InputSliceNode) {
+            FilterContent srcContent;
+            FilterContent dstContent;
+            CType srcType;
+            CType dstType;
+            srcContent = ((OutputSliceNode)src).getPrevFilter().getFilter();
+            dstContent = ((InputSliceNode)dest).getNextFilter().getFilter();
+            srcType = srcContent.getOutputType();
+            dstType = dstContent.getInputType();
+            type = dstType;
+            assert srcType.equals(dstType) : "Error calculating type: " + 
+            srcContent + " -> " + dstContent;
+            return type;
+        }
         
-        type = src.getPrevFilter().getFilter().getOutputType();
-        return type;
+        // intra-slice edges:
+        if (src instanceof InputSliceNode && dest instanceof FilterSliceNode) {
+            type = ((FilterSliceNode)dest).getFilter().getInputType();
+            return type;
+        }
+        if (src instanceof FilterSliceNode && dest instanceof OutputSliceNode) {
+            type = ((FilterSliceNode)src).getFilter().getOutputType();
+            return type;
+        }
+        // only for general slices...
+        if (src instanceof FilterSliceNode
+                && dest instanceof FilterSliceNode) {
+            type = ((FilterSliceNode)src).getFilter().getOutputType();
+            assert type == ((FilterSliceNode)dest).getFilter().getInputType() 
+            : "Error calculating type: " + 
+            ((FilterSliceNode)src).getFilter() + " -> " + ((FilterSliceNode)dest).getFilter();
+            return type;
+        }
+        throw new AssertionError ("Unexpected SliceNode connection " + src + " -> " + dest);
     }
 
-    public OutputSliceNode getSrc() {
-        return src;
-    }
-
-    public InputSliceNode getDest() {
+    /**
+     * @return dest SliceNode
+     */
+    public SliceNode getDest() {
         return dest;
     }
 
-    public void setSrc(OutputSliceNode src) {
+    /**
+     * Set the source SliceNode
+     * @param src
+     */
+    public void setSrc(SliceNode src) {
         this.src = src;
     }
 
-    public void setDest(InputSliceNode dest) {
+    /**
+     * Set the destination SliceNode
+     * @param dest
+     */
+    public void setDest(SliceNode dest) {
         this.dest = dest;
     }
 
     public String toString() {
         return src + "->" + dest + "(" + hashCode() + ")";
     }
-
     /**
-     * The number of items that traverse this edge in the initialization
-     * stage.
-     * 
-     * @return The number of items that traverse this edge in the initialization
-     * stage. 
+     * Return a FilterSliceNode that is either the passed node, or the next node if an InputSliceNode.
+     * Error if passed an OutputSliceNode.
+     * @param node a FilterSliceNode or InputSliceNode
+     * @return a FilterSliceNode
      */
-    public int initItems() {
-        int itemsReceived, itemsSent;
-
-        // calculate the items the input slice receives
-        FilterInfo next = FilterInfo.getFilterInfo((FilterSliceNode) dest
-                                                   .getNext());
-        
-        itemsSent = (int) ((double) next.initItemsReceived() * dest.ratio(this));
-        //System.out.println(next.initItemsReceived()  + " * " + dest.ratio(this));
-        
-        // calculate the items the output slice sends
-        FilterInfo prev = FilterInfo.getFilterInfo((FilterSliceNode) src
-                                                   .getPrevious());
-        itemsReceived = (int) ((double) prev.initItemsSent() * src.ratio(this));
-
-        if (itemsSent != itemsReceived) {
-            System.out.println("*** Init: Items received != Items Sent!");
-            System.out.println(prev + " -> " + next);
-            System.out.println("Mult: " + prev.getMult(true, false) + " " +  
-                    next.getMult(true, false));
-            System.out.println("Push: " + prev.prePush + " " + prev.push);
-            System.out.println("Pop: " + next.pop);
-            System.out.println("Init items Sent * Ratio: " + prev.initItemsSent() + " * " +
-                    src.ratio(this));
-            System.out.println("Items Received: " + next.initItemsReceived(true));
-            System.out.println("Ratio received: " + dest.ratio(this));
-            
+    private static FilterSliceNode nextFilter(SliceNode node) {
+        if (node instanceof FilterSliceNode) {
+            return (FilterSliceNode)node;
+        } else {
+            return ((InputSliceNode)node).getNextFilter();
         }
-        
-        // see if they are different
-        assert (itemsSent == itemsReceived) : "Calculating init stage: items received != items send on buffer: "
-            + src + " (" + itemsSent + ") -> (" + itemsReceived + ") "+ dest;
-
-        return itemsSent;
     }
-
+    
     /**
-     * @return The amount of items (not counting typesize) that flows 
-     * over this edge in the steady state.
+     * Return a FilterSliceNode that is either the passed node, or the previous node if an OutputSliceNode.
+     * Error if passed an InputSliceNode.
+     * @param node a FilterSliceNode or OutputSliceNode
+     * @return a FilterSliceNode
      */
-    public int steadyItems() {
-        int itemsReceived, itemsSent;
-
-        // calculate the items the input slice receives
-        FilterInfo next = FilterInfo.getFilterInfo(dest.getNextFilter());
-        itemsSent = (int) ((next.steadyMult * next.pop) * ((double) dest
-                                                           .getWeight(this) / dest.totalWeights()));
-
-        // calculate the items the output slice sends
-        FilterInfo prev = FilterInfo.getFilterInfo((FilterSliceNode) src
-                                                   .getPrevious());
-        itemsReceived = (int) ((prev.steadyMult * prev.push) * ((double) src
-                                                                .getWeight(this) / src.totalWeights()));
-
-        assert (itemsSent == itemsReceived) : "Calculating steady state: items received != items send on buffer "
-            + itemsSent + " " + itemsReceived + " " + prev + " " + next;
-
-        return itemsSent;
+   
+    private static FilterSliceNode prevFilter(SliceNode node) {
+        if (node instanceof FilterSliceNode) {
+            return (FilterSliceNode)node;
+        } else {
+            return ((OutputSliceNode)node).getPrevFilter();
+        }
     }
 
-   /**
-    * The number of items sent over this link in one call of the link in the prime
-    * pump stage, the link might be used many times in the prime pump stage conceptually 
-    * using the rotating buffers.
-    * 
-    * @return ...
-    */
-    public int primePumpItems() {
-        return (int) ((double) FilterInfo.getFilterInfo(src.getPrevFilter())
-                      .totalItemsSent(false, true) * src.ratio(this));
-    }
 
 }

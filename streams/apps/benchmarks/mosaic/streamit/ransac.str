@@ -1,59 +1,142 @@
 
-featuresListPairs->featuresListPairs pipeline ransac(){
+featureListPair->featureListPair pipeline ransac(){
 	
-	portal<selectIndices> pop1or2;
+	portal<selectIndices> feedbackOrInput;
 	portal<gateOfEntry> pop1orNone;
 	portal<gateOfExit> push1orNone;
+	featureListPair idiotface;
 	
 	add normalizeFeaturePts();
-	add gateOfEntry();
+	add gateOfEntry() to pop1orNone;
 	
-	add featureListPair->featureListPair feedbackloop (){
+	add featureListPair->featureListPair feedbackloop{
 		join roundrobin(1,1);
 		body pipeline {		
-			add selectIndices();
-		    add fundMatrix();
-		    add findInliers(pop1or2,pop1orNone,push1orNone);
+			add selectIndices() to feedbackOrInput;
+		    add makeFundMatrix();
+		    add findInliers(feedbackOrInput,pop1orNone,push1orNone);
 		}
-		loop {}
+		loop FLPID();
+		enqueue(idiotface);
 		split duplicate;		
 	}
-    add gateOfExit();
-	add splitjoin{
-			add Identity<featureListPair>;
+    add gateOfExit() to push1orNone;
+	/*add splitjoin{
+			split duplicate;
+			add FLPID();
 			add pipeline{
 						add featureListPair->float filter{
 							featureListPair feat;
 							work pop 1 push 9{
 								feat = pop();
 								for(int j = 0; j < 3; j++){
-									for(int i = 0; i < 3; i++){										
+									for(int i = 0; i < 3; i++){									
 										push(feat.bestF[i][j]);
 									}
 								}							
 							}						
-						}
-						add denormalizeF();						
+						}			
 			}
 	join roundrobin(1,1);
+	}
 	add featureListPair->featureListPair filter {
+		featureListPair feat1;
+		featureListPair feat2;
 		work pop 2 push 1{	
-			featureListPair feat1 = pop();	
-			featureListPair feat2 = pop();
+			feat1 = pop();	
+			feat2 = pop();	
 			feat1.tempF = feat2.tempF;
 			push(feat1);
 		}		
 	}	
-    add denormalizeFeaturePts();
-    
+	add denormalizeF();*/
+    //add denormalizeFeaturePts();
 }
 
-featureListPair->featureListPair filter gateOfEntry{
+featureListPair->featureListPair filter normalizeFeaturePts()
+{	
+	featureListPair feat;
+	float runningSumX1;
+	float runningSumY1;
+	float runningSumX2;
+	float runningSumY2;
+	float runningSumDist1;
+	float runningSumDist2;
+	float muX1, muX2;
+	float muY1, muY2;
+	float stDevFactor1, stDevFactor2;
+	
+	work pop 1 push 1{
+		//println("started to normalizeFeaturePts");	
+		feat = pop();
+		
+		//bestFeaturesAndNormData pushedData;
+		
+		runningSumX1 = 0;
+		runningSumY1 = 0;
+		runningSumX2 = 0;
+		runningSumY2 = 0;
+		runningSumDist1 = 0;
+		runningSumDist2 = 0;
+
+		for(int i = 0; i < feat.firstZeroIndex; i++){
+			feat.n1[i].x = (float) feat.x1[i].x;
+			feat.n1[i].y = (float) feat.x1[i].y;
+			feat.n1[i].z = (float) feat.x1[i].z;
+			feat.n2[i].x = (float) feat.x2[i].x;
+			feat.n2[i].y = (float) feat.x2[i].y;
+			feat.n2[i].z = (float) feat.x2[i].z;
+			
+			runningSumX1+=feat.n1[i].x;
+			runningSumY1+=feat.n1[i].y;	
+			runningSumX2+=feat.n2[i].x;
+			runningSumY2+=feat.n2[i].y;			
+	
+		}
+		
+		muX1 = runningSumX1/feat.firstZeroIndex;
+		muY1 = runningSumY1/feat.firstZeroIndex;
+		muX2 = runningSumX2/feat.firstZeroIndex;
+		muY2 = runningSumY2/feat.firstZeroIndex;	
+	
+
+		for(int i = 0; i < feat.firstZeroIndex; i++){
+			feat.n1[i].x-= muX1;
+			feat.n1[i].y-= muY1;
+			runningSumDist1+= sqrt(feat.n1[i].x*feat.n1[i].x + feat.n1[i].y*feat.n1[i].y);	
+			feat.n2[i].x-= muX2;
+			feat.n2[i].y-= muY2;
+			runningSumDist2+= sqrt(feat.n2[i].x*feat.n2[i].x + feat.n2[i].y*feat.n2[i].y);	
+			
+		}
+
+		stDevFactor1 = sqrt(2)/(runningSumDist1/feat.firstZeroIndex);
+		stDevFactor2 = sqrt(2)/(runningSumDist2/feat.firstZeroIndex);
+		
+		for(int i = 0; i < feat.firstZeroIndex; i++){
+			
+			feat.n1[i].x*= stDevFactor1;
+			feat.n1[i].y*= stDevFactor1;
+			feat.n2[i].x*= stDevFactor2;
+			feat.n2[i].y*= stDevFactor2;
+
+		}
+
+		feat.frame1scaleFeat = stDevFactor1;
+		feat.frame1c1Feat = muX1;
+		feat.frame1c2Feat = muY1;
+		feat.frame2scaleFeat = stDevFactor2;
+		feat.frame2c1Feat = muX2;
+		feat.frame2c2Feat = muY2;	
+		push(feat);
+	}
+}
+
+featureListPair->featureListPair filter gateOfEntry(){
 	boolean nextPair;
 	featureListPair tempFeat;
-	init{	nextPair = 1;	}
+	init{	nextPair = true;	}
 	work pop [0,1] push 1{
-			
 		if(nextPair){
 			tempFeat = pop();
 			tempFeat.trialCount = 0;
@@ -69,25 +152,30 @@ featureListPair->featureListPair filter gateOfEntry{
 }
 
 featureListPair->featureListPair filter selectIndices(){
-	boolean feedback;
+	
+
 	featureListPair tempFLP;
+	featureListPair tempFromInput;
+	featureListPair tempFromFeedBackLoop;
+	
+	int indFill;
+	int tempRand;
+	boolean rndNumInIndex;
+	boolean degenerate;
+	boolean feedback;
+	
 	init{
-		feedback = 0;	
+		feedback = false;	
 	}
 	
 	work pop 2 push 1{
-		
-		featureListPair tempFromInput = pop();
-		featurelistPair tempFromFeedbackLoop = pop();
-		
+		tempFromInput = pop();
+		tempFromFeedBackLoop = pop();
 		if(feedback){	 tempFLP = tempFromFeedBackLoop;	}
 		else		{	 tempFLP = tempFromInput;			}
-		
-		int indFill;
-		int tempRand;
-		boolean rndNumInIndex = 0;
-		boolean degenerate = 1;
-		while(degenerate){
+		rndNumInIndex = false;
+		degenerate = false;
+		if(!degenerate){
 			// Generate s random indices in the range 1..npts
 			indFill = 0;
 			while(indFill < s){
@@ -96,27 +184,28 @@ featureListPair->featureListPair filter selectIndices(){
 				 int g=0;
 				 while(g<indFill){
 					 if(tempFLP.ind[g]==tempRand){
-						 rndNumInIndex = 1;
+						 rndNumInIndex = true;
 						 g=indFill;
 					 }
 					 else{g++;}		  	    		
 				 }
-				 if(rndNumInIndex) {	rndNumInIndex = 0;	    }
+				 if(rndNumInIndex) {	rndNumInIndex = false;	    }
 				 else{	tempFLP.ind[indFill] = tempRand; indFill++;	 }
 			}
-	        
-			// Test that these points are not a degenerate configuration.
-			/*degenerate = feval(degenfn, x(:,ind));
-			degenerate = 0; //assume for the time being that we don't reach the 
-						 // degenerate case
-			// Safeguard against being stuck in this loop forever
-			count = count + 1;
-			if(count > maxDataTrials){
-				println("Unable to select a nondegenerate data set");
-				break;}
-			*/
+		/*println("X Y Z for x1 then x2");	
+	    for(int i = 0;i<s; i++){
+	    	println(tempFLP.x1[tempFLP.ind[i]].x);
+			println(tempFLP.x1[tempFLP.ind[i]].y);
+			println(tempFLP.x1[tempFLP.ind[i]].z);
+	    }
+		for(int i = 0;i<s; i++){
+			println(tempFLP.x2[tempFLP.ind[i]].x);
+			println(tempFLP.x2[tempFLP.ind[i]].y);
+			println(tempFLP.x2[tempFLP.ind[i]].z);
+		}*/
+	        			
 		}
-		
+
 		push(tempFLP);
 	}
 	handler setVal(boolean val){
@@ -124,18 +213,27 @@ featureListPair->featureListPair filter selectIndices(){
 	}
 }
 
-featureListPair->featureListPair filter findInliers(portal<selectIndices> pop1or2,
+featureListPair->featureListPair filter findInliers(portal<selectIndices> feedbackOrInput,
 													portal<gateOfEntry> pop1orNone,
 													portal<gateOfExit> push1orNone){
 	
-	work pop 1 push 1{
-	
 	float[60] x2tFx1;
 	float fracinliers, pNoOutliers;
-	bestFeatures[60] Fx1, Ftx2;
-		
-	featureListPair feat = pop();
+	float[60] Fx1x, Ftx2x, Fx1y, Ftx2y, Fx1z, Ftx2z;
+	featureListPair feat;
+	float[60]x1x;
+	float[60]x1y;
+	float[60]x2x;
+	float[60]x2y;
+	float denom;
+	float tempPrint;
 	
+	work pop 1 push 1{	
+
+	feat = pop();
+	
+	feat.ninliers = 0;
+	//println("firstZeroIndex = " + feat.firstZeroIndex);
 	for(int i = 0; i< feat.firstZeroIndex; i++){
 		
 		//x2tFx1 = x2'*F*x1
@@ -146,30 +244,31 @@ featureListPair->featureListPair filter findInliers(portal<selectIndices> pop1or
 
 		//Fx1 = F*x1
 
-		Fx1[i].x = feat.tempF[0][0]*feat.x1[i].x + feat.tempF[0][1]*feat.x1[i].y + feat.tempF[0][2]*feat.x1[i].z;
-		Fx1[i].y = feat.tempF[1][0]*feat.x1[i].x + feat.tempF[1][1]*feat.x1[i].y + feat.tempF[1][2]*feat.x1[i].z;
-		Fx1[i].z = feat.tempF[2][0]*feat.x1[i].x + feat.tempF[2][1]*feat.x1[i].y + feat.tempF[2][2]*feat.x1[i].z;
+		Fx1x[i] = feat.tempF[0][0]*feat.x1[i].x + feat.tempF[0][1]*feat.x1[i].y + feat.tempF[0][2]*feat.x1[i].z;
+		Fx1y[i] = feat.tempF[1][0]*feat.x1[i].x + feat.tempF[1][1]*feat.x1[i].y + feat.tempF[1][2]*feat.x1[i].z;
+		Fx1z[i] = feat.tempF[2][0]*feat.x1[i].x + feat.tempF[2][1]*feat.x1[i].y + feat.tempF[2][2]*feat.x1[i].z;
 
 		//Ftx2 = F'*x2
 
-		Ftx2[i].x = feat.tempF[0][0]*feat.x2[i].x + feat.tempF[1][0]*feat.x2[i].y + feat.tempF[2][0]*feat.x2[i].z;
-		Ftx2[i].y = feat.tempF[0][1]*feat.x2[i].x + feat.tempF[1][1]*feat.x2[i].y + feat.tempF[2][1]*feat.x2[i].z;
-		Ftx2[i].z = feat.tempF[0][2]*feat.x2[i].x + feat.tempF[1][2]*feat.x2[i].y + feat.tempF[2][2]*feat.x2[i].z;
+		Ftx2x[i] = feat.tempF[0][0]*feat.x2[i].x + feat.tempF[1][0]*feat.x2[i].y + feat.tempF[2][0]*feat.x2[i].z;
+		Ftx2y[i] = feat.tempF[0][1]*feat.x2[i].x + feat.tempF[1][1]*feat.x2[i].y + feat.tempF[2][1]*feat.x2[i].z;
+		Ftx2z[i] = feat.tempF[0][2]*feat.x2[i].x + feat.tempF[1][2]*feat.x2[i].y + feat.tempF[2][2]*feat.x2[i].z;
 
+			
 		//d(i) = x2tFx1[i]^2 / (Fx1[i].x^2 + Fx1[i].y^2 + Ftx2[i].x^2 + Ftx2[i].y^2)
 
-		feat.d[i] = x2tFx1[i]*x2tFx1[i]/(Fx1[i].x*Fx1[i].x + Fx1[i].y*Fx1[i].y + Fx2[i].x*Fx2[i].x + Fx2[i].y*Fx2[i].y);		
-
-				
-		feat.ninliers = 0;
-
+		feat.d[i] = x2tFx1[i]*x2tFx1[i]/(Fx1x[i]*Fx1x[i] + Fx1y[i]*Fx1y[i] + Fx1z[i]*Fx1z[i] + Ftx2x[i]*Ftx2x[i] + Ftx2y[i]*Ftx2y[i]+ Ftx2z[i]*Ftx2z[i]);		
+		
 		if(abs(feat.d[i])<ransacThreshold){
 
 			feat.tempInliers[feat.ninliers] = i;
 			feat.ninliers++;				
+
 		}	
+		
 	}
-	if(feat.ninliers>feat.bestScore){
+	
+	if(feat.ninliers>=feat.bestScore){
 		
 		feat.bestScore = feat.ninliers;
 		feat.bestInliers = feat.tempInliers;
@@ -177,38 +276,50 @@ featureListPair->featureListPair filter findInliers(portal<selectIndices> pop1or
 			
 		//now update N
 		
-		fracinliers = feat.ninliers/feat.firstZeroIndex;	
-		pNoOutliers = 1-fracinliers^s;
-		if(pNoOutliers==0){			
-			println("ransac stage found no inliers");
+		fracinliers = feat.ninliers / (float)feat.firstZeroIndex;	
+		pNoOutliers = 1-pow(fracinliers,s);
+		pNoOutliers = max(eps, pNoOutliers);
+		if(min(1-eps, pNoOutliers)==(1-eps)){
+			pNoOutliers = 1-eps;
+			denom=-eps;	
 		}
-		else{feat.N = log(1-probOutliers)/log(pNoOutliers);}		
-	}
-	if(feat.N<=feat.trialCount||feat.trialCount>maxTrials){
-		pop1or2.setVal(1) [:];
-		pop1orNone.setVal(1) [:];
-		push1orNone.setVal(1) [:];
+		else{denom = log(pNoOutliers);}
+		feat.N = (log(1-probOutliers)/denom);
+	}	
+	feat.trialCount++;
+	println("best score" + feat.bestScore + "\tninliners: " 
+			+ feat.ninliers + "\tN: " + feat.N  + "\ttrialCount: " 
+			+ feat.trialCount + "\tpNoOutliers: " + pNoOutliers	+ "\tfracinliers: " + fracinliers 
+			+ "\tpow(fracinliers,8): " + pow(fracinliers,s)); 
+	
+	if(feat.N<=feat.trialCount||feat.trialCount>=maxTrials){
+		feedbackOrInput.setVal(false);
+		pop1orNone.setVal(true);
+		push1orNone.setVal(true);
 	}
 	else{
-		pop1or2.setVal(0) [:];
-		pop1orNone.setVal(0) [:];
-		push1orNone.setVal(0) [:];
+		feedbackOrInput.setVal(true);
+		pop1orNone.setVal(false);
+		push1orNone.setVal(false);
 	}
 	push(feat);	
 	
 	}	
 }
 
-featureListPair->featureListPair filter gateOfExit{
+featureListPair->featureListPair filter gateOfExit(){
 	boolean nextPair;
-	init{	nextPair = 0;	}
+	init{	nextPair = false;	}
 	work pop 1 push [0,1]{	
 		if(nextPair){
 			push(pop());	
+			println("exiting RANSAC");
 		}
 		else{
 		 pop();
+		
 		}	
+		
 	}
 	handler setVal(boolean val){
 		nextPair = val;	

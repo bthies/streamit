@@ -13,6 +13,8 @@
  * and NZeropad, where we mean the Height of the thing whose FFT we want
  * to take.  
  */
+ 
+ 
 
 /*void->void pipeline FFT(){
 
@@ -208,9 +210,10 @@ float->float filter Transpose(int M, int N) {
 //prints whatever comes across it on the tape
 
 float->float filter printer(){
+	float gerry;
 	work push 1 pop 1 peek 1
 	{
-		float gerry = peek(0);
+		gerry = peek(0);
 		println(gerry);
 		push(pop());
 	}

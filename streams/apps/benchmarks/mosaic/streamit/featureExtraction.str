@@ -60,19 +60,38 @@ float[320][240]->float[320][240]
 					int imageWidth, int imageHeight, int winWidth, int winHeight, 
 					float iweight, float qweight, int patchsize)
 {
-	
+	float[320][240] yMatrix;	
+	float[320][240] iMatrix;	
+	float[320][240] qMatrix;		
+	float[320][240] eigenMatrix;
+	int r;
+	float gx; float gy; float gxi; float gyi; float gxq; float gyq;	
+	Gstruct tempSum;
+	float minorEig;
+	float newgx; 
+	float newgy;
+	float newgxi; 
+	float newgyi;
+	float newgxq; 
+	float newgyq;
+	float oldgx;
+	float oldgy;
+	float oldgxi;
+	float oldgyi;
+	float oldgxq;
+	float oldgyq;
+	int row;
 	//check to make sure that the window has a half-patchsize cushion around it plus one.  
 	//actually, since patchsizes are odd, it's half-patchsize - 1/2 cushion plus one). 
 	work pop 3 push 4
 	{
 	
 	Gstruct[320 + patchsize - 1] Garray;
-	float[320][240] yMatrix = pop();	
-	float[320][240] iMatrix = pop();	
-	float[320][240] qMatrix = pop();		
-	float[320][240] eigenMatrix;
+	yMatrix = pop();	
+	iMatrix = pop();	
+	qMatrix = pop();
 	
-	int r = (patchsize-1)/2;
+	r = (patchsize-1)/2;
 	
 	if(
 		(startx-(r + 1))<0 || 
@@ -85,8 +104,6 @@ float[320][240]->float[320][240]
 		println("or there is a problem with your start indices");
 		return;
 	}
-	
-	float gx; float gy; float gxi; float gyi; float gxq; float gyq;
 		
 	for(int i = startx-r; i< (startx+winWidth+r); i++)
 	{
@@ -114,13 +131,11 @@ float[320][240]->float[320][240]
 	println(Garray[winWidth + patchsize - 1].gxx);
 	println(Garray[winWidth + patchsize - 1].gxy);
 	println(Garray[winWidth + patchsize - 1].gyy);*/
-	
-	Gstruct tempSum;	
+		
 	tempSum.gxx = 0;	
 	tempSum.gyy = 0;
 	tempSum.gxy = 0;
 	
-	float minorEig;
 	for(int i = 0; i<patchsize; i++){
 		tempSum.gxx+=Garray[i].gxx;
 		tempSum.gyy+=Garray[i].gyy;
@@ -141,20 +156,9 @@ float[320][240]->float[320][240]
 		tempSum.gxy+=(Garray[i+patchsize].gxy - Garray[i].gxy);			
 	}
 
-	int row = starty;
+	row = starty;
 	row++;
-	float newgx; 
-	float newgy;
-	float newgxi; 
-	float newgyi;
-	float newgxq; 
-	float newgyq;
-	float oldgx;
-	float oldgy;
-	float oldgxi;
-	float oldgyi;
-	float oldgxq;
-	float oldgyq;
+
 
 	for(int j=row; j< starty+winHeight; j++)
 	{	
@@ -219,7 +223,7 @@ float[320][240]->float[320][240]
 	push(iMatrix);
 	push(qMatrix);
 	push(eigenMatrix);
-	println("genMinorEig completed...");
+	//println("genMinorEig completed...");
 	}
 }
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -233,17 +237,22 @@ do not exist in overlapping patches.*/
 float[320][240]->imageAndFeatures
 filter chooseEigsAndHighlight(int imageWidth, int imageHeight)
 {
-
+	float[320][240] eigenMatrix;
+	bestFeatures[60] best;
+	int h;
+	boolean inPatch;
+	imageAndFeatures featExtOutput;
+	
 	work pop 4 push 1 peek 1
 	{
 
-	float[320][240] eigenMatrix = peek(3);
-	bestFeatures[40] best;
+	eigenMatrix = peek(3);
+
 	for(int k = 0; k < iters; k++){	
 	for(int j = 0; j< imageHeight; j++){
 		for(int i = 0; i < imageWidth; i++){
-		int h = 0;
-		boolean inPatch = false;
+		h = 0;
+		inPatch = false;
 		while( h < k)
 		{	//check to see if we're in any of the patches
 			//corresponding to a good feature
@@ -278,13 +287,13 @@ filter chooseEigsAndHighlight(int imageWidth, int imageHeight)
 	for(int i = 0; i< iters; i++){
 	println(best[i].y);}
 */
-	imageAndFeatures featExtOutput;
 	featExtOutput.yImage = pop();
 	featExtOutput.iImage = pop();
 	featExtOutput.qImage = pop();
 	pop(); //the eigenvalues are no longer necessary
 	featExtOutput.myBest = best;
+	featExtOutput.goodPts = iters;
 	push(featExtOutput);
-	println("chooseEigs completed...");
+	//println("chooseEigs completed...");
 	}
 }

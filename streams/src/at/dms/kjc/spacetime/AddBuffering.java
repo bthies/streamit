@@ -10,7 +10,7 @@ import at.dms.kjc.sir.SIRFilter;
 import at.dms.kjc.sir.SIRIdentity;
 import at.dms.kjc.sir.lowering.RenameAll;
 import at.dms.kjc.slicegraph.DataFlowOrder;
-import at.dms.kjc.slicegraph.Edge;
+import at.dms.kjc.slicegraph.InterSliceEdge;
 import at.dms.kjc.slicegraph.FilterInfo;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
@@ -151,8 +151,8 @@ public class AddBuffering {
      */
     private boolean fixInputNodeBuffering(InputSliceNode input) {
         
-        Iterator<Edge> edges = input.getSourceSet().iterator();
-        HashMap<Edge, Double> mults = new HashMap<Edge, Double>();
+        Iterator<InterSliceEdge> edges = input.getSourceSet().iterator();
+        HashMap<InterSliceEdge, Double> mults = new HashMap<InterSliceEdge, Double>();
         double minMult = Double.MAX_VALUE;
 
         //System.out.println("***** " + input + " " + input.getNext());
@@ -163,7 +163,7 @@ public class AddBuffering {
         //find the edge that has the smallest multiplicity in the
         //initialization stage
         while(edges.hasNext()) {
-            Edge edge = edges.next();
+            InterSliceEdge edge = edges.next();
             
             double mult = 
                 (initItemsPushed(edge) / ((double)input.getWeight(edge)));
@@ -197,7 +197,7 @@ public class AddBuffering {
         
         edges = input.getSourceSet().iterator();
         while (edges.hasNext()) {
-            Edge edge = edges.next();
+            InterSliceEdge edge = edges.next();
             
             double myMult = mults.get(edge).doubleValue();
             //if the mult is not equal to the target mult, we must buffer
@@ -241,7 +241,7 @@ public class AddBuffering {
      * @param incoming
      * @param itemsToPassInit
      */
-    private void addNewBufferingSlice(Slice upSlice, Edge edge, int itemsToPassInit) {
+    private void addNewBufferingSlice(Slice upSlice, InterSliceEdge edge, int itemsToPassInit) {
         System.out.println("Adding new buffering slice at edge: " + edge);
         CType type = edge.getType(); 
         
@@ -272,7 +272,7 @@ public class AddBuffering {
         
         //create the new edge that will exist between the new slice and the
         //downstream slice
-        Edge newEdge = new Edge(newOutput, edge.getDest());
+        InterSliceEdge newEdge = new InterSliceEdge(newOutput, edge.getDest());
         
         //now install the edge at the input of the downstream slice instead 
         //of the old edge
@@ -282,8 +282,8 @@ public class AddBuffering {
         edge.setDest(newInput);
                 
         //set the sources and dests of the new input and new output
-        newInput.setSources(new Edge[]{edge});
-        newOutput.setDests(new Edge[][]{{newEdge}});
+        newInput.setSources(new InterSliceEdge[]{edge});
+        newOutput.setDests(new InterSliceEdge[][]{{newEdge}});
         
         System.out.println("   with new input: " + newInput);
         System.out.println("   with new output: " + newOutput);
@@ -325,9 +325,9 @@ public class AddBuffering {
         
         OutputSliceNode output = slice.getTail();
         
-        Iterator<Edge> edges = output.getDestSet().iterator(); 
+        Iterator<InterSliceEdge> edges = output.getDestSet().iterator(); 
         while (edges.hasNext()) {
-            Edge edge = edges.next();
+            InterSliceEdge edge = edges.next();
             FilterInfo downstream = FilterInfo.getFilterInfo(edge.getDest().getNextFilter());
             
             int itemsRecOnEdge = (int) (((double)initItemsSent) *
@@ -356,7 +356,7 @@ public class AddBuffering {
      * @return The number of items that the ID must pass to the output
      * slice node.
      */
-    private int itemsToPass(Slice slice, Edge edge, double inputMult) {
+    private int itemsToPass(Slice slice, InterSliceEdge edge, double inputMult) {
         assert slice == edge.getSrc().getParent();
         OutputSliceNode output = edge.getSrc();
         InputSliceNode input = edge.getDest();
@@ -427,7 +427,7 @@ public class AddBuffering {
      * @return The number of items pushed onto this edge in the initialization
      * stage.
      */
-    private double initItemsPushed(Edge edge) {
+    private double initItemsPushed(InterSliceEdge edge) {
         return ((double)edge.getSrc().getPrevFilter().getFilter().initItemsPushed()) *
         edge.getSrc().ratio(edge);
     }

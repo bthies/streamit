@@ -1,6 +1,6 @@
 package at.dms.kjc.spacetime;
 
-import at.dms.kjc.slicegraph.Edge;
+import at.dms.kjc.slicegraph.InterSliceEdge;
 
 /**
  * This class encapsulates the port plus the distance of this port to the
@@ -13,7 +13,7 @@ import at.dms.kjc.slicegraph.Edge;
  */
 class PortDistance implements Comparable {
     public StreamingDram dram;
-    private Edge edge;
+    private InterSliceEdge edge;
     
     private StreamingDram src;
     private StreamingDram dst;
@@ -25,7 +25,7 @@ class PortDistance implements Comparable {
 
     public int id;
     
-    public PortDistance(Edge edge, StreamingDram dram, 
+    public PortDistance(InterSliceEdge edge, StreamingDram dram, 
             StreamingDram src, StreamingDram dst) {
         this.dram = dram;
         this.edge = edge;

@@ -5,7 +5,7 @@ package at.dms.kjc.spacetime;
 
 import java.util.*;
 import at.dms.kjc.sir.*;
-import at.dms.kjc.slicegraph.Edge;
+import at.dms.kjc.slicegraph.InterSliceEdge;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.OutputSliceNode;
@@ -327,7 +327,7 @@ public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout {
             Slice slice = slices[i];
             Iterator edges = slice.getTail().getDestSet().iterator();
             while (edges.hasNext()) {
-                Edge edge = (Edge)edges.next();
+                InterSliceEdge edge = (InterSliceEdge)edges.next();
                // //System.out.println(" Checking if " + edge + " crosses.");
                 InterSliceBuffer buf = InterSliceBuffer.getBuffer(edge);
                 

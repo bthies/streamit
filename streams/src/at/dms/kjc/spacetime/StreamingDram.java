@@ -4,7 +4,7 @@ import at.dms.util.Utils;
 import java.util.HashSet;
 import java.util.Iterator;
 import at.dms.kjc.slicegraph.*;
-import at.dms.kjc.slicegraph.Edge;
+import at.dms.kjc.slicegraph.InterSliceEdge;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.OutputSliceNode;
 
@@ -64,7 +64,7 @@ public class StreamingDram extends IODevice
         HashSet<StreamingDram> drams = new HashSet<StreamingDram>();
         Iterator edges = out.getDestSet().iterator();
         while(edges.hasNext()) {
-            Edge edge = (Edge)edges.next();
+            InterSliceEdge edge = (InterSliceEdge)edges.next();
             //System.out.println(out + "->" + in);
             if (drams.contains(InterSliceBuffer.getBuffer(edge).getDRAM()))
                 return false;
@@ -81,7 +81,7 @@ public class StreamingDram extends IODevice
         //get the source set, so there are no duplicate edges.
         Iterator edges = in.getSourceSet().iterator();
         while(edges.hasNext()) {
-            Edge edge = (Edge)edges.next();
+            InterSliceEdge edge = (InterSliceEdge)edges.next();
             if (drams.contains(InterSliceBuffer.getBuffer(edge).getDRAM()))
                 return false;
             drams.add(InterSliceBuffer.getBuffer(edge).getDRAM());

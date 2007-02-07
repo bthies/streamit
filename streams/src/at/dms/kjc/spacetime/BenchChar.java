@@ -6,7 +6,7 @@ package at.dms.kjc.spacetime;
 import java.util.*;
 
 import at.dms.kjc.sir.*;
-import at.dms.kjc.slicegraph.Edge;
+import at.dms.kjc.slicegraph.InterSliceEdge;
 import at.dms.kjc.slicegraph.FilterInfo;
 import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.slicegraph.SliceNode;
@@ -134,10 +134,10 @@ public class BenchChar {
     private static int longestPathToSink(Slice slice) {
         if (slice.getTail().noOutputs())
             return 0;
-        Iterator<Edge> edges = slice.getTail().getDestSet().iterator();
+        Iterator<InterSliceEdge> edges = slice.getTail().getDestSet().iterator();
         int maxPath = 0;
         while (edges.hasNext()) {
-            Edge edge = edges.next();
+            InterSliceEdge edge = edges.next();
             int pathLenToSink = longestPathToSink(edge.getDest().getParent());
             if (pathLenToSink > maxPath)
                 maxPath = pathLenToSink;
@@ -148,10 +148,10 @@ public class BenchChar {
     private static int shortestPathToSink(Slice slice) {
         if (slice.getTail().noOutputs())
             return 0;
-        Iterator<Edge> edges = slice.getTail().getDestSet().iterator();
+        Iterator<InterSliceEdge> edges = slice.getTail().getDestSet().iterator();
         int minPath = Integer.MAX_VALUE;
         while (edges.hasNext()) {
-            Edge edge = edges.next();
+            InterSliceEdge edge = edges.next();
             int pathLenToSink = shortestPathToSink(edge.getDest().getParent());
             if (pathLenToSink < minPath)
                 minPath = pathLenToSink;

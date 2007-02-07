@@ -6,7 +6,7 @@ package at.dms.kjc.spacetime;
 import java.util.Iterator;
 
 import at.dms.kjc.common.CommonUtils;
-import at.dms.kjc.slicegraph.Edge;
+import at.dms.kjc.slicegraph.InterSliceEdge;
 import at.dms.kjc.slicegraph.Slice;
 
 /**
@@ -112,7 +112,7 @@ public class DRAMCommandDist {
                 //reads and writers
                 //the reads of the incoming arcs of the joiner
                 for (int s = 0; s < slice.getHead().getSources().length; s++) {
-                    Edge edge = slice.getHead().getSources()[s];
+                    InterSliceEdge edge = slice.getHead().getSources()[s];
                     OffChipBuffer buf = InterSliceBuffer.getBuffer(edge);
                     interReads[buf.getDRAM().port]++;
                 }
@@ -125,7 +125,7 @@ public class DRAMCommandDist {
                 interReads[IntraSliceBuffer.getDstIntraBuf(slice).getDRAM().port]++;
                 Iterator dsts = slice.getTail().getDestSet().iterator();
                 while (dsts.hasNext()) {
-                    Edge edge = (Edge)dsts.next();
+                    InterSliceEdge edge = (InterSliceEdge)dsts.next();
                     OffChipBuffer buf = InterSliceBuffer.getBuffer(edge);
                     interWrites[buf.getDRAM().port]++;
                 }

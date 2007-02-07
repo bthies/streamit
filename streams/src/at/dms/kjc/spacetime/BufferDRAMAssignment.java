@@ -1,18 +1,15 @@
 package at.dms.kjc.spacetime;
 
-//import java.util.ListIterator;
 import java.util.Iterator;
 import java.util.TreeSet;
 import java.util.HashMap;
-//import java.util.Vector;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-//import java.util.Random;
-
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.slicegraph.*;
+
 
 /**
  * This class will assign the offchip-rotating buffers to DRAM banks of the
@@ -151,7 +148,7 @@ public class BufferDRAMAssignment {
         Iterator<SliceNode> tns= sortedSliceNodes.iterator();
         while (tns.hasNext()) {
             SliceNode tn = tns.next();
-            List<Edge> edges;
+            List<InterSliceEdge> edges;
             if (tn.isOutputSlice())
                 edges = tn.getAsOutput().getSortedOutputs();
             else 
@@ -163,7 +160,7 @@ public class BufferDRAMAssignment {
     }
     
     private void unsetDramAssignment(SliceNode tn) {
-        List<Edge> edges;
+        List<InterSliceEdge> edges;
         if (tn.isOutputSlice())
             edges = tn.getAsOutput().getSortedOutputs();
         else 
@@ -438,20 +435,20 @@ public class BufferDRAMAssignment {
      * @return
      */
     private boolean valid(OutputSliceNode sliceNode) {
-       Iterator<Edge> edges = sliceNode.getDestSet().iterator();
+       Iterator<InterSliceEdge> edges = sliceNode.getDestSet().iterator();
        HashSet<Integer> freePorts = new HashSet<Integer>();
        //System.out.println(" * For " + sliceNode);
        while (edges.hasNext()) {
-           Edge edge = edges.next();
+           InterSliceEdge edge = edges.next();
            InputSliceNode input = edge.getDest();
            
            HashSet<Integer>ports = new HashSet<Integer>();
            for (int i = 0; i < rawChip.getNumDev(); i++) 
                ports.add(new Integer(i));
            System.out.println("      " + input + "is using:");
-           Iterator<Edge> inEdges = input.getSourceSet().iterator();
+           Iterator<InterSliceEdge> inEdges = input.getSourceSet().iterator();
            while (inEdges.hasNext()) {
-               Edge inEdge = inEdges.next();
+               InterSliceEdge inEdge = inEdges.next();
                InterSliceBuffer buffer = InterSliceBuffer.getBuffer(inEdge);
                
                if (buffer.isAssigned()) {
@@ -478,7 +475,7 @@ public class BufferDRAMAssignment {
         //System.out.println("Calling assignRemaining for: " + sliceNode);
         //get all the edges of this output slice node
         //sorted by their weight
-        List<Edge>edges = sliceNode.getSortedOutputs();
+        List<InterSliceEdge>edges = sliceNode.getSortedOutputs();
         
         //assert valid(sliceNode);
         
@@ -497,7 +494,7 @@ public class BufferDRAMAssignment {
      * 
      * @param sliceNode
      */
-    private boolean assignRemaining(List<Edge> edgesToAssign, int index) {
+    private boolean assignRemaining(List<InterSliceEdge> edgesToAssign, int index) {
         //the end condition
         if (index >= edgesToAssign.size())
             return true;
@@ -506,7 +503,7 @@ public class BufferDRAMAssignment {
                 " " + index);*/
         
         //get the edge
-        Edge edge = edgesToAssign.get(index);
+        InterSliceEdge edge = edgesToAssign.get(index);
         OutputSliceNode sliceNode = edge.getSrc();
         InputSliceNode input = edge.getDest();
         
@@ -578,7 +575,7 @@ public class BufferDRAMAssignment {
         HashSet<StreamingDram> set = new HashSet<StreamingDram>();
         Iterator dests = output.getDestSet().iterator();
         while (dests.hasNext()) {
-            Edge edge = (Edge)dests.next();
+            InterSliceEdge edge = (InterSliceEdge)dests.next();
             if (InterSliceBuffer.getBuffer(edge).isAssigned()) {
                 //System.out.println("     "  +
                 //        InterSliceBuffer.getBuffer(edge).getDRAM() + "(this output)");
@@ -659,18 +656,18 @@ public class BufferDRAMAssignment {
     */
     
     /**
-     * Given a Edge, edge, return an order iterator of PortDistances
+     * Given a InterSliceEdge, edge, return an order iterator of PortDistances
      * that is ordered in increase cost of communication for assigning 
      * edge to the DRAM in the PortDistance. 
      * 
-     * @param edge The Edge in question.
+     * @param edge The InterSliceEdge in question.
      * @param chip The raw chip.
      * 
      * @return An iterator over a list of PortDistance ordered in ascending 
      * order of the distance from both the dram assigned to the source of 
      * <pre>edge</pre> and the dram assigned to the dest of <pre>edge</pre>. 
      */
-    private Iterator<PortDistance> assignmentOrder(Edge edge) {
+    private Iterator<PortDistance> assignmentOrder(InterSliceEdge edge) {
         // the streaming DRAM implementation can do both a
         // read and a write on the same cycle, so it does not
         // matter if the port is assigned to reading the outputslicenode

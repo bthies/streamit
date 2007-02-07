@@ -6,7 +6,7 @@ import at.dms.kjc.sir.*;
 import at.dms.util.Utils;
 import at.dms.kjc.slicegraph.*;
 import at.dms.kjc.sir.linear.LinearAnalyzer;
-import at.dms.kjc.slicegraph.Edge;
+import at.dms.kjc.slicegraph.InterSliceEdge;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.OutputSliceNode;
@@ -20,7 +20,7 @@ public class TraceExtractor {
         LinkedList<Slice> slices=new LinkedList<Slice>();
         //HashMap outNodes=new HashMap();
         //HashMap inNodes=new HashMap();
-        HashMap<UnflatEdge, Edge> edges=new HashMap<UnflatEdge, Edge>(); // UnflatEdge -> Edge
+        HashMap<UnflatEdge, InterSliceEdge> edges=new HashMap<UnflatEdge, InterSliceEdge>(); // UnflatEdge -> Edge
         for(int i=0;i<topFilters.length;i++)
             Q.add(topFilters[i]);
         while(Q.size()>0) {
@@ -54,14 +54,14 @@ public class TraceExtractor {
                     //node=new InputTraceNode(filter.inWeights,getInNodes(outNodes,filter.in));
                     //node=getInNode(outNodes,inNodes,filter);
                     UnflatEdge[] unflatEdges=filter.in;
-                    Edge[] inEdges=new Edge[unflatEdges.length];
+                    InterSliceEdge[] inEdges=new InterSliceEdge[unflatEdges.length];
                     node=new InputSliceNode(filter.inWeights,inEdges);
                     for(int i=0;i<unflatEdges.length;i++) {
                         UnflatEdge unflatEdge=unflatEdges[i];
-                        Edge edge=edges.get(unflatEdge);
+                        InterSliceEdge edge=edges.get(unflatEdge);
                         //assert edge!=null:"Edge Null "+filter;
                         if(edge==null) {
-                            edge=new Edge((InputSliceNode)node);
+                            edge=new InterSliceEdge((InputSliceNode)node);
                             edges.put(unflatEdge,edge);
                         } else
                             edge.setDest((InputSliceNode)node);
@@ -137,23 +137,23 @@ public class TraceExtractor {
                     //SIRFileReader read=(SIRFileReader)filter.filter;
                     //outNode=new EnterTraceNode(read.getFileName(),true,filter.outWeights);
                     //} else
-                    Edge[][] outEdges=new Edge[filter.out.length][];
+                    InterSliceEdge[][] outEdges=new InterSliceEdge[filter.out.length][];
                     outNode=new OutputSliceNode(filter.outWeights,outEdges);
                     node.setNext(outNode);
                     outNode.setPrevious(node);
                     //outNodes.put(filter,outNode);
                     for(int i=0;i<filter.out.length;i++) {
                         UnflatEdge[] inner=filter.out[i];
-                        Edge[] innerEdges=new Edge[inner.length];
+                        InterSliceEdge[] innerEdges=new InterSliceEdge[inner.length];
                         outEdges[i]=innerEdges;
                         for(int j=0;j<inner.length;j++) {
                             UnflatEdge unflatEdge=inner[j];
                             UnflatFilter dest=unflatEdge.dest;
                             if(!visited.containsKey(dest))
                                 Q.add(dest);
-                            Edge edge=edges.get(unflatEdge);
+                            InterSliceEdge edge=edges.get(unflatEdge);
                             if(edge==null) {
-                                edge=new Edge(outNode);
+                                edge=new InterSliceEdge(outNode);
                                 edges.put(unflatEdge,edge);
                             } else
                                 edge.setSrc(outNode);

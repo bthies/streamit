@@ -7,7 +7,7 @@ import java.util.Set;
 import java.util.HashSet;
 import java.util.Iterator;
 import at.dms.kjc.*;
-import at.dms.kjc.slicegraph.Edge;
+import at.dms.kjc.slicegraph.InterSliceEdge;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.OutputSliceNode;
 
@@ -21,7 +21,7 @@ import at.dms.kjc.slicegraph.OutputSliceNode;
  */
 public class InterSliceBuffer extends OffChipBuffer {
     // the edge
-    protected Edge edge;
+    protected InterSliceEdge edge;
    
     /** 
      * A map of StreamingDrams to the number of InterTraceBuffers
@@ -30,13 +30,13 @@ public class InterSliceBuffer extends OffChipBuffer {
     protected static HashMap<StreamingDram, Integer> dramsToBuffers;
     
     
-    protected InterSliceBuffer(Edge edge) {
+    protected InterSliceBuffer(InterSliceEdge edge) {
         super(edge.getSrc(), edge.getDest());
         this.edge = edge;
         calculateSize();
     }
 
-    public static InterSliceBuffer getBuffer(Edge edge) {
+    public static InterSliceBuffer getBuffer(InterSliceEdge edge) {
         if (!bufferStore.containsKey(edge)) {
             bufferStore.put(edge, new InterSliceBuffer(edge));
         }
@@ -72,7 +72,7 @@ public class InterSliceBuffer extends OffChipBuffer {
         sizeSteady = (Address.ZERO.add(maxItems)).add32Byte(0);
     }
 
-    public Edge getEdge() {
+    public InterSliceEdge getEdge() {
         return edge;
     }
 

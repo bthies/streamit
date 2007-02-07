@@ -6,7 +6,7 @@ import java.util.Iterator;
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.slicegraph.ComputeNode;
-import at.dms.kjc.slicegraph.Edge;
+import at.dms.kjc.slicegraph.InterSliceEdge;
 import at.dms.kjc.slicegraph.FilterInfo;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
@@ -223,10 +223,10 @@ public class Rawify {
                         hasBeenJoined.add(notSched.getHead());
                     }
                         
-                    Iterator<Edge> inEdges = notSched.getHead().getSourceSet().iterator();
+                    Iterator<InterSliceEdge> inEdges = notSched.getHead().getSourceSet().iterator();
                     boolean canJoin = true;
                     while (inEdges.hasNext()) {
-                        Edge inEdge = inEdges.next();
+                        InterSliceEdge inEdge = inEdges.next();
                         if (!hasBeenSplit.contains(inEdge.getSrc())) {
                             canJoin = false;
                             break;
@@ -520,9 +520,9 @@ public class Rawify {
 
         // generate the commands to read from the o/i temp buffer
         // for each input to the input trace node
-        Iterator<Edge> edges = input.getSourceSet().iterator(); 
+        Iterator<InterSliceEdge> edges = input.getSourceSet().iterator(); 
         while (edges.hasNext()) {
-            Edge edge = edges.next();
+            InterSliceEdge edge = edges.next();
             // get the first non-redundant buffer         
             OffChipBuffer srcBuffer = 
                 InterSliceBuffer.getBuffer(edge).getNonRedundant();
@@ -598,7 +598,7 @@ public class Rawify {
         // now generate the store drm command
         Iterator dests = output.getDestSet().iterator();
         while (dests.hasNext()) {
-            Edge edge = (Edge) dests.next();
+            InterSliceEdge edge = (InterSliceEdge) dests.next();
             InterSliceBuffer destBuffer = InterSliceBuffer.getBuffer(edge);
             int typeSize = Util.getTypeSize(edge.getType());
             int writeWords = typeSize;
@@ -913,10 +913,10 @@ public class Rawify {
         dest[0].getNeighboringTile().getSwitchCode().appendComment(init || primepump,
                                                                    "Start join: This is the dest (" + filter.toString() + ")");
 
-        Iterator<Edge> sources = traceNode.getSourceSet().iterator();
+        Iterator<InterSliceEdge> sources = traceNode.getSourceSet().iterator();
         while (sources.hasNext()) {
             StreamingDram dram = 
-                InterSliceBuffer.getBuffer((Edge) sources.next()).getNonRedundant().getDRAM();
+                InterSliceBuffer.getBuffer((InterSliceEdge) sources.next()).getNonRedundant().getDRAM();
             dram.getNeighboringTile().getSwitchCode().
                     appendComment(init || primepump,
                             "Start join: This a source (" + dram.toString() + ")");
@@ -974,9 +974,9 @@ public class Rawify {
             SwitchCodeStore.dummyOutgoing(dest[0], dummy, init || primepump);
         }
         // disregard remainder of inputs coming from temp offchip buffers
-        Iterator<Edge> edges = traceNode.getSourceSet().iterator();
+        Iterator<InterSliceEdge> edges = traceNode.getSourceSet().iterator();
         while (edges.hasNext()) {
-            Edge edge = edges.next();
+            InterSliceEdge edge = edges.next();
             if (edge.getSrc().isFileInput())
                 continue;
             int remainder = ((iterations * typeSize * traceNode.getItems(edge)) % 
@@ -998,7 +998,7 @@ public class Rawify {
         sources = traceNode.getSourceSet().iterator();
         while (sources.hasNext()) {
             StreamingDram dram = InterSliceBuffer.getBuffer(
-                                                            (Edge) sources.next()).getNonRedundant().getDRAM();
+                                                            (InterSliceEdge) sources.next()).getNonRedundant().getDRAM();
             dram.getNeighboringTile().getSwitchCode().appendComment(
                                                                     init || primepump,
                                                                     "End join: This a source (" + dram.toString() + ")");
@@ -1045,7 +1045,7 @@ public class Rawify {
         Iterator dests = traceNode.getDestSet().iterator();
         while (dests.hasNext()) {
             StreamingDram dram = InterSliceBuffer
-                .getBuffer((Edge) dests.next()).getDRAM();
+                .getBuffer((InterSliceEdge) dests.next()).getDRAM();
             dram.getNeighboringTile().getSwitchCode().appendComment(
                                                                     init || primepump,
                                                                     "Start split: This a dest (" + dram.toString() + ")");
@@ -1128,7 +1128,7 @@ public class Rawify {
         dests = traceNode.getDestSet().iterator();
         while (dests.hasNext()) {
             StreamingDram dram = InterSliceBuffer
-                .getBuffer((Edge) dests.next()).getDRAM();
+                .getBuffer((InterSliceEdge) dests.next()).getDRAM();
             dram.getNeighboringTile().getSwitchCode().appendComment(
                                                                     init || primepump,
                                                                     "End split: This a dest (" + dram.toString() + ")");
@@ -1205,7 +1205,7 @@ public class Rawify {
             // write dummy values into each temp buffer with a remainder
             Iterator it = traceNode.getDestSet().iterator();
             while (it.hasNext()) {
-                Edge edge = (Edge) it.next();
+                InterSliceEdge edge = (InterSliceEdge) it.next();
                 if (edge.getDest().isFileOutput())
                     continue;
                 int remainder = ((typeSize * iterations * traceNode
@@ -2434,8 +2434,8 @@ public class Rawify {
      * 3), readBytes, srcBuffer, true);
      * 
      * //generate the commands to write the o/i temp buffer dest Iterator dests =
-     * output.getDestSet().iterator(); while (dests.hasNext()){ Edge edge =
-     * (Edge)dests.next(); OffChipBuffer destBuffer =
+     * output.getDestSet().iterator(); while (dests.hasNext()){ InterSliceEdge edge =
+     * (InterSliceEdge)dests.next(); OffChipBuffer destBuffer =
      * InterSliceBuffer.getBuffer(edge); int writeBytes = iterations * typeSize *
      * output.getWeight(edge) * 4; writeBytes = Util.cacheLineDiv(writeBytes);
      * destBuffer.getOwner().getComputeCode().addDRAMCommand(false, stage,

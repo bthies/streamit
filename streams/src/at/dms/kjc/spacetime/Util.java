@@ -1,12 +1,10 @@
 package at.dms.kjc.spacetime;
 
-//import at.dms.kjc.common.CodegenPrintWriter;
 import at.dms.kjc.slicegraph.*;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.util.Utils;
 import java.util.Collection;
-//import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.slicegraph.ComputeNode;
 import at.dms.kjc.slicegraph.Edge;
 import at.dms.kjc.slicegraph.FilterSliceNode;
@@ -19,10 +17,8 @@ import at.dms.kjc.slicegraph.SliceNode;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
-//import java.util.TreeSet;
 import java.util.HashSet;
 import java.util.HashMap;
-//import java.io.*;
 import at.dms.kjc.spacetime.switchIR.*;
 import java.util.Arrays;
 
@@ -298,16 +294,16 @@ public class Util {
     }
 
     // the size of the buffer between in, out for the steady state
-    public static int steadyBufferSize(Edge edge) {
+    public static int steadyBufferSize(InterSliceEdge edge) {
         return edge.steadyItems() * getTypeSize(edge.getType());
     }
 
     // the size of the buffer between in / out for the init stage
-    public static int initBufferSize(Edge edge) {
+    public static int initBufferSize(InterSliceEdge edge) {
         return edge.initItems() * getTypeSize(edge.getType());
     }
     
-    public static int magicBufferSize(Edge edge) {
+    public static int magicBufferSize(InterSliceEdge edge) {
         // i don't remember why I have the + down there,
         // but i am not going to change
         return Math.max(steadyBufferSize(edge), initBufferSize(edge));

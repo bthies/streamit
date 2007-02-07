@@ -5,7 +5,7 @@ import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.common.SimulatedAnnealing;
 import at.dms.kjc.slicegraph.ComputeNode;
 import at.dms.kjc.slicegraph.DataFlowOrder;
-import at.dms.kjc.slicegraph.Edge;
+import at.dms.kjc.slicegraph.InterSliceEdge;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.OutputSliceNode;
@@ -565,7 +565,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
      * @return A metric of the latency of the Edge edge.
      */
     private HashMap<RawComputeNode, Integer> distanceLatency
-         (HashSet<RawComputeNode> bigWorkers, Edge edge) {
+         (HashSet<RawComputeNode> bigWorkers, InterSliceEdge edge) {
         
         //get the port that source is writing to
         RawTile srcTile = (RawTile)assignment.get(edge.getSrc().getPrevFilter());
@@ -616,7 +616,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
             Slice slice = slices[i];
             Iterator edges = slice.getTail().getDestSet().iterator();
             while (edges.hasNext()) {
-                Edge edge = (Edge)edges.next();
+                InterSliceEdge edge = (InterSliceEdge)edges.next();
                // System.out.println(" Checking if " + edge + " crosses.");
                 InterSliceBuffer buf = InterSliceBuffer.getBuffer(edge);
                 
@@ -695,7 +695,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
             Slice slice = slices[i];
             Iterator edges = slice.getTail().getDestSet().iterator();
             while (edges.hasNext()) {
-                Edge edge = (Edge)edges.next();
+                InterSliceEdge edge = (InterSliceEdge)edges.next();
                // System.out.println(" Checking if " + edge + " crosses.");
                 InterSliceBuffer buf = InterSliceBuffer.getBuffer(edge);
                 
@@ -1109,13 +1109,13 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
         if (input.noInputs())
             return false;
         
-        Iterator<Edge> inEdges = input.getSourceSet().iterator();
+        Iterator<InterSliceEdge> inEdges = input.getSourceSet().iterator();
         while (inEdges.hasNext()) {
-            Edge inEdge = inEdges.next();
+            InterSliceEdge inEdge = inEdges.next();
             OutputSliceNode output = inEdge.getSrc();
-            Iterator<Edge> upstreamOutEdges = output.getDestSet().iterator();
+            Iterator<InterSliceEdge> upstreamOutEdges = output.getDestSet().iterator();
             while (upstreamOutEdges.hasNext()) {
-                Edge upstreamOutEdge = upstreamOutEdges.next();
+                InterSliceEdge upstreamOutEdge = upstreamOutEdges.next();
                 if (assignment.containsKey(upstreamOutEdge.getDest().getNextFilter()) &&
                         assignment.get(upstreamOutEdge.getDest().getNextFilter()) == tile)    
                     return true;

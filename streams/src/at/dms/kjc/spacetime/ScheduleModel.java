@@ -9,7 +9,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 import at.dms.kjc.slicegraph.ComputeNode;
-import at.dms.kjc.slicegraph.Edge;
+import at.dms.kjc.slicegraph.InterSliceEdge;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.Slice;
@@ -338,9 +338,9 @@ public class ScheduleModel {
            //find the max end times of all the traces that this trace depends on
            int maxDepStartTime = 0;
            InputSliceNode input = slice.getHead();
-           Iterator<Edge> inEdges = input.getSourceSet().iterator();
+           Iterator<InterSliceEdge> inEdges = input.getSourceSet().iterator();
            while (inEdges.hasNext()) {
-               Edge edge = inEdges.next();
+               InterSliceEdge edge = inEdges.next();
                if (spaceTime.getPartitioner().isIO(edge.getSrc().getParent()))
                    continue;
                FilterSliceNode upStream = edge.getSrc().getPrevFilter();

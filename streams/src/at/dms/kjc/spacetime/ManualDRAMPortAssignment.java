@@ -5,12 +5,10 @@ package at.dms.kjc.spacetime;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.util.HashMap;
 import java.util.Iterator;
-
 import at.dms.kjc.slicegraph.FileInputContent;
 import at.dms.kjc.slicegraph.FileOutputContent;
-import at.dms.kjc.slicegraph.Edge;
+import at.dms.kjc.slicegraph.InterSliceEdge;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.OutputSliceNode;
@@ -77,7 +75,7 @@ public class ManualDRAMPortAssignment {
         
         // commit the assignment
         while (edges.hasNext()) {
-            Edge edge = (Edge) edges.next();
+            InterSliceEdge edge = (InterSliceEdge) edges.next();
             String query = output + " -> " + edge.getDest();
             
             int port = getPortNumberFromUser("Assignment for: " + query, chip);

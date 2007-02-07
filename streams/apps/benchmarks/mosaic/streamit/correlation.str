@@ -10,24 +10,50 @@
 imageAndFeatures->imageAndFeatures
 		filter correlation(int w)
 {
+	imageAndFeatures imAndFeat1;
+	imageAndFeatures imAndFeat2;
+	int r;
+	float[320][240] y1Matrix;
+	float[320][240] i1Matrix;
+	float[320][240] q1Matrix;
+	float[320][240] y2Matrix;
+	float[320][240] i2Matrix;
+	float[320][240] q2Matrix;
 	
+	bestFeatures[60] feat1;
+	bestFeatures[60] feat2;
+	
+	float[60][60] corrMatrix;
+	
+	float stanDevW1;
+	float stanDevW2;
+	float elementWiseProduct;
+	
+	int[60] bestRows;
+	int[60] bestCols;
+	
+	float currRowBestVal;
+	float currColBestVal;
+	
+	int badFeatures;
 	work pop 1 peek 2 push 2
 	{
-		int r = (w-1)/2;
+		r = (w-1)/2;
+		
+		imAndFeat1 = peek(0);
+		imAndFeat2 = peek(1);
+		
+		y1Matrix = imAndFeat1.yImage;
+		i1Matrix = imAndFeat1.iImage;
+		q1Matrix = imAndFeat1.qImage;
+		
+		y2Matrix = imAndFeat2.yImage;
+		i2Matrix = imAndFeat2.iImage;
+		q2Matrix = imAndFeat2.qImage;
+		
+		feat1 = imAndFeat1.myBest;
+		feat2 = imAndFeat2.myBest;
 	
-		imageAndFeatures imAndFeat1 = peek(0);
-		imageAndFeatures imAndFeat2 = peek(1);
-		
-		float[320][240] y1Matrix = imAndFeat1.yImage;
-		float[320][240] i1Matrix = imAndFeat1.iImage;
-		float[320][240] q1Matrix = imAndFeat1.qImage;
-		
-		float[320][240] y2Matrix = imAndFeat2.yImage;
-		float[320][240] i2Matrix = imAndFeat2.iImage;
-		float[320][240] q2Matrix = imAndFeat2.qImage;
-		
-		bestFeatures[40] feat1 = imAndFeat1.myBest;
-		bestFeatures[40] feat2 = imAndFeat2.myBest;
 		
 		//here is where we take care of sharpening the image, 
 		//which which we do by subtracted a blurred (LPF) image from
@@ -38,9 +64,6 @@ imageAndFeatures->imageAndFeatures
 		//of that result.  after this, we take the center values (i.e.,
 		//we ignore a border of length 6 around the image
 		
-		
-		
-		float[40][40] corrMatrix;
 		
 		for(int i=0;i<iters;i++)
 		{
@@ -56,9 +79,9 @@ imageAndFeatures->imageAndFeatures
 		//first, calculate the correlation matrix
 
 		for(int i=0; i<iters; i++)
-		{ 	if(feat1[i].x>r & feat1[i].x<imageWidth+1-r
-			  & feat1[i].y>r & feat1[i].y<imageHeight+1-r) // check if the feature is in bounds
-			{	float stanDevW1 = 0;
+		{ 	if(feat1[i].x>r & feat1[i].x<imageWidth-r
+			  & feat1[i].y>r & feat1[i].y<imageHeight-r) // check if the feature is in bounds
+			{	stanDevW1 = 0;
 				//make w1, which is a windowof width w around the feature considered in im1
 				for(int m = -r; m <= r; m++)
 				{
@@ -71,23 +94,23 @@ imageAndFeatures->imageAndFeatures
 				stanDevW1 = sqrt(stanDevW1);
 				for(int j=0; j<iters ; j++)
 				{	
-					if(feat2[j].x>r & feat2[j].x<imageWidth+1-r
-								  & feat1[i].y>r & feat1[i].y<imageHeight+1-r) // check if the feature is in bounds
+					if(feat2[j].x>r & feat2[j].x<imageWidth-r
+								  & feat2[j].y>r & feat2[j].y<imageHeight-r) // check if the feature is in bounds
 					{
-						float stanDevW2 = 0;	
+						stanDevW2 = 0;	
 						//make w2, which is a window of width w around the feature considered in im2 
 						for(int s = -r; s <= r; s++)
 						{
 							  for(int t = -r; t<= r; t++)
 						  	  {	
-								
+								//println("s: " + s + "\tt: " + t + "\tr: " + r +"\tfeat2[j].x: " + feat2[j].x + "\tfeat2[j].y: " + feat2[j].y); 
 								w2[s+r][t+r] = y2Matrix[feat2[j].x + s][feat2[j].y + t];
 								stanDevW2 = stanDevW2 + w2[s+r][t+r]*w2[s+r][t+r];				  	  	
 								
 						  	  }
 						}
 						stanDevW2 = sqrt(stanDevW2);
-						float elementWiseProduct = 0;
+						elementWiseProduct = 0;
 						for(int s = -r; s <= r; s++)
 						{
 							for(int t = -r; t<= r; t++)
@@ -102,9 +125,7 @@ imageAndFeatures->imageAndFeatures
 		} //ends outer i loop	
 
 		// now, use the correlation matrix to find features that 'like' each other
-		
-		int[40] bestRows;
-		int[40] bestCols;						
+								
 			
 		for(int i=0; i<iters; i++){
 			
@@ -112,8 +133,8 @@ imageAndFeatures->imageAndFeatures
 			bestCols[i] = 0;				
 		}
 		
-		float currRowBestVal = 0;
-		float currColBestVal = 0;
+		currRowBestVal = 0;
+		currColBestVal = 0;
 		//find greatest values in each row and their numbers
 		for(int i = 0; i < iters; i++){
 			currRowBestVal = 0;
@@ -136,8 +157,8 @@ imageAndFeatures->imageAndFeatures
 				} // end if
 			} // end inner for						
 		} // end outer for		
-		int badFeatures = 0;
-		println("Feature	Image	Value		X	Y");
+		badFeatures = 0;
+		//println("Feature	Image	Value		X	Y");
 		for(int h = 0 ; h < iters; h++)
 		{
 			//if the features are no good, set their values
@@ -148,14 +169,17 @@ imageAndFeatures->imageAndFeatures
 				badFeatures = badFeatures + 1;
 			}
 			else{
-				println(h + "\t" + 1 + "\t" + feat1[h].val + "\t" + feat1[h].x + "\t" + feat1[h].y 
-					 +  "\n \t" + 2 + "\t" + feat2[h].val + "\t" + feat2[h].x + "\t" + feat2[h].y);
+				/*println(h + "\t" + 1 + "\t" + feat1[h].val + "\t" + feat1[h].x + "\t" + feat1[h].y 
+					  +  "\n \t" + 2 + "\t" + feat2[h].val + "\t" + feat2[h].x + "\t" + feat2[h].y);*/
 			}
 		}
-			
+		
 		println("Found " + (iters-badFeatures) + " correlating features out of " + iters);
 		imAndFeat1.myBest = feat1;
 		imAndFeat2.myBest = feat2;
+		imAndFeat1.goodPts = iters - badFeatures;
+		imAndFeat2.goodPts = iters - badFeatures;
+		
 		
 		pop();
 		push(imAndFeat1);
@@ -218,7 +242,7 @@ imageAndFeatures->imageAndFeatures pipeline sharpen(int w){
 	int r = (w-1)/2;
 	add splitjoin{
 		split duplicate;
-		add iAFIdentity();
+		add IAFID();
 		add pipeline{
 			add extractMatrix();
 			add unmakeMatrix(); // now we have a stream of floats
@@ -274,22 +298,18 @@ imageAndFeatures->imageAndFeatures pipeline sharpen(int w){
 	};
 	
 	add imageAndFeatures->imageAndFeatures 	filter 
-		{work pop 2 push 1 
+		{
+			imageAndFeatures iAndF1;
+			imageAndFeatures iAndF2;
+			work pop 2 push 1 
 			{
-				imageAndFeatures iAndF1 = pop();
-				imageAndFeatures iAndF2 = pop(); 	
+				iAndF1 = pop();
+				iAndF2 = pop(); 	
 				iAndF2.myBest = iAndF1.myBest;
 				push(iAndF2);
 			}
 		};
-}
-
-    
-imageAndFeatures->imageAndFeatures filter iAFIdentity(){
-	work pop 1 push 1{
-		push(pop());
-	}	
-}  
+} 
     
 float->float filter takeInnerMatrix(int FFTM, int FFTN, int FFTWidth, int FFTHeight, int r) {
 
@@ -316,9 +336,10 @@ void->float pipeline pushAverager(int w, int FFTWidth, int FFTHeight) {
     
 imageAndFeatures->float[320][240] filter extractMatrix()
 {
+	imageAndFeatures temp;
 	work pop 1 push 1
 	{
-		imageAndFeatures temp = pop();
+		temp = pop();
 		push(temp.yImage);
 	}
 }
@@ -348,10 +369,10 @@ float->float[320][240] filter makeMatrix(){
 	}
 }
 float[320][240]->float filter unmakeMatrix()
-{
+{	float[320][240] yMatrix;
 	work pop 1 push imageHeight*imageWidth
     {
-	  float[320][240] yMatrix = pop();
+	  yMatrix = pop();
 	  for(int i = 0; i < imageHeight; i++){
 	   for(int  j = 0; j < imageWidth; j++){
 				  push(yMatrix[j][i]);	

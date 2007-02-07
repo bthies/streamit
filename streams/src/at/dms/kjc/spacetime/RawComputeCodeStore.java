@@ -1,18 +1,15 @@
 package at.dms.kjc.spacetime;
 
-//import at.dms.compiler.JavaStyleComment;
 import at.dms.kjc.*;
-//import at.dms.util.Utils;
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.sir.*;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-//import java.util.List;
-
 import at.dms.kjc.slicegraph.ComputeNode;
 import at.dms.kjc.slicegraph.FilterContent;
 import at.dms.kjc.slicegraph.FilterInfo;
+import at.dms.kjc.slicegraph.Buffer;
 
 /**
  * 
@@ -702,11 +699,11 @@ public class RawComputeCodeStore extends ComputeCodeStore<RawTile> implements SI
      *
      */
     public static void presynchEmptyTilesInSteady() {
-        Iterator<OffChipBuffer> buffers = OffChipBuffer.getBuffers().iterator();
+        Iterator<Buffer> buffers = OffChipBuffer.getBuffers().iterator();
         HashSet<RawTile> visitedTiles = new HashSet<RawTile>();
         
         while (buffers.hasNext()) {
-            OffChipBuffer buffer = buffers.next();
+            OffChipBuffer buffer = (OffChipBuffer)buffers.next();
             if (buffer.redundant())
                 continue;
             //don't do anything if a filter is mapped to this
@@ -794,11 +791,11 @@ public class RawComputeCodeStore extends ComputeCodeStore<RawTile> implements SI
      *
      */
     public static void presynchAllDramsInInit() {
-        Iterator<OffChipBuffer> buffers = OffChipBuffer.getBuffers().iterator();
+        Iterator<Buffer> buffers = OffChipBuffer.getBuffers().iterator();
         HashSet<RawTile> visitedTiles = new HashSet<RawTile>();
         
         while (buffers.hasNext()) {
-            OffChipBuffer buffer = buffers.next();
+            OffChipBuffer buffer = (OffChipBuffer)buffers.next();
             if (buffer.redundant())
                 continue;
             if (!visitedTiles.contains(buffer.getOwner())) {

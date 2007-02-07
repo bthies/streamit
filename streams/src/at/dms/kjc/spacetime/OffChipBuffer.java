@@ -1,11 +1,6 @@
 package at.dms.kjc.spacetime;
 
-import at.dms.util.Utils;
-import java.util.Vector;
 import java.util.HashMap;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.Collection;
 import java.util.Iterator;
 import at.dms.kjc.*;
 import at.dms.kjc.common.CommonUtils;
@@ -14,21 +9,23 @@ import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.OutputSliceNode;
 import at.dms.kjc.slicegraph.SliceNode;
+import at.dms.kjc.slicegraph.Buffer;
+import at.dms.kjc.slicegraph.Edge;
+
 
 /**
  * This abstract class represents a buffer in the partitioner slice graph.  A 
  * buffer appears between slices and inside slices between the input node and the first
  * filter and between the last filter and the output node.  
  * 
+ * Now derived from {@link at.dms.kjc.slicegraph.Buffer Buffer}.
+ * Assumes all buffers are actuall OffChipBuffers.
  * @author mgordon
  *
  */
-public abstract class OffChipBuffer {
+public abstract class OffChipBuffer extends Buffer {
     /** The sending or receiving tile*/
     protected ComputeNode owner;
-    /** unique ident for the buffer */
-    protected String ident;
-    protected static int unique_id;
     /** the store for all OffChipBuffers, indexed by src for intratrace buffers 
      * or Edge for IntertraceBuffers */
     protected static HashMap<Object, OffChipBuffer> bufferStore;
@@ -45,36 +42,18 @@ public abstract class OffChipBuffer {
     /** the rotation length of this buffer for software pipelining **/
     protected int rotationLength;
            
-    static {
-        unique_id = 0;
-        bufferStore = new HashMap<Object, OffChipBuffer>();
-    }
-
     protected OffChipBuffer(SliceNode src, SliceNode dst) {
+        super(src,dst);
         rotationLength = 1;
-        source = src;
-        dest = dst;
-
-        ident = "__buf_" + /* owner.getIODevice().getPort() + */"_" + unique_id
-            + "__";
-        unique_id++;
-        setType();
+//        ident = "__buf_" + /* owner.getIODevice().getPort() + */"_" + unique_id
+//            + "__";
     }
 
-    /**
-     * Reset the buffer store and create all number buffer objects.  
-     * Used if one wants to munge the trace graph.
-     */
-    public static void reset() {
-        unique_id = 0;
-        bufferStore = new HashMap<Object, OffChipBuffer>();
-    }
-    
-    public static void printBuffers() {
-        Iterator<OffChipBuffer> bufs = bufferStore.values().iterator();
-        while (bufs.hasNext()) {
-            System.out.println(bufs.next());
-        }
+    protected OffChipBuffer(Edge edge) {
+        super(edge);
+        rotationLength = 1;
+//        ident = "__buf_" + /* owner.getIODevice().getPort() + */"_" + unique_id
+//            + "__";
     }
     
     public abstract boolean redundant();
@@ -177,24 +156,19 @@ public abstract class OffChipBuffer {
     }
 
     public CType getType() {
-        return type;
+        return theEdge.getType();
     }
 
     protected abstract void setType();
-
-    // return of the buffers of this stream program
-    public static Collection<OffChipBuffer> getBuffers() {
-        return bufferStore.values();
-    }
 
     /** 
      * Reset all the dram assignments of the buffers to null.
      *
      */
     public static void resetDRAMAssignment() {
-        Iterator<OffChipBuffer> buffers = getBuffers().iterator();
+        Iterator<Buffer> buffers = getBuffers().iterator();
         while (buffers.hasNext()) {
-            OffChipBuffer buf = buffers.next();
+            OffChipBuffer buf = (OffChipBuffer)buffers.next();
             buf.setDRAM(null);
         }
     }
@@ -250,12 +224,12 @@ public abstract class OffChipBuffer {
      */
     public static void setRotationLengths(SpaceTimeSchedule spaceTime) {
         InterSliceBuffer.dramsToBuffers = new HashMap<StreamingDram, Integer>();
-        Iterator<OffChipBuffer> buffers = getBuffers().iterator();
+        Iterator<Buffer> buffers = getBuffers().iterator();
         //iterate over the buffers and communicate each buffer
         //address from its declaring tile to the tile neighboring
         //the dram it is assigned to
         while (buffers.hasNext()) {
-            OffChipBuffer buffer = buffers.next();
+            OffChipBuffer buffer = (OffChipBuffer)buffers.next();
             if (buffer.isInterSlice()) {
                 //set the rotation length for the buffer
                 setRotationLength(spaceTime, (InterSliceBuffer)buffer);
@@ -317,10 +291,10 @@ public abstract class OffChipBuffer {
      * assigned to drams.
      */
     public static boolean areAllAssigned() {
-        Iterator<OffChipBuffer> buffers = getBuffers().iterator();
+        Iterator<Buffer> buffers = getBuffers().iterator();
         boolean returnVal = true;
         while (buffers.hasNext()) {
-            OffChipBuffer buf = buffers.next();
+            OffChipBuffer buf = (OffChipBuffer)buffers.next();
             if (!buf.isAssigned()) {
                 if (buf.isInterSlice()) {
                     System.out.println("No assignment for : " + buf + ": " + 

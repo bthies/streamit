@@ -152,9 +152,9 @@ public class SliceDotGraph {
                 fw.write("}\n");
             }
 
-            Iterator<OffChipBuffer> buffers = OffChipBuffer.getBuffers().iterator();
+            Iterator<Buffer> buffers = OffChipBuffer.getBuffers().iterator();
             while (buffers.hasNext()) {
-                OffChipBuffer buffer = buffers.next();
+                OffChipBuffer buffer = (OffChipBuffer)buffers.next();
                 if (buffer.isIntraSlice())
                     continue;
                 bufferArc(buffer, fw, DRAM, label);

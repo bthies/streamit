@@ -6,6 +6,7 @@ import java.util.Random;
 import at.dms.kjc.*;
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.slicegraph.ComputeNode;
+import at.dms.kjc.slicegraph.Buffer;
 
 /**
  * This class will generate code to allocate the off chip buffers on the necessary
@@ -106,12 +107,12 @@ public class CommunicateAddrs
             }
         }
     
-        Iterator<OffChipBuffer> buffers = OffChipBuffer.getBuffers().iterator();
+        Iterator<Buffer> buffers = Buffer.getBuffers().iterator();
         //iterate over the buffers and communicate each buffer
         //address from its declaring tile to the tile logically mapped to it
         //the dram it is assigned to
         while (buffers.hasNext()) {
-            OffChipBuffer buffer = buffers.next();
+            OffChipBuffer buffer = (OffChipBuffer)buffers.next();
             //do nothing for redundant buffers
             if (buffer.redundant())
                 continue;

@@ -61,4 +61,34 @@ public class Util {
         return trav.listIterator();
     }
 
+    /**
+     * Given two slice nodes, return an edge.
+     * Returns an existing edge from src to dst if one is found, else creates a new edge.
+     * Only looks at src's edges to find one to return, not at dst's edges.
+     * If the edge should be an InterSliceEdge, then the returned edge will be one.
+     * Does not update the SliceNode's in any way.
+     * @param src  Source SliceNode for edge
+     * @param dst  Destination SliceNode for Edge
+     * @return an InterSliceEdge or Edge from src to dst
+     */
+    public static Edge srcDstToEdge(SliceNode src, SliceNode dst) {
+        if (src instanceof OutputSliceNode && dst instanceof InputSliceNode) {
+            InterSliceEdge[][] edgesedges = ((OutputSliceNode)src).getDests();
+            for (InterSliceEdge[] edges : edgesedges) {
+                for (InterSliceEdge edge : edges) {
+                    assert edge.src == src;
+                    if (edge.dest == dst) {
+                        return edge;
+                    }
+                }
+            }
+            return new InterSliceEdge((OutputSliceNode)src,(InputSliceNode)dst);
+        } else {
+            Edge e = src.getEdgeToNext();
+            if (e == null || e.getDest() != dst) {
+                e = new Edge(src,dst);
+            }
+            return e;
+        }
+    }
 }

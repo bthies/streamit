@@ -16,8 +16,8 @@ import at.dms.kjc.*;
 public class Buffer {
 
     /**
-     * technical note: a Buffer in a backend implements an Edge in a slice graph
-     * so this data structure uses an Edge to store source, destination, and type information.
+     * Technical note: a Buffer in a backend implements an Edge in a slice graph
+     * This data structure uses an Edge to store source, destination, and type information.
      */
     protected Edge theEdge;
     /** unique ident for the buffer */
@@ -34,12 +34,27 @@ public class Buffer {
         bufferStore = new HashMap<Edge, Buffer>();
     }
 
+    /**
+     * Create a buffer given an edge.
+     * @param edge
+     */
     protected Buffer(Edge edge) {
         assert edge != null;
         theEdge = edge;
         edge.getType(); // side effect of catching error if source and dest types not the same
         unique_id = unique_id_generator++;
+        ident = "__buf__" + unique_id + "__";
     }
+    
+    /**
+     * Create a buffer given src and dst SliceNode's
+     * @param src
+     * @param dst
+     */
+    protected Buffer(SliceNode src, SliceNode dst) {
+        this(Util.srcDstToEdge(src, dst));
+    }
+    
     /**
      * Reset the buffer store and create all number buffer objects.  
      * Used if one wants to munge the trace graph.

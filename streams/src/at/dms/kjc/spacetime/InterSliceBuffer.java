@@ -49,20 +49,16 @@ public class InterSliceBuffer extends OffChipBuffer {
      * of the source trace performs its function.
      */
     public boolean redundant() {
-        return unnecessary((OutputSliceNode) source);
+        return unnecessary((OutputSliceNode) theEdge.getSrc());
     }
 
     public OffChipBuffer getNonRedundant() {
         if (redundant()) {
             return IntraSliceBuffer.getBuffer(
-                                              (FilterSliceNode) source.getPrevious(),
-                                              (OutputSliceNode) source).getNonRedundant();
+                                              (FilterSliceNode) theEdge.getSrc().getPrevious(),
+                                              (OutputSliceNode) theEdge.getSrc()).getNonRedundant();
         }
         return this;
-    }
-
-    protected void setType() {
-        type = ((OutputSliceNode) source).getType();
     }
 
     protected void calculateSize() {

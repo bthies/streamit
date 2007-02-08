@@ -1,17 +1,13 @@
 package at.dms.kjc.spacetime;
 
-import at.dms.util.Utils;
-import java.util.Vector;
-import java.util.HashMap;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.Iterator;
-import at.dms.kjc.*;
 import at.dms.kjc.slicegraph.FilterInfo;
+import at.dms.kjc.slicegraph.SliceNode;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.OutputSliceNode;
 import at.dms.kjc.slicegraph.Slice;
+import at.dms.kjc.slicegraph.Edge;
+import at.dms.kjc.slicegraph.Util;
 
 /**
  * This class represents the buffer between the sink filter of a slice
@@ -27,36 +23,29 @@ public class IntraSliceBuffer extends OffChipBuffer {
     
     public static IntraSliceBuffer getBuffer(FilterSliceNode src,
                                              OutputSliceNode dst) {
-        if (!bufferStore.containsKey(src)) {
-            //System.out.println("Creating Buffer from " + src + " to " + dst);
-            bufferStore.put(src, new IntraSliceBuffer(src, dst));
-        }
-        assert (((IntraSliceBuffer) bufferStore.get(src)).getDest() == dst) : "Src connected to different dst in buffer store";
-
-        return (IntraSliceBuffer) bufferStore.get(src);
+        return getBufferSrcDst(src,dst);
     }
 
     public static IntraSliceBuffer getBuffer(InputSliceNode src,
                                              FilterSliceNode dst) {
-        if (!bufferStore.containsKey(src)) {
-            bufferStore.put(src, new IntraSliceBuffer(src, dst));
+        return getBufferSrcDst(src,dst);
+    }
+    
+    private static IntraSliceBuffer getBufferSrcDst(SliceNode src, SliceNode dst) {
+        Edge e = Util.srcDstToEdge(src, dst);
+        if (!bufferStore.containsKey(e)) {
             //System.out.println("Creating Buffer from " + src + " to " + dst);
+            bufferStore.put(e, new IntraSliceBuffer(e));
         }
-        assert (((IntraSliceBuffer) bufferStore.get(src)).getDest() == dst) : "Src connected to different dst in buffer store";
+        IntraSliceBuffer retval = (IntraSliceBuffer) bufferStore.get(e);
+        return retval;
+     }
 
-        return (IntraSliceBuffer) bufferStore.get(src);
-    }
-
-    protected IntraSliceBuffer(InputSliceNode src, FilterSliceNode dst) {
-        super(src, dst);
+    private IntraSliceBuffer (Edge e) {
+        super(e);
         calculateSize();
     }
-
-    protected IntraSliceBuffer(FilterSliceNode src, OutputSliceNode dst) {
-        super(src, dst);
-        calculateSize();
-    }
-
+    
     /**
      * @return Returns true if this buffer uses staticNet.
      */
@@ -85,30 +74,30 @@ public class IntraSliceBuffer extends OffChipBuffer {
     public boolean redundant() {
         // if there are no outputs for the output slice
         // then redundant
-        if (source.isFilterSlice() && dest.isOutputSlice()) {
-            if (((OutputSliceNode) dest).noOutputs())
+        if (theEdge.getSrc().isFilterSlice() && theEdge.getDest().isOutputSlice()) {
+            if (((OutputSliceNode) theEdge.getDest()).noOutputs())
                 return true;
         } else
             // if the inputslice is not necessray
-            return unnecessary((InputSliceNode) source);
+            return unnecessary((InputSliceNode) theEdge.getSrc());
         return false;
     }
 
     public OffChipBuffer getNonRedundant() {
-        if (source.isInputSlice() && dest.isFilterSlice()) {
+        if (theEdge.getSrc().isInputSlice() && theEdge.getDest().isFilterSlice()) {
             // if no inputs return null
-            if (((InputSliceNode) source).noInputs())
+            if (((InputSliceNode) theEdge.getSrc()).noInputs())
                 return null;
             // if redundant get the previous buffer and call getNonRedundant
             if (redundant())
                 return InterSliceBuffer.getBuffer(
-                                                  ((InputSliceNode) source).getSingleEdge())
+                                                  ((InputSliceNode) theEdge.getSrc()).getSingleEdge())
                     .getNonRedundant();
             // otherwise return this...
             return this;
-        } else { // (source.isFilterSlice() && dest.isOutputSlice())
+        } else { // (theEdge.getSrc().isFilterSlice() && theEdge.getDest().isOutputSlice())
             // if no outputs return null
-            if (((OutputSliceNode) dest).noOutputs())
+            if (((OutputSliceNode) theEdge.getDest()).noOutputs())
                 return null;
             // the only way it could be redundant (unnecesary) is for there to
             // be no outputs
@@ -116,19 +105,12 @@ public class IntraSliceBuffer extends OffChipBuffer {
         }
     }
 
-    protected void setType() {
-        if (source.isFilterSlice())
-            type = ((FilterSliceNode) source).getFilter().getOutputType();
-        else if (dest.isFilterSlice())
-            type = ((FilterSliceNode) dest).getFilter().getInputType();
-    }
-
     protected void calculateSize() {
         // we'll make it 32 byte aligned
-        if (source.isFilterSlice()) {
+        if (theEdge.getSrc().isFilterSlice()) {
             // the init size is the max of the multiplicities for init and pp
             // times the push rate
-            FilterInfo fi = FilterInfo.getFilterInfo((FilterSliceNode) source);
+            FilterInfo fi = FilterInfo.getFilterInfo((FilterSliceNode) theEdge.getSrc());
             int maxItems = fi.initMult;
             maxItems *= fi.push;
             // account for the initpush
@@ -137,9 +119,9 @@ public class IntraSliceBuffer extends OffChipBuffer {
             maxItems = Math.max(maxItems, fi.push*fi.steadyMult);
             // steady is just pop * mult
             sizeSteady = (Address.ZERO.add(maxItems)).add32Byte(0);
-        } else if (dest.isFilterSlice()) {
+        } else if (theEdge.getDest().isFilterSlice()) {
             // this is not a perfect estimation but who cares
-            FilterInfo fi = FilterInfo.getFilterInfo((FilterSliceNode) dest);
+            FilterInfo fi = FilterInfo.getFilterInfo((FilterSliceNode) theEdge.getDest());
             int maxItems = fi.initMult;
             maxItems *= fi.pop;
             // now account for initpop, initpeek, peek

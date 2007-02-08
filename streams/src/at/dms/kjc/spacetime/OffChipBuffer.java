@@ -26,19 +26,10 @@ import at.dms.kjc.slicegraph.Edge;
 public abstract class OffChipBuffer extends Buffer {
     /** The sending or receiving tile*/
     protected ComputeNode owner;
-    /** the store for all OffChipBuffers, indexed by src for intratrace buffers 
-     * or Edge for IntertraceBuffers */
-    protected static HashMap<Object, OffChipBuffer> bufferStore;
-    /** the size of the buffer in the steady stage */ 
+     /** the size of the buffer in the steady stage */ 
     protected Address sizeSteady;
-    /** the type of the buffer */ 
-    protected CType type;
     /** the dram that we are reading/writing */
     protected StreamingDram dram;
-    /** the source slice (trace) */  
-    protected SliceNode source;
-    /** the destination slice (trace) */
-    protected SliceNode dest;
     /** the rotation length of this buffer for software pipelining **/
     protected int rotationLength;
            
@@ -159,8 +150,6 @@ public abstract class OffChipBuffer extends Buffer {
         return theEdge.getType();
     }
 
-    protected abstract void setType();
-
     /** 
      * Reset all the dram assignments of the buffers to null.
      *
@@ -193,15 +182,15 @@ public abstract class OffChipBuffer extends Buffer {
     }
 
     public String toString() {
-        return source + "->" + dest + "[" + dram + "]";
+        return theEdge.getSrc() + "->" + theEdge.getDest() + "[" + dram + "]";
     }
 
     public SliceNode getSource() {
-        return source;
+        return theEdge.getSrc();
     }
 
     public SliceNode getDest() {
-        return dest;
+        return theEdge.getDest();
     }
 
     public boolean isIntraSlice() {
@@ -280,8 +269,8 @@ public abstract class OffChipBuffer extends Buffer {
         //output trace node!!
         if (length > 1 && buffer.redundant()) {
             //System.out.println("Setting upstream rotation length " + length);
-            IntraSliceBuffer upstream = IntraSliceBuffer.getBuffer((FilterSliceNode)buffer.source.getPrevious(), 
-                    (OutputSliceNode)buffer.source);
+            IntraSliceBuffer upstream = IntraSliceBuffer.getBuffer((FilterSliceNode)buffer.getSource().getPrevious(), 
+                    (OutputSliceNode)buffer.getSource());
             upstream.rotationLength = length;
         }
     }
@@ -316,9 +305,9 @@ public abstract class OffChipBuffer extends Buffer {
     public static Address totalBufferSizeInBytes() {
         Address bytes = Address.ZERO;
         
-        Iterator<Object> keys = bufferStore.keySet().iterator();
+        Iterator<Edge> keys = bufferStore.keySet().iterator();
         while (keys.hasNext()) {
-            OffChipBuffer buf = bufferStore.get(keys.next());
+            OffChipBuffer buf = (OffChipBuffer)bufferStore.get(keys.next());
             
             if (!buf.redundant()) {
                 bytes = bytes.add(buf.sizeSteady.mult(buf.rotationLength));

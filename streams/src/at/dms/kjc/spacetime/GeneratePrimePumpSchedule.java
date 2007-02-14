@@ -18,13 +18,13 @@ import at.dms.kjc.slicegraph.Slice;
  *
  */
 public class GeneratePrimePumpSchedule {
-    private BasicSpaceTimeSchedule spaceTimeSchedule;
+    private SpaceTimeScheduleAndPartitioner spaceTimeSchedule;
     //the execution count for each trace during the calculation of the schedule
     private HashMap<Slice, Integer> exeCounts;
     
     
    
-    public GeneratePrimePumpSchedule(BasicSpaceTimeSchedule sts) {
+    public GeneratePrimePumpSchedule(SpaceTimeScheduleAndPartitioner sts) {
         spaceTimeSchedule = sts;
         exeCounts = new HashMap<Slice, Integer>();
     }
@@ -48,7 +48,11 @@ public class GeneratePrimePumpSchedule {
             LinkedList<Slice> currentStep = new LinkedList<Slice>();
            
             Iterator it = dataFlowTraversal.iterator();
+            /* XXX testing */   int maxsiz = dataFlowTraversal.size();
+            /* XXX testing */   int usesiz = 0;
             while (it.hasNext()) {
+                /* XXX testing */ assert usesiz < maxsiz;
+                /* XXX testing */ usesiz++;
                 Slice slice = (Slice)it.next();
                 //if the trace can fire, then fire it in this init step
                 if (canFire(slice)) {
@@ -73,7 +77,7 @@ public class GeneratePrimePumpSchedule {
         while (it.hasNext()) {
             Slice slice = it.next();
             if (exeCounts.containsKey(slice)) {
-                exeCounts.put(slice, exeCounts.get(slice).intValue() + 1);
+                exeCounts.put(slice, exeCounts.get(slice) + 1);
             }
             else {
                 exeCounts.put(slice, 1);
@@ -112,7 +116,7 @@ public class GeneratePrimePumpSchedule {
         //one more time than me.
         for (int i = 0; i < depends.length; i++) {
             //file input nodes can always fire
-            if (depends[i].getFilterNodes().get(0).isInputSlice())
+            if (spaceTimeSchedule.getPartitioner().isIO(depends[i]))
                 continue;
             
             int dependsExeCount = getExeCount(depends[i]);
@@ -147,7 +151,7 @@ public class GeneratePrimePumpSchedule {
      * @return should this be counted as a trace that needs to fire.
      */
     private boolean shouldFire(Slice slice) {
-        if (slice.getFilterNodes().get(0).isPredefined() /* instance of FileInput or FileOutput */) {
+        if (!spaceTimeSchedule.getPartitioner().isIO(slice)) {
             return true;
         }
         if (slice.getHead().getNextFilter().isFileOutput()) {

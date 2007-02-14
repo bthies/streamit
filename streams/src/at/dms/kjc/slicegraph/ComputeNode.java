@@ -19,6 +19,9 @@ public class ComputeNode<StoreType extends ComputeCodeStore<?>> extends ProcElem
     private LinkedList<SliceNode> primepumpFilters;
     private LinkedList<SliceNode> steadyFilters;
 
+    private int uniqueId = 0;
+    private boolean uniqueIdIsSet = false;
+    
     /**
      * Constructor.
      * Because of mutually recursive types of ComputeNode and ComputeCodeStore
@@ -83,5 +86,20 @@ public class ComputeNode<StoreType extends ComputeCodeStore<?>> extends ProcElem
             return steadyFilters;
     }
 
+    /**
+     * set unique integer representing this compute node.
+     */
     
+    public void setUniqueId(int unique_id) {
+        uniqueId = unique_id;
+        uniqueIdIsSet = true;
+    }
+    
+    /**
+     * return unique integer representing this compute node.
+     */
+    public int getUniqueId() {
+        assert uniqueIdIsSet == true;
+        return uniqueId;
+    }
 }

@@ -36,7 +36,7 @@ public class LayoutDot
             SliceNode node = nodes.next();
             if (node.isFilterSlice()) {
                 ComputeNode tile = 
-                    layout.getTile(node.getAsFilter());
+                    layout.getComputeNode(node.getAsFilter());
                 assignment.put(node, tile);
             }
         }

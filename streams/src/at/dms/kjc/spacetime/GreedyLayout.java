@@ -15,7 +15,7 @@ import at.dms.kjc.slicegraph.Slice;
  * @author mgordon
  *
  */
-public class GreedyLayout implements Layout {
+public class GreedyLayout implements Layout<RawTile> {
     private HashMap<FilterSliceNode, RawTile> assignment;
     private SpaceTimeSchedule spaceTime;
     private RawChip chip;
@@ -67,11 +67,11 @@ public class GreedyLayout implements Layout {
     }
     
     
-    public RawTile getTile(FilterSliceNode node) {
+    public RawTile getComputeNode(FilterSliceNode node) {
         return assignment.get(node);
     }
    
-    public void setTile(FilterSliceNode node, RawTile tile) {
+    public void setComputeNode(FilterSliceNode node, RawTile tile) {
         assignment.put(node, tile);
     }
     public void run() {

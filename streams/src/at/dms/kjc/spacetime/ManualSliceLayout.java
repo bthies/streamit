@@ -17,7 +17,7 @@ import at.dms.kjc.slicegraph.SliceNode;
  * Given a trace, ask the user where he/she wants it placed on
  *              the raw chip.
  */
-public class ManualSliceLayout implements Layout {
+public class ManualSliceLayout implements Layout<RawTile> {
     private HashMap assignment;
     private SpaceTimeSchedule spaceTime;
     
@@ -25,12 +25,12 @@ public class ManualSliceLayout implements Layout {
         this.spaceTime = spaceTime; 
     }
     
-    public RawTile getTile(FilterSliceNode node) {
+    public RawTile getComputeNode(FilterSliceNode node) {
         assert assignment.containsKey(node);
         return (RawTile)assignment.get(node);
     }
     
-    public void setTile(FilterSliceNode node, RawTile tile) {
+    public void setComputeNode(FilterSliceNode node, RawTile tile) {
         assignment.put(node, tile);
     }
     
@@ -52,14 +52,14 @@ public class ManualSliceLayout implements Layout {
                 assert slice.getHead().oneInput();
                 //set this file writer tile to the tile of its upstream input
                 assignment.put(slice.getHead().getNextFilter(),
-                        getTile(slice.getHead().getSingleEdge().getSrc().getPrevFilter()));
+                        getComputeNode(slice.getHead().getSingleEdge().getSrc().getPrevFilter()));
             }
             else if (slice.getTail().getPrevFilter().isFileInput()) {
                 //file reader
                 assert slice.getTail().oneOutput();
                 //set this file reader to the tile of its downstream reader
                 assignment.put(slice.getTail().getPrevFilter(),
-                        getTile(slice.getTail().getSingleEdge().getDest().getNextFilter()));
+                        getComputeNode(slice.getTail().getSingleEdge().getDest().getNextFilter()));
             }
             else 
                 assert false : "Some unknown i/o trace...";

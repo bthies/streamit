@@ -14,8 +14,6 @@ import java.util.Vector;
  *
  */
 public class RawTile extends RawComputeNode {
-    private int tileNumber;
-
     /** true if this tile has switch code */
     private boolean switches;
 
@@ -105,7 +103,7 @@ public class RawTile extends RawComputeNode {
     }
 
     private void setTileNumber() {
-        tileNumber = (Y * rawChip.getXSize()) + X;
+         setUniqueId((Y * rawChip.getXSize()) + X);
         /*
          * //because the simulator only simulates 4x4 or 8x8 we //have to
          * translate the tile number according to these layouts int columns = 4;
@@ -115,7 +113,7 @@ public class RawTile extends RawComputeNode {
     }
 
     public int getTileNumber() {
-        return tileNumber;
+        return getUniqueId();
     }
 
     public boolean hasComputeCode() {

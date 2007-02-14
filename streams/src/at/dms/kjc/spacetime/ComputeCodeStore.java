@@ -12,6 +12,16 @@ import at.dms.kjc.JWhileStatement;
 import at.dms.kjc.slicegraph.FilterInfo;
 import at.dms.kjc.slicegraph.ComputeNode;
 
+/**
+ * A data structure for associating code with each filter at each phase.
+ * 
+ * As lifted from MGordon's code there is a mutually-recursive type problem:
+ * ComputeCodeStore and ComputeNode types are extended in parallel, and each refers to the other.
+ * 
+ * @author mgodon / dimock
+ *
+ * @param <ComputeNodeType> 
+ */
 public class ComputeCodeStore<ComputeNodeType extends ComputeNode<?>> implements at.dms.kjc.sir.SIRCodeUnit {
 
     /** the name of the main function for each tile */

@@ -32,7 +32,7 @@ import java.util.HashSet;
  * @author mgordon
  *
  */
-public class AnnealedLayout extends SimulatedAnnealing implements Layout {
+public class AnnealedLayout extends SimulatedAnnealing implements Layout<RawTile> {
     /** if a tile does at least <pre>BIG_WORKER</pre> percentage of the bottle neck tile,
      * communication to and from it are included in the communication cost component
      * of the cost function.
@@ -148,7 +148,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
      * 
      * Must call {@link AnnealedLayout#run} first.
      */
-    public RawTile getTile(FilterSliceNode filter) {
+    public RawTile getComputeNode(FilterSliceNode filter) {
         assert assignment.containsKey(filter) : 
             "AnnealedLayout does have a mapping for " + filter;
         //assert !partitioner.isIO(filter.getParent());
@@ -294,7 +294,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
      * @param node The node that will be assigned to tile.
      * @param tile The tile to assign node to.
      */
-    public void setTile(FilterSliceNode node, RawTile tile) {
+    public void setComputeNode(FilterSliceNode node, RawTile tile) {
         assignment.put(node, tile);
     }
     
@@ -356,7 +356,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
                 if (otherSplitFiltersMapped(node.getAsFilter(), tile))
                     continue;
                 */
-		setTile(filter, tile);
+		setComputeNode(filter, tile);
 		if (newSliceAssignment(node.getNext()))
 		    return true;
 	    }
@@ -391,7 +391,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
                     continue;
                                        
                 //assign this filter to the tile in this direction
-                setTile(filter, tile);
+                setComputeNode(filter, tile);
                 //try the assignment to the tile in this direction
                 if (newSliceAssignment(node.getNext()))
                     return true; //if it worked return!

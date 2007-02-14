@@ -2,15 +2,11 @@ package at.dms.kjc.slicegraph;
 
 import java.util.*;
 import java.io.FileWriter;
-//import java.io.FilterWriter;
-
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.sir.*;
-//import at.dms.util.Utils;
 import at.dms.kjc.sir.linear.LinearAnalyzer;
 import at.dms.kjc.sir.lowering.partition.*;
 import at.dms.kjc.spacetime.MultiLevelSplitsJoins;
-//import at.dms.kjc.spacetime.RawChip;
 import at.dms.kjc.KjcOptions;
 
 /**
@@ -147,10 +143,8 @@ public abstract class Partitioner {
             assert sliceBNWork.containsKey(slices[i]) : slices[i];
             //this doesn't get filled till later
             //assert bottleNeckFilter.containsKey(slices[i]) : slices[i];
-            for (int j = 0; j < slices[i].getFilterNodes().length; j++) {
-                assert workEstimation.containsKey(slices[i].getFilterNodes()[j].getFilter()) :
-                    slices[i].getFilterNodes()[j].getFilter();
-                
+            for (FilterSliceNode fsn : slices[i].getFilterNodes()) {
+                assert workEstimation.containsKey(fsn.getFilter()) : fsn.getFilter();
             }
         }
     }
@@ -170,6 +164,14 @@ public abstract class Partitioner {
         return false;
     }
     
+   /*
+    * work estimate for filter needed in various places. 
+    */
+   private int workEst(FilterSliceNode node) {
+       return MultiLevelSplitsJoins.IDENTITY_WORK *
+       node.getFilter().getSteadyMult();
+   }
+    
     /**
      * Update all the necesary state to add node to slice.
      * 
@@ -178,16 +180,14 @@ public abstract class Partitioner {
      */
     public void addFilterToSlice(FilterSliceNode node, 
             Slice slice) {
-        int workEst = MultiLevelSplitsJoins.IDENTITY_WORK *
-               node.getFilter().getSteadyMult();
+        int workEst = workEst(node);
         
         //add the node to the work estimation
         if (!workEstimation.containsKey(node.getFilter()))
-            workEstimation.put(node.getFilter(),
-                    new Integer(workEst));
+            workEstimation.put(node.getFilter(), workEst);
         
         if (workEst > sliceBNWork.get(slice).intValue()) {
-            sliceBNWork.put(slice, new Integer(workEst));
+            sliceBNWork.put(slice, workEst);
             bottleNeckFilter.put(slice, node);
         }
     }
@@ -203,25 +203,26 @@ public abstract class Partitioner {
         //add the new filters to the necessary structures...
         for (int i = 0; i < slices.length; i++) {
             if (!containsSlice(slices[i])) {
-                assert slices[i].getFilterNodes().length == 1;
-                assert slices[i].getFilterNodes()[0].toString().startsWith("Identity");
+                assert slices[i].getNumFilters() == 1;
+                FilterSliceNode filter = slices[i].getFilterNodes().get(0);
+                assert filter.toString().startsWith("Identity");
                                 
-                if (!workEstimation.containsKey(slices[i].getFilterNodes()[0])) {
+                if (!workEstimation.containsKey(filter)) {
                     //for a work estimation of an identity filter
                     //multiple the estimated cost of on item by the number
                     //of items that passes through it (determined by the schedule mult).
-                    workEstimation.put(slices[i].getFilterNodes()[0].getFilter(), 
+                    workEstimation.put(filter.getFilter(), 
                             MultiLevelSplitsJoins.IDENTITY_WORK *
-                            slices[i].getFilterNodes()[0].getFilter().getSteadyMult());
+                            filter.getFilter().getSteadyMult());
                 }
                 
                 //remember that that the only filter, the id, is the bottleneck..
                 if (!sliceBNWork.containsKey(slices[i])) {
                     sliceBNWork.put(slices[i], 
-                            workEstimation.get(slices[i].getFilterNodes()[0].getFilter()));;
+                            workEstimation.get(filter.getFilter()));;
                 }
                 if (!bottleNeckFilter.containsKey(slices[i])) {
-                    bottleNeckFilter.put(slices[i], slices[i].getFilterNodes()[0]);
+                    bottleNeckFilter.put(slices[i], filter);
                 }
                 
             }
@@ -580,4 +581,100 @@ public abstract class Partitioner {
         return filterStartupCost.get(node).intValue();
     }
     
+    /**
+     * Make sure that all the {@link Slice}s are {@link SimpleSlice}s.
+     */
+    
+    public void ensureSimpleSlices() {
+        // update sliceGraph, topSlices, io, sliceBNWork, bottleNeckFilter
+        // Assume that topSlices, io, sliceBNWork.keys(), bottleNeckFilter.keys() 
+        // are all proper subsets of sliceGraph.
+        List<SimpleSlice> newSliceGraph = new LinkedList<SimpleSlice>();
+        Map<Slice,SimpleSlice> newtopSlices = new HashMap<Slice,SimpleSlice>();
+        for (Slice s : topSlices) {newtopSlices.put(s, null);}
+        Map<Slice,SimpleSlice> newIo = new HashMap<Slice,SimpleSlice>();
+        for (Slice s : io) {newIo.put(s,null);}
+        
+        // for each slice s, derived initial simple slice ss1, following simple slices ss2 ... ssn
+        // add to ss1 ... ssn to newSliceGraph,
+        // replace newtopSlices: s |-> null with s -> ss1
+        // replace newIo: s |-> null with s -> ss1
+        for (Slice s : sliceGraph) {
+//            if (s.getNumFilters() == 1) {
+//                SimpleSlice ss = new SimpleSlice(s.getHead(), s.getFilterNodes().get(0), s.getTail());
+//                newSliceGraph.add(ss);
+//                if (newtopSlices.containsKey(s)) {
+//                    newtopSlices.put(s,ss);
+//                }
+//                if (newIo.containsKey(s)) {
+//                    newIo.put(s,ss);
+//                }
+//            } else {
+                int numFilters = s.getNumFilters();
+                assert numFilters != 0 : s;
+                List<FilterSliceNode> fs = s.getFilterNodes();
+                OutputSliceNode prevTail = null;
+                for (int i = 0; i < numFilters; i++) {
+                    InputSliceNode head;
+                    OutputSliceNode tail;
+                    FilterSliceNode f = fs.get(i);
+                    // first simpleSlice has a head, otherwise create a new one.
+                    if (i == 0) {
+                        head = s.getHead();
+                    } else {
+                       /* TODO weight should probably not be 1 */
+                       head = new InputSliceNode(new int[]{1});
+                       // Connect tail from last iteration with head from this iteration.
+                       // prevTail will not be null here...
+                       InterSliceEdge prevTailToHead = new InterSliceEdge(prevTail,head);
+                       head.setSources(new InterSliceEdge[]{prevTailToHead});
+                       prevTail.setDests(new InterSliceEdge[][]{{prevTailToHead}});
+                    }
+                   if (i == numFilters - 1) {
+                       tail = s.getTail();
+                   } else {
+                       /* TODO weight should probably not be 1 */
+                       tail = new OutputSliceNode(new int[]{1});
+                   }
+                   prevTail = tail;
+                   SimpleSlice ss = new SimpleSlice(head, f, tail);
+
+                   // now put these slices in crect data structures.
+                   newSliceGraph.add(ss);
+                   if (i == 0) {
+                       if (newtopSlices.containsKey(s)) {
+                           newtopSlices.put(s,ss);
+                       }
+                       if (newIo.containsKey(s)) {
+                           // check criterion used elsewhere for inclusion in io[]
+                           // it is the case that a slice in io[] only contains a single filter.
+                           assert f.isPredefined();
+                           newIo.put(s,ss);
+                       }
+                   }
+                }
+                
+            }
+            
+//        }
+        // update arrays of slices with new info.
+        sliceGraph = newSliceGraph.toArray(new Slice[newSliceGraph.size()]);
+        for (int i = 0; i < topSlices.length; i++) {
+            topSlices[i] = newtopSlices.get(topSlices[i]);
+            assert topSlices[i] != null;
+        }
+        for (int i = 0; i < io.length; i++) {
+            io[i] = newIo.get(io[i]);
+            assert io[i] != null;
+        }
+        // update bottleNeckFilter, sliceBNWork.
+        bottleNeckFilter = new HashMap<Slice, FilterSliceNode>();
+        sliceBNWork = new HashMap<Slice, Integer>();
+        for (Slice s : sliceGraph) {
+            SimpleSlice ss = (SimpleSlice)s;
+            int workEst = workEst(ss.getBody());
+            sliceBNWork.put(ss, workEst);
+            bottleNeckFilter.put(ss,ss.getBody());
+        }
+    }
 }

@@ -30,7 +30,7 @@ public class ScheduleModel {
      * to trace enpoints for each trace.
      */
     public static final int DRAM_ISSUE_COST = 5;
-    private Layout layout;
+    private Layout<RawTile> layout;
     private LinkedList<Slice> scheduleOrder;
     private RawChip rawChip;
     private SpaceTimeSchedule spaceTime;
@@ -162,9 +162,6 @@ public class ScheduleModel {
             int prevStart = 0;
             int prevEnd = 0;
           
-            assert slice.getFilterNodes().length == 
-                slice.getNumFilters();
-            
             if (debug)
                 System.out.println("Scheduling: " + slice);
             
@@ -172,10 +169,9 @@ public class ScheduleModel {
                 System.out.println("Finding correct times for last filter: ");
             
             //find the correct starting & ending time for the last filter of the trace
-            for (int f = 0; f < slice.getFilterNodes().length; f++) {
-                FilterSliceNode current = slice.getFilterNodes()[f];
+            for (FilterSliceNode current : slice.getFilterNodes()) {
                 
-                RawTile tile = layout.getTile(current);
+                RawTile tile = layout.getComputeNode(current);
                 if (debug)
                     System.out.println("  Tile Cost of " + tile.getTileNumber() + " is " + 
                             tileCosts[tile.getTileNumber()]);
@@ -229,7 +225,7 @@ public class ScheduleModel {
             //it finishes last and base everyone else on it
             FilterSliceNode bottleNeck = slice.getTail().getPrevFilter();
                            
-            RawTile bottleNeckTile = layout.getTile(bottleNeck);
+            RawTile bottleNeckTile = layout.getComputeNode(bottleNeck);
             
             //calculate when the bottle neck tile will finish, 
             //and base everything off of that, traversing backward and 
@@ -261,7 +257,7 @@ public class ScheduleModel {
             
             //traverse backwards and set the finish times of the traces...
             while (current.isFilterSlice()) {
-                RawTile tile = layout.getTile(current.getAsFilter());
+                RawTile tile = layout.getComputeNode(current.getAsFilter());
                 tileCosts[tile.getTileNumber()] = (nextFinish - next1Iter);
                 
                 if (debug)
@@ -293,15 +289,15 @@ public class ScheduleModel {
             }
             */
             //some checks
-            for (int f = 0; f < slice.getFilterNodes().length; f++) {
-                assert getFilterStart(slice.getFilterNodes()[f]) <=
-                    (getFilterEnd(slice.getFilterNodes()[f]) - 
-                    spaceTime.getPartitioner().getFilterWorkSteadyMult(slice.getFilterNodes()[f])) :
+            for (FilterSliceNode fsn : slice.getFilterNodes()) {
+                assert getFilterStart(fsn) <=
+                    (getFilterEnd(fsn) - 
+                    spaceTime.getPartitioner().getFilterWorkSteadyMult(fsn)) :
    
-                        slice.getFilterNodes()[f] + " " + 
-                        getFilterStart(slice.getFilterNodes()[f]) + " <= " +
-                            getFilterEnd(slice.getFilterNodes()[f]) + " - " + 
-                                    spaceTime.getPartitioner().getFilterWorkSteadyMult(slice.getFilterNodes()[f]) +
+                        fsn + " " + 
+                        getFilterStart(fsn) + " <= " +
+                            getFilterEnd(fsn) + " - " + 
+                                    spaceTime.getPartitioner().getFilterWorkSteadyMult(fsn) +
                                         " (bottleneck: " + bottleNeck + ")";
             }
         }
@@ -330,7 +326,7 @@ public class ScheduleModel {
        //HashMap<FilterSliceNode, Double> endTime = new HashMap<FilterSliceNode, Double>();
        while (slices.hasNext()) {
            Slice slice = slices.next();
-           RawTile tile = layout.getTile(slice.getHead().getNextFilter());
+           RawTile tile = layout.getComputeNode(slice.getHead().getNextFilter());
            int traceWork = spaceTime.getPartitioner().getSliceBNWork(slice); 
            int myStart = 0;
            //now find the start time
@@ -345,7 +341,7 @@ public class ScheduleModel {
                    continue;
                FilterSliceNode upStream = edge.getSrc().getPrevFilter();
                
-               ComputeNode upTile = layout.getTile(upStream);
+               ComputeNode upTile = layout.getComputeNode(upStream);
                assert endTime.containsKey(upStream);
                if (endTime.get(upStream).doubleValue() > maxDepStartTime)
                    maxDepStartTime = endTime.get(upStream);

@@ -61,7 +61,7 @@ public class Rawify {
     private static DRAMCommandDist steadyDRAMCommands;
     
     /** the layout we are using */
-    private static Layout layout;
+    private static Layout<RawTile> layout;
     
     private static Router router;
     
@@ -74,8 +74,9 @@ public class Rawify {
      *  
      * @param schedule
      * @param rawChip
+     * @param layout
      */
-    public static void run(SpaceTimeSchedule schedule, RawChip rawChip, Layout layout) {
+    public static void run(SpaceTimeSchedule schedule, RawChip rawChip, Layout<RawTile> layout) {
         Slice traces[];
 
         spaceTimeSchedule = schedule;
@@ -347,7 +348,7 @@ public class Rawify {
                 assert !filterNode.isPredefined() : 
                     "Predefined filters should not appear in the trace traversal: "
                     + slice.toString();
-                RawTile tile = layout.getTile(filterNode); 
+                RawTile tile = layout.getComputeNode(filterNode); 
                 // create the filter info class
                 FilterInfo filterInfo = FilterInfo.getFilterInfo(filterNode);
                 // add the dram command if this filter trace is an
@@ -662,19 +663,19 @@ public class Rawify {
 
             // in the case of a gdn load that has a different destination 
             // than the owning tile, we must use a special dram command
-            if (nonRedBuffer.getOwner() != layout.getTile(filterNode)) {
+            if (nonRedBuffer.getOwner() != layout.getComputeNode(filterNode)) {
                 assert false : "For InputSliceNode: " + filterNode +  
                 "must be at home time of DRAM or use GDN!";
             
                 if (Util.onlyFileInput((InputSliceNode)filterNode.getPrevious()))
                     nonRedBuffer.getOwner().getComputeCode().addFileGDNReadCommand
                     (init || primepump, words, nonRedBuffer, 
-                            layout.getTile(filterNode));
+                            layout.getComputeNode(filterNode));
                 else
                     nonRedBuffer.getOwner().getComputeCode().addDRAMGDNReadCommand(init,
                             primepump, Util.cacheLineDiv(words * 4), 
                             nonRedBuffer, true, 
-                            layout.getTile(filterNode));
+                            layout.getComputeNode(filterNode));
             }
             else {
                 //generate commands to get the input for the filter from a dram or from 
@@ -792,7 +793,7 @@ public class Rawify {
         //source to dest!!
         Slice srcSlice = buffer.getSource().getParent();
         //get the raw chip that is write the data (sending it over the gdn)...
-        RawTile srcTile = layout.getTile(srcSlice.getTail().getPrevFilter());
+        RawTile srcTile = layout.getComputeNode(srcSlice.getTail().getPrevFilter());
                 
         //generate the switch code to send the item from the owner 
         //to the srcTile of the data
@@ -1263,7 +1264,7 @@ public class Rawify {
         RawComputeNode sourceNode = null;
         // Get sourceNode and input port
         if (node.getPrevious().isFilterSlice())
-            sourceNode = layout.getTile(((FilterSliceNode) node.getPrevious()));
+            sourceNode = layout.getComputeNode(((FilterSliceNode) node.getPrevious()));
                                          
         else {
 //            if (KjcOptions.magicdram && node.getPrevious() != null
@@ -1280,7 +1281,7 @@ public class Rawify {
         // Get destNode and output port
         RawComputeNode destNode = null;
         if (node.getNext().isFilterSlice())
-            destNode = layout.getTile(((FilterSliceNode) node.getNext()));
+            destNode = layout.getComputeNode(((FilterSliceNode) node.getNext()));
         else {
 //            if (KjcOptions.magicdram && node.getNext() != null
 //                && node.getNext().isOutputSlice() && tile.hasIODevice())
@@ -1440,7 +1441,7 @@ public class Rawify {
         RawComputeNode sourceNode = null;
         // Get sourceNode and input port
         if (node.getPrevious().isFilterSlice())
-            sourceNode = layout.getTile(((FilterSliceNode) node.getPrevious()));
+            sourceNode = layout.getComputeNode(((FilterSliceNode) node.getPrevious()));
                                          
         else {
 //            if (KjcOptions.magicdram && node.getPrevious() != null
@@ -1457,7 +1458,7 @@ public class Rawify {
         // Get destNode and output port
         RawComputeNode destNode = null;
         if (node.getNext().isFilterSlice())
-            destNode = layout.getTile(((FilterSliceNode) node.getNext()));
+            destNode = layout.getComputeNode(((FilterSliceNode) node.getNext()));
                                       
         else {
 //            if (KjcOptions.magicdram && node.getNext() != null
@@ -2181,7 +2182,7 @@ public class Rawify {
         assert itemsReceiving > 0;
         
         if (node.getPrevious().isFilterSlice())
-            sourceNode = layout.getTile(((FilterSliceNode) node.getPrevious()));
+            sourceNode = layout.getComputeNode(((FilterSliceNode) node.getPrevious()));
                                          
         else {
 //            if (KjcOptions.magicdram && node.getPrevious() != null
@@ -2239,7 +2240,7 @@ public class Rawify {
         RawComputeNode destNode = null;
 
         if (node.getNext().isFilterSlice())
-            destNode = layout.getTile(((FilterSliceNode) node.getNext()));
+            destNode = layout.getComputeNode(((FilterSliceNode) node.getNext()));
                                        
         else {
 //            if (KjcOptions.magicdram && node.getNext() != null

@@ -3,12 +3,8 @@ package at.dms.kjc.spacetime;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
-import at.dms.kjc.KjcOptions;
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.slicegraph.DataFlowOrder;
 import at.dms.kjc.slicegraph.FilterSliceNode;
@@ -31,7 +27,7 @@ public class GenerateSteadyStateSchedule {
     private RawChip rawChip;
     //the schedule we are building
     private LinkedList<Slice> schedule;
-    private Layout layout;
+    private Layout<RawTile> layout;
     
     /**
      * 
@@ -97,7 +93,7 @@ public class GenerateSteadyStateSchedule {
             //remove the first trace, the trace with the most work
             Slice slice = sortedTraces.removeFirst();
           
-            scheduleTrace(slice, sortedTraces);
+            scheduleSlice(slice, sortedTraces);
         }
     }
     
@@ -111,20 +107,20 @@ public class GenerateSteadyStateSchedule {
         for (int i = 0; i < tileAvail.length; i++)
             if (newMin < tileAvail[i])
                 newMin = tileAvail[i];
-        //only reset teh current time if we are advancing time...
+        //only reset the current time if we are advancing time...
         if (newMin > currentTime)
             currentTime = newMin;
     }
     
     /**
-     *  Take a trace that is ready to be scheduled (along with its layout) and
+     *  Take a slice that is ready to be scheduled (along with its layout) and
      *  make the necessary state changes to schedule the trace.
      *  
      * @param layout The layout hashmap
      * @param slice The Slice that is going to be scheduled for execution
      * @param sortedList The list of Traces that need to be scheduled
      */
-    private void scheduleTrace(Slice slice,
+    private void scheduleSlice(Slice slice,
                                LinkedList<Slice> sortedList) {
         assert slice != null;
         CommonUtils.println_debugging("Scheduling Slice: " + slice + " at time "
@@ -140,7 +136,7 @@ public class GenerateSteadyStateSchedule {
 
         while (node instanceof FilterSliceNode) {
             
-            RawTile tile = layout.getTile(node.getAsFilter());
+            RawTile tile = layout.getComputeNode(node.getAsFilter());
 
             // add to the avail time for the tile, use either the current time
             // or the tile's avail

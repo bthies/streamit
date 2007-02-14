@@ -16,7 +16,7 @@ import at.dms.kjc.slicegraph.Slice;
  * @author mgordon
  *
  */
-public class CompareSliceBNWork implements Comparator {
+public class CompareSliceBNWork implements Comparator<Slice> {
     /** The partition we used */
     private Partitioner partitioner;
     
@@ -34,8 +34,8 @@ public class CompareSliceBNWork implements Comparator {
      * 
      * @return The comparison 
      */
-    public int compare(Object o1, Object o2) {
-        assert o1 instanceof Slice && o2 instanceof Slice;
+    public int compare(Slice o1, Slice o2) {
+//        assert o1 instanceof Slice && o2 instanceof Slice;
         
         if (partitioner.getSliceBNWork((Slice) o1) < partitioner
                 .getSliceBNWork((Slice) o2))

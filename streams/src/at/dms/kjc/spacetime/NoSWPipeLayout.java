@@ -17,7 +17,7 @@ import at.dms.kjc.slicegraph.Slice;
  * @author mgordon
  *
  */
-public class NoSWPipeLayout extends SimulatedAnnealing implements Layout {
+public class NoSWPipeLayout extends SimulatedAnnealing implements Layout<RawTile> {
     
     private SpaceTimeSchedule spaceTime;
     private RawChip chip;
@@ -34,11 +34,11 @@ public class NoSWPipeLayout extends SimulatedAnnealing implements Layout {
         rand = new Random(17);
     }
     
-    public RawTile getTile(FilterSliceNode node) {
+    public RawTile getComputeNode(FilterSliceNode node) {
         return (RawTile)assignment.get(node);
     }
     
-    public void setTile(FilterSliceNode node, RawTile tile) {
+    public void setComputeNode(FilterSliceNode node, RawTile tile) {
         assignment.put(node, tile);
     }
     
@@ -84,7 +84,7 @@ public class NoSWPipeLayout extends SimulatedAnnealing implements Layout {
           //System.out.println(trace.getHead().getNextFilter());
           //if (spaceTime.partitioner.isIO(trace))
           //    continue;
-          assert slice.getFilterNodes().length == 1 : "NoSWPipeLayout only works for Time! "  + 
+          assert slice.getNumFilters() == 1 : "NoSWPipeLayout only works for Time! "  + 
                slice;
           //System.out.println("init assiging " + trace.getHead().getNextFilter() + " to " + tile);
           assignment.put(slice.getHead().getNextFilter(), chip.getTile(tile++));
@@ -109,7 +109,7 @@ public class NoSWPipeLayout extends SimulatedAnnealing implements Layout {
         HashMap<FilterSliceNode, Double> endTime = new HashMap<FilterSliceNode, Double>();
         while (slices.hasNext()) {
             Slice slice = slices.next();
-            RawTile tile = getTile(slice.getHead().getNextFilter());
+            RawTile tile = getComputeNode(slice.getHead().getNextFilter());
             double traceWork = spaceTime.getPartitioner().getSliceBNWork(slice); 
             double startTime = 0;
             //now find the start time
@@ -124,7 +124,7 @@ public class NoSWPipeLayout extends SimulatedAnnealing implements Layout {
                     continue;
                 FilterSliceNode upStream = edge.getSrc().getPrevFilter();
                 
-                ComputeNode upTile = getTile(upStream);
+                ComputeNode upTile = getComputeNode(upStream);
                 assert endTime.containsKey(upStream);
                 if (endTime.get(upStream).doubleValue() > maxDepStartTime)
                     maxDepStartTime = endTime.get(upStream).doubleValue();

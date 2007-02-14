@@ -57,12 +57,10 @@ public class SimpleSlice extends Slice {
             body.setParent(this);
             tail.setParent(this);
             len = 1;
-            head.setPrevious(null);
             head.setNext(body);
             body.setPrevious(head);
             body.setNext(tail);
             tail.setPrevious(body);
-            tail.setNext(null);
     }
     
     /**
@@ -86,7 +84,7 @@ public class SimpleSlice extends Slice {
         assert head.getNext() == body.getPrevious() 
         && tail.getPrevious() == body.getNext()
         && head.getParent() == this 
-        && filterNodes[0].getParent() == this
+        && body.getParent() == this
         && tail.getParent() == this;
         return 1;
     }
@@ -98,14 +96,15 @@ public class SimpleSlice extends Slice {
         return 1;
     }
     
+    
     /**
      * For SimpleSlice: call {@link #getBody()} instead.
-     * For compatability with Slice, returns a one-element array of
-     * FilterSliceNode, but unlike {@link Slice#getFilterNodes()}
-     * changes to the array are not reflected in this.  
-     */
-    public FilterSliceNode[] getFilterNodes() {
-        return new FilterSliceNode[]{body};
+     * For compatability with Slice, returns a one-element list of
+     * FilterSliceNode.
+      * @return (singleton) list the filter slice nodes, in data flow order, unmodifiable.
+    */
+    public java.util.List<FilterSliceNode> getFilterNodes() {
+        return java.util.Collections.singletonList(body);
     }
 
     /**

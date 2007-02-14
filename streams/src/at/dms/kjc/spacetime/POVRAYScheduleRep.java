@@ -32,14 +32,14 @@ public class POVRAYScheduleRep {
     
     private ScheduleModel scheduleModel;
     private SpaceTimeSchedule spaceTime;
-    private Layout layout;
+    private Layout<RawTile> layout;
     
     /**
      * 
      * @param spaceTime
      * @param file
      */
-    public POVRAYScheduleRep(SpaceTimeSchedule spaceTime, Layout layout, String file) {
+    public POVRAYScheduleRep(SpaceTimeSchedule spaceTime, Layout<RawTile> layout, String file) {
         this.spaceTime = spaceTime;
         this.layout = layout;
         
@@ -99,7 +99,7 @@ public class POVRAYScheduleRep {
      * @param layout
      * @throws Exception
      */
-    private void createSliceShape(Slice slice, Layout layout) 
+    private void createSliceShape(Slice slice, Layout<RawTile> layout) 
             throws Exception  {
         //don't do anything for file reader and writer traces
         if (spaceTime.getPartitioner().isIO(slice))
@@ -107,9 +107,8 @@ public class POVRAYScheduleRep {
         
         fw.write("//-------------------------------------------\n");
         fw.write("// Objects for " + slice + "\n");
-        for (int i = 0; i < slice.getFilterNodes().length; i++) {
-            FilterSliceNode filter = slice.getFilterNodes()[i];
-            RawTile tile = layout.getTile(filter);
+        for (FilterSliceNode filter : slice.getFilterNodes()) {
+            RawTile tile = layout.getComputeNode(filter);
             int lowerLeftX = getLowerLeftX(tile);
             int lowerLeftY = getLowerLeftY(tile); 
             /* double lowerLeftZ = (double)scheduleModel.getFilterStart(filter) *

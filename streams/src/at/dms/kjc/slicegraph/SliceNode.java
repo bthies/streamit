@@ -6,8 +6,8 @@ package at.dms.kjc.slicegraph;
  * They can be specialized into {@link InputSliceNode}, {@link FilterSliceNode}, or {@link OutputSliceNode}. 
  */
 public class SliceNode {
-    private Edge toNext;  // internal to slice: may be null for OutputSliceNode
-    private Edge toPrev;  // internal to slice: may be null for InputSliceNode
+    private Edge toNext = null;  // internal to slice: remains null for OutputSliceNode
+    private Edge toPrev = null;  // internal to slice: remains null for InputSliceNode
 
     private Slice parent;
 

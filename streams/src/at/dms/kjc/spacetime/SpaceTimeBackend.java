@@ -22,8 +22,9 @@ import at.dms.kjc.slicegraph.FlattenAndPartition;
 import at.dms.kjc.slicegraph.Partitioner;
 import at.dms.kjc.slicegraph.SimplePartitioner;
 import at.dms.kjc.slicegraph.Slice;
+import at.dms.kjc.slicegraph.ComputeNode;
 import java.util.*;
-import at.dms.kjc.sir.lowering.FinalUnitOptimize;
+//import at.dms.kjc.sir.lowering.FinalUnitOptimize;
 //import at.dms.util.SIRPrinter;
 //import at.dms.kjc.sir.SIRToStreamIt;
 
@@ -58,6 +59,10 @@ public class SpaceTimeBackend {
     
     private static int numCores;
     
+    // ComputeNodes for standalone version, 
+    // replaces rawChip of Raw version.
+    private static ComputeNode[] computeNodes;  
+    
     /**
      * Top level method for SpaceTime backend, called via reflection from {@link at.dms.kjc.Main}.
      * @param str               SIRStream from {@link at.dms.kjc.Kopi2SIR}
@@ -82,10 +87,18 @@ public class SpaceTimeBackend {
         //first of all enable altcodegen by default
         //KjcOptions.altcodegen = true;
 
-        
+        // on standalone set numVodes = 1, but there is a sneaky way of specifying some other number.
         if (KjcOptions.standalone) {
+            if (KjcOptions.raw > 0) {
+                numCores = KjcOptions.raw;
+            } else {
+                numCores = 1;
+            }
+            computeNodes = new ComputeNode[numCores];
+            for (int i = 0; i < numCores; i++) {
+                computeNodes[i] = new ComputeNode();
+            }
             KjcOptions.raw = -1;  // set "raw" switch to "missing"
-            numCores = 1;
         }
         else if (KjcOptions.raw >= 0) {
             // Set up rawchip data structure if compiling for raw.
@@ -322,28 +335,23 @@ public class SpaceTimeBackend {
         KjcOptions.partition_dp = false;
         */
         
-        if (KjcOptions.standalone) {
-            // If standalone output desired, then (for now)
-            // fuse all filters in a single appearance schedule.
-            // Partitioning, etc, will be a no-op since there will only
-            // be one filter, but we will still have a slice coming out
-            // so that the code emitter for standalone will work on the 
-            // same representation as the code emitter for RAW.
-            
-            // TODO: eventually do not want to fuse here so can take advantage 
-            // of cache partitioner, more flexible scheduling, etc. 
-            
-            
-            // fuse all into a single filter (precludes support for helper functions,
-            // messaging, dynamic rates, most scheduling algorithms...)
-            at.dms.kjc.rstream.ConvertFileFilters.doit(str);
-            str = FuseAll.fuse(str);
-
-//            System.err.println("// str after FuseAll");
-//            SIRToStreamIt.run(str, interfaces, interfaceTables, structs,
-//                  new SIRGlobal[0]);
-//            System.err.println("// END str after FuseAll");
-        }
+//        if (KjcOptions.standalone) {
+//            // If standalone output desired, then (for now)
+//            // fuse all filters in a single appearance schedule.
+//            // Partitioning, etc, will be a no-op since there will only
+//            // be one filter, but we will still have a slice coming out
+//            // so that the code emitter for standalone will work on the 
+//            // same representation as the code emitter for RAW.
+//            
+//            // TODO: eventually do not want to fuse here so can take advantage 
+//            // of cache partitioner, more flexible scheduling, etc. 
+//            
+//            
+//            // fuse all into a single filter (precludes support for helper functions,
+//            // messaging, dynamic rates, most scheduling algorithms...)
+//            at.dms.kjc.rstream.ConvertFileFilters.doit(str);
+//            str = FuseAll.fuse(str);
+//        }
         
         // get the execution counts from the scheduler
         HashMap[] executionCounts = SIRScheduler.getExecutionCounts(str);
@@ -439,17 +447,13 @@ public class SpaceTimeBackend {
         //we can now use filter infos, everything is set
         FilterInfo.canUse();
         
-        if (KjcOptions.standalone) {
-            EmitStandaloneCode.emitForSingleSlice(partitioner.getSliceGraph());
-
-            System.exit(0);
-        }
-        
         //create the space/time schedule object to be filled in by the passes 
         SpaceTimeSchedule spaceTimeSchedule = new SpaceTimeSchedule(partitioner, rawChip);
         //check to see if we need to add any buffering before splitters or joiners
         //for correct execution of the init stage and steady state
-        AddBuffering.doit(spaceTimeSchedule);
+        if (KjcOptions.raw > 0) {
+            AddBuffering.doit(spaceTimeSchedule);
+        }
         
         //generate the schedule modeling values for each filter/slice 
         partitioner.calculateWorkStats();
@@ -461,23 +465,41 @@ public class SpaceTimeBackend {
         //create the layout for each stage of the execution using simulated annealing
         //or manual
         Layout layout = null;
-        if (KjcOptions.noswpipe) {
-            layout = new NoSWPipeLayout(spaceTimeSchedule); 
-        } else if (KjcOptions.manuallayout) {
-            layout = new ManualSliceLayout(spaceTimeSchedule);
-        } else if (KjcOptions.greedysched || (KjcOptions.dup > 1)) {
-            //layout = new GreedyLayout(spaceTimeSchedule, rawChip);
-            layout = new AnnealedGreedyLayout(spaceTimeSchedule, rawChip, duplicate);
+        if (KjcOptions.raw > 0) {
+            if (KjcOptions.noswpipe) {
+                layout = new NoSWPipeLayout(spaceTimeSchedule);
+            } else if (KjcOptions.manuallayout) {
+                layout = new ManualSliceLayout(spaceTimeSchedule);
+            } else if (KjcOptions.greedysched || (KjcOptions.dup > 1)) {
+                /* XXX hack for compile time in testing, do not submit !!! */
+                layout = new GreedyLayout(spaceTimeSchedule, rawChip);
+                /* proper code: */
+                // layout = new AnnealedGreedyLayout(spaceTimeSchedule, rawChip,
+                // duplicate);
+            } else {
+                layout = new AnnealedLayout(spaceTimeSchedule);
+            }
         } else {
-            layout = new AnnealedLayout(spaceTimeSchedule);
+            // for non-raw, just use greedy layout.
+            spaceTimeSchedule.getPartitioner().ensureSimpleSlices();
+            layout = new BasicGreedyLayout(spaceTimeSchedule, computeNodes);
         }
-        
+
         layout.run();
-                
+
         System.out.println("Space/Time Scheduling Steady-State...");
-        GenerateSteadyStateSchedule spaceTimeScheduler = 
-            new GenerateSteadyStateSchedule(spaceTimeSchedule, layout);
-        spaceTimeScheduler.schedule();
+// GenerateSteadyStateSchedule seems to have been cut back to no more than
+// BasicGenerateSteadyStateSchedule
+// plus an un-called method.
+//        if (KjcOptions.raw > 0) {
+//            GenerateSteadyStateSchedule spaceTimeScheduler = new GenerateSteadyStateSchedule(
+//                    spaceTimeSchedule, layout);
+//            spaceTimeScheduler.schedule();
+//        } else {
+            BasicGenerateSteadyStateSchedule spaceTimeScheduler = new BasicGenerateSteadyStateSchedule(
+                    spaceTimeSchedule, partitioner);
+            spaceTimeScheduler.schedule();
+//        }
   
         /*
         if (partitioner instanceof AdaptivePartitioner &&
@@ -494,9 +516,7 @@ public class SpaceTimeBackend {
         
         System.out.println("Creating Pre-Loop Schedule...");
         GeneratePrimePumpSchedule preLoopSched = new GeneratePrimePumpSchedule(spaceTimeSchedule);
-        preLoopSched.schedule();
-        
-       
+        preLoopSched.schedule(spaceTimeSchedule.getPartitioner().getSliceGraph());
         
         //System.out.println("Assigning Buffers to DRAMs...");
         //new BufferDRAMAssignment().run(spaceTimeSchedule);
@@ -504,7 +524,14 @@ public class SpaceTimeBackend {
         
         //set the rotation lengths of the buffers
         OffChipBuffer.setRotationLengths(spaceTimeSchedule);
+
+        if (KjcOptions.standalone) {
+            EmitStandaloneCode.emitForSingleSlice(partitioner.getSliceGraph());
+
+            System.exit(0);
+        }
         
+
         //communicate the addresses for the off-chip buffers && set up
         // the rotating buffers based on the preloopschedule for software pipelining
 //        if (!KjcOptions.magicdram) {

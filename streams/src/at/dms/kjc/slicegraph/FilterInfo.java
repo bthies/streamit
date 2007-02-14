@@ -11,10 +11,11 @@ import java.util.HashMap;
  * 
  */
 public class FilterInfo {
+    /** peeked amount in pre-work of two-stage filter */
     public int prePeek;
-
+    /** popped amount in pre-work in two-stage filter */
     public int prePop;
-
+    /** pushed amount in pre-work in two-stage filter */
     public int prePush;
 
     public int remaining;

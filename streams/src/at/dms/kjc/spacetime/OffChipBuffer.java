@@ -30,21 +30,13 @@ public abstract class OffChipBuffer extends Buffer {
     protected Address sizeSteady;
     /** the dram that we are reading/writing */
     protected StreamingDram dram;
-    /** the rotation length of this buffer for software pipelining **/
-    protected int rotationLength;
            
     protected OffChipBuffer(SliceNode src, SliceNode dst) {
         super(src,dst);
-        rotationLength = 1;
-//        ident = "__buf_" + /* owner.getIODevice().getPort() + */"_" + unique_id
-//            + "__";
     }
 
     protected OffChipBuffer(Edge edge) {
         super(edge);
-        rotationLength = 1;
-//        ident = "__buf_" + /* owner.getIODevice().getPort() + */"_" + unique_id
-//            + "__";
     }
     
     public abstract boolean redundant();
@@ -68,7 +60,7 @@ public abstract class OffChipBuffer extends Buffer {
         return false;
     }
 
-    // return true if outputtracenode does anything
+    // return true if OutputSliceNode does nothing useful
     public static boolean unnecessary(OutputSliceNode output) {
         if (output.noOutputs())
             return true;
@@ -146,10 +138,6 @@ public abstract class OffChipBuffer extends Buffer {
         return ident;
     }
 
-    public CType getType() {
-        return theEdge.getType();
-    }
-
     /** 
      * Reset all the dram assignments of the buffers to null.
      *
@@ -185,13 +173,6 @@ public abstract class OffChipBuffer extends Buffer {
         return theEdge.getSrc() + "->" + theEdge.getDest() + "[" + dram + "]";
     }
 
-    public SliceNode getSource() {
-        return theEdge.getSrc();
-    }
-
-    public SliceNode getDest() {
-        return theEdge.getDest();
-    }
 
     public boolean isIntraSlice() {
         return (this instanceof IntraSliceBuffer);
@@ -209,9 +190,9 @@ public abstract class OffChipBuffer extends Buffer {
      * This method also counts the number of intertracebuffers that are assigned
      * to each dram and stores it in the dramToBuffer's hashmap in intertracebuffer.
      * 
-     * @param spaceTime The SpaceTimeSchedule
+     * @param spaceTime The BasicSpaceTimeSchedule
      */
-    public static void setRotationLengths(SpaceTimeSchedule spaceTime) {
+    public static void setRotationLengths(BasicSpaceTimeSchedule spaceTime) {
         InterSliceBuffer.dramsToBuffers = new HashMap<StreamingDram, Integer>();
         Iterator<Buffer> buffers = getBuffers().iterator();
         //iterate over the buffers and communicate each buffer
@@ -229,11 +210,11 @@ public abstract class OffChipBuffer extends Buffer {
                     InterSliceBuffer.dramsToBuffers.put(buffer.getDRAM(),
                             new Integer
                             (InterSliceBuffer.dramsToBuffers.
-                                    get(buffer.getDRAM()).intValue() + 1));
+                                    get(buffer.getDRAM()) + 1));
                 }
                 else //haven't seen dram before so just put 1
                     InterSliceBuffer.dramsToBuffers 
-                    .put(buffer.getDRAM(), new Integer(1));
+                    .put(buffer.getDRAM(), 1);
             }
         }
     }
@@ -245,7 +226,7 @@ public abstract class OffChipBuffer extends Buffer {
      * 
      * @param buffer
      */
-    private static void setRotationLength(SpaceTimeSchedule spaceTimeSchedule, InterSliceBuffer buffer) {
+    private static void setRotationLength(BasicSpaceTimeSchedule spaceTimeSchedule, InterSliceBuffer buffer) {
         int sourceMult = spaceTimeSchedule.getPrimePumpMult(buffer.getSource().getParent());
         int destMult = spaceTimeSchedule.getPrimePumpMult(buffer.getDest().getParent());
         //fix for file readers and writers!!!!

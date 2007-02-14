@@ -51,7 +51,7 @@ public class FilterSliceNode extends SliceNode
     public String toString(Layout layout) 
     {
         return filter.toString() + " " + 
-        (layout != null ? layout.getTile(this) : "");   
+        (layout != null ? layout.getComputeNode(this) : "");   
     }
     
     

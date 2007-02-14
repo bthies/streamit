@@ -19,7 +19,7 @@ import at.dms.kjc.common.SimulatedAnnealing;
  * @author mgordon
  *
  */
-public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout {
+public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout<RawTile> {
     private GreedyLayout greedyLayout;
     private RawChip chip;
     private SpaceTimeSchedule spaceTime;
@@ -39,16 +39,16 @@ public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout {
         this.duplicate = duplicate;
     }
     
-    public RawTile getTile(FilterSliceNode node) {
+    public RawTile getComputeNode(FilterSliceNode node) {
         assert assignment.containsKey(node) : "Node not in assignment: " + node;
         assert assignment.get(node) != null : "Tile assignment null: " + node;
         return (RawTile)assignment.get(node);
     }
     
-    public void setTile(FilterSliceNode node, RawTile tile) {
+    public void setComputeNode(FilterSliceNode node, RawTile tile) {
         
         if (!node.isPredefined()) { 
-            tileCosts[getTile(node).getTileNumber()] -= 
+            tileCosts[getComputeNode(node).getTileNumber()] -= 
                 partitioner.getFilterWorkSteadyMult(node);
             tileCosts[tile.getTileNumber()] += 
                 partitioner.getFilterWorkSteadyMult(node);
@@ -116,8 +116,8 @@ public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout {
             filter1 = slice1.getHead().getNextFilter();
             filter2 = slice2.getHead().getNextFilter();
             
-            bin1 = getTile(filter1).getTileNumber();
-            bin2 = getTile(filter2).getTileNumber();
+            bin1 = getComputeNode(filter1).getTileNumber();
+            bin2 = getComputeNode(filter2).getTileNumber();
             
             ////System.out.println("Swap?: " + filter1 + " from  " + bin1 + 
             //        " with "+ filter2 + " from " + bin2);

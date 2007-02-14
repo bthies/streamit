@@ -215,7 +215,7 @@ public class Util {
         //cycle thru the nodes and see if we can find a match 
         //of the coordinates for the tile and a filter trace
         while (node.isFilterSlice()) {
-            if (tile == layout.getTile(node.getAsFilter()))
+            if (tile == layout.getComputeNode(node.getAsFilter()))
                 return true;
             
             node = node.getNext();

@@ -188,9 +188,8 @@ public class SynchRemover {
     }
     
     private static boolean isIdentity(Slice slice) {
-        FilterSliceNode[] fn = slice.getFilterNodes();
-        for (int i=0; i<fn.length; i++) {
-            if (!fn[i].getFilter().getName().startsWith("Identity"))
+        for (FilterSliceNode fn : slice.getFilterNodes()) {
+            if (!fn.getFilter().getName().startsWith("Identity"))
                 return false;
         }
         return true;

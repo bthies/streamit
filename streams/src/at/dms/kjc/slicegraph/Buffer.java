@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.LinkedList;
+import at.dms.kjc.spacetime.BasicSpaceTimeSchedule;
 import at.dms.kjc.*;
 
 /**
@@ -28,7 +29,12 @@ public class Buffer {
     /** the store for all Buffers, indexed by edge.
      */
     protected static HashMap<Edge, Buffer> bufferStore;
- 
+    /** the rotation length of this buffer for software pipelining 
+     * Includes any length from extraLength field. **/
+    protected int rotationLength;
+    /** set to 1 for double bufferring or higher if even more extra buffers desired */
+    protected int extraCount;
+
     static {
         unique_id_generator = 0;
         bufferStore = new HashMap<Edge, Buffer>();
@@ -44,6 +50,7 @@ public class Buffer {
         edge.getType(); // side effect of catching error if source and dest types not the same
         unique_id = unique_id_generator++;
         ident = "__buf__" + unique_id + "__";
+        rotationLength = 1;
     }
     
     /**
@@ -78,7 +85,79 @@ public class Buffer {
         return bufferStore.values();
     }
 
+    /** Get the type of data to be stored in the buffer 
+     * You can not set the type, it is determined at buffer
+     * creation time.
+     * @return type of data to be stored in the buffer */
+    public CType getType() {
+        return theEdge.getType();
+    }
 
+
+    /** 
+     * Determine whether logical buffer has extra
+     * physical space for double-bufferring.
+     * If 0 then no double bufferring.
+     * If 1 then double bufferring.
+     * If > 1 then n+1 bufferring.
+     * @return number of extra comm buffers for double bufferring or 0 if none.
+     */
+    public int getExtraCount() {
+        return extraCount;
+    }
+    
+    /**
+     * Call with 1 to set double bufferring.
+     * Or > 1 for n+1-bufferring.
+     * No effect after {@link #setRotationLengths} has been called.
+     */
+    public void setExtralength(int extracount) {
+        this.extraCount = extracount;
+    }
+    
+    /** get the source (upstream) SliceNode for this buffer. */
+    public SliceNode getSource() {
+        return theEdge.getSrc();
+    }
+
+    /** get the destination (downstream) SliceNode for this buffer. */
+    public SliceNode getDest() {
+        return theEdge.getDest();
+    }
+
+    /**
+     * Set rotation count: number of buffers needed during primePump phase.
+     * Also adds in extracount to set up double-bufferring if desired.
+     * @param sched BasicSpaceTimeSchedule gives primePump multiplicities.
+     */
+    public static void setRotationLengths(BasicSpaceTimeSchedule sched) {
+        for (Buffer buf : getBuffers()) {
+            setRotationLength(buf, sched);
+        }
+    }
+    
+    /**
+     * Set the rotation length of each buffer based on the multiplicities 
+     * of the source trace and the dest trace in the prime pump schedule and add
+     * in extraCount field to enable double bufferring if desired.
+     * 
+     * @param buffer
+     */
+    private static void setRotationLength(Buffer buffer, BasicSpaceTimeSchedule spaceTimeSchedule) {
+        int sourceMult = spaceTimeSchedule.getPrimePumpMult(buffer.getSource().getParent());
+        int destMult = spaceTimeSchedule.getPrimePumpMult(buffer.getDest().getParent());
+
+        // if source run more often than dest, then need extra space.
+        if (sourceMult > destMult) {
+            buffer.rotationLength = sourceMult - destMult + buffer.extraCount; 
+        } else {
+            buffer.rotationLength = buffer.extraCount;
+        }
+        
+        //System.out.println("Setting rotation length: " + buffer + " " + length);
+    }
+    
+    
     /* Lots of JBlock, JMethodDeclaration, ... here 
      * Set to empty values, since many do not need to be overridden in many backends. 
      */

@@ -59,7 +59,7 @@ public class Slice {
     
     /**
      * Finishes creating Slice.
-     * Expects the slice to have an InputSliceNode, and 1 or more FilterliceNodes. 
+     * Expects the slice to have an InputSliceNode, and 1 or more FilterSliceNodes. 
      * Creates an OutputSliceNode if necessary.
      * @return The number of FilterSliceNodes.
      */
@@ -177,13 +177,15 @@ public class Slice {
             node = node.getNext();
             ret++;
         }
+        assert ret == filterNodes.length;
         return ret;
     }
 
+
     /** 
-     * @return The array of just the filter slice nodes, in data flow order.
+     * @return list the filter slice nodes, in data flow order, unmodifiable.
      */
-    public FilterSliceNode[] getFilterNodes() {
-        return filterNodes;
+    public java.util.List<FilterSliceNode> getFilterNodes() {
+        return java.util.Collections.unmodifiableList(java.util.Arrays.asList(filterNodes));
     }
 }

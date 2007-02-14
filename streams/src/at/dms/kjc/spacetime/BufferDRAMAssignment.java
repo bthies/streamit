@@ -30,7 +30,7 @@ public class BufferDRAMAssignment {
     /** The raw chip we are compiling to */
     private RawChip rawChip;
     /** the layout we are using */
-    private Layout layout;
+    private Layout<RawTile> layout;
     private SpaceTimeSchedule spaceTime;
     
     
@@ -46,7 +46,7 @@ public class BufferDRAMAssignment {
         this.layout = layout;
         
         rawChip = spaceTime.getRawChip();
-        SliceNode[] sliceNodes = Util.sliceNodeArray(spaceTime.getPartitioner().getSliceGraph());
+        SliceNode[] sliceNodes = Util.sliceNodeArray(this.spaceTime.getPartitioner().getSliceGraph());
         
         // take care of the file readers and writes
         // assign the reader->output buffer and the input->writer buffer
@@ -208,14 +208,14 @@ public class BufferDRAMAssignment {
 
                     //if this tile is different from the tile we have already 
                     //issued a gdn store command from, then we might have a race condition.
-                    if (dramToTile.get(buffer.getDRAM()) != layout.getTile(output.getPrevFilter())) {
+                    if (dramToTile.get(buffer.getDRAM()) != layout.getComputeNode(output.getPrevFilter())) {
                         System.out.println(dramToTile.get(buffer.getDRAM()) + " and " +
-                                layout.getTile(output.getPrevFilter()));
+                                layout.getComputeNode(output.getPrevFilter()));
                         return true;
                     }
                 }
                 else //otherwise put the tile in the hashmap to remember that we issued a store from it 
-                    dramToTile.put(buffer.getDRAM(), layout.getTile(output.getPrevFilter()));
+                    dramToTile.put(buffer.getDRAM(), layout.getComputeNode(output.getPrevFilter()));
             }
             
         }
@@ -261,10 +261,10 @@ public class BufferDRAMAssignment {
                 RawTile tile;
                 if (files[i].getHead().oneInput()) {
 //                 set the filter tile to be the tile of the upstream tile
-                    tile = layout.getTile(files[i].getHead().getSingleEdge().getSrc().getPrevFilter());
-                    layout.setTile(files[i].getHead().getNextFilter(), tile);
+                    tile = layout.getComputeNode(files[i].getHead().getSingleEdge().getSrc().getPrevFilter());
+                    layout.setComputeNode(files[i].getHead().getNextFilter(), tile);
                 } else {
-                    tile = layout.getTile(filter); 
+                    tile = layout.getComputeNode(filter); 
                 }
                     
                 
@@ -296,10 +296,10 @@ public class BufferDRAMAssignment {
                 //if there is only one output, then force its assignment to the 
                 //filter that the tile is assigned to so that there is no copying
                 if (files[i].getTail().oneOutput()) {
-                    tile = layout.getTile(files[i].getTail().getSingleEdge().getDest().getNextFilter());
-                    layout.setTile(files[i].getHead().getNextFilter(), tile);                
+                    tile = layout.getComputeNode(files[i].getTail().getSingleEdge().getDest().getNextFilter());
+                    layout.setComputeNode(files[i].getHead().getNextFilter(), tile);                
                 } else {
-                    tile = layout.getTile(filter);
+                    tile = layout.getComputeNode(filter);
                 }
                 
 
@@ -331,7 +331,7 @@ public class BufferDRAMAssignment {
         
         //if we are splitting this output then assign the intraslicebuffer
         //to the home base of the dest filter
-        ComputeNode tile = layout.getTile(output.getPrevFilter());
+        ComputeNode tile = layout.getComputeNode(output.getPrevFilter());
         IntraSliceBuffer buf = IntraSliceBuffer.getBuffer(output.getPrevFilter(), output);
         buf.setDRAM(getHomeDevice(tile));
         buf.setStaticNet(tile == getHomeDevice(tile).getNeighboringTile());
@@ -347,7 +347,7 @@ public class BufferDRAMAssignment {
     private void singleOutputAssignment(OutputSliceNode output) {
 
         //get the upstream tile
-        ComputeNode upTile = layout.getTile(output.getPrevFilter());
+        ComputeNode upTile = layout.getComputeNode(output.getPrevFilter());
         //the downstream slice is a single input slice
         IntraSliceBuffer buf = IntraSliceBuffer.getBuffer(output.getPrevFilter(), 
                 output);
@@ -365,7 +365,7 @@ public class BufferDRAMAssignment {
         if (output.getSingleEdge().getDest().oneInput()) {
           
             //get the tile that the downstream filter is assigned to
-            ComputeNode dsTile = layout.getTile(output.getSingleEdge().getDest().getNextFilter());   
+            ComputeNode dsTile = layout.getComputeNode(output.getSingleEdge().getDest().getNextFilter());   
             buf.setDRAM(getHomeDevice(dsTile));
             
             //should we use the dynamic network
@@ -421,7 +421,7 @@ public class BufferDRAMAssignment {
             return;
         //this is the dram we would like, the home dram from the first filter
         //of the downstream slice
-        StreamingDram wanted = getHomeDevice(layout.getTile(input.getNextFilter()));
+        StreamingDram wanted = getHomeDevice(layout.getComputeNode(input.getNextFilter()));
         //if it is not assigned yet to an interslicebuffer of the output,
         //then assign it, otherwise, do nothing...
         if (!assignedOutputDRAMs(output).contains(wanted)) {
@@ -551,7 +551,7 @@ public class BufferDRAMAssignment {
     private void inputFilterAssignment(InputSliceNode input) {
         FilterSliceNode filter = input.getNextFilter();
         
-        ComputeNode tile = layout.getTile(filter);
+        ComputeNode tile = layout.getComputeNode(filter);
         // the neighboring dram of the tile we are assigning this buffer to
         StreamingDram dram = getHomeDevice(tile);
         // assign the buffer to the dram

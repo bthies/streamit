@@ -319,7 +319,7 @@ public class AddBuffering {
     private boolean legalToAddBufferingInSlice(Slice slice, int initItemsSent) {
         if (KjcOptions.greedysched || KjcOptions.noswpipe)
             return false;
-        if (slice.getFilterNodes().length >=
+        if (slice.getNumFilters() >=
                 spaceTime.getTotalNodes()/*getRawChip().getTotalTiles()*/)
             return false;
         
@@ -392,7 +392,7 @@ public class AddBuffering {
     private void addIDToSlice(Slice slice, int initMult) {
         FilterSliceNode oldLast = slice.getTail().getPrevFilter();
      
-        assert slice.getFilterNodes().length < 
+        assert slice.getNumFilters() < 
             spaceTime.getTotalNodes()/*getRawChip().getTotalTiles()*/ : 
                 "Cannot add buffering to slice because it has (filters == tiles).";
         

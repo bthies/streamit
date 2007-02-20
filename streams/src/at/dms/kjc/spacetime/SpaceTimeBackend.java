@@ -471,11 +471,8 @@ public class SpaceTimeBackend {
             } else if (KjcOptions.manuallayout) {
                 layout = new ManualSliceLayout(spaceTimeSchedule);
             } else if (KjcOptions.greedysched || (KjcOptions.dup > 1)) {
-                /* XXX hack for compile time in testing, do not submit !!! */
-                layout = new GreedyLayout(spaceTimeSchedule, rawChip);
-                /* proper code: */
-                // layout = new AnnealedGreedyLayout(spaceTimeSchedule, rawChip,
-                // duplicate);
+            //layout = new GreedyLayout(spaceTimeSchedule, rawChip);
+            layout = new AnnealedGreedyLayout(spaceTimeSchedule, rawChip, duplicate);
             } else {
                 layout = new AnnealedLayout(spaceTimeSchedule);
             }

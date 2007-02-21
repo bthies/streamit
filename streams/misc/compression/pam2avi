@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# This script converts a sequence of PAM files to an Apple-Animation
+# encoded AVI file.
+#
+# Call with "pam2avi width height input-prefix output-file.avi".
+# Script expects input files in input-prefix1.pam, input-prefix2.pam,
+# etc.
+
+if [ $# -ne 4 ]
+then
+  echo "Usage: pam2avi width height input-prefix output-file.avi"
+  exit $E_BADARGS
+fi
+
+. $STREAMIT_HOME/misc/compression/setup-ffmpeg
+$FFMPEG_HOME/ffmpeg -vcodec pam -i $3%d.pam -f avi -vcodec qtrle -y $4

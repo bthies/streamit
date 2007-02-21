@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# This script converts any AVI file into a raw byte sequence, encoded
+# in Apple Animation format.
+
+if [ $# -ne 4 ]
+then
+  echo "Usage: avi2aa width height input-file.avi output-file.aa"
+  exit $E_BADARGS
+fi
+
+. $STREAMIT_HOME/misc/compression/setup-ffmpeg
+$FFMPEG_HOME/ffmpeg -i $3 -f rawvideo -vcodec qtrle -y $4

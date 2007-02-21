@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# This script converts a raw byte sequence, encoded in Apple Animation
+# format, into a sequence of PAM files.
+#
+# Called with "aa2pam width height input-file.aa output-prefix", expect
+# to find the output in output-prefix1.pam, output-prefix2.pam, etc.
+
+if [ $# -ne 4 ]
+then
+  echo "Usage: aa2pam width height input-file.aa output-prefix"
+  exit $E_BADARGS
+fi
+
+# convert through a temporary RAW format
+$STREAMIT_HOME/misc/compression/aa2raw $1 $2 $3 _temp.raw
+$STREAMIT_HOME/misc/compression/raw2pam $1 $2 _temp.raw $4
+rm _temp.raw

@@ -1,0 +1,16 @@
+#!/bin/bash
+
+#
+# This script converts any AVI file to a sequence of PAM files.
+#
+# Call with "avi2pam width height input-file.avi output-prefix" and
+# expect output files in output-prefix1.pam, output-prefix2.pam, etc.
+
+if [ $# -ne 4 ]
+then
+  echo "Usage: avi2pam width height input-file.avi output-prefix"
+  exit $E_BADARGS
+fi
+
+. $STREAMIT_HOME/misc/compression/setup-ffmpeg
+$FFMPEG_HOME/ffmpeg -i $3 -vcodec pam $4%d.pam

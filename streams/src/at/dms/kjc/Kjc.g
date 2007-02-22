@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Kjc.g,v 1.6 2005-12-21 20:02:34 thies Exp $
+ * $Id: Kjc.g,v 1.7 2007-02-22 20:15:01 dimock Exp $
  */
 
 /*
@@ -371,18 +371,18 @@ jClassDefinition[int modifiers]
   (
     "class" ident1:IDENT { ident = ident1; }
     superClass = jSuperClassClause[]
-  |
-    "filter" { superClass = CClassType.lookup("Filter"); }
-    ident2:IDENT { ident = ident2; }
-  |
-    "feedback" { superClass = CClassType.lookup("FeedbackLoop"); }
-    ident3:IDENT { ident = ident3; }
-  |
-    "pipeline" { superClass = CClassType.lookup("Pipeline"); }
-    ident4:IDENT { ident = ident4; }
-  |
-    "splitjoin" { superClass = CClassType.lookup("SplitJoin"); }
-    ident5:IDENT { ident = ident5; }
+//   |
+//     "filter" { superClass = CClassType.lookup("Filter"); }
+//     ident2:IDENT { ident = ident2; }
+//   |
+//     "feedback" { superClass = CClassType.lookup("FeedbackLoop"); }
+//     ident3:IDENT { ident = ident3; }
+//   |
+//     "pipeline" { superClass = CClassType.lookup("Pipeline"); }
+//     ident4:IDENT { ident = ident4; }
+//   |
+//     "splitjoin" { superClass = CClassType.lookup("SplitJoin"); }
+//     ident5:IDENT { ident = ident5; }
   )
   interfaces = jImplementsClause[]
   jClassBlock[context]

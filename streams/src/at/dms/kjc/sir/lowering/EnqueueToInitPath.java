@@ -16,7 +16,7 @@ import at.dms.compiler.TokenReference;
  * that enqueue statements are outside of any control flow.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: EnqueueToInitPath.java,v 1.6 2006-09-25 13:54:42 dimock Exp $
+ * @version $Id: EnqueueToInitPath.java,v 1.7 2007-02-23 19:42:08 dimock Exp $
  */
 public class EnqueueToInitPath
 {
@@ -77,6 +77,14 @@ public class EnqueueToInitPath
                             enqTypeWrapper[0] = mce.getIdent().substring(7); // len("enqueue")
                         }
                 }});
+
+        if (values.size() == 0) {
+            // it is possible that there were no enqueue statements:
+            // enqueuing can also be handled by a prework function in the
+            // loop -- which is more flexible: wider range of types, more values...
+            return;
+        }
+
         String enqType = enqTypeWrapper[0];
 
         // Now build the new function.
@@ -102,6 +110,7 @@ public class EnqueueToInitPath
                 JStatement stmt = new JIfStatement(where, cond, rtn, null, null);
                 stmts.add(stmt);
             }
+        
         // Figure out both the type and default case from the
         // name of the enqueue function.
         CType rtnType;

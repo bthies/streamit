@@ -502,9 +502,9 @@ public class StaticsProp {
                             // We now have a static section and field name
                             // to propagate into the stream "self".
                             
-                            /////////////////////////////////////////////
-                            // (1) make a copy of the field decl and code
-                            /////////////////////////////////////////////
+                            /////////////////////////////////////////////////////////////
+                            // (1) make a copy of the field decls and initialization code
+                            /////////////////////////////////////////////////////////////
                             JFieldDeclaration newDecl = 
                                 (JFieldDeclaration) ObjectDeepCloner
                                 .deepCopy(
@@ -675,7 +675,7 @@ public class StaticsProp {
      * after any JVariableDeclarationStatement's
      */
     private static void propagateCode(SIRStream str, 
-				      List/*<JStatement>*/ theCode) {
+				      List<JStatement> theCode) {
         // Add declaration or local and assignments in body of init.
         JMethodDeclaration init = str.getInit();
         JBlock body = init.getBody();
@@ -684,7 +684,7 @@ public class StaticsProp {
         while (stmtIter.hasNext() 
                && stmtIter.next() instanceof JVariableDeclarationStatement){}
         // add
-        body.addAllStatements(stmtIter.nextIndex(), theCode);
+        body.addAllStatements(stmtIter.previousIndex(), theCode);
     }
 
     /*

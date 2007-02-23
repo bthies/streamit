@@ -1,10 +1,8 @@
-
 featureListPair->featureListPair pipeline ransac(){
 	
 	portal<selectIndices> feedbackOrInput;
 	portal<gateOfEntry> pop1orNone;
 	portal<gateOfExit> push1orNone;
-	featureListPair idiotface;
 	
 	add normalizeFeaturePts();
 	add gateOfEntry() to pop1orNone;
@@ -16,8 +14,7 @@ featureListPair->featureListPair pipeline ransac(){
 		    add makeFundMatrix();
 		    add findInliers(feedbackOrInput,pop1orNone,push1orNone);
 		}
-		loop FLPID();
-		enqueue(idiotface);
+		loop  FLPID_backloop;
 		split duplicate;		
 	}
     add gateOfExit() to push1orNone;
@@ -52,6 +49,23 @@ featureListPair->featureListPair pipeline ransac(){
 	add denormalizeF();*/
     //add denormalizeFeaturePts();
 }
+
+
+featureListPair->featureListPair pipeline FLPID_backloop {
+    add FLPID();
+    add featureListPair->featureListPair filter {
+	prework push 1 {
+	    // push (unititialized) featureListPair
+	    // to sprime a feedbackloop.
+	    featureListPair idiotface;
+	    push(idiotface);
+	}
+	work push 1 pop 1 {
+	    push(pop());
+	}
+    }
+}
+
 
 featureListPair->featureListPair filter normalizeFeaturePts()
 {	

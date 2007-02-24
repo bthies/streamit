@@ -1,15 +1,10 @@
 package at.dms.kjc.slicegraph;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-
-import at.dms.kjc.flatgraph.FlatNode;
-import at.dms.kjc.flatgraph.GraphFlattener;
 
 public class SynchRemover {
 
@@ -26,8 +21,6 @@ public class SynchRemover {
     private final LinkedList<Slice> identities = new LinkedList<Slice>();
         
     private final HashMap<InterSliceEdge,SSSequence> outMap = new HashMap<InterSliceEdge,SSSequence>();
-    
-    private final HashMap<InterSliceEdge,SSSequence> inMap = new HashMap<InterSliceEdge,SSSequence>();
     
     public SynchRemover(Slice topSlice) {
         this.topSlice = topSlice;
@@ -51,11 +44,11 @@ public class SynchRemover {
             return;
         visited.add(current);
         
-        // initialize the input sequence for each slice to be empty
-        InterSliceEdge[] inputs = current.getHead().getSources();
-        for (int i=0; i<inputs.length; i++) {
-            inMap.put(inputs[i], new SSSequence(current.getHead().totalWeights()));
-        }
+//        // initialize the input sequence for each slice to be empty
+//        InterSliceEdge[] inputs = current.getHead().getSources();
+//        for (int i=0; i<inputs.length; i++) {
+//            inMap.put(inputs[i], new SSSequence());
+//        }
         
         if (!isIdentity(current)) {
             // create steady-state output sequence
@@ -100,12 +93,16 @@ public class SynchRemover {
 
     private void removeSynch() {
         while (!identities.isEmpty()) {
+            HashMap<InterSliceEdge,SSSequence> inMap = new HashMap<InterSliceEdge,SSSequence>();
+            
             Slice id = identities.removeFirst();
             Slice[] parents = id.getDependencies();
             int[] inweights = id.getHead().getWeights();
+            int inweightsum = id.getHead().totalWeights();
             
             // Array to store output SSSequences of each parent slice 
-            SSSequence[] inseq = new SSSequence[parents.length];
+            SSSequence[] parentOutputSeqs = new SSSequence[parents.length];
+            InterSliceEdge[] edges = new InterSliceEdge[parents.length];
             
             // If any parents haven't yet been processed, add this slice back
             // to the end of the list and loop again
@@ -115,7 +112,7 @@ public class SynchRemover {
             }
             
             // number of times to repeat inputs
-            int mult = 1;
+            int tempinmult = 1;
             
             // Go through parents to calculate lcm's and extract output SSSequences
             // from the HashMap of InterSliceEdges
@@ -126,50 +123,140 @@ public class SynchRemover {
                 InterSliceEdge e = getEdgeBetween(parent, id);
                 SSSequence output = outMap.get(e);
                 // Store in the array for later use
-                inseq[i] = output;
+                parentOutputSeqs[i] = output;
+                edges[i] = e;
                 
                 // calculate lcm for this particular input
                 int partialmult = lcm(output.length(), inweights[i])/inweights[i];
                 // update running lcm over all inputs
-                mult = lcm(mult, partialmult);
+                tempinmult = lcm(tempinmult, partialmult);
             }
             
-            // Create a single SSSequence of outputs for this Slice
-            ArrayList<SSElement> list = new ArrayList<SSElement>();
-            for (int i=0; i<mult; i++) {
-                for (int j=0; j<parents.length; j++) {
-                    SSSequence seq = inseq[j];
-                    for (int k=0; k<inweights[j]; k++) {
-                        list.add(seq.getNext());
+            // calculate overall multiplicity for inputs and outputs
+            int outweightsum = id.getTail().totalWeights();
+            int lcm = lcm(inweightsum*tempinmult, outweightsum);
+            int outmult = lcm/outweightsum;
+            int inmult = lcm/inweightsum;
+            
+            // create output sequences for each child of each parent and store
+            // in inMap, keyed by the edge
+            for (int i=0; i<parents.length; i++) {
+                // retrieve information for ith parent
+                Slice parent = parents[i];
+                InterSliceEdge[][] parentOutEdges = parent.getTail().getDests();
+                int[] weights = parent.getTail().getWeights();
+                
+                // calculate number of times this parent's outputs have to be
+                // repeated
+                SSSequence seq = parentOutputSeqs[i];
+                int parentRepeatMult = inmult*inweights[i]/seq.length();
+                
+                // iterate through all of parent's outgoing edges
+                for (int j=0; j<parentOutEdges.length; j++) {
+                    int weight = weights[j];
+                    InterSliceEdge[] dupes = parentOutEdges[j];
+                    SSSequence outseq = outMap.get(dupes[0]);
+                    ArrayList<SSElement> list = new ArrayList<SSElement>();
+                    // create steady-state output for each child
+                    for (int k=0; k<parentRepeatMult*weight; k++) {
+                        SSElement temp = outseq.getNext();
+                        // update repeat multiplier
+                        SSElement newelt = new SSElement(temp.slice, temp.num, temp.repeat*parentRepeatMult);
+                        list.add(newelt);
+                    }
+                    // store in inMap, keyed by the edge
+                    for (int l=0; l<dupes.length; l++) {
+                        inMap.put(dupes[l], new SSSequence(list));
                     }
                 }
             }
-            SSSequence out = new SSSequence(list, list.size());
             
-            // Distribute single SSSequence over all of the output Slices
+            // combine all input sequences into a single sequence
+            ArrayList<SSElement> out = new ArrayList<SSElement>();
+            for (int i=0; i<inmult; i++) {
+                for (int j=0; j<parents.length; j++) {
+                    InterSliceEdge e = edges[j];
+                    SSSequence in = inMap.get(e);
+                    for (int k=0; k<inweights[j]; k++) {
+                        out.add(in.getNext());
+                    }
+                }
+            }
+            Iterator<SSElement> iter = out.iterator();
+            
+            // Distribute single sequence over all of the output Slices
             InterSliceEdge[][] outedges = id.getTail().getDests();
-            SSSequence[] outseq = new SSSequence[outedges.length];
+            SSSequence[] outseqs = new SSSequence[outedges.length];
             int[] outweights = id.getTail().getWeights();
-            int lcm = lcm(out.length(), id.getTail().totalWeights());
-            mult = lcm/id.getTail().totalWeights();
             
-            for (int i=0; i<mult; i++) {
+            for (int i=0; i<outmult; i++) {
                 for (int j=0; j<outedges.length; j++) {
-                    if (outseq[j] == null) {
-                        outseq[j] = new SSSequence(id.getTail().totalWeights());
+                    if (outseqs[j] == null) {
+                        outseqs[j] = new SSSequence();
                     }
                     int weight = outweights[j];
                     for (int k=0; k<weight; k++) {
-                        outseq[j].add(out.getNext());
+                        outseqs[j].add(iter.next());
                     }
                 }
             }
-
             for (int i=0; i<outedges.length; i++) {
                 for (int j=0; j<outedges[i].length; j++) {
-                    outMap.put(outedges[i][j], outseq[i]);
+                    inMap.put(outedges[i][j], outseqs[i]);
                 }
             }
+            
+            // create new outgoing edges for all of the parent slices
+            for (int i=0; i<parents.length; i++) {
+                Slice parent = parents[i];
+                InterSliceEdge[][] parentOutEdges = parent.getTail().getDests();
+                int[] weights = parent.getTail().getWeights();
+                LinkedList<LinkedList<InterSliceEdge>> newedges = 
+                    new LinkedList<LinkedList<InterSliceEdge>>();
+                for (int j=0; j<parentOutEdges.length; j++) {
+                    for (int k=0; k<parentOutEdges[j].length; k++) {
+                        if (parentOutEdges[j][k].getDest().getParent() == id)
+                            continue;
+                        SSSequence seq = inMap.get(parentOutEdges[j][k]);
+                        for (int l=0; l<seq.length(); l++) {
+                            SSElement elt = seq.getNext();
+                            LinkedList<InterSliceEdge> array = newedges.get(elt.num);
+                            if (array == null) {
+                                array = new LinkedList<InterSliceEdge>();
+                            }
+                            InterSliceEdge newedge = new InterSliceEdge(parent.getTail(), parentOutEdges[j][k].getDest());
+                            array.add(newedge);
+                        }
+                    }
+                }
+                for (int j=0; j<outedges.length; j++) {
+                    for (int k=0; k<outedges[j].length; k++) {
+                        InterSliceEdge outedge = outedges[j][k];
+                        SSSequence seq = inMap.get(outedge);
+                        for (int l=0; l<seq.length(); l++) {
+                            SSElement elt = seq.getNext();
+                            if (elt.slice != parent)
+                                continue;
+                            LinkedList<InterSliceEdge> array = newedges.get(elt.num);
+                            if (array == null) {
+                                array = new LinkedList<InterSliceEdge>();
+                            }
+                            InterSliceEdge newedge = new InterSliceEdge(parent.getTail(), outedge.getDest());
+                            array.add(newedge);
+                        }
+                    }
+                }
+                LinkedList<Integer> newweights = new LinkedList<Integer>();
+                for (int j=0; j<newedges.size(); j++) {
+                    newweights.add(new Integer(1));
+                }
+                parent.getTail().set(newweights, newedges);
+            }
+            
+            id.getHead().setSources(new InterSliceEdge[0]);
+            id.getHead().setWeights(new int[0]);
+            id.getTail().setDests(new InterSliceEdge[0][]);
+            id.getTail().setWeights(new int[0]);
         }
     }
     
@@ -229,11 +316,11 @@ public class SynchRemover {
     private static SSSequence createSSSequence(Slice current, int index, int weight, int sumweights) {
         ArrayList<SSElement> list = new ArrayList<SSElement>();
         for (int i=0; i<weight; i++) {
-            SSElement elt = new SSElement(current, index);
+            SSElement elt = new SSElement(current, index, sumweights);
             list.add(elt);
             index++;
         }
-        return new SSSequence(list, sumweights);
+        return new SSSequence(list);
     }
     
     
@@ -454,20 +541,18 @@ public class SynchRemover {
 class SSSequence {
     ArrayList<SSElement> list;
     int index;
-    int sumweights;
+    //int sumweights;
     int redos;
     
-    SSSequence(int sw) {
+    SSSequence() {
         list = new ArrayList<SSElement>();
         index = 0;
-        sumweights = sw;
         redos = 0;
     }
     
-    SSSequence(ArrayList<SSElement> list, int sw) {
+    SSSequence(ArrayList<SSElement> list) {
         this.list = list;
         index = 0;
-        sumweights = sw;
         redos = 0;
     }
     
@@ -481,7 +566,7 @@ class SSSequence {
             temp = list.get(index);
             index++;
         }
-        return new SSElement(temp.slice, temp.num + redos*sumweights);
+        return new SSElement(temp.slice, temp.num + redos*temp.repeat, temp.repeat);
     }
     
     int length() {
@@ -496,10 +581,18 @@ class SSSequence {
 class SSElement {
     Slice slice;
     int num;
+    int repeat;
     
     SSElement(Slice slice, int num) {
         this.slice = slice;
         this.num = num;
+        this.repeat = 1;
+    }
+    
+    SSElement(Slice slice, int num, int repeat) {
+        this.slice = slice;
+        this.num = num;
+        this.repeat = repeat;
     }
     
     Slice getSlice() {
@@ -508,6 +601,10 @@ class SSElement {
     
     int getNum() {
         return num;
+    }
+    
+    int getRepeat() {
+        return repeat;
     }
     
     boolean equals(SSElement elt) {

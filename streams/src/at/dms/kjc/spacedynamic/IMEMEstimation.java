@@ -1,20 +1,20 @@
 package at.dms.kjc.spacedynamic;
 
 import at.dms.kjc.flatgraph.FlatNode;
-import at.dms.util.IRPrinter;
-import at.dms.util.SIRPrinter;
+//import at.dms.util.IRPrinter;
+//import at.dms.util.SIRPrinter;
 import at.dms.kjc.*;
-import at.dms.kjc.iterator.*;
+//import at.dms.kjc.iterator.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.lowering.*;
-import at.dms.kjc.sir.lowering.partition.*;
-import at.dms.kjc.sir.lowering.fusion.*;
-import at.dms.kjc.sir.lowering.fission.*;
-import at.dms.kjc.lir.*;
+//import at.dms.kjc.sir.lowering.partition.*;
+//import at.dms.kjc.sir.lowering.fusion.*;
+//import at.dms.kjc.sir.lowering.fission.*;
+//import at.dms.kjc.lir.*;
 import java.util.*;
 import at.dms.util.Utils;
 import java.io.*;
-import at.dms.kjc.flatgraph.FlatNode;
+//import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.flatgraph.FlatVisitor;
 
 public class IMEMEstimation implements FlatVisitor
@@ -31,7 +31,7 @@ public class IMEMEstimation implements FlatVisitor
 
     static 
     {
-        rand = new Random();
+        rand = KjcOptions.fixseed? new Random(17): new Random();
         user = getUser();
     }
 

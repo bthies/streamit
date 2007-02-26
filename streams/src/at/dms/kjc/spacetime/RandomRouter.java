@@ -5,7 +5,7 @@ package at.dms.kjc.spacetime;
 
 import java.util.LinkedList;
 import java.util.Random;
-
+import at.dms.kjc.KjcOptions;
 import at.dms.util.Utils;
 
 /**
@@ -41,7 +41,7 @@ public class RandomRouter implements Router {
             dst = ((IODevice)dst).getNeighboringTile();
         }
     
-        Random rand = new Random();
+        Random rand = KjcOptions.fixseed ? new Random(17): new Random();
         
         if (src == null || dst == null)
             Utils.fail("Trying to route from/to null");

@@ -16,6 +16,10 @@ import at.dms.kjc.*;
 import at.dms.kjc.common.SimulatedAnnealing;
 
 /**
+ * An experimental class that tries to optimize the data-reordering
+ * stage of the greedy layout.  It was not helpful.  Please don't 
+ * look at it!
+ * 
  * @author mgordon
  *
  */
@@ -275,8 +279,6 @@ public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout<R
     }
     
     public void run() {
-        
-        
         if (duplicate != null && !KjcOptions.partition_greedier)  {
             //if we have used StreamlinedDuplicate, then we want to start with its
             //layout

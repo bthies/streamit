@@ -12,8 +12,11 @@ import at.dms.kjc.slicegraph.Slice;
 
 
 /**
+ * This class calculates the assignment of filters to tiles using a
+ * greedy bin packing heuristic.  At each step, assign the current filter
+ * in question to the tile with the least amount of work assigned to it.
+ * 
  * @author mgordon
- *
  */
 public class GreedyLayout implements Layout<RawTile> {
     private HashMap<FilterSliceNode, RawTile> assignment;
@@ -26,6 +29,13 @@ public class GreedyLayout implements Layout<RawTile> {
     private int[] searchOrder; 
     private int totalWork;
     
+    /**
+     * Create a new GreedyLayout object that is ready for the packing
+     * to begin.
+     * 
+     * @param spaceTime
+     * @param chip
+     */
     public GreedyLayout(SpaceTimeSchedule spaceTime, RawChip chip) {
         this.chip = chip;
         this.spaceTime = spaceTime;
@@ -38,6 +48,8 @@ public class GreedyLayout implements Layout<RawTile> {
             bins[i] = new LinkedList<FilterSliceNode>();
             binWeight[i] = 0;
         }
+        //define a search order for each step of the packing
+        //don't remember why this is done
         searchOrder = new int[numBins];
         if (numBins == 16) {
             searchOrder[0] = 5;
@@ -74,6 +86,10 @@ public class GreedyLayout implements Layout<RawTile> {
     public void setComputeNode(FilterSliceNode node, RawTile tile) {
         assignment.put(node, tile);
     }
+    
+    /**
+     * Calcuate the assignment of filters to tiles.
+     */
     public void run() {
         assignment = new HashMap<FilterSliceNode, RawTile>();
         pack();
@@ -82,7 +98,11 @@ public class GreedyLayout implements Layout<RawTile> {
         //assign buffers!
         //new BufferDRAMAssignment().run(spaceTime, this);
     }
-    
+
+    /**    
+     * Use a greedy bin-packing (partitioning) heuristic to calcuate
+     * a load-balanced assignment of filters to tiles.  
+     */
     private void pack() {
         //now sort the filters by work
         LinkedList<FilterSliceNode> sortedList = new LinkedList<FilterSliceNode>();

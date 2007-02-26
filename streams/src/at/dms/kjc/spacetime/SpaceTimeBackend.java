@@ -78,6 +78,10 @@ public class SpaceTimeBackend {
                            SIRStructure[]structs,
                            SIRHelper[] helpers,
                            SIRGlobal global) {
+	//the original (unmodified) stream graph
+	//only used for statistics gathering
+	SIRStream origSTR = null;
+
         structures = structs;
         
         NO_SWPIPELINE = KjcOptions.noswpipe;
@@ -156,6 +160,12 @@ public class SpaceTimeBackend {
         if (str instanceof SIRContainer)
             ((SIRContainer)str).reclaimChildren();
         
+	//if we are gathering statistics, clone the original stream graph 
+	//so that we can gather statictics on it, not on the modified graph
+	if (KjcOptions.stats) {
+	    origSTR = 
+		(SIRStream)ObjectDeepCloner.deepCopy(str);
+	}
 
         // splitjoin optimization on SIR graph can not be
         // done after fusion, and should not affect fusable
@@ -163,7 +173,7 @@ public class SpaceTimeBackend {
         Lifter.liftAggressiveSync(str);
         
  
-        if (KjcOptions.fusion || KjcOptions.dup > 1 || KjcOptions.noswpipe) {
+        if (KjcOptions.fusion || KjcOptions.dup >= 1 || KjcOptions.noswpipe) {
             // if we are about to fuse filters, we should perform
             // any vectorization now, since vectorization can not work inside
             // fused sections, and vetctorization should map pipelines of 
@@ -183,33 +193,46 @@ public class SpaceTimeBackend {
             DuplicateBottleneck.duplicateHeavyFilters(str);
         }
         */
-        if (KjcOptions.dup > 1) {
+        WorkEstimate work = WorkEstimate.getWorkEstimate(str);
+        work.printGraph(str, "work_estimate.dot");
+        WorkList workList = work.getSortedFilterWork();
+        for (int i = 0; i < workList.size(); i++) {
+            SIRFilter filter = workList.getFilter(i);
+            int filterWork = work.getWork(filter); 
+            System.out.println("Sorted Work " + i + ": " + filter + " work " 
+                    + filterWork + ", is fissable: " + StatelessDuplicate.isFissable(filter));
+        }
+        
+        //for right now, we use the dup parameter to specify the type 
+        //of data-parallelization we are using
+        //if we want to enable the data-parallelization
+        //stuff from asplos 06, use dup == 1
+        if (KjcOptions.dup == 1) {
             DuplicateBottleneck dup = new DuplicateBottleneck();
             dup.percentStateless(str);
             str = FusePipelines.fusePipelinesOfStatelessStreams(str);
+            StreamItDot.printGraph(str, "after-fuse-stateless.dot");
             dup.smarterDuplicate(str);
-            /*
-            if (KjcOptions.noswpipe) {
-                //str = FuseStatelessPipelines.doit(str);
-                //str = FuseAll.fuse(str);
-                dup.duplicateFilters(str, numCores);
-                //dup.smarterDuplicate(str);
-
-            }
-            else {
-                duplicate = new StreamlinedDuplicate();
-                duplicate.doit(str, rawChip);
-            }*/
+            StreamItDot.printGraph(str, "after-data-par.dot");
+        } 
+        else if (KjcOptions.dup == rawChip.getTotalTiles()) {
+            //if we want to use fine-grained parallelization
+            //then set dup to be the number of tiles (cores)
+            DuplicateBottleneck dup = new DuplicateBottleneck();
+            System.out.println("Fine-Grained Data Parallelism...");
+            dup.duplicateFilters(str, rawChip.getTotalTiles());
         }
-       
+
+        //if we are no software pipelining, then fuse pipelines of 
+        //filters so that the communicate using on-chip tile memory
         if (KjcOptions.noswpipe)
             str = FusePipelines.fusePipelinesOfFilters(str);
         
         StreamItDot.printGraph(str, "canonical-graph.dot");
 
-        //StreamItDot.printGraph(str, "before-fusepipe.dot");
-        
-        //StreamItDot.printGraph(str, "after-fusepipe.dot");
+        //Use the partition_greedier flag to enable the Granularity Adjustment
+        //phase, it will try to partition more as long as the critical path
+        //is not affected (see asplos 06).
         if (KjcOptions.partition_greedier) {
             StreamItDot.printGraph(str, "before-granularity-adjust.dot");
             str = GranularityAdjust.doit(str, numCores);
@@ -222,9 +245,6 @@ public class SpaceTimeBackend {
                 16, true, false, true);
         KjcOptions.partition_dp = false;
         */
-        
-       
-     
         
         
         if (KjcOptions.fission > 1) {
@@ -459,7 +479,7 @@ public class SpaceTimeBackend {
         partitioner.calculateWorkStats();
         
         if (KjcOptions.stats) {
-            BenchChar.doit(spaceTimeSchedule, str);
+            BenchChar.doit(spaceTimeSchedule, origSTR);
         }
         
         //create the layout for each stage of the execution using simulated annealing
@@ -471,8 +491,8 @@ public class SpaceTimeBackend {
             } else if (KjcOptions.manuallayout) {
                 layout = new ManualSliceLayout(spaceTimeSchedule);
             } else if (KjcOptions.greedysched || (KjcOptions.dup > 1)) {
-            //layout = new GreedyLayout(spaceTimeSchedule, rawChip);
-            layout = new AnnealedGreedyLayout(spaceTimeSchedule, rawChip, duplicate);
+                layout = new GreedyLayout(spaceTimeSchedule, rawChip);
+                //layout = new AnnealedGreedyLayout(spaceTimeSchedule, rawChip, duplicate);
             } else {
                 layout = new AnnealedLayout(spaceTimeSchedule);
             }
@@ -751,3 +771,4 @@ public class SpaceTimeBackend {
 // System.err.println("TopNodes in Forest: "+traceForrest.length);
 // }
 // */
+[]

@@ -19,6 +19,10 @@ import java.util.*;
 import at.dms.kjc.*;
 
 /**
+ * This class holds various methods for extracting data parallelism
+ * from the stream graph.  There are many experimental methods and 
+ * there are not many comments.
+ * 
  * @author mgordon
  *
  */
@@ -31,7 +35,14 @@ public class DuplicateBottleneck {
         
     }
     
-    
+    /**
+     * Experimental method for extracting data-parallelism.  It attempts
+     * to create load-balanced bins.
+     *  
+     * @param str The stream graph
+     * @param chip The raw chip we are targeting
+     * @return The modified str graph
+     */
     public SIRStream smarterDuplicateStreamline(SIRStream str, RawChip chip) {
         double threshold = 0.9;
         SIRStream oldStr;
@@ -166,6 +177,12 @@ public class DuplicateBottleneck {
         return fraction;
     }
     
+    /**
+     * Duplicate all the filters in the stream graph reps times.
+     * 
+     * @param str The original stream graph that we are going to munge.
+     * @param reps The number to times to duplicate.
+     */
     public void duplicateFilters(SIRStream str, int reps) {
         
         WorkEstimate work = WorkEstimate.getWorkEstimate(str);
@@ -175,9 +192,15 @@ public class DuplicateBottleneck {
             SIRFilter filter = workList.getFilter(i);
             if (!StatelessDuplicate.isFissable(filter))
                 continue;
+            StatelessDuplicate.doit(filter, reps);
+            //for right now just duplicate ever filter, don't worry about comp/comm
+            /*  
             int filterWork = work.getWork(filter);
             int commRate = ((int[])work.getExecutionCounts().get(filter))[0] * 
                 (filter.getPushInt() + filter.getPopInt());
+            
+                
+            
             if (filterWork / commRate > 10) {
                 StatelessDuplicate.doit(filter, reps);
                 System.out.println("Dup  " + filter + " comp/comm is " + (filterWork / commRate));
@@ -185,25 +208,51 @@ public class DuplicateBottleneck {
             else {
                 System.out.println("Don't dup  " + filter + " comp/comm is " + (filterWork / commRate));
             }
+            */
         }
     }
     
     /**
-     * Use the cousins 
-     * @param str
+     * Use the cousins algorithm to duplicate each stateless filter.  See
+     * Asplos 06 paper for an explanation.  
+     * 
+     * This call assumes that we are compiling to a spacetime raw chip.
+     * 
+     * @param str The stream graph
      */
     public void smarterDuplicate(SIRStream str) {
+        smarterDuplicate(str, SpaceTimeBackend.getRawChip().getTotalTiles());
+    }
+    
+    /**
+     * Use the cousins algorithm specifying the number of tiles.  Duplicate each
+     * data parallel (stateless) filter a number of times taking the task parallel
+     * work into account.  See ASPLOS 06 paper for an explanation. 
+     *  
+     * @param str The stream graph
+     * @param tiles The number of cores of the target machine
+     */
+    public void smarterDuplicate(SIRStream str, int tiles) {
         
         WorkEstimate work = WorkEstimate.getWorkEstimate(str);
         WorkList workList = work.getSortedFilterWork();
         HashMap<SIRStream, Double> averageWork = 
             new HashMap<SIRStream, Double>(); 
         findAverageWork(str, work, averageWork);
-        int tiles = SpaceTimeBackend.getRawChip().getTotalTiles();
+        
+        
+        int totalWork = 0;
+        for (int i = 0; i < workList.size(); i++) {
+            SIRFilter filter = workList.getFilter(i);
+            int filterWork = work.getWork(filter); 
+            System.out.println("Sorted Work " + i + ": " + filter + " work " 
+                    + filterWork + ", is fissable: " + StatelessDuplicate.isFissable(filter));
+            totalWork += filterWork;
+        }
         
         for (int i = workList.size() - 1; i >= 0; i--) {
             SIRFilter filter = workList.getFilter(i);
-            System.out.println(filter + " work " + work.getWork(filter));
+            System.out.println(filter + " work: " + work.getWork(filter));
             if (!StatelessDuplicate.isFissable(filter)) {
                 System.out.println("  not fissible");
                 continue;
@@ -212,25 +261,29 @@ public class DuplicateBottleneck {
                  (filter.getPushInt() + filter.getPopInt());
             int filterWork = work.getWork(filter);
             if (filterWork / commRate <= 10) {
+                System.out.println("   Comp/Comp rate too low!");
                 continue;
             }
           
             int cousins = getNumCousins(filter); 
             if (cousins == 1) {
+                System.out.println("   No cousins: dup " + tiles);    
                 StatelessDuplicate.doit(filter, tiles);
             }
             else {
                 // esimate work fraction of this filter vs. cousins
                 double workFraction = estimateWorkFraction(filter, averageWork);
-                System.out.println("Filter " + filter + " has " + cousins + " cousins and does " + workFraction + " of the work.");
+                System.out.println("   Filter " + filter + " has " + cousins + " cousins and does " + workFraction + " of the work.");
                 if (cousins < tiles) {
                     int reps = (int)Math.ceil(workFraction * ((double)tiles));
                     reps = Math.min(tiles - cousins + 1, reps);
                    
-                    System.out.println("Calling dup with: " + reps);
+                    System.out.println("   Calling dup with: " + reps);
                     if (reps > 1)
                         StatelessDuplicate.doit(filter, reps);
+           
                 }
+                
             }
         }
     }
@@ -239,6 +292,13 @@ public class DuplicateBottleneck {
         return (int)Math.pow(2, Math.ceil(Math.log(10) / Math.log(2)));
     }
     
+    /**
+     * Print the percentage of work that is contained in stateless filters 
+     * compared to the total work of the application.  Use the static work
+     * estimation to calculate the estimate.
+     * 
+     * @param str The stream graph
+     */
     public void percentStateless(SIRStream str) {
         sortedWorkEsts = new Vector<Integer>();
         sortedFilters = new Vector<SIRFilter>();
@@ -261,6 +321,13 @@ public class DuplicateBottleneck {
       
     }
     
+    /**
+     * An experimental method for data-parallelization.
+     * 
+     * @param str The stream graph
+     * @param chip The raw chip
+     * @return The modified stream graph.
+     */
     public SIRStream smartDuplication(SIRStream str, RawChip chip) {
         percentStateless(str);
         WorkEstimate work = WorkEstimate.getWorkEstimate(str);
@@ -307,10 +374,25 @@ public class DuplicateBottleneck {
         return str;
     }
     
+    /**
+     * An experimental method for exploiting data-parallelism.  Keep 
+     * parallelizing the filter with the most work until we get close 
+     * to the ideal work distribution for the target or the bottleneck
+     * is not data-parallel.
+     * 
+     * @param str The stream graph.
+     */
     public static void duplicateHeavyFilters(SIRStream str) { 
         while (duplicateHeavyFiltersRound(str));
     }
     
+    /**
+     * Perform one round of duplication, so duplicate the filter with
+     * the most load and return true if we have made a change.
+     * 
+     * @param str
+     * @return True if have made a parallelization.
+     */
     private static boolean duplicateHeavyFiltersRound(SIRStream str) {
         boolean change = false;
         //get the work estimate
@@ -377,7 +459,13 @@ public class DuplicateBottleneck {
         return true;
     }
     
-       
+    /**   
+     * Finds all the filters in the str graph and generates a sorted list
+     * of filters based on work load.
+     * 
+     * @param str The stream graph
+     * @param work The work estimation calculated for the stream graph
+     */
     private void walkSTR(SIRStream str, WorkEstimate work) {
         if (str instanceof SIRFeedbackLoop) {
             SIRFeedbackLoop fl = (SIRFeedbackLoop) str;

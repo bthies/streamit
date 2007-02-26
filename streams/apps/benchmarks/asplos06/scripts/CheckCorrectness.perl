@@ -2,12 +2,21 @@
 
 # parameters .str file, numiters
 
+# compare the output of a compiler run to the library.  This
+# script will extract the file name from the .str file and then
+# run the library for the comparison.  Its uses mathematical 
+# comparison so that if the output is within 1% of the library, it
+# is consider correct.
+
+
 use strict;
 use warnings;
 
 my $tolerance = .01;
 my $strFile = shift;
 my $numIters = shift;
+#should we write to the results.out file
+my $write_results = 0;
 
 #find the file writer add statement
 # add FileWriter<type>("filename");
@@ -24,13 +33,17 @@ foreach (<>) {
 
 die("Found No add FileWriter statement.") unless defined($addFileStmt);
 
+
+
 #get the type and the file name
 my ($type) = ($addFileStmt =~ /.+\<(.+)\>.+/);
 my ($outFile) = ($addFileStmt =~ /.+\"(.+)\".+/);
 
 #make sure that the file exists and the results.out file exists
 die ("output file does not exist") unless ( -s $outFile);
-die ("results.out file does not exist") unless ( -s "results.out");
+if ( -s "results.out") {
+  $write_results = 1;
+}
 
 #make sure the type is either int or float
 die("Unrecognized Type") unless ($type =~ /^float$/ || $type =~/^int$/);
@@ -42,14 +55,16 @@ system("strc", "-library", "-i", "$numIters", "$strFile");
 #compare $outfile to $outfile.raw based on type
 #exit with sucess for successful compare or die
 if (compareFiles($outFile, "$outFile.raw", $type) == 1) {
-  print "Files Sucessfully Compare!";
-  open(RES, ">>results.out");
-  #record in the results.out that we have passed
-  print RES "PASSED\n";
-  close RES;
+  print "Files Sucessfully Compare!\n";
+  if ($write_results == 1) {
+    open(RES, ">>results.out");
+    #record in the results.out that we have passed
+    print RES "PASSED\n";
+    close RES;
+  }
 }
 else {
-  print "Files Fail Compare!";
+  print "Files Fail Compare!\n";
 }
 
 

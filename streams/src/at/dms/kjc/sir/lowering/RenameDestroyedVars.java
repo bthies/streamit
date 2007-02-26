@@ -3,13 +3,7 @@ package at.dms.kjc.sir.lowering;
 import java.util.*;
 
 import at.dms.kjc.*;
-import at.dms.util.*;
 import at.dms.kjc.sir.*;
-import at.dms.kjc.lir.*;
-import at.dms.compiler.JavaStyleComment;
-import at.dms.compiler.JavadocComment;
-import java.lang.Math;
-import at.dms.compiler.TokenReference;
 
 // Given a filter and a set of variables created by ArrayDestroyer rename
 // and reduce number of the variables by analyzing live ranges.
@@ -29,7 +23,7 @@ public class RenameDestroyedVars extends SLIRReplacingVisitor {
 
     private RenameDestroyedVars(Set vars) {
         destroyedVars = vars;
-        random = new Random();
+        random = KjcOptions.fixseed? new Random(17): new Random();
     }
 
     private HashMap<CType, Integer> live_vars; // CType -> Integer

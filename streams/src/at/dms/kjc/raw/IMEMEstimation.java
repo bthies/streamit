@@ -23,7 +23,7 @@ public class IMEMEstimation implements FlatVisitor
 
     static 
     {
-        rand = new Random();
+        rand = KjcOptions.fixseed? new Random(17): new Random();
         user = getUser();
     }
 

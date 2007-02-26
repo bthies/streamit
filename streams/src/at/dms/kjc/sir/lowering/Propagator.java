@@ -1472,7 +1472,9 @@ public class Propagator extends SLIRReplacingVisitor {
         }
 
     
-        // Look for known idempotent functions.
+        // TODO: look at at.dms.util.Utils.MathMethodInfo and see if
+        // can automate.
+        // Look for known functions.
         if (args.length == 1 && args[0].isConstant())
             {
                 if (ident.equals("sin") || ident.equals("cos") ||

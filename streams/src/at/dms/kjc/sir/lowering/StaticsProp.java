@@ -740,8 +740,19 @@ public class StaticsProp {
     // Utility routines that could well go elsewhere
     // -------------------------------------------------------------------
 
-     
-    private static class IterOverAllFieldsAndMethods {
+    /**
+     * Methods to iterate  a EmptyAttributeVisitor over all fields / methods / parameters
+     * of a stream, or of a subgraph of the stream graph.
+     * <p>
+     * The methods {@link #preVisit(SIRStream)} and {@link #postVisit(SIRStream)} are overridable.
+     * When iterating the visitor over a subgraph, you can use these methods to get / set information
+     * for the visitor per SIRStream.
+     * </p><p>
+     * You can select to visit field definitions, method definitions, and / or parameter definitions.
+     * If visiting parameter definitions for push / pop / peek rates, 
+     * </p>
+     */
+    public static class IterOverAllFieldsAndMethods {
         /**
          * Operation to perform before visiting a SIRstream.
          * (for overriding)
@@ -765,11 +776,14 @@ public class StaticsProp {
         }
     
         /**
-         * Visit all field and method definitions reachable from a SIRStream.
+         * Visit all field, method, and parameter definitions reachable from a SIRStream (Including substreams).
          * 
          * Given a SIRStream (filter, pipeline, splitjoin, ...) for all
          * Iterate over the stream, and for each element use the passed
-         * KjcVisitor to iterate over all field and method declarations.
+         * EmptyAttributeVisitor to iterate over all field and method declarations.
+         * 
+         * See {@link #iterOverFieldsAndMethods(SIRStream, boolean, boolean, boolean, EmptyAttributeVisitor) iterOverFieldsAndMethods}
+         * for more details.
          *
          * @param str        a SIRStream object -- root of traversal
          * @param            doFields == true to visit field declarations
@@ -801,15 +815,32 @@ public class StaticsProp {
 
 
         /**
-         * Visit all field and method declarations in a SIRStream element.
+         * Visit all field and method declarations in a SIRStream element (Not including substreams).
          * 
          * Given a SIRStream element, find all field declarations and methods
          * defined in the stream element, and have them accept the passed
          * visitor.
+         * 
+         * It is a Java limitation that a parameterized return type can not be 
+         * instantiated to void (as opposed to generics in ML or Haskell) so even
+         * if you want to use a subclass of {@link at.dms.kjc.KjcVisitor KjcVisitor} 
+         * to gather information, you
+         * still need to use a subclass of {@link at.dms.kjc.EmptyAttributeVisitor EmptyAttributeVisitor}.
+         * In fact, you will want a visitor extended for dealing with SIR constructs.
+         * 
+         * This method contains special cases for visitors extending 
+         * {@link at.dms.kjc.ReplacingVisitor ReplacingVisitor}: these visitors automatically
+         * replace (destructively update) sub-trees of the AST that acepts them.
+         * Here, we update any top-level method declarations / field declarations / parameter values,
+         * changed by a ReplacingVisitor.
+         *
+         * If you are updating parameters, or just inspecting the actual values of parameters,
+         * you should call {@link #at.dms.kjc.sir.SIRDynamicRateManager.pushIdentityPolicy()}
+         * before calling this method (and {@link #at.dms.kjc.sir.SIRDynamicRateManager.popPolicy()} after).
          *
          * @param str        a SIRStream object (filter, splitjoin, ...)
          * @param doFields == true to visit field declarations
-         * @param doMethods == true to vieis method declarations
+         * @param doMethods == true to visit method declarations
          * @param doParameters == true to visit parameters (push / pop / peek rates, joiner / splitter weights...)
          * @param visitor inheriting from EmptyAttributeVisitor that will be used on field / method / parameter declarations.
          *
@@ -819,6 +850,7 @@ public class StaticsProp {
                 boolean doMethods,
                 boolean doParameters,
                 EmptyAttributeVisitor visitor) {
+            
             if (doFields) {
                 for (JFieldDeclaration field : str.getFields()) {
                     field.accept(visitor);
@@ -830,39 +862,95 @@ public class StaticsProp {
                 }
             }
             if (doParameters) {
+                boolean replacing = visitor instanceof ReplacingVisitor;
+
                 if (str instanceof SIRSplitJoin) {
+                    // SplitJoin has splitter and joiner edge weight parameters.
+                    
                     SIRSplitJoin spj = (SIRSplitJoin)str;
-                    for (JExpression weight : spj.getJoiner().getInternalWeights()) {
-                        weight.accept(visitor);
+                    {
+                        // visit / update joiner weight expressions
+                        JExpression[] jweights = spj.getJoiner()
+                                .getInternalWeights();
+                        for (int i = 0; i < jweights.length; i++) {
+                            Object o = jweights[i].accept(visitor);
+                            if (replacing && o != null) {
+                                jweights[i] = (JExpression) o;
+                            }
+                        }
                     }
-                    for (JExpression weight : spj.getSplitter().getInternalWeights()) {
-                        weight.accept(visitor);
+                    {
+                        // visit / update splitter weight expressions
+                        JExpression[] sweights = spj.getSplitter()
+                                .getInternalWeights();
+                        for (int i = 0; i < sweights.length; i++) {
+                            Object o = sweights[i].accept(visitor);
+                            if (replacing && o != null) {
+                                sweights[i] = (JExpression) o;
+                            }
+                        }
                     }
                 } else if (str instanceof SIRFeedbackLoop) {
+                    // Feedback loop has joiner and splitter edge weight parameters, 
+                    // a delay (number of pre-enqueued values to read)
+                    // and enqueued values.  The enqueued values are taken care of
+                    // above (depending on whether EnqueueToInitPath has been called,
+                    // they are either method calls to enqueueXXX in init() or they are
+                    // the initPath(int i) method declaration.
+                    
                     SIRFeedbackLoop loop = (SIRFeedbackLoop)str;
-                    for (JExpression weight : loop.getJoiner().getInternalWeights()) {
-                        weight.accept(visitor);
+                    {
+                        // visit / update joiner weight expressions
+                        JExpression[] jweights = loop.getJoiner()
+                                .getInternalWeights();
+                        for (int i = 0; i < jweights.length; i++) {
+                            Object o = jweights[i].accept(visitor);
+                            if (replacing && o != null) {
+                                jweights[i] = (JExpression) o;
+                            }
+                        }
                     }
-                    for (JExpression weight : loop.getSplitter().getInternalWeights()) {
-                        weight.accept(visitor);
+                    {
+                        // visit / update splitter weight expressions
+                        JExpression[] sweights = loop.getSplitter()
+                                .getInternalWeights();
+                        for (int i = 0; i < sweights.length; i++) {
+                            Object o = sweights[i].accept(visitor);
+                            if (replacing && o != null) {
+                                sweights[i] = (JExpression) o;
+                            }
+                        }
                     }
+                    // visit / update delay.
                     JExpression delay = loop.getDelay();
                     if (delay != null) {
-                        delay.accept(visitor);
+                        Object o = delay.accept(visitor);
+                        if (replacing && o != null) {
+                            loop.setDelay((JExpression)o);
+                        }
                     }
                 } else if (str instanceof SIRPhasedFilter) {
                     for (JMethodDeclaration method : ((SIRPhasedFilter)str).getMethods()) {
                         JExpression pop = method.getPop();
                         if (pop != null) {
-                            pop.accept(visitor);
+                            Object o = pop.accept(visitor);
+                            if (replacing && o != null) {
+                                method.setPop((JExpression)o);
+                            }
                         }
                         JExpression peek = method.getPeek();
                         if (peek != null) {
-                            peek.accept(visitor);
+                            Object o = peek.accept(visitor);
+                            if (replacing && o != null) {
+                                method.setPeek((JExpression)o);
+                            }
                         }
                         JExpression push = method.getPush();
                         if (push != null) {
-                            push.accept(visitor);
+                            Object o = push.accept(visitor);
+                            if (replacing && o != null) {
+                                method.setPush((JExpression)o);
+                            }
                         }
                     }
                 }

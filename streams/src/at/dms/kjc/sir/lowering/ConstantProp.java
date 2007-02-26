@@ -2,11 +2,9 @@ package at.dms.kjc.sir.lowering;
 
 import java.util.*;
 import at.dms.kjc.*;
-//import at.dms.util.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.common.ArrayCopy;
-//import at.dms.kjc.lir.*;
-//import at.dms.compiler.JavaStyleComment;
+
 /**
  * This class propagates constants and unrolls loops.  Currently only
  * works for init functions.
@@ -49,6 +47,7 @@ public class ConstantProp {
      */
     private void propagateAndUnroll(SIRStream str, Hashtable constants) {
         Unroller unroller;
+        
         do {
             if(KjcOptions.struct&&!Flattener.INIT_STATEMENTS_RESOLVED) {
                 StructDestroyer dest=new StructDestroyer();
@@ -95,10 +94,12 @@ public class ConstantProp {
     }
 
     /**
-     * Given a propagator <propagator>, this propagates constants
-     * through the fields of <str>.
+     * Given a propagator <b>propagator</b>, this propagates constants
+     * through parameters of <b>str</b>: push, pop, peek rate declarations, 
+     * splitter, joiner weights, feedbackloop delay; also through field declarations.
      */
     private void propagateFields(Propagator propagator, SIRStream str) {
+           
         // in actual field declarations, look for array dimensions
         // that refer to fields
         JFieldDeclaration[] fields = str.getFields();
@@ -131,7 +132,8 @@ public class ConstantProp {
     }
 
     /**
-     * Use <propagator> to propagate constants into the fields of <filter>
+     * Use <b>propagator</b> to propagate constants into the peek, pop, push of <b>filter</b>.
+     * peek, pop, push declarations on the method declarations.
      */
     private void propagateFilterFields(Propagator propagator, 
                                        SIRPhasedFilter filter) {

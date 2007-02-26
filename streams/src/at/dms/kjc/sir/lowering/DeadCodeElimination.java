@@ -5,6 +5,7 @@ import at.dms.kjc.sir.*;
 import at.dms.compiler.JavaStyleComment;
 
 import java.util.HashSet;
+import java.util.Set;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.ListIterator;
@@ -30,51 +31,81 @@ public class DeadCodeElimination {
     }
 
     /**
+     * Visitor to find un-dead locals.
+     * (local variables that occur as r-values).
+     */
+    
+    private static class FindLocals extends SLIREmptyAttributeVisitor {
+        Set<JLocalVariable> varsUsed;
+
+        /** 
+         * Constructor
+         * @param varsUsed  reference to set of variables, to be updated with local variables that occur as r-values
+         */
+        public FindLocals(Set<JLocalVariable> varsUsed) {
+            this.varsUsed = varsUsed;
+        }
+        
+        // visitor bits:
+        
+        /**
+         * only descend into RHS of assignment expression.
+         * If something is assigned but never referenced,
+         * it's still dead.
+         */
+        public Object visitAssignmentExpression(JAssignmentExpression self,
+                                              JExpression left,
+                                              JExpression right) {
+            // if not a local variable must descend into left
+            if (!(left instanceof JLocalVariableExpression)) {
+                left.accept(this);
+            }
+            right.accept(this);
+            return null;
+        }
+
+        public Object visitCompoundAssignmentExpression(JCompoundAssignmentExpression self,
+                                                      int oper,
+                                                      JExpression left,
+                                                      JExpression right) {
+            // if not a local variable must descend into left
+            if (!(left instanceof JLocalVariableExpression)) {
+                left.accept(this);
+            }
+            right.accept(this);
+            return null;
+        }
+
+
+        // If we get here, we have a variable reference that is user as a r-value.
+        // add it to set of used variables.
+        public Object visitLocalVariableExpression(JLocalVariableExpression self,
+                                                 String ident) {
+            super.visitLocalVariableExpression(self, ident);
+            varsUsed.add(self.getVariable());
+            return null;
+        }
+        
+    }
+    
+    /**
      * Removes local variables that are never referenced.
      */
     public static void removeDeadLocalDecls(SIRCodeUnit unit) {
         // variables used
-        final HashSet<JLocalVariable> varsUsed = new HashSet<JLocalVariable>();
+        final Set<JLocalVariable> varsUsed = new HashSet<JLocalVariable>();
 
         // in all the methods...
         JMethodDeclaration[] methods = unit.getMethods();
+        FindLocals findLocals = new FindLocals(varsUsed);
         for (int i=0; i<methods.length; i++) {
-            // take a recording pass, seeing what's used
-            methods[i].accept(new SLIREmptyVisitor() {
-                    /**
-                     * only descend into RHS of assignment expression.
-                     * If something is assigned but never referenced,
-                     * it's still dead.
-                     */
-                    public void visitAssignmentExpression(JAssignmentExpression self,
-                                                          JExpression left,
-                                                          JExpression right) {
-                        // if not a local variable must descend into left
-                        if (!(left instanceof JLocalVariableExpression)) {
-                            left.accept(this);
-                        }
-                        right.accept(this);
-                    }
-
-                    public void visitCompoundAssignmentExpression(JCompoundAssignmentExpression self,
-                                                                  int oper,
-                                                                  JExpression left,
-                                                                  JExpression right) {
-                        // if not a local variable must descend into left
-                        if (!(left instanceof JLocalVariableExpression)) {
-                            left.accept(this);
-                        }
-                        right.accept(this);
-                    }
-
-
-                    public void visitLocalVariableExpression(JLocalVariableExpression self,
-                                                             String ident) {
-                        super.visitLocalVariableExpression(self, ident);
-                        varsUsed.add(self.getVariable());
-//                        System.err.println("var used: " + ident + " " + self.getVariable().hashCode());
-                    }
-                });
+            // take a recording pass, seeing what's used,
+            // accumulate un-dead variables to get from FindLocals.getVarsUsed()
+            methods[i].accept(findLocals);
+        }
+        
+        if (unit instanceof SIRStream) {
+            StaticsProp.IterOverAllFieldsAndMethods.iterOverFieldsAndMethods((SIRStream)unit, false, false, true, findLocals);
         }
         
         for (int i=0; i<methods.length; i++) {

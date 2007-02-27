@@ -659,13 +659,13 @@ public class SwitchCode extends at.dms.util.Utils {
         }
         
         //for now only handle joiners whose output is not split
-        if (node.isJoiner() && node.ways > 0 && node.edges[0].isSplitter()) 
+        if (node.isJoiner() && node.ways > 0 && node.getEdges()[0].isSplitter()) 
             return false;
         
         //only handle filters whose output is split once
-        if (node.isFilter() && node.ways > 0 && node.edges[0].isSplitter()) {
-            for (int j = 0; j < node.edges[0].ways; j++) {
-                if (node.edges[0].edges[j].isSplitter())
+        if (node.isFilter() && node.ways > 0 && node.getEdges()[0].isSplitter()) {
+            for (int j = 0; j < node.getEdges()[0].ways; j++) {
+                if (node.getEdges()[0].getEdges()[j].isSplitter())
                     assert false : 
                         "Case of filter split more than once not support by Simple Switch Code.";
             }
@@ -928,7 +928,7 @@ public class SwitchCode extends at.dms.util.Utils {
         assert false : "Simple switch code for joiners is broken!";
         assert node.isJoiner();
         //get the destination direction for this joiner
-        LinkedList<ComputeNode> destRoute = layout.router.getRoute(ssg, tile, layout.getComputeNode(node.edges[0]));
+        LinkedList<ComputeNode> destRoute = layout.router.getRoute(ssg, tile, layout.getComputeNode(node.getEdges()[0]));
         String destDir = rawChip.getDirection(tile, destRoute.get(1));
         
         //if the node is a joiner, generate code that will

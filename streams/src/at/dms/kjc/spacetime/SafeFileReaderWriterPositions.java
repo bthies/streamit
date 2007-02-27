@@ -73,7 +73,7 @@ public class SafeFileReaderWriterPositions {
     private class CheckGraph implements FlatVisitor {
         public void visitNode(FlatNode node) {
             if (node.contents instanceof SIRFileReader) {
-                FlatNode[] outgoing = node.edges;
+                FlatNode[] outgoing = node.getEdges();
                 if (outgoing.length == 1
                         && outgoing[0].contents instanceof SIRSplitter) {
                     readerBeforeSplitter.add(node.contents);

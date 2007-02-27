@@ -80,7 +80,7 @@ public class Util extends at.dms.util.Utils {
             sumWeights += prev.weights[i];
         int thisWeight = -1;
         for (int i = 0; i < prev.ways; i++) {
-            if (prev.edges[i].equals(node)) {
+            if (prev.getEdges()[i].equals(node)) {
                 thisWeight = prev.weights[i];
                 break;
             }
@@ -196,8 +196,8 @@ public class Util extends at.dms.util.Utils {
         if (node == null)
             return set;
 
-        for (int i = 0; i < node.edges.length; i++) 
-            getAssignedEdgesHelper(node.edges[i], set);
+        for (int i = 0; i < node.getEdges().length; i++) 
+            getAssignedEdgesHelper(node.getEdges()[i], set);
 
         return set;
     }
@@ -210,8 +210,8 @@ public class Util extends at.dms.util.Utils {
             return;
         }
         else {
-            for (int i = 0; i < node.edges.length; i++) 
-                getAssignedEdgesHelper(node.edges[i], set);
+            for (int i = 0; i < node.getEdges().length; i++) 
+                getAssignedEdgesHelper(node.getEdges()[i], set);
         }
     }
 
@@ -224,7 +224,7 @@ public class Util extends at.dms.util.Utils {
         if (node == null || node.isSplitter())
             Utils.fail("getDirectDownStream(...) error. Node not filter or joiner.");
         if (node.ways > 0)
-            return getDirectDownstreamHelper(node.edges[0]);
+            return getDirectDownstreamHelper(node.getEdges()[0]);
         else 
             return new HashSet<Object>();
     }
@@ -243,7 +243,7 @@ public class Util extends at.dms.util.Utils {
         
             for (int i = 0; i < current.ways; i++) {
                 if(current.weights[i]!=0)
-                    RawBackend.addAll(ret, getDirectDownstreamHelper(current.edges[i]));
+                    RawBackend.addAll(ret, getDirectDownstreamHelper(current.getEdges()[i]));
             }
             return ret;
         }

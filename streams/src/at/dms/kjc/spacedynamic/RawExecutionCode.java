@@ -330,7 +330,7 @@ public class RawExecutionCode extends at.dms.util.Utils implements FlatVisitor,
         // get the number of item current produces
         int currentUpStreamItems = 
 	    getUpStreamItems(ssg
-			     .getExecutionCounts(true), current.edges[0]);
+			     .getExecutionCounts(true), current.getEdges()[0]);
         //System.out.println(currentUpStreamItems);
         /*
          * if (getUpStreamItems(ssg.getExecutionCounts(true), node) !=

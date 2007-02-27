@@ -41,7 +41,7 @@ public class FileReaderDevice extends IODevice {
         else {
             //otherwise, just use the downstream filter as dest
             assert node.ways == 1;
-            dest = node.edges[0];
+            dest = node.getEdges()[0];
             return;
         }
     }

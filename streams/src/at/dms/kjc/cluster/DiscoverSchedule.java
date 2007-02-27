@@ -133,7 +133,7 @@ class DiscoverSchedule
                 }   
                 
                 FlatNode splitterNode = NodeEnumerator.getFlatNode(NodeEnumerator.getSIROperatorId(oper));
-                FlatNode[] children = splitterNode.edges;
+                FlatNode[] children = splitterNode.getEdges();
                 int [] weights = splitterNode.weights;
                 for (int i = 0; i < children.length; i++) {
                     if (weights[i] == 0) {

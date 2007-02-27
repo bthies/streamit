@@ -33,7 +33,7 @@ public class FlatNode {
     /** The operator this node contains (either a splitter, joiner, or filter) */
     public SIROperator contents;
     /** The outgoing arcs of this FlatNode */
-    public FlatNode[] edges;
+    private FlatNode[] edges;
     /** The incoming edges of this FlatNode */
     public FlatNode[] incoming;
     /** The round robin weights of each incoming arc */
@@ -65,7 +65,7 @@ public class FlatNode {
      * Remove all downstream edges this node.
      */
     public void removeEdges() {
-        edges = new FlatNode[0];
+        setEdges(new FlatNode[0]);
         ways = 0;
         weights = new int[0];
         currentEdge = 0;
@@ -90,21 +90,21 @@ public class FlatNode {
      * @param to The FlatNode whose edge we want to remove.
      */
     public void removeForwardEdge(FlatNode to) {
-        assert edges.length == ways && edges.length == weights.length
-        && edges.length > 0;
+        assert getEdges().length == ways && getEdges().length == weights.length
+        && getEdges().length > 0;
         
         //the new versions of the outgoing edges and the associated weights
-        FlatNode[] newEdges = new FlatNode[edges.length - 1];
-        int[] newWeights = new int[edges.length - 1];
+        FlatNode[] newEdges = new FlatNode[getEdges().length - 1];
+        int[] newWeights = new int[getEdges().length - 1];
 
         boolean found = false;
         int j = 0;
 
         //iterate over all the edges and store the ones we don't want
         //to remove in the new arrays
-        for (int i = 0; i < edges.length; i++) {
-            if (to != edges[i]) {
-                newEdges[j] = edges[i];
+        for (int i = 0; i < getEdges().length; i++) {
+            if (to != getEdges()[i]) {
+                newEdges[j] = getEdges()[i];
                 newWeights[j++] = weights[i];
             } else
                 found = true;
@@ -112,7 +112,7 @@ public class FlatNode {
 
         assert found : "Trying to remove an outgoing edge that does not exist.";
         
-        edges = newEdges;
+        setEdges(newEdges);
         weights = newWeights;
         ways--;
         currentEdge--;
@@ -197,7 +197,7 @@ public class FlatNode {
             ways = 0;
             inputs = 0;
             incoming = new FlatNode[0];
-            edges = new FlatNode[0];
+            setEdges(new FlatNode[0]);
             // edges[0] = null;
         }
 
@@ -210,7 +210,7 @@ public class FlatNode {
             inputs = joiner.getWays();
             incoming = new FlatNode[inputs];
             incomingWeights = joiner.getWeights();
-            edges = new FlatNode[0];
+            setEdges(new FlatNode[0]);
             // edges[0] = null;
         }
         if (op instanceof SIRSplitter) {
@@ -219,7 +219,7 @@ public class FlatNode {
             //splitter weights...
             SIRSplitter splitter = (SIRSplitter) op;
             ways = splitter.getWays();
-            edges = new FlatNode[ways];
+            setEdges(new FlatNode[ways]);
             weights = splitter.getWeights();
             inputs = 0;
             incoming = new FlatNode[0];
@@ -278,12 +278,12 @@ public class FlatNode {
         //outgoing structures
         if (ways == 0) {
             ways = 1;
-            edges = new FlatNode[ways];
+            setEdges(new FlatNode[ways]);
             weights = new int[1];
             weights[0] = 1;
         }
 
-        edges[currentEdge++] = to;
+        getEdges()[currentEdge++] = to;
     }
 
     /**
@@ -317,14 +317,14 @@ public class FlatNode {
             || !(contents.getParent() instanceof SIRFeedbackLoop))
             Utils.fail("We do not want to swap the edges on non-splitter");
         
-        if (edges.length != 2)
+        if (getEdges().length != 2)
             return;
 
         // The weights are correct and do not need to be swapped
 
-        FlatNode temp = edges[0];
-        edges[0] = edges[1];
-        edges[1] = temp;
+        FlatNode temp = getEdges()[0];
+        getEdges()[0] = getEdges()[1];
+        getEdges()[1] = temp;
     }
 
     /**
@@ -349,10 +349,10 @@ public class FlatNode {
         set.add(this);
         v.visitNode(this);
         for (int i = 0; i < ways; i++) {
-            if (edges[i] == null)
+            if (getEdges()[i] == null)
                 continue;
-            if (!set.contains(edges[i]))
-                edges[i].accept(v, set, false);
+            if (!set.contains(getEdges()[i]))
+                getEdges()[i].accept(v, set, false);
         }
     }
 
@@ -599,7 +599,7 @@ public class FlatNode {
      */
     public int getWeight(FlatNode to) {
         for (int i = 0; i < ways; i++) {
-            if (edges[i] == to)
+            if (getEdges()[i] == to)
                 return weights[i];
         }
         assert false : "Node " + this + " not connected to " + to;
@@ -616,7 +616,7 @@ public class FlatNode {
      */
     public int getWay(FlatNode to) {
         for (int i = 0; i < ways; i++) {
-            if (edges[i] == to)
+            if (getEdges()[i] == to)
                 return i;
         }
         assert false : "Node " + this + " not connected to " + to;
@@ -668,6 +668,16 @@ public class FlatNode {
             return from.getWeight(to);
         assert false : "Invalid FlatNode type" + from.toString();
         return -1;
+    }
+
+
+    public void setEdges(FlatNode[] edges) {
+        this.edges = edges;
+    }
+
+
+    public FlatNode[] getEdges() {
+        return edges;
     }
 
 }

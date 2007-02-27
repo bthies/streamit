@@ -319,7 +319,7 @@ public class RawExecutionCode extends at.dms.util.Utils
         //now current must be a joiner or filter
         //get the number of item current produces
         int currentUpStreamItems = getUpStreamItems(RawBackend.initExecutionCounts,
-                                                    current.edges[0]);
+                                                    current.getEdges()[0]);
         System.out.println(currentUpStreamItems);
         /*
           if (getUpStreamItems(RawBackend.initExecutionCounts, node) != 

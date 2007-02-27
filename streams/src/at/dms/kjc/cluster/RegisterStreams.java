@@ -110,16 +110,16 @@ public class RegisterStreams {
             // create a vector of output tapes
 
                 int source = NodeEnumerator.getFlatNodeId(node);
-                if (node.edges != null && node.edges.length > 0 && source != -1) {
+                if (node.getEdges() != null && node.getEdges().length > 0 && source != -1) {
 
-                    Tape[] outgoings = new Tape[node.edges.length];
-                    for (int i = 0; i < node.edges.length; i++) {
+                    Tape[] outgoings = new Tape[node.getEdges().length];
+                    for (int i = 0; i < node.getEdges().length; i++) {
                         // don't track edges with no tapes.
-                        if (node.edges[i] == null || node.weights[i] == 0
+                        if (node.getEdges()[i] == null || node.weights[i] == 0
                                 || output_t == CStdType.Void) {
                             outgoings[i] = null;
                         } else {
-                            int ndest = NodeEnumerator.getFlatNodeId(node.edges[i]);
+                            int ndest = NodeEnumerator.getFlatNodeId(node.getEdges()[i]);
                             assert ndest >= 0; // if have outgoing edge, it
                                                 // should have a number.
                             outgoings[i] = TapeBase.newTape(source, ndest, output_t);

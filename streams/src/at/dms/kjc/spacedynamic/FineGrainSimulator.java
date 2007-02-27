@@ -273,7 +273,7 @@ public class FineGrainSimulator extends Simulator {
     // return the destinations of the data item and generate the code
     // to receive data into the joiner
     private List<FlatNode> getDestination(FlatNode node, SimulationCounter counters) {
-        List<FlatNode> list = getDestinationHelper(node.edges[0], counters, "", node);
+        List<FlatNode> list = getDestinationHelper(node.getEdges()[0], counters, "", node);
         HashSet<FlatNode> visited = new HashSet<FlatNode>();
         // generate joiner receive code
         // iterate over the list
@@ -311,7 +311,7 @@ public class FineGrainSimulator extends Simulator {
         // create a list and add it
         if (node.contents instanceof SIRFilter) {
             if (layout.getIdentities().contains(node)) {
-                return getDestinationHelper(node.edges[0], counters,
+                return getDestinationHelper(node.getEdges()[0], counters,
                                             joinerBuffer, node);
             }
             counters.incrementBufferCount(node);
@@ -331,7 +331,7 @@ public class FineGrainSimulator extends Simulator {
                 // if previous == identity
                 return list;
             } else {
-                return getDestinationHelper(node.edges[0], counters,
+                return getDestinationHelper(node.getEdges()[0], counters,
                                             joinerBuffer + getJoinerBuffer(node, previous), node);
             }
         } else if (node.contents instanceof SIRSplitter) {
@@ -346,7 +346,7 @@ public class FineGrainSimulator extends Simulator {
                     if (counters.getArcCountOutgoing(node, i) == 0)
                         counters.resetArcCountOutgoing(node, i);
                     counters.decrementArcCountOutgoing(node, i);
-                    list.addAll(getDestinationHelper(node.edges[i], counters,
+                    list.addAll(getDestinationHelper(node.getEdges()[i], counters,
                                                      joinerBuffer, previous));
                 }
                 return list;
@@ -355,7 +355,7 @@ public class FineGrainSimulator extends Simulator {
                 for (int i = 0; i < node.ways; i++) {
                     if (counters.getArcCountOutgoing(node, i) > 0) {
                         counters.decrementArcCountOutgoing(node, i);
-                        return getDestinationHelper(node.edges[i], counters,
+                        return getDestinationHelper(node.getEdges()[i], counters,
                                                     joinerBuffer, previous);
                     }
                 }
@@ -367,7 +367,7 @@ public class FineGrainSimulator extends Simulator {
                 for (int i = 0; i < node.ways; i++) {
                     if (counters.getArcCountOutgoing(node, i) > 0) {
                         counters.decrementArcCountOutgoing(node, i);
-                        return getDestinationHelper(node.edges[i], counters,
+                        return getDestinationHelper(node.getEdges()[i], counters,
                                                     joinerBuffer, previous);
                     }
                 }
@@ -409,9 +409,9 @@ public class FineGrainSimulator extends Simulator {
             // (the order defined by the joiner) add to the queue in the reverse
             // order
             for (int i = node.ways - 1; i >= 0; i--) {
-                if (!visited.contains(node.edges[i])) {
-                    queue.add(node.edges[i]);
-                    visited.add(node.edges[i]);
+                if (!visited.contains(node.getEdges()[i])) {
+                    queue.add(node.getEdges()[i]);
+                    visited.add(node.getEdges()[i]);
                 }
             }
         }

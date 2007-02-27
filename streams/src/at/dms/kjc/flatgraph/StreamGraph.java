@@ -129,7 +129,7 @@ public class StreamGraph {
      */
     private void searchDownstream(FlatNode current, StaticStreamGraph ssg,
                                   HashSet<FlatNode> visited, List<FlatNode> dynamicBoundary) {
-        assert current.ways == current.edges.length;
+        assert current.ways == current.getEdges().length;
 
         // we may have already seen this node before, if so just exit
         if (visited.contains(current)) {
@@ -149,13 +149,13 @@ public class StreamGraph {
             // a new SSG, so add it to dynamicBoundary, but only if we have not
             // seen the node yet: We way have visited it in an upstream walk
             if (filter.getPush().isDynamic()) {
-                assert current.ways == 1 && current.edges.length == 1
-                    && current.edges[0] != null;
-                if (!visited.contains(current.edges[0])) {
-                    dynamicBoundary.add(current.edges[0]);
+                assert current.ways == 1 && current.getEdges().length == 1
+                    && current.getEdges()[0] != null;
+                if (!visited.contains(current.getEdges()[0])) {
+                    dynamicBoundary.add(current.getEdges()[0]);
                     // set the next field of the ssg for the current flatnode
-                    ssg.addNext(current, current.edges[0]);
-                    cutGraph(current, current.edges[0]);
+                    ssg.addNext(current, current.getEdges()[0]);
+                    cutGraph(current, current.getEdges()[0]);
                 }
                 return;
             }
@@ -166,25 +166,25 @@ public class StreamGraph {
             // but only if we haven't visited the node yet, we may have visited
             // it in
             // upstream walk...
-            if (current.ways > 0 && current.edges[0].isFilter()) {
-                assert current.ways == 1 && current.edges.length == 1;
-                SIRFilter downstream = (SIRFilter) current.edges[0].contents;
+            if (current.ways > 0 && current.getEdges()[0].isFilter()) {
+                assert current.ways == 1 && current.getEdges().length == 1;
+                SIRFilter downstream = (SIRFilter) current.getEdges()[0].contents;
                 if ((downstream.getPeek().isDynamic() || downstream.getPop()
                      .isDynamic())) {
-                    if (!visited.contains(current.edges[0])) {
-                        dynamicBoundary.add(current.edges[0]);
+                    if (!visited.contains(current.getEdges()[0])) {
+                        dynamicBoundary.add(current.getEdges()[0]);
                         // set the next field of the ssg for the current
                         // flatnode
-                        ssg.addNext(current, current.edges[0]);
-                        cutGraph(current, current.edges[0]);
+                        ssg.addNext(current, current.getEdges()[0]);
+                        cutGraph(current, current.getEdges()[0]);
                     }
                     return;
                 }
             }
             // otherwise continue the ssg if connected to more
-            if (current.edges.length > 0) {
-                assert current.edges[0] != null;
-                searchDownstream(current.edges[0], ssg, visited,
+            if (current.getEdges().length > 0) {
+                assert current.getEdges()[0] != null;
+                searchDownstream(current.getEdges()[0], ssg, visited,
                                  dynamicBoundary);
             }
         } else if (current.isSplitter()) {
@@ -193,8 +193,8 @@ public class StreamGraph {
                 //assert current.edges[i] != null;
                 //case of splitting to allow some outside stream to join.
                 // usual case.
-                if (current.edges[i] == null) continue;
-                searchDownstream(current.edges[i], ssg, visited,
+                if (current.getEdges()[i] == null) continue;
+                searchDownstream(current.getEdges()[i], ssg, visited,
                                  dynamicBoundary);
             }
         } else {
@@ -214,9 +214,9 @@ public class StreamGraph {
                 }
             }
             // now resume the downstream search
-            if (current.edges.length > 0) {
-                assert current.edges[0] != null;
-                searchDownstream(current.edges[0], ssg, visited,
+            if (current.getEdges().length > 0) {
+                assert current.getEdges()[0] != null;
+                searchDownstream(current.getEdges()[0], ssg, visited,
                                  dynamicBoundary);
             }
         }
@@ -349,8 +349,8 @@ public class StreamGraph {
                 // now visited so would end a downstream search started
                 // above it prematurely.
                 for (int i = 0; i < current.ways; i++) {
-                    if (current.edges[i] != null) {
-                        searchDownstream(current.edges[i], ssg, visited,
+                    if (current.getEdges()[i] != null) {
+                        searchDownstream(current.getEdges()[i], ssg, visited,
                                 dynamicBoundary);
                     }
                 }

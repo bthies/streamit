@@ -35,9 +35,9 @@ public class BreadthFirstTraversal
             //to keep the order of the nodes of a splitjoin in the correct order
             //(the order defined by the joiner) add to the queue in the reverse order
             for (int i = node.ways - 1; i >= 0; i--) {
-                if (!visited.contains(node.edges[i])) {
-                    queue.add(node.edges[i]); 
-                    visited.add(node.edges[i]);
+                if (!visited.contains(node.getEdges()[i])) {
+                    queue.add(node.getEdges()[i]); 
+                    visited.add(node.getEdges()[i]);
                 }
             }
         } 

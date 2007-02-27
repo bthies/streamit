@@ -55,9 +55,9 @@ public class ConvertChannelExprsMIV {
         //set the push buffer and the push counter if this filter pushes
         if (current.getNode().ways > 0) {
             assert current.getNode().ways == 1;
-            assert current.getNode().edges[0] != null;
+            assert current.getNode().getEdges()[0] != null;
         
-            FusionState next = FusionState.getFusionState(current.getNode().edges[0]);
+            FusionState next = FusionState.getFusionState(current.getNode().getEdges()[0]);
 
             this.pushBuffer = current.getPushBufferVar(isInit);
             //if this is not the init, then remember to push after the items saved,

@@ -178,7 +178,7 @@ public class ScheduledStaticStreamGraph extends StaticStreamGraph {
              } else if (node.contents instanceof SIRSplitter) {
                  // System.out.println("Splitter:"+node);
                  int[] weights = node.weights;
-                 FlatNode[] edges = node.edges;
+                 FlatNode[] edges = node.getEdges();
                  int sum = 0;
                  for (int j = 0; j < weights.length; j++)
                      sum += weights[j];

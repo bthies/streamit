@@ -90,8 +90,8 @@ public class SplitterFusionState extends FusionState
         if (node.isDuplicateSplitter() && node.ways > 0) {
             //check that all the down stream buffersize are equal for both init and steady, 
             //there is no peek buffer for immediate downstream 
-            int bufferSizeSteady = FusionState.getFusionState(node.edges[0]).getBufferSize(node, false);
-            int bufferSizeInit = FusionState.getFusionState(node.edges[0]).getBufferSize(node, true);
+            int bufferSizeSteady = FusionState.getFusionState(node.getEdges()[0]).getBufferSize(node, false);
+            int bufferSizeInit = FusionState.getFusionState(node.getEdges()[0]).getBufferSize(node, true);
 
             //make sure there are no items remaining on the incoming buffer after initialization
             if (remaining[0] > 0)
@@ -107,34 +107,34 @@ public class SplitterFusionState extends FusionState
                 return true;
             }
             //make sure that we have a filter
-            if (!node.edges[0].isFilter()) {
+            if (!node.getEdges()[0].isFilter()) {
                 //System.out.println("Downstream not filter");
                 return true;
             }
 
             //make sure there is no remaining items
-            if (FusionState.getFusionState(node.edges[0]).getRemaining(node, true) > 0) {
+            if (FusionState.getFusionState(node.getEdges()[0]).getRemaining(node, true) > 0) {
                 //System.out.println("Downstream peek buffer > 0");
                 return true;
             }
         
             for (int i = 1; i < node.ways; i++) {
                 //make sure that there is a filter connected
-                if (!node.edges[i].isFilter()) {
+                if (!node.getEdges()[i].isFilter()) {
                     //System.out.println("Downstream not filter");
                     return true;
                 }
                 //check the peek buffer, it must be zero
-                if (FusionState.getFusionState(node.edges[0]).getRemaining(node, true) > 0) {
+                if (FusionState.getFusionState(node.getEdges()[0]).getRemaining(node, true) > 0) {
                     //System.out.println("Downstream peek buffer > 0");
                     return true;
                 }
                 //if all buffer size's are equal, good
-                if (bufferSizeSteady != FusionState.getFusionState(node.edges[i]).getBufferSize(node, false)) {
+                if (bufferSizeSteady != FusionState.getFusionState(node.getEdges()[i]).getBufferSize(node, false)) {
                     //System.out.println("Unequal buffer sizes of children (steady)");
                     return true;
                 }
-                if (bufferSizeInit != FusionState.getFusionState(node.edges[i]).getBufferSize(node, true)) {
+                if (bufferSizeInit != FusionState.getFusionState(node.getEdges()[i]).getBufferSize(node, true)) {
                     //System.out.println("Unequal buffer sizes of children (init)");
                     return true;
                 }
@@ -159,7 +159,7 @@ public class SplitterFusionState extends FusionState
         //filter's share the same incoming buffer, the buffer of the splitter...
         if (!necessary) {
             for (int i = 0; i < node.ways; i++)
-                ((FilterFusionState)FusionState.getFusionState(node.edges[i])).
+                ((FilterFusionState)FusionState.getFusionState(node.getEdges()[i])).
                     sharedBufferVar(bufferVar[0]);
         }
 
@@ -251,7 +251,7 @@ public class SplitterFusionState extends FusionState
             JVariableDefinition innerVar = 
                 GenerateCCode.newIntLocal(RRINNERVAR + myUniqueID + "_", i, 0);
             //get the downstream fusion state
-            FusionState downstream = FusionState.getFusionState(node.edges[i]);
+            FusionState downstream = FusionState.getFusionState(node.getEdges()[i]);
 
             //add the decl of the induction variable
             if (!KjcOptions.doloops)
@@ -357,7 +357,7 @@ public class SplitterFusionState extends FusionState
         for (int i = 0; i < node.ways; i++) {
             assert node.weights[i] == 1;
             //get the downstream fusion state
-            FusionState downstream =  FusionState.getFusionState(node.edges[i]);
+            FusionState downstream =  FusionState.getFusionState(node.getEdges()[i]);
 
             //if init outgoing[induction] = incoming[induction]
             //if steady outgoing[induction + remaining_outgoing] = incoming[induction]

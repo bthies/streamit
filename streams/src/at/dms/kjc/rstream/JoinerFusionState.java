@@ -195,10 +195,10 @@ public class JoinerFusionState extends FusionState
         if (mult == 0)
             return statements.getStatementArray();
     
-        assert node.edges[0] != null;
+        assert node.getEdges()[0] != null;
     
         //the single downstream FusionState
-        FusionState downstream = FusionState.getFusionState(node.edges[0]);
+        FusionState downstream = FusionState.getFusionState(node.getEdges()[0]);
         //the single outgoing buffer
         JVariableDefinition outgoingBuffer = downstream.getBufferVar(node, isInit);
         //the induction var of the outer loop that counts to mult

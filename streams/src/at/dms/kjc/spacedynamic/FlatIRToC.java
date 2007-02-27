@@ -286,7 +286,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
                 if (flatNode.ways > 0) {
                     //it has to be a pipeline!
                     assert flatNode.ways == 1;
-                    downstream = flatNode.edges[0];
+                    downstream = flatNode.getEdges()[0];
                 }
             }
             

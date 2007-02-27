@@ -34,7 +34,7 @@ public class PushSimulator extends at.dms.util.Utils
         do {
             //Since top is guaranteed to be a filter, it has
             //only one connection
-            simulateDataItem(top.edges[0], current);
+            simulateDataItem(top.getEdges()[0], current);
             if (counters.checkAllZero())
                 break;
             temp = new SwitchScheduleNode();
@@ -54,7 +54,7 @@ public class PushSimulator extends at.dms.util.Utils
         }
         else if (node.contents instanceof SIRJoiner) {
             //just pass thru joiners they only have one downstream connection
-            simulateDataItem(node.edges[0], scheduleNode);
+            simulateDataItem(node.getEdges()[0], scheduleNode);
         }
         else if (node.contents instanceof SIRSplitter) {
             //here is the meat
@@ -66,7 +66,7 @@ public class PushSimulator extends at.dms.util.Utils
                     if (counters.getCount(node, i) == 0)
                         counters.resetCount(node, i);
                     counters.decrementCount(node, i);
-                    simulateDataItem(node.edges[i], scheduleNode);
+                    simulateDataItem(node.getEdges()[i], scheduleNode);
                 }
             }
             else {
@@ -74,7 +74,7 @@ public class PushSimulator extends at.dms.util.Utils
                 for (int i = 0; i < node.ways; i++) {
                     if (counters.getCount(node, i) > 0) {
                         counters.decrementCount(node, i);
-                        simulateDataItem(node.edges[i], scheduleNode);
+                        simulateDataItem(node.getEdges()[i], scheduleNode);
                         return;
                     }
                 }
@@ -84,7 +84,7 @@ public class PushSimulator extends at.dms.util.Utils
                     counters.resetCount(node, i);
                 }
                 counters.decrementCount(node, 0);
-                simulateDataItem(node.edges[0], scheduleNode);
+                simulateDataItem(node.getEdges()[0], scheduleNode);
             }
         
         }

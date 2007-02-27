@@ -512,7 +512,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
                 
             //case 1:
             //if sending thru a splitter 
-            if (node.edges[0].contents instanceof SIRSplitter) {
+            if (node.getEdges()[0].contents instanceof SIRSplitter) {
                 //if the final dest is a filter then just get the execution count of the 
                 //dest filter * its pop rate
                 if (dest.contents instanceof SIRFilter) {
@@ -687,7 +687,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
             return new HashSet<Object>();
         HashSet<Object> ret = new HashSet<Object>();
         for (int i = 0; i < node.ways; i++) {
-            RawBackend.addAll(ret, getDownStreamHelper(node.edges[i]));
+            RawBackend.addAll(ret, getDownStreamHelper(node.getEdges()[i]));
         }
         return ret;
     }
@@ -698,7 +698,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
     
         if (node.contents instanceof SIRFilter) {
             if (layout.identities.contains(node))
-                return getDownStreamHelper(node.edges[0]);
+                return getDownStreamHelper(node.getEdges()[0]);
             HashSet<Object> ret = new HashSet<Object>();
             ret.add(node);
             return ret;
@@ -709,7 +709,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
                 ret.add(node);
                 return ret;
             }   //if this joiner was not mapped then visit its down stream
-            else return (node.edges.length > 0 ? getDownStreamHelper(node.edges[0]) :
+            else return (node.getEdges().length > 0 ? getDownStreamHelper(node.getEdges()[0]) :
                          getDownStreamHelper(null));  //be careful about null joiners
         }
         else if (node.contents instanceof SIRSplitter) {
@@ -727,7 +727,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
             */
             for (int i = 0; i < node.ways; i++) {
                 if(node.weights[i]!=0)
-                    RawBackend.addAll(ret, getDownStreamHelper(node.edges[i]));
+                    RawBackend.addAll(ret, getDownStreamHelper(node.getEdges()[i]));
             }
             return ret;
         }
@@ -838,10 +838,10 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
         }
         if (node.contents instanceof SIRJoiner) {
             //we have a null joiner so just return
-            if (node.edges.length == 0)
+            if (node.getEdges().length == 0)
                 return;
             //now see if we need this joiner
-            if (node.edges[0] == null || !(node.edges[0].contents instanceof SIRJoiner)) {
+            if (node.getEdges()[0] == null || !(node.getEdges()[0].contents instanceof SIRJoiner)) {
                 //do not assign the joiner if JoinerRemoval wants it removed...
                 if (JoinerRemoval.unnecessary != null && 
                     JoinerRemoval.unnecessary.contains(node))

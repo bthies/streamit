@@ -357,7 +357,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
             return new HashSet<Object>();
         HashSet<Object> ret = new HashSet<Object>();
         for (int i = 0; i < node.ways; i++) {
-            SpaceDynamicBackend.addAll(ret, getDownStreamHelper(node.edges[i]));
+            SpaceDynamicBackend.addAll(ret, getDownStreamHelper(node.getEdges()[i]));
         }
         return ret;
     }
@@ -376,10 +376,10 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
             ret.add(node);
             return ret;
         } else { // otherwise find the downstream neighbors that are assigned
-            for (int i = 0; i < node.edges.length; i++) {
+            for (int i = 0; i < node.getEdges().length; i++) {
                 if (node.weights[i] != 0)
                     SpaceDynamicBackend.addAll(ret,
-                                               getDownStreamHelper(node.edges[i]));
+                                               getDownStreamHelper(node.getEdges()[i]));
             }
             return ret;
         }
@@ -723,7 +723,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
                 // if we are sending thru a splitter we have to be careful
                 // because not
                 // all the data that the src produces goes to the dest
-                if (src.edges[0].isSplitter()) {
+                if (src.getEdges()[0].isSplitter()) {
                     // if the dest is a filter, then just calculate the number
                     // of items
                     // the dest filter receives
@@ -746,7 +746,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
                         // now calculate the rate at which the splitter sends to
                         // the joiner
                         rate = rate
-                            * (((double) src.edges[0].weights[0]) / ((double) src.edges[0]
+                            * (((double) src.getEdges()[0].weights[0]) / ((double) src.getEdges()[0]
                                                                      .getTotalOutgoingWeights()));
                         // now calculate the number of items sent to this dest
                         // by this filter
@@ -1142,13 +1142,13 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
     public static boolean assignedJoiner(FlatNode node) {
         assert node.isJoiner();
         //don't assign null joiners with zero weights
-        if (node.edges.length == 0) {
+        if (node.getEdges().length == 0) {
             assert node.getTotalIncomingWeights() == 0;
             return false;
         }
         
         //don't need this joiner if it is connected to a joiner downstream
-        if (node.edges[0] != null && node.edges[0].isJoiner())
+        if (node.getEdges()[0] != null && node.getEdges()[0].isJoiner())
             return false;
         
         return true;

@@ -152,20 +152,20 @@ public class CalculateParams {
         Iterator<FlatNode> flatNodes = DataFlowTraversal.getTraversal(topLevel).iterator();
         
         if ((topLevel.contents instanceof SIRFileReader) && 
-                topLevel.edges[0].isFilter()) 
+                topLevel.getEdges()[0].isFilter()) 
             traces = 1;
                 
         while(flatNodes.hasNext()) {
             FlatNode node = flatNodes.next();
             if (node.isSplitter()) {
                 for (int i = 0; i < node.ways; i++) {
-                    if (!node.edges[i].isSplitter())
+                    if (!node.getEdges()[i].isSplitter())
                         traces++;
                 }
             }
             else if (node.isJoiner() && node.ways > 0 && 
-                    !(node.edges[0].isJoiner()) && 
-                    !(node.edges[0].isSplitter())) {
+                    !(node.getEdges()[0].isJoiner()) && 
+                    !(node.getEdges()[0].isSplitter())) {
                 traces++;
             }
             else if (node.isFilter() && !(node.contents instanceof SIRFileReader) &&

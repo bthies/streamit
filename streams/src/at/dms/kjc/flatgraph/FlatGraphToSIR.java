@@ -108,8 +108,8 @@ public class FlatGraphToSIR
                 if (current.ways == 0)
                     return;
                 //assert that there is exactly one outgoing edge of this filter
-                assert current.ways == 1 && current.edges.length == 1;
-                current = current.edges[0];
+                assert current.ways == 1 && current.getEdges().length == 1;
+                current = current.getEdges()[0];
             }
         } 
         
@@ -143,14 +143,14 @@ public class FlatGraphToSIR
                                                 ((SIRSplitter)current.contents).getWays());
             splitJoin.setJoiner(joiner);
 
-            for (int i = 0; i < current.edges.length; i++) {
-                if (current.edges[i] != null) {
+            for (int i = 0; i < current.getEdges().length; i++) {
+                if (current.getEdges()[i] != null) {
                     //wrap all parallel splitter edges in a pipeline
                     SIRPipeline pipeline = new SIRPipeline(splitJoin, "Pipeline" + id++ 
-                            + parentSuffix(current.edges[i].contents));
+                            + parentSuffix(current.getEdges()[i].contents));
                     pipeline.setInit(SIRStream.makeEmptyInit());
                     splitJoin.add(pipeline);
-                    reSIR(pipeline, current.edges[i], visited);
+                    reSIR(pipeline, current.getEdges()[i], visited);
                 }
         
             }
@@ -169,14 +169,14 @@ public class FlatGraphToSIR
               // record that we have added this splitter.
               visited.add(current);
               ((SIRFeedbackLoop)fbloop).setSplitter((SIRSplitter)current.contents);
-              assert current.ways == 2 && current.edges[1] != null;
+              assert current.ways == 2 && current.getEdges()[1] != null;
               SIRPipeline pipeline = new SIRPipeline(fbloop, "Pipeline" + id++
-                      + suffix(current.edges[1].contents));
+                      + suffix(current.getEdges()[1].contents));
               pipeline.setInit(SIRStream.makeEmptyInit());
               ((SIRFeedbackLoop)fbloop).setLoop(pipeline);
-              reSIR(pipeline,current.edges[1],visited);
-              if (current.edges[0] != null) {
-                  reSIR(((SIRFeedbackLoop)fbloop).getParent(), current.edges[0], visited);
+              reSIR(pipeline,current.getEdges()[1],visited);
+              if (current.getEdges()[0] != null) {
+                  reSIR(((SIRFeedbackLoop)fbloop).getParent(), current.getEdges()[0], visited);
               }
           }
           
@@ -195,12 +195,12 @@ public class FlatGraphToSIR
                     fbloop.setInitPath(oldparent.getInitPath());
                     fbloop.setJoiner((SIRJoiner)current.contents);
                     parent.add(fbloop);
-                    assert current.ways == 1 && current.edges[0] != null;
+                    assert current.ways == 1 && current.getEdges()[0] != null;
                     SIRPipeline pipeline = new SIRPipeline(fbloop, "Pipeline" + id++
-                            + suffix(current.edges[0].contents));
+                            + suffix(current.getEdges()[0].contents));
                     pipeline.setInit(SIRStream.makeEmptyInit());
                     fbloop.setBody(pipeline);
-                    reSIR(pipeline, current.edges[0], visited);
+                    reSIR(pipeline, current.getEdges()[0], visited);
                 } // else end this recursion at end of loop portion
             } else {
               // end of existing splitjoin: update joiner and
@@ -218,10 +218,10 @@ public class FlatGraphToSIR
                 // joiner and visit the remainder of the graph
                 ((SIRSplitJoin) splitJoin).setJoiner((SIRJoiner) current.contents);
                 if (current.ways > 0) {
-                    assert current.edges.length == 1 && current.ways == 1
-                    && current.edges[0] != null;
+                    assert current.getEdges().length == 1 && current.ways == 1
+                    && current.getEdges()[0] != null;
                     reSIR(((SIRSplitJoin) splitJoin).getParent(),
-                            current.edges[0], visited);
+                            current.getEdges()[0], visited);
                 }
               }
             }

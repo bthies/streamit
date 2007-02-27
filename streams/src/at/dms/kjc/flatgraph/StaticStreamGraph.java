@@ -154,11 +154,11 @@ public class StaticStreamGraph {
         addFlatNode(topLevel);
 
         // add edges from old top level
-        assert oldTopLevel.ways == oldTopLevel.edges.length
+        assert oldTopLevel.ways == oldTopLevel.getEdges().length
             && oldTopLevel.ways == ((SIRSplitter) oldTopLevel.contents)
             .getWays();
         for (int i = 0; i < oldTopLevel.ways; i++) {
-            FlatNode current = oldTopLevel.edges[i];
+            FlatNode current = oldTopLevel.getEdges()[i];
             // first remove the back edge to the old top level
             current.removeBackEdge(oldTopLevel);
             // now add new edges (forward and back)
@@ -208,13 +208,13 @@ public class StaticStreamGraph {
                     }
                 }
                 if (node.ways > 0) {
-                    for (int i = 0; i < node.edges.length; i++) {
-                        if (node.edges[i] == null) {
+                    for (int i = 0; i < node.getEdges().length; i++) {
+                        if (node.getEdges()[i] == null) {
                             assert i == 0
                                     && (node.contents instanceof SIRSplitter || node.contents instanceof SIRJoiner)
                                     && node.contents.getParent() instanceof SIRFeedbackLoop;
-                        } else if (!(flatNodes.contains(node.edges[i]))) {
-                            node.removeForwardEdge(node.edges[i]);
+                        } else if (!(flatNodes.contains(node.getEdges()[i]))) {
+                            node.removeForwardEdge(node.getEdges()[i]);
                         }
                     }
                 }
@@ -252,7 +252,7 @@ public class StaticStreamGraph {
                             assert node.ways == 1;
                         else // doesn't push
                         if (node.ways == 1)
-                            assert node.edges[0].getIncomingWeight(node) == 0;
+                            assert node.getEdges()[0].getIncomingWeight(node) == 0;
                     }
                 } else if (node.isJoiner()) {
                         SIRJoiner joiner = (SIRJoiner) node.contents;
@@ -275,7 +275,7 @@ public class StaticStreamGraph {
                             }
                             int nonnull_ways = 0;
                             for (int i = 0; i < node.ways; i++) {
-                                if (node.edges[i] != null) nonnull_ways++;
+                                if (node.getEdges()[i] != null) nonnull_ways++;
                             }
                             assert nonzero_weights == nonnull_ways : "Invalid Splitter: "
                                 + node
@@ -312,9 +312,9 @@ public class StaticStreamGraph {
         // remove the splitter because it is not needed!!!
         if (((SIRSplitter) topLevel.contents).getWays() == 1) {
             FlatNode oldTopLevel = topLevel;
-            assert topLevel.ways == 1 && topLevel.edges.length == 1
-                && topLevel.edges[0] != null;
-            topLevel = topLevel.edges[0];
+            assert topLevel.ways == 1 && topLevel.getEdges().length == 1
+                && topLevel.getEdges()[0] != null;
+            topLevel = topLevel.getEdges()[0];
             if (topLevel.isFeedbackJoiner()) {
                 // old top level was feedbackloop joiner
                 // restore its old configuration with
@@ -492,12 +492,12 @@ public class StaticStreamGraph {
             } else if (topLevel.isSplitter()) {
                 // if a splitter, then set the input[] to the direct downstream
                 // node of the splitter...
-                assert prevs.size() == topLevel.edges.length
-                    && topLevel.edges.length == ((SIRSplitter) topLevel.contents)
+                assert prevs.size() == topLevel.getEdges().length
+                    && topLevel.getEdges().length == ((SIRSplitter) topLevel.contents)
                     .getWays() && inputs.length == prevs.size() : "Partitioning problem: The partition changed the number of inputs of SSG "
                     + this.toString();
                 for (int i = 0; i < inputs.length; i++) {
-                    inputs[i] = topLevel.edges[i];
+                    inputs[i] = topLevel.getEdges()[i];
                 }
             } else
                 // can't be a joiner if there are any previous nodes!
@@ -626,7 +626,7 @@ public class StaticStreamGraph {
         topLevel.accept(new FlatVisitor() {
                 public void visitNode(FlatNode node) {
                     // if the node has no edges, it is a bottom level...
-                    if (node.edges.length == 0) {
+                    if (node.getEdges().length == 0) {
                         assert bottomLevel == null : node;
                         bottomLevel = node;
                     }
@@ -884,9 +884,9 @@ public class StaticStreamGraph {
             FlatNode upstream = edge.outputNode;
             FlatNode downstream = edge.inputNode;
             CType t = outputTypes[edge.getOutputNum()];
-            if (upstream.edges.length > 0) {
-                assert upstream.edges.length == 1 && upstream.edges[0].isNullJoiner();
-                upstream.edges[0].removeBackEdge(upstream);
+            if (upstream.getEdges().length > 0) {
+                assert upstream.getEdges().length == 1 && upstream.getEdges()[0].isNullJoiner();
+                upstream.getEdges()[0].removeBackEdge(upstream);
                 upstream.removeEdges();
             }
             if (downstream.incoming.length > 0) {

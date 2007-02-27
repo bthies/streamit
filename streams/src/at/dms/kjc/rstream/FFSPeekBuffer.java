@@ -87,9 +87,9 @@ public class FFSPeekBuffer extends FilterFusionState
         //after the positions where we will restore the peek buffer 
         if (filter.getPushInt() > 0) {
             assert node.ways == 1;
-            assert node.edges[0] != null;
+            assert node.getEdges()[0] != null;
         
-            FusionState next = getFusionState(node.edges[0]);
+            FusionState next = getFusionState(node.getEdges()[0]);
         
             pushCounterVar = new JVariableDefinition(null,
                                                      0,

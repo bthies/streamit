@@ -222,19 +222,19 @@ public class ClusterFusion implements FlatVisitor {
 
             if (partition == null) {
 
-                if (node.edges[0] != null && node.edges[0].contents instanceof SIRFilter) {
+                if (node.getEdges()[0] != null && node.getEdges()[0].contents instanceof SIRFilter) {
 
-                    fuseTo(node.edges[0], node);
+                    fuseTo(node.getEdges()[0], node);
                 }
 
-                if (node.edges[0] != null && node.edges[0].contents instanceof SIRJoiner) {
+                if (node.getEdges()[0] != null && node.getEdges()[0].contents instanceof SIRJoiner) {
 
-                    fuseTo(node.edges[0], node);
+                    fuseTo(node.getEdges()[0], node);
                 }
 
-                if (node.edges[0] != null && node.edges[0].contents instanceof SIRSplitter) {
+                if (node.getEdges()[0] != null && node.getEdges()[0].contents instanceof SIRSplitter) {
 
-                    fuseTo(node.edges[0], node);
+                    fuseTo(node.getEdges()[0], node);
                 }
             }
         }
@@ -279,8 +279,8 @@ public class ClusterFusion implements FlatVisitor {
             if (op instanceof SIRJoiner) {
                 // joiner not fused to anything by cluster fusion
 
-                if (node.edges[0] != null && node.edges[0].contents instanceof SIRFilter) {
-                    String part = getPartition(node.edges[0]);
+                if (node.getEdges()[0] != null && node.getEdges()[0].contents instanceof SIRFilter) {
+                    String part = getPartition(node.getEdges()[0]);
                     return part;
                 } 
             
@@ -336,7 +336,7 @@ public class ClusterFusion implements FlatVisitor {
                 HashMap<String,Integer> map = new HashMap<String,Integer>(); // String partition->Integer sum
                 int[] weights = split.getWeights();
                 for (int i=0; i<weights.length; i++) {
-                    String part = getPartition(node.edges[i]);
+                    String part = getPartition(node.getEdges()[i]);
                     Integer _oldSum = map.get(part);
                     int oldSum = 0;
                     if (_oldSum!=null) {
@@ -364,7 +364,7 @@ public class ClusterFusion implements FlatVisitor {
                 // if we find identity that wasn't assigned, integrate it
                 // into its destination (arbitrarily -- could just as well
                 // be the source)
-                return getPartition(node.edges[0]);
+                return getPartition(node.getEdges()[0]);
             }
 
             return null;

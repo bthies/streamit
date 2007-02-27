@@ -38,6 +38,7 @@ public class InterSliceBuffer extends OffChipBuffer {
 
     public static InterSliceBuffer getBuffer(InterSliceEdge edge) {
         if (!bufferStore.containsKey(edge)) {
+            System.out.println("Creating Inter Buffer from " + edge.getSrc() + " to " + edge.getDest());
             bufferStore.put(edge, new InterSliceBuffer(edge));
         }
         return (InterSliceBuffer) bufferStore.get(edge);

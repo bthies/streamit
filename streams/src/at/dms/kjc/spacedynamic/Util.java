@@ -86,11 +86,11 @@ public class Util extends at.dms.util.Utils {
      */
     public static FlatNode getFilterDownstreamAssigned(Layout layout, FlatNode node) {
         assert node.isFilter();
-        FlatNode downstream = node.edges[0];
+        FlatNode downstream = node.getEdges()[0];
         while (!Layout.assignToAComputeNode(downstream)) {
             if (downstream.ways < 1)
                 return null;
-            downstream = downstream.edges[0];
+            downstream = downstream.getEdges()[0];
         }
         
         return downstream;    
@@ -142,7 +142,7 @@ public class Util extends at.dms.util.Utils {
             sumWeights += prev.weights[i];
         int thisWeight = -1;
         for (int i = 0; i < prev.ways; i++) {
-            if (prev.edges[i] != null && prev.edges[i].equals(node)) {
+            if (prev.getEdges()[i] != null && prev.getEdges()[i].equals(node)) {
                 thisWeight = prev.weights[i];
                 break;
             }
@@ -277,8 +277,8 @@ public class Util extends at.dms.util.Utils {
         if (node == null)
             return set;
 
-        for (int i = 0; i < node.edges.length; i++)
-            getAssignedEdgesHelper(layout, node.edges[i], set);
+        for (int i = 0; i < node.getEdges().length; i++)
+            getAssignedEdgesHelper(layout, node.getEdges()[i], set);
 
         return set;
     }
@@ -291,8 +291,8 @@ public class Util extends at.dms.util.Utils {
             set.add(node);
             return;
         } else {
-            for (int i = 0; i < node.edges.length; i++)
-                getAssignedEdgesHelper(layout, node.edges[i], set);
+            for (int i = 0; i < node.getEdges().length; i++)
+                getAssignedEdgesHelper(layout, node.getEdges()[i], set);
         }
     }
 
@@ -305,7 +305,7 @@ public class Util extends at.dms.util.Utils {
             Utils
                 .fail("getDirectDownStream(...) error. Node not filter or joiner.");
         if (node.ways > 0)
-            return getDirectDownstreamHelper(node.edges[0]);
+            return getDirectDownstreamHelper(node.getEdges()[0]);
         else
             return new HashSet<Object>();
     }
@@ -323,7 +323,7 @@ public class Util extends at.dms.util.Utils {
             for (int i = 0; i < current.ways; i++) {
                 if (current.weights[i] != 0)
                     SpaceDynamicBackend.addAll(ret,
-                                               getDirectDownstreamHelper(current.edges[i]));
+                                               getDirectDownstreamHelper(current.getEdges()[i]));
             }
             return ret;
         }
@@ -405,9 +405,9 @@ public class Util extends at.dms.util.Utils {
             return new FlatNode[0];
         
         //only handle filters whose output is split once
-        if (node.ways > 0 && node.edges[0].isSplitter()) {
-            for (int j = 0; j < node.edges[0].ways; j++) {
-                if (node.edges[0].edges[j].isSplitter())
+        if (node.ways > 0 && node.getEdges()[0].isSplitter()) {
+            for (int j = 0; j < node.getEdges()[0].ways; j++) {
+                if (node.getEdges()[0].getEdges()[j].isSplitter())
                     assert false : "getSendingSchedule() cannot handle this filter!";
             }
         }
@@ -415,15 +415,15 @@ public class Util extends at.dms.util.Utils {
         assert node.ways == 1;
         LinkedList<FlatNode> schedule = new LinkedList<FlatNode>();
         //  get the downstream filter
-        FlatNode downstream = node.edges[0];
+        FlatNode downstream = node.getEdges()[0];
         if (downstream.isSplitter()) {
             //if the node downstream is a splitter, then add the downstream filters
             //of this splitter to the schedule according to the weights...
             for (int i = 0; i < downstream.ways; i++) {
-                assert !downstream.edges[i].isSplitter();
+                assert !downstream.getEdges()[i].isSplitter();
                 for (int j = 0; j < downstream.weights[i]; j++) {
                     //System.out.println("Adding " + downstream.edges[i] + " to the sending schedule."); 
-                    schedule.add(downstream.edges[i]);
+                    schedule.add(downstream.getEdges()[i]);
                 }
             }
         } else {

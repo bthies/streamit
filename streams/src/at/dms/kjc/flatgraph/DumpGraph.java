@@ -89,9 +89,9 @@ public class DumpGraph implements FlatVisitor
                            node.incoming.length + ")");
                 buf.append("\\n");
             }
-            if (node.ways != node.edges.length) {
+            if (node.ways != node.getEdges().length) {
                 buf.append("node.ways (" + node.ways + ") != node.edges.length (" + 
-                           node.edges.length + ")");
+                           node.getEdges().length + ")");
             }
         
             buf.append("\"];");
@@ -111,12 +111,12 @@ public class DumpGraph implements FlatVisitor
         }
         //create the arcs for the outgoing edges
         for (int i = 0; i < node.ways; i++) {
-            if (node.edges[i] == null)
+            if (node.getEdges()[i] == null)
                 continue;
-            if (node.edges[i].contents instanceof SIRJoiner)
+            if (node.getEdges()[i].contents instanceof SIRJoiner)
                 continue;
             buf.append(node.getName() + " -> " 
-                       + node.edges[i].getName());
+                       + node.getEdges()[i].getName());
             buf.append("[label=\"" + node.weights[i] + "\"];\n");
         }
     }

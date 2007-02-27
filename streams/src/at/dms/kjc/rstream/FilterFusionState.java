@@ -68,7 +68,7 @@ public abstract class FilterFusionState extends FusionState
         //if this filter is not necessary then return the downstream's
         //remaining count
         if (!necessary && node.ways > 0)
-            return FusionState.getFusionState(node.edges[0]).getRemaining(node, isInit);
+            return FusionState.getFusionState(node.getEdges()[0]).getRemaining(node, isInit);
     
         return remaining[0];
     }
@@ -93,7 +93,7 @@ public abstract class FilterFusionState extends FusionState
     {
         //if this filter is not necessary, return the downstream's incoming buffer var
         if (!necessary && node.ways > 0) {
-            return FusionState.getFusionState(node.edges[0]).getBufferVar(node, init);
+            return FusionState.getFusionState(node.getEdges()[0]).getBufferVar(node, init);
         }
         return bufferVar[0];
     }
@@ -112,7 +112,7 @@ public abstract class FilterFusionState extends FusionState
     {
         assert node.ways == 1;
     
-        return getFusionState(node.edges[0]).getBufferVar(node, isInit);
+        return getFusionState(node.getEdges()[0]).getBufferVar(node, isInit);
     }
     
     /** Add any necessary initialization tasks to the SIR code containers **/

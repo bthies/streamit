@@ -757,11 +757,11 @@ public class ParallelizationGathering {
 		}
 		//System.err.println("Bee!");
 		getSplitFactor(syncfactor, flatSplitter);   //recursion happens in this procedure   
-		for(int i = 0; i < flatSplitter.edges.length; i++)
+		for(int i = 0; i < flatSplitter.getEdges().length; i++)
 		{
-		    if(flatSplitter.edges[i].contents instanceof SIRFilter)
+		    if(flatSplitter.getEdges()[i].contents instanceof SIRFilter)
 		    {
-			SIRFilter currentFilter = (SIRFilter)flatSplitter.edges[i].contents;			
+			SIRFilter currentFilter = (SIRFilter)flatSplitter.getEdges()[i].contents;			
 			NumberGathering execNumbers = new NumberGathering();
 			int numreps = work.getReps(currentFilter);
 			execNumbers.doit(flatGraph.getFlatNode(currentFilter), executionCounts);

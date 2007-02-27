@@ -88,7 +88,7 @@ public class FlattenAndPartition extends Partitioner {
 
             System.out.println("  outputs: " + node.ways);
             if (node.ways != 0) {
-                assert node.ways == node.edges.length
+                assert node.ways == node.getEdges().length
                         && node.ways == node.weights.length;
                 
                 // set up the i/o arcs
@@ -100,9 +100,9 @@ public class FlattenAndPartition extends Partitioner {
                     if (node.weights[i] == 0)
                         continue;
                     InterSliceEdge edge = new InterSliceEdge(output, sliceNodes.inputNodes
-                            .get(node.edges[i].contents));
+                            .get(node.getEdges()[i].contents));
                     newEdges.put(sliceNodes.inputNodes
-                            .get(node.edges[i].contents), edge);
+                            .get(node.getEdges()[i].contents), edge);
                     outEdges.add(edge);
                     outWeights.add(node.weights[i]);
                 }

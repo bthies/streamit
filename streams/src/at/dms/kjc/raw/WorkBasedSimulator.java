@@ -381,7 +381,7 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
         counters.decrementBufferCount(dest, 1);
         //System.out.println(src.contents.getName() + " to joiner Buffer (Receive): " + joinerBuffer);//    
         //get the buffer this item is being sent to..
-        String joinerBuffer = buildJoinerBufferString(src, src.edges[0], dest);
+        String joinerBuffer = buildJoinerBufferString(src, src.getEdges()[0], dest);
         //record that the data was placed in this buffer...
         counters.incrementJoinerBufferCount(dest, joinerBuffer);
         //add to the joiner code for this dest
@@ -897,7 +897,7 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
     //to receive data into the joiner
     private List<FlatNode> getDestination(FlatNode node, SimulationCounter counters)
     {
-        return getDestinationHelper(node.edges[0], counters, "", node);
+        return getDestinationHelper(node.getEdges()[0], counters, "", node);
     }
     
     //call with src, src.edges[0], dest
@@ -907,7 +907,7 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
             return getJoinerBuffer(current, previous);
     
         return getJoinerBuffer(current, previous) + buildJoinerBufferString(current,
-                                                                            current.edges[0], 
+                                                                            current.getEdges()[0], 
                                                                             dest);
     }
         
@@ -917,10 +917,10 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
     {
 
         if (node.contents instanceof SIRIdentity &&
-            (node.edges[0].contents instanceof SIRIdentity ||
-             node.edges[0].isSplitter())) {
+            (node.getEdges()[0].contents instanceof SIRIdentity ||
+             node.getEdges()[0].isSplitter())) {
             //pass thru multiple conntected identities
-            return getDestinationHelper(node.edges[0], counters, joinerBuffer, node);
+            return getDestinationHelper(node.getEdges()[0], counters, joinerBuffer, node);
         }
         else if (node.contents instanceof SIRFilter) {
             //if we reached a node then this is a destination
@@ -945,7 +945,7 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
                 return list;
             }
             else {
-                return getDestinationHelper(node.edges[0], counters, 
+                return getDestinationHelper(node.getEdges()[0], counters, 
                                             joinerBuffer + getJoinerBuffer(node, 
                                                                            previous),
                                             node);
@@ -963,7 +963,7 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
                     if (counters.getArcCountOutgoing(node, i) == 0)
                         counters.resetArcCountOutgoing(node, i);
                     counters.decrementArcCountOutgoing(node, i);
-                    list.addAll(getDestinationHelper(node.edges[i], 
+                    list.addAll(getDestinationHelper(node.getEdges()[i], 
                                                      counters, joinerBuffer,
                                                      previous));
                 }
@@ -974,7 +974,7 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
                 for (int i = 0; i < node.ways; i++) {
                     if (counters.getArcCountOutgoing(node, i) > 0) {
                         counters.decrementArcCountOutgoing(node, i);
-                        return getDestinationHelper(node.edges[i], 
+                        return getDestinationHelper(node.getEdges()[i], 
                                                     counters, joinerBuffer,
                                                     previous);
                     }
@@ -987,7 +987,7 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
                 for (int i = 0; i < node.ways; i++) {
                     if (counters.getArcCountOutgoing(node, i) > 0) {
                         counters.decrementArcCountOutgoing(node, i);
-                        return getDestinationHelper(node.edges[i], 
+                        return getDestinationHelper(node.getEdges()[i], 
                                                     counters, joinerBuffer,
                                                     previous);
                     }

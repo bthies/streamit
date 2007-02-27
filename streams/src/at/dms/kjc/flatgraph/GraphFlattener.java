@@ -507,7 +507,7 @@ public class GraphFlattener extends at.dms.util.Utils
                                 FlatNode dummySplit=new FlatNode(SIRSplitter.createWeightedRR(null,new JExpression[0]));
                                 dummySplit.inputs=1;
                                 dummySplit.incoming=new FlatNode[]{in};
-                                in.getEdges()[0]=dummySplit;
+                                in.setEdge(0,dummySplit);
                                 int[] dummyWeights=new int[size];
                                 FlatNode[] dummyEdges=new FlatNode[size];
                                 for(int j=0,offset=0;j<list.size();j+=2,offset++) {
@@ -654,7 +654,7 @@ public class GraphFlattener extends at.dms.util.Utils
                             edges=new LinkedList<Object>();
                             FlatNode ident=new FlatNode(new SIRIdentity(getOutputType(node)));
                             FlatNode split=new FlatNode(SIRSplitter.createWeightedRR(null,new JExpression[0]));
-                            node.getEdges()[0]=split;
+                            node.setEdge(0,split);
                             split.inputs=1;
                             split.incoming=new FlatNode[]{node};
                             ident.inputs=1;
@@ -691,13 +691,13 @@ public class GraphFlattener extends at.dms.util.Utils
                         split.ways=size;
                         if(size==1) {
                             FlatNode ident=(FlatNode)list.get(1);
-                            node.getEdges()[0]=ident;
+                            node.setEdge(0,ident);
                             ident.incoming[0]=node;
                             needsToBeSched.add(ident);
                         } else {
                             needsToBeSched.add(split);
                             for(int i=1,off=0;i<list.size();i+=2,off++) {
-                                split.getEdges()[off]=(FlatNode)list.get(i);
+                                split.setEdge(off,(FlatNode)list.get(i));
                                 int weight=((Integer)list.get(i+1)).intValue();
                                 split.weights[off]=weight;
                             }

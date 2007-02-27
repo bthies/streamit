@@ -1,12 +1,8 @@
 package at.dms.kjc.flatgraph;
 
-import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
-import at.dms.kjc.sir.lowering.*;
 import at.dms.util.Utils;
-
 import java.util.HashSet;
-import java.util.HashMap;
 
 /**
  * This class represents a node in the flattened graph.  It has incoming edges
@@ -28,7 +24,8 @@ import java.util.HashMap;
  *
  * @author mgordon 
  */
-public class FlatNode {
+
+public final class FlatNode {
 
     /** The operator this node contains (either a splitter, joiner, or filter) */
     public SIROperator contents;
@@ -283,7 +280,7 @@ public class FlatNode {
             weights[0] = 1;
         }
 
-        getEdges()[currentEdge++] = to;
+        setEdge(currentEdge++,to);
     }
 
     /**
@@ -670,14 +667,27 @@ public class FlatNode {
         return -1;
     }
 
-
+    /**
+     * Replace all of the outgoing edges.
+     * @param the array the edges to set.
+     */
     public void setEdges(FlatNode[] edges) {
         this.edges = edges;
     }
 
 
+    /**
+     * Set an edge in the outgoing edges.
+     * @param offset   edge number (0 based)
+     * @param newEdge  edge to replace existing edge at the offset.
+     */
+    public void setEdge(int offset, FlatNode newEdge) {
+        edges[offset] = newEdge;
+    }
+    /**
+     * @return the outgoing edges.
+     */
     public FlatNode[] getEdges() {
         return edges;
     }
-
 }

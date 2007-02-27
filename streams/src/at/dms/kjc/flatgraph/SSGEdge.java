@@ -7,23 +7,27 @@ import at.dms.kjc.flatgraph.FlatNode;
  *
  * Dynamic-rate edges between static-rate subgraphs (StaticStreamGraph).
  * 
+ * Note that a SSGEdge may be shared between the SSGs at its upstream and downstream ends,
+ * or they may have separate SSGEdge's with identical data.
+ * 
  * @author Mike Gordon
  */
 
-public class SSGEdge<S extends StaticStreamGraph> 
+public class SSGEdge<fromType extends StaticStreamGraph, toType extends StaticStreamGraph> 
 {
     //the source and dest SSG
     //fromSSG->toSSG
-    private S fromSSG, toSSG;
+    private fromType fromSSG;
+    private toType toSSG;
     //the exact nodes of the SSGs,
     // outputNode -> inputNode
-    public FlatNode outputNode, inputNode;
+    FlatNode upstreamNode, downstreamNode;
     /** the connection numbers, so we can rebuild the
         SSGEdges if the flatgraph changes **/
     private int from, to;
 
-    public SSGEdge(S fromSSG, 
-                   S toSSG,
+    public SSGEdge(fromType fromSSG, 
+                   toType toSSG,
                    int from, int to) 
     {
         this.fromSSG = fromSSG;
@@ -33,24 +37,24 @@ public class SSGEdge<S extends StaticStreamGraph>
     }
     
     /** get the index into the input array for the downstream SSG **/
-    public int getInputNum() 
+    public int getDownstreamNum() 
     {
         return to;
     }
     
     /** get the index into the output array of the upstream SSG **/
-    public int getOutputNum() 
+    public int getUpstreamNum() 
     {
         return from;
     }
 
     /** the downstream SSG of edge **/
-    public S getInput() 
+    public toType getDownstream() 
     {
         return toSSG;
     }
     /** the upstream SSG of edge **/
-    public S getOutput()
+    public fromType getUpstream()
     {
         return fromSSG;
     }

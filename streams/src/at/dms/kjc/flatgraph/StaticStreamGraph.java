@@ -23,8 +23,8 @@ import at.dms.kjc.common.CommonUtils;
 
 public class StaticStreamGraph {
     /** These Hashmaps map flatnode -> flatnode.
-     * <br/>prevs maps the input of this SSG to the output of its upstream SSG
-     * <br/>nexts stores the converse.
+     * <br/>prevs maps an input node of this SSG to the corresponding output node of a upstream SSG
+     * <br/>nexts maps an output node of this SSG to the corresponding input node of a downstream SSG
      * <br/>Note: only used in building graph.  no longer valid after setTopLevelSIR.
      */
     protected HashMap<FlatNode,FlatNode> prevs, nexts;
@@ -180,8 +180,8 @@ public class StaticStreamGraph {
     }
 
     /***************************************************************************
-     * remove toplevel splitter if not needed!!! and perform some other checks
-     * on the SSG
+     * Remove toplevel splitter if not needed, and perform some other checks
+     * and fixes on the SSG.
      * 
      * XXX: problem in DynamicRatesComp1, null joiner at end will match null
      * splitter at top so both are left.  This may be the cause of a scheduler
@@ -222,6 +222,7 @@ public class StaticStreamGraph {
         }, null, true);
 
         // make sure all nodes have correct number of connections...
+        // seems to be all checks -- except for fixing number of joiner ways.
         topLevel.accept(new FlatVisitor() {
                 public void visitNode(FlatNode node) {
                     if (node.isFilter()) {
@@ -303,13 +304,10 @@ public class StaticStreamGraph {
                 }
             }, null, true);
 
-        // splitters and joiners are balanced so return...
-        if (splitterBalance == 0)
+        if (splitterBalance != 0)
         {
-            return;
-        }
         
-        // remove the splitter because it is not needed!!!
+        // remove unbalanced splitter because it is not needed!!!
         if (((SIRSplitter) topLevel.contents).getWays() == 1) {
             FlatNode oldTopLevel = topLevel;
             assert topLevel.ways == 1 && topLevel.getEdges().length == 1
@@ -327,7 +325,8 @@ public class StaticStreamGraph {
             }
             flatNodes.remove(oldTopLevel);
         }
-
+        }
+        
         // set up the downstream SSG's prevs hashmap
         Iterator<FlatNode> nextsIt = nexts.keySet().iterator();
         while (nextsIt.hasNext()) {
@@ -337,25 +336,36 @@ public class StaticStreamGraph {
             streamGraph.getParentSSG(dest).addPrev(dest, source);
         }
 
+        // set up the upstream SSG's nexts hashmap
+        for (FlatNode inThis : prevs.keySet()) {
+            FlatNode inPrev = prevs.get(inThis);
+            assert inPrev != null : inThis.toString();
+            streamGraph.getParentSSG(inPrev).addNext(inPrev, inThis);
+        }
+    }
+
+    /**
+     * Build nextSSGs, prevSSGs.
+     * Call after {@link #cleanUp()} run on all ssgs.
+     */
+    public void prevAndNextSSGs() {
         // build the prevSSGs and nextSSGs list, the upstream and downstream
         // SSGs
-        nextsIt = nexts.values().iterator();
-        while (nextsIt.hasNext()) {
+        for (FlatNode aNext : nexts.values()) {
             StaticStreamGraph ssg = streamGraph
-                .getParentSSG(nextsIt.next());
+                .getParentSSG(aNext);
             if (!nextSSGs.contains(ssg))
                 nextSSGs.add(ssg);
         }
 
-        Iterator<FlatNode> prevsIt = prevs.values().iterator();
-        while (prevsIt.hasNext()) {
+        for (FlatNode aPrev : prevs.values()) {
             StaticStreamGraph ssg = streamGraph
-                .getParentSSG(prevsIt.next());
+                .getParentSSG(aPrev);
             if (!prevSSGs.contains(ssg))
                 prevSSGs.add(ssg);
         }
     }
-
+    
     /**
      * after SSG construction is complete, create the inter-SSG connections for
      * this SSG
@@ -376,25 +386,26 @@ public class StaticStreamGraph {
             // nexts.containsKey(outputs[i]));
 
             FlatNode dest = nexts.get(outputs[i]);
+            assert dest != null;
             StaticStreamGraph input = streamGraph.getParentSSG(dest);
-            // N.B.  Can not guarantee static type safety given
-            // array of generic objects.  Would get error if
-            // put parameterized type on array decl.
 
-            outputSSGEdges[i] = new SSGEdge<StaticStreamGraph>(this, input, i, input
-                                            .getInputNum(dest));
-            outputSSGEdges[i].outputNode = outputs[i];
-            outputSSGEdges[i].inputNode = dest;
+            outputSSGEdges[i] = 
+                new SSGEdge(this, input, i, input.getInputNum(dest));
+            outputSSGEdges[i].downstreamNode = dest;
         }
 
-        // for input, just get the sources SSGEdges!
         for (int i = 0; i < inputSSGEdges.length; i++) {
-            FlatNode source = prevs.get(inputs[i]);
-            StaticStreamGraph input = streamGraph.getParentSSG(source);
-            inputSSGEdges[i] = input.getOutputSSGEdgeSource(source);
+            FlatNode src = prevs.get(inputs[i]);
+            assert src != null;
+            StaticStreamGraph upstream = streamGraph.getParentSSG(src);
+
+            inputSSGEdges[i] = 
+                new SSGEdge(upstream, this, upstream.getOutputNum(src), i);
+            inputSSGEdges[i].upstreamNode = src;
         }
 
-        // update the connections
+        // fix outputSSGEdges[i].upstreamNode, inputSSGEdges[i].downstreamNode
+        // to reflext the output nodes / unipt nodes of this SSG.
         updateSSGEdges();
 
         for (int i = 0; i < outputs.length; i++)
@@ -406,31 +417,6 @@ public class StaticStreamGraph {
 
     }
 
-    /**
-     * given an output node for this SSG, get the SSGEdge that represents the
-     * connection, <pre>source</pre> is the source of the SSG edge.
-     */
-    public SSGEdge<StaticStreamGraph> getOutputSSGEdgeSource(FlatNode source) {
-        for (int i = 0; i < outputSSGEdges.length; i++)
-            if (outputSSGEdges[i].outputNode == source)
-                return outputSSGEdges[i];
-
-        assert false;
-        return null;
-    }
-
-    /**
-     * Given <pre>dest</pre> a source of a direct downstream SSG, get the SSGEdge that
-     * represents the connection.
-     */
-
-    public SSGEdge getOutputSSEdgeDest(FlatNode dest) {
-        for (int i = 0; i < outputSSGEdges.length; i++)
-            if (outputSSGEdges[i].inputNode == dest)
-                return outputSSGEdges[i];
-        assert false;
-        return null;
-    }
 
     /**
      * after we have changed the flatgraph and updated outputs[] and inputs[],
@@ -440,11 +426,11 @@ public class StaticStreamGraph {
      */
     private void updateSSGEdges() {
         for (int i = 0; i < outputs.length; i++) {
-            outputSSGEdges[i].outputNode = outputs[i];
+            outputSSGEdges[i].upstreamNode = outputs[i];
         }
 
         for (int i = 0; i < inputs.length; i++) {
-            inputSSGEdges[i].inputNode = inputs[i];
+            inputSSGEdges[i].downstreamNode = inputs[i];
         }
 
     }
@@ -508,7 +494,8 @@ public class StaticStreamGraph {
         if (nexts.size() > 0) {
             assert bottomLevel != null;
             if (bottomLevel.isFilter()) {
-                assert nexts.size() == 1 && outputs.length == 1;
+                assert nexts.size() == 1 && outputs.length == 1 : 
+                    "Partitioning problem: The partition changed the number of outputs of SSG ";
                 outputs[0] = bottomLevel;
             } else if (bottomLevel.isJoiner()) {
                 // if a joiner set outputs[] to be the upstream nodes of the
@@ -619,7 +606,10 @@ public class StaticStreamGraph {
     }
 
 
-    /** after the underlying flatgraph has changed, find the new bottom level * */
+    /** After the underlying flatgraph has changed, find the new bottom level 
+     * It should be an invariant that here is a single BottomLevel node:
+     * either a single filter, or a null joiner.
+     */
     private void setBottomLevel() {
         bottomLevel = null;
 
@@ -640,6 +630,9 @@ public class StaticStreamGraph {
      * prevs hash map and add <pre>node</pre> to the inputs array
      */
     public void addPrev(FlatNode node, FlatNode source) {
+        if (prevs.get(node) == source) {
+            return;
+        }
         assert flatNodes.contains(node);
         // create a new inputs array with the old inputs + this
         FlatNode[] oldInputs = inputs;
@@ -656,6 +649,9 @@ public class StaticStreamGraph {
      * nexts hash map and add the <pre>node</pre> to the outputs array.
      */
     public void addNext(FlatNode node, FlatNode next) {
+        if (nexts.get(node) == next) {
+            return;
+        }
         assert flatNodes.contains(node);
 
         // System.out.println("Add next " + node + " -> " + next);
@@ -713,8 +709,8 @@ public class StaticStreamGraph {
         assert flatNodes.contains(flatNode) : "Trying to get downstream SSG for a flatNode not in SSG";
 
         for (int i = 0; i < outputSSGEdges.length; i++) {
-            if (flatNode == outputSSGEdges[i].outputNode)
-                return outputSSGEdges[i].inputNode;
+            if (flatNode == outputSSGEdges[i].upstreamNode)
+                return outputSSGEdges[i].downstreamNode;
         }
 
         assert false : "Error: calling getNext() on non-dynamic sink of: "
@@ -730,8 +726,8 @@ public class StaticStreamGraph {
         assert flatNodes.contains(flatNode) : "Trying to get upstream SSG for a FlatNode not in SSG";
 
         for (int i = 0; i < inputSSGEdges.length; i++) {
-            if (flatNode == inputSSGEdges[i].inputNode)
-                return inputSSGEdges[i].outputNode;
+            if (flatNode == inputSSGEdges[i].downstreamNode)
+                return inputSSGEdges[i].upstreamNode;
         }
 
         assert false : "Error: calling getPrev() on non-dynamic source of: "
@@ -757,9 +753,10 @@ public class StaticStreamGraph {
     }
 
     public String toString() {
-        // if (topLevel != null)
-        // return topLevel.toString();
+        if (topLevelSIR != null) {
         return topLevelSIR.getIdent();
+        }
+        return "StaticStreamGraph_with_no_top_level_SIR";
     }
 
     public void check() {
@@ -778,24 +775,6 @@ public class StaticStreamGraph {
         }
     }
 
-// Never called: in fact can not be correct since a SSG may have multiple entrances or exits.
-//    /**
-//     * Called right after construction to set the rates of the endpoints of the
-//     * SSG (push = 0 for sink, peek = pop = 0 for source) and remember true
-//     * rates..
-//     */
-//    public void fixEndpoints() {
-//        SIRFilter source = Util.getSourceFilter(topLevelSIR);
-//        SIRFilter sink = Util.getSinkFilter(topLevelSIR);
-//
-//        pushRate = sink.getPush();
-//        popRate = source.getPop();
-//        peekRate = source.getPeek();
-//
-//        source.setPop(new JIntLiteral(0));
-//        source.setPeek(new JIntLiteral(0));
-//        sink.setPush(new JIntLiteral(0));
-//    }
 
     /** get the parent stream graph of SSG * */
     public StreamGraph getStreamGraph() {
@@ -807,11 +786,11 @@ public class StaticStreamGraph {
      * Get an input SSGEdge coming into this SSG given the <pre>dest</pre> of the edge,
      * so <pre>dest</pre> is in this SSG
      */
-    public SSGEdge<StaticStreamGraph> getInputSSGEdgeDest(FlatNode dest) {
-        SSGEdge<StaticStreamGraph> edge = null;
+    private SSGEdge getInputSSGEdgeDest(FlatNode dest) {
+        SSGEdge edge = null;
 
         for (int i = 0; i < inputSSGEdges.length; i++)
-            if (inputSSGEdges[i].inputNode == dest)
+            if (inputSSGEdges[i].downstreamNode == dest)
                 edge = inputSSGEdges[i];
         assert edge != null : "Calling getInputSSGEdgeDest(FlatNode dest) with a node that is not an input to SSG";
 
@@ -827,8 +806,8 @@ public class StaticStreamGraph {
         assert flatNodes.contains(node) : "Calling getInputType(node) and node is not in SSG";
         if (isInput(node)) {
             // get the type from the source SSG of this edge
-            SSGEdge<StaticStreamGraph> edge = getInputSSGEdgeDest(node);
-            return edge.getOutput().getOutputType(edge.outputNode);
+            SSGEdge edge = getInputSSGEdgeDest(node);
+            return edge.getUpstream().getOutputType(edge.upstreamNode);
         } else
             return node.getFilter().getInputType();
     }
@@ -881,9 +860,9 @@ public class StaticStreamGraph {
      * Restore types in filters being connected.  Restore dynamic rate info. */
     public void reconnectOutputs() {
         for (SSGEdge edge : outputSSGEdges) {
-            FlatNode upstream = edge.outputNode;
-            FlatNode downstream = edge.inputNode;
-            CType t = outputTypes[edge.getOutputNum()];
+            FlatNode upstream = edge.upstreamNode;
+            FlatNode downstream = edge.downstreamNode;
+            CType t = outputTypes[edge.getUpstreamNum()];
             if (upstream.getEdges().length > 0) {
                 assert upstream.getEdges().length == 1 && upstream.getEdges()[0].isNullJoiner();
                 upstream.getEdges()[0].removeBackEdge(upstream);

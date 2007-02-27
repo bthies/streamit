@@ -99,13 +99,19 @@ public class StreamGraph {
 
         // set up the array of sub graphs
         staticSubGraphs = ssgs
-            .toArray(new StaticStreamGraph[0]);
+            .toArray(new StaticStreamGraph[ssgs.size()]);
 
         // clean up the flat graph so that is can be converted to an SIR
+        // get prevs and nexts to match up.
         for (int i = 0; i < staticSubGraphs.length; i++)
             staticSubGraphs[i].cleanUp();
 
-        // create the inter-SSG connections of the graph!!!
+        // create prevSSGs, nextSSGs data structures
+        for (int i = 0; i < staticSubGraphs.length; i++)
+            staticSubGraphs[i].prevAndNextSSGs();
+        
+        // create the inter-SSG connections of the graph,
+        // that is inputSSGEdges, outputSSGEdges.
         for (int i = 0; i < staticSubGraphs.length; i++)
             staticSubGraphs[i].connect();
 
@@ -317,6 +323,7 @@ public class StreamGraph {
             if (filter.getPop().isDynamic() || filter.getPeek().isDynamic()) {
                 assert current.inputs == 1;
                 // cut the graph and add another entry point for the SSG
+                ssg.addPrev(current, current.incoming[0]);
                 cutGraph(current.incoming[0], current);
                 ssg.addTopLevelFlatNode(current);
                 return;
@@ -329,6 +336,7 @@ public class StreamGraph {
                     SIRFilter upstream = (SIRFilter) current.incoming[0].contents;
                     if (upstream.getPush().isDynamic()) {
                         // cut the graph and add another entry point for the SSG
+                        ssg.addPrev(current, current.incoming[0]);
                         cutGraph(current.incoming[0], current);
                         ssg.addTopLevelFlatNode(current);
                         return;

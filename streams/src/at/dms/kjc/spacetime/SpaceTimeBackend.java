@@ -771,4 +771,3 @@ public class SpaceTimeBackend {
 // System.err.println("TopNodes in Forest: "+traceForrest.length);
 // }
 // */
-[]

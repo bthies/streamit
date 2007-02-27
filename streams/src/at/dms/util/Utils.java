@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.46 2007-01-17 17:02:10 dimock Exp $
+ * $Id: Utils.java,v 1.47 2007-02-27 16:41:26 dimock Exp $
  */
 
 package at.dms.util;
@@ -155,7 +155,7 @@ public abstract class Utils implements Serializable, DeepCloneable {
         ATAN("atan", "atanf", "atanf", "atanf_v"),        // float -> float
         // not supplied on cell but processed: atan2(x,y) => atanf_v(y/x)
         // in $STREAMIT_HOME/misc/vectorization.h
-        ATAN2("atan2", "atan2f", "atan2f", "atan2f_v"),   // float X float -> float
+        ATAN2("atan2", "atan2f", "atan2f", "atan2f_v"),   // float x float -> float
         CEIL("ceil", "ceilf", "ceilf", "ceilf_v"),
         COS("cos", "cosf", "cosf", "cosf_v"),             // float -> float
         SIN("sin", "sinf", "sinf", "sinf_v"),             // float -> float
@@ -166,15 +166,15 @@ public abstract class Utils implements Serializable, DeepCloneable {
         // or Sum n=0...  x**(2*n + 1) / fact(2*n + 1)
         SINH("sinh", "sinhf", "sinhf", null),             // float -> float
         EXP("exp", "expf", "expf", "expf_v"),             // float -> float
-        FABS("fabs", "fabsf", "fabsf", "fabsf_v"),        // float -> float
+// never used.        FABS("fabs", "fabsf", "fabsf", "fabsf_v"),        // float -> float
         // note int has %, vector int has fmod_i_v
-        FMOD("fmod", "fmodf", "fmodf", "fmodf_v"),        // float -> float
-        MODF("modf", "modf", "modf", "fmodf_v"),          // float X float* -> float
-        FREXP("frexp", "frexpf", "frexpf", "frexpf_v"),   // float X int* -> float
+// never used        FMOD("fmod", "fmodf", "fmodf", "fmodf_v"),        // float -> float
+// never used        MODF("modf", "modf", "modf", "fmodf_v"),          // float x float* -> float
+// never used        FREXP("frexp", "frexpf", "frexpf", "frexpf_v"),   // float x int* -> float
         FLOOR("floor", "floorf", "floorf", "floorf_v"),   // float -> float
         LOG("log", "logf", "logf", "logf_v"),             // float -> float
         LOG10("log10", "log10f", "log10f", "log10f_v"),   // float -> float
-        POW("pow", "powf", "powf", "powf_v"),             // float X float -> float
+        POW("pow", "powf", "powf", "powf_v"),             // float x float -> float
         // round(x) should be replaced with trunc(x+0.5) to match java behavior
         // will still need casting to int.
         ROUND("round", "roundf", "roundf", "roundf_v"),   // float -> float
@@ -187,9 +187,9 @@ public abstract class Utils implements Serializable, DeepCloneable {
         // Some bad compromises follow:  These are used (in non-vector case)
         // at int and float types, thus use the double versions to allow an int 
         // to be cast, processed, and cast back without losing precision. 
-        ABS("abs", "fabs", "fabs", "fabsf_v"),            // double-> double (exc vector)
-        MAX("max", "maxf", "fmax", "fmaxf_v"),            // double-> double
-        MIN("min", "minf", "fmin", "fminf_v"),            // double -> double
+        ABS("abs", "fabs", "fabs", "fabsf_v"),            // double -> double (exc vector)
+        MAX("max", "maxf", "fmax", "fmaxf_v"),            // double x double -> double
+        MIN("min", "minf", "fmin", "fminf_v"),            // double x double -> double
         ;
         
         MathMethodInfo(String streamit_name, String c_name, String cpp_name, String cell_name) {
@@ -212,42 +212,231 @@ public abstract class Utils implements Serializable, DeepCloneable {
         public String cpp_name() {return cpp_name;}
         /** fourth field: name of vector version for cell */
         public String cell_name() {return cell_name;}
-    }
-    
-    private static Map<String, MathMethodInfo> mathMethodMap;
-    
-    static {
-        mathMethodMap = new HashMap<String, MathMethodInfo>();
-        EnumSet<MathMethodInfo> allMathMethods = EnumSet.allOf(MathMethodInfo.class);
-        for (MathMethodInfo m : allMathMethods) {
-            mathMethodMap.put(m.streamit_name(), m);
+        
+        private static Map<String, MathMethodInfo> mathMethodMap;
+        
+        static {
+            mathMethodMap = new HashMap<String, MathMethodInfo>();
+            EnumSet<MathMethodInfo> allMathMethods = EnumSet.allOf(MathMethodInfo.class);
+            for (MathMethodInfo m : allMathMethods) {
+                mathMethodMap.put(m.streamit_name(), m);
+            }
         }
     }
-    
-//    private static Set<String> mathMethods;
-//    
-//
-//    static {
-//        mathMethods = new HashSet<String>();
-//        mathMethods.addAll(Arrays.asList(new String[]{
-//                "acos", "asin", "atan", "atan2", "ceil", "cos", "sin", "cosh", "sinh",
-//                "exp", "fabs", "abs", "max", "min", "modf", "fmod", "frexp", "floor", 
-//                "log", "log10", "pow", "round", "rint", "sqrt", "tanh", "tan"
-//        }));
-//    }
 
     /**
-     * Is the passed method name (broken into prefix and identifier) a Java math method?
-     * Limited to those methods that we can emit code for...
-     * @param prefix JExpression that is method name prefix
-     * @param ident  String that is method name
-     * @return  whether or not method is a math method.
+     * promote a literal type to double.
+     * @param from  an integer, float, or double literal.
+     * @return a double literal.
+     */
+    private static JExpression asDouble(JExpression from)
+    {
+        if (from instanceof JFloatLiteral)
+            return new JDoubleLiteral(from.getTokenReference(),
+                                      from.floatValue());
+        if (from instanceof JIntLiteral)
+            return new JDoubleLiteral(from.getTokenReference(),
+                                      from.intValue());
+        assert from instanceof JDoubleLiteral;
+        return from;
+    }
+   
+    /**
+     * Simplify an call to a math function with literal arguments.
+     * Even if can't simplify, pass back something semantically 
+     * equivalent to the original expression.
+     * @param applyMath  application of math function to simplify
+     * @return an expression, possibly a literal value.
+     */
+    public static JExpression simplifyMathMethod(JMethodCallExpression applyMath) {
+        MathMethodInfo mm = MathMethodInfo.mathMethodMap.get(applyMath
+                .getIdent());
+        if (mm == null) {
+            return applyMath;
+        }
+
+        JExpression[] args = applyMath.getArgs();
+        for (JExpression arg : args) {
+            if (!(arg instanceof JLiteral)) {
+                return applyMath;
+            }
+        }
+
+        // At this point know that we are dealing with
+        // a supported math method with constant arguments.
+
+        double darg;
+        double darg2;
+
+        switch (mm) {
+        case ACOS:
+            assert args.length == 1;
+            darg = asDouble(args[0]).doubleValue();
+            return new JDoubleLiteral(applyMath.getTokenReference(), Math
+                    .acos(darg));
+
+        case ASIN:
+            assert args.length == 1;
+            darg = asDouble(args[0]).doubleValue();
+            return new JDoubleLiteral(applyMath.getTokenReference(), Math
+                    .asin(darg));
+        case ATAN:
+            assert args.length == 1;
+            darg = asDouble(args[0]).doubleValue();
+            return new JDoubleLiteral(applyMath.getTokenReference(), Math
+                    .atan(darg));
+        case ATAN2:
+            assert args.length == 2;
+            darg = asDouble(args[0]).doubleValue();
+            darg2 = asDouble(args[1]).doubleValue();
+            return new JDoubleLiteral(applyMath.getTokenReference(), Math
+                    .atan2(darg, darg2));
+        case CEIL:
+            assert args.length == 1;
+            darg = asDouble(args[0]).doubleValue();
+            return new JDoubleLiteral(applyMath.getTokenReference(), Math
+                    .ceil(darg));
+        case COS:
+            assert args.length == 1;
+            darg = asDouble(args[0]).doubleValue();
+            return new JDoubleLiteral(applyMath.getTokenReference(), Math
+                    .cos(darg));
+        case SIN:
+            assert args.length == 1;
+            darg = asDouble(args[0]).doubleValue();
+            return new JDoubleLiteral(applyMath.getTokenReference(), Math
+                    .sin(darg));
+        case COSH:
+            assert args.length == 1;
+            darg = asDouble(args[0]).doubleValue();
+            return new JDoubleLiteral(applyMath.getTokenReference(), Math
+                    .cosh(darg));
+        case SINH:
+            assert args.length == 1;
+            darg = asDouble(args[0]).doubleValue();
+            return new JDoubleLiteral(applyMath.getTokenReference(), Math
+                    .sinh(darg));
+        case EXP:
+            assert args.length == 1;
+            darg = asDouble(args[0]).doubleValue();
+            return new JDoubleLiteral(applyMath.getTokenReference(), Math
+                    .exp(darg));
+        case FLOOR:
+            assert args.length == 1;
+            darg = asDouble(args[0]).doubleValue();
+            return new JDoubleLiteral(applyMath.getTokenReference(), Math
+                    .floor(darg));
+        case LOG:
+            assert args.length == 1;
+            darg = asDouble(args[0]).doubleValue();
+            return new JDoubleLiteral(applyMath.getTokenReference(), Math
+                    .log(darg));
+        case LOG10:
+            assert args.length == 1;
+            darg = asDouble(args[0]).doubleValue();
+            return new JDoubleLiteral(applyMath.getTokenReference(), Math
+                    .log10(darg));
+        case POW:
+            assert args.length == 2;
+            darg = asDouble(args[0]).doubleValue();
+            darg2 = asDouble(args[1]).doubleValue();
+            return new JDoubleLiteral(applyMath.getTokenReference(), Math.pow(
+                    darg, darg2));
+        case ROUND:
+            assert args.length == 1;
+            darg = asDouble(args[0]).doubleValue();
+            return new JDoubleLiteral(applyMath.getTokenReference(), Math
+                    .round(darg));
+        case RINT:
+            assert args.length == 1;
+            darg = asDouble(args[0]).doubleValue();
+            return new JDoubleLiteral(applyMath.getTokenReference(), Math
+                    .rint(darg));
+        case SQRT:
+            assert args.length == 1;
+            darg = asDouble(args[0]).doubleValue();
+            return new JDoubleLiteral(applyMath.getTokenReference(), Math
+                    .sqrt(darg));
+        case TAN:
+            assert args.length == 1;
+            darg = asDouble(args[0]).doubleValue();
+            return new JDoubleLiteral(applyMath.getTokenReference(), Math
+                    .tan(darg));
+        case TANH:
+            assert args.length == 1;
+            darg = asDouble(args[0]).doubleValue();
+            return new JDoubleLiteral(applyMath.getTokenReference(), Math
+                    .tanh(darg));
+        case ABS:
+            assert args.length == 1;
+            if (args[0] instanceof JIntLiteral) {
+                return new JIntLiteral(applyMath.getTokenReference(), Math
+                        .abs(((JIntLiteral) args[0]).intValue()));
+            } else {
+                darg = asDouble(args[0]).doubleValue();
+                return new JDoubleLiteral(applyMath.getTokenReference(), Math
+                        .abs(darg));
+            }
+        case MAX:
+            assert args.length == 2;
+            if (args[0] instanceof JIntLiteral
+                    && args[1] instanceof JIntLiteral) {
+                return new JIntLiteral(applyMath.getTokenReference(), Math.max(
+                        ((JIntLiteral) args[0]).intValue(),
+                        ((JIntLiteral) args[1]).intValue()));
+            } else {
+                darg = asDouble(args[0]).doubleValue();
+                darg2 = asDouble(args[1]).doubleValue();
+                return new JDoubleLiteral(applyMath.getTokenReference(), Math
+                        .max(darg, darg2));
+            }
+        case MIN:
+            assert args.length == 2;
+            if (args[0] instanceof JIntLiteral
+                    && args[1] instanceof JIntLiteral) {
+                return new JIntLiteral(applyMath.getTokenReference(), Math.min(
+                        ((JIntLiteral) args[0]).intValue(),
+                        ((JIntLiteral) args[1]).intValue()));
+            } else {
+                darg = asDouble(args[0]).doubleValue();
+                darg2 = asDouble(args[1]).doubleValue();
+                return new JDoubleLiteral(applyMath.getTokenReference(), Math
+                        .min(darg, darg2));
+            }
+        default:
+            throw new AssertionError(mm);
+        }
+    }
+
+
+    
+// private static Set<String> mathMethods;
+//    
+//
+// static {
+// mathMethods = new HashSet<String>();
+// mathMethods.addAll(Arrays.asList(new String[]{
+// "acos", "asin", "atan", "atan2", "ceil", "cos", "sin", "cosh", "sinh",
+// "exp", "fabs", "abs", "max", "min", "modf", "fmod", "frexp", "floor",
+// "log", "log10", "pow", "round", "rint", "sqrt", "tanh", "tan"
+// }));
+// }
+
+    /**
+     * Is the passed method name (broken into prefix and identifier) a Java math
+     * method? Limited to those methods that we can emit code for...
+     * 
+     * @param prefix
+     *            JExpression that is method name prefix
+     * @param ident
+     *            String that is method name
+     * @return whether or not method is a math method.
      */
     public static boolean isMathMethod(JExpression prefix, String ident) 
     {
         if (prefix instanceof JTypeNameExpression &&
                 ((JTypeNameExpression)prefix).getQualifiedName().equals("java/lang/Math") &&
-                /*mathMethods.contains(ident)*/ mathMethodMap.containsKey(ident)) {
+                /*mathMethods.contains(ident)*/ MathMethodInfo.mathMethodMap.containsKey(ident)) {
             return true;
         }
         return false;
@@ -263,7 +452,7 @@ public abstract class Utils implements Serializable, DeepCloneable {
     public static String cellMathEquivalent(JExpression prefix, String ident) {
         if (prefix instanceof JTypeNameExpression &&
                 ((JTypeNameExpression)prefix).getQualifiedName().equals("java/lang/Math")) {
-            MathMethodInfo mm = mathMethodMap.get(ident);
+            MathMethodInfo mm = MathMethodInfo.mathMethodMap.get(ident);
             if (mm == null) return null;
             return mm.cell_name;
         }
@@ -279,7 +468,7 @@ public abstract class Utils implements Serializable, DeepCloneable {
     public static String cMathEquivalent(JExpression prefix, String ident) {
         if (prefix instanceof JTypeNameExpression &&
                 ((JTypeNameExpression)prefix).getQualifiedName().equals("java/lang/Math")) {
-            MathMethodInfo mm = mathMethodMap.get(ident);
+            MathMethodInfo mm = MathMethodInfo.mathMethodMap.get(ident);
             if (mm == null) return null;
             return mm.c_name;
         }
@@ -295,7 +484,7 @@ public abstract class Utils implements Serializable, DeepCloneable {
     public static String cppMathEquivalent(JExpression prefix, String ident) {
         if (prefix instanceof JTypeNameExpression &&
                 ((JTypeNameExpression)prefix).getQualifiedName().equals("java/lang/Math")) {
-            MathMethodInfo mm = mathMethodMap.get(ident);
+            MathMethodInfo mm = MathMethodInfo.mathMethodMap.get(ident);
             if (mm == null) return null;
             return mm.cpp_name;
         }

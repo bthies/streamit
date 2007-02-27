@@ -1471,66 +1471,11 @@ public class Propagator extends SLIRReplacingVisitor {
             }
         }
 
-    
-        // TODO: look at at.dms.util.Utils.MathMethodInfo and see if
-        // can automate.
-        // Look for known functions.
-        if (args.length == 1 && args[0].isConstant())
-            {
-                if (ident.equals("sin") || ident.equals("cos") ||
-                    ident.equals("log") || ident.equals("exp") ||
-                    ident.equals("atan") || ident.equals("sqrt") ||
-                    ident.equals("floor") || ident.equals("ceil")) {
-                    JExpression narg = doPromote(args[0],
-                                                 new JDoubleLiteral(null, 0.0));
-                    double darg = narg.doubleValue();
-                    if (ident.equals("sin")) {
-                        return new JDoubleLiteral(self.getTokenReference(),
-                                                  Math.sin(darg));
-                    }
-                    if (ident.equals("cos"))
-                        return new JDoubleLiteral(self.getTokenReference(),
-                                                  Math.cos(darg));
-                    if (ident.equals("log"))
-                        return new JDoubleLiteral(self.getTokenReference(),
-                                                  Math.log(darg));
-                    if (ident.equals("exp"))
-                        return new JDoubleLiteral(self.getTokenReference(),
-                                                  Math.exp(darg));
-                    if (ident.equals("atan"))
-                        return new JDoubleLiteral(self.getTokenReference(),
-                                                  Math.atan(darg));
-                    if (ident.equals("sqrt"))
-                        return new JDoubleLiteral(self.getTokenReference(),
-                                                  Math.sqrt(darg));
-                    if (ident.equals("floor"))
-                        return new JDoubleLiteral(self.getTokenReference(),
-                                                  Math.floor(darg));
-                    if (ident.equals("ceil"))
-                        return new JDoubleLiteral(self.getTokenReference(),
-                                                  Math.ceil(darg));
-                }
-            }
-        // RMR { look for known functions with 2 args
-        if (args.length == 2 && args[0].isConstant() && args[1].isConstant())
-            {
-                if (ident.equals("max")) {
-                    JExpression narg1 = doPromote(args[0],
-                                                  new JDoubleLiteral(null, 0.0));
-
-                    double darg1 = narg1.doubleValue();
-                    
-                    JExpression narg2 = doPromote(args[1],
-                                                  new JDoubleLiteral(null, 0.0));
-                    double darg2 = narg2.doubleValue();
-
-                    if (ident.equals("max"))
-                        return new JDoubleLiteral(self.getTokenReference(),
-                                                  Math.max(darg1, darg2));
-                }
-            }
-        // } RMR
-
+        // if java.lang.Math method, try evaluating now.
+        if (at.dms.util.Utils.isMathMethod(prefix, ident)) {
+            return at.dms.util.Utils.simplifyMathMethod(self);
+        }
+        
         return self;
     }
 

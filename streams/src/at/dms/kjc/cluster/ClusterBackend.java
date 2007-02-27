@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.118 2007-02-01 21:11:32 dimock Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.119 2007-02-27 23:42:23 dimock Exp $
 package at.dms.kjc.cluster;
 
 import at.dms.kjc.flatgraph.FlatNode;
@@ -259,6 +259,11 @@ public class ClusterBackend {
 
         StreamItDot.printGraph(str, "before-subgraphs.dot");
 
+        if (debugging) {
+            System.err.println("// str before subgraphs");
+            SIRToStreamIt.run(str,interfaces,interfaceTables,structs);
+            System.err.println("// END str before subgraphs");
+        }
         streamGraph = new ClusterStreamGraph((new GraphFlattener(str)).top);
         //create the static stream graphs cutting at dynamic rate boundaries
         streamGraph.createStaticStreamGraphs();
@@ -305,6 +310,8 @@ public class ClusterBackend {
         
             System.err.println("Running Partitioning... target number of threads: "+hosts);
 
+            HashSet doNotHorizFuse = ssg.getIOFilters();
+            
             StreamItDot.printGraph(ssg.getTopLevelSIR(), 
                                    Utils.makeDotFileName("before-partition", ssg.getTopLevelSIR()));
 
@@ -337,7 +344,7 @@ public class ClusterBackend {
                 // targeting a multiprocessor
                 // TODO: can we use curcount (param2) and targetCount (param3) to make partitioning
                 // interact with dynamic regions?
-                ssg.setTopLevelSIR(Partitioner.doit(ssg.getTopLevelSIR(), 0, hosts, false, false, false));
+                ssg.setTopLevelSIR(Partitioner.doit(ssg.getTopLevelSIR(), 0, hosts, false, false, false, doNotHorizFuse));
                 // from now on, 'hosts' is used to count the number of
                 // filters in the graph.  (For if we fused further than
                 // needed?)
@@ -409,15 +416,7 @@ public class ClusterBackend {
             // debugging:
             if (debugging) {
                 System.err.println("// str after vector fusing");
-                SIRGlobal[] globals;
-                if (global != null) {
-                    globals = new SIRGlobal[1];
-                    globals[0] = global;
-                } else {
-                    globals = new SIRGlobal[0];
-                }
-                SIRToStreamIt.run(ssg.getTopLevelSIR(), interfaces, interfaceTables, structs,
-                                  globals);
+                SIRToStreamIt.run(ssg.getTopLevelSIR(), interfaces, interfaceTables, structs);
                 System.err.println("// END str after vector fusing");
             }
                 
@@ -490,13 +489,8 @@ public class ClusterBackend {
         // end constrained scheduler
 
         if (debugging) {
-            SIRGlobal[] globals;
-            if (global != null) {
-                globals = new SIRGlobal[1];
-                globals[0] = global;
-            } else globals = new SIRGlobal[0];
             System.err.println("// str before Cluster-specific code");
-            SIRToStreamIt.run(str,interfaces,interfaceTables,structs,globals);
+            SIRToStreamIt.run(str,interfaces,interfaceTables,structs);
             System.err.println("// END str before Cluster-specific code");
         }
 

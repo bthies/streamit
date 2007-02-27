@@ -296,22 +296,23 @@ public abstract class SIRStream extends SIROperator implements Cloneable, SIRCod
     }
 
     /**
-     * Adds <newMethod> to this.  If <origMethod> is a method of this,
-     * then <newMethod> takes its first place (<origMethod> is
-     * removed).  If <origMethod> is null, then <newMethod> is just
-     * added to this.
+     * Adds <b>newMethod</b> to this.  If <b>origMethod</b> is a method of this,
+     * then <b>newMethod</b> takes its first place (<b>origMethod<b> is
+     * removed).  If <b>origMethod</b> is null, then <b>newMethod</b> is just
+     * added to this.  If <b>newMethod</b> is null, then <b>origMethod</b>
+     * is removed.
      *
-     * Assumes <origMethod> appears at most once in this (as should
+     * Assumes <b>origMethod</b> appears at most once in this (as should
      * all methods.)
      */
     protected void addReplacementMethod(JMethodDeclaration newMethod,
                                         JMethodDeclaration origMethod) {
         // check if <origMethod> is null
-        if (origMethod==null) {
+        if (origMethod==null && newMethod != null) {
             // if yes, then just add <newMethod>
             addMethod(newMethod);
         } else {
-            //otherwise, try swappping the old init function with new
+            //otherwise, try replacing the old with new
             int i;
             for (i=0; i<methods.length; i++) {
                 if (methods[i]==origMethod) { 
@@ -319,9 +320,23 @@ public abstract class SIRStream extends SIROperator implements Cloneable, SIRCod
                     break;
                 }
             }
-            // if we didn't find it, then just add <newMethod>
             if (i==methods.length) {
-                addMethod(newMethod);
+                // if we didn't find it, then just add <newMethod>
+                if (newMethod != null) {
+                    addMethod(newMethod);
+                }
+            } else if (methods[i] == null) {
+                // found but replaced with null <newMethod>: compress out the null.
+                JMethodDeclaration[] newMethods = new JMethodDeclaration[methods.length -1];
+                int j = 0, k = 0; 
+                while (k < newMethods.length) {
+                    if (methods[j] != null) {
+                        newMethods[j++] = methods[k++];
+                    } else {
+                        k++;
+                    }
+                }
+                methods = newMethods;
             }
         }
     }

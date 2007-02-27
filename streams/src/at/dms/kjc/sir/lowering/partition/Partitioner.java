@@ -55,7 +55,7 @@ public class Partitioner {
         // requested is only one more than the number of non-fusable
         // filters, then just run fuse-all
         int fuseAllResult = estimateFuseAllResult(str);
-        if (targetCount <= fuseAllResult + 1) {
+        if (targetCount <= fuseAllResult + 1 && noHorizFuse.isEmpty()) {
             System.out.println("  Detected target is max fusion, " + (strict ? "running fuseall..." : "fusing as much as possible..."));
             str = FuseAll.fuse(str, strict);
         } else {

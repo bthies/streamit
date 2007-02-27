@@ -208,7 +208,7 @@ void->void pipeline mosaic{
 	};
 	add splitjoin{
 		split duplicate;
-		add IAFID();		
+		add IAFIDandDynBoundary();		
 		add pipeline{
 			add makeFeatureListPairs();
 			add ransac();
@@ -261,6 +261,17 @@ void->void pipeline mosaic{
 	add YIQ2RGB();
 	add fileWrite();
 	//add FileWriter<int>("1out.bin");
+}
+
+
+imageAndFeatures->imageAndFeatures pipeline IAFIDandDynBoundary(){
+    add IAFID();
+    // fake a dynamic rate boundary to deal with delicacy of crateStaticStreamGraphs.
+    add imageAndFeatures->imageAndFeatures filter {
+	work pop [1,*,1] push 1 {
+		push(pop());
+	}
+    }
 }
 
 imageAndFeatures->imageAndFeatures filter IAFID(){

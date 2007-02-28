@@ -80,7 +80,7 @@ public class SIRPhasedFilter extends SIRStream implements Cloneable
         this.init = other.init;
         this.inputType = other.inputType;
         this.outputType = other.outputType;
-        this.parent = other.parent;
+        this.setParent(other.getParent());
         this.fields = other.fields;
         this.methods = other.methods;
         this.initPhases = other.initPhases;

@@ -178,10 +178,10 @@ public abstract class SIRStream extends SIROperator implements Cloneable, SIRCod
      * the parameters haven't been resolved yet.
      */
     public List<JExpression> getParams() {
-        if (parent==null) {
+        if (getParent()==null) {
             return null;
         } else {
-            return parent.getParams(parent.indexOf(this));
+            return getParent().getParams(getParent().indexOf(this));
         } 
     }
 

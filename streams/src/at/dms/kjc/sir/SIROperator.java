@@ -16,7 +16,7 @@ public abstract class SIROperator implements Finalizable, Serializable, DeepClon
      * The stream structure containing this, or NULL if this is the
      * toplevel stream.
      */
-    protected SIRContainer parent;
+    private SIRContainer parent;
     
     // Revolting hack: there is some processing (flatgraph.StaticStreamGraph.setTopLevelSIR for instance)
     // where object data structures containing SIROperators are replaced.  We need to keep data about the
@@ -43,20 +43,25 @@ public abstract class SIROperator implements Finalizable, Serializable, DeepClon
      * Constructs and operator with parent <parent>.
      */
     protected SIROperator(SIRContainer parent) {
-        this.parent = parent;
+        this.setParent(parent);
     }
 
     protected SIROperator() {
-        this.parent = null;
+       this(null);
     }
 
     /**
-     * Sets parent container
+     * @param parent the parent to set
      */
-    public void setParent(SIRContainer p){
-        this.parent = p;
+    public void setParent(SIRContainer parent) {
+        this.parent = parent;
     }
-
+    /**
+     * @return the parent
+     */
+    public SIRContainer getParent() {
+        return parent;
+    }
     /**
      * TO BE REMOVED once immutable stuff is in place.
      *
@@ -66,7 +71,7 @@ public abstract class SIROperator implements Finalizable, Serializable, DeepClon
      */
     public SIRContainer[] getParents() {
         LinkedList<SIRContainer> result = new LinkedList<SIRContainer>();
-        SIRContainer parent = getParent();
+        SIRContainer parent = this.getParent();
         // make list of parents
         while (parent!=null) {
             result.add(parent);
@@ -111,20 +116,20 @@ public abstract class SIROperator implements Finalizable, Serializable, DeepClon
      * TO BE REMOVED once immutable stuff is in place.
      */
     public String getRelativeName() {
-        if (parent==null) {
+        if (getParent()==null) {
             return null;
         } else {
-            if (parent instanceof SIRFeedbackLoop) {
-                if (this==((SIRFeedbackLoop)parent).getLoop()) {
+            if (getParent() instanceof SIRFeedbackLoop) {
+                if (this==((SIRFeedbackLoop)getParent()).getLoop()) {
                     return "loop";
                 } else {
                     return "body";
                 }
             } else {
-                assert parent.indexOf((SIRStream)this)!=-1:
+                assert getParent().indexOf((SIRStream)this)!=-1:
                     "Stream's parent doesn't contain it.  Stream is " +
-                    this + ", parent is " + parent;
-                return "child_" + parent.indexOf((SIRStream)this);
+                    this + ", parent is " + getParent();
+                return "child_" + getParent().indexOf((SIRStream)this);
             }
         }
     }
@@ -138,14 +143,14 @@ public abstract class SIROperator implements Finalizable, Serializable, DeepClon
     private Object serializationHandle;
     
     private void writeObject(ObjectOutputStream oos) throws IOException {
-        this.serializationHandle = ObjectDeepCloner.getHandle(parent);
+        this.serializationHandle = ObjectDeepCloner.getHandle(getParent());
     
         if (((Integer)serializationHandle).intValue()>=0) {
             // if we got a handle, erase our parent for the write object call
-            SIRContainer temp = this.parent;
-            this.parent = null;
+            SIRContainer temp = this.getParent();
+            this.setParent(null);
             oos.defaultWriteObject();
-            this.parent = temp;
+            this.setParent(temp);
         } else {
             // otherwise just write the parent
             oos.defaultWriteObject();
@@ -156,7 +161,7 @@ public abstract class SIROperator implements Finalizable, Serializable, DeepClon
         Object o = ObjectDeepCloner.getInstance(serializationHandle, this);
         if (o!=this) {
             // if we had a handle, reset parent before returning
-            this.parent = (SIRContainer)o;
+            this.setParent((SIRContainer)o);
         }
         return this;
     }
@@ -205,12 +210,6 @@ public abstract class SIROperator implements Finalizable, Serializable, DeepClon
         return Namer.getUniqueNumber(this);
     }
 
-    /**
-     * Returns the parent of this.
-     */
-    public SIRContainer getParent() {
-        return parent;
-    }
 
     public int hashCode() {
         return Namer.getUniqueNumber(this);
@@ -276,7 +275,7 @@ public abstract class SIROperator implements Finalizable, Serializable, DeepClon
 
     /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.sir.SIROperator other) {
-        other.parent = this.parent;
+        other.setParent(this.getParent());
         other.serializationHandle = this.serializationHandle;
     }
 

@@ -126,8 +126,8 @@ public abstract class SIRContainer extends SIRStream {
     }
 
     /**
-     * Adds <str> at index <index> with parameters <param>, and sets
-     * parent of <str> to this.
+     * Adds <b>str</b> at index <b>index</b> with parameters <b>param</b>, and sets
+     * parent of <b>str</b> to this.
      */
     public void add(int index, SIRStream str, List param) {
         children.add(index, str);
@@ -268,8 +268,8 @@ public abstract class SIRContainer extends SIRStream {
     }
 
     /**
-     * Returns a wrapper for <str>.  Also mutates parent of <str> to
-     * contain the wrapper in between itself and <str>.
+     * Returns a wrapper for <b>str</b>.  Also mutates parent of <b>str</b> to
+     * contain the wrapper in between itself and <b>str</b>.
      */
     public static SIRPipeline makeWrapper(SIRStream str) {
         // wrapper.add below changes the parent of str, so grab the

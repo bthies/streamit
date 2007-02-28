@@ -280,15 +280,20 @@ public class LoopIterInfo  implements Constants {
                 } else {
                     initExpr = (JAssignmentExpression)((JExpressionStatement)init).getExpression();
                 }
+                JExpression initialRExpr = null;
                 if(((JLocalVariableExpression)initExpr.getLeft()).getVariable()==var)
-                    initVal 
-                        = ((JIntLiteral)initExpr.getRight()).intValue();
+                    initialRExpr = initExpr.getRight();
                 else if(values.containsKey(var))
-                    initVal=((JIntLiteral)values.get(var)).intValue();
+                    initialRExpr = values.get(var);
                 else if(constants.containsKey(var))
-                    initVal=((JIntLiteral)constants.get(var)).intValue();
+                    initialRExpr = constants.get(var);
                 else {
                     throw new Exception("Not Constant!");
+                }
+                if (! (initialRExpr instanceof JIntLiteral)) {
+                    throw new Exception("Not Constant!");
+                } else {
+                    initVal = ((JIntLiteral)initialRExpr).intValue();
                 }
             } else if (init instanceof JVariableDeclarationStatement &&
                     ((JVariableDeclarationStatement)init).getVars()[0].getIdent().equals(var.getIdent())

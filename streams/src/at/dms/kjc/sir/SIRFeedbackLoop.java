@@ -278,12 +278,21 @@ public class SIRFeedbackLoop extends SIRContainer implements Cloneable {
         return this.delay;
     }
 
+    private boolean warned = false;
+    
     /**
      * Retrieve the delay of this as an int (requires that constants
      * have been propagated).
      */
     public int getDelayInt() {
         if (!(delay instanceof JIntLiteral)) {
+            if (delay == null) {
+                if (! warned) {
+                    System.err.println("Feedback loop " + this.getIdent() + " seems to have no enqueues.");
+                }
+                warned = true;
+                return 0;
+            }
             Utils.fail("Trying to get integer value for DELAY value, " + 
                        "but the constant hasn't been resolved yet.  " + 
                        "It is of class " + delay.getClass());

@@ -75,8 +75,10 @@ public class PartitionDot extends StreamItDot {
         } catch (NumberFormatException e) {
             partition = -1;
         }
+        int offset = (partition + 1) % color_table.length;
+        if (offset < 0) { offset = color_table.length + offset; }
         return origLabel + prefixLabel + partitions.get(op) + 
-            "\" color=\"" + color_table[(partition+1)%color_table.length] + "\" style=\"filled";
+            "\" color=\"" + color_table[offset] + "\" style=\"filled";
     }
 
     /* visit a filter */

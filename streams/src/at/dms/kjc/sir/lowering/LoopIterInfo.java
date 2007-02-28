@@ -268,6 +268,9 @@ public class LoopIterInfo  implements Constants {
             // inspect condition...
             JRelationalExpression condExpr = (JRelationalExpression)cond;
             int relation=condExpr.getOper();
+            if (! (condExpr.getLeft() instanceof JLocalVariableExpression)) {
+                throw new Exception("Left hand side of conditional is not a local variable");
+            }
             var=((JLocalVariableExpression)condExpr.getLeft()).getVariable();
             if(init instanceof JExpressionListStatement || init instanceof JExpressionStatement) {
                 JAssignmentExpression initExpr;

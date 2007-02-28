@@ -1,23 +1,20 @@
 package at.dms.kjc.sir.lowering.partition.dynamicprog;
 
 import java.util.*;
-import java.io.*;
-
+//import java.io.*;
 import at.dms.kjc.*;
 import at.dms.util.*;
 import at.dms.kjc.iterator.*;
 import at.dms.kjc.sir.*;
-import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.sir.lowering.fusion.*;
-import at.dms.kjc.sir.lowering.fission.*;
 import at.dms.kjc.sir.lowering.partition.*;
 
 abstract class DPConfigContainer extends DPConfig {
     /**  
      * A_s[x1][x2][y1][y2][n][j] holds minimum cost of assigning
-     * children (x1..x2, y1..y2) of stream s to n tiles.  <pre>j</pre> is 1 if
+     * children (x1..x2, y1..y2) of stream s to n tiles.  <b>j</b> is 1 if
      * these children are next to a downstream joiner in the current
-     * configuration; <pre>j</pre> is zero otherwise.  If this corresponds to a
+     * configuration; <b>j</b> is zero otherwise.  If this corresponds to a
      * filter's config, then A is null.
      */
     private int[][][][][][] A;
@@ -355,7 +352,7 @@ abstract class DPConfigContainer extends DPConfig {
                     SIRFilter filter = (SIRFilter)rec.get(i);
                     numFilters++;
                     // see if filter is not fusable in general
-                    if (!isFusable(filter)) {
+                    if (!FusePipe.isFusable(filter)) {
                         fusable = false;
                     }
                     // if we are fusing horizontally, see if filter is
@@ -613,12 +610,6 @@ abstract class DPConfigContainer extends DPConfig {
         return overhead;
     }
 
-    /**
-     * Returns whether or not it is okay to fuse <pre>filter</pre> with others.
-     */
-    private boolean isFusable(SIRFilter filter) {
-        return FusePipe.isFusable(filter);
-    }
 
     /**
      * Traceback function.
@@ -682,25 +673,8 @@ abstract class DPConfigContainer extends DPConfig {
                 return str;
             } else {
                 // fuse everything.
-        
-                //  This wrapper business is a mess.  Could probably be
-                //  simplified -- just moving legacy code out of end of
-                //  FuseAll, being sure to preserve functionality.
-                SIRPipeline wrapper = SIRContainer.makeWrapper(str);
-                wrapper.reclaimChildren();
-                SIRPipeline wrapper2 = FuseAll.fuse(str);
-                Lifter.eliminatePipe(wrapper2);
-                Lifter.lift(wrapper);
-                // make sure we've fused
-                assert wrapper.size()==1 &&
-                    wrapper.get(0) instanceof SIRFilter:
-                    "Wrapper contains " + wrapper.size() +
-                    " entries, with get(0)==" + wrapper.get(0);
-                // return child
-                Lifter.eliminatePipe(wrapper);
-                SIRStream result = wrapper.get(0);
                 indent--;
-                return result;
+                return partitioner.fuseall(str);
             }
         }
 
@@ -763,14 +737,8 @@ abstract class DPConfigContainer extends DPConfig {
                             // overhead.  While just a heuristic, this
                             // improves bitonic (for example).
                             if (sum<partitioner.getBottleneck()) {
-                                SIRPipeline wrapper = new SIRPipeline(null, sj.getIdent()+"_wrapper");
-                                wrapper.add(sj);
-                                SIRPipeline wrapper2 = FuseAll.fuse(sj);
-                                Lifter.eliminatePipe(wrapper2);
-                                Lifter.lift(wrapper);
-                                // return child
-                                Lifter.eliminatePipe(wrapper);
-                                return wrapper.get(0);
+                                sj.setParent(null);
+                                return partitioner.fuseall(sj);
                             }
                         }
 

@@ -136,7 +136,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
         this.noHorizFuse = noHorizFuse;
     }
     /**
-     * As above, without <pre>noHorizFuse</pre>.
+     * As above, without <b>noHorizFuse</b>.
      */
     public DynamicProgPartitioner(SIRStream str, WorkEstimate work, int numTiles, boolean joinersNeedTiles, boolean limitICode, boolean strict) {
         this(str, work, numTiles, joinersNeedTiles, limitICode, strict, new HashSet());
@@ -417,18 +417,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
         if (str instanceof SIRContainer) {
             // fuse it if it is all identities
             if (allIdentities.contains(str)) {
-                //  This wrapper business is a mess.  Could probably be
-                //  simplified -- just moving legacy code out of end of
-                //  FuseAll, being sure to preserve functionality.
-                SIRPipeline wrapper = SIRContainer.makeWrapper(str);
-                wrapper.reclaimChildren();
-                SIRPipeline wrapper2 = FuseAll.fuse(str);
-                Lifter.eliminatePipe(wrapper2);
-                Lifter.lift(wrapper);
-                // return child
-                Lifter.eliminatePipe(wrapper);
-                SIRStream result = wrapper.get(0);
-                return result;  
+                return fuseall(str);
             } else {
                 // otherwise recurse
                 SIRContainer cont = (SIRContainer)str;
@@ -452,7 +441,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
         // make canonical representation
         str = RefactorSplitJoin.addDeepRectangularSyncPoints(str);
         // dump to graph
-        //StreamItDot.printGraph(str, "dp-partition-input.dot");
+        StreamItDot.printGraph(str, "dp-partition-input.dot");
         return (DPConfig)str.accept(new ConfigBuilder());
     }
 
@@ -595,6 +584,82 @@ public class DynamicProgPartitioner extends ListPartitioner {
             DPConfig config = createConfig(self);
             configMap.put(self, config);
             return config;
+        }
+    }
+    
+    /** 
+     * Check limitations on fusion
+     * @param str                               candidate for fusion
+     * @param unfusableDueToSSGConstruction     if [0] == true, can not call fusaAll because of unfusable filters at dynamic rate boundaries.
+     * @param unfusableDueToFeedback            if [0] == true, can not fuse strictly because of presence of feedback loop
+     */
+    private void fusionChecker (SIRStream str, final boolean[] unfusableDueToSSGConstruction, final boolean[] unfusableDueToFeedback) {
+        SIRIterator streamiter = IterFactory.createFactory().createIter(str);
+        streamiter.
+        accept(new EmptyStreamVisitor() {
+            @Override 
+            public void preVisitFeedbackLoop(SIRFeedbackLoop loop,
+                    SIRFeedbackLoopIter iter) {
+                super.preVisitFeedbackLoop(loop, iter);
+                unfusableDueToFeedback[0] = true;
+            }
+            
+            @Override
+            public void visitFilter(SIRFilter filter,
+                    SIRFilterIter iter) {
+                if (getNoHorizFuse().contains(filter)) {
+                    SIRStream parent = filter.getParent();
+                    SIRSplitJoin closestSplitJoin = null;
+                    while (parent != null) {
+                        if (parent instanceof SIRSplitJoin) {
+                            closestSplitJoin = (SIRSplitJoin)parent;
+                            break;
+                        }
+                        parent = parent.getParent();
+                    }
+                    if (closestSplitJoin != null 
+                            && ((closestSplitJoin.getSplitter().getSumOfWeights() == 0
+                                    && closestSplitJoin.getSplitter().getWays() > 1)
+                                || (closestSplitJoin.getJoiner().getSumOfWeights() == 0
+                                    &&  closestSplitJoin.getJoiner().getWays() > 1))) {
+                        // this is the actual criterion that a filter in a SSG is not fusable.
+                        // should be in at.dms.kjc.flatgraph.something...
+                        unfusableDueToSSGConstruction[0] = true;
+                    }
+                }
+            }
+        });
+    }
+
+    public SIRStream fuseall (SIRStream str) {
+        final boolean unfusableDueToSSGConstruction[] = {false};
+        final boolean unfusableDueToFeedback[] = {false};
+        fusionChecker(str,unfusableDueToSSGConstruction,unfusableDueToFeedback);
+
+        // for now, don't even try fusing around unfusable filters.
+        if (unfusableDueToSSGConstruction[0]) {
+            System.err.println(this.getClass().getName() + ": Unfusable stream " + str + " due to SSG construction");
+            return str;
+        } else {
+            boolean strictFusion = ! unfusableDueToFeedback[0];
+            // Fuseall wants a SIRContainer, so wrap in case we have a SIRFilter.
+            SIRPipeline wrapper = SIRContainer.makeWrapper(str);
+            wrapper.reclaimChildren();
+            // Fuseall returns a pipeline, but it may have only one element.
+            SIRPipeline wrapper2 = FuseAll.fuse(str, strictFusion);
+            Lifter.eliminatePipe(wrapper2); // fusion's intorduced pipeline.
+            Lifter.lift(wrapper);  // clean up graph structure (if any left)
+            if (wrapper.size() != 1 || ! (wrapper.get(0) instanceof SIRFilter)) {
+                // didn't actually fuse all -- print warning.
+                System.err.println(this.getClass().getName() + ": Unfusable stream " + str + " due to feedbackloop");
+            }
+            if (wrapper.size()==1) {
+                // common case: will have fused down to 1 filter unwrap and return.
+                Lifter.eliminatePipe(wrapper);
+                return wrapper.get(0);
+            } else {
+                return wrapper;
+            }
         }
     }
 }

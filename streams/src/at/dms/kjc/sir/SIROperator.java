@@ -63,8 +63,6 @@ public abstract class SIROperator implements Finalizable, Serializable, DeepClon
         return parent;
     }
     /**
-     * TO BE REMOVED once immutable stuff is in place.
-     *
      * Returns list of all parents.  The first element of the list is
      * the immediate parent of this, and the last element is the final
      * non-null ancestor of this.
@@ -77,9 +75,24 @@ public abstract class SIROperator implements Finalizable, Serializable, DeepClon
             result.add(parent);
             parent = parent.getParent();
         }
-        return result.toArray(new SIRContainer[0]);
+        return result.toArray(new SIRContainer[result.size()]);
     }
 
+    /**
+     * Get lists starting with <b>this</b> followed by its
+     * ancestors in order of lookup through the parent relation.
+     * @return reflexive closure of parent relation, in order.
+     */
+    public List<SIROperator> getAncestors() {
+        LinkedList<SIROperator> result = new LinkedList<SIROperator>();
+        SIROperator parent = this;
+        while (parent!=null) {
+            result.add(parent);
+            parent = parent.getParent();
+        }
+        return result;
+    }
+    
     /**
      * TO BE REMOVED once immutable IR is in place.
      *

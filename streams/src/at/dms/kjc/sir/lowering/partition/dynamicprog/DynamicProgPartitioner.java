@@ -440,8 +440,12 @@ public class DynamicProgPartitioner extends ListPartitioner {
     private DPConfig buildStreamConfig() {
         // make canonical representation
         str = RefactorSplitJoin.addDeepRectangularSyncPoints(str);
+        if (str instanceof SIRContainer) {
+            // fix any sloppiness about parent pointers from addDeepRectangularSyncPoints
+            ((SIRContainer)str).reclaimChildren();
+        }
         // dump to graph
-        StreamItDot.printGraph(str, "dp-partition-input.dot");
+        //StreamItDot.printGraph(str, "dp-partition-input.dot");
         return (DPConfig)str.accept(new ConfigBuilder());
     }
 

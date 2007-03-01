@@ -3,11 +3,12 @@ package at.dms.kjc.cluster;
 
 import at.dms.kjc.sir.*;
 import at.dms.kjc.iterator.*;
-import java.util.Vector;
+import java.util.*;
 import java.util.Iterator;
 import java.util.HashSet;
 import java.util.HashMap;
 import streamit.misc.AssertedClass;
+import at.dms.kjc.common.CommonUtils;
 
 /**
  * A class that detects and stores pairwise latency constraints 
@@ -21,16 +22,16 @@ import streamit.misc.AssertedClass;
 public class LatencyConstraints {
 
     // consists of SIRFilter(s)
-    public static HashSet<SIRStream> restrictedExecutionFilters = new HashSet<SIRStream>();
+    private static HashSet<SIRStream> restrictedExecutionFilters = new HashSet<SIRStream>();
 
     // consists of SIRFilter -> Integer
     //public static HashMap initCredit = new HashMap();
 
     // consists of SIRFilter(s) -> HashSet of LatencyConstraint(s)
-    public static HashMap<SIRStream, HashSet<LatencyConstraint>> outgoingLatencyConstraints = new HashMap<SIRStream, HashSet<LatencyConstraint>>();
+    private static HashMap<SIRStream, HashSet<LatencyConstraint>> outgoingLatencyConstraints = new HashMap<SIRStream, HashSet<LatencyConstraint>>();
 
     // Vector of SIRFilter(s) (sender, receiver) -> Boolean;
-    public static HashMap<Vector<SIRFilter>, Boolean> messageDirectionDownstream = new HashMap<Vector<SIRFilter>, Boolean>();
+    private static HashMap<Vector<SIRFilter>, Boolean> messageDirectionDownstream = new HashMap<Vector<SIRFilter>, Boolean>();
 
     /**
      * Returns true if a {@link SIRFilter} needs to receive credit
@@ -40,19 +41,6 @@ public class LatencyConstraints {
     public static boolean isRestricted(SIRFilter filter) {
         return restrictedExecutionFilters.contains(filter);
     }
-
-    /*
-    public static int getInitCredit(SIRFilter filter) {
-        return ((Integer)initCredit.get(filter)).intValue();
-    }
-
-    private static void setInitCredit(SIRFilter filter, int val) {
-        Integer now = (Integer)initCredit.get(filter);
-        if (now == null || val < now.intValue()) {
-            initCredit.put(filter, new Integer(val));
-        }
-    }
-    */
 
     /**
      * Returns a set of outgoing constraints for a {@link SIRFilter}
@@ -131,15 +119,13 @@ public class LatencyConstraints {
     }
 
     /**
-     * Given a top stream iterator and an array of portals detect and
+     * Given an array of portals detect and
      * register all pairwise latency constraints.
      * @param topStreamIter top stream iterator
      * @param portals an array of all portals
      */
 
-    public static void detectConstraints(
-                                         streamit.scheduler2.iriter.Iterator topStreamIter,
-                                         SIRPortal portals[]) {
+    public static void detectConstraints(SIRPortal portals[]) {
         if (ClusterBackend.debugging)
             System.out.println("Number of portals is: "+portals.length);
 
@@ -147,7 +133,20 @@ public class LatencyConstraints {
         
             SIRPortalSender senders[] = portals[t].getSenders();
             SIRStream receivers[] = portals[t].getReceivers();
+            
+            // in next few lines, we finf the smallest common super-structure containing
+            // all senders and receivers.
+            // We hope that the result does not cross any dynamic rate boundaries
+            // since the constrained scheduler does not know what to do at dynamic rate boundaries.
+            Vector<SIRStream> sendRecieveLocations = new Vector<SIRStream>(Arrays.asList(receivers));
+            for (SIRPortalSender sender : senders) {
+                sendRecieveLocations.add(sender.getStream());
+            }
+            SIRStream rootOfSearch = (SIRStream)CommonUtils.commonAncestor(sendRecieveLocations);
+            assert rootOfSearch != null;
 
+            streamit.scheduler2.iriter.Iterator topStreamIter = IterFactory.createFactory().createIter(rootOfSearch);
+            
             HashSet<SIRStream> visited_senders = new HashSet<SIRStream>();
         
             int min_latency = 0;
@@ -251,12 +250,8 @@ public class LatencyConstraints {
                     SIRFilter f1 = (SIRFilter)sender;
                     SIRFilter f2 = (SIRFilter)receiver;
 
-                    int n1 = NodeEnumerator.getSIROperatorId(f1);
-                    int n2 = NodeEnumerator.getSIROperatorId(f2);
-
-                    // seems to have no side effects, and causes a
-                    // performance bottleneck in MPEG.
-                    //FindPath.find(n1,n2);
+                    //int n1 = NodeEnumerator.getSIROperatorId(f1);
+                    //int n2 = NodeEnumerator.getSIROperatorId(f2);
 
                     streamit.scheduler2.constrained.Scheduler cscheduler2 =
                         streamit.scheduler2.constrained.Scheduler.

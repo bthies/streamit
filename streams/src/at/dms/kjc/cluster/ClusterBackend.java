@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.119 2007-02-27 23:42:23 dimock Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.120 2007-03-01 22:59:34 dimock Exp $
 package at.dms.kjc.cluster;
 
 import at.dms.kjc.flatgraph.FlatNode;
@@ -64,11 +64,11 @@ public class ClusterBackend {
      */
     private static SIRStructure[] structures;
 
-    /**
-     * Used to iterate over str structure ignoring flattening.
-     * <br/> Also used in {@link ClusterCodeGenerator} and {@link FlatIrToCluster2}
-     */
-    static streamit.scheduler2.iriter.Iterator topStreamIter; 
+//    /**
+//     * Used to iterate over str structure ignoring flattening.
+//     * <br/> Also used in {@link ClusterCodeGenerator} and {@link FlatIrToCluster2}
+//     */
+//    static streamit.scheduler2.iriter.Iterator topStreamIter; 
     
     /**
      * This keeps the stream graph split up into static rate subgraphs.
@@ -463,8 +463,6 @@ public class ClusterBackend {
         // The str and flatgraph representations are not allowed to change from
         // here on.
         str = streamGraph.recreateSIR();
-        topStreamIter = IterFactory.createFactory().createIter(str);
-        //topStreamIter = IterFactory.createFineGrainedFactory().createIter(str);
         FlatNode strTop = streamGraph.getTopLevel().getTopLevel();
        
         StreamItDot.printGraph(str, "after-subgraphs.dot");
@@ -515,10 +513,9 @@ public class ClusterBackend {
         if (KjcOptions.removeglobals) { RemoveGlobals.doit(graphFlattener.top); }
         */
 
-        /// start output portals
-        SIRPortal portals[] = SIRPortal.getPortals();
-
-        LatencyConstraints.detectConstraints(topStreamIter, portals);
+        // calculate latency constraints for all portals
+        // and save for later query.
+        LatencyConstraints.detectConstraints(SIRPortal.getPortals());
     
         /// end output portals
 

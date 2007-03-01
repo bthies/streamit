@@ -1,33 +1,57 @@
 package at.dms.kjc.flatgraph;
 
 import at.dms.kjc.flatgraph.FlatNode;
-
+import java.util.Map;
+import java.util.WeakHashMap;
 /**
  * This class represents inter-SSG edges.
  *
  * Dynamic-rate edges between static-rate subgraphs (StaticStreamGraph).
  * 
- * Note that a SSGEdge may be shared between the SSGs at its upstream and downstream ends,
- * or they may have separate SSGEdge's with identical data.
+ * A there is only a single SSGEdge for a connection, shared by its upstream side and its downstream side.
+ * So, if upstream (resp. downstream) side sets upstreamNode (resp. downStreamNode) value, 
+ * the downstream (resp. upstream) SSG will see it.
  * 
  * @author Mike Gordon
  */
 
-public class SSGEdge<fromType extends StaticStreamGraph, toType extends StaticStreamGraph> 
+public class SSGEdge 
 {
+    static Map<SSGEdge,Object> allEdges = new WeakHashMap<SSGEdge,Object>();
+
+    /**
+     * Create a new SSGEdge, or return an existing one with the same parameters.
+     * @param fromSSG  upstream SSG
+     * @param toSSG    dowmstream SSG
+     * @param from     number of outgoing connection in upstream SSG
+     * @param to       number of incoming connection in downstream SSG
+     * @return a SSGEdge.
+     */
+    public static SSGEdge createSSGEdge(StaticStreamGraph fromSSG, StaticStreamGraph toSSG, int from, int to) {
+        for (SSGEdge e : allEdges.keySet()) {
+            if (e.fromSSG == fromSSG && e.toSSG == toSSG && e.from == from && e.to == to) {
+                return e;
+            }
+        }
+        SSGEdge retval = new SSGEdge(fromSSG, toSSG, from, to);
+        allEdges.put(retval, null);
+        return retval;
+    }
+
     //the source and dest SSG
     //fromSSG->toSSG
-    private fromType fromSSG;
-    private toType toSSG;
+    private StaticStreamGraph fromSSG;
+    private StaticStreamGraph toSSG;
     //the exact nodes of the SSGs,
     // outputNode -> inputNode
-    FlatNode upstreamNode, downstreamNode;
+    private FlatNode downstreamNode;
+    private FlatNode upstreamNode;
     /** the connection numbers, so we can rebuild the
         SSGEdges if the flatgraph changes **/
     private int from, to;
 
-    public SSGEdge(fromType fromSSG, 
-                   toType toSSG,
+    private SSGEdge(StaticStreamGraph fromSSG, 
+                   StaticStreamGraph toSSG,
                    int from, int to) 
     {
         this.fromSSG = fromSSG;
@@ -49,13 +73,42 @@ public class SSGEdge<fromType extends StaticStreamGraph, toType extends StaticSt
     }
 
     /** the downstream SSG of edge **/
-    public toType getDownstream() 
+    public StaticStreamGraph getDownstream() 
     {
         return toSSG;
     }
+    
     /** the upstream SSG of edge **/
-    public fromType getUpstream()
+    public StaticStreamGraph getUpstream()
     {
         return fromSSG;
+    }
+
+    /**
+     * @param upstreamNode the upstreamNode to set
+     */
+    void setUpstreamNode(FlatNode upstreamNode) {
+        this.upstreamNode = upstreamNode;
+    }
+
+    /**
+     * @return the upstreamNode
+     */
+    FlatNode getUpstreamNode() {
+        return upstreamNode;
+    }
+
+    /**
+     * @param downstreamNode the downstreamNode to set
+     */
+    void setDownstreamNode(FlatNode downstreamNode) {
+        this.downstreamNode = downstreamNode;
+    }
+
+    /**
+     * @return the downstreamNode
+     */
+    FlatNode getDownstreamNode() {
+        return downstreamNode;
     }
 }

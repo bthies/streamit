@@ -16,8 +16,11 @@ import java.util.*;
  */
 
 public class StreamGraph {
-    /** The toplevel stream container * */
-    protected FlatNode topLevelFlatNode;
+    /** The toplevel stream container.
+     * Used as starting point for creating subgraphs
+     * but may later become obsolete, not updated as SSG's change.
+     */
+    private FlatNode topLevelFlatNode;
 
     /** A list of all the static sub graphs * */
     protected StaticStreamGraph[] staticSubGraphs;

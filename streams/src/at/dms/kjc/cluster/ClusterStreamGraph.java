@@ -25,7 +25,7 @@ public class ClusterStreamGraph extends ScheduledStreamGraph {
         return new ClusterStaticStreamGraph(sg,realTop);
     }
     
-    /** Clean up any data structure saffected by fusion. */
+    /** Clean up any data structures affected by fusion. */
     public void cleanupForFused() {
         // handle fusion in each StaticStreamGraph
         for (StaticStreamGraph ssg : staticSubGraphs) {
@@ -43,9 +43,11 @@ public class ClusterStreamGraph extends ScheduledStreamGraph {
             newParentMap.put(k,v);
         }
         parentMap = newParentMap;
-        // handle fusion in topLevelFlatNode
-        if (ClusterFusion.isEliminated(topLevelFlatNode)) {
-            topLevelFlatNode = ClusterFusion.getMaster(topLevelFlatNode);
-        }
+
+        // topLevelFlatNode was listed as protected, but should have been private...
+//        // handle fusion in topLevelFlatNode
+//        if (ClusterFusion.isEliminated(topLevelFlatNode)) {
+//            topLevelFlatNode = ClusterFusion.getMaster(topLevelFlatNode);
+//        }
     }
 }

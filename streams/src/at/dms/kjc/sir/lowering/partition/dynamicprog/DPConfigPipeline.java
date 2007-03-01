@@ -43,8 +43,10 @@ class DPConfigPipeline extends DPConfigContainer {
     protected DPConfig childConfig(int x, int y) {
         SIRStream c1 = cont.get(y), c2;
         // if we're just accessing a hierarchical unit, return it
-        if (x==0 && !(c1 instanceof SIRSplitJoin)) {
+        if (x==0 && !(c1 instanceof SIRSplitJoin || c1 instanceof SIRFeedbackLoop)) {
             c2 = c1;
+        } else if (c1 instanceof SIRFeedbackLoop) {
+            c2 = ((SIRFeedbackLoop)c1).get(x);
         } else {
             // otherwise, we're looking inside a hierarchical unit -- must
             // be a splitjoin
@@ -77,6 +79,8 @@ class DPConfigPipeline extends DPConfigContainer {
             SIRStream child = cont.get(i);
             if (child instanceof SIRSplitJoin) {
                 result[i] = ((SIRSplitJoin)child).size();
+            } else if (child instanceof SIRFeedbackLoop) {
+                result[i] = 2;
             } else {
                 result[i] = 1;
             }

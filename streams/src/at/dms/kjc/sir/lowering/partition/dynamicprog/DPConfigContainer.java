@@ -662,7 +662,8 @@ abstract class DPConfigContainer extends DPConfig {
     
         // if we only have one tile left, return fusion transform with
         // children fused first
-        if (tileLimit==1) {
+        // AD: updated with also processing SIRFeedbackLoop since we do not decompose these.
+        if (tileLimit==1 || str instanceof SIRFeedbackLoop) {
             // everything goes in this partition
             for (int y=y1; y<=y2; y++) {
                 for (int x=x1; x<=Math.min(x2,width[y]-1); x++) {

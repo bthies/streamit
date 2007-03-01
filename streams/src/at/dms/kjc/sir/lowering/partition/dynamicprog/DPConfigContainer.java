@@ -842,6 +842,9 @@ abstract class DPConfigContainer extends DPConfig {
                 }
             } else if (str instanceof SIRSplitJoin) {
                 verticalObj = (SIRSplitJoin)str;
+            } else if (str instanceof SIRFeedbackLoop) {
+                // can not cut a feedback loop vertically
+                tryVertical = false;
             } else {
                 Utils.fail("Didn't expect " + str.getClass() + " as object of vertical cut.");
             }    

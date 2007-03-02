@@ -17,7 +17,7 @@ WIDTH 120
 HEIGHT 96
 DEPTH 4
 MAXVAL 255
-TUPLETYPE RGB_ALPHA
+TUPLTYPE RGB_ALPHA
 ENDHDR
 */
 
@@ -53,7 +53,7 @@ int main(int argc, char** argv) {
                     sprintf(frame_str, "%s%d.pam", argv[4], ++frame_no);
                     output = fopen(frame_str, "w");
                     // insert headers between frames
-                    fprintf(output, "P7\nWIDTH %d\nHEIGHT %d\nDEPTH 4\nMAXVAL 255\nTUPLETYPE RGB_ALPHA\nENDHDR\n", width, height);
+                    fprintf(output, "P7\nWIDTH %d\nHEIGHT %d\nDEPTH 4\nMAXVAL 255\nTUPLTYPE RGB_ALPHA\nENDHDR\n", width, height);
                 }
                 fputc((char)val, output);
                 if (i==width*height*4-1) {

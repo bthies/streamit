@@ -369,14 +369,16 @@ public class ClusterCode {
 
             JMethodDeclaration ipath = floop.getInitPath();
 
-            ipath.setName("__Init_Path_"+thread_id);
-            FlatIRToCluster fir = new FlatIRToCluster();
-            fir.setDeclOnly(false);
-            ipath.accept(fir);
-            p.print(fir.getPrinter().getString());
+            if (ipath != null) {
+                ipath.setName("__Init_Path_" + thread_id);
+                FlatIRToCluster fir = new FlatIRToCluster();
+                fir.setDeclOnly(false);
+                ipath.accept(fir);
+                p.print(fir.getPrinter().getString());
 
-            p.newLine();
-            p.newLine();
+                p.newLine();
+                p.newLine();
+            }
 
         }
 

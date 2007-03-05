@@ -4,6 +4,7 @@ import at.dms.kjc.CStdType;
 import at.dms.kjc.JIntLiteral;
 import at.dms.kjc.JExpression;
 import at.dms.kjc.CType;
+import at.dms.kjc.CClassType;
 import at.dms.kjc.CBitType;
 import at.dms.kjc.CArrayType;
 import at.dms.kjc.CEmittedTextType;
@@ -19,8 +20,8 @@ import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.sir.SIRFilter;
 import at.dms.kjc.sir.SIRJoiner;
 import at.dms.kjc.sir.SIRSplitter;
-import at.dms.kjc.sir.SIRStream;
-import at.dms.kjc.sir.SIRContainer;
+//import at.dms.kjc.sir.SIRStream;
+//import at.dms.kjc.sir.SIRContainer;
 import at.dms.kjc.sir.SIROperator;
 import java.util.*;
 /**
@@ -99,6 +100,9 @@ public class CommonUtils {
                 }
             }
             return typ;
+        } else if (s instanceof CClassType) {
+            // SIRStructures seem to have CCLassType in variable definitions.
+            return "__" + ((CClassType)s).toString();
         } else {
             return s.toString();
         }

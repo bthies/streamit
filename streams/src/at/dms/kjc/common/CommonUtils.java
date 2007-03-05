@@ -128,28 +128,8 @@ public class CommonUtils {
     public static String CTypeToStringA(CType s, boolean hasBoolType) {
         if (s instanceof CArrayType){
             return CTypeToString(((CArrayType)s).getBaseType(), hasBoolType)  + "*";
-        } else if (s.getTypeID() == CType.TID_BOOLEAN) {
-            return hasBoolType ? "bool" : "int";
-        } else if (s.toString().endsWith("Portal")) {
-            // ignore the specific type of portal in the C library
-            return "portal";
-        } else if (s instanceof CBitType) {
-            // for now convert bit's to int's
-            return "int";
-        } else if (s instanceof CEmittedTextType) {
-            String typ = "";
-            for (Object part : ((CEmittedTextType)s).getParts()) {
-                if (part instanceof String) {
-                    typ += (String)part;
-                } else if (part instanceof CType) {
-                    typ += CTypeToString(s,hasBoolType);
-                } else {
-                    throw new AssertionError("object has unexpected type " + part);
-                }
-            }
-            return typ;
         } else {
-            return s.toString();
+            return CTypeToString(s,hasBoolType);
         }
     } 
 

@@ -101,6 +101,10 @@ public class CommonUtils {
             }
             return typ;
         } else if (s instanceof CClassType) {
+            String classstring = ((CClassType)s).toString();
+            if (classstring.equals("java.lang.String")) {
+                return "char *";
+            }
             // SIRStructures seem to have CCLassType in variable definitions.
             return "__" + ((CClassType)s).toString();
         } else {

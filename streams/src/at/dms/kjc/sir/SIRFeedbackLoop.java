@@ -275,7 +275,10 @@ public class SIRFeedbackLoop extends SIRContainer implements Cloneable {
      **/
     public JExpression getDelay() 
     {
-        return this.delay;
+        if (delay == null) {
+            return new JIntLiteral(0);
+        }
+        return delay;
     }
 
     private boolean warned = false;

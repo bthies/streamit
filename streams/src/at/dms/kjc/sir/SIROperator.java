@@ -18,26 +18,6 @@ public abstract class SIROperator implements Finalizable, Serializable, DeepClon
      */
     private SIRContainer parent;
     
-    // Revolting hack: there is some processing (flatgraph.StaticStreamGraph.setTopLevelSIR for instance)
-    // where object data structures containing SIROperators are replaced.  We need to keep data about the
-    // SIROperators, e.g. whether they are on the boundary between StaticStreamGraph's and the safest place
-    // to keep that infomation seems to be in the SIROperators themselves, assuming that they are mutated
-    // and rearranged, but not recreated during processing where the data is needed.
-
-    // anyway, here goes.  Attributes are not clonable: if the
-    // object is cloned then attributes are shared by all clones.
-    private Map<String,Object> attributes = new HashMap<String,Object>();
-    /** a property list implementation :^( */
-    public Map<String,Object> getAttributes() { return attributes; }
-    /** a property list implementation :^( */
-    public void clearAttribute(String key) {attributes.remove(key); }
-    /** a property list implementation :^( */
-    public void setAttribute(String name, Object attribute) {attributes.put(name,attribute);}
-    /** a property list implementation :^( */
-    public void clearAllAttributes() {attributes = new HashMap<String,Object>();}
-    
-    // tell clone generator to not attempt to clone the attributes field
-    public static final String[] DO_NOT_CLONE_THESE_FIELDS = {"attributes"};
     
     /**
      * Constructs and operator with parent <parent>.

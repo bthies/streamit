@@ -134,7 +134,7 @@ public class LatencyConstraints {
             SIRPortalSender senders[] = portals[t].getSenders();
             SIRStream receivers[] = portals[t].getReceivers();
             
-            // in next few lines, we finf the smallest common super-structure containing
+            // in next few lines, we find the smallest common super-structure containing
             // all senders and receivers.
             // We hope that the result does not cross any dynamic rate boundaries
             // since the constrained scheduler does not know what to do at dynamic rate boundaries.

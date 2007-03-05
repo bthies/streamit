@@ -25,6 +25,8 @@ import at.dms.kjc.flatgraph.FlatNode;
 
 class DiscoverSchedule
 {
+    public static boolean debugging = false;
+    
     // map SIROperator => phase number
     HashMap<SIROperator,Integer> phases = new HashMap<SIROperator,Integer>();
 
@@ -83,6 +85,7 @@ class DiscoverSchedule
     public void findPhases(SIROperator top) {
 
 	phases.put(top, 0);
+    if (debugging) {System.err.println(top.getIdent() + " ->1 0");}
 	current_ops.add(top);
     
         do {
@@ -130,6 +133,7 @@ class DiscoverSchedule
                 }
                 if (join_ways > 0) {
                     splitjoinJoiners.put(joiner, join_ways);
+                    if (debugging) {System.err.println("adding " + joiner.getIdent() + " with ways " + join_ways + "(" + joiner.getWays() + ")");}
                 }   
                 
                 FlatNode splitterNode = NodeEnumerator.getFlatNode(NodeEnumerator.getSIROperatorId(oper));
@@ -140,6 +144,7 @@ class DiscoverSchedule
                         SIROperator next = children[i].contents;
                         next_ops.add(children[i].contents);
                         phases.put(next, number_of_phases + 1);
+                        if (debugging) {System.err.println(next.getIdent() + " ->2 " + Integer.toString(number_of_phases + 1));}
                     }
                 }
                 
@@ -241,11 +246,12 @@ class DiscoverSchedule
                       } else {
                           // case: there is no continuation (saw joiner twice since processed loop
                           // but no entry in feedbackSplittersLoop since didn't have both loop and
-                          // continuation.
+                          // continuation.  Does this happen?
                           continue;
                       }
                 }
                 phases.put(next, number_of_phases + 1);
+                if (debugging) {System.err.println(next.getIdent() + " ->3 " + Integer.toString(number_of_phases + 1));}
                 next_ops.add(next);
                 // System.out.println("Operator: "+next+
                 // " assigned to phase: "+

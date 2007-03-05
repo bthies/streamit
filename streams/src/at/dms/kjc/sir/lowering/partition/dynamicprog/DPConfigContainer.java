@@ -663,7 +663,7 @@ abstract class DPConfigContainer extends DPConfig {
         // if we only have one tile left, return fusion transform with
         // children fused first
         // AD: updated with also processing SIRFeedbackLoop since we do not decompose these.
-        if (tileLimit==1 || str instanceof SIRFeedbackLoop) {
+        if (tileLimit==1 || isWrappedFeedbackLoop(str)) {
             // everything goes in this partition
             for (int y=y1; y<=y2; y++) {
                 for (int x=x1; x<=Math.min(x2,width[y]-1); x++) {
@@ -811,6 +811,24 @@ abstract class DPConfigContainer extends DPConfig {
         return null;
     }
 
+    /** 
+     * Is <b>str</b> indivisible because it is essentially a feedback loop?
+     * return true if <b>str</b> is feedback loop or if it is a 1-element
+     * pipeline satisfying isWrappedFeedbackLoop.
+     * @param str
+     * @return
+     */
+    private boolean isWrappedFeedbackLoop(SIRStream str) {
+        if (str instanceof SIRFeedbackLoop) {
+            return true;
+        } else if (str instanceof SIRPipeline
+                && ((SIRPipeline) str).size() == 1) {
+            return isWrappedFeedbackLoop(((SIRPipeline) str).get(0));
+        } else {
+            return false;
+        }
+    }
+    
     /**
      * Return a splitjoin that a vertical cut could be performed on.
      * If it is impossible to perform a vertical cut, returns null.
@@ -835,7 +853,7 @@ abstract class DPConfigContainer extends DPConfig {
                 // now remove synchronization in <copy>.
                 RefactorSplitJoin.removeMatchingSyncPoints(copy);
                 // now if we only have one splitjoin left as the child, we can do a cut
-                if (copy.size()==1) {
+                if (copy.size()==1 && copy.get(0) instanceof SIRSplitJoin) {
                     verticalObj = (SIRSplitJoin)copy.get(0);
                 } else {
                     // otherwise can't do a cut

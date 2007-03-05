@@ -1437,7 +1437,7 @@ public class FlatIRToCluster extends InsertTimers implements
             try {
                 type = (CArrayType)right.getType();
             } catch (ClassCastException e) {
-                System.err.println("Warning: copy from non-array type to array type.");
+                System.err.println("Warning: copy from non-array type to array type: " + left + " = " + right);
                 p.println("/* Warning: copy from non-array type to array type. */");
                 type = (CArrayType)left.getType();
             }

@@ -46,13 +46,11 @@ public class ClusterStaticStreamGraph extends ScheduledStaticStreamGraph {
          for (int i=0; i < outputs.length; i++) {
               if (! ClusterFusion.isEliminated(outputs[i])) {
                   newOutputs.add(outputs[i]);
-                  newOutputTypes.add(outputTypes[i]);
               } else {
                   newOutputs.add(ClusterFusion.getMaster(outputs[i]));
-                  newOutputTypes.add(CommonUtils.getOutputType(ClusterFusion.getMaster(outputs[i])));}
+              }
          }
          outputs = newOutputs.toArray(new FlatNode[]{});
-         outputTypes = newOutputTypes.toArray(new CType[]{});
          
          List<FlatNode> newInputs = new LinkedList<FlatNode>();
          for (int i=0; i < inputs.length; i++) {

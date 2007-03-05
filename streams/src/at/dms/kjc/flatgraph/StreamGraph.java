@@ -13,6 +13,9 @@ import java.util.*;
  * This class represents the entire stream graph of the application we are
  * compiling. It is composed of StaticStreamGraphs.
  * 
+ * The StreamGraph / StaticSteam(sub)Graph representation was developed before
+ * SIRDynamicRateManager.  In the future, try not to use this representation but
+ * instead use SIRDynamicRateManager to fake up disconnection of graph.
  */
 
 public class StreamGraph {
@@ -70,10 +73,14 @@ public class StreamGraph {
      */
 
     public void createStaticStreamGraphs() {
+        SIRDynamicRateManager.pushIdentityPolicy();
         // flat nodes at a dynamic rate boundary that may constitute the
         // beginning of a new ssg
         LinkedList<FlatNode> dynamicBoundary = new LinkedList<FlatNode>();
+        // lists of nodes linked across dynamic boundary. 
         HashSet<FlatNode> visited = new HashSet<FlatNode>();
+
+        
         // add the toplevel to the dynamicboundary list
         dynamicBoundary.add(topLevelFlatNode);
 
@@ -92,22 +99,22 @@ public class StreamGraph {
             //assert top.isTopFilter() || top.isNullSplitter():
             //    "Error: Toplevel node for a static subgraph is not filter or null splitter!";
             StaticStreamGraph ssg = this.new_StaticStreamGraph(this, top);
-            // set toplevel;
-            if (topLevel == null)
-                topLevel = ssg;
+            // set top level SSG in the stream graph
+            if (topLevel == null) {
+                topLevel = ssg; }
             ssgs.add(ssg);
             // search downstream for what should be added to this SSG
-            searchDownstream(top, ssg, visited, dynamicBoundary);
+            searchDownstream(top, ssg, visited, dynamicBoundary);//, allSSGinputs, allSSGoutputs);
         }
 
         // set up the array of sub graphs
         staticSubGraphs = ssgs
             .toArray(new StaticStreamGraph[ssgs.size()]);
-
+        
         // clean up the flat graph so that is can be converted to an SIR
         // get prevs and nexts to match up.
-        for (int i = 0; i < staticSubGraphs.length; i++)
-            staticSubGraphs[i].cleanUp();
+        for (StaticStreamGraph ssg : ssgs)
+            ssg.cleanUp();//inputsMap.get(ssg),inputsMap.get(ssg));
 
         // create prevSSGs, nextSSGs data structures
         for (int i = 0; i < staticSubGraphs.length; i++)
@@ -124,20 +131,24 @@ public class StreamGraph {
             staticSubGraphs[i].createSIRGraph();
             //staticSubGraphs[i].dumpFlatGraph();
         }
+        SIRDynamicRateManager.popPolicy();
     }
     
     /**
      * recursive function to cut the graph into ssgs, it searchs downstream
-     * starting at <pre>current</pre> and adds nodes to <pre>ssg</pre> that are connected by
+     * starting at <b>current</b> and adds nodes to <b>ssg</b> that are connected by
      * static rate channels or it remembers entry points to new SSGs in
-     * <pre>dynamicBoundary</pre>
+     * <b>dynamicBoundary</b>
      * @param current: the node currently being visited (May have rated munged if at dynamic boundary)
      * @param ssg: the StaticStreamGraph being built (updated as nodes are added)
      * @param visited: the set of FlatNode's already visited by this (updated per node)
      * @param dynamicBoundary: the unvisited nodes across a dynamic rate boundary (updated if such a node found)
+     * @param allSSGinputs accumulates all nodes on downstream side of dynamic rate boundaries.
+     * @param allSSGoutputs accumulates all nodes on upstream side of dynamic rate boundaries.
      */
     private void searchDownstream(FlatNode current, StaticStreamGraph ssg,
-                                  HashSet<FlatNode> visited, List<FlatNode> dynamicBoundary) {
+                                  HashSet<FlatNode> visited, 
+                                  List<FlatNode> dynamicBoundary) {
         assert current.ways == current.getEdges().length;
 
         // we may have already seen this node before, if so just exit
@@ -156,11 +167,9 @@ public class StreamGraph {
             // if this filter has dynamic output and there is a downstream
             // neighbor, it will begin
             // a new SSG, so add it to dynamicBoundary, but only if we have not
-            // seen the node yet: We way have visited it in an upstream walk
+            // seen the node yet: We may have visited it in an upstream walk
             if (filter.getPush().isDynamic()) {
-                assert current.ways == 1 && current.getEdges().length == 1
-                    && current.getEdges()[0] != null;
-                if (!visited.contains(current.getEdges()[0])) {
+                if (current.ways >0 && !visited.contains(current.getEdges()[0])) {
                     dynamicBoundary.add(current.getEdges()[0]);
                     // set the next field of the ssg for the current flatnode
                     ssg.addNext(current, current.getEdges()[0]);
@@ -232,62 +241,38 @@ public class StreamGraph {
     }
 
     /**
-     * This method cuts the connections from <pre>upstream</pre> to <pre>downstream</pre> in the
-     * flatgraph and in the SIR graph, sets the types of the input of
-     * <pre>downstream</pre> and output of <pre>upstream</pre> to void, and sets the appropriate
-     * rates to 0.
+     * This method cuts the connections from <b>upstream</b> to <b>downstream</b> in the
+     * flatgraph.
      * <br/>
      * Assume that cuts only occur between filters.
      * <br/>
-     * There does not appear to be any way to restore the upstream push rate or the downstream 
-     * peek and pop rates, and the edge is removed between the FlatNode's.
-     * The edge is between StaticSubgraph's and can be found in the nexts (or prevs) field
-     * of the appropriate StaticSubgraph, and the original type (replaced here with void)
-     * can be found by calling getInputType / getOutputType for the node in the correct SSG
-     * - - assuming that addNexts has been called before the call to cutGraph.
+     * At some point, need to also cut the SIR graph, set the types of the input of
+     * <b>downstream</b> and output of <b>upstream</b> to void, and sett the appropriate
+     * rates to 0.
      * @param upstream: Node upstream of boundary, assumed to have 1 outgoing edge.
      * @param downstream: Node downstream of boundary, assumed to have 1 incoming edge.
      */
     private void cutGraph(FlatNode upstream, FlatNode downstream) {
         // System.out.println("*** Cut Graph ***");
+
         //The upstream has to be a filter or a null joiner,
         //The downstream has to be a null splitter 
         assert (upstream.isFilter() || upstream.isNullJoiner()) && 
                 (downstream.isFilter() || (downstream.isNullSplitter()));
 
-        // if node structure changes, try to at least have hook to SIR structure.
-        upstream.contents.setAttribute("edge", downstream.contents);
-        downstream.contents.setAttribute("incoming",upstream.contents);
-
         if (upstream.isFilter()) {
-            SIRFilter upFilter = (SIRFilter) upstream.contents;
-            // store removed data as attributes in upFilter
-            upFilter.setAttribute("push",upFilter.getPush());
-            upFilter.setAttribute("outtype", upFilter.getOutputType());
-            // reset upstream
-            upFilter.setPush(new JIntLiteral(0));
-            upFilter.setOutputType(CStdType.Void);
             upstream.removeEdges();
         }
         
-        // reset downstream
         if (downstream.isFilter()) {
-            SIRFilter downFilter = (SIRFilter) downstream.contents;
-            // store removed data as attributes in downFilter
-            downFilter.setAttribute("pop",downFilter.getPop());
-            downFilter.setAttribute("peek",downFilter.getPeek());
-            downFilter.setAttribute("intype",downFilter.getInputType());
-            downFilter.setPop(new JIntLiteral(0));
-            downFilter.setPeek(new JIntLiteral(0));
-            downFilter.setInputType(CStdType.Void);
             downstream.removeIncoming();
         }
     }
 
     /**
-     * This method search upstream from <pre>current</pre> for nodes that it should add
-     * to <pre>ssg</pre>. It will add nodes that are connected through static rate channels.
-     * <pre>dynamicBoundary</pre> stores all the entries for SSGs we haven't constructed
+     * This method search upstream from <b>current</b> for nodes that it should add
+     * to <b>ssg</b>. It will add nodes that are connected through static rate channels.
+     * <b>dynamicBoundary</b> stores all the entries for SSGs we haven't constructed
      * yet.
      * <br/>
      * It is necessary in order to ensure a cut across a splitjoin contruct.
@@ -322,17 +307,16 @@ public class StreamGraph {
 
         if (current.isFilter()) {
             SIRFilter filter = (SIRFilter) current.contents;
-            // if this filter has dynamic input
-            if (filter.getPop().isDynamic() || filter.getPeek().isDynamic()) {
-                assert current.inputs == 1;
-                // cut the graph and add another entry point for the SSG
-                ssg.addPrev(current, current.incoming[0]);
-                cutGraph(current.incoming[0], current);
-                ssg.addTopLevelFlatNode(current);
-                return;
-            }
             if (current.inputs > 0) {
                 assert current.inputs == 1 && current.incoming[0] != null;
+                // if this filter has dynamic input
+                if (filter.getPop().isDynamic() || filter.getPeek().isDynamic()) {
+                    // cut the graph and add another entry point for the SSG
+                    ssg.addPrev(current, current.incoming[0]);
+                    cutGraph(current.incoming[0], current);
+                    ssg.addTopLevelFlatNode(current);
+                    return;
+                }
                 // check if the upstream filter has dynamic output
                 // if so return
                 if (current.incoming[0].isFilter()) {
@@ -347,14 +331,14 @@ public class StreamGraph {
                 }
                 // if not, continue upstream walk
                 searchUpstream(current.incoming[0], ssg, visited,
-                               dynamicBoundary);
+                               dynamicBoundary);//,allSSGinputs,allSSGoutputs);
             }
         } else if (current.isSplitter()) {
             // continue upstream search...
             if (current.inputs > 0) {
                 assert current.incoming[0] != null && current.inputs == 1;
                 searchUpstream(current.incoming[0], ssg, visited,
-                               dynamicBoundary);
+                               dynamicBoundary);//,allSSGinputs,allSSGoutputs);
                 // for feedbackloop splitter, reachable from joiner above, 
                 // also need to initiate downstream search since splitter is
                 // now visited so would end a downstream search started
@@ -378,8 +362,9 @@ public class StreamGraph {
     }
 
     /***************************************************************************
-     * Return true if the source of this stream, <pre>stream</pre> has 
-     * dynamic rate input
+     * Return true if the source of this stream, <b>stream</b> has 
+     * dynamic rate input.
+     * TODO: SIRDynamicRateManager
      * @param stream: 
      * @return true if stream is a filter with dynamic peek or pop rate or pipeline starting with such a filter
      **************************************************************************/
@@ -397,8 +382,9 @@ public class StreamGraph {
     }
 
     /***************************************************************************
-     * Return true if the sink of this stream, <pre>stream</pre> has dynamic rate output
-     * @param stream: 
+     * Return true if the sink of this stream, <b>stream</b> has dynamic rate output
+      * TODO: SIRDynamicRateManager
+    * @param stream: 
      * @return true if stream is a filter with dynamic push rate or pipeline ending with such a filter
      **************************************************************************/
     public boolean dynamicExit(SIRStream stream) {
@@ -448,10 +434,6 @@ public class StreamGraph {
         return topLevel;
     }
 
-//    public void setTopLevel(StaticStreamGraph ssg) {
-//        this.topLevel = ssg;
-//    }
-    
     /** print out some stats on each SSG to STDOUT * */
     public void dumpStaticStreamGraph() {
         StaticStreamGraph current = topLevel;
@@ -467,23 +449,6 @@ public class StreamGraph {
                                    + ".dot");
         }
     }
-
-//    /** create a stream graph with only one filter (thus one SSG) * */
-//    public static StreamGraph constructStreamGraph(SIRFilter filter) {
-//        return constructStreamGraph(new FlatNode(filter));
-//    }
-
-//    /**
-//     * create a stream graph with only one filter (thus one SSG), it's not laid
-//     * out yet*
-//     */
-//    public static StreamGraph constructStreamGraph(FlatNode node) {
-//        assert node.isFilter();
-//
-//        StreamGraph streamGraph = new_StreamGraph(node);
-//        streamGraph.createStaticStreamGraphs();
-//        return streamGraph;
-//    }
 
     
     /**

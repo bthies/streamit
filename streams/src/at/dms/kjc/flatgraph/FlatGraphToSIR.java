@@ -11,6 +11,8 @@ import java.util.*;
  * This assume that the Flat graph is amenable to this conversion.  For example, 
  * it will not work if filter nodes have multiple input/output.   
  * 
+ * It should does not change any filters in the graph, but may re-create
+ * splitters and joiners.  It completely recreates any pipelines in the graph.
  * 
  * @author mgordon
  */

@@ -35,6 +35,14 @@ public class StreamGraph {
      * <br/>this needs to be updated whenever a node is added or deleted. */
     public HashMap<FlatNode,StaticStreamGraph> parentMap;
 
+    /** 
+     * If map from filter to FlatNode.
+     * updated when out-of-date.
+     * requires that any action on a StaticStreamGraph that
+     * alters its FlatNode's removes old FlatNodes and add new.
+     */
+    private Map<SIRFilter,FlatNode> filtersToNodes = new HashMap<SIRFilter,FlatNode>();
+    
     /**
      * Create the static stream graph for the application that has <pre>top</pre> as the
      * top level FlatNode.
@@ -407,7 +415,7 @@ public class StreamGraph {
      * @param node:
      * @param ssg:
      */
-    public void putParentMap(FlatNode node, StaticStreamGraph ssg) {
+    void putParentMap(FlatNode node, StaticStreamGraph ssg) {
         parentMap.put(node, ssg);
     }
 
@@ -420,6 +428,53 @@ public class StreamGraph {
         return parentMap.get(node);
     }
 
+    /**
+     * Used only by StaticStreamGraph as a callback during graph construction.
+     * @param filter
+     * @return
+     */
+    FlatNode filterToFlatNode(SIRFilter filter) {
+        // convert to node
+        FlatNode node = filtersToNodes.get(filter);
+        if (node != null && parentMap.containsKey(node)) {
+            // if node is in some current subgraph the translation succeeded.
+            return node;
+        } else {
+            // filtersToNodes out of date here: rebuild it
+            for (FlatNode n : parentMap.keySet()) {
+                if (n.contents instanceof SIRFilter) {
+                    filtersToNodes.put((SIRFilter)n.contents, n);
+                }
+            }
+            node = filtersToNodes.get(filter);
+            assert node != null : filter;
+            return node;
+        }
+    }
+    
+//    private void listParentMap() {
+//        System.err.println("Parent map:");
+//        String[] names = new String[parentMap.size()]; 
+//        int i = 0;
+//        for (FlatNode n : parentMap.keySet()) {
+//            names[i++] = n.getName();
+//        }
+//        Arrays.sort(names);
+//        for (String name : names) {
+//            System.err.print("  " + name);
+//        }
+//        System.err.println();
+//    }
+//    
+    /**
+     * Used only by StaticStreamGraph as a callback during graph construction.
+     * @param filter
+     * @return
+     */
+    StaticStreamGraph getParentSSGbyFilter(SIRFilter filter) {
+        return getParentSSG(filterToFlatNode(filter));
+    }
+    
     /** return the array of SSGs of this Stream Graph in no particular order
      * @return  the array of SSGs of this Stream Graph in no particular order
      */

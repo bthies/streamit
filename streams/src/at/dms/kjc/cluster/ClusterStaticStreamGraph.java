@@ -60,29 +60,11 @@ public class ClusterStaticStreamGraph extends ScheduledStaticStreamGraph {
              else {newInputs.add(ClusterFusion.getMaster(inputs[i]));}
         }
          inputs = newInputs.toArray(new FlatNode[]{});
-         prevs = toMasters(prevs);
-         nexts = toMasters(nexts);
          
          if (ClusterFusion.isEliminated(topLevel)) {
              topLevel = ClusterFusion.getMaster(topLevel);
          }
          setTopLevelSIR(new FlatGraphToSIR(topLevel).getTopLevelSIR());
          // not currently updating graphFlattener.
-     }
-     
-     private HashMap<FlatNode,FlatNode> toMasters(HashMap<FlatNode,FlatNode> in) {
-         HashMap<FlatNode,FlatNode> updated = new HashMap<FlatNode,FlatNode>();
-             for (Map.Entry<FlatNode,FlatNode> n : in.entrySet()) {
-                 FlatNode k = n.getKey();
-                 FlatNode v = n.getValue();
-                 if (ClusterFusion.isEliminated(k)) {
-                     k = ClusterFusion.getMaster(k);
-                 }
-                 if (ClusterFusion.isEliminated(v)) {
-                     v = ClusterFusion.getMaster(v);
-                 }
-                 updated.put(k,v);
-             }
-         return updated;
      }
 }

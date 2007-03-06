@@ -38,7 +38,11 @@ public class StaticStreamGraph {
      * The sizes are used as a sanity check that operations on the ssh have not changed number of
      * incoming or outgoing edges, but contents should not be referenced after initial graph build.
      */
-    protected HashMap<FlatNode,FlatNode> prevs, nexts;
+    // prevs, and nexts must survive the first graph reorganization.
+    // take advantage of the fact that dynamic rate cuts are only
+    // allowed between filters, which are not changed in reorganizing a SIR graph of Flat graph.
+    protected HashMap<SIRFilter,SIRFilter> prevs;
+    protected HashMap<SIRFilter,SIRFilter> nexts;
 
     /** SSGs with edges to this SSG.  Assumed immutible after SSG construction */
     private List<StaticStreamGraph> prevSSGs;
@@ -123,8 +127,8 @@ public class StaticStreamGraph {
     public StaticStreamGraph(StreamGraph sg, FlatNode realTop) {
         this.streamGraph = sg;
         id = nextID++;
-        this.prevs = new HashMap<FlatNode,FlatNode>();
-        this.nexts = new HashMap<FlatNode,FlatNode>();
+        this.prevs = new HashMap<SIRFilter,SIRFilter>();
+        this.nexts = new HashMap<SIRFilter,SIRFilter>();
         this.prevSSGs = new LinkedList<StaticStreamGraph>();
         this.nextSSGs = new LinkedList<StaticStreamGraph>();
         // flatNodes = new HashSet();
@@ -145,7 +149,7 @@ public class StaticStreamGraph {
      * encountering an upstream connection to a dynamic node.
      * @param node node to add.
      */
-    public void addTopLevelFlatNode(FlatNode node) {
+    void addTopLevelFlatNode(FlatNode node) {
         // System.out.println("AddTopLevelNode " + node + " to " + id) ;
         assert node.isFilter() || node.isNullSplitter() || node.isFeedbackJoiner();
         
@@ -192,10 +196,10 @@ public class StaticStreamGraph {
         FlatNode.addEdges(topLevel, node);
     }
 
-    /** when constructing this SSG, add <pre>node</pre> to it 
+    /** when constructing this SSG, add <b>node</b> to it 
      * @param FlatNode node: node to add to flatNodes in this subgraph
      */
-    public void addFlatNode(FlatNode node) {
+    void addFlatNode(FlatNode node) {
         // System.out.println("Adding " + node + " to " + id);
         flatNodes.add(node);
         streamGraph.putParentMap(node, this);
@@ -204,13 +208,13 @@ public class StaticStreamGraph {
 
     /***************************************************************************
      * Remove toplevel splitter if not needed, and perform some other checks
-     * and fixes on the SSG.
+     * and fixes on the SSG: Only for building SSGs from {@link StreamGraph}.
      * At this point we assume that the SSG has a correct collection of nodes
      * and a correct entry point.  We also assume that there is a set of SSGs 
      * partitioning the reachable nodes in the flatgraph.
      **************************************************************************/
 
-    public void cleanUp(/*Set<FlatNode> ssginputs,Set<FlatNode> ssgoutputs*/) {
+    void cleanUp() {
         assert topLevel.isSplitter();
         assert ((SIRSplitter) topLevel.contents).getWays() > 0;
         final boolean[] deferred_errors = {false};
@@ -321,52 +325,67 @@ public class StaticStreamGraph {
         }
         }
         
-        // set up the downstream SSG's prevs hashmap
-        Iterator<FlatNode> nextsIt = nexts.keySet().iterator();
-        while (nextsIt.hasNext()) {
-            FlatNode source = nextsIt.next();
-            FlatNode dest = nexts.get(source);
-            assert dest != null : source.toString();
-            streamGraph.getParentSSG(dest).addPrev(dest, source);
+        // set up the downstream SSG's prevs hashmap for this SSG's nexts
+        for (SIRFilter inThis : nexts.keySet()) {
+            SIRFilter inNext = nexts.get(inThis);
+            assert inNext != null : inThis.toString();
+            streamGraph.getParentSSGbyFilter(inNext).addPrev(
+                    streamGraph.filterToFlatNode(inNext),
+                    streamGraph.filterToFlatNode(inThis));
         }
 
-        // set up the upstream SSG's nexts hashmap
-        for (FlatNode inThis : prevs.keySet()) {
-            FlatNode inPrev = prevs.get(inThis);
+
+        // set up the upstream SSG's nexts hashmap for this SSG's prevs
+        for (SIRFilter inThis : prevs.keySet()) {
+            SIRFilter inPrev = prevs.get(inThis);
             assert inPrev != null : inThis.toString();
-            streamGraph.getParentSSG(inPrev).addNext(inPrev, inThis);
+            streamGraph.getParentSSGbyFilter(inPrev).addNext(
+                    streamGraph.filterToFlatNode(inPrev),
+                    streamGraph.filterToFlatNode(inThis));
         }
+        
     }
 
     /**
-     * Build nextSSGs, prevSSGs.
+     * Build nextSSGs, prevSSGs: Only for building SSGs from {@link StreamGraph}.
      * Cache types and rates across dynamic rate edges
      * and set types across dynamic edges to void, 
      * rates across dynamic edges to 0 for schedulers, partitioners.
      * Call after {@link #cleanUp()} run on all ssgs.
      */
-    public void prevAndNextSSGs() {
+    void prevAndNextSSGs() {
         // build the prevSSGs and nextSSGs list, the upstream and downstream
         // SSGs
-        for (FlatNode aNext : nexts.values()) {
+        for (SIRFilter aNext : nexts.values()) {
             StaticStreamGraph ssg = streamGraph
-                .getParentSSG(aNext);
+                .getParentSSGbyFilter(aNext);
             if (!nextSSGs.contains(ssg)) {
                 nextSSGs.add(ssg); }
             
         }
 
-        for (FlatNode aPrev : prevs.values()) {
+        for (SIRFilter aPrev : prevs.values()) {
             StaticStreamGraph ssg = streamGraph
-                .getParentSSG(aPrev);
+                .getParentSSGbyFilter(aPrev);
             if (!prevSSGs.contains(ssg)) {
                 prevSSGs.add(ssg); }
         }
         
 
-        assert outputs.length == nexts.size();
-        assert inputs.length == prevs.size();
+        // getPrevs, getNexts order of setting up inputs / outputs
+        // is not the order that we want for the inputs / outputs fields.
+        // Instead, set the order that will be used by setTopLevelSIR().
         
+        outputs = new FlatNode[nexts.size()];
+        inputs = new FlatNode[prevs.size()];
+        
+        
+        // recreate the graph putting joiner at bottom if more than one output.
+        // then calculate inputs and outputs from the splitter and joiner in the
+        // recreated graph.
+        setTopLevelSIRInitial((new FlatGraphToSIR(topLevel)).getTopLevelSIR());
+        
+
         outputTypes = new CType[outputs.length];
         pushRates = new JExpression[outputs.length];
         
@@ -400,34 +419,35 @@ public class StaticStreamGraph {
         SIRDynamicRateManager.popPolicy();
      }
     
+    
     /**
-     * after SSG construction is complete, create the inter-SSG connections for
-     * this SSG
+     * After SSG construction is complete, create the inter-SSG connections for
+     * this SSG: Only for building SSGs from {@link StreamGraph}.
      */
   
-  public void connect() {
+  void connect() {
         // build the inputSSGEdges and outputSSGEdges arrays
         inputSSGEdges = new SSGEdge[prevs.size()];
         outputSSGEdges = new SSGEdge[nexts.size()];
 
         for (int i = 0; i < outputSSGEdges.length; i++) {
-            FlatNode dest = nexts.get(outputs[i]);
+            SIRFilter dest = nexts.get(outputs[i].contents);
             assert dest != null;
-            StaticStreamGraph input = streamGraph.getParentSSG(dest);
+            StaticStreamGraph input = streamGraph.getParentSSGbyFilter(dest);
 
             outputSSGEdges[i] = 
-                SSGEdge.createSSGEdge(this, input, i, input.getInputNum(dest));
-            outputSSGEdges[i].setDownstreamNode(dest);
+                SSGEdge.createSSGEdge(this, input, i, input.getInputNum(streamGraph.filterToFlatNode(dest)));
+            outputSSGEdges[i].setDownstreamNode(streamGraph.filterToFlatNode(dest));
         }
 
         for (int i = 0; i < inputSSGEdges.length; i++) {
-            FlatNode src = prevs.get(inputs[i]);
+            SIRFilter src = prevs.get(inputs[i].contents);
             assert src != null;
-            StaticStreamGraph upstream = streamGraph.getParentSSG(src);
+            StaticStreamGraph upstream = streamGraph.getParentSSGbyFilter(src);
 
             inputSSGEdges[i] = 
-                SSGEdge.createSSGEdge(upstream, this, upstream.getOutputNum(src), i);
-            inputSSGEdges[i].setUpstreamNode(src);
+                SSGEdge.createSSGEdge(upstream, this, upstream.getOutputNum(streamGraph.filterToFlatNode(src)), i);
+            inputSSGEdges[i].setUpstreamNode(streamGraph.filterToFlatNode(src));
         }
 
         // fix outputSSGEdges[i].upstreamNode, inputSSGEdges[i].downstreamNode
@@ -503,6 +523,14 @@ public class StaticStreamGraph {
             // if a filter, then just set the inputs[0] to it
             if (topLevel.isFilter()) {
                 assert prevs.size() == 1 && inputs.length == 1;
+
+//                System.err.println("inputs[0] changing from  " 
+//                        + ((inputs[0] != null) ?  (inputs[0].contents.getName() + " (" 
+//                        + inputs[0].contents.getIdent() + ")") : ""));
+//                System.err.println("  to "
+//                        + topLevel.contents.getName() + " (" 
+//                        + topLevel.contents.getIdent() + ")");
+
                 inputs[0] = topLevel;
             } else if (topLevel.isSplitter()) {
                 // if a splitter, then set the input[] to the direct downstream
@@ -512,6 +540,14 @@ public class StaticStreamGraph {
                     .getWays() && inputs.length == prevs.size() : "Partitioning problem: The partition changed the number of inputs of SSG "
                     + this.toString();
                 for (int i = 0; i < inputs.length; i++) {
+                    
+//                    System.err.println("inputs[" + i + "] changing from  " 
+//                            + ((inputs[i] != null) ?  (inputs[i].contents.getName() + " (" 
+//                            + inputs[i].contents.getIdent() + ")") : ""));
+//                    System.err.println("  to "
+//                            + topLevel.getEdges()[i].contents.getName() + " (" 
+//                            + topLevel.getEdges()[i].contents.getIdent() + ")");
+
                     inputs[i] = topLevel.getEdges()[i];
                 }
             } else
@@ -525,6 +561,14 @@ public class StaticStreamGraph {
             if (bottomLevel.isFilter()) {
                 assert nexts.size() == 1 && outputs.length == 1 : 
                     "Partitioning problem: The partition changed the number of outputs of SSG ";
+
+//                System.err.println("outputs[0] changing from  " 
+//                        + ((outputs[0] != null) ?  (outputs[0].contents.getName() + " (" 
+//                        + outputs[0].contents.getIdent() + ")") : ""));
+//                System.err.println("  to "
+//                        + bottomLevel.contents.getName() + " (" 
+//                        + bottomLevel.contents.getIdent() + ")");
+
                 outputs[0] = bottomLevel;
             } else if (bottomLevel.isJoiner()) {
                 // if a joiner set outputs[] to be the upstream nodes of the
@@ -533,8 +577,17 @@ public class StaticStreamGraph {
                     && bottomLevel.incoming.length == ((SIRJoiner) bottomLevel.contents)
                     .getWays() && outputs.length == nexts.size() : "Partitioning problem: The partition changed the number of outputs of SSG "
                     + this.toString();
-                for (int i = 0; i < outputs.length; i++)
+                for (int i = 0; i < outputs.length; i++) {
+//
+//                    System.err.println("outputs[" + i + "] changing from  " 
+//                            + ((outputs[i] != null) ?  (outputs[i].contents.getName() + " (" 
+//                            + outputs[i].contents.getIdent() + ")") : ""));
+//                    System.err.println("  to "
+//                            + bottomLevel.incoming[i].contents.getName() + " (" 
+//                            + bottomLevel.incoming[i].contents.getIdent() + ")");
+
                     outputs[i] = bottomLevel.incoming[i];
+                }
             } else
                 // can't be a splitter
                 assert false : topLevel;
@@ -564,36 +617,38 @@ public class StaticStreamGraph {
 
         topLevelSIR = newTop;
 
+        setTopLevelSIRInitial(topLevelSIR);
+        // update the inter-SSG connections to reference the new flatnodes
+        updateSSGEdges();
+    }
+
+    /** Portion of setTopLevelSIR also called to set up inputs, outputs at SSC build time */
+    private void setTopLevelSIRInitial(SIRStream newTop) {
         // remove the old nodes from the global parent map
-        Iterator<FlatNode> fns = flatNodes.iterator();
-        while (fns.hasNext()) {
-            streamGraph.parentMap.remove(fns.next());
+        for (FlatNode fn : flatNodes) {
+            streamGraph.parentMap.remove(fn);
         }
         // flatten the graph
-        graphFlattener = new GraphFlattener(topLevelSIR);
+        graphFlattener = new GraphFlattener(newTop);
         topLevel = graphFlattener.top;
+        // update the flatnodes of this SSG list
+        flatNodes = new LinkedList<FlatNode>();
+        // update the flatnodes of this SSG list
+        // and update the global parent map
+        final StaticStreamGraph thiz = this;
+        topLevel.accept(new FlatVisitor() {
+                public void visitNode(FlatNode node) {
+                    flatNodes.add(node);
+                    streamGraph.parentMap.put(node,thiz);
+                }
+            }, null, true);
+
         // reset bottom level, the sink of this SSG
         setBottomLevel();
         // update inputs[] and outputs[] to point to the new flatnodes
         updateIOArrays();
-        // update the inter-SSG connections to reference the new flatnodes
-        updateSSGEdges();
-        flatNodes = new LinkedList<FlatNode>();
-        // update the flatnodes of this SSG list
-        topLevel.accept(new FlatVisitor() {
-                public void visitNode(FlatNode node) {
-                    flatNodes.add(node);
-                }
-            }, null, true);
-
-        // update the global parent map
-        fns = flatNodes.iterator();
-        while (fns.hasNext()) {
-            streamGraph.parentMap.put(fns.next(), this);
-        }
-
     }
-
+    
     /**
      * Given the current toplevel flatnode, create the SIR graph, also
      * regenerating the flatgraph *
@@ -649,22 +704,29 @@ public class StaticStreamGraph {
 
 
     /**
-     * when constructing this SSG, add a new connection from node->source to the
-     * prevs hash map and add <pre>node</pre> to the inputs array
+     * When constructing this SSG, add a new connection from node->source to the
+     * prevs hash map and add <b>node</b> to the inputs array
      */
     public void addPrev(FlatNode node, FlatNode source) {
-        if (prevs.get(node) == source) {
+        assert node.contents instanceof SIRFilter 
+            && source.contents instanceof SIRFilter
+            : "Dynamic rate edges must be between filters " + source.contents + " " + node.contents;
+        if (prevs.get(node.contents) == source.contents) {
             return;
         }
         assert flatNodes.contains(node);
-        // create a new inputs array with the old inputs + this
-        FlatNode[] oldInputs = inputs;
-        inputs = new FlatNode[oldInputs.length + 1];
-        for (int i = 0; i < oldInputs.length; i++)
-            inputs[i] = oldInputs[i];
-        inputs[inputs.length - 1] = node;
-
-        prevs.put(node, source);
+//        // create a new inputs array with the old inputs + this
+//        FlatNode[] oldInputs = inputs;
+//        inputs = new FlatNode[oldInputs.length + 1];
+//        for (int i = 0; i < oldInputs.length; i++)
+//            inputs[i] = oldInputs[i];
+//        inputs[inputs.length - 1] = node;
+//        
+//        System.err.println("inputs[" + (inputs.length - 1) + "] = " 
+//                + node.contents.getName() + " (" 
+//                + node.contents.getIdent() + ")");
+//
+        prevs.put((SIRFilter)node.contents, (SIRFilter)source.contents);
     }
 
     /**
@@ -672,21 +734,27 @@ public class StaticStreamGraph {
      * nexts hash map and add the <pre>node</pre> to the outputs array.
      */
     public void addNext(FlatNode node, FlatNode next) {
-        if (nexts.get(node) == next) {
+        assert node.contents instanceof SIRFilter 
+        && next.contents instanceof SIRFilter
+        : "Dynamic rate edges must be between filters " + node.contents + " " + next.contents;
+        if (nexts.get(node.contents) == next.contents) {
             return;
         }
         assert flatNodes.contains(node);
 
-        // System.out.println("Add next " + node + " -> " + next);
+//        // System.out.println("Add next " + node + " -> " + next);
+//
+//        // create a new outputs array with the old outputs + this
+//        FlatNode[] oldOutputs = outputs;
+//        outputs = new FlatNode[oldOutputs.length + 1];
+//        for (int i = 0; i < oldOutputs.length; i++)
+//            outputs[i] = oldOutputs[i];
+//        outputs[outputs.length - 1] = node;
+//        System.err.println("outputs[" + (outputs.length - 1) + "] = " 
+//                + node.contents.getName() + " (" 
+//                + node.contents.getIdent() + ")");
 
-        // create a new outputs array with the old outputs + this
-        FlatNode[] oldOutputs = outputs;
-        outputs = new FlatNode[oldOutputs.length + 1];
-        for (int i = 0; i < oldOutputs.length; i++)
-            outputs[i] = oldOutputs[i];
-        outputs[outputs.length - 1] = node;
-
-        nexts.put(node, next);
+        nexts.put((SIRFilter)node.contents, (SIRFilter)next.contents);
     }
 
     /** does this ssg have dynamic output * */
@@ -901,8 +969,8 @@ public class StaticStreamGraph {
                 f.setInputType(inputTypes[i]);
                 f.setPeek(peekRates[i]);
                 f.setPop(popRates[i]);
-//                System.err.println("Input Filter \"" + f.getName() + " (" + f.getIdent() + ") "
-//                        + inputTypes[i] + " " + peekRates[i] + " " + popRates[i]);
+                System.err.println("Input Filter \"" + f.getName() + " (" + f.getIdent() + ") "
+                        + inputTypes[i] + " " + peekRates[i] + " " + popRates[i]);
             }
         }
         for (int i = 0; i < outputs.length; i++) {
@@ -910,8 +978,8 @@ public class StaticStreamGraph {
                 SIRFilter f = (SIRFilter)outputs[i].contents;
                 f.setOutputType(outputTypes[i]);
                 f.setPush(pushRates[i]);
-//                System.err.println("Output Filter \"" + f.getName() + " (" + f.getIdent() + ") "
-//                        + outputTypes[i] + " " + pushRates[i]);
+                System.err.println("Output Filter \"" + f.getName() + " (" + f.getIdent() + ") "
+                        + outputTypes[i] + " " + pushRates[i]);
             }
         }
     }

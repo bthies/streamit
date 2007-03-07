@@ -15,6 +15,7 @@ import at.dms.kjc.sir.lowering.*;
 import java.util.*;
 import at.dms.kjc.common.CodegenPrintWriter;
 import at.dms.kjc.common.CommonConstants;
+import at.dms.kjc.common.CommonUtils;
 //import at.dms.kjc.common.RawUtil;
 
 /**
@@ -656,13 +657,17 @@ public class FlatIRToCluster extends InsertTimers implements
                                 if (portal_method_params[a].isArrayType()) {
                                     // read arrays by passing array pointer and length
                                     CArrayType arrType = (CArrayType)portal_method_params[a];
-                                    p.print("        msg->get_" + arrType.getBaseType()
-                                            + "_array_param((" + arrType.getBaseType() + "*)p" + a + ", " + arrType.getTotalNumElements() + ");\n");
+                                    p.print("        msg->get_" 
+                                            + CommonUtils.CTypeToString(arrType.getBaseType(), hasBoolType) 
+                                            + "_array_param((" 
+                                            + CommonUtils.CTypeToString(arrType.getBaseType(), hasBoolType)
+                                            + "*)p" + a + ", " + arrType.getTotalNumElements() + ");\n");
                                 } else {
                                     // read primitives by calling function and assigning result 
                                     p.print("        p" + a
                                             + " = msg->get_" 
-                                            + portal_method_params[a] + "_param();\n");
+                                            + CommonUtils.CTypeToString(portal_method_params[a], hasBoolType) 
+                                            + "_param();\n");
                                 }
                             }
 
@@ -1715,12 +1720,18 @@ public class FlatIRToCluster extends InsertTimers implements
                         if (method_params[t].isArrayType()) {
                             // push arrays by passing array pointer and length
                             CArrayType arrType = (CArrayType)method_params[t];
-                            p.print("  __msg->push_" + arrType.getBaseType() + "_array((" + arrType.getBaseType() + "*)");
+                            p.print("  __msg->push_" 
+                                    + CommonUtils.CTypeToString(arrType.getBaseType(), hasBoolType)
+                                    + "_array((" 
+                                    + CommonUtils.CTypeToString(arrType.getBaseType(), hasBoolType)
+                                    + "*)");
                             params[t].accept(this);
                             p.print(", " + arrType.getTotalNumElements() + ");\n");
                         } else {
                             // push primitives by passing only value
-                            p.print("  __msg->push_" + method_params[t] + "(");
+                            p.print("  __msg->push_" 
+                                    + CommonUtils.CTypeToString(method_params[t], hasBoolType) 
+                                    + "(");
                             params[t].accept(this);
                             p.print(");\n");
                         }

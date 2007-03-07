@@ -43,11 +43,15 @@ public:
   void alloc_params(int param_size);
   void push_int(int a);
   void push_int_array(int* src, int length);
+  void push_bool(bool a);
+  void push_bool_array(bool* src, int length);
   void push_float(float f);
   void push_float_array(float* src, int length);
 
   int get_int_param(); // advances current
   void get_int_array_param(int* dst, int length);
+  int get_bool_param(); // advances current
+  void get_bool_array_param(bool* dst, int length);
   float get_float_param(); // advances current
   void get_float_array_param(float* dst, int length);
 

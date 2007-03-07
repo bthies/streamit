@@ -49,6 +49,15 @@ void message::push_int_array(int* src, int length) {
   write_ptr+=length;
 }
 
+void message::push_bool(bool a) {
+  *(bool*)(write_ptr++) = a;
+}
+
+void message::push_bool_array(bool* src, int length) {
+  memcpy(write_ptr, src, length*sizeof(bool));
+  write_ptr+=length;
+}
+
 void message::push_float(float f) {
   *(float*)(write_ptr++) = f;
 }

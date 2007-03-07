@@ -969,8 +969,8 @@ public class StaticStreamGraph {
                 f.setInputType(inputTypes[i]);
                 f.setPeek(peekRates[i]);
                 f.setPop(popRates[i]);
-                System.err.println("Input Filter \"" + f.getName() + " (" + f.getIdent() + ") "
-                        + inputTypes[i] + " " + peekRates[i] + " " + popRates[i]);
+//                System.err.println("Input Filter \"" + f.getName() + " (" + f.getIdent() + ") "
+//                        + inputTypes[i] + " " + peekRates[i] + " " + popRates[i]);
             }
         }
         for (int i = 0; i < outputs.length; i++) {
@@ -978,8 +978,8 @@ public class StaticStreamGraph {
                 SIRFilter f = (SIRFilter)outputs[i].contents;
                 f.setOutputType(outputTypes[i]);
                 f.setPush(pushRates[i]);
-                System.err.println("Output Filter \"" + f.getName() + " (" + f.getIdent() + ") "
-                        + outputTypes[i] + " " + pushRates[i]);
+//                System.err.println("Output Filter \"" + f.getName() + " (" + f.getIdent() + ") "
+//                        + outputTypes[i] + " " + pushRates[i]);
             }
         }
     }

@@ -304,7 +304,7 @@ float->featureListPair pipeline newF(){
 		add float->float filter {				
 			float d1;
 			float d2;
-			work pop 12 peek 10 push 9{
+			work pop 12 peek 12 push 9{
 				d1 = peek(9);
 				d2 = peek(10);
 				push(d1*peek(0));

@@ -537,9 +537,9 @@ public class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
      */
     public void visitBooleanLiteral(boolean value) {
         if (value)
-            p.print(1);
+            p.print(this.hasBoolType ? "true" :  "1");
         else
-            p.print(0);
+            p.print(this.hasBoolType ? "false" :  "0");
     }
 
     /**

@@ -74,7 +74,7 @@ public class OperatorPhases extends Misc
     {
         assert channel >= 0 && channel < nInputChannels;
         assert phase >= 0 && phase < nPhases;
-        assert pop >= 0 && peek >= pop;
+        assert pop >= 0 && peek >= pop : "Expected peek rate >= pop rate but got peek rate " + peek + " and pop rate " + pop;
 
         channelPeek[channel][phase] = peek;
         channelPop[channel][phase] = pop;

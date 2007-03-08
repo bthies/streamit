@@ -92,7 +92,7 @@ public class StrToRStream {
         System.out.println("Running Constant Prop and Unroll...");
         Set<SIRGlobal> theStatics = new HashSet<SIRGlobal>();
         if (global != null) theStatics.add(global);
-        Map associatedGlobals = StaticsProp.propagate(str,theStatics);
+        Map associatedGlobals = StaticsProp.propagateIntoContainers(str,theStatics);
         ConstantProp.propagateAndUnroll(str,true);
         System.out.println("Done Constant Prop and Unroll.");
 
@@ -162,6 +162,8 @@ public class StrToRStream {
             System.err.println("Done User-Defined Transformations...");
             RemoveMultiPops.doit(str);
         }
+
+        StaticsProp.propagateIntoFilters(str, theStatics);
 
         //if Splitjoin to pipe is enabled, run it...
         if (KjcOptions.sjtopipe) {

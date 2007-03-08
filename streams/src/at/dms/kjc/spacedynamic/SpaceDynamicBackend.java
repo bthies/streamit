@@ -67,7 +67,7 @@ public class SpaceDynamicBackend {
         System.out.println("Running Constant Prop and Unroll...");
         Set<SIRGlobal> theStatics = new HashSet<SIRGlobal>();
         if (global != null) theStatics.add(global);
-        Map associatedGlobals = StaticsProp.propagate(str,theStatics);
+        Map associatedGlobals = StaticsProp.propagateIntoContainers(str,theStatics);
         ConstantProp.propagateAndUnroll(str,true);
         System.out.println("Done Constant Prop and Unroll...");
         
@@ -238,6 +238,8 @@ public class SpaceDynamicBackend {
                     KjcOptions.partition_dp = oldKjcDP;
                 }
         
+                StaticsProp.propagateIntoFilters(str,theStatics);
+
                 if (KjcOptions.sjtopipe) {
                     SJToPipe.doit(ssg.getTopLevelSIR());
                 }

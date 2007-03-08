@@ -171,8 +171,8 @@ public class StaticsProp {
     // --------------------------------------------------------------------
     
     /**
-     * The top-level for propagating data from static sections into the stream
-     * graph.
+     * The top-level for propagating data from static sections into
+     * the hierarchical containers in the stream graph.
      * 
      * <p>Of course, for some static data -- using a static section to set
      * parameters, or push, peek, or pop rates -- it is necessary that the
@@ -188,7 +188,43 @@ public class StaticsProp {
      * we need to use constant prop based on constant values of local variables.
      * This presents a non-uniform interface for using the returned map.</p>
      * 
+     * @param str
+     *            The stream program
+     * @param theStatics
+     *            a set of static sections that need to be propagated through
+     *            the stream.
+     * @param doFilters
+     *            Whether we should propagate into filters.  (If true,
+     *            does not propagate into streams.)
      * 
+     * @return a map of associations between propagated data. This information
+     *         may be useful in a fusion: if two filters with associated data
+     *         are fused, only one copy is needed.  The map is from a field
+     *         or variable name as a string to a set of strings that are 
+     *         synonyms for the variable name.
+     * 
+     */
+    public static Map propagateIntoContainers(SIRStream str, Set<SIRGlobal> theStatics) {
+        return propagate(str, theStatics, false);
+    }
+
+    /**
+     * The top-level for propagating data from static sections into
+     * the filters in the stream graph.
+     * 
+     * <p>Of course, for some static data -- using a static section to set
+     * parameters, or push, peek, or pop rates -- it is necessary that the
+     * static data be constants that can be propagated to place with FieldProp
+     * in the streams.</p>
+     * 
+     * <p>Warning: if fusing filters with control constructs, please note that
+     * information from static sections appears in <b>filters</b> as <b>fields</b>
+     * so that multiple phases (even just init and work) have access to the
+     * values. In <b>containers</b> the information appears as
+     * <b>local variables</b>. The reason for the difference is that field 
+     * propagation does not propagate information far enough for containers, so
+     * we need to use constant prop based on constant values of local variables.
+     * This presents a non-uniform interface for using the returned map.</p>
      * 
      * @param str
      *            The stream program
@@ -203,7 +239,31 @@ public class StaticsProp {
      *         synonyms for the variable name.
      * 
      */
-    public static Map propagate(SIRStream str, Set<SIRGlobal> theStatics) {
+    public static Map propagateIntoFilters(SIRStream str, Set<SIRGlobal> theStatics) {
+        return propagate(str, theStatics, true);
+    }
+
+    /**
+     * The inner method for propagating data from static sections into
+     * the stream graph.
+     * 
+     * @param str
+     *            The stream program
+     * @param theStatics
+     *            a set of static sections that need to be propagated through
+     *            the stream.
+     * @param doFilters
+     *            Whether we should propagate into filters.  (If true,
+     *            does not propagate into streams.)
+     * 
+     * @return a map of associations between propagated data. This information
+     *         may be useful in a fusion: if two filters with associated data
+     *         are fused, only one copy is needed.  The map is from a field
+     *         or variable name as a string to a set of strings that are 
+     *         synonyms for the variable name.
+     * 
+     */
+    private static Map propagate(SIRStream str, Set<SIRGlobal> theStatics, boolean doFilters) {
         linearizeStatics(theStatics);
 
         if (debugPrint) {
@@ -218,7 +278,7 @@ public class StaticsProp {
         sp.findStaticsForStr(str);
         if (debugPrint) {System.err.println(sp.streamIdentToField);}
         sp.getCodeToPropagate();
-        sp.propagateIntoStreams(str);
+        sp.propagateIntoStreams(str, doFilters);
         return sp.nameToName;
     }
     
@@ -479,11 +539,13 @@ public class StaticsProp {
      *  Changes for multiple fields will end up in arbitrary order with 
      *  respect to each other. (More work if have tom implement back slice).
      */
-    private void propagateIntoStreams(SIRStream str) {
+    private void propagateIntoStreams(SIRStream str, final boolean doFilters) {
         IterFactory.createFactory().createIter(str).accept(
             new EmptyStreamVisitor() {
                 public void postVisitStream(SIRStream self,
                         SIRIterator iter) {
+                    if (doFilters && self instanceof SIRPhasedFilter ||
+                        !doFilters && !(self instanceof SIRFilter)) {
                     String streamIdent = self.getIdent();
                     Set<StaticAndField> toPropagate = 
                         streamIdentToField.get(streamIdent);
@@ -548,7 +610,7 @@ public class StaticsProp {
                         /////////////////////////////////////////////////
                         updateReferences(self,namesInStream);
                     }
-                }
+                    }}
                 });
         /////////////////////////////////////////////////////
         // (6) map from each synonym for a field name to the
@@ -684,7 +746,7 @@ public class StaticsProp {
         while (stmtIter.hasNext() 
                && stmtIter.next() instanceof JVariableDeclarationStatement){}
         // add
-        body.addAllStatements(stmtIter.previousIndex(), theCode);
+        body.addAllStatements((int)Math.max(0, stmtIter.previousIndex()), theCode);
     }
 
     /*

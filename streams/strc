@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.114 2007-02-16 19:18:40 thies Exp $
+# $Id: strc,v 1.115 2007-03-08 17:50:15 dimock Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -220,6 +220,7 @@ Usage: strc [options] file.str ...
 + --debug             Output debugging information in the compiler
 + --fusion            Fuse entire program to a single filter
 + --fission n         Do vertical fission up to limit of argument
++ --fixseed           Make randomized algorithms repeatable
   --iterations n,-i n Specify number of iterations to run
 * --havefftw          Declare that the sfftw libraries are available
   --linearreplacement Perform linear transformations based on analysis
@@ -365,6 +366,7 @@ sub get_options
 			    "dpscaling",
 			    "finegrained",
 			    "fission=i",
+			    "fixseed",
 			    "frequencyreplacement|F",
 			    "forceunroll",
 			    "fusion",
@@ -797,6 +799,7 @@ sub get_compiler_opts
     $opts{forceunroll} && ($copts .= " --forceunroll");
     $opts{frequencyreplacement} && ($copts .= " --frequencyreplacement");
     $opts{fission} && ($copts .= " --fission " . $opts{fission});
+    $opts{fixseed} && ($copts .= " --fixseed");
     $opts{fusion} && ($copts .= " --fusion");
     $opts{linearanalysis} && ($copts .= " --linearanalysis");
     $opts{linearpartition} && ($copts .= " --linearpartition");

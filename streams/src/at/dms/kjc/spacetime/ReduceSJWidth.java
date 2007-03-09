@@ -6,7 +6,6 @@ import java.util.Arrays;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.slicegraph.*;
-import at.dms.kjc.slicegraph.Edge;  // for some reason javac 1.5.0_01 was not getting Edge from at.dms.kjc.slicegraph.*
 
 import java.util.HashSet;
 import java.util.Vector;
@@ -27,7 +26,7 @@ public class ReduceSJWidth
     private static int DRAMs;
 
     public static void run(List<Slice> initList, List<Slice> steadyList, 
-                           RawChip chip, Slice[] files) 
+                           RawProcElements chip, Slice[] files) 
     {
         //keep the old steady traversal around so we can iterate over it...
         Slice[] oldSteady = steadyList.toArray(new Slice[0]);

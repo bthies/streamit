@@ -20,7 +20,7 @@ public class DRAMCommandDist {
     /** The schedule we are executing */
     private Slice[] schedule;
     /** The raw chip we are executing on */
-    private RawChip rawChip;
+    private RawProcElements rawChip;
     /** the number of reads for <pre>schedule</pre> to each dram while
      * executing within a trace
      */
@@ -45,7 +45,7 @@ public class DRAMCommandDist {
      * @param schedule The schedule. 
      * @param rawChip The raw chip.
      */
-    public DRAMCommandDist(Slice[] schedule, RawChip rawChip) {
+    public DRAMCommandDist(Slice[] schedule, RawProcElements rawChip) {
         this.schedule = schedule;
         this.rawChip = rawChip;
         intraReads = new int[rawChip.getNumDev()];

@@ -7,6 +7,7 @@ package at.dms.kjc.spacetime;
 
 import java.util.Vector;
 
+import at.dms.kjc.backendSupport.SchedulingPhase;
 import at.dms.kjc.slicegraph.FilterInfo;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.Partitioner;
@@ -59,7 +60,7 @@ public class SpaceTimeScheduleAndPartitioner extends BasicSpaceTimeSchedule {
             assert node.getFilter().getInputType().isNumeric() :
                 "non-numeric type for input to filewriter";
         
-            outputs += fi.totalItemsReceived(false, false);
+            outputs += fi.totalItemsReceived(SchedulingPhase.STEADY);
         }
         return outputs;
     }

@@ -1,5 +1,7 @@
 package at.dms.kjc.slicegraph;
 
+import at.dms.kjc.backendSupport.SchedulingPhase;
+
 /**
  *  This class represents an edge in the partitioned stream graph between slices.
  *  But it actually connects {@link OutputSliceNode}s to {@link InputSliceNodes}.
@@ -81,8 +83,8 @@ public class InterSliceEdge extends Edge {
         if (itemsSent != itemsReceived) {
             System.out.println("*** Init: Items received != Items Sent!");
             System.out.println(prev + " -> " + next);
-            System.out.println("Mult: " + prev.getMult(true, false) + " " +  
-                    next.getMult(true, false));
+            System.out.println("Mult: " + prev.getMult(SchedulingPhase.INIT) + " " +  
+                    next.getMult(SchedulingPhase.INIT));
             System.out.println("Push: " + prev.prePush + " " + prev.push);
             System.out.println("Pop: " + next.pop);
             System.out.println("Init items Sent * Ratio: " + prev.initItemsSent() + " * " +
@@ -132,7 +134,7 @@ public class InterSliceEdge extends Edge {
     */
     public int primePumpItems() {
         return (int) ((double) FilterInfo.getFilterInfo(((OutputSliceNode)src).getPrevFilter())
-                      .totalItemsSent(false, true) * ((OutputSliceNode)src).ratio(this));
+                      .totalItemsSent(SchedulingPhase.PRIMEPUMP) * ((OutputSliceNode)src).ratio(this));
     }
 
 }

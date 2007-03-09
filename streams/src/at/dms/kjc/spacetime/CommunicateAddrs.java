@@ -36,7 +36,7 @@ public class CommunicateAddrs
     /** The Address Communication pass for the application of this compile */ 
     private static CommunicateAddrs commAddrs;
     /** the raw chip */
-    private RawChip chip;
+    private RawProcElements chip;
     /** functions that we are creating, RawTile to StringBuffer */
     private HashMap<RawTile, StringBuffer> functions;
     /** de-allocate functions that we are creating, RawTile to StringBuffer */

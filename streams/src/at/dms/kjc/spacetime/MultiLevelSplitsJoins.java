@@ -34,7 +34,7 @@ public class MultiLevelSplitsJoins {
      * number of devices*/
     private int maxWidth;
     private Partitioner partitioner;
-    private RawChip rawChip;
+    private RawProcElements rawChip;
     
     /**
      * Create an instance of the pass that will operate on the 
@@ -44,7 +44,7 @@ public class MultiLevelSplitsJoins {
      * @param partitioner The partitioning.
      * @param rawChip The Raw chip.
      */
-    public MultiLevelSplitsJoins(Partitioner partitioner, RawChip rawChip) {
+    public MultiLevelSplitsJoins(Partitioner partitioner, RawProcElements rawChip) {
         this.rawChip = rawChip;
         this.partitioner = partitioner;
         //set max width to number of devices

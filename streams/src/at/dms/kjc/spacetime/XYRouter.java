@@ -18,7 +18,7 @@ public class XYRouter implements Router {
     public LinkedList<RawComputeNode> getRoute(RawComputeNode src, RawComputeNode dst) 
     {
         LinkedList<RawComputeNode> route = new LinkedList<RawComputeNode>();
-        RawChip chip = src.getRawChip();
+        RawProcElements chip = src.getRawChip();
         //set this to the dst if the dst is an IODevice so we can
         //add it to the end of the route
         RawComputeNode realDst = null;

@@ -6,6 +6,8 @@ package at.dms.kjc.slicegraph;
 import java.util.Iterator;
 import java.util.HashMap;
 
+import at.dms.kjc.backendSupport.SchedulingPhase;
+
 /**
  * A class to hold all the various information for a filter.
  * 
@@ -299,62 +301,68 @@ public class FilterInfo {
 
     /**
      * get the total number of items received during the execution of the stage
-     * we are in (based on <pre>init</pre> and <pre>primepump</pre>.  For primepump, this is just
+     * we are in (based on <b>whichPhase</b>.  For PRIMEPUMP, this is just
      * for one firing of the parent slice in the primepump stage, the slice may fire
      * many times in the prime pump schedule to fill the rotating buffers.
      * 
-     * @param init
-     * @param primepump
+     * @param whichPhase scheduling phase: initialization, primePump or steady state.
      * @return total number of items received
      */
-    public int totalItemsReceived(boolean init, boolean primepump) {
-        assert !((init) && (init && primepump)) : "incorrect usage";
+    public int totalItemsReceived(SchedulingPhase whichPhase) {
         int items = 0;
         // get the number of items received
-        if (init)
+        switch (whichPhase) {
+        case INIT:
             items = initItemsReceived();
-        else if (primepump)
+            break;
+        case PRIMEPUMP:
+        case STEADY:
             items = steadyMult * pop;
-        else
-            items = steadyMult * pop;
+            break;
+        }
 
         return items;
     }
 
     /**
      * get the total number of itmes sent during the execution of the stage
-     * we are in (based on <pre>init</pre> and <pre>primepump</pre>.  For primepump, this is just
+     * we are in (based on <b>whichPhase</b>.  For PRIMEPUMP, this is just
      * for one firing of the parent slice in the primepump stage, the slice may fire
      * many times in the prime pump schedule to fill the rotating buffers.
      * 
-     * @param init
-     * @param primepump
+     * @param whichPhase  scheduling phase: initialization, primePump or steady state.
      * @return total number of itmes sent
      */
-    public int totalItemsSent(boolean init, boolean primepump) {
-        assert !((init) && (init && primepump)) : "incorrect usage";
+    public int totalItemsSent(SchedulingPhase whichPhase) {
         int items = 0;
-        if (init)
+        switch (whichPhase) {
+        case INIT:
             items = initItemsSent();
-        else if (primepump)
+            break;
+        case PRIMEPUMP:
+        case STEADY:
             items = steadyMult * push;
-        else
-            items = steadyMult * push;
+            break;
+        }
         return items;
     }
 
     /**
-     * @param init
-     * @param primepump
+     * @param whichPhase  scheduling phase: initialization, primePump or steady state.
      * @return The multiplicity of the filter in the given stage, return
      * the steady mult for the primepump stage.
      */
-    public int getMult(boolean init, boolean primepump) {
-        assert !((init) && (init && primepump)) : "incorrect usage";
-        if (init)
-            return initMult;
-        else 
-            return steadyMult; 
+    public int getMult(SchedulingPhase whichPhase) {
+        switch (whichPhase) {
+            case INIT:
+                return initMult;
+            case PRIMEPUMP:
+            case STEADY:
+                return steadyMult;
+            default:                     // required coverage 
+                throw new AssertionError();
+        }
+        
     }
     
     

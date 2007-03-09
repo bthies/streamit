@@ -1,6 +1,7 @@
 package at.dms.kjc.spacetime;
 
 import at.dms.kjc.*;
+import at.dms.kjc.backendSupport.SchedulingPhase;
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.sir.*;
 import java.util.HashMap;
@@ -26,6 +27,9 @@ import at.dms.kjc.slicegraph.Buffer;
  *
  */
 public class RawComputeCodeStore extends ComputeCodeStore<RawTile> implements SIRCodeUnit{
+    /* debug dump of operations on code buffer: */
+    static boolean debugging = false;
+    
     /* attempt to override value of static field in superclass */
     static { mainName = "__RAWMAIN__";}
     /** If true, generate presynched dram commands when needed */
@@ -51,6 +55,7 @@ public class RawComputeCodeStore extends ComputeCodeStore<RawTile> implements SI
         super(parent);
         firstLoadPresynchedInSteady = false;
         rawCode = new HashMap<FilterContent, RawExecutionCode>();
+        if (debugging) {System.err.println("RawComputeCodeStore " + parent);}
     }
 
     /**
@@ -65,6 +70,7 @@ public class RawComputeCodeStore extends ComputeCodeStore<RawTile> implements SI
      */
     public void addFileCommand(boolean read, boolean init, int words,
                                OffChipBuffer buffer, boolean staticNet) {
+        if (debugging) {System.err.println("addFileCommand " + read + " " + init + " " + words + " " + staticNet);}
         assert !buffer.redundant() : "trying to generate a file command for a redundant buffer.";
         assert words > 0 : "trying to generate a file dram command of size 0";
 
@@ -101,8 +107,10 @@ public class RawComputeCodeStore extends ComputeCodeStore<RawTile> implements SI
      * @param buffer Used to get the port
      * @param dest The tile to which to send the data.
      */
-    public void addFileGDNReadCommand(boolean init, int words,
+    public void addFileGDNReadCommand(SchedulingPhase whichPhase, int words,
                                OffChipBuffer buffer, RawTile dest) {
+        if (debugging) {System.err.println("addFileGDNReadCommand " + whichPhase + " " + words + " " + dest);}
+
         assert !buffer.redundant() : "trying to generate a file command for a redundant buffer.";
         assert words > 0 : "trying to generate a file dram command of size 0";
         
@@ -123,11 +131,16 @@ public class RawComputeCodeStore extends ComputeCodeStore<RawTile> implements SI
 
         // the dram command
         JMethodCallExpression call = new JMethodCallExpression(null, functName,
-                                                               args);
-        if (init)
+                 args);
+        switch (whichPhase) {
+        case INIT:
+        case PRIMEPUMP:
             initBlock.addStatement(new JExpressionStatement(null, call, null));
-        else
+            break;
+        case STEADY:
             steadyLoop.addStatement(new JExpressionStatement(null, call, null));
+            break;
+        }
     }
 
     
@@ -145,20 +158,26 @@ public class RawComputeCodeStore extends ComputeCodeStore<RawTile> implements SI
      * @param init
      * @param buffer
      */
-    public void addGDNStoreCommandWithSynch(boolean init, boolean primepump, 
+    public void addGDNStoreCommandWithSynch(SchedulingPhase whichPhase, 
             int bytes, OffChipBuffer buffer) {
-        
-        addDRAMCommand(false, init, primepump, bytes, buffer, false);
+        if (debugging) {System.err.println("addGDNStoreCommandWithSynch " + whichPhase + " " + bytes);}
+       
+        addDRAMCommand(false, whichPhase, bytes, buffer, false);
         
         JAssignmentExpression ass = 
             new JAssignmentExpression(new JFieldAccessExpression(Util.CSTOINTVAR), 
                     new JIntLiteral(-1));
         JStatement statement = new JExpressionStatement(ass);
         
-        if (init || primepump)
+        switch (whichPhase) {
+        case INIT:
+        case PRIMEPUMP:
             initBlock.addStatement(statement);
-        else 
+            break;
+        case STEADY:
             steadyLoop.addStatement(statement);
+            break;
+        }
     }
     
     /**
@@ -178,6 +197,7 @@ public class RawComputeCodeStore extends ComputeCodeStore<RawTile> implements SI
      */
     public void addGDNFileStoreCommandWithSynch(boolean init, int words,
             OffChipBuffer buffer) {
+        if (debugging) {System.err.println("addGDNFileStoreCommandWithSynch " + init + " " + words);}
         addFileCommand(false, init, words, buffer, false);
         
         JAssignmentExpression ass = 
@@ -201,6 +221,7 @@ public class RawComputeCodeStore extends ComputeCodeStore<RawTile> implements SI
      */
     public void dummyOutgoing(IODevice dev, int words, boolean init) {
         JBlock block = new JBlock();
+        if (debugging) {System.err.println("dummyOutgoing " + init + " " + words + " " + dev);}
 
         assert words < RawChip.cacheLineWords : "Should not align more than cache-line size.";
         
@@ -241,6 +262,7 @@ public class RawComputeCodeStore extends ComputeCodeStore<RawTile> implements SI
      * @param init Which schedule should be append this code to?
      */
     public void disregardIncoming(IODevice dev, int words, boolean init) {
+        if (debugging) {System.err.println("disregardIncoming " + init + " " + words + " " + dev);}
         JBlock block = new JBlock();
 
         assert words < RawChip.cacheLineWords : "Should not align more than cache-line size.";
@@ -271,9 +293,9 @@ public class RawComputeCodeStore extends ComputeCodeStore<RawTile> implements SI
      * @param buffer
      * @return True if we should presynch, false if not.
      */
-    public boolean shouldPresynch(boolean read, boolean init, boolean 
-            primepump, OffChipBuffer buffer) {
-        
+    public boolean shouldPresynch(boolean read, SchedulingPhase whichPhase, OffChipBuffer buffer) {
+        if (debugging) {System.err.println("shouldPresynch " + whichPhase + " " + read);}
+              
         //never presynch a write, double buffering and the execution
         //order assures that writes will always occurs after the data is read
         if (!read)
@@ -283,7 +305,7 @@ public class RawComputeCodeStore extends ComputeCodeStore<RawTile> implements SI
         
         //always presynch in the init && primepump stage and if we are not software
         //pipeling!
-        if (init || primepump || SpaceTimeBackend.NO_SWPIPELINE) 
+        if (SchedulingPhase.isInitOrPrimepump(whichPhase) || SpaceTimeBackend.NO_SWPIPELINE) 
             return true;
         
         //now in steady
@@ -329,13 +351,14 @@ public class RawComputeCodeStore extends ComputeCodeStore<RawTile> implements SI
      * @param buffer The address to load/store
      * @param staticNet True if we want to use the static network, false if gdn
      */    
-    public void addDRAMCommand(boolean read, boolean init, boolean primepump, int bytes,
+    public void addDRAMCommand(boolean read, SchedulingPhase whichPhase, int bytes,
             OffChipBuffer buffer, boolean staticNet) {
-        
+        if (debugging) {System.err.println("addDRAMCommand " + read + " " + whichPhase + " " + bytes + " " + staticNet);}
+       
         assert bytes > 0 : "trying to generate a dram command of size 0";
         assert !buffer.redundant() : "Trying to generate a dram command for a redundant buffer!";
                 
-        boolean shouldPreSynch = shouldPresynch(read, init, primepump, buffer);
+        boolean shouldPreSynch = shouldPresynch(read, whichPhase, buffer);
         
         parent.setComputes();
         
@@ -366,17 +389,22 @@ public class RawComputeCodeStore extends ComputeCodeStore<RawTile> implements SI
                                  + buffer + " " + cacheLines);
         
         // add the statements to the appropriate stage
-        if (init || primepump) {
+        switch (whichPhase) {
+        case INIT:
+            initBlock.addStatement(dramCommand);
+            break;
+        case PRIMEPUMP:
             initBlock.addStatement(dramCommand);
             //only rotate in init during primepump
-            if (primepump)
-                initBlock.addStatement(new JExpressionStatement(null, rotExp, null));
-        } else {
+            initBlock.addStatement(new JExpressionStatement(null, rotExp, null));
+            break;
+        case STEADY:
             steadyLoop.addStatement((JStatement)ObjectDeepCloner.deepCopy(dramCommand));
             //always rotate in the steady state
             steadyLoop
             .addStatement(new JExpressionStatement(null, 
                     (JAssignmentExpression)ObjectDeepCloner.deepCopy(rotExp), null));
+            break;
         }
     }
 
@@ -395,6 +423,7 @@ public class RawComputeCodeStore extends ComputeCodeStore<RawTile> implements SI
      */
     public static JStatement sirDramCommand(boolean read, int cacheLines, JExpression sampleAddress,
             boolean staticNet, boolean shouldPreSynch, JExpression address) {
+        if (debugging) {System.err.println("sirDramCommand " + read + " " + cacheLines + " " + staticNet + " " + shouldPreSynch + " " + sampleAddress + " " + address);}
         JBlock block = new JBlock();
         
         String functName = "raw_streaming_dram" + (!staticNet ? "_gdn" : "") + 
@@ -440,15 +469,16 @@ public class RawComputeCodeStore extends ComputeCodeStore<RawTile> implements SI
      * one is issued
      * @param dest The read's destination. 
      */    
-    public void addDRAMGDNReadCommand(boolean init, boolean primepump, int bytes,
+    public void addDRAMGDNReadCommand(SchedulingPhase whichPhase, int bytes,
             OffChipBuffer buffer, boolean presynched, RawTile dest) {
+        if (debugging) {System.err.println("addDRAMGDNReadCommand " + whichPhase + " " + bytes + " " + presynched + " " + dest);}
         
 
         assert bytes > 0 : "trying to generate a dram command of size 0";
         assert !buffer.redundant() : "Trying to generate a dram command for a redundant buffer!";
          
         boolean shouldPreSynch = presynched && GEN_PRESYNCH && 
-                (init || primepump || SpaceTimeBackend.NO_SWPIPELINE);
+                (SchedulingPhase.isInitOrPrimepump(whichPhase) || SpaceTimeBackend.NO_SWPIPELINE);
         
         parent.setComputes();
         String functName = "raw_streaming_dram_gdn_request_read" + 
@@ -491,14 +521,20 @@ public class RawComputeCodeStore extends ComputeCodeStore<RawTile> implements SI
         CommonUtils.println_debugging("Adding DRAM Command to " + parent + " "
                                  + buffer + " " + cacheLines);
         // add the statements to the appropriate stage
-        if (init || primepump) {
+        switch (whichPhase) {
+        case INIT:
+            initBlock.addStatement(new JExpressionStatement(null, call, null));
+            initBlock
+                .addStatement(new JExpressionStatement(null, assExp, null));
+            break;
+        case PRIMEPUMP:
             initBlock.addStatement(new JExpressionStatement(null, call, null));
             initBlock
                 .addStatement(new JExpressionStatement(null, assExp, null));
             //only rotate the buffer in the primepump stage
-            if (primepump)
-                initBlock.addStatement(new JExpressionStatement(null, rotExp, null));
-        } else {
+            initBlock.addStatement(new JExpressionStatement(null, rotExp, null));
+            break;
+        case STEADY:
             steadyLoop.addStatement(new JExpressionStatement(null, 
                     (JMethodCallExpression)ObjectDeepCloner.deepCopy(call), null));
             steadyLoop
@@ -507,6 +543,7 @@ public class RawComputeCodeStore extends ComputeCodeStore<RawTile> implements SI
             steadyLoop
             .addStatement(new JExpressionStatement(null, 
                     (JAssignmentExpression)ObjectDeepCloner.deepCopy(rotExp), null));
+           break;
         }
     }   
     
@@ -521,7 +558,8 @@ public class RawComputeCodeStore extends ComputeCodeStore<RawTile> implements SI
      */
     @Override
     public void addSliceSteady(FilterInfo filterInfo, Layout layout) {
-     
+        if (debugging) {System.err.println("addSliceSteady " + filterInfo);}
+    
         RawExecutionCode exeCode;
 
         // check to see if we have seen this filter already
@@ -615,7 +653,8 @@ public class RawComputeCodeStore extends ComputeCodeStore<RawTile> implements SI
      */
     @Override
     public void addSlicePrimePump(FilterInfo filterInfo, Layout layout) {
-      
+        if (debugging) {System.err.println("addSlicePrimePump " + filterInfo);}
+     
         RawExecutionCode exeCode;
         JMethodDeclaration primePump;
         
@@ -657,7 +696,8 @@ public class RawComputeCodeStore extends ComputeCodeStore<RawTile> implements SI
      */
     @Override
     public void addSliceInit(FilterInfo filterInfo, Layout layout) {
-     
+        if (debugging) {System.err.println("addSliceInit " + filterInfo);}
+    
         RawExecutionCode exeCode;
 
         // if we can run direct communication, run it
@@ -699,6 +739,7 @@ public class RawComputeCodeStore extends ComputeCodeStore<RawTile> implements SI
      *
      */
     public static void presynchEmptyTilesInSteady() {
+        if (debugging) {System.err.println("presynchEmptyTilesInSteady");}
         Iterator<Buffer> buffers = OffChipBuffer.getBuffers().iterator();
         HashSet<RawTile> visitedTiles = new HashSet<RawTile>();
         
@@ -750,7 +791,8 @@ public class RawComputeCodeStore extends ComputeCodeStore<RawTile> implements SI
      * @param chip The raw chip.
      */
     public static void barrier(RawChip chip, boolean init, boolean primepump) {
-        Router router = new XYRouter();
+       if (debugging) {System.err.println("barrier " + init + " " + primepump);}
+       Router router = new XYRouter();
         
         boolean steady = !init && !primepump;
         int stage = 1;
@@ -791,6 +833,7 @@ public class RawComputeCodeStore extends ComputeCodeStore<RawTile> implements SI
      *
      */
     public static void presynchAllDramsInInit() {
+        if (debugging) {System.err.println("presynchAllDramsInInit");}
         Iterator<Buffer> buffers = OffChipBuffer.getBuffers().iterator();
         HashSet<RawTile> visitedTiles = new HashSet<RawTile>();
         
@@ -847,6 +890,7 @@ public class RawComputeCodeStore extends ComputeCodeStore<RawTile> implements SI
      * @param init if true add to init stage, otherwise add to steady.
      */
     public void sendConstToSwitch(int constant, boolean init) {
+        if (debugging) {System.err.println("sendConstToSwitch " + init + " " + constant);}
         JStatement send = RawExecutionCode.constToSwitchStmt(constant);
 
         if (init)

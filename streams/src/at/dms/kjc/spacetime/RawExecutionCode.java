@@ -1,6 +1,8 @@
 package at.dms.kjc.spacetime;
 
 import java.util.Vector;
+
+import at.dms.kjc.backendSupport.SchedulingPhase;
 import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.flatgraph.FlatVisitor;
 import at.dms.kjc.*;
@@ -287,9 +289,9 @@ public abstract class RawExecutionCode
      * @param primepump true if primepump
      */
     
-    protected JStatement setupGDNStore(boolean init, boolean primepump) {
+    protected JStatement setupGDNStore(SchedulingPhase whichPhase) {
         //if we are not sending anything, don't do anything...
-        if (filterInfo.totalItemsSent(init, primepump) == 0)
+        if (filterInfo.totalItemsSent(whichPhase) == 0)
             return new JEmptyStatement();
         
         JBlock block = new JBlock();
@@ -482,8 +484,10 @@ public abstract class RawExecutionCode
     protected JBlock gdnCacheAlign(boolean init) {
         JBlock block = new JBlock();
         
+        SchedulingPhase whichPhase = init? SchedulingPhase.INIT : SchedulingPhase.STEADY;
+        
         if (gdnInput) {
-            int wordsReceived = filterInfo.totalItemsReceived(init, false) * 
+            int wordsReceived = filterInfo.totalItemsReceived(whichPhase) * 
                 Util.getTypeSize(filterInfo.filter.getInputType());
             //first make sure that we are not receiving code from a file
             //reader, because we do not align file readers
@@ -503,7 +507,7 @@ public abstract class RawExecutionCode
         
         if (gdnOutput) {
             int wordsSent = Util.getTypeSize(filterInfo.filter.getOutputType()) *
-                filterInfo.totalItemsSent(init, false);
+                filterInfo.totalItemsSent(whichPhase);
             
             OutputSliceNode output = (OutputSliceNode)filterInfo.sliceNode.getNext();
             

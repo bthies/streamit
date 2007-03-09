@@ -7,8 +7,6 @@ import java.util.Iterator;
 import java.io.FileWriter;
 import java.util.ArrayList;
 import at.dms.kjc.slicegraph.*;
-import at.dms.kjc.slicegraph.InputSliceNode;
-import at.dms.kjc.slicegraph.OutputSliceNode;
 
 public class MagicDram extends IODevice {
     // the list of instructions
@@ -39,7 +37,7 @@ public class MagicDram extends IODevice {
         outputFiles = new HashSet();
     }
 
-    public static void GenerateCode(RawChip chip) {
+    public static void GenerateCode(RawProcElements chip) {
         for (int i = 0; i < chip.getDevices().length; i++) {
             if (chip.getDevices()[i] == null)
                 continue;

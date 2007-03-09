@@ -176,7 +176,7 @@ public class SpaceTimeBackend {
         if (KjcOptions.fusion || KjcOptions.dup >= 1 || KjcOptions.noswpipe) {
             // if we are about to fuse filters, we should perform
             // any vectorization now, since vectorization can not work inside
-            // fused sections, and vetctorization should map pipelines of 
+            // fused sections, and vectorization should map pipelines of 
             // stateless filters to pipelines of stateless filters.
 
             SimplifyPopPeekPush.simplify(str);
@@ -426,7 +426,7 @@ public class SpaceTimeBackend {
         traceGraph = partitioner.partition();
         System.out.println("Traces: " + traceGraph.length);
         partitioner.dumpGraph("traces.dot");
-
+/////////////////////////////////////////////////////////////////////
         if (KjcOptions.raw >= 0) {
             // Compiling for RAW: 
             

@@ -2,6 +2,7 @@ package at.dms.kjc.spacetime;
 
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
+import at.dms.kjc.backendSupport.SchedulingPhase;
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.iterator.*;
 import at.dms.util.Utils;
@@ -244,7 +245,7 @@ public class DirectCommunication extends RawExecutionCode
         //if we have gdn output then we have to set up the gdn packet header for
         //each gdn send
         if (gdnOutput) {
-            statements.addStatement(setupGDNStore(true, false));
+            statements.addStatement(setupGDNStore(SchedulingPhase.INIT));
         }
         
         //add the calls for the work function in the initialization stage
@@ -333,7 +334,11 @@ public class DirectCommunication extends RawExecutionCode
         //if we have gdn output then we have to set up the gdn packet header for
         //each gdn send
         if (gdnOutput) {
-            block.addStatement(setupGDNStore(false, !steady));
+            if (steady) {
+                block.addStatement(setupGDNStore(SchedulingPhase.STEADY));
+            } else {
+                block.addStatement(setupGDNStore(SchedulingPhase.PRIMEPUMP));
+            }
         }
         
         block.addStatement(loop);

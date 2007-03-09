@@ -19,6 +19,11 @@ public class Buffer {
     /**
      * Technical note: a Buffer in a backend implements an Edge in a slice graph
      * This data structure uses an Edge to store source, destination, and type information.
+     *
+     * XXX fix this? is sharing edges with the sliceGraph
+     * can see wanting to optimize buffers to remove useless edges
+     * and wanting to change source and dest,
+     * presumably without changing slice graph. 
      */
     protected Edge theEdge;
     /** unique ident for the buffer */

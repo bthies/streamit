@@ -52,7 +52,7 @@ public class SliceDotGraph {
         
         List<Slice> steadyTrav = Arrays.asList(schedule);
         Partitioner partitioner = spaceTime.getPartitioner();
-        RawChip rawChip = spaceTime.getRawChip();
+        RawProcElements rawChip = spaceTime.getRawChip();
         
         //System.out.println("Creating Slice Dot Graph...");
         try {

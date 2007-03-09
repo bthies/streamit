@@ -61,7 +61,7 @@ public class GenerateSwitchCode {
     
     }
     
-    private static String startIO(RawChip rawChip, RawTile tile) 
+    private static String startIO(RawProcElements rawChip, RawTile tile) 
     {
         StringBuffer buf = new StringBuffer();
         if (tile.hasIODevice()) {

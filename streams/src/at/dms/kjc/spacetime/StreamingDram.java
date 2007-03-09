@@ -4,9 +4,6 @@ import at.dms.util.Utils;
 import java.util.HashSet;
 import java.util.Iterator;
 import at.dms.kjc.slicegraph.*;
-import at.dms.kjc.slicegraph.InterSliceEdge;
-import at.dms.kjc.slicegraph.InputSliceNode;
-import at.dms.kjc.slicegraph.OutputSliceNode;
 
 /**
  * This class represents a streaming dram (SDRAM) that can be attached
@@ -30,7 +27,7 @@ public class StreamingDram extends IODevice
     private FileState fileWriter;
     
 
-    public static void setSize(RawChip chip)
+    public static void setSize(RawProcElements chip)
     {
         size = Address.MAX_ADDRESS.div(2*chip.getXSize() +
                                        2*chip.getYSize());
@@ -44,7 +41,7 @@ public class StreamingDram extends IODevice
         fileWriter = null;
     }
 
-    public static StreamingDram getStrDram(Address addr, RawChip chip) 
+    public static StreamingDram getStrDram(Address addr, RawProcElements chip) 
     {
         for (int i = 0; i < chip.getDevices().length; i++) {
             StreamingDram dram = ((StreamingDram)chip.getDevices()[i]);
@@ -224,7 +221,7 @@ public class StreamingDram extends IODevice
     
     //set the address range for all the drams
     //call this after set size
-    public static void setBounds(RawChip chip) 
+    public static void setBounds(RawProcElements chip) 
     {
         Address addr = Address.ZERO;
         int i, index = 0;
@@ -271,7 +268,7 @@ public class StreamingDram extends IODevice
                            " size: " + size + " (" + this.X + ", " + this.Y + ")");
     }
 
-    public static void printSetup(RawChip chip) 
+    public static void printSetup(RawProcElements chip) 
     {
         System.out.println("Streaming DRAM configuration:");
         for (int i = 0; i < chip.getDevices().length; i++) {

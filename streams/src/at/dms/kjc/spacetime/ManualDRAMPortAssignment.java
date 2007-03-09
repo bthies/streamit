@@ -28,7 +28,7 @@ import at.dms.kjc.slicegraph.Util;
  */
 public class ManualDRAMPortAssignment {
     /** The raw chip */
-    private static RawChip chip; 
+    private static RawProcElements chip; 
     /**the traces that are file readers and writers */
     private static Slice[] files;
     private static BufferedReader inputBuffer;
@@ -69,7 +69,7 @@ public class ManualDRAMPortAssignment {
     }
 
     
-    private static void manualInterSliceAssignment(OutputSliceNode output, RawChip chip) {
+    private static void manualInterSliceAssignment(OutputSliceNode output, RawProcElements chip) {
         // get the assignment for each input trace node
         Iterator edges = output.getDestSet().iterator();
         
@@ -84,7 +84,7 @@ public class ManualDRAMPortAssignment {
         }  
     }
     
-    private static void manualIntraSliceAssignment(OutputSliceNode output, RawChip chip) {
+    private static void manualIntraSliceAssignment(OutputSliceNode output, RawProcElements chip) {
         FilterSliceNode filter = output.getPrevFilter();
         
         //if the output trace node does nothing assign to zero
@@ -104,7 +104,7 @@ public class ManualDRAMPortAssignment {
         IntraSliceBuffer.getBuffer(filter, output).setStaticNet(staticNet);
     }
     
-    private static void manualIntraSliceAssignment(InputSliceNode input, RawChip chip) {
+    private static void manualIntraSliceAssignment(InputSliceNode input, RawProcElements chip) {
         FilterSliceNode filter = input.getNextFilter();
         
         if (input.noInputs()) { //if we don't do anything assign to zero
@@ -128,7 +128,7 @@ public class ManualDRAMPortAssignment {
      * 
      * @return the port 
      */
-    private static int getPortNumberFromUser(String query, RawChip chip) {
+    private static int getPortNumberFromUser(String query, RawProcElements chip) {
         int portNumber = -1;
         String str = "";
         
@@ -191,7 +191,7 @@ public class ManualDRAMPortAssignment {
      * @param files The traces that are file readers and writers
      * @param chip The raw chip we are targeting
      */
-    private static void fileStuff(Slice[] files, RawChip chip) {
+    private static void fileStuff(Slice[] files, RawProcElements chip) {
         // first go thru the file, reader and writers and assign their
         // input->file and file->output buffers
         for (int i = 0; i < files.length; i++) {

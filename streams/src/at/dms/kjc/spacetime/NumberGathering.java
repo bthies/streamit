@@ -1,6 +1,8 @@
 package at.dms.kjc.spacetime;
 
 import java.util.Vector;
+
+import at.dms.kjc.backendSupport.SchedulingPhase;
 import at.dms.kjc.slicegraph.*;
 
 
@@ -32,7 +34,7 @@ public class NumberGathering
      * 
      * @return The class with the stats.
      */
-    public static NumberGathering doit(RawChip chip, Slice[] files) 
+    public static NumberGathering doit(RawProcElements chip, Slice[] files) 
     {
         return (new NumberGathering(chip, files));
     }
@@ -43,7 +45,7 @@ public class NumberGathering
      * @param chip
      * @param files
      */
-    private NumberGathering(RawChip chip, Slice[] files)
+    private NumberGathering(RawProcElements chip, Slice[] files)
     {
         //get all the file writers
         Vector<Slice> fw = new Vector<Slice>();
@@ -63,10 +65,10 @@ public class NumberGathering
             assert node.getFilter().getInputType().isNumeric() :
                 "non-numeric type for input to filewriter";
         
-            steady[i] = fi.totalItemsReceived(false, false);
+            steady[i] = fi.totalItemsReceived(SchedulingPhase.STEADY);
             totalSteadyItems += steady[i];
-            skip[i] = fi.totalItemsReceived(true, false) + 
-                fi.totalItemsReceived(false, true);
+            skip[i] = fi.totalItemsReceived(SchedulingPhase.INIT) + 
+                fi.totalItemsReceived(SchedulingPhase.PRIMEPUMP);
         }
     }    
 

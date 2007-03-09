@@ -20,7 +20,7 @@ import at.dms.kjc.slicegraph.ComputeNode;
  * 
  * @author mgodon / dimock
  *
- * @param <ComputeNodeType> 
+ * @param ComputeNodeType 
  */
 public class ComputeCodeStore<ComputeNodeType extends ComputeNode<?>> implements at.dms.kjc.sir.SIRCodeUnit {
 

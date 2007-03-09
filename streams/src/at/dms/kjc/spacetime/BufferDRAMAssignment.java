@@ -28,7 +28,7 @@ public class BufferDRAMAssignment {
      */
     private final boolean ALWAYS_ASSIGN_INTRA_HOME_BASE = true;
     /** The raw chip we are compiling to */
-    private RawChip rawChip;
+    private RawProcElements rawChip;
     /** the layout we are using */
     private Layout<RawTile> layout;
     private SpaceTimeSchedule spaceTime;

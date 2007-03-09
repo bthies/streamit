@@ -2,6 +2,7 @@ package at.dms.kjc.spacetime;
 
 import java.util.Vector;
 
+import at.dms.kjc.backendSupport.SchedulingPhase;
 import at.dms.kjc.common.CommonUtils;
 //import at.dms.kjc.flatgraph.FlatNode;
 //import at.dms.kjc.flatgraph.FlatVisitor;
@@ -461,7 +462,7 @@ public class BufferedCommunication extends RawExecutionCode
         //if we have gdn output then we have to set up the gdn packet header for
         //each gdn send
         if (gdnOutput) {
-            statements.addStatement(setupGDNStore(true, false));
+            statements.addStatement(setupGDNStore(SchedulingPhase.INIT));
         }
 
         //add the call to initWork
@@ -650,7 +651,11 @@ public class BufferedCommunication extends RawExecutionCode
         //if we have gdn output then we have to set up the gdn packet header for
         //each gdn send
         if (gdnOutput) {
-            block.addStatementFirst(setupGDNStore(false, !steady));
+            if (steady) {
+                block.addStatementFirst(setupGDNStore(SchedulingPhase.STEADY));
+            } else {
+                block.addStatementFirst(setupGDNStore(SchedulingPhase.PRIMEPUMP));
+            }
         }
         
         //now we must make sure that 

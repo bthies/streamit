@@ -2,8 +2,6 @@ package at.dms.kjc.backendSupport;
 
 import at.dms.kjc.slicegraph.*;
 import at.dms.kjc.spacetime.ComputeCodeStore;
-import at.dms.kjc.spacetime.ComputeNodes;
-import at.dms.kjc.spacetime.ComputeNodesI;
 import at.dms.kjc.spacetime.Layout;
 
 import java.util.Collection;

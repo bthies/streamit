@@ -1,4 +1,4 @@
-// $Id: BackEndScaffold.java,v 1.1 2007-03-09 23:43:19 dimock Exp $
+// $Id: BackEndScaffold.java,v 1.2 2007-03-12 16:38:08 dimock Exp $
 package at.dms.kjc.backendSupport;
 
 import java.util.*;
@@ -6,7 +6,6 @@ import java.util.*;
 import at.dms.kjc.slicegraph.*;
 import at.dms.kjc.spacetime.BasicSpaceTimeSchedule;
 import at.dms.kjc.spacetime.ComputeCodeStore;
-import at.dms.kjc.spacetime.ComputeNodesI;
 import at.dms.kjc.KjcOptions;
 
 

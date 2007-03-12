@@ -341,6 +341,13 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
                                 // the split better consume some data too!
                                 assert joinIn != 0;
 
+                                if (joinRate == null) {
+                                    String name = "" + splitjoin.getObject();
+                                    assert false : 
+                                    "Null join rate in " + name + 
+                                    ". This can occur if your stream graph is decomposable into multiple graphs with no data flowing between them.";
+                                }
+                                
                                 // compute the rate at which the child should execute
                                 // w.r.t. the splitter
                                 newChildRate =

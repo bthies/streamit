@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.47 2007-02-27 16:41:26 dimock Exp $
+ * $Id: Utils.java,v 1.48 2007-03-12 18:09:09 dimock Exp $
  */
 
 package at.dms.util;
@@ -175,6 +175,8 @@ public abstract class Utils implements Serializable, DeepCloneable {
         LOG("log", "logf", "logf", "logf_v"),             // float -> float
         LOG10("log10", "log10f", "log10f", "log10f_v"),   // float -> float
         POW("pow", "powf", "powf", "powf_v"),             // float x float -> float
+        RANDOM("random", "", "", ""),                     // void -> float in java, void -> int in C, C++
+        __RANDOM("__random", "rand", "rand", "rand_v"),   // internal in translating random() to rand();
         // round(x) should be replaced with trunc(x+0.5) to match java behavior
         // will still need casting to int.
         ROUND("round", "roundf", "roundf", "roundf_v"),   // float -> float
@@ -256,6 +258,69 @@ public abstract class Utils implements Serializable, DeepCloneable {
         }
 
         JExpression[] args = applyMath.getArgs();
+
+        if (mm == MathMethodInfo.RANDOM) {
+            // TODO: extend to setting seed, but
+            // need to determine how to change float seed for random(s) 
+            // to int seed for srand(s')
+            if (args.length != 0) {
+                return applyMath;
+            }
+            /* random() should return a floating random value in [0,1)  ... or is that [0,1] ?
+             * need to do this using rand() returning an integer value [0, RAND_MAX]
+             * convert as:
+             * (float)((double)(rand()) / ((double)RAND_MAX + 1.0))
+             * despite the fact that RAND_MAX may be large, we want to avoid doubles for
+             * most vector architectures, so there use:
+             * (float)(rand()) / ((float)RAND_MAX + 1.0f)
+             * 
+             * changes name from random() to __random() so that translation does not iterate.
+             * __random() changed on code emission to right name for target.
+             * 
+             * Problem: RAND_MAX is a named constant rather than a field or local variable
+             * We make it be an (uninitialized) field for purposes of further compilation. 
+             */
+            JExpression randmax = 
+                new JFieldAccessExpression(new JThisExpression(),
+                        "RAND_MAX");
+            randmax.setType(CStdType.Integer);
+
+            JExpression dividend = null;
+            JExpression divisor = null;
+            JExpression quotient = null;
+            JExpression cast_quotient = null;
+
+            JExpression randcall = new JMethodCallExpression(applyMath.getTokenReference(),
+                    applyMath.getPrefix(),
+                    "__random", applyMath.getArgs());
+            randcall.setType(CStdType.Integer);
+            
+            if (KjcOptions.vectorize > 0) {
+                dividend = new JAddExpression(null,
+                        new JCastExpression(null,  // is there a specific widening cast in kopi?
+                                randmax, 
+                                CStdType.Float),
+                        new JFloatLiteral(1.0f));
+                divisor = new JCastExpression(null, randcall, CStdType.Float);
+                quotient = new JDivideExpression(null, divisor, dividend);
+                cast_quotient = quotient;
+            } else {
+                try {
+                dividend = new JAddExpression(null,
+                        new JCastExpression(null,  // is there a specific widening cast in kopi?
+                                randmax, 
+                                CStdType.Double),
+                        new JDoubleLiteral(null,"1.0"));
+                } catch (at.dms.compiler.PositionedError e) {
+                    assert false : e;  // should not raise invalid format error.
+                }
+                divisor = new JCastExpression(null, randcall, CStdType.Double);
+                quotient = new JDivideExpression(null, divisor, dividend);
+                cast_quotient = new JCastExpression(null, quotient, CStdType.Float);
+            }
+            return cast_quotient;
+        }
+        
         for (JExpression arg : args) {
             if (!(arg instanceof JLiteral)) {
                 return applyMath;
@@ -269,6 +334,9 @@ public abstract class Utils implements Serializable, DeepCloneable {
         double darg2;
 
         switch (mm) {
+        case __RANDOM:
+            // called again with translatoin of random();
+            return applyMath;
         case ACOS:
             assert args.length == 1;
             darg = asDouble(args[0]).doubleValue();

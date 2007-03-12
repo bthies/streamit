@@ -1343,6 +1343,10 @@ public class FlatIRToCluster extends InsertTimers implements
             p.print(left.getType().getCClass().getOwner().getType() + "->this");
             return;
         }
+        if (ident.startsWith("RAND_MAX")) {
+            p.print(ident);
+            return;
+        }
         int index = ident.indexOf("_$");
         if (index != -1) {
             p.print(ident.substring(0, index)); // local var

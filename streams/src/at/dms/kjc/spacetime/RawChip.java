@@ -2,6 +2,7 @@ package at.dms.kjc.spacetime;
 
 import at.dms.util.Utils;
 import at.dms.kjc.*;
+import at.dms.kjc.backendSupport.ComputeNodesI;
 import at.dms.kjc.spacetime.switchIR.*;
 
 /**

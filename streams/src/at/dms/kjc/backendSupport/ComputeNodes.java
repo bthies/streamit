@@ -2,7 +2,6 @@ package at.dms.kjc.backendSupport;
 
 import java.util.*;
 import at.dms.kjc.slicegraph.*;
-import at.dms.kjc.spacetime.ComputeCodeStore;
 /**
  * A ComputeNodes is a collection of {@link ComputeNode}s.
  *  
@@ -23,6 +22,8 @@ public class ComputeNodes<CodeStoreType extends ComputeCodeStore<?>>  implements
             nodes.add(new ComputeNode<CodeStoreType>());
         }
     }
+    
+
     
     /**
      * Assume that it is easy to add more nodes...

@@ -2,16 +2,16 @@ package at.dms.kjc.vanillaSlice;
 
 import at.dms.kjc.backendSupport.BackEndFactory;
 import at.dms.kjc.backendSupport.BackEndScaffold;
+import at.dms.kjc.backendSupport.ComputeCodeStore;
+import at.dms.kjc.backendSupport.ComputeNode;
 import at.dms.kjc.backendSupport.ComputeNodes;
 import at.dms.kjc.backendSupport.SchedulingPhase;
-import at.dms.kjc.slicegraph.ComputeNode;
 import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.OutputSliceNode;
 import java.util.*;
 import at.dms.kjc.slicegraph.Buffer;
-import at.dms.kjc.spacetime.ComputeCodeStore;
 //import at.dms.kjc.spacetime.ComputeNodesI;
 /**
  * Stub for uniprocessor backend.
@@ -19,32 +19,38 @@ import at.dms.kjc.spacetime.ComputeCodeStore;
  *
  */
 public class UniBackEndFactory extends BackEndFactory<
-    ComputeNodes,
-    ComputeNode<?>,
-    ComputeCodeStore<?>,
-    Object> { 
+    UniProcessors,
+    UniProcessor,
+    UniComputeCodeStore,
+    Integer> { 
+
+    private BackEndScaffold<
+    UniProcessors, UniProcessor, UniComputeCodeStore, Integer
+    > scaffolding = null;
 
     @Override
     public  BackEndScaffold<
-     ComputeNodes,ComputeNode<?>,ComputeCodeStore<?>,Object> getBackEndMain() {
-        // TODO Auto-generated method stub
-        return null;
+    UniProcessors, UniProcessor, UniComputeCodeStore, Integer> getBackEndMain() {
+        if (scaffolding == null) {
+            scaffolding  = new BackEndScaffold<UniProcessors, UniProcessor, UniComputeCodeStore, Integer>();
+        }
+        return scaffolding;
     }
     
-    public ComputeNodes getComputeNodes() {
+    public UniProcessors getComputeNodes() {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public  ComputeCodeStore<?> getComputeCodeStore(ComputeNode<?> parent) {
+    public UniComputeCodeStore getComputeCodeStore(UniProcessor parent) {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public  ComputeNode<?> getComputeNode(ComputeNodes allNodes,
-            Object specifier) {
+    public UniProcessor getComputeNode(UniProcessors allNodes,
+            Integer specifier) {
         // TODO Auto-generated method stub
         return null;
     }
@@ -58,7 +64,7 @@ public class UniBackEndFactory extends BackEndFactory<
      */
     @Override
     public void processInputSliceNode(InputSliceNode input,
-            SchedulingPhase whichPhase, ComputeNodes computeNodes) {
+            SchedulingPhase whichPhase, UniProcessors computeNodes) {
         
     }
     
@@ -71,7 +77,7 @@ public class UniBackEndFactory extends BackEndFactory<
      */
     @Override
     public void processFilterSlices(Slice slice, 
-            SchedulingPhase whichPhase, ComputeNodes computeNodes) {
+            SchedulingPhase whichPhase, UniProcessors computeNodes) {
         
     }
 
@@ -84,7 +90,7 @@ public class UniBackEndFactory extends BackEndFactory<
      */
 
     public void processFilterSliceNode(FilterSliceNode filter,
-            SchedulingPhase whichPhase, ComputeNodes computeNodes) {
+            SchedulingPhase whichPhase, UniProcessors computeNodes) {
         
     }
 
@@ -97,7 +103,7 @@ public class UniBackEndFactory extends BackEndFactory<
      */
     @Override
     public void processOutputSliceNode(OutputSliceNode output,
-            SchedulingPhase whichPhase, ComputeNodes computeNodes) {
+            SchedulingPhase whichPhase, UniProcessors computeNodes) {
         
     }
     

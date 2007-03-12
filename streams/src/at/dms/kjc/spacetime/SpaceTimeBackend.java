@@ -2,6 +2,7 @@ package at.dms.kjc.spacetime;
 
 import at.dms.kjc.sir.*;
 import at.dms.kjc.*;
+import at.dms.kjc.backendSupport.ComputeNode;
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.common.ConvertLonelyPops;
 import at.dms.kjc.slicegraph.*;
@@ -22,7 +23,6 @@ import at.dms.kjc.slicegraph.FlattenAndPartition;
 import at.dms.kjc.slicegraph.Partitioner;
 import at.dms.kjc.slicegraph.SimplePartitioner;
 import at.dms.kjc.slicegraph.Slice;
-import at.dms.kjc.slicegraph.ComputeNode;
 import java.util.*;
 //import at.dms.kjc.sir.lowering.FinalUnitOptimize;
 //import at.dms.util.SIRPrinter;

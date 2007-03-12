@@ -1,6 +1,6 @@
 package at.dms.kjc.spacetime;
 
-import at.dms.kjc.slicegraph.ComputeNode;
+import at.dms.kjc.backendSupport.ComputeNode;
 import at.dms.util.Utils;
 import java.util.Vector;
 

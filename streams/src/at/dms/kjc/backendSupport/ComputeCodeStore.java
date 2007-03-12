@@ -1,4 +1,4 @@
-package at.dms.kjc.spacetime;
+package at.dms.kjc.backendSupport;
 
 import at.dms.kjc.CClassType;
 import at.dms.kjc.CStdType;
@@ -10,7 +10,7 @@ import at.dms.kjc.JMethodDeclaration;
 import at.dms.kjc.JStatement;
 import at.dms.kjc.JWhileStatement;
 import at.dms.kjc.slicegraph.FilterInfo;
-import at.dms.kjc.slicegraph.ComputeNode;
+import at.dms.kjc.spacetime.Layout;
 
 /**
  * A data structure for associating code with each filter at each phase.
@@ -92,6 +92,24 @@ public class ComputeCodeStore<ComputeNodeType extends ComputeNode<?>> implements
 
     }
 
+    /**
+     * @param stmt  statement to add after any other statements in init code.
+     * 
+     */
+     public void addInitStatement(JStatement stmt) {
+         initBlock.addStatement(stmt);
+     }
+    
+     /**
+      * @param stmt  statement to add after any other statements in init code.
+      * 
+      */
+    public void addSteadyLoopStatement(JStatement stmt) {
+         steadyLoop.addStatement(stmt);
+     }
+     
+
+    
     /**
      * Bill's code adds method <pre>meth</pre> to this, if <pre>meth</pre> is not already
      * registered as a method of this. Requires that <pre>method</pre> is non-null.

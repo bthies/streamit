@@ -1,13 +1,14 @@
 package at.dms.kjc.spacetime;
 
 import at.dms.kjc.*;
+import at.dms.kjc.backendSupport.ComputeCodeStore;
+import at.dms.kjc.backendSupport.ComputeNode;
 import at.dms.kjc.backendSupport.SchedulingPhase;
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.sir.*;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import at.dms.kjc.slicegraph.ComputeNode;
 import at.dms.kjc.slicegraph.FilterContent;
 import at.dms.kjc.slicegraph.FilterInfo;
 import at.dms.kjc.slicegraph.Buffer;
@@ -815,9 +816,9 @@ public class RawComputeCodeStore extends ComputeCodeStore<RawTile> implements SI
                                 new JAssignmentExpression(new JFieldAccessExpression(TraceIRtoC.DUMMY_VOLATILE),
                                         new JFieldAccessExpression(Util.CSTIINTVAR)));
                     if (steady) 
-                        dest.getComputeCode().steadyLoop.addStatement(rec);
+                        dest.getComputeCode().addSteadyLoopStatement(rec);
                     else 
-                        dest.getComputeCode().initBlock.addStatement(rec);
+                        dest.getComputeCode().addInitStatement(rec);
                     dests[index++] = chip.getTile(x);
                 }
             }

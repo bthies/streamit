@@ -3,7 +3,8 @@ package at.dms.kjc.spacetime;
 import java.io.FileWriter;
 import java.util.Iterator;
 import java.util.HashMap;
-import at.dms.kjc.slicegraph.ComputeNode;
+
+import at.dms.kjc.backendSupport.ComputeNode;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.FilterInfo;
 import at.dms.kjc.slicegraph.SliceNode;

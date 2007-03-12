@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 
-import at.dms.kjc.slicegraph.ComputeNode;
+import at.dms.kjc.backendSupport.ComputeNode;
 
 /**
  * This static class stores the logical mapping between tiles and drams that the 

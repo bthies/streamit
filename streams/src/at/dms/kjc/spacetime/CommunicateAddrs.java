@@ -4,8 +4,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Random;
 import at.dms.kjc.*;
+import at.dms.kjc.backendSupport.ComputeNode;
 import at.dms.kjc.common.CommonUtils;
-import at.dms.kjc.slicegraph.ComputeNode;
 import at.dms.kjc.slicegraph.Buffer;
 
 /**

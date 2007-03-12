@@ -15,7 +15,7 @@ import at.dms.kjc.*;
  * @author mgordon
  *
  */
-public class RawComputeNode extends at.dms.kjc.slicegraph.ComputeNode<RawComputeCodeStore>
+public class RawComputeNode extends at.dms.kjc.backendSupport.ComputeNode<RawComputeCodeStore>
 {
     /** the x coordinate */
     protected int X;

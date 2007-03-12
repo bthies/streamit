@@ -3,10 +3,10 @@ package at.dms.kjc.spacetime;
 import java.util.ListIterator;
 import java.util.Iterator;
 
+import at.dms.kjc.backendSupport.ComputeNode;
 import at.dms.kjc.backendSupport.SchedulingPhase;
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.sir.*;
-import at.dms.kjc.slicegraph.ComputeNode;
 import at.dms.kjc.slicegraph.InterSliceEdge;
 import at.dms.kjc.slicegraph.FilterInfo;
 import at.dms.kjc.slicegraph.FilterSliceNode;

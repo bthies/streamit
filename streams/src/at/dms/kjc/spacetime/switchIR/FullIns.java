@@ -2,7 +2,7 @@ package at.dms.kjc.spacetime.switchIR;
 
 import java.util.*;
 import at.dms.util.Utils;
-import at.dms.kjc.slicegraph.ComputeNode;
+import at.dms.kjc.backendSupport.ComputeNode;
 
 //SwitchProcessorIns to Route Instructions
 public class FullIns extends SwitchProcessorIns {

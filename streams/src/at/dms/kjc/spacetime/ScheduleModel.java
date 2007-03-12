@@ -8,7 +8,7 @@ import java.util.LinkedList;
 import java.util.HashMap;
 import java.util.HashSet;
 
-import at.dms.kjc.slicegraph.ComputeNode;
+import at.dms.kjc.backendSupport.ComputeNode;
 import at.dms.kjc.slicegraph.InterSliceEdge;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;

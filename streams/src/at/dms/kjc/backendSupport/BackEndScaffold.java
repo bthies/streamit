@@ -1,17 +1,16 @@
-// $Id: BackEndScaffold.java,v 1.2 2007-03-12 16:38:08 dimock Exp $
+// $Id: BackEndScaffold.java,v 1.3 2007-03-12 23:42:12 dimock Exp $
 package at.dms.kjc.backendSupport;
 
 import java.util.*;
 
 import at.dms.kjc.slicegraph.*;
 import at.dms.kjc.spacetime.BasicSpaceTimeSchedule;
-import at.dms.kjc.spacetime.ComputeCodeStore;
 import at.dms.kjc.KjcOptions;
 
 
 /**
  * Create code for a partitioning of {@link at.dms.kjc.slicegraph.Slice Slice}s 
- * on a collection of {@link at.dms.kjc.slicegraph.ComputeNode ComputeNode}s.
+ * on a collection of {@link at.dms.kjc.backendSupport.ComputeNode ComputeNode}s.
  * Connections between the ComputeNode s are returned as 
  * under-specified {@link at.dms.kjc.slicegraph.Buffer Buffer}s.
  * @author dimock
@@ -64,7 +63,7 @@ ComputeNodeSelectorArgType extends Object> {
     }
     
     /**
-     * Pass in a {@link BasicSpaceTimeSchedule schedule}, and get a set of {@link at.dms.kjc.slicegraph.ComputeNode ComputeNode}s
+     * Pass in a {@link BasicSpaceTimeSchedule schedule}, and get a set of {@link at.dms.kjc.backendSupport.ComputeNode ComputeNode}s
      * and a set of (underspecified) {@link at.dms.kjc.slicegraph.Buffer Buffer}s filled in.
      * @param schedule
      * @param computeNodes

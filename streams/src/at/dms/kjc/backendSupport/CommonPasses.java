@@ -55,7 +55,7 @@ public class CommonPasses {
      * @param structs           SIRStructure[] from  {@link at.dms.kjc.Kopi2SIR}
      * @param helpers           SIRHelper[] from {@link at.dms.kjc.Kopi2SIR}
      * @param global            SIRGlobal from  {@link at.dms.kjc.Kopi2SIR}
-     * @param numCores          Number of {@link at.dms.kjc.slicegraph.ComputeNode}'s to use in partitioning. 
+     * @param numCores          Number of {@link at.dms.kjc.backendSupport.ComputeNode}'s to use in partitioning. 
      *
      * @return a slice graph: the optimized program in {@link at.dms.kjc.slicegraph.Slice Slice} representation.
      */

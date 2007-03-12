@@ -5,8 +5,8 @@ package at.dms.kjc.spacetime;
 
 import java.util.*;
 
+import at.dms.kjc.backendSupport.ComputeNode;
 import at.dms.kjc.common.*;
-import at.dms.kjc.slicegraph.ComputeNode;
 import at.dms.kjc.slicegraph.DataFlowOrder;
 import at.dms.kjc.slicegraph.InterSliceEdge;
 import at.dms.kjc.slicegraph.FilterSliceNode;

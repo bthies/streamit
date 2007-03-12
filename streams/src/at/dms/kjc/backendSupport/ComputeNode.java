@@ -1,7 +1,9 @@
-package at.dms.kjc.slicegraph;
+package at.dms.kjc.backendSupport;
 
 import java.util.LinkedList;
-import at.dms.kjc.spacetime.ComputeCodeStore;
+
+import at.dms.kjc.slicegraph.ProcElement;
+import at.dms.kjc.slicegraph.SliceNode;
 
 /**
  * This abstract class represents a device that can perform computation.

@@ -1,7 +1,5 @@
 package at.dms.kjc.backendSupport;
 
-import at.dms.kjc.slicegraph.ComputeNode;
-import at.dms.kjc.spacetime.ComputeCodeStore;
 /**
  * Define what a collection of ComputeNodes must implement.
  * A Collection of ComputeNodes inherits from a collection of ProcElements

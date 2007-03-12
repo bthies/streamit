@@ -76,6 +76,16 @@ void message::get_int_array_param(int* dst, int length) {
   current+=length;
 }
 
+
+bool message::get_bool_param() {
+  return *((bool*)(current++));
+}
+
+void message::get_bool_array_param(bool* dst, int length) {
+  memcpy(dst, current, length*sizeof(bool));
+  current+=length;
+}
+
 float message::get_float_param() {
   return *((float*)(current++));
 }

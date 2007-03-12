@@ -50,7 +50,7 @@ public:
 
   int get_int_param(); // advances current
   void get_int_array_param(int* dst, int length);
-  int get_bool_param(); // advances current
+  bool get_bool_param(); // advances current
   void get_bool_array_param(bool* dst, int length);
   float get_float_param(); // advances current
   void get_float_array_param(float* dst, int length);

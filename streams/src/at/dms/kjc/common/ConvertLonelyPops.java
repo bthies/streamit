@@ -72,48 +72,58 @@ public class ConvertLonelyPops implements Constants {
     }
     
     /**
+     * Convert all lonely pops for a method declaration.
+     * @param method the method declaration.
+     * @param type the type of any pops in this method.
+     */
+    
+    public void convert(JMethodDeclaration method, CType type) {
+        //don't do anything for no numeric types...
+        if (!type.isNumeric())
+            return;
+        
+        final boolean[] replaced = {false};
+        final JVariableDefinition varDef = 
+            new JVariableDefinition(null, ACC_VOLATILE, type, VARNAME, 
+                    type.isFloatingPoint() ? (JLiteral) new JFloatLiteral(0) :
+                        (JLiteral)new JIntLiteral(0));
+        // replace the lonely receives
+        method.getBody().accept(new SLIRReplacingVisitor() {
+            public Object visitExpressionStatement(JExpressionStatement self,
+                    JExpression expr) {
+                
+                // this this statement consists only of a method call
+                // and
+                // it is a receive and it has zero args, the create a
+                // dummy assignment
+                if (expr instanceof SIRPopExpression) {
+                    self.setExpression
+                    (new JAssignmentExpression(new JLocalVariableExpression(varDef), 
+                            expr));
+                    replaced[0] = true;
+                }
+                
+                return self;
+            }
+        });
+        
+        // if we created an assignment expression, create a var def for the
+        // dummy variable
+        if (replaced[0]) {
+            method.getBody().
+            addStatementFirst(new JVariableDeclarationStatement(null, varDef, null));
+        }
+    }
+    
+    
+    /**
      * Convert all lonely pops of the filter.
      * 
      * @param filter The filter.
      */
     public void convert(SIRFilter filter) {
-        CType type = filter.getInputType();
-        //don't do anything for no numeric types...
-        if (!type.isNumeric())
-            return;
-        
-        for (int i = 0; i < filter.getMethods().length; i++) {
-            JMethodDeclaration meth = filter.getMethods()[i];
-            //did we replace anything...
-            final boolean[] replaced = {false};
-            final JVariableDefinition varDef = 
-                new JVariableDefinition(null, ACC_VOLATILE, type, VARNAME, 
-                                        type.isFloatingPoint() ? (JLiteral) new JFloatLiteral(0) :
-                                        (JLiteral)new JIntLiteral(0));
-            //replace the lonely receives
-            meth.getBody().accept(new SLIRReplacingVisitor() {
-                    public Object visitExpressionStatement(JExpressionStatement self,
-                                                           JExpression expr) {
-
-                        //this this statement consists only of a method call and 
-                        //it is a receive and it has zero args, the create a dummy assignment
-                        if (expr instanceof SIRPopExpression) {
-                            self.setExpression
-                                (new JAssignmentExpression(new JLocalVariableExpression(varDef), 
-                                                           expr));
-                            replaced[0] = true;
-                        }
-            
-                        return self;
-                    }
-                });
-        
-            //if we created an assignment expression, create a var def for the 
-            //dummy variable
-            if (replaced[0]) {
-                meth.getBody().
-                    addStatementFirst(new JVariableDeclarationStatement(null, varDef, null));
-            }
+        for (JMethodDeclaration method : filter.getMethods()) {
+            convert(method,filter.getInputType());
         }
     }
 }

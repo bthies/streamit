@@ -1,7 +1,6 @@
 package at.dms.kjc.backendSupport;
 
 import at.dms.kjc.slicegraph.*;
-import at.dms.kjc.spacetime.Layout;
 
 import java.util.Collection;
 
@@ -29,8 +28,6 @@ public abstract class BackEndFactory<
      ComputeNodeType extends ComputeNode<?>, 
      CodeStoreType extends ComputeCodeStore<?>, 
      ComputeNodeSelectorArgType extends Object>
-//        implements
-//     BackEndFactoryInterface<ComputeNodesType, ComputeNodeType, CodeStoreType, ComputeNodeSelectorArgType> 
 {
     /**
      * @return Singleton to generate {@link Buffer}s and
@@ -84,13 +81,7 @@ public abstract class BackEndFactory<
     public abstract void processOutputSliceNode(OutputSliceNode output,
             SchedulingPhase whichPhase, ComputeNodesType computeNodes);
 
-    /** 
-     * Code Emitter...
-     */
-    // what is type?
-    // Set<ComputeNode>, Set<Buffer>, filename -> void  ?? 
-
-    /**
+     /**
      * @return Get the (unique) collection of nodes involved in computation.
      */
     public abstract ComputeNodesType getComputeNodes();
@@ -101,18 +92,18 @@ public abstract class BackEndFactory<
     public abstract CodeStoreType getComputeCodeStore(ComputeNodeType parent);
 
     /**
-     * @param allNodes
-     *            the collection of all nodes (from {@link #getComputeNodes()}).
+     * Get a specified compute node.
+     * Assumes that BackEndFactory.getComputeNodes() returns a collection
+     * of ComputeNode including the desired node.
      * @param specifier
      *            Different instantiations will have different number of
      *            arguments to specify which node, so a specifier (String, int, array[int]...) here.
      * @return a (unique per specifier) ComputeNode
      */
-    public abstract ComputeNodeType getComputeNode(ComputeNodesType allNodes,
-            ComputeNodeSelectorArgType specifier);
+    public abstract ComputeNodeType getComputeNode(ComputeNodeSelectorArgType specifier);
     
     
-    private Layout<ComputeNodeType> layout;
+    protected Layout<ComputeNodeType> layout;
 
     /**
      * Keep a copy of the {@link Layout}: the mapping from {@link at.dms.kjc.slicegraph.SliceNode SliceNode} to 
@@ -136,5 +127,7 @@ public abstract class BackEndFactory<
      * This function should return that collection of channels.
      * @return some collection of Channel s for the code emitter's use.
      */
-    public abstract Collection<Buffer> getChannels();
+    public Collection<Buffer> getChannels() {
+        return Buffer.getBuffers();
+    }
 }

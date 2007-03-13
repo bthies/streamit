@@ -2,6 +2,7 @@ package at.dms.kjc.spacetime;
 
 import java.util.Vector;
 
+import at.dms.kjc.backendSupport.Layout;
 import at.dms.kjc.backendSupport.SchedulingPhase;
 import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.flatgraph.FlatVisitor;

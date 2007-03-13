@@ -13,6 +13,7 @@ import at.dms.kjc.slicegraph.Partitioner;
 import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.*;
 
+import at.dms.kjc.backendSupport.Layout;
 import at.dms.kjc.common.SimulatedAnnealing;
 
 /**

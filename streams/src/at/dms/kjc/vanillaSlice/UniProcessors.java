@@ -45,5 +45,8 @@ public class UniProcessors  implements ComputeNodesI<UniComputeCodeStore>{
         return nodes.size();
     }
 
+    public UniProcessor[] toArray() {
+        return nodes.toArray(new UniProcessor[nodes.size()]);
+    }
 }
 

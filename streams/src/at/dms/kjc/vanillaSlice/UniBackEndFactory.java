@@ -24,9 +24,34 @@ public class UniBackEndFactory extends BackEndFactory<
     UniComputeCodeStore,
     Integer> { 
 
-    private BackEndScaffold<
-    UniProcessors, UniProcessor, UniComputeCodeStore, Integer
-    > scaffolding = null;
+    private UniProcessors processors ;
+
+    /**
+     * Constructor if creating UniBackEndFactory before layout
+     * Creates <b>numProcessors</b> processors.
+     * @param numProcessors  number of processors to create.
+     */
+    public UniBackEndFactory(Integer numProcessors) {
+       this(new UniProcessors(numProcessors));
+    }
+    
+    public UniBackEndFactory() {
+        
+    }
+    
+    /**
+     * Constructor if creating UniBackEndFactory after layout.
+     * Call it with same collection of processors used in Layout.
+     * @param processors  the existing collection of processors.
+     */
+    public UniBackEndFactory(UniProcessors processors) {
+        if (processors == null) {
+            processors = new UniProcessors(1);
+        }
+        this.processors = processors;
+    }
+    
+    private BackEndScaffold<UniProcessors, UniProcessor, UniComputeCodeStore, Integer> scaffolding = null;
 
     @Override
     public  BackEndScaffold<
@@ -37,22 +62,21 @@ public class UniBackEndFactory extends BackEndFactory<
         return scaffolding;
     }
     
+    
+    @Override
     public UniProcessors getComputeNodes() {
-        // TODO Auto-generated method stub
-        return null;
+        return processors;
     }
 
+    
     @Override
     public UniComputeCodeStore getComputeCodeStore(UniProcessor parent) {
-        // TODO Auto-generated method stub
-        return null;
+        return parent.getComputeCode();
     }
 
     @Override
-    public UniProcessor getComputeNode(UniProcessors allNodes,
-            Integer specifier) {
-        // TODO Auto-generated method stub
-        return null;
+    public UniProcessor getComputeNode(Integer specifier) {
+        return processors.getNthComputeNode(specifier);
     }
     /**
      * Process an input slice node: find the correct ProcElement(s) and add joiner code, and buffers.
@@ -106,10 +130,4 @@ public class UniBackEndFactory extends BackEndFactory<
             SchedulingPhase whichPhase, UniProcessors computeNodes) {
         
     }
-    
-    @Override
-    public Collection<Buffer> getChannels() {
-        return null;
-    }
-
 }

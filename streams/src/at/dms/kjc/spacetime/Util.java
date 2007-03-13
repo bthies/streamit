@@ -1,6 +1,7 @@
 package at.dms.kjc.spacetime;
 
 import at.dms.kjc.backendSupport.ComputeNode;
+import at.dms.kjc.backendSupport.Layout;
 import at.dms.kjc.slicegraph.*;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;

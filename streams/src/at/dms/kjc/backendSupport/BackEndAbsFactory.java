@@ -4,7 +4,7 @@
 package at.dms.kjc.backendSupport;
 
 import at.dms.kjc.spacetime.RawBackEndFactory;
-//import at.dms.kjc.vanillaSlice.UniBackEndFactory;
+import at.dms.kjc.vanillaSlice.UniBackEndFactory;
 
 /**
  * Abstract Factory pattern for creating BackEndFactory classes.
@@ -28,7 +28,7 @@ public class BackEndAbsFactory {
             theBackEnd = new RawBackEndFactory();
             break;
         case UNI:
-            //theBackEnd = new UniBackEndFactory();
+            theBackEnd = new UniBackEndFactory();
 	    break;
         }
         return theBackEnd;

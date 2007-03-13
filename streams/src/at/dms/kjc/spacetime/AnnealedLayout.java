@@ -2,6 +2,7 @@ package at.dms.kjc.spacetime;
 
 import at.dms.kjc.KjcOptions;
 import at.dms.kjc.backendSupport.ComputeNode;
+import at.dms.kjc.backendSupport.Layout;
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.common.SimulatedAnnealing;
 import at.dms.kjc.slicegraph.DataFlowOrder;

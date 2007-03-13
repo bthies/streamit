@@ -3,6 +3,7 @@ package at.dms.kjc.spacetime;
 import at.dms.kjc.*;
 import at.dms.kjc.backendSupport.ComputeCodeStore;
 import at.dms.kjc.backendSupport.ComputeNode;
+import at.dms.kjc.backendSupport.Layout;
 import at.dms.kjc.backendSupport.SchedulingPhase;
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.sir.*;

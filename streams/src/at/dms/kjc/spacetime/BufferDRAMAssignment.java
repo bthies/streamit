@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Set;
 
 import at.dms.kjc.backendSupport.ComputeNode;
+import at.dms.kjc.backendSupport.Layout;
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.slicegraph.*;
 

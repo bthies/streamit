@@ -4,6 +4,7 @@ import java.util.ListIterator;
 import java.util.Iterator;
 
 import at.dms.kjc.backendSupport.ComputeNode;
+import at.dms.kjc.backendSupport.Layout;
 import at.dms.kjc.backendSupport.SchedulingPhase;
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.sir.*;

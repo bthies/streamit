@@ -5,6 +5,7 @@ import at.dms.kjc.KjcOptions;
 import at.dms.kjc.backendSupport.BackEndAbsFactory;
 import at.dms.kjc.backendSupport.BackEndFactory;
 import at.dms.kjc.backendSupport.BackEndScaffold;
+import at.dms.kjc.backendSupport.Layout;
 import at.dms.kjc.backendSupport.SchedulingPhase;
 import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.slicegraph.InputSliceNode;
@@ -24,6 +25,19 @@ import java.util.*;
 public class RawBackEndFactory extends BackEndFactory<RawChip, RawTile, RawComputeCodeStore, int[]> 
 {
 
+    public RawBackEndFactory() {
+        
+    }
+    
+    public RawBackEndFactory(RawChip rawChip, Layout<RawTile> layout) {
+        if (rawChip == null) {
+            rawChip = new RawChip(KjcOptions.raw,
+                    KjcOptions.rawcol > 0 ? KjcOptions.rawcol : KjcOptions.raw);
+            }
+        this.rawChip = rawChip;
+        setLayout(layout);
+    }
+    
     // Singleton...
     private BackEndScaffold<RawChip, RawTile, RawComputeCodeStore, int[]> scaffolding = null;
     /**
@@ -101,39 +115,20 @@ public class RawBackEndFactory extends BackEndFactory<RawChip, RawTile, RawCompu
     /** @see RawChip */
     @Override
     public RawChip getComputeNodes() {
-        if (rawChip == null) {
-        rawChip = new RawChip(KjcOptions.raw,
-                KjcOptions.rawcol > 0 ? KjcOptions.rawcol : KjcOptions.raw);
-        }
         return rawChip;
     }
 
-
-    // Singleton tile per position (on the singleton chip).
-    private HashMap<int[], RawTile> tileMap = new HashMap<int[], RawTile>();
     /** @see RawTile */
     @Override
-    public RawTile getComputeNode(RawChip rawChip, int[] xy) {
+    public RawTile getComputeNode(int[] xy) {
         assert xy.length == 2;
-        RawTile tile = tileMap.get(xy);
-        if (tile == null) {
-            tile = new RawTile(xy[0], xy[1], rawChip);
-            tileMap.put(xy, tile);
-        }
-        return tile;
+        return rawChip.getTile(xy[0], xy[1]);
     }
 
-    // Single code store per tile.
-    private HashMap<RawTile, RawComputeCodeStore> storeMap = new HashMap<RawTile, RawComputeCodeStore>();
     /** @see RawComputeCodeStore */
     @Override
     public RawComputeCodeStore getComputeCodeStore(RawTile parent) {
-        RawComputeCodeStore store = storeMap.get(parent);
-        if (store == null) {
-            store = new RawComputeCodeStore(parent);
-            storeMap.put(parent, store);
-        }
-        return store;
+        return parent.getComputeCode();
     }
 
     // place to keep Layout.
@@ -152,11 +147,5 @@ public class RawBackEndFactory extends BackEndFactory<RawChip, RawTile, RawCompu
      */
     public Layout<RawTile> getLayout() {
         return layout;
-    }
-    
-    public HashSet<Buffer> channels;
-
-    public Collection<Buffer> getChannels() {
-        return channels;
     }
 }

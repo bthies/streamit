@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 
+import at.dms.kjc.backendSupport.Layout;
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.KjcOptions;
@@ -16,7 +17,6 @@ import at.dms.kjc.sir.linear.LinearAnalyzer;
 import at.dms.kjc.sir.lowering.partition.WorkEstimate;
 import at.dms.kjc.sir.lowering.partition.WorkList;
 import at.dms.kjc.spacetime.InterSliceBuffer;
-import at.dms.kjc.spacetime.Layout;
 import at.dms.kjc.spacetime.LinearFission;
 import at.dms.kjc.spacetime.ScheduleModel;
 import at.dms.kjc.spacetime.SpaceTimeBackend;

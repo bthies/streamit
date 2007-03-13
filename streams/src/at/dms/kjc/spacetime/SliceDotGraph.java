@@ -1,5 +1,6 @@
 package at.dms.kjc.spacetime;
 
+import at.dms.kjc.backendSupport.Layout;
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.slicegraph.FilterInfo;

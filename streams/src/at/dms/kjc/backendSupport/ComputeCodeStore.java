@@ -10,7 +10,6 @@ import at.dms.kjc.JMethodDeclaration;
 import at.dms.kjc.JStatement;
 import at.dms.kjc.JWhileStatement;
 import at.dms.kjc.slicegraph.FilterInfo;
-import at.dms.kjc.spacetime.Layout;
 
 /**
  * A data structure for associating code with each filter at each phase.

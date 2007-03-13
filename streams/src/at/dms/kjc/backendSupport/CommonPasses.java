@@ -20,17 +20,20 @@ import at.dms.kjc.sir.lowering.SimplifyPopPeekPush;
 import at.dms.kjc.sir.lowering.StaticsProp;
 import at.dms.kjc.sir.lowering.VarDeclRaiser;
 import at.dms.kjc.sir.lowering.VectorizeEnable;
+import at.dms.kjc.sir.lowering.fission.StatelessDuplicate;
 import at.dms.kjc.sir.lowering.fusion.*;
 import at.dms.kjc.sir.linear.*;
 import at.dms.kjc.sir.lowering.fission.FissionReplacer;
 import at.dms.kjc.sir.lowering.partition.ManualPartition;
 import at.dms.kjc.sir.lowering.partition.SJToPipe;
 import at.dms.kjc.sir.lowering.partition.WorkEstimate;
+import at.dms.kjc.sir.lowering.partition.WorkList;
 import at.dms.kjc.spacetime.DuplicateBottleneck;
 import at.dms.kjc.spacetime.GranularityAdjust;
 import at.dms.kjc.spacetime.GreedyBinPacking;
 import at.dms.kjc.spacetime.CompCommRatio;
 import at.dms.kjc.spacetime.CalculateParams;
+import at.dms.kjc.spacetime.StreamlinedDuplicate;
 import at.dms.kjc.slicegraph.*;
 import at.dms.kjc.common.CommonUtils;
 /**
@@ -44,6 +47,9 @@ public class CommonPasses {
     
     /** field that may be useful later */
     private WorkEstimate workEstimate;
+    
+    /** stores pre-modified str for statistics gathering */
+    private SIRStream origSTR;
     
     
     
@@ -111,14 +117,19 @@ public class CommonPasses {
             ((SIRContainer)str).reclaimChildren();
         }
         
+	    // if we are gathering statistics, clone the original stream graph
+        // so that we can gather statictics on it, not on the modified graph
+        if (KjcOptions.stats) {
+            origSTR = (SIRStream) ObjectDeepCloner.deepCopy(str);
+        }
 
         // splitjoin optimization on SIR graph can not be
         // done after fusion, and should not affect fusable
         // pipelines, so do it here.
         Lifter.liftAggressiveSync(str);
         
-        
-        if (KjcOptions.fusion || KjcOptions.dup > 1 || KjcOptions.noswpipe) {
+ 
+        if (KjcOptions.fusion || KjcOptions.dup >= 1 || KjcOptions.noswpipe) {
             // if we are about to fuse filters, we should perform
             // any vectorization now, since vectorization can not work inside
             // fused sections, and vectorization should map pipelines of 
@@ -132,25 +143,47 @@ public class CommonPasses {
         if (KjcOptions.fusion)
             str = FuseAll.fuse(str);
         
-        // RAW-specific: fission of any filters that
-        // are too large.
-        if (KjcOptions.dup > 1) {
+        StreamlinedDuplicate duplicate = null;
+        WorkEstimate work = WorkEstimate.getWorkEstimate(str);
+        work.printGraph(str, "work_estimate.dot");
+        WorkList workList = work.getSortedFilterWork();
+        for (int i = 0; i < workList.size(); i++) {
+            SIRFilter filter = workList.getFilter(i);
+            int filterWork = work.getWork(filter); 
+            System.out.println("Sorted Work " + i + ": " + filter + " work " 
+                    + filterWork + ", is fissable: " + StatelessDuplicate.isFissable(filter));
+        }
+        
+        //for right now, we use the dup parameter to specify the type 
+        //of data-parallelization we are using
+        //if we want to enable the data-parallelization
+        //stuff from asplos 06, use dup == 1
+        if (KjcOptions.dup == 1) {
             DuplicateBottleneck dup = new DuplicateBottleneck();
             dup.percentStateless(str);
             str = FusePipelines.fusePipelinesOfStatelessStreams(str);
+            StreamItDot.printGraph(str, "after-fuse-stateless.dot");
             dup.smarterDuplicate(str);
-        }
+        } else if (KjcOptions.dup == numCores) {
+            //if we want to use fine-grained parallelization
+            //then set dup to be the number of tiles (cores)
+            DuplicateBottleneck dup = new DuplicateBottleneck();
+            System.out.println("Fine-Grained Data Parallelism...");
+            dup.duplicateFilters(str, numCores);
+	}
         
         // If not software-pipelining, don't expect to
-        // spilt the stream graph horizontally so fuse
+        // split the stream graph horizontally so fuse
         // pipelines down into individual filters.
         if (KjcOptions.noswpipe)
             str = FusePipelines.fusePipelinesOfFilters(str);
         
         // Print stream graph after fissing and fusing.
         StreamItDot.printGraph(str, "canonical-graph.dot");
-     
-        // ???
+
+        //Use the partition_greedier flag to enable the Granularity Adjustment
+        //phase, it will try to partition more as long as the critical path
+        //is not affected (see asplos 06).
         if (KjcOptions.partition_greedier) {
             StreamItDot.printGraph(str, "before-granularity-adjust.dot");
             str = GranularityAdjust.doit(str, numCores);
@@ -177,11 +210,16 @@ public class CommonPasses {
             System.err.println("Done User-Defined Transformations...");
         }
         
+    
+        StaticsProp.propagateIntoFilters(str,theStatics);
+
         // If requiested, convert splitjoins (below top level)
         // to pipelines of filters.
         if (KjcOptions.sjtopipe) {
             SJToPipe.doit(str);
         }
+
+        StreamItDot.printGraph(str, "before-partition.dot");
 
         // VarDecl Raise to move array assignments up
         new VarDeclRaiser().raiseVars(str);
@@ -191,7 +229,7 @@ public class CommonPasses {
         new VarDeclRaiser().raiseVars(str);
         
         // Make sure all variables have different names.
-        // This must be run now, other pass rely on it...
+        // This must be run now, later pass rely on distinct names.
         RenameAll.renameOverAllFilters(str);
         
         // Linear Analysis
@@ -300,7 +338,7 @@ public class CommonPasses {
      * Get the Partitioner used in {@link #run(SIRStream, JInterfaceDeclaration[], SIRInterfaceTable[], SIRStructure[], SIRHelper[], SIRGlobal, int) run}.
      * @return the partitioner
      */
-    private Partitioner getPartitioner() {
+    public Partitioner getPartitioner() {
         return partitioner;
     }
 
@@ -321,7 +359,17 @@ public class CommonPasses {
      * Get the WorkEstimate used in {@link #run(SIRStream, JInterfaceDeclaration[], SIRInterfaceTable[], SIRStructure[], SIRHelper[], SIRGlobal, int) run}.
      * @return the workEstimate
      */
-    private WorkEstimate getWorkEstimate() {
+    public WorkEstimate getWorkEstimate() {
         return workEstimate;
     }
+    
+    
+    /**
+     * Get the original stream for statistics gathering
+     * @return the stream before any graph structure modifications.
+     */
+    public SIRStream getOrigSTR() {
+        return origSTR;
+    }
+    
 }

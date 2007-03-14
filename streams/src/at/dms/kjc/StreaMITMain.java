@@ -97,6 +97,8 @@ public class StreaMITMain {
             }
         } else if (KjcOptions.cluster != -1) {
             backendClass = "at.dms.kjc.cluster.ClusterBackend";
+        } else if (KjcOptions.newSimple != -1) {
+            backendClass = "at.dms.kjc.vanillaSlice.UniBackEnd";
         } else {
             backendClass = "at.dms.kjc.sir.lowering.Flattener";
             // backendMethod = "flatten";

@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.115 2007-03-08 17:50:15 dimock Exp $
+# $Id: strc,v 1.116 2007-03-14 22:07:15 dimock Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -158,9 +158,13 @@ exit(0);
 ###
 
 sub non_streamit_backend_defined {
-    return $opts{library} || $opts{cluster} || $opts{raw} || $opts{rstream} ||
-	$opts{simpleC} || $opts{uni} || $opts{spacetime} || 
-	$opts{spacedynamic};
+    return $opts{library} || 
+    $opts{cluster} || 
+    $opts{raw} || $opts{spacedynamic} || $opts{spacetime} || 
+    $opts{rstream} || $opts{simpleC} ||
+    $opts{newSimple} || 
+	$opts{uni} 
+	;
 }
 
 ###
@@ -194,6 +198,7 @@ Usage: strc [options] file.str ...
 
   --cluster n         Compile for a cluster or multicore with n nodes
   --library           Run in the Java library instead of compiling
+* --newSimple         (in development)
   --simpleC           Use basic backend (not full-featured) to generate C output
   --raw n, -r n       Compile for Raw, with an n-by-n grid
   --rstream, -R       Generate C-like file to be compiled by RStream compiler 
@@ -384,6 +389,7 @@ sub get_options
 			    "memory|Xmx=s",
 			    "modfusion",
 			    "manuallayout",
+			    "newSimple:i",
 			    "nodatacollapse",
 			    "nolinearcollapse",
 			    "noexecutable",
@@ -464,6 +470,11 @@ sub get_options
 	if ($have_fftw) {
 	    $opts{havefftw} = 1;
 	}
+    }
+    
+    # default number of processors
+    if (defined($opts{newSimple}) && $opts{newSimple} == 0) {
+    	$opts{newSimple} = 1;
     }
     
     # if targeting more than one cluster host, then turn on partitioning
@@ -625,23 +636,22 @@ sub java_to_c
     my $jfiles = join(' ', @$fns);
     if ($opts{uni})	     # uni backend writes to stdout: TODO fix some day
       {
-	my $target = change_extension($fns->[0], "java", "c");
-	$target = $opts{output} . ".c" if $opts{outputs};
-	my $result = call("$java $xmx $server at.dms.kjc.Main --streamit $compiler_opts " .
+		my $target = change_extension($fns->[0], "java", "c");
+		$target = $opts{output} . ".c" if $opts{outputs};
+		my $result = call("$java $xmx $server at.dms.kjc.Main --streamit $compiler_opts " .
 			  "$jfiles > $target");
-	return undef if $result != 0;
-	return [$target];
-      }
-    else
-      {
-	my $result = call("$java $xmx $server at.dms.kjc.Main --streamit $compiler_opts $jfiles");
-	return undef if $result != 0;
-	# TODO: implement --output flags to all backends.
-	return ["Makefile.streamit"] if $opts{cluster};	# makes multiple cpp files
-	return ["tile0.c"] if $opts{raw} && $opts{standalone};
-	return ["str.c"] if $opts{simpleC} || $opts{rstream};
-	return ["standalone.c"] if ($opts{standalone} && $opts{spacetime});
-	return [];
+		return undef if $result != 0;
+		return [$target];
+      } else {
+		my $result = call("$java $xmx $server at.dms.kjc.Main --streamit $compiler_opts $jfiles");
+		return undef if $result != 0;
+		# TODO: implement --output flags to all backends.
+		return ["Makefile.streamit"] if $opts{cluster};	# makes multiple cpp files
+		return ["str.c"] if $opts{newSimple};
+		return ["tile0.c"] if $opts{raw} && $opts{standalone};
+		return ["str.c"] if $opts{simpleC} || $opts{rstream};
+		return ["standalone.c"] if ($opts{standalone} && $opts{spacetime});
+		return [];
       }
   }
 
@@ -726,7 +736,8 @@ sub c_to_out
     my $libflags = "";
 
     if ($opts{simpleC} || 
-	($opts{standalone} && $opts{spacetime})) 
+	($opts{standalone} && $opts{spacetime}) ||
+	$opts{newSimple}) 
     {
 	  $libs .= " -lm";
     }
@@ -811,6 +822,7 @@ sub get_compiler_opts
     $opts{optfile} && ($copts .= " --optfile " . $opts{optfile});
     $opts{modfusion} && ($copts .= " --modfusion");
     $opts{manuallayout} && ($copts .= " --manuallayout");
+    $opts{newSimple} && ($copts .= " --newSimple");
     $opts{nodatacollapse} && ($copts .= " --nodatacollapse");
     $opts{nolinearcollapse} && ($copts .= " --nolinearcollapse");
     $opts{numbers} && ($copts .= " --numbers " . $opts{numbers});

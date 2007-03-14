@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.94 2007-02-26 14:00:21 dimock Exp $
+ * $Id: KjcOptions.opt,v 1.95 2007-03-14 22:07:15 dimock Exp $
  */
 
 prefix Kjc
@@ -328,6 +328,12 @@ longname		"cluster"
 	default		"-1"
 	requireArgument
 	help		"Compile for a network cluster with <n> nodes."
+
+longname		"newSimple"
+	type		int
+	default		"-1"
+	requireArgument
+	help		"New uni-processor / shared-memory multicore backend"
 
 longname		"vectorize"
 	type		int

@@ -2,16 +2,11 @@ package at.dms.kjc.vanillaSlice;
 
 import at.dms.kjc.backendSupport.BackEndFactory;
 import at.dms.kjc.backendSupport.BackEndScaffold;
-import at.dms.kjc.backendSupport.Channel;
-import at.dms.kjc.backendSupport.ComputeCodeStore;
-import at.dms.kjc.backendSupport.ComputeNode;
-import at.dms.kjc.backendSupport.ComputeNodes;
 import at.dms.kjc.backendSupport.SchedulingPhase;
 import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.OutputSliceNode;
-import java.util.*;
 //import at.dms.kjc.spacetime.ComputeNodesI;
 /**
  * Stub for uniprocessor backend.
@@ -33,10 +28,6 @@ public class UniBackEndFactory extends BackEndFactory<
      */
     public UniBackEndFactory(Integer numProcessors) {
        this(new UniProcessors(numProcessors));
-    }
-    
-    public UniBackEndFactory() {
-        
     }
     
     /**

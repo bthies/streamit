@@ -1,18 +1,14 @@
 package at.dms.kjc.spacetime;
 
-import java.util.HashMap;
 import at.dms.kjc.KjcOptions;
-import at.dms.kjc.backendSupport.BackEndAbsFactory;
 import at.dms.kjc.backendSupport.BackEndFactory;
 import at.dms.kjc.backendSupport.BackEndScaffold;
-import at.dms.kjc.backendSupport.Channel;
 import at.dms.kjc.backendSupport.Layout;
 import at.dms.kjc.backendSupport.SchedulingPhase;
 import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.OutputSliceNode;
-import java.util.*;
 
 /**
  * Factor out parts of RAW (at.dms.kjc.spacetime) back end that need matching types.
@@ -26,7 +22,7 @@ public class RawBackEndFactory extends BackEndFactory<RawChip, RawTile, RawCompu
 {
 
     public RawBackEndFactory() {
-        
+        this(null,null);
     }
     
     public RawBackEndFactory(RawChip rawChip, Layout<RawTile> layout) {

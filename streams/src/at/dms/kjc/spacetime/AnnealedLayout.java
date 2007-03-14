@@ -149,7 +149,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout<RawTile
      * 
      * Must call {@link AnnealedLayout#run} first.
      */
-    public RawTile getComputeNode(FilterSliceNode filter) {
+    public RawTile getComputeNode(SliceNode filter) {
         assert assignment.containsKey(filter) : 
             "AnnealedLayout does have a mapping for " + filter;
         //assert !partitioner.isIO(filter.getParent());
@@ -295,7 +295,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout<RawTile
      * @param node The node that will be assigned to tile.
      * @param tile The tile to assign node to.
      */
-    public void setComputeNode(FilterSliceNode node, RawTile tile) {
+    public void setComputeNode(SliceNode node, RawTile tile) {
         assignment.put(node, tile);
     }
     

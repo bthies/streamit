@@ -6,7 +6,10 @@ package at.dms.kjc.backendSupport;
 import java.util.*;
 
 import at.dms.kjc.slicegraph.DataFlowOrder;
+import at.dms.kjc.slicegraph.SliceNode;
 import at.dms.kjc.slicegraph.FilterSliceNode;
+import at.dms.kjc.slicegraph.InputSliceNode;
+import at.dms.kjc.slicegraph.OutputSliceNode;
 import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.spacetime.CompareSliceBNWork;
 import at.dms.kjc.spacetime.SpaceTimeBackend;
@@ -18,10 +21,10 @@ import at.dms.kjc.spacetime.SpaceTimeBackend;
  *
  */
 public class BasicGreedyLayout<T extends ComputeNode> implements Layout<T> {
-    private HashMap<FilterSliceNode, T> assignment;
+    private HashMap<SliceNode, T> assignment;
     private SpaceTimeScheduleAndPartitioner spaceTime;
     private int numBins;
-    private LinkedList<FilterSliceNode>[] bins;
+    private LinkedList<SliceNode>[] bins;
     private int[] binWeight;
     //private int[] searchOrder;
     private int totalWork;
@@ -40,25 +43,25 @@ public class BasicGreedyLayout<T extends ComputeNode> implements Layout<T> {
         bins = new LinkedList[numBins];
         binWeight = new int[numBins];
         for (int i = 0; i < numBins; i++) {
-            bins[i] = new LinkedList<FilterSliceNode>();
+            bins[i] = new LinkedList<SliceNode>();
             binWeight[i] = 0;
         }
     }
     
-    public HashMap<FilterSliceNode, T> getAssignment() {
+    public HashMap<SliceNode, T> getAssignment() {
         return assignment;
     }
     
     
-    public T getComputeNode(FilterSliceNode node) {
+    public T getComputeNode(SliceNode node) {
         return assignment.get(node);
     }
    
-    public void setComputeNode(FilterSliceNode node, T tile) {
+    public void setComputeNode(SliceNode node, T tile) {
         assignment.put(node, tile);
     }
     public void run() {
-        assignment = new HashMap<FilterSliceNode, T>();
+        assignment = new HashMap<SliceNode, T>();
         pack();
 
         System.out.println("IdealWork = " + totalWork / numBins);
@@ -67,7 +70,7 @@ public class BasicGreedyLayout<T extends ComputeNode> implements Layout<T> {
     
     private void pack() {
         //now sort the filters by work
-        LinkedList<FilterSliceNode> sortedList = new LinkedList<FilterSliceNode>();
+        LinkedList<SliceNode> sortedList = new LinkedList<SliceNode>();
         LinkedList<Slice> scheduleOrder;
         
         //get the schedule order of the graph!
@@ -91,20 +94,35 @@ public class BasicGreedyLayout<T extends ComputeNode> implements Layout<T> {
             sortedList.add(slice.getHead().getNextFilter());
         }
         
-        Iterator<FilterSliceNode> sorted = sortedList.iterator();
+        Iterator<SliceNode> sorted = sortedList.iterator();
         
         //perform the packing
         while (sorted.hasNext()) {
-            FilterSliceNode fnode = sorted.next();
-            int bin = findMinBin();
+            SliceNode snode = sorted.next();
+            if (snode instanceof FilterSliceNode) {
+                FilterSliceNode fnode = (FilterSliceNode) snode;
+                int bin = findMinBin();
+
+                bins[bin].add(fnode);
+                assignment.put(fnode, nodes[bin]);
+                binWeight[bin] += spaceTime.getPartitioner()
+                        .getFilterWorkSteadyMult(fnode);
+                totalWork += spaceTime.getPartitioner()
+                        .getFilterWorkSteadyMult(fnode);
+                System.out.println(" Placing: "
+                        + fnode
+                        + " work = "
+                        + spaceTime.getPartitioner().getFilterWorkSteadyMult(
+                                fnode) + " on bin " + bin + ", bin work = "
+                        + binWeight[bin]);
+                if (snode.getPrevious() instanceof InputSliceNode) {
+                    assignment.put(snode.getPrevious(),nodes[bin]);
+                }
+                if (snode.getNext() instanceof OutputSliceNode) {
+                    assignment.put(snode.getNext(),nodes[bin]);
+                }
             
-            bins[bin].add(fnode);
-            assignment.put(fnode, nodes[bin]);
-            binWeight[bin] += spaceTime.getPartitioner().getFilterWorkSteadyMult(fnode);
-            totalWork += spaceTime.getPartitioner().getFilterWorkSteadyMult(fnode);
-            System.out.println(" Placing: " + fnode + " work = " + 
-                    spaceTime.getPartitioner().getFilterWorkSteadyMult(fnode) + 
-                            " on bin " + bin + ", bin work = " + binWeight[bin]);
+            }
 
         }
     }

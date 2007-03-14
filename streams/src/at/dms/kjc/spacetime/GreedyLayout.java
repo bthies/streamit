@@ -9,6 +9,7 @@ import at.dms.kjc.backendSupport.Layout;
 import at.dms.kjc.sir.SIRFilter;
 import at.dms.kjc.slicegraph.DataFlowOrder;
 import at.dms.kjc.slicegraph.FilterSliceNode;
+import at.dms.kjc.slicegraph.SliceNode;
 import at.dms.kjc.slicegraph.Slice;
 
 
@@ -20,7 +21,7 @@ import at.dms.kjc.slicegraph.Slice;
  * @author mgordon
  */
 public class GreedyLayout implements Layout<RawTile> {
-    private HashMap<FilterSliceNode, RawTile> assignment;
+    private HashMap<SliceNode, RawTile> assignment;
     private SpaceTimeSchedule spaceTime;
     private RawChip chip;
     private int numBins;
@@ -75,16 +76,16 @@ public class GreedyLayout implements Layout<RawTile> {
         }
     }
     
-    public HashMap<FilterSliceNode, RawTile> getAssignment() {
+    public HashMap<SliceNode, RawTile> getAssignment() {
         return assignment;
     }
     
     
-    public RawTile getComputeNode(FilterSliceNode node) {
+    public RawTile getComputeNode(SliceNode node) {
         return assignment.get(node);
     }
    
-    public void setComputeNode(FilterSliceNode node, RawTile tile) {
+    public void setComputeNode(SliceNode node, RawTile tile) {
         assignment.put(node, tile);
     }
     
@@ -92,7 +93,7 @@ public class GreedyLayout implements Layout<RawTile> {
      * Calcuate the assignment of filters to tiles.
      */
     public void run() {
-        assignment = new HashMap<FilterSliceNode, RawTile>();
+        assignment = new HashMap<SliceNode, RawTile>();
         pack();
         System.out.println("IdealWork = " + totalWork / chip.getTotalTiles());
         System.out.println("Greedy max tile Work Cost = " + maxBinWeight);

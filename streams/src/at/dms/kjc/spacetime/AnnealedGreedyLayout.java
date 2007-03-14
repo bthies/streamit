@@ -6,6 +6,7 @@ package at.dms.kjc.spacetime;
 import java.util.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.slicegraph.InterSliceEdge;
+import at.dms.kjc.slicegraph.SliceNode;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.OutputSliceNode;
@@ -44,23 +45,24 @@ public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout<R
         this.duplicate = duplicate;
     }
     
-    public RawTile getComputeNode(FilterSliceNode node) {
+    public RawTile getComputeNode(SliceNode node) {
         assert assignment.containsKey(node) : "Node not in assignment: " + node;
         assert assignment.get(node) != null : "Tile assignment null: " + node;
         return (RawTile)assignment.get(node);
     }
     
-    public void setComputeNode(FilterSliceNode node, RawTile tile) {
-        
-        if (!node.isPredefined()) { 
-            tileCosts[getComputeNode(node).getTileNumber()] -= 
-                partitioner.getFilterWorkSteadyMult(node);
+    public void setComputeNode(SliceNode node, RawTile tile) {
+        assert node instanceof FilterSliceNode;
+        FilterSliceNode fnode = (FilterSliceNode)node;
+        if (!fnode.isPredefined()) { 
+            tileCosts[getComputeNode(fnode).getTileNumber()] -= 
+                partitioner.getFilterWorkSteadyMult(fnode);
             tileCosts[tile.getTileNumber()] += 
-                partitioner.getFilterWorkSteadyMult(node);
+                partitioner.getFilterWorkSteadyMult(fnode);
             //and add the assignment
         }
         
-        assignment.put(node, tile);
+        assignment.put(fnode, tile);
     }
     
     /** 

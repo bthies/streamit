@@ -8,8 +8,10 @@ import java.util.*;
 import at.dms.kjc.common.*;
 import at.dms.kjc.slicegraph.DataFlowOrder;
 import at.dms.kjc.slicegraph.InterSliceEdge;
-import at.dms.kjc.slicegraph.FilterSliceNode;
+import at.dms.kjc.slicegraph.SliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
+import at.dms.kjc.slicegraph.FilterSliceNode;
+import at.dms.kjc.slicegraph.OutputSliceNode;
 import at.dms.kjc.slicegraph.Slice;
 
 
@@ -22,28 +24,31 @@ public class NoSWPipeLayout<T extends ComputeNode, Ts extends ComputeNodesI> ext
     private SpaceTimeScheduleAndPartitioner spaceTime;
     private Ts chip;
     private LinkedList<Slice> scheduleOrder;
-    private LinkedList<FilterSliceNode> assignedFilters;
+    private LinkedList<SliceNode> assignedFilters;
     private Random rand;
+    
+    private HashMap<SliceNode, T> layout;
     
     public NoSWPipeLayout(SpaceTimeScheduleAndPartitioner spaceTime, Ts chip) {
         this.chip = chip;
         scheduleOrder = 
             DataFlowOrder.getTraversal(spaceTime.getPartitioner().getSliceGraph());
-        assignedFilters = new LinkedList<FilterSliceNode>();
+        assignedFilters = new LinkedList<SliceNode>();
         rand = new Random(17);
     }
     
-    public T getComputeNode(FilterSliceNode node) {
-        return (T)assignment.get(node);
+    public T getComputeNode(SliceNode node) {
+        return layout.get(node);
     }
     
-    public void setComputeNode(FilterSliceNode node, T tile) {
-        assignment.put(node, tile);
+    public void setComputeNode(SliceNode node, T tile) {
+        layout.put(node, tile);
     }
     
     /** 
      * Use this function to reassign the assignment to <newAssign>, update
      * anything that needs to be updated on a new assignment.
+     * Callable only during {@link at.dms.kjc.common.SimulatedAnnealing Simulated Annealing}.
      * @param newAssign
      */
     public void setAssignment(HashMap newAssign) {
@@ -53,10 +58,10 @@ public class NoSWPipeLayout<T extends ComputeNode, Ts extends ComputeNodesI> ext
     /**
      * Called by perturbConfiguration() to perturb the configuration.
      * perturbConfiguration() decides if we should keep the new assignment.
-     * 
+     * The assignment should contain only {@link at.dms.kjc.slicegraphFilterSliceNode FilterSliceNode}s when this is called.
      */
     public void swapAssignment() {
-        FilterSliceNode filter1 = assignedFilters.get(rand.nextInt(assignedFilters.size()));
+        FilterSliceNode filter1 = (FilterSliceNode)assignedFilters.get(rand.nextInt(assignedFilters.size()));
         assignment.put(filter1, chip.getNthComputeNode(rand.nextInt(chip.size())));
     }
     
@@ -159,6 +164,25 @@ public class NoSWPipeLayout<T extends ComputeNode, Ts extends ComputeNodesI> ext
         
     public void run() { 
         //initialPlacement();
+        
+        // set up assignemts for filters in assignment
         simAnnealAssign(1, 2000);
+
+        // set assignments for all SliceNodes in layout
+        Set<Map.Entry> entries = assignment.entrySet();
+        for (Map.Entry<SliceNode, T> snode_cnode : entries) {
+            T cnode = snode_cnode.getValue();
+            SliceNode snode = snode_cnode.getKey();
+            
+            if (snode instanceof FilterSliceNode) {
+                layout.put(snode,cnode);
+                if (snode.getPrevious() instanceof InputSliceNode) {
+                    layout.put(snode.getPrevious(),cnode);
+                }
+                if (snode.getNext() instanceof OutputSliceNode) {
+                    layout.put(snode.getNext(),cnode);
+                }
+            }
+        }
     }
 }

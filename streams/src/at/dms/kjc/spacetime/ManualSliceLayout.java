@@ -19,24 +19,24 @@ import at.dms.kjc.slicegraph.SliceNode;
  *              the raw chip.
  */
 public class ManualSliceLayout implements Layout<RawTile> {
-    private HashMap assignment;
+    private HashMap<SliceNode,RawTile> assignment;
     private SpaceTimeSchedule spaceTime;
     
     public ManualSliceLayout(SpaceTimeSchedule spaceTime) {
         this.spaceTime = spaceTime; 
     }
     
-    public RawTile getComputeNode(FilterSliceNode node) {
+    public RawTile getComputeNode(SliceNode node) {
         assert assignment.containsKey(node);
         return (RawTile)assignment.get(node);
     }
     
-    public void setComputeNode(FilterSliceNode node, RawTile tile) {
+    public void setComputeNode(SliceNode node, RawTile tile) {
         assignment.put(node, tile);
     }
     
     public void run() {
-        assignment = new HashMap();
+        assignment = new HashMap<SliceNode,RawTile>();
         //call layout on traces!
         Slice[] traces = spaceTime.getPartitioner().getSliceGraph();
         
@@ -86,7 +86,7 @@ public class ManualSliceLayout implements Layout<RawTile> {
         // the tile number we are assigning
         int tileNumber;
         String str = "";
-        ComputeNode tile;
+        RawTile tile;
         
         System.out.println("Enter layout for trace: " + slice);
         

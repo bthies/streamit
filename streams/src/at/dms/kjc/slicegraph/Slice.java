@@ -4,7 +4,7 @@ import at.dms.util.Utils;
 import java.util.ArrayList;
 
 /** 
- * Slice class models a slice (slice).
+ * Slice class models a slice (joiner, sequence of filters, splitter).
  *  
  * @author mgordon
  */

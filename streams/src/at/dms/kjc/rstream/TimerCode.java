@@ -60,7 +60,7 @@ public final class TimerCode {
      *        to become names of some fields)
      */
     public TimerCode(String timerName) {
-        timerType = new CClassNameType("struct tms");
+        timerType = new CEmittedTextType(new Object[]{"struct tms"});
         timerStartName = timerName + "_start";
         timerStartVar = new JVariableDefinition(timerType, timerStartName);
         timerEndName = timerName + "_end";
@@ -228,10 +228,10 @@ public final class TimerCode {
         new JMinusExpression
         (null,
          new JFieldAccessExpression
-          (new JClassExpression (null, new CClassNameType(timerEndName), 0),
+          (new JClassExpression (null, new CEmittedTextType(new Object[]{timerEndName}), 0),
            fieldname),
          new JFieldAccessExpression
-          (new JClassExpression (null, new CClassNameType(timerStartName), 0),
+          (new JClassExpression (null, new CEmittedTextType(new Object[]{timerStartName}), 0),
            fieldname)
            );
     }

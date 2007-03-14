@@ -301,10 +301,12 @@ featureListPair->featureListPair filter findInliers(portal<selectIndices> feedba
 		feat.N = (log(1-probOutliers)/denom);
 	}	
 	feat.trialCount++;
+	float pow_fracinliers_s;
+	pow_fracinliers_s = pow(fracinliers,s);
 	println("best score" + feat.bestScore + "\tninliners: " 
 			+ feat.ninliers + "\tN: " + feat.N  + "\ttrialCount: " 
 			+ feat.trialCount + "\tpNoOutliers: " + pNoOutliers	+ "\tfracinliers: " + fracinliers 
-			+ "\tpow(fracinliers,8): " + pow(fracinliers,s)); 
+			+ "\tpow(fracinliers,8): " + pow_fracinliers_s); 
 	
 	if(feat.N<=feat.trialCount||feat.trialCount>=maxTrials){
 		feedbackOrInput.setVal(false);

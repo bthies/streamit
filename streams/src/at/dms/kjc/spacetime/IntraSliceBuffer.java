@@ -1,6 +1,6 @@
 package at.dms.kjc.spacetime;
 
-import at.dms.kjc.slicegraph.FilterInfo;
+import at.dms.kjc.backendSupport.FilterInfo;
 import at.dms.kjc.slicegraph.SliceNode;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;

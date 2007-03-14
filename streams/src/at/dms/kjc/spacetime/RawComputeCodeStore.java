@@ -1,8 +1,10 @@
 package at.dms.kjc.spacetime;
 
 import at.dms.kjc.*;
+import at.dms.kjc.backendSupport.Channel;
 import at.dms.kjc.backendSupport.ComputeCodeStore;
 import at.dms.kjc.backendSupport.ComputeNode;
+import at.dms.kjc.backendSupport.FilterInfo;
 import at.dms.kjc.backendSupport.Layout;
 import at.dms.kjc.backendSupport.SchedulingPhase;
 import at.dms.kjc.common.CommonUtils;
@@ -11,8 +13,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import at.dms.kjc.slicegraph.FilterContent;
-import at.dms.kjc.slicegraph.FilterInfo;
-import at.dms.kjc.slicegraph.Buffer;
 
 /**
  * 
@@ -742,7 +742,7 @@ public class RawComputeCodeStore extends ComputeCodeStore<RawTile> implements SI
      */
     public static void presynchEmptyTilesInSteady() {
         if (debugging) {System.err.println("presynchEmptyTilesInSteady");}
-        Iterator<Buffer> buffers = OffChipBuffer.getBuffers().iterator();
+        Iterator<Channel> buffers = OffChipBuffer.getBuffers().iterator();
         HashSet<RawTile> visitedTiles = new HashSet<RawTile>();
         
         while (buffers.hasNext()) {
@@ -836,7 +836,7 @@ public class RawComputeCodeStore extends ComputeCodeStore<RawTile> implements SI
      */
     public static void presynchAllDramsInInit() {
         if (debugging) {System.err.println("presynchAllDramsInInit");}
-        Iterator<Buffer> buffers = OffChipBuffer.getBuffers().iterator();
+        Iterator<Channel> buffers = OffChipBuffer.getBuffers().iterator();
         HashSet<RawTile> visitedTiles = new HashSet<RawTile>();
         
         while (buffers.hasNext()) {

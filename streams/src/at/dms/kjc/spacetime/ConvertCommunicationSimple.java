@@ -1,5 +1,6 @@
 package at.dms.kjc.spacetime;
 
+import at.dms.kjc.backendSupport.FilterInfo;
 import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.flatgraph.FlatVisitor;
 import at.dms.kjc.*;
@@ -14,7 +15,6 @@ import java.util.HashMap;
 import java.io.*;
 import at.dms.compiler.*;
 import at.dms.kjc.sir.lowering.*;
-import at.dms.kjc.slicegraph.FilterInfo;
 
 import java.util.Hashtable;
 import java.math.BigInteger;
@@ -27,7 +27,7 @@ import java.math.BigInteger;
  * the peek's and pop's.   
  * 
  * This class will only work for filters that are deemed 
- * simple by {@link at.dms.kjc.slicegraph.FilterInfo#isSimple()}.
+ * simple by {@link at.dms.kjc.backendSupport.FilterInfo#isSimple()}.
  * 
  * It uses a simple linear buffer from which to read it values.
  * 

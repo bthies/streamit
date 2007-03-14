@@ -5,6 +5,7 @@ package at.dms.kjc.spacetime;
 
 import java.util.*;
 
+import at.dms.kjc.backendSupport.SpaceTimeScheduleAndPartitioner;
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.slicegraph.DataFlowOrder;
 import at.dms.kjc.slicegraph.Slice;

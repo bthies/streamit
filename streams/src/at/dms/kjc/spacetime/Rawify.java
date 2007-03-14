@@ -4,12 +4,12 @@ import java.util.ListIterator;
 import java.util.Iterator;
 
 import at.dms.kjc.backendSupport.ComputeNode;
+import at.dms.kjc.backendSupport.FilterInfo;
 import at.dms.kjc.backendSupport.Layout;
 import at.dms.kjc.backendSupport.SchedulingPhase;
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.slicegraph.InterSliceEdge;
-import at.dms.kjc.slicegraph.FilterInfo;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.OutputSliceNode;

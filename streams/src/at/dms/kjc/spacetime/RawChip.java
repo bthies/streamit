@@ -37,8 +37,9 @@ public class RawChip extends RawProcElements implements ComputeNodesI<RawCompute
     public RawChip(int xSize, int ySize) {
         super(xSize,ySize);
         for (int x = 0; x < xSize; x++)
-            for (int y = 0; y < ySize; y++)
+            for (int y = 0; y < ySize; y++) {
                 tiles[x][y] = new RawTile(x, y, this);
+            }
 
 //        if (KjcOptions.magicdram)
 //            addMagicDrams();

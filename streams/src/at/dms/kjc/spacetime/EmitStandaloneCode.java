@@ -3,6 +3,7 @@ package at.dms.kjc.spacetime;
 
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
+import at.dms.kjc.backendSupport.FilterInfo;
 import at.dms.kjc.common.*;
 import at.dms.kjc.slicegraph.*;
 

@@ -5,9 +5,9 @@ import java.util.Iterator;
 import java.util.HashMap;
 
 import at.dms.kjc.backendSupport.ComputeNode;
+import at.dms.kjc.backendSupport.FilterInfo;
 import at.dms.kjc.backendSupport.Layout;
 import at.dms.kjc.slicegraph.FilterSliceNode;
-import at.dms.kjc.slicegraph.FilterInfo;
 import at.dms.kjc.slicegraph.SliceNode;
 import at.dms.kjc.slicegraph.Util;
 

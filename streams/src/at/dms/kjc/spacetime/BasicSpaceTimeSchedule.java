@@ -7,8 +7,8 @@ package at.dms.kjc.spacetime;
 
 import java.util.*;
 
-import at.dms.kjc.slicegraph.FilterInfo;
 import at.dms.kjc.slicegraph.Slice;
+import at.dms.kjc.backendSupport.FilterInfo;
 import at.dms.kjc.common.CommonUtils;
 
 /**

@@ -2,6 +2,7 @@ package at.dms.kjc.spacetime;
 
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
+import at.dms.kjc.backendSupport.FilterInfo;
 import at.dms.kjc.iterator.*;
 import at.dms.util.Utils;
 import java.util.List;
@@ -12,7 +13,6 @@ import java.util.HashMap;
 import java.io.*;
 import at.dms.compiler.*;
 import at.dms.kjc.sir.lowering.*;
-import at.dms.kjc.slicegraph.FilterInfo;
 
 import java.util.Hashtable;
 import java.math.BigInteger;

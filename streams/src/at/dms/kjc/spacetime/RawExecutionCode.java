@@ -2,6 +2,7 @@ package at.dms.kjc.spacetime;
 
 import java.util.Vector;
 
+import at.dms.kjc.backendSupport.FilterInfo;
 import at.dms.kjc.backendSupport.Layout;
 import at.dms.kjc.backendSupport.SchedulingPhase;
 import at.dms.kjc.flatgraph.FlatNode;
@@ -18,7 +19,6 @@ import java.util.HashMap;
 import java.io.*;
 import at.dms.compiler.*;
 import at.dms.kjc.sir.lowering.*;
-import at.dms.kjc.slicegraph.FilterInfo;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.OutputSliceNode;
 

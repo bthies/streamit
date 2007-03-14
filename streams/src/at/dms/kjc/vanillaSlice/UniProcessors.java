@@ -3,6 +3,7 @@ package at.dms.kjc.vanillaSlice;
 import at.dms.kjc.backendSupport.ComputeNode;
 import at.dms.kjc.backendSupport.ComputeNodesI; 
 import java.util.*;
+import at.dms.kjc.backendSupport.ComputeNodes;
 
 public class UniProcessors  implements ComputeNodesI<UniComputeCodeStore>{
 
@@ -17,7 +18,9 @@ public class UniProcessors  implements ComputeNodesI<UniComputeCodeStore>{
     public UniProcessors(Integer numberOfNodes) {
         nodes = new Vector<UniProcessor>(numberOfNodes);
         for (int i = 0; i < numberOfNodes; i++) {
-            nodes.add(new UniProcessor());
+            UniProcessor node = new UniProcessor();
+            node.setUniqueId(i);
+            nodes.add(node);
         }
     }
 

@@ -4,11 +4,13 @@ import java.util.*;
 import at.dms.kjc.slicegraph.*;
 /**
  * A ComputeNodes is a collection of {@link ComputeNode}s.
- *  
+ * Each node has a unique id corresponding to its order of creation.
  * @author dimock
  */
 public class ComputeNodes<CodeStoreType extends ComputeCodeStore<?>>  implements ComputeNodesI<CodeStoreType> {
 
+    private int high_unique_id = 0;
+    
     /** our collection of nodes... */
     private Vector<ComputeNode<CodeStoreType>> nodes;
     
@@ -19,7 +21,9 @@ public class ComputeNodes<CodeStoreType extends ComputeCodeStore<?>>  implements
     public ComputeNodes(int numberOfNodes) {
         nodes = new Vector<ComputeNode<CodeStoreType>>(numberOfNodes);
         for (int i = 0; i < numberOfNodes; i++) {
-            nodes.add(new ComputeNode<CodeStoreType>());
+            ComputeNode<CodeStoreType> node = new ComputeNode<CodeStoreType>();
+            node.setUniqueId(high_unique_id++);
+            nodes.add(node);
         }
     }
     
@@ -41,8 +45,10 @@ public class ComputeNodes<CodeStoreType extends ComputeCodeStore<?>>  implements
     }
 
     public int newComputeNode() {
-        nodes.add(new ComputeNode<CodeStoreType>());
-        return nodes.size() - 1;
+        ComputeNode<CodeStoreType> node = new ComputeNode<CodeStoreType>();
+        node.setUniqueId(high_unique_id);
+        nodes.add(node);
+        return high_unique_id++;
     }
 
     public int size() {

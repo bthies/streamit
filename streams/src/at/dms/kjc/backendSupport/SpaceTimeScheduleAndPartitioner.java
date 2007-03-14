@@ -1,4 +1,4 @@
-//$Id: SpaceTimeScheduleAndPartitioner.java,v 1.1 2007-03-13 20:19:27 dimock Exp $
+//$Id: SpaceTimeScheduleAndPartitioner.java,v 1.2 2007-03-14 14:22:06 dimock Exp $
 /**
  * Extracts the "schedule" part of Mike's SpaceTimeSchedule.
  * 
@@ -7,7 +7,6 @@ package at.dms.kjc.backendSupport;
 
 import java.util.Vector;
 
-import at.dms.kjc.slicegraph.FilterInfo;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.Partitioner;
 import at.dms.kjc.slicegraph.Slice;

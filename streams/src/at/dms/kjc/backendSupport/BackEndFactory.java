@@ -30,7 +30,7 @@ public abstract class BackEndFactory<
      ComputeNodeSelectorArgType extends Object>
 {
     /**
-     * @return Singleton to generate {@link Buffer}s and
+     * @return Singleton to generate {@link Channel}s and
      *         {@link ComputeCodeStore}s for the {@link ComputeNodes}.
      * @param <...> needs same parameterization as this so as to be able to refer to this.
      */
@@ -127,7 +127,7 @@ public abstract class BackEndFactory<
      * This function should return that collection of channels.
      * @return some collection of Channel s for the code emitter's use.
      */
-    public Collection<Buffer> getChannels() {
-        return Buffer.getBuffers();
+    public Collection<Channel> getChannels() {
+        return Channel.getBuffers();
     }
 }

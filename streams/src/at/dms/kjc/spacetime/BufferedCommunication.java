@@ -2,6 +2,7 @@ package at.dms.kjc.spacetime;
 
 import java.util.Vector;
 
+import at.dms.kjc.backendSupport.FilterInfo;
 import at.dms.kjc.backendSupport.Layout;
 import at.dms.kjc.backendSupport.SchedulingPhase;
 import at.dms.kjc.common.CommonUtils;
@@ -24,7 +25,6 @@ import at.dms.kjc.sir.lowering.*;
 //import java.util.Hashtable;
 //import java.math.BigInteger;
 import at.dms.kjc.slicegraph.FilterContent;
-import at.dms.kjc.slicegraph.FilterInfo;
 
 /**
  * This class implements filter communication with a peek buffer.  The peek buffer can 

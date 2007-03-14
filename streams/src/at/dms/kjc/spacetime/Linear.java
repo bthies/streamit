@@ -2,6 +2,7 @@ package at.dms.kjc.spacetime;
 
 import at.dms.kjc.*;
 import at.dms.util.Utils;
+import at.dms.kjc.backendSupport.FilterInfo;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.slicegraph.*;
 import at.dms.compiler.PositionedError;

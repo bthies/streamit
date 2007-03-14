@@ -4,9 +4,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Random;
 import at.dms.kjc.*;
+import at.dms.kjc.backendSupport.Channel;
 import at.dms.kjc.backendSupport.ComputeNode;
 import at.dms.kjc.common.CommonUtils;
-import at.dms.kjc.slicegraph.Buffer;
 
 /**
  * This class will generate code to allocate the off chip buffers on the necessary
@@ -107,7 +107,7 @@ public class CommunicateAddrs
             }
         }
     
-        Iterator<Buffer> buffers = Buffer.getBuffers().iterator();
+        Iterator<Channel> buffers = Channel.getBuffers().iterator();
         //iterate over the buffers and communicate each buffer
         //address from its declaring tile to the tile logically mapped to it
         //the dram it is assigned to

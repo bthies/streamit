@@ -1,9 +1,13 @@
-package at.dms.kjc.slicegraph;
+package at.dms.kjc.backendSupport;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.LinkedList;
+
+import at.dms.kjc.slicegraph.Edge;
+import at.dms.kjc.slicegraph.SliceNode;
+import at.dms.kjc.slicegraph.Util;
 import at.dms.kjc.spacetime.BasicSpaceTimeSchedule;
 import at.dms.kjc.*;
 
@@ -14,7 +18,7 @@ import at.dms.kjc.*;
  * 
  * @author dimock
  */
-public class Buffer {
+public class Channel {
 
     /**
      * Technical note: a Buffer in a backend implements an Edge in a slice graph
@@ -33,7 +37,7 @@ public class Buffer {
     private static int unique_id_generator;
     /** the store for all Buffers, indexed by edge.
      */
-    protected static HashMap<Edge, Buffer> bufferStore;
+    protected static HashMap<Edge, Channel> bufferStore;
     /** the rotation length of this buffer for software pipelining 
      * Includes any length from extraLength field. **/
     protected int rotationLength;
@@ -42,14 +46,14 @@ public class Buffer {
 
     static {
         unique_id_generator = 0;
-        bufferStore = new HashMap<Edge, Buffer>();
+        bufferStore = new HashMap<Edge, Channel>();
     }
 
     /**
      * Create a buffer given an edge.
      * @param edge
      */
-    protected Buffer(Edge edge) {
+    protected Channel(Edge edge) {
         assert edge != null;
         theEdge = edge;
         edge.getType(); // side effect of catching error if source and dest types not the same
@@ -63,7 +67,7 @@ public class Buffer {
      * @param src
      * @param dst
      */
-    protected Buffer(SliceNode src, SliceNode dst) {
+    protected Channel(SliceNode src, SliceNode dst) {
         this(Util.srcDstToEdge(src, dst));
     }
     
@@ -73,20 +77,20 @@ public class Buffer {
      */
     public static void reset() {
         unique_id_generator = 0;
-        bufferStore = new HashMap<Edge, Buffer>();
+        bufferStore = new HashMap<Edge, Channel>();
     }
     
     /**
      * For debugging.
      */
     public static void printBuffers() {
-        for (Buffer buf : bufferStore.values()) {
+        for (Channel buf : bufferStore.values()) {
             System.out.println(buf);
         }
     }
 
     /** @return of the buffers of this stream program */
-    public static Collection<Buffer> getBuffers() {
+    public static Collection<Channel> getBuffers() {
         return bufferStore.values();
     }
 
@@ -136,7 +140,7 @@ public class Buffer {
      * @param sched BasicSpaceTimeSchedule gives primePump multiplicities.
      */
     public static void setRotationLengths(BasicSpaceTimeSchedule sched) {
-        for (Buffer buf : getBuffers()) {
+        for (Channel buf : getBuffers()) {
             setRotationLength(buf, sched);
         }
     }
@@ -148,7 +152,7 @@ public class Buffer {
      * 
      * @param buffer
      */
-    private static void setRotationLength(Buffer buffer, BasicSpaceTimeSchedule spaceTimeSchedule) {
+    private static void setRotationLength(Channel buffer, BasicSpaceTimeSchedule spaceTimeSchedule) {
         int sourceMult = spaceTimeSchedule.getPrimePumpMult(buffer.getSource().getParent());
         int destMult = spaceTimeSchedule.getPrimePumpMult(buffer.getDest().getParent());
 

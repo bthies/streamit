@@ -5,13 +5,13 @@ package at.dms.kjc.spacetime;
 
 import java.util.*;
 
+import at.dms.kjc.backendSupport.FilterInfo;
 import at.dms.kjc.slicegraph.FilterContent;
 import at.dms.kjc.sir.SIRFilter;
 import at.dms.kjc.sir.SIRIdentity;
 import at.dms.kjc.sir.lowering.RenameAll;
 import at.dms.kjc.slicegraph.DataFlowOrder;
 import at.dms.kjc.slicegraph.InterSliceEdge;
-import at.dms.kjc.slicegraph.FilterInfo;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.OutputSliceNode;

@@ -3,13 +3,13 @@ package at.dms.kjc.spacetime;
 import java.util.HashMap;
 import java.util.Iterator;
 import at.dms.kjc.*;
+import at.dms.kjc.backendSupport.Channel;
 import at.dms.kjc.backendSupport.ComputeNode;
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.OutputSliceNode;
 import at.dms.kjc.slicegraph.SliceNode;
-import at.dms.kjc.slicegraph.Buffer;
 import at.dms.kjc.slicegraph.Edge;
 
 
@@ -18,12 +18,12 @@ import at.dms.kjc.slicegraph.Edge;
  * buffer appears between slices and inside slices between the input node and the first
  * filter and between the last filter and the output node.  
  * 
- * Now derived from {@link at.dms.kjc.slicegraph.Buffer Buffer}.
+ * Now derived from {@link at.dms.kjc.backendSupport.Channel Buffer}.
  * Assumes all buffers are actuall OffChipBuffers.
  * @author mgordon
  *
  */
-public abstract class OffChipBuffer extends Buffer {
+public abstract class OffChipBuffer extends Channel {
     /** The sending or receiving tile*/
     protected ComputeNode owner;
      /** the size of the buffer in the steady stage */ 
@@ -143,7 +143,7 @@ public abstract class OffChipBuffer extends Buffer {
      *
      */
     public static void resetDRAMAssignment() {
-        Iterator<Buffer> buffers = getBuffers().iterator();
+        Iterator<Channel> buffers = getBuffers().iterator();
         while (buffers.hasNext()) {
             OffChipBuffer buf = (OffChipBuffer)buffers.next();
             buf.setDRAM(null);
@@ -194,7 +194,7 @@ public abstract class OffChipBuffer extends Buffer {
      */
     public static void setRotationLengths(BasicSpaceTimeSchedule spaceTime) {
         InterSliceBuffer.dramsToBuffers = new HashMap<StreamingDram, Integer>();
-        Iterator<Buffer> buffers = getBuffers().iterator();
+        Iterator<Channel> buffers = getBuffers().iterator();
         //iterate over the buffers and communicate each buffer
         //address from its declaring tile to the tile neighboring
         //the dram it is assigned to
@@ -261,7 +261,7 @@ public abstract class OffChipBuffer extends Buffer {
      * assigned to drams.
      */
     public static boolean areAllAssigned() {
-        Iterator<Buffer> buffers = getBuffers().iterator();
+        Iterator<Channel> buffers = getBuffers().iterator();
         boolean returnVal = true;
         while (buffers.hasNext()) {
             OffChipBuffer buf = (OffChipBuffer)buffers.next();

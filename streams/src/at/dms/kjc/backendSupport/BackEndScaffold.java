@@ -1,4 +1,4 @@
-// $Id: BackEndScaffold.java,v 1.3 2007-03-12 23:42:12 dimock Exp $
+// $Id: BackEndScaffold.java,v 1.4 2007-03-14 14:22:06 dimock Exp $
 package at.dms.kjc.backendSupport;
 
 import java.util.*;
@@ -12,7 +12,7 @@ import at.dms.kjc.KjcOptions;
  * Create code for a partitioning of {@link at.dms.kjc.slicegraph.Slice Slice}s 
  * on a collection of {@link at.dms.kjc.backendSupport.ComputeNode ComputeNode}s.
  * Connections between the ComputeNode s are returned as 
- * under-specified {@link at.dms.kjc.slicegraph.Buffer Buffer}s.
+ * under-specified {@link at.dms.kjc.backendSupport.Channel Buffer}s.
  * @author dimock
  */
 public class BackEndScaffold<
@@ -64,13 +64,13 @@ ComputeNodeSelectorArgType extends Object> {
     
     /**
      * Pass in a {@link BasicSpaceTimeSchedule schedule}, and get a set of {@link at.dms.kjc.backendSupport.ComputeNode ComputeNode}s
-     * and a set of (underspecified) {@link at.dms.kjc.slicegraph.Buffer Buffer}s filled in.
+     * and a set of (underspecified) {@link at.dms.kjc.backendSupport.Channel Buffer}s filled in.
      * @param schedule
      * @param computeNodes
      * @param buffers
      */
     public void run(BasicSpaceTimeSchedule schedule,
-            BackEndFactory<ComputeNodesType,ComputeNodeType,CodeStoreType, ComputeNodeSelectorArgType> resources, Set<Buffer> buffers) {
+            BackEndFactory<ComputeNodesType,ComputeNodeType,CodeStoreType, ComputeNodeSelectorArgType> resources, Set<Channel> buffers) {
    
         ComputeNodesType computeNodes = resources.getComputeNodes();
         this.resources = resources;

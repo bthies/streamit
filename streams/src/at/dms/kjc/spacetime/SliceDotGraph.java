@@ -1,9 +1,10 @@
 package at.dms.kjc.spacetime;
 
+import at.dms.kjc.backendSupport.Channel;
+import at.dms.kjc.backendSupport.FilterInfo;
 import at.dms.kjc.backendSupport.Layout;
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.sir.*;
-import at.dms.kjc.slicegraph.FilterInfo;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.OutputSliceNode;
@@ -153,7 +154,7 @@ public class SliceDotGraph {
                 fw.write("}\n");
             }
 
-            Iterator<Buffer> buffers = OffChipBuffer.getBuffers().iterator();
+            Iterator<Channel> buffers = OffChipBuffer.getBuffers().iterator();
             while (buffers.hasNext()) {
                 OffChipBuffer buffer = (OffChipBuffer)buffers.next();
                 if (buffer.isIntraSlice())

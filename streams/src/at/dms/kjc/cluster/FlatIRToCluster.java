@@ -1902,39 +1902,19 @@ public class FlatIRToCluster extends InsertTimers implements
         // following commented-out code never worked.
         // push as if scalar and let the TapeXXXX.java functions
         // handle generation of push for arrays.
-        p.print(RegisterStreams.getFilterOutStream(filter).getPushName());
-        p.print("(");
-        val.accept(this);
-        p.print(")");
-
-// AD: never worked to my knowledge
-//        CType baseType = ((CArrayType) tapeType).getBaseType();
-//        String dims[] = this.makeArrayStrings(((CArrayType)tapeType).getDims());
-//
-//        for (int i = 0; i < dims.length; i++) {
-//            p.print("for (" + CommonConstants.ARRAY_INDEX + i + " = 0; "
-//                    + CommonConstants.ARRAY_INDEX + i + " < " + dims[i]
-//                    + " ; " + CommonConstants.ARRAY_INDEX + i + "++)\n");
-//        }
-//
-//        // AD: never tested to my knowledge.  Also, decoupled is only defined for RAW backends
-//        //        if (KjcOptions.altcodegen || KjcOptions.decoupled) {
-//        //            p.print("{\n");
-//        //            // p.print(Util.CSTOVAR + " = ");
-//        //            val.accept(this);
-//        //            for (int i = 0; i < dims.length; i++) {
-//        //                p.print("[" + CommonConstants.ARRAY_INDEX + i + "]");
-//        //            }
-//        //            p.print(";\n}\n");
-//        //        } else {
-//        p.print("{");
-//        p.print("static_send((" + baseType + ") ");
-//        val.accept(this);
-//        for (int i = 0; i < dims.length; i++) {
-//            p.print("[" + CommonConstants.ARRAY_INDEX + i + "]");
-//        }
-//        p.print(");\n}\n");
-//        //        }
+        // TODO need to have tapes do code generation here
+        Tape outputTape = RegisterStreams.getFilterOutStream(filter);
+        if (outputTape instanceof TapeDynrate) {
+            p.print(outputTape.getPushName());
+            p.print("(reinterpret_cast<" + ((TapeDynrate)(outputTape)).getTypeCastName() + ">(&");
+            val.accept(this);
+            p.print("))");
+        } else {
+            p.print(outputTape.getPushName());
+            p.print("(");
+            val.accept(this);
+            p.print(")");
+        }
     }
 
     public void visitPushExpression(SIRPushExpression self, CType tapeType,

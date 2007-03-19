@@ -91,6 +91,7 @@ public class Profiler {
     public static final int FUNC_LOG =        registerOp("log");
     public static final int FUNC_LOG10 =      registerOp("log10");
     public static final int FUNC_POW =        registerOp("pow");
+    public static final int FUNC_RANDOM =     registerOp("random");
     public static final int FUNC_ROUND =      registerOp("round");
     public static final int FUNC_RINT =       registerOp("int");
     public static final int FUNC_SQRT =       registerOp("sqrt");

@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.121 2007-03-08 20:54:54 thies Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.122 2007-03-19 17:58:13 thies Exp $
 package at.dms.kjc.cluster;
 
 import at.dms.kjc.flatgraph.FlatNode;
@@ -240,8 +240,18 @@ public class ClusterBackend {
         // Raise all pushes, pops, peeks to statement level
         // (several phases above introduce new peeks, pops, pushes
         //  including but not limited to doLinearAnalysis)
-        SimplifyPopPeekPush.simplify(str);
-
+        if (!(KjcOptions.linearreplacement || KjcOptions.linearreplacement2 ||
+              KjcOptions.linearreplacement3 || KjcOptions.atlas || KjcOptions.linearpartition ||
+              KjcOptions.frequencyreplacement || KjcOptions.redundantreplacement)) {
+            // for now, do not run in combination with linear replacements
+            // because some linear expressions do not have type set
+            SimplifyPopPeekPush.simplify(str);
+        } else if (KjcOptions.vectorize>0) {
+            System.err.println("Linear analysis + vectorization unsupported, because 3-address\n" +
+                               "code cannot infer types of some expressions created.  Can fix\n" +
+                               "by setting types in linear analysis, or by adding type inference.");
+            System.exit(1);
+        }
 
         // Code relating to IncreaseFilterMult removed here.
         

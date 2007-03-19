@@ -258,7 +258,18 @@ public class CommonPasses {
         // (several phases above introduce new peeks, pops, pushes
         //  including but not limited to doLinearAnalysis)
         // needed before vectorization
-        SimplifyPopPeekPush.simplify(str);
+        if (!(KjcOptions.linearreplacement || KjcOptions.linearreplacement2 ||
+              KjcOptions.linearreplacement3 || KjcOptions.atlas || KjcOptions.linearpartition ||
+              KjcOptions.frequencyreplacement || KjcOptions.redundantreplacement)) {
+            // for now, do not run in combination with linear replacements
+            // because some linear expressions do not have type set
+            SimplifyPopPeekPush.simplify(str);
+        } else if (KjcOptions.vectorize>0) {
+            System.err.println("Linear analysis + vectorization unsupported, because 3-address\n" +
+                               "code cannot infer types of some expressions created.  Can fix\n" +
+                               "by setting types in linear analysis, or by adding type inference.");
+            System.exit(1);
+        }
 
         // If vectorization enabled, create (fused streams of) vectorized filters.
         // the top level compile script should not allow vectorization to be enabled

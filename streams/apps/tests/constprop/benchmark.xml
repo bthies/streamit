@@ -10,7 +10,7 @@ These tests target various aspects of constant propagation.
       <file class="source">ConstPropTest1.str</file>
       <file class="output">ConstPropTest1.out</file>
     </impl>
-    <impl lang="StreamIt" id="constproptest1">
+    <impl lang="StreamIt" id="constproptest2">
       <desc>MIT, test constant propagation through arrays</desc>
       <file class="source">ConstPropTest2.str</file>
       <file class="output">ConstPropTest2.out</file>

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.95 2007-03-14 22:07:15 dimock Exp $
+ * $Id: KjcOptions.opt,v 1.96 2007-03-19 17:20:24 dimock Exp $
  */
 
 prefix Kjc
@@ -384,6 +384,11 @@ longname		"nomult"
 	type		boolean
 	default		"false"
 	help		"Do not increase multiplicity of partitions"
+
+longname		"dynamicRatesEverywhere"
+	type		boolean
+	default		"false"
+	help		"For testing performance of dynamic rates"
 
 
 /* removed, used in testing on cluster */

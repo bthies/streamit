@@ -7,6 +7,16 @@
 # make sure STREAMIT_HOME is exported
 export STREAMIT_HOME
 
+# detect cygwin environment
+export STRC_HOST_TYPE="unknown"
+if [[ `uname` == "Linux" ]]; then
+  export STRC_HOST_TYPE="x86-linux"
+else
+  if [[ `uname` == "CYGWIN_NT-5.1" ]]; then
+    export STRC_HOST_TYPE="x86-windows"
+  fi
+fi
+
 # take care of classpath
 if [ -z "$CLASSPATH" ]
 then

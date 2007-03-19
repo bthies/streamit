@@ -545,7 +545,7 @@ public class StaticsProp {
                 public void postVisitStream(SIRStream self,
                         SIRIterator iter) {
                     if (doFilters && self instanceof SIRPhasedFilter ||
-                        !doFilters && !(self instanceof SIRFilter)) {
+                        !doFilters && !(self instanceof SIRPhasedFilter)) {
                     String streamIdent = self.getIdent();
                     Set<StaticAndField> toPropagate = 
                         streamIdentToField.get(streamIdent);

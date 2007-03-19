@@ -49,7 +49,7 @@ public class ConstantProp {
         Unroller unroller;
         
         do {
-            if(KjcOptions.struct&&!Flattener.INIT_STATEMENTS_RESOLVED) {
+            if(KjcOptions.struct&&!ConstructSIRTree.INIT_STATEMENTS_RESOLVED) {
                 StructDestroyer dest=new StructDestroyer();
                 JMethodDeclaration[] methods=str.getMethods();
                 for(int i=0;i<methods.length;i++)
@@ -173,7 +173,7 @@ public class ConstantProp {
         }
         // recursion method depends on whether or not there are still
         // init statements
-        if (Flattener.INIT_STATEMENTS_RESOLVED) {
+        if (ConstructSIRTree.INIT_STATEMENTS_RESOLVED) {
             //System.err.println("Recurse From 2:"+str);
             for (int i=0; i<str.size(); i++) {
                 recurseInto(str.get(i), str.getParams(i), constants);

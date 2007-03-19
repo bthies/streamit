@@ -21,7 +21,13 @@ public class ConstructSIRTree {
      * we will set this exception to the first error that is thrown.
      */
     private static RuntimeException nonConstantArgError = null;
-
+    /**
+     * Whether or not the init statements have been resolved into
+     * actual streams -- in other words, whether or not this has run
+     * yet.
+     */
+    public static boolean INIT_STATEMENTS_RESOLVED = false;
+    
     public static void doit(SIRStream str) {
         // do collapse data parallelism from here, since its contract
         // depends on wrapping around ConstructSIRTree
@@ -34,6 +40,9 @@ public class ConstructSIRTree {
         } else {
             doMyWork(str);
         }
+        // after construct sir tree, the init statements have been
+        // resolved.  assuming we're only calling this on one stream...
+        INIT_STATEMENTS_RESOLVED = true;
     }
 
     // the actual construction of SIR tree.  Not main entry point.

@@ -23,13 +23,6 @@ import java.util.*;
  */
 public class Flattener {
     /**
-     * This variable is toggled once SIRInitStatements have been
-     * eliminated in favor of a hierarchical stream represenation
-     * within the SIRContainers.
-     */
-    public static boolean INIT_STATEMENTS_RESOLVED = false;
-
-    /**
      * Flattens <str> into a low IR representation, given that <interfaces>
      * are all the top-level interfaces declared in the program and 
      * <interfaceTables> represents the mapping from interfaces to methods
@@ -76,7 +69,6 @@ public class Flattener {
 
         // construct stream hierarchy from SIRInitStatements
         ConstructSIRTree.doit(str);
-        INIT_STATEMENTS_RESOLVED = true;
 
         if (hasDynamicRates(str)) {
             SIRDynamicRateManager.pushConstantPolicy(1000000);

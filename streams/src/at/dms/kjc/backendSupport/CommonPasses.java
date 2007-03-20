@@ -83,7 +83,7 @@ public class CommonPasses {
         Set<SIRGlobal> theStatics = new HashSet<SIRGlobal>();
         if (global != null) theStatics.add(global);
         
-        associatedGlobals = StaticsProp.propagateIntoContainers(str, theStatics);
+        associatedGlobals = StaticsProp.propagate(str, theStatics);
         ConstantProp.propagateAndUnroll(str, true);
         System.out.println("Done Constant Prop and Unroll...");
 

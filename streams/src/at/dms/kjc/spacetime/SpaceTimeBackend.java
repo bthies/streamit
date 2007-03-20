@@ -14,6 +14,7 @@ import at.dms.kjc.sir.lowering.partition.*;
 import at.dms.kjc.slicegraph.DataFlowOrder;
 import at.dms.kjc.slicegraph.Partitioner;
 import at.dms.kjc.slicegraph.Slice;
+import java.util.*;
 
 /**
  * The entry to the space time backend for raw.
@@ -40,11 +41,10 @@ public class SpaceTimeBackend {
     private static RawChip rawChip;
   
     private static double COMP_COMM_RATIO;
+
+    /** Saves output of StaticsProp until time to clean up ComputeCodeStore's */
+    public static Map<String,Set<String>> prefixAssociations;
     
-    
-    // ComputeNodes for standalone version, 
-    // replaces rawChip of Raw version.
-    private static ComputeNode[] computeNodes;  
     
     /**
      * Top level method for SpaceTime backend, called via reflection from {@link at.dms.kjc.Main}.
@@ -89,7 +89,9 @@ public class SpaceTimeBackend {
         CommonPasses commonPasses = new CommonPasses();
         Slice[] sliceGraph = commonPasses.run(str, interfaces, 
                 interfaceTables, structs, helpers, global, numCores);
-
+        prefixAssociations = commonPasses.getAssociatedGlobals();
+        
+        
         // do RAW-specific stuff with pops:
         // convert all multiple pops sequences of pops.
         // convert all pops that do not return values to writes to a volatile.
@@ -167,7 +169,6 @@ public class SpaceTimeBackend {
         Layout layout = null;
         if (KjcOptions.noswpipe) {
             layout = new NoSWPipeLayout<RawTile,RawChip>(spaceTimeSchedule, rawChip);
-            new BufferDRAMAssignment().run(spaceTimeSchedule, layout);
         } else if (KjcOptions.manuallayout) {
             layout = new ManualSliceLayout(spaceTimeSchedule);
         } else if (KjcOptions.greedysched || (KjcOptions.dup > 1)) {
@@ -177,9 +178,10 @@ public class SpaceTimeBackend {
         } else {
             layout = new AnnealedLayout(spaceTimeSchedule);
         }
-
         layout.run();
-
+        new BufferDRAMAssignment().run(spaceTimeSchedule, layout);
+        
+        
         System.out.println("Space/Time Scheduling Steady-State...");
         BasicGenerateSteadyStateSchedule spaceTimeScheduler = new BasicGenerateSteadyStateSchedule(
                 spaceTimeSchedule, partitioner);

@@ -66,9 +66,6 @@ public class ManualSliceLayout implements Layout<RawTile> {
                 assert false : "Some unknown i/o trace...";
         }
         
-        //now call buffer dram assignment
-        new BufferDRAMAssignment().run(spaceTime, this);
-        
         LayoutDot.printLayoutCost(spaceTime, this);
     }
     

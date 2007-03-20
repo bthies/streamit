@@ -202,13 +202,13 @@ public class SliceDotGraph {
         if (label)
         {
             fw.write("[label=\""
-                    + (DRAM ? buffer.getDRAM().toString() : "not assigned\""));
+                    + (DRAM  && buffer.isAssigned() ? buffer.getDRAM().toString() : "not assigned\""));
             if (buffer.isIntraSlice() && !((IntraSliceBuffer)buffer).isStaticNet())
                 fw.write(",gdn,");
             
             fw.write(buffer.getRotationLength() + ", ");
             
-            if (DRAM) {
+            if (DRAM && buffer.isAssigned()) {
                 if (buffer.redundant())
                     fw.write("\", style=dashed");
                 else

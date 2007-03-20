@@ -20,22 +20,24 @@ imageAndFeatures->imageAndFeatures
 	float[320][240] i2Matrix;
 	float[320][240] q2Matrix;
 	
-	bestFeatures[60] feat1;
-	bestFeatures[60] feat2;
+	bestFeatures[40] feat1;
+	bestFeatures[40] feat2;
 	
-	float[60][60] corrMatrix;
+	bestFeatures[40] tempFeat1;
+	bestFeatures[40] tempFeat2;
+	
+	float[40][40] corrMatrix;
 	
 	float stanDevW1;
 	float stanDevW2;
 	float elementWiseProduct;
 	
-	int[60] bestRows;
-	int[60] bestCols;
+	int[40] bestRows;
+	int[40] bestCols;
 	
 	float currRowBestVal;
 	float currColBestVal;
-	
-	int badFeatures;
+
 	work pop 1 peek 2 push 2
 	{
 		r = (w-1)/2;
@@ -64,7 +66,6 @@ imageAndFeatures->imageAndFeatures
 		//of that result.  after this, we take the center values (i.e.,
 		//we ignore a border of length 6 around the image
 		
-		
 		for(int i=0;i<iters;i++)
 		{
 			for(int j=0;j<iters;j++)
@@ -81,8 +82,9 @@ imageAndFeatures->imageAndFeatures
 		for(int i=0; i<iters; i++)
 		{ 	if(feat1[i].x>r & feat1[i].x<imageWidth-r
 			  & feat1[i].y>r & feat1[i].y<imageHeight-r) // check if the feature is in bounds
-			{	stanDevW1 = 0;
-				//make w1, which is a windowof width w around the feature considered in im1
+			{	
+				stanDevW1 = 0;
+				//make w1, which is a window of width w around the feature considered in im1
 				for(int m = -r; m <= r; m++)
 				{
 					for(int n = -r; n<= r; n++)
@@ -118,7 +120,10 @@ imageAndFeatures->imageAndFeatures
 								elementWiseProduct = elementWiseProduct + w1[s+r][t+r]*w2[s+r][t+r];
 							}
 						}
-						corrMatrix[i][j] = elementWiseProduct/(stanDevW1*stanDevW2);		
+						
+						corrMatrix[i][j] = elementWiseProduct/(stanDevW1*stanDevW2);				
+							
+							
 					} // ends second 'if' statement
 				} //ends inner j loop
 			} // ends first 'if statement
@@ -146,7 +151,6 @@ imageAndFeatures->imageAndFeatures
 				} // end if
 			} // end inner for						
 		} // end outer for
-		
 		//find greatest values in each col and their numbers
 		for(int j = 0; j < iters; j++){
 			currColBestVal = 0;
@@ -157,30 +161,33 @@ imageAndFeatures->imageAndFeatures
 				} // end if
 			} // end inner for						
 		} // end outer for		
-		badFeatures = 0;
+		//badFeatures = 0;
 		//println("Feature	Image	Value		X	Y");
+		imAndFeat1.goodPts=0;
 		for(int h = 0 ; h < iters; h++)
-		{
-			//if the features are no good, set their values
-			// to zero
-			if(bestCols[bestRows[h]] != h){
-				feat1[h].val = 0;
-				feat2[h].val = 0;
-				badFeatures = badFeatures + 1;
-			}
-			else{
-				/*println(h + "\t" + 1 + "\t" + feat1[h].val + "\t" + feat1[h].x + "\t" + feat1[h].y 
-					  +  "\n \t" + 2 + "\t" + feat2[h].val + "\t" + feat2[h].x + "\t" + feat2[h].y);*/
+		{			
+			if(bestRows[bestCols[h]] == h && (bestCols[h]!=0 && h!=0)){
+				tempFeat1[imAndFeat1.goodPts] = feat1[bestCols[h]];
+				tempFeat2[imAndFeat1.goodPts] = feat2[h];
+				imAndFeat1.goodPts++;
 			}
 		}
+
+		imAndFeat1.myBest = tempFeat1;
+		imAndFeat2.myBest = tempFeat2;
 		
-		println("Found " + (iters-badFeatures) + " correlating features out of " + iters);
-		imAndFeat1.myBest = feat1;
-		imAndFeat2.myBest = feat2;
-		imAndFeat1.goodPts = iters - badFeatures;
-		imAndFeat2.goodPts = iters - badFeatures;
+		println(imAndFeat1.goodPts + "/" + iters + " features corresponded");
+/*
+		println("post corr 1");
 		
+		for(int i = 0; i<imAndFeat1.goodPts; i++){
 		
+				println(tempFeat1[i].x + "\t\t" + tempFeat2[i].x);
+				println(tempFeat1[i].y + "\t\t" + tempFeat2[i].y);
+				println(" ");
+			
+		}
+		*/
 		pop();
 		push(imAndFeat1);
 		push(imAndFeat2);

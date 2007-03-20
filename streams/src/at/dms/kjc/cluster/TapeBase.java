@@ -104,9 +104,7 @@ public abstract class TapeBase implements Tape {
             } else {
                 t = new TapeCluster(src,dest,type);
             }
-        // Experiment in using dynamic rates everywhere
-        return new TapeDynrate(src,dest,type);
-        //return t;
+        return t;
     }
 
 

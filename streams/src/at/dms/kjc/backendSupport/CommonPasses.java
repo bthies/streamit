@@ -51,7 +51,8 @@ public class CommonPasses {
     /** stores pre-modified str for statistics gathering */
     private SIRStream origSTR;
     
-    
+    /** stores the association between names of global variables duplicated locally */
+    private Map<String,Set<String>> associatedGlobals;
     
     /**
      * Top level method for executing passes common to some current and all future StreamIt compilers.
@@ -81,7 +82,8 @@ public class CommonPasses {
         System.out.println("Running Constant Prop and Unroll...");
         Set<SIRGlobal> theStatics = new HashSet<SIRGlobal>();
         if (global != null) theStatics.add(global);
-        /*Map associatedGlobals =*/ StaticsProp.propagateIntoContainers(str, theStatics);
+        
+        associatedGlobals = StaticsProp.propagate/*IntoContainers*/(str, theStatics);
         ConstantProp.propagateAndUnroll(str, true);
         System.out.println("Done Constant Prop and Unroll...");
 
@@ -141,7 +143,7 @@ public class CommonPasses {
         
         //fuse entire str to one filter if possible
         if (KjcOptions.fusion)
-            str = FuseAll.fuse(str);
+            str = FuseAll.fuse(str, false);
         
         StreamlinedDuplicate duplicate = null;
         WorkEstimate work = WorkEstimate.getWorkEstimate(str);
@@ -211,7 +213,7 @@ public class CommonPasses {
         }
         
     
-        StaticsProp.propagateIntoFilters(str,theStatics);
+        /*StaticsProp.propagateIntoFilters(str,theStatics);*/
 
         // If requiested, convert splitjoins (below top level)
         // to pipelines of filters.
@@ -383,4 +385,11 @@ public class CommonPasses {
         return origSTR;
     }
     
+    /**
+     * Get the names of globals that may have been copied into multiple places.
+     * @return
+     */
+    public Map<String,Set<String>> getAssociatedGlobals() {
+        return associatedGlobals;
+    }
 }

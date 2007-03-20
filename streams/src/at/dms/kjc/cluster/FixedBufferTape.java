@@ -181,10 +181,10 @@ public class FixedBufferTape {
         int remaining = srcProduce - dstConsume;
         // assertion should be true since if work peeks more than it pops then
         // it requires an init phase.  (However, some dynamic rate managment policies
-        // will cause this to be trifferred trying to estimate the initial size
+        // will cause this to be triggerred trying to estimate the initial size
         // of a buffer for dynamic rates.
-        assert (remaining >= f.getPeekInt() - f.getPopInt()) && remaining >= 0 :
-            remaining +"," + f.getPeekInt() + "," + f.getPopInt();
+//        assert (remaining >= f.getPeekInt() - f.getPopInt()) && remaining >= 0 :
+//            remaining +"," + f.getPeekInt() + "," + f.getPopInt();
         return remaining;
     }
 

@@ -4,6 +4,7 @@
 package at.dms.kjc.sir.lowering;
 
 import java.util.*;
+import java.util.regex.*;
 import java.lang.IllegalArgumentException;
 import at.dms.kjc.*;
 import at.dms.kjc.common.CommonUtils;
@@ -43,6 +44,7 @@ import at.dms.kjc.sir.lowering.ConstantProp;
  */
 public class StaticsProp {
     
+    /** For diagnostic printout, only global to make easier to set in debugger. */
     static boolean debugPrint = false;
     
     // -------------------------------------------------------------------
@@ -75,54 +77,55 @@ public class StaticsProp {
     // Fields
     // -------------------------------------------------------------------
     
-    // Names of all static sections.
+    /** Names of all static sections. */
     private Set<String> staticsNames;
 
-    // map from name of static section to the section
+    /**  map from name of static section to the section */
     private Map<String, SIRGlobal> namesToStatics;
 
-    // map from the name of a SIRStream element to all
-    // static fields that it uses (by static section name, field name)
+    /**  map from the name of a SIRStream element to all
+     * static fields that it uses (by static section name, field name) */
     private Map<String,Set<StaticAndField>> streamIdentToField =
 	new HashMap<String,Set<StaticAndField>>();
 
-    // the current SIRStream element name for iterators. (Allows me to 
-    // use the value in code in inner classes without having to define them
-    // inside the method that uses them...  Aesthetically unpleasing.
-    // As bad as breaking code up strangely to encapsulate all use of
-    // this field in (yet another) inner class?
+    /**
+     * the current SIRStream element name for iterators. (Allows me to 
+     * use the value in code in inner classes without having to define them
+     * inside the method that uses them...  Aesthetically unpleasing.
+     * As bad as breaking code up strangely to encapsulate all use of
+     * this field in (yet another) inner class? */
     private String currentStreamIdent;
     
-    // map from a static section name and field name to the code for
-    // declaring (and statically initializing) the field.
+    /** map from a static section name and field name to the code for
+     * declaring (and statically initializing) the field. */
     private Map<StaticAndField,JFieldDeclaration> staticNameToFields =
 	new HashMap<StaticAndField,JFieldDeclaration>();
  
-    // map from a static section name and a field name to the code that
-    // is needed to assign value(s) to the field.
+    /** map from a static section name and a field name to the code that
+     * is needed to assign value(s) to the field. */
     private Map<StaticAndField,List<JStatement>> staticNameToAssignments =
 	new HashMap<StaticAndField,List<JStatement>>();
 
-    // map from a static section and field name to the set of synonyms for
-    // the field.
+    /** map from a static section and field name to the set of synonyms for
+     * the field. */
     private Map<StaticAndField,Set<String>> staticNameToNewNames = 
 	new HashMap<StaticAndField,Set<String>>();
 
-    // map from each propagated field name to a set
-    // of synonyms (including the name itself)
+    /** map from each propagated field name to a set
+     * of synonyms (including the name itself) */
     private Map<String,Set<String>> nameToName = new HashMap<String,Set<String>>();
 
     
-    // for conversion to local variables, there must be a single definition of the variable.
+    /** for conversion to local variables, there must be a single definition of the variable. */
     private final Map<String,JVariableDefinition> identToVarDefn =
 	new HashMap<String,JVariableDefinition>();
 
-    /*
+    /**
      * I thought to eventually support multiple static sections:
      * So I have to associate a SIRStream with each combination
      * of static section and field that it references.
      * This necessitates writing a simple pair structure that
-     * will hash well.
+     * will hash well, using structural equality.
      */
     private static class StaticAndField {
         private String theStatic;
@@ -171,8 +174,8 @@ public class StaticsProp {
     // --------------------------------------------------------------------
     
     /**
-     * The top-level for propagating data from static sections into
-     * the hierarchical containers in the stream graph.
+     * The top-level for propagating data from static sections into the stream
+     * graph.
      * 
      * <p>Of course, for some static data -- using a static section to set
      * parameters, or push, peek, or pop rates -- it is necessary that the
@@ -188,43 +191,7 @@ public class StaticsProp {
      * we need to use constant prop based on constant values of local variables.
      * This presents a non-uniform interface for using the returned map.</p>
      * 
-     * @param str
-     *            The stream program
-     * @param theStatics
-     *            a set of static sections that need to be propagated through
-     *            the stream.
-     * @param doFilters
-     *            Whether we should propagate into filters.  (If true,
-     *            does not propagate into streams.)
      * 
-     * @return a map of associations between propagated data. This information
-     *         may be useful in a fusion: if two filters with associated data
-     *         are fused, only one copy is needed.  The map is from a field
-     *         or variable name as a string to a set of strings that are 
-     *         synonyms for the variable name.
-     * 
-     */
-    public static Map propagateIntoContainers(SIRStream str, Set<SIRGlobal> theStatics) {
-        return propagate(str, theStatics, false);
-    }
-
-    /**
-     * The top-level for propagating data from static sections into
-     * the filters in the stream graph.
-     * 
-     * <p>Of course, for some static data -- using a static section to set
-     * parameters, or push, peek, or pop rates -- it is necessary that the
-     * static data be constants that can be propagated to place with FieldProp
-     * in the streams.</p>
-     * 
-     * <p>Warning: if fusing filters with control constructs, please note that
-     * information from static sections appears in <b>filters</b> as <b>fields</b>
-     * so that multiple phases (even just init and work) have access to the
-     * values. In <b>containers</b> the information appears as
-     * <b>local variables</b>. The reason for the difference is that field 
-     * propagation does not propagate information far enough for containers, so
-     * we need to use constant prop based on constant values of local variables.
-     * This presents a non-uniform interface for using the returned map.</p>
      * 
      * @param str
      *            The stream program
@@ -239,31 +206,7 @@ public class StaticsProp {
      *         synonyms for the variable name.
      * 
      */
-    public static Map propagateIntoFilters(SIRStream str, Set<SIRGlobal> theStatics) {
-        return propagate(str, theStatics, true);
-    }
-
-    /**
-     * The inner method for propagating data from static sections into
-     * the stream graph.
-     * 
-     * @param str
-     *            The stream program
-     * @param theStatics
-     *            a set of static sections that need to be propagated through
-     *            the stream.
-     * @param doFilters
-     *            Whether we should propagate into filters.  (If true,
-     *            does not propagate into streams.)
-     * 
-     * @return a map of associations between propagated data. This information
-     *         may be useful in a fusion: if two filters with associated data
-     *         are fused, only one copy is needed.  The map is from a field
-     *         or variable name as a string to a set of strings that are 
-     *         synonyms for the variable name.
-     * 
-     */
-    private static Map propagate(SIRStream str, Set<SIRGlobal> theStatics, boolean doFilters) {
+    public static Map<String,Set<String>> propagate(SIRStream str, Set<SIRGlobal> theStatics) {
         linearizeStatics(theStatics);
 
         if (debugPrint) {
@@ -278,7 +221,7 @@ public class StaticsProp {
         sp.findStaticsForStr(str);
         if (debugPrint) {System.err.println(sp.streamIdentToField);}
         sp.getCodeToPropagate();
-        sp.propagateIntoStreams(str, doFilters);
+        sp.propagateIntoStreams(str);
         return sp.nameToName;
     }
     
@@ -312,7 +255,7 @@ public class StaticsProp {
             // of for methods.  eg:
             // int N;
             // int[N] myArray;
-            // init {N = 10;}
+            // init () {N = 10;}
             // should result in an array of size 10, not an array of
             // unknown length.
 
@@ -369,7 +312,7 @@ public class StaticsProp {
     // Visitor for associating Streams with fields from static sections
     // --------------------------------------------------------------------
     
-    /*
+    /**
      * Given a SIRStream, find all static fields referred to in the stream
      * and any other reachable streams, and record te association between
      * each stream and the static fields that it references.
@@ -383,8 +326,8 @@ public class StaticsProp {
                                             new FindStaticsInStr());
     }
     
-    // Specialize stream walker to maintain this.currentStreamIdent
-    // so that the FindStaticsInStr visitor can record stream names
+    /** Specialize stream walker to maintain this.currentStreamIdent
+     * so that the FindStaticsInStr visitor can record stream names */
     private class MyIter extends IterOverAllFieldsAndMethods {
         protected boolean preVisit(SIRStream str) {
             // an ugly way to make the stream ident available to
@@ -395,7 +338,7 @@ public class StaticsProp {
         }
     };
     
-    /*
+    /**
      * Given a Kjc / SIR expression, find all static fields referenced
      * and store them in streamIdentToField
      */
@@ -417,7 +360,6 @@ public class StaticsProp {
         }
     }
 
-    
     // --------------------------------------------------------------------
     // Utility phase: for each piece of code that needs propagation, pull
     // code out of the static section to (1) put into field definitions,
@@ -435,7 +377,7 @@ public class StaticsProp {
     // StreamIt program, get the JFieldDeclaration in staticNameToFields and
     // get the assignments used in initializing the field in 
     // staticNameToAssignments.
-
+    
     private void getCodeToPropagate() {
         Set<StaticAndField> usedStaticAndFields = new HashSet<StaticAndField>();
         // from map key->Set<StaticAndField>  to Set<StaticAndField>
@@ -460,7 +402,7 @@ public class StaticsProp {
         }
     }   
     
-    // return the JFieldDeclaration in SIRGlobal s for field name f.
+    /** return the JFieldDeclaration in SIRGlobal s for field name f. */
     private JFieldDeclaration getFieldDecl(SIRGlobal s, String f) {
         JFieldDeclaration[] fields = s.getFields();
         for (int i = 0; i < fields.length; i++) {
@@ -471,8 +413,8 @@ public class StaticsProp {
         throw new IllegalArgumentException("no JFieldDeclaration for " + f);
     }
 
-    // Return a list (in original order) of assignments in static 
-    // sections to a field with name f.
+    /** Return a list (in original order) of assignments in static 
+     * sections to a field with name f. */
     private List<JStatement> getFieldAssignments(SIRGlobal s, 
 						     final String f) {
         JMethodDeclaration[] methods = s.getMethods();
@@ -524,7 +466,7 @@ public class StaticsProp {
     // Propagate fields from static sections to their uses
     // --------------------------------------------------------------------
     
-    /*
+    /**
      * For each filter or container requiring static data:give it its own copy.
      * 
      *  Fields are renamed apart in each copy.  We maintain a map from each
@@ -539,13 +481,11 @@ public class StaticsProp {
      *  Changes for multiple fields will end up in arbitrary order with 
      *  respect to each other. (More work if have tom implement back slice).
      */
-    private void propagateIntoStreams(SIRStream str, final boolean doFilters) {
+    private void propagateIntoStreams(SIRStream str) {
         IterFactory.createFactory().createIter(str).accept(
             new EmptyStreamVisitor() {
                 public void postVisitStream(SIRStream self,
                         SIRIterator iter) {
-                    if (doFilters && self instanceof SIRPhasedFilter ||
-                        !doFilters && !(self instanceof SIRPhasedFilter)) {
                     String streamIdent = self.getIdent();
                     Set<StaticAndField> toPropagate = 
                         streamIdentToField.get(streamIdent);
@@ -610,7 +550,7 @@ public class StaticsProp {
                         /////////////////////////////////////////////////
                         updateReferences(self,namesInStream);
                     }
-                    }}
+                }
                 });
         /////////////////////////////////////////////////////
         // (6) map from each synonym for a field name to the
@@ -635,6 +575,16 @@ public class StaticsProp {
         }
     }
     
+    /** Shape of a translated static variable name, using 
+     * {@link #newName(at.dms.kjc.sir.lowering.StaticsProp.StaticAndField, Map) newName} 
+     * and {@link #makeNewName(String) makeNewName}. 
+     * Leading _ to indicate a generated name, 
+     * double _ after segment name, field name, and uid. 
+     */
+    private static java.util.regex.Pattern prefixPattern;
+    static {
+        prefixPattern = java.util.regex.Pattern.compile("_\\w+__\\w+__\\d+__");
+    }
 
     /** How many variables have been renamed.  Used to uniquify names. */
     private static int counter = 0;
@@ -648,25 +598,32 @@ public class StaticsProp {
      */
     private static String makeNewName(String oldName)
     {
+        // XXX: Need to be able to identify the end of a name generated
+        // here in shareStaticVariables().
         String name =  oldName + "__" + counter;
         counter++;
         return name;
     }
     
-    // make a new name and add a mapping for the new name to 
-    // staticNameToNewNames
+    /** make a new name and add a mapping for the new name to 
+     * staticNameToNewNames. */
     private static String newName(StaticAndField sf, 
 				  Map<StaticAndField,Set<String>> staticNameToNewNames) {
-        String newname =  sf.getTheStatic() + "_" 
-	                  + makeNewName(sf.getTheField());
+        // There is a tension here between making names that the programmer
+        // can not make, versus performing StreamIt to StreamIt xlation.
+        // Compromise is to prefix with "_"
+        // XXX: Need to be able to identify the end of a name generated
+        // here in shareStaticVariables().
+        String newname =  "_" + sf.getTheStatic() + "__" 
+	                  + makeNewName(sf.getTheField()) + "__";
         addToMapValueSet(staticNameToNewNames, sf, newname);
         return newname;
     }
     
 
-    // Mung names.  Works in place!  pass it clones of theDecl, theCode.
-    // Uses visitors to JFieldAccessExpression, to JFieldDeclaration
-    // for field names.
+    /** Mung names.  Works in place!  pass it clones of theDecl, theCode.
+     * Uses visitors to JFieldAccessExpression and to JFieldDeclaration
+     * for field names. */
     private void mungFieldName(StaticAndField sf, final String newFieldName,
                                JFieldDeclaration theDecl, 
 			       List<JStatement> theCode) {
@@ -680,10 +637,10 @@ public class StaticsProp {
                                                  JExpression left, 
                                                  String ident) {
                     super.visitFieldExpression(self,left,ident);
-                    JExpression newLeft = 
-                      new JTypeNameExpression(left.getTokenReference(), 
-                                              staticClassName);
                     if (ident.equals(oldFieldName)) {
+                        JExpression newLeft = 
+                            new JTypeNameExpression(left.getTokenReference(), 
+                                                    staticClassName);
                         //set prefix as would appear in client code
                         self.setPrefix(newLeft);
                     }
@@ -691,6 +648,7 @@ public class StaticsProp {
                 });
         }
         
+        // change to newFieldName in field declaration.
         theDecl.accept(new KjcEmptyVisitor() {
                 public void visitFieldDeclaration(JFieldDeclaration self, 
                                                   int modifiers, 
@@ -713,7 +671,7 @@ public class StaticsProp {
             });
     }
     
-    /*
+    /**
      * Put a field declaration into a SIRStream
      * either as a field (for filters)
      * or in the beginning of an init as a local declaration (for containers)
@@ -732,7 +690,7 @@ public class StaticsProp {
         }
     }
     
-    /*
+    /**
      * Put a list of statements into the init function of a SIRStream 
      * after any JVariableDeclarationStatement's
      */
@@ -746,10 +704,10 @@ public class StaticsProp {
         while (stmtIter.hasNext() 
                && stmtIter.next() instanceof JVariableDeclarationStatement){}
         // add
-        body.addAllStatements((int)Math.max(0, stmtIter.previousIndex()), theCode);
+        body.addAllStatements(stmtIter.previousIndex(), theCode);
     }
 
-    /*
+    /**
      * Update all field references of the form "StaticClass.oldName" 
      * to "this.newName"
      */
@@ -820,7 +778,7 @@ public class StaticsProp {
          * (for overriding)
          * 
          * @param   str    a SIRStream
-         * @return  true if fields and methods in this SIRStream should be 
+         * @return  true if fields, methods, parameters in this SIRStream should be 
          *          visited.  false otherwise.
          */
     
@@ -1040,6 +998,109 @@ public class StaticsProp {
         }
     }
 
+    
+    /**
+     * Share all propagated statics in a SIRCodeUnit.
+     * <br/>
+     * A SIRCodeUnit is anything with fields and methods, and is used in some back ends to collect the code
+     * to run on a particular device.
+     * @param codeUnit  A code unit that can refer to any static variable under several names.
+     * @param prefixAssociations The map returned from {@link #propagate(SIRStream, Set) propagate}.
+     */
+    public static void shareStaticVars (SIRCodeUnit codeUnit,
+            Map<String,Set<String>> prefixAssociations) {
 
+        // idea: since various compiler passes add suffixes to variables, we are mostly
+        // working just from the regular expression pattern of an internal name for a 
+        // propagated static variable.  The associations are passed only as a sanity check.
+        
+        // declare final for access within embedded visitor classes.
+        final Map<String,Set<String>> prefixAssociationsf = prefixAssociations;
+        final Map<String,Set<String>> fieldAssociations = new HashMap<String,Set<String>>();
+        final Set<String> isInitializedField = new HashSet<String>();
+        
+        // for any field declaration declaring a base name + suffix
+        // if it is the first such declaration give it just the base name
+        // if it is a subsequent declaration, remove it from the field declarations.
+        
+        List<JFieldDeclaration> processedDeclarations = new LinkedList<JFieldDeclaration>();
 
+        for (JFieldDeclaration f : codeUnit.getFields()) {
+            String ident = f.getVariable().getIdent();
+            Matcher mr = prefixPattern.matcher(ident);
+            if (mr.lookingAt()) {
+                assert prefixAssociationsf == null || prefixAssociationsf.containsKey(mr.group()) :
+                    "program variable " + ident + " mimics internal format of static variables";
+                addToMapValueSet(fieldAssociations, mr.group(), ident);
+                if (f.getVariable().getValue() != null) {
+                    // initialized
+                    assert isInitializedField.contains(mr.group()) 
+                        || fieldAssociations.get(mr.group()).size() == 1:
+                        "Compiler error " + mr.group() + " not initialized";
+                    isInitializedField.add(mr.group());
+                }
+                if (fieldAssociations.get(mr.group()).size() == 1) {
+                    f.getVariable().setIdent(mr.group());
+                    processedDeclarations.add(f);
+                }
+            } else {
+                processedDeclarations.add(f);
+            }
+        }
+        codeUnit.setFields(processedDeclarations.toArray(new JFieldDeclaration[processedDeclarations.size()]));
+        
+        // visit all methods and update field names in references.
+        // (print out any local variables propagated from statics: may want to add detection and
+        // rewriting for locals if sufficient exist.)
+        for (JMethodDeclaration m : codeUnit.getMethods()) {
+//            final Map<String,Set<String>> localsAssociations = new HashMap<String,Set<String>>();
+
+            m.accept(new SLIREmptyVisitor(){
+                
+                
+// check local variables and report for now: have not yet seen a local duplicated.
+//                public void visitVariableDeclarationStatement(JVariableDeclarationStatement self,
+//                        JVariableDefinition[] vars) {
+//                    super.visitVariableDeclarationStatement(self,vars);
+//                    for (JVariableDefinition var : vars) {
+//                        String ident = var.getIdent();
+//                        Matcher mr = prefixPattern.matcher(ident);
+//                        if (mr.lookingAt()) {
+//                            assert prefixAssociationsf == null || prefixAssociationsf.containsKey(mr.group()) :
+//                                "program variable " + ident + " mimics internal format of static variables";
+//                            addToMapValueSet(localsAssociations, mr.group(), ident);
+//                            if (var.hasInitializer()) {
+//                                System.err.println( ident + " is initialized");
+//                            }
+//                        }
+//                    }
+//                }
+
+                // make all field acesses reference the base name.
+                public void visitFieldExpression(JFieldAccessExpression self,
+                        JExpression left,
+                        String ident) {
+                    super.visitFieldExpression(self,left,ident);
+                    Matcher mr = prefixPattern.matcher(ident);
+                    if (mr.lookingAt()) {
+                        assert fieldAssociations.containsKey(mr.group());
+                        self.setIdent(mr.group());
+                    }
+                }
+                
+            });
+            
+//            if (! localsAssociations.isEmpty()) {
+//                System.err.println("Locals associations in StaticsProp: tell Allyn");
+//                for (String staticName : localsAssociations.keySet()) {
+//                    System.err.print(staticName + ":");
+//                    for (String ident : localsAssociations.get(staticName)) {
+//                        System.err.print(" " + ident);
+//                    }
+//                    System.err.println();
+//                }
+//            }
+
+        }
+    }
 }

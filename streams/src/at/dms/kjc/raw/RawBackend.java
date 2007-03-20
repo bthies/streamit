@@ -72,7 +72,7 @@ public class RawBackend {
         System.out.println("Running Constant Prop and Unroll...");
         Set<SIRGlobal> theStatics = new HashSet<SIRGlobal>();
         if (global != null) theStatics.add(global);
-        Map associatedGlobals = StaticsProp.propagateIntoContainers(str,theStatics);
+        Map associatedGlobals = StaticsProp.propagate(str,theStatics);
         ConstantProp.propagateAndUnroll(str,true);
         System.out.println("Done Constant Prop and Unroll...");
 
@@ -190,7 +190,7 @@ public class RawBackend {
                 RemoveMultiPops.doit(str);
             }
 
-            StaticsProp.propagateIntoFilters(str, theStatics);
+            /*StaticsProp.propagateIntoFilters(str, theStatics);*/
 
             if (KjcOptions.sjtopipe) {
                 SJToPipe.doit(str);

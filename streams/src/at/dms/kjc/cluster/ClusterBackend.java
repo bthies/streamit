@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.122 2007-03-19 17:58:13 thies Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.123 2007-03-20 23:12:38 dimock Exp $
 package at.dms.kjc.cluster;
 
 import at.dms.kjc.flatgraph.FlatNode;
@@ -132,7 +132,7 @@ public class ClusterBackend {
         Set<SIRGlobal> statics = new HashSet<SIRGlobal>();
         if (global != null)
             statics.add(global);
-        StaticsProp.propagateIntoContainers(str, statics);
+        StaticsProp.propagate/*IntoContainers*/(str, statics);
 
         if (debugging) {
             System.err.println("// str before Constant Prop");
@@ -260,6 +260,7 @@ public class ClusterBackend {
         // set up for future estimateCode / estimateLocals calls.
         Estimator.estimate(str);
 
+        
         // How many systems will be running this code.
         int hosts = KjcOptions.cluster;
         
@@ -393,7 +394,7 @@ public class ClusterBackend {
                 }
             }
 
-            StaticsProp.propagateIntoFilters(ssg.getTopLevelSIR(), statics);
+            /*taticsProp.propagateIntoFilters(ssg.getTopLevelSIR(), statics);*/
 
             if (KjcOptions.sjtopipe) {
                 // may replace SIROperators!

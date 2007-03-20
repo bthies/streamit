@@ -4,6 +4,8 @@ package at.dms.kjc.sir.lowering;
 
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
+import at.dms.kjc.spacetime.SpaceTimeBackend;
+
 import java.util.Hashtable;
 
 /**
@@ -28,6 +30,9 @@ public class FinalUnitOptimize {
      */
     
     public void optimize(SIRCodeUnit unit) {
+        // remove multiple copies of propagated static variables.
+        StaticsProp.shareStaticVars(unit,null);
+
         ArrayDestroyer arrayDest=new ArrayDestroyer();
         for (JMethodDeclaration method : unit.getMethods()) {
             if (! optimizeThisMethod(unit,method)) {

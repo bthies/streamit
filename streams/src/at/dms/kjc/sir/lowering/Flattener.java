@@ -43,7 +43,7 @@ public class Flattener {
         System.err.print("Running Constant Prop and Unroll... ");
         Set<SIRGlobal> theStatics = new HashSet<SIRGlobal>();
         if (global != null) theStatics.add(global);
-        Map associatedGlobals = StaticsProp.propagateIntoContainers(str,theStatics);
+        Map associatedGlobals = StaticsProp.propagate(str,theStatics);
         ConstantProp.propagateAndUnroll(str,true);
         System.err.println("done.");
 
@@ -120,8 +120,6 @@ public class Flattener {
         FieldInitMover.moveStreamInitialAssignments(str,
                                                     FieldInitMover.IGNORE_ARRAY_INITIALIZERS);
         System.err.println("done.");
-
-        associatedGlobals = StaticsProp.propagateIntoFilters(str,theStatics);
 
         if (KjcOptions.sjtopipe) {
             SJToPipe.doit(str);

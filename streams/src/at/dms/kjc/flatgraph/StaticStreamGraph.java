@@ -948,21 +948,22 @@ public class StaticStreamGraph {
             FlatNode upstream = edge.getUpstreamNode();
             FlatNode downstream = edge.getDownstreamNode();
             if (upstream.getEdges().length > 0) {
+                // the upstream FlatNode has a single edge to a null Joiner.  
+                // Remove the edge between the joiner and the upstream node.
                 assert upstream.getEdges().length == 1 && upstream.getEdges()[0].isNullJoiner();
                 upstream.getEdges()[0].removeBackEdge(upstream);
                 upstream.removeEdges();
             }
             if (downstream.incoming.length > 0) {
+                // the downstream node has a single edge to a null splitter. ... 
                 assert downstream.incoming.length == 1 && downstream.incoming[0].isNullSplitter();
-                try {
-                    downstream.incoming[0].removeBackEdge(downstream);
-                } catch (NullPointerException e) {
-                    // TODO: this shouldn't happen but it does
-                }
+                downstream.incoming[0].removeForwardEdge(downstream);
                 downstream.removeIncoming();
             }
+            // restore original connectivity of FlatNode's
             FlatNode.addEdges(upstream,downstream);
         }
+        // restore original information for filters.
         for (int i = 0; i < inputs.length; i++) {
             if (inputs[i].contents instanceof SIRFilter) {
                 SIRFilter f = (SIRFilter)inputs[i].contents;

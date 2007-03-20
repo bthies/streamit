@@ -59,20 +59,20 @@ CFLAGS = -O2
 all: mpeg2decode mpeg2encode
 
 mpeg2decode:
-	cd src/mpeg2dec; make 'CC=$(CC)' \
+	cd mpeg2dec/src; make 'CC=$(CC)' \
 	'CFLAGS=$(CFLAGS) $(USE_DISP) $(USE_SHMEM) $(INCLUDEDIR)' \
 	'LIBS=$(LIBS)' 'LIBRARYDIR=$(LIBRARYDIR)'
 
 mpeg2encode:
-	cd src/mpeg2enc; make 'CC=$(CC)' 'CFLAGS=$(CFLAGS)'
+	cd mpeg2enc/src; make 'CC=$(CC)' 'CFLAGS=$(CFLAGS)'
 
 pc:
-	cd src/mpeg2dec; make pc 'CC=$(CC)' 'CFLAGS=$(CFLAGS)'
-	cd src/mpeg2enc; make pc 'CC=$(CC)' 'CFLAGS=$(CFLAGS)'
+	cd mpeg2dec/src; make pc 'CC=$(CC)' 'CFLAGS=$(CFLAGS)'
+	cd mpeg2enc/src; make pc 'CC=$(CC)' 'CFLAGS=$(CFLAGS)'
 
 clean:
-	cd src/mpeg2dec; make clean
-	cd src/mpeg2enc; make clean
+	cd mpeg2dec/src; make clean
+	cd mpeg2enc/src; make clean
 
 test:
 	cd verify; ./verify

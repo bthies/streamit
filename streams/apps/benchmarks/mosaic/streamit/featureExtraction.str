@@ -238,7 +238,7 @@ float[320][240]->imageAndFeatures
 filter chooseEigsAndHighlight(int imageWidth, int imageHeight)
 {
 	float[320][240] eigenMatrix;
-	bestFeatures[60] best;
+	bestFeatures[40] best;
 	int h;
 	boolean inPatch;
 	imageAndFeatures featExtOutput;

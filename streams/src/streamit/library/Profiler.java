@@ -106,24 +106,24 @@ public class Profiler {
     public static final int NUM_OPS = OP_TO_NAME.length;
 
     // counts of all operations
-    private static int floatTotal = 0;
-    private static int intTotal = 0;
-    private static int boolTotal = 0;
+    private static long floatTotal = 0;
+    private static long intTotal = 0;
+    private static long boolTotal = 0;
 
     // counts of all communication
-    private static int pushTotal = 0;
-    private static int popTotal = 0;
+    private static long pushTotal = 0;
+    private static long popTotal = 0;
 
     // counts of specific operations
-    private static int[] floatOps = new int[NUM_OPS];
-    private static int[] intOps = new int[NUM_OPS];
-    private static int[] boolOps = new int[NUM_OPS];
+    private static long[] floatOps = new long[NUM_OPS];
+    private static long[] intOps = new long[NUM_OPS];
+    private static long[] boolOps = new long[NUM_OPS];
 
     // counts of how many times each operation ID executed.  There is
     // an ID assigned to each static arithmetic operation by the
     // frontend.  This is similar to a line number, except that there
     // could be multiple operation ID's per line.
-    static int[] idCounts;
+    static long[] idCounts;
     // the actual line of code that is being computed at a given id
     static String[] idCode;
 
@@ -190,7 +190,7 @@ public class Profiler {
      */
     public static void setNumIds(int numIds) {
         // initialize arrays
-        idCounts = new int[numIds];
+        idCounts = new long[numIds];
         idCode = new String[numIds];
     }
 
@@ -245,7 +245,7 @@ public class Profiler {
      */
     private static void summarize(PrintStream out) throws IOException {
         // total ops 
-        int opsTotal = floatTotal + intTotal + boolTotal;
+        long opsTotal = floatTotal + intTotal + boolTotal;
         out.println("Total ops:    " + opsTotal);
         out.println("  float ops:  " + floatTotal);
         out.println("  int ops:    " + intTotal);

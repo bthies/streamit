@@ -32,7 +32,16 @@
 
 include $(STREAMIT_HOME)/misc/Makefile.vars
 
-JAVAC           = javac
+# Under Cygwin, translate the CLASSPATH before sending it to java(c)
+ifeq ($(STRC_HOST_TYPE), x86-windows)
+  TRANSLATED_PATH = $(shell cygpath -pw "$(CLASSPATH)")
+  JAVAC           = javac -cp "$(TRANSLATED_PATH)"
+  JAVA            = java -cp "$(TRANSLATED_PATH)"
+else
+  JAVAC           = javac
+  JAVA            = java
+endif
+
 DEBUG_OPT       = -g
 JAVA_VERSION    = -source 1.5 -target 1.5
 JAVA_OPT        = -nowarn $(JAVA_VERSION) 
@@ -50,12 +59,12 @@ all: $(JAVA_SRCS)
 	$(MAKE) moreall
 
 moreall:
-	(cd streamit/frontend; javac `find . -name "*.java"`)
-	(cd streamit/library; javac `find . -name "*.java"`)
-	(cd streamit/misc; javac `find . -name "*.java"`)
-	(cd streamit/scheduler1; javac `find . -name "*.java"`)
-	(cd streamit/scheduler2; javac `find . -name "*.java"`)
-	(cd at; javac `find . -name "*.java"`)
+	(cd streamit/frontend; `find . -name "*.java" | xargs -tn1 $(JAVAC)`)
+	(cd streamit/library; `find . -name "*.java" | xargs -tn1 $(JAVAC)`)
+	(cd streamit/misc; `find . -name "*.java" | xargs -tn1 $(JAVAC)`)
+	(cd streamit/scheduler1; `find . -name "*.java" | xargs -tn1 $(JAVAC)`)
+	(cd streamit/scheduler2; `find . -name "*.java" | xargs -tn1 $(JAVAC)`)
+	(cd at; `find . -name "*.java" | xargs -tn1 $(JAVAC)`)
 
 %.class: %.java
 	$(JAVAC) $(JAVAC_FLAGS) $<
@@ -63,12 +72,12 @@ moreall:
 %.java : %.opt
 	@$(RM) $*.java
 	cd $(dir $<) && \
-	java at.dms.compiler.tools.optgen.Main $(notdir $<)
+	$(JAVA) at.dms.compiler.tools.optgen.Main $(notdir $<)
 
 %.java %TokenTypes.txt: %.g
 	@$(RM) $*.java
 	cd $(dir $<) && \
-	java antlr.Tool $(notdir $<)
+	$(JAVA) antlr.Tool $(notdir $<)
 
 
 ###############################################################################
@@ -176,19 +185,19 @@ at/dms/kjc/KjcScanner.java : at/dms/compiler/resource/skeleton.shared \
 	../3rdparty/java_cup/runtime/lr_parser.class
 	@# may need to remove old version before rebuilding
 	@rm -f at/dms/kjc/KjcScanner.java
-	java JFlex.Main -d at/dms/kjc/ -skel at/dms/compiler/resource/skeleton.shared at/dms/kjc/Kjc.flex
+	$(JAVA) JFlex.Main -d at/dms/kjc/ -skel at/dms/compiler/resource/skeleton.shared at/dms/kjc/Kjc.flex
 
 at/dms/kjc/KjcTokenTypes.java : at/dms/kjc/Kjc.t $(KOPI_LEXGEN_TARGET)
 	@# may need to remove old version before rebuilding
 	@rm -f at/dms/kjc/KjcTokenTypes.java
 	cd $(dir $<) && \
-	java at.dms.compiler.tools.lexgen.Main -ditf $(notdir $<)
+	$(JAVA) at.dms.compiler.tools.lexgen.Main -ditf $(notdir $<)
 
 at/dms/kjc/KjcParser.java : at/dms/kjc/Kjc.g at/dms/kjc/KjcTokenTypes.java $(KOPI_ANTLR_TARGET)
 	@# may need to remove old version before rebuilding
 	@rm -f at/dms/kjc/KjcParser.java
 	cd $(dir $<) && \
-	java -mx64m at.dms.compiler.tools.antlr.compiler.Main $(notdir $<)
+	$(JAVA) -mx64m at.dms.compiler.tools.antlr.compiler.Main $(notdir $<)
 
 
 ###############################################################################

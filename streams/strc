@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.117 2007-03-19 17:20:24 dimock Exp $
+# $Id: strc,v 1.118 2007-03-22 18:33:12 psung Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -34,6 +34,14 @@ $rm = "rm";
 $make = "make";
 $have_fftw = "1";
 # END AUTOCONFISCATE
+
+# Detect cygwin and adjust java to use new classpath
+if ($ENV{"STRC_HOST_TYPE"} eq "x86-windows") {
+    my $translated_classpath = `cygpath -pw \"$ENV{"CLASSPATH"}\"`;
+    chop($translated_classpath);
+    $java = $java . " -cp \"$translated_classpath\"";
+    $javac = $javac . " -cp \"$translated_classpath\"";
+}
 
 # Turn off warnings: code is currently a mix of 1.4 and 1.5.
 $javac = $javac . " -nowarn";

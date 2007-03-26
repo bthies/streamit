@@ -703,8 +703,10 @@ public class StaticsProp {
         // iterate past JVariableDeclarationStatement's
         while (stmtIter.hasNext() 
                && stmtIter.next() instanceof JVariableDeclarationStatement){}
-        // add
-        body.addAllStatements(stmtIter.previousIndex(), theCode);
+        // The corner case with index == -1 below is putting statements into an empty init function.
+        int index = stmtIter.previousIndex();
+        if (index == -1) { index = 0; }
+        body.addAllStatements(index, theCode);
     }
 
     /**

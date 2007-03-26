@@ -1,13 +1,16 @@
 // testing:
 
-void->void pipeline YUVFileReader() {
+void->int pipeline YUVFileReader() {
     add FileReader<bit> ("../testvideos/mobile.cif");
     add BitStream2IntStream();
     int width = 352;
     int height = 288;
+    // testing code -- also done in IntraPrediction
+    /*
     add MacroblockMaker(width, height);
     add FrameBuilder(width, height);     
     add FramePrinter(width, height); 
+    */
 }
 
 /* ********************************************************

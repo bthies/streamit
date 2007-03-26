@@ -22,14 +22,14 @@
  * FOR TESTING: top level stream
  * 
  */
-/*
+
 
 void->void pipeline TESTTransforms() {
     
     add Int2x2Source();
     add Hadamard2x2();
     add Hadamard2x2();
-    /////
+    /*
     //add Int4x4Source();
     //add ForwardHadamard4x4();
     //add InverseHadamard4x4();
@@ -72,15 +72,14 @@ void->void pipeline TESTTransforms() {
     add FactorizedCoreInverseDCT4x4Transform();
     
     add Matrix4x4Printer();
-    //////
+    */
     add Matrix2x2Printer();
 }
 
-*/
 //////////////////////////////////////////////////////
 // INTERNALS
 //////////////////////////////////////////////////////
-/*
+
 int->int[4][4] filter IntTo4x4Matrix() {
     // 4x4 blocks are sent here in raster order
     // following filter converts the int stream to an int[4][4] stream
@@ -117,7 +116,7 @@ int[4][4]->int filter Matrix4x4ToInt() {
 	  pop();
     }
 }
-*/
+
 void->int[4][4] filter Int4x4Source() {
     
     int[4][4] test = {{1,2,3,4},
@@ -197,7 +196,7 @@ void->int[2][2] filter Int2x2Source() {
  * @input 4x4 matrix to be transformed
  * @output 4x4 matrix of result
  */
-int[4][4]->int[4][4] filter FactorizedCoreDCT4x4Transform() {    
+void->int[4][4] filter FactorizedCoreDCT4x4Transform() {    
 
     // test example
     int[4][4] EX1 = {{5,11,8,10},
@@ -220,11 +219,11 @@ int[4][4]->int[4][4] filter FactorizedCoreDCT4x4Transform() {
 			  {1,-1,-1, 2},
 			  {1,-2, 1,-1}};
     
-    work pop 1 push 1 {
+    work push 1 {
 	  
 	  int[4][4] product1;
 	  int[4][4] product2;
-	  int[4][4] input = peek(0);
+	  //int[4][4] input = peek(0);
 	  
 	  
 	  println("Factorized 4x4 DCT Core Transform");
@@ -235,10 +234,10 @@ int[4][4]->int[4][4] filter FactorizedCoreDCT4x4Transform() {
 		    int sumOfProducts = 0;
 		    //print(input[r][c]+" ");
 		    for (int i=0; i<4; i++) {
-			  //peek(0) = 4x4 block to be transformed
-			  //sumOfProducts += C[r][i]*EX2[i][c];
+			  // peek(0) = 4x4 block to be transformed
+			  sumOfProducts += C[r][i]*EX2[i][c];
 			  
-			  sumOfProducts += C[r][i]*input[i][c];
+			  //sumOfProducts += C[r][i]*input[i][c];
 
 		    }
 		    product1[r][c] = sumOfProducts;
@@ -247,7 +246,7 @@ int[4][4]->int[4][4] filter FactorizedCoreDCT4x4Transform() {
 		println(" ");
 	  }
 
-	  pop();
+	  //pop();
 
 	  // second matrix multiplication
 	  println("product2");

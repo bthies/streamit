@@ -6,7 +6,7 @@
  * The specification for MPEG-4 (Part 10) used is the ITU-T H-Series 
  * Recommendation for H.264.
  * 
- * @author <a href="mailto:shirleyf@gmail.com">Shirley Fung</a>
+ * @author <a href="mailto:shirley.mit07@gmail.com">Shirley Fung</a>
  * @file VideoProcessor.str
  * @version 1.0
  */
@@ -37,27 +37,27 @@
  */
 void->Frame pipeline VideoProcessor(int width, int height) {
 	
-	// video parameters, are specified here right now, but
-	// this will have to move to the main pipeline once this
-	// part has been tested
-	// int width = 352;
-	// int height = 288;
-	// int numPictures = 300; 
+    // video parameters, are specified here right now, but
+    // this will have to move to the main pipeline once this
+    // part has been tested
+    // int width = 352;
+    // int height = 288;
+    // int numPictures = 300; 
 
 	
 
-	// comment out for testing
-	add FileReader<bit> ("../testvideos/mobile.cif");
-	add BitStream2IntStream();
+    // comment out for testing
+    add FileReader<bit> ("../testvideos/mobile.cif");
+    add BitStream2IntStream();
 	
-	// for testing macroblockmaker and framebuilder
-	// add FakeVideoIntsGenerator();
-	
-	add MacroblockMaker(width, height);
-	add FrameBuilder(width, height);
-	
-	// for testing only
-	//add FramePrinter(width, height); 
+    // for testing macroblockmaker and framebuilder
+    // add FakeVideoIntsGenerator();
+    
+    add MacroblockMaker(width, height);
+    add FrameBuilder(width, height);
+     
+    // for testing only
+    //add FramePrinter(width, height); 
 
 }
 
@@ -79,9 +79,9 @@ void->Frame pipeline VideoProcessor(int width, int height) {
 struct Macroblock {
 	// For clarification, first number will index the row
 	// and second number will index the column
-	int[16][16] YSamples;
-	int[8][8] CbSamples;
-	int[8][8] CrSamples;
+    int[16][16] YSamples;
+    int[8][8] CbSamples;
+    int[8][8] CrSamples;
 }
 
 /**
@@ -101,21 +101,17 @@ struct Macroblock {
  */
 struct Frame {
       
-      int frameNumber;
-      int sliceType;
-	// QCIF 22w x 16h blocks
-	// For clarification, first number will index the row
-	// and second number will index the column
-	Macroblock[18][22] macroblocks;
+    int frameNumber;
+    int sliceType;
+    // QCIF 22w x 16h blocks
+    // For clarification, first number will index the row
+    // and second number will index the column
+    Macroblock[18][22] macroblocks;
 }
 
 
 
 /** 
- * ORIGINALLY WRITTEN BY MATTHEW DRAKE FROM MPEG2/BINARYFILE.STR.PRE
- * MODIFICATIONS BY SHIRLEY FUNG, changed code to work with values of 
- * 8 bits instead of the original 32.
- * 
  * Converts a byte stream into a sequence of integers. A byte represents a value.
  * 
  * Works with unsigned byte representation only, and currently expect that 
@@ -126,32 +122,32 @@ struct Frame {
  */
 bit->int filter BitStream2IntStream() {
 	
-	work pop 8 push 1 {
-  	
-		int some_int = 0;
-	      // perhaps the 2 powers should be initialized 
-		// to avoid computing it every time the filter iterates
-		int two_power = 1;
-		//println("Running BitStream2IntStream...");
-		for (int i = 0; i < 8; i++) {
-			// big endian, peek(0) of the byte is the most sig bit
-		      int ZeroOrOne = (int) peek(7-i);
-		      int add_int = ZeroOrOne * two_power;
-			two_power = two_power * 2;
-			some_int += add_int;
-			//print(peek(7-i));
-		}
+    work pop 8 push 1 {
+    
+	  int some_int = 0;
+	  // perhaps the 2 powers should be initialized 
+	  // to avoid computing it every time the filter iterates
+	  int two_power = 1;
+	  //println("Running BitStream2IntStream...");
+	  for (int i = 0; i < 8; i++) {
+	  	// big endian, peek(0) of the byte is the most sig bit
+	      int ZeroOrOne = (int) peek(7-i);
+    	      int add_int = ZeroOrOne * two_power;
+     		two_power = two_power * 2;
+     		some_int += add_int;
+     		//print(peek(7-i));
+	  }
 		//println("now to int value");
 		//print(some_int);
 
 		// pop all
 		for (int i=0; i<8; i++) {
-			pop();
+		    pop();
 		}
 	
 		push(some_int);
 	
-	}
+    }
 }
 
 /**
@@ -165,108 +161,102 @@ bit->int filter BitStream2IntStream() {
  * 		  Therefore, Y, Cb, Cr are stored in separate arrays.
  * @output A stream of macroblocks (struct).
  */
-int->Macroblock pipeline MacroblockMaker(int width, int height) {
-	
-
-
-
-
-	add splitjoin {
-		
-
-		// split inputs into planes;
+int->Macroblock pipeline MacroblockMaker(int width, int height) {	
+    
+    add splitjoin {		
+	  // split inputs into planes;
 	    
-		int numOfYValues = width*height;
-		int numOfCbCrValues = (int) width*height/4; // 4:2:0 downsampling scheme
-		int numOfValuesInFrame = numOfYValues + 2*numOfCbCrValues;		
+	  int numOfYValues = width*height;
+	  int numOfCbCrValues = (int) width*height/4; // 4:2:0 downsampling scheme
+	  int numOfValuesInFrame = numOfYValues + 2*numOfCbCrValues;		
 		
-		split roundrobin(numOfYValues, numOfCbCrValues, numOfCbCrValues);
+	  split roundrobin(numOfYValues, numOfCbCrValues, numOfCbCrValues);
 	
 		
-		int numOfHBlocks = (int) (width/16);
-		// reorganizes Y values
-		add splitjoin {
-			split roundrobin(16);
-			for (int i=0; i<numOfHBlocks; i++) {
-				add Identity<int>;
-			}
-			join roundrobin(256);
+	  int numOfHBlocks = (int) (width/16);
+	  // reorganizes Y values
+	  add splitjoin {
+	    	split roundrobin(16);
+	    	for (int i=0; i<numOfHBlocks; i++) {
+	    	    add Identity<int>;
+	    	}
+		join roundrobin(256);
+	  }
+	
+	  // reorganizes Cb values
+	  add splitjoin {
+	      split roundrobin(8);
+	      for (int i=0; i<numOfHBlocks; i++) {
+		    add Identity<int>;
 		}
+		join roundrobin(64);
+	  }
 	
-		// reorganizes Cb values
-		add splitjoin {
-			split roundrobin(8);
-			for (int i=0; i<numOfHBlocks; i++) {
-				add Identity<int>;
-			}
-			join roundrobin(64);
+	  // reorganizes Cr values
+	  add splitjoin {
+		split roundrobin(8);
+		for (int i=0; i<numOfHBlocks; i++) {
+		    add Identity<int>;
 		}
-	
-		// reorganizes Cr values
-		add splitjoin {
-			split roundrobin(8);
-			for (int i=0; i<numOfHBlocks; i++) {
-				add Identity<int>;
-			}
-			join roundrobin(64);
+		join roundrobin(64);
+	  }
+		
+	  // collects all samples for a 16x16 macroblock
+	  join roundrobin(256,64,64); 
+	  // 4:2:0 downsampling scheme for a macroblock
+	  // at this point, 256+64+64 pixels represent a set of 
+	  // YCbCr values for a macroblock
+	  // 256+64+64 = 384
+    }
+    
+    add int->Macroblock filter {
+	  
+	  
+	  
+	  // stuff 384 values into a macroblock
+	  work pop 384 push 1 {
+		
+		// at each iteration of the work function, 
+		// it will work on the macroblocks, in raster order
+		//println("Stuffing values into a Macroblock");
+		Macroblock newMacroblock;
+		
+		int pixelCount=0;
+		
+		// stuff Y values into a macroblock struct;
+		for (int row=0; row<16; row++) {
+		    for (int col=0; col<16; col++) {
+			  newMacroblock.YSamples[row][col] = peek(pixelCount);
+			  pixelCount++;
+		    }
 		}
 		
-		// collects all samples for a 16x16 macroblock
-		join roundrobin(256,64,64); 
-		// 4:2:0 downsampling scheme for a macroblock
-		// at this point, 256+64+64 pixels represent a set of 
-		// YCbCr values for a macroblock
-		// 256+64+64 = 384
-	}
-	
-	add int->Macroblock filter {
+		// stuff Cb values 
+		for (int row=0; row<8; row++) {
+		    for (int col=0; col<8; col++) {
+			  newMacroblock.CbSamples[row][col] = peek(pixelCount);
+			  pixelCount++;
+		    } 
+		}
 		
-	      
-	      
-		// stuff 384 values into a macroblock
-		work pop 384 push 1 {
-		      
-			// at each iteration of the work function, 
-			// it will work on the macroblocks, in raster order
-			//println("Stuffing values into a Macroblock");
-			Macroblock newMacroblock;
-			
-			int pixelCount=0;
-				
-			// stuff Y values into a macroblock struct;
-			for (int row=0; row<16; row++) {
-				for (int col=0; col<16; col++) {
-					newMacroblock.YSamples[row][col] = peek(pixelCount);
-					pixelCount++;
-		     		}
-			}
-				
-			// stuff Cb values 
-			for (int row=0; row<8; row++) {
-			      for (int col=0; col<8; col++) {
-				      newMacroblock.CbSamples[row][col] = peek(pixelCount);
-					pixelCount++;
-				}
-			}
-			
-			
-			for (int row=0; row<8; row++) {
-				for (int col=0; col<8; col++) {
-					newMacroblock.CrSamples[row][col] = peek(pixelCount);
-					pixelCount++;
-				}
-			}
-				
-			
-			push(newMacroblock);
-			
-			// pop all
-			for (int i=0; i<384; i++) {
-				pop();
-			}
-			
-		}	
-	}
+		
+		for (int row=0; row<8; row++) {
+		    for (int col=0; col<8; col++) {
+			  newMacroblock.CrSamples[row][col] = peek(pixelCount);
+			  pixelCount++;
+		    }
+		}
+		
+		
+		push(newMacroblock);
+		
+		// pop all
+		for (int i=0; i<384; i++) {
+		    pop();
+		}
+		
+	  }	
+    }
 }
 
 /**
@@ -280,51 +270,51 @@ Macroblock->Frame filter FrameBuilder(int width, int height) {
 	
       
 	
-      int numOfHBlocks;
-      int numOfVBlocks;
-      int numOfMacroblocks;
-      int frameCount;
-	Frame newFrame;
+    int numOfHBlocks;
+    int numOfVBlocks;
+    int numOfMacroblocks;
+    int frameCount;
+    Frame newFrame;
 	
-	// taking this out for now
-      init {
-	    
-	      numOfHBlocks = (int) (width/16); 
-		// number of macroblocks in the horizontal direction
-		numOfVBlocks = (int) (height/16); 
-		// number of macroblocks in the vertical direction
-		numOfMacroblocks = (int) (width/16)*(height/16); 
-		// number of macroblocks in a frame
-		frameCount = 0;	
+    // taking this out for now
+    init {
+	  
+	  numOfHBlocks = (int) (width/16); 
+	  // number of macroblocks in the horizontal direction
+	  numOfVBlocks = (int) (height/16); 
+	  // number of macroblocks in the vertical direction
+	  numOfMacroblocks = (int) (width/16)*(height/16); 
+	  // number of macroblocks in a frame
+	  frameCount = 0;	
+	  
+    }
+    
+    // work pop numOfMacroblocks push 1 {
+    work pop (width/16)*(height/16) push 1 {
+	  
+	  //println("Running FrameBuilder...");
+	  //Frame newFrame;                                                                                                               
+	  for (int row=0; row<numOfVBlocks; row++) {
 		
-	}
-
-	// work pop numOfMacroblocks push 1 {
-	work pop (width/16)*(height/16) push 1 {
-		
-	      //println("Running FrameBuilder...");
-		//Frame newFrame;                                                                                                               
-		for (int row=0; row<numOfVBlocks; row++) {
-	      	      
-		      for (int col=0; col<numOfHBlocks; col++) {
-			    //println(row+" "+col+" "+(row*numOfHBlocks+col)+" ");
-			     	newFrame.macroblocks[row][col] = peek(row*numOfHBlocks+col);
-				
-			}
-	      }
-		
-		newFrame.frameNumber = frameCount;
-		frameCount++;
-		push(newFrame);
-		
-		// pop all
-		for (int i=0; i<numOfMacroblocks; i++) {
-			pop();
+		for (int col=0; col<numOfHBlocks; col++) {
+		    //println(row+" "+col+" "+(row*numOfHBlocks+col)+" ");
+		    newFrame.macroblocks[row][col] = peek(row*numOfHBlocks+col);
+		    
 		}
-		
-		
-	}
-
+	  }
+	  
+	  newFrame.frameNumber = frameCount;
+	  frameCount++;
+	  push(newFrame);
+	  
+	  // pop all
+	  for (int i=0; i<numOfMacroblocks; i++) {
+		pop();
+	  }
+	  
+	  
+    }
+    
 }
 
 
@@ -340,13 +330,13 @@ Macroblock->Frame filter FrameBuilder(int width, int height) {
 
 void->int filter FakeVideoIntsGenerator() {
 	
-	int x = 0;
-
-	work push 1 {
-	    
-		push(x++);
-	   
-	}
+    int x = 0;
+    
+    work push 1 {
+	  
+	  push(x++);
+	  
+    }
 }	
 
 /**
@@ -354,63 +344,63 @@ void->int filter FakeVideoIntsGenerator() {
  * this all works.
  */
 Frame->void filter FramePrinter(int width, int height) {
-	
-	
-      int numOfHBlocks;
-	int numOfVBlocks;
-	
-	init {
-
-	      numOfHBlocks = (int) (width/16); 
-		// number of macroblocks in the horizontal direction
-		numOfVBlocks = (int) (height/16); 
-		// number of macroblocks in the vertical direction
-	
-	}
-	work pop 1 {
-		
-		Frame currentFrame = peek(0);
-		
-		println(" ");
-		print("Frame ");
-		print(currentFrame.frameNumber);
-		println(" ");
-		
-		for (int row=0; row<numOfVBlocks; row++) {
-			for (int col=0; col<numOfVBlocks; col++) {
-				
-				Macroblock mBlock = currentFrame.macroblocks[row][col];
-				println("printing macroblock: row-"+row+", col-"+col);
-
-				println("Y Samples");
-				for (int r=0; r<16; r++) {
-					for (int c=0; c<16; c++) {
-						print(mBlock.YSamples[r][c]+" ");
-					}
-					println(" ");
-				}
-				
-				println("Cb Samples");
-				for (int r=0; r<8; r++) {
-					for (int c=0; c<8; c++) {
-						print(mBlock.CbSamples[r][c]+" ");
-					}
-					println(" ");
-				}
-				
-				println("Cr Samples");
-				for (int r=0; r<8; r++) {
-					for (int c=0; c<8; c++) {
-						print(mBlock.CrSamples[r][c]+" ");
-					}
-					println(" ");
-				}
-				
-				println(" ");
-			}
+    
+    
+    int numOfHBlocks;
+    int numOfVBlocks;
+    
+    init {
+	  
+	  numOfHBlocks = (int) (width/16); 
+	  // number of macroblocks in the horizontal direction
+	  numOfVBlocks = (int) (height/16); 
+	  // number of macroblocks in the vertical direction
+	  
+    }
+    work pop 1 {
+	  
+	  Frame currentFrame = peek(0);
+	  
+	  println(" ");
+	  print("Frame ");
+	  print(currentFrame.frameNumber);
+	  println(" ");
+	  
+	  for (int row=0; row<numOfVBlocks; row++) {
+		for (int col=0; col<numOfVBlocks; col++) {
+		    
+		    Macroblock mBlock = currentFrame.macroblocks[row][col];
+		    println("printing macroblock: row-"+row+", col-"+col);
+		    
+		    println("Y Samples");
+		    for (int r=0; r<16; r++) {
+			  for (int c=0; c<16; c++) {
+				print(mBlock.YSamples[r][c]+" ");
+			  }
+			  println(" ");
+		    }
+		    
+		    println("Cb Samples");
+		    for (int r=0; r<8; r++) {
+			  for (int c=0; c<8; c++) {
+				print(mBlock.CbSamples[r][c]+" ");
+			  }
+			  println(" ");
+		    }
+		    
+		    println("Cr Samples");
+		    for (int r=0; r<8; r++) {
+			  for (int c=0; c<8; c++) {
+				print(mBlock.CrSamples[r][c]+" ");
+			  }
+			  println(" ");
+		    }
+		    
+		    println(" ");
 		}
-		pop();	
-	}
+	  }
+	  pop();	
+    }
 	
 }
 

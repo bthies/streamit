@@ -70,7 +70,7 @@
 /**
  * TOP LEVEL STREAM
  */
-
+/*
 void->void pipeline PredictionModes16x16Luma() {
     add FakeBlockHVXGenerator(); 
  
@@ -87,7 +87,7 @@ void->void pipeline PredictionModes16x16Luma() {
     add FindBestPredictionMode16x16();
     add PredictionResultPrinter();
 }
-
+*/
 void->int filter FakeBlockHVXGenerator() {
     work push 289 {
 
@@ -132,8 +132,8 @@ void->int filter FakeBlockHVXGenerator() {
     }
 }
 
-int->void filter PredictionResultPrinter() {
-    work pop 290 {
+int->int filter PredictionResultPrinter() {
+    work pop 290 push 290{
 	  
 	  println("prediction results, residual");
 
@@ -150,7 +150,10 @@ int->void filter PredictionResultPrinter() {
 	  for (int i=257; i<290; i++) {
 		print(peek(i)+" ");
 	  }
-	  
+	  // push all
+	  for (int i=0; i<290; i++) {
+		push(peek(i));
+	  } 
 	  // pop all
 	  for (int i=0; i<290; i++) {
 		pop();
@@ -332,6 +335,11 @@ int->int filter Prediction16x16Mode2AndSAE() {
     // 'X'                    peek(288)
     work pop 289 push 290 {
 	  
+
+	  // note that this implementation is incomplete
+	  // if H pixels are unavailable, average is only taken with V
+	  // if V pixels are unavailable, average is only taken with H
+	  // this implementation here assumes both H and V are available
 	  println("Prediction16x16Mode2AndSAE");
 	  int DC = 16;
 	  for (int hv=256; hv<=287; hv++) {
@@ -388,7 +396,7 @@ int->int filter Prediction16x16Mode3AndSAE() {
 	  // H = sum((x+1)*(H[8+x]-H[6-x]))
 	  // case where x = 7
 	  // 8*(H[15]-H[-1]); H[-1] = 'X'
-	  int H = 8*(peek(271)-peek(288)) ; 
+	  int H = 8*(peek(271)-peek(288)); 
 	  for (int x=0; x<=6; x++) {
 		// H += (x+1)*(peek(256+8+x)-peek(256+6-x));
 		H += (x+1)*(peek(264+x)-peek(262-x));
@@ -398,9 +406,9 @@ int->int filter Prediction16x16Mode3AndSAE() {
 	  // V = sum((y+1)*(V[8+y]-V[6-y]))
 	  // case where y = 7
 	  // 8*(V[15]-V[-1]); V[-1] = 'X'
-	  int V = 8*(peek(287)-peek(288)) ; 
+	  int V = 8*(peek(287)-peek(288)); 
 	  for (int y=0; y<=6; y++) {
-		// V += (y+1)*(peek(272+8+y)-peek(272+6yx));
+		// V += (y+1)*(peek(272+8+y)-peek(272+6-y));
 		V += (y+1)*(peek(280+y)-peek(278-y));
 	  }
 
@@ -412,7 +420,8 @@ int->int filter Prediction16x16Mode3AndSAE() {
  	  for (int row=0; row<16; row++) {
 		
 		for (int col=0; col<16; col++) {
-		   
+		    
+		    // clipping
 		    int predicted = (a + b*(col-7) + c*(row-7) + 16) >> 5;
 		    if (predicted < 0) {
 			  predicted = 0;
@@ -442,4 +451,181 @@ int->int filter Prediction16x16Mode3AndSAE() {
 	  }
     } 
 }
+
+/////////////////////////////////////////////////
+// RECONSTRUCTION for INTRA PREDICTION
+/////////////////////////////////////////////////
+
+
+/**
+ * This filter takes 256 residual pixels, previously inverse transformed
+ * and inverse quantized, followed by the intra prediction mode (1),
+ * and HVX (33) pixels, will generate the HVX pixels of the reconstructed block.
+ *
+ * H = lower edge pixels (contains X)
+ * V = right edge pixels (contains X)
+ * X = lower right corner (already in H and V)
+ *
+ * Residual values are sent in raster scan order within a 16x16 macroblock.
+ * These blocks are predicted in 16x16 Luma Intra Prediction Mode. 
+ * 
+ * @input 256 residual values + mode (1) + HVX (33) values
+ * @output reconstructed HVX pixels (order: H, V, X)
+ */
+int->int filter Reconstruct16x16LumaIntraPredFromHVX() {
+    
+    work pop 290 push 33 {
+	  
+	  // H residuals (bottom edge): peek(240->255);
+	  // V residuals (right edge): peek(15+i*16); // i = [0,1,2,...15]
+
+	  // mode: peek(256)
+	  // H: peek(257->272)
+	  // V: peek(273->288)
+	  // X: peek(289)
+	  
+	  // check mode
+	  int mode = peek(256);
+	  if (mode == 0) { // VERTICAL
+		// push H's, bottom edge
+		for (int i=0; i<16; i++) {
+		    int predicted = peek(257+i);
+		    int residual = peek(240+i);
+		    push(predicted + residual);
+		}
+		// push V's, right edge
+		int predicted = peek(272);
+		for (int i=0; i<16; i++) {
+		    int residual = peek(15+i*16);
+		    push(predicted + residual);
+		    if (i == 15) {
+			  push(predicted + residual); // X
+		    }
+		}
+		
+	  } else if (mode == 1) { // HORIZONTAL
+		// push H's, bottom edge
+		int predicted = peek(288);
+		for (int i=0; i<16; i++) {
+		    int residual = peek(240+i);
+		    push(predicted + residual);
+		}
+		// push V's, right edge
+		for (int i=0; i<16; i++) {
+		    predicted = peek(273+i);
+		    int residual = peek(15+i*16);
+		    push(predicted + residual);
+		    if (i == 15) {
+			  push(predicted + residual); // X
+		    }
+		}
+		
+	  } else if (mode == 2) { // DC
+		int DC = 16;
+		for (int hv=257; hv<=288; hv++) {
+		    DC += peek(hv);
+		}
+		int predicted = (int) round(DC>>5); // DC Avg
+		
+		// push H's, bottom edge
+		for (int i=0; i<16; i++) {
+		    int residual = peek(240+i);
+		    push(predicted + residual);
+		}
+		// push V's, right edge
+		for (int i=0; i<16; i++) {
+		    int residual = peek(15+i*16);
+		    push(predicted + residual);
+		    if (i == 15) {
+			  push(predicted + residual); // X
+		    }
+		}
+		
+		
+	  } else if (mode == 3) { // PLANE
+		// reminder
+		// H residuals (bottom edge): peek(240->255);
+		// V residuals (right edge): peek(15+i*16); // i = [0,1,2,...15]
+		
+		// mode: peek(256)
+		// H: peek(257->272)
+		// V: peek(273->288)
+		// X: peek(289)
+		// a = 16 * (p[-1,15]+p[15,-1]) = 16 * (V[15]+H[15])
+		int a = 16*(peek(288)+peek(272));
+
+		
+		// H = sum((x+1)*(H[8+x]-H[6-x]))
+		// case where x = 7
+		// 8*(H[15]-H[-1]); H[-1] = 'X'
+		int H = 8*(peek(272)-peek(289)); 
+		for (int x=0; x<=6; x++) {
+		    // H += (x+1)*(peek(257+8+x)-peek(257+6-x));
+		    H += (x+1)*(peek(265+x)-peek(263-x));
+		}
+		
+		
+		// V = sum((y+1)*(V[8+y]-V[6-y]))
+		// case where y = 7
+		// 8*(V[15]-V[-1]); V[-1] = 'X'
+		int V = 8*(peek(288)-peek(289)) ; 
+		for (int y=0; y<=6; y++) {
+		    // V += (y+1)*(peek(273+8+y)-peek(273+6-y));
+		    V += (y+1)*(peek(281+y)-peek(279-y));
+		}
+		
+		int b = (5*H+32)>>6;
+		int c = (5*V+32)>>6;
+		
+		// push H's, bottom edge
+		for (int row=0; row<16; row++) {
+		    int col = 15; // fixed to right edge
+		    int residual = peek(240+row); 
+		    // row iterates column position here
+	   
+		    // clipping
+		    int predicted = (a + b*(col-7) + c*(row-7) + 16) >> 5;
+		    if (predicted < 0) {
+			  predicted = 0;
+		    } else if (predicted > 255) {
+			  predicted = 255;
+		    } else {
+			  // do nothing;
+		    }
+		    push(predicted + residual);
+		   
+		}
+		// push V's, right edge
+		for (int col=0; col<16; col++) {
+		    int row = 15; // fixed to bottom edge
+		    int residual = peek(15+col*16); 
+		    // col iterates row position here
+	   
+		    // clipping
+		    int predicted = (a + b*(col-7) + c*(row-7) + 16) >> 5;
+		    if (predicted < 0) {
+			  predicted = 0;
+		    } else if (predicted > 255) {
+			  predicted = 255;
+		    } else {
+			  // do nothing;
+		    }
+		    push(predicted + residual);
+		    if (col == 15) { // push X
+			  push (predicted + residual);
+		    }
+		}
+		
+		
+	  } else {
+		println("This macroblock has an invalid mode");
+	  }
+	  
+	  for (int i=0; i<290; i++) {
+		pop();
+	  }
+    }
+
+}
+
 

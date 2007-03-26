@@ -65,7 +65,7 @@
  * @input A-M + 16 pixels from the original block (total: 29 pixels)
  * @output recommended 4x4 luma prediction: ModeandPBlock4x4
  */
-int-int pipeline BestPredictionMode4x4 {
+int->int pipeline BestPredictionMode4x4 {
 	add CalculatePredictionModes4x4;
 	add FindBestPredictionMode4x4();
 }

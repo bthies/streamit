@@ -1,0 +1,471 @@
+/**
+ * @description
+ * This contains the StreamIt graph design for intraprediction used in 
+ * H.264.
+ *
+ * Reference: 
+ * http://www.vcodex.com 
+ * H.264/MPEG-4 Part 10: Intra Prediction
+ * 
+ * @author <a href="mailto:shirley.mit07@gmail.com">Shirley Fung</a>
+ * @file IntraPrediction.str
+ * @version 1.0
+ */
+
+/**
+ * List of TODOS
+ * - Clean up code for intra prediction
+ * - do Quantization
+ * 
+ */
+
+
+
+/**
+ * What's happening here:
+ * The goal for now is to implement the process for doing 16x16 intraprediction,
+ * and not have th4 4x4 intraprediction yet. The goal is to have both processes
+ * go on at the same time, and the decision between 16x16 or 4x4 will be made 
+ * after T/Q where the block with more zeros wins.
+ */
+
+/**
+ * Top level stream
+ */
+void->void pipeline IntraPrediction() {
+    int width = 352;
+    int height = 288;
+    add IntStream();
+    //add IntTo4x4Matrix();
+    //add Matrix4x4ToInt();
+    //add PrintInts();
+    //add LumaIntraPred16x16AndTQ(10);
+    add Luma16x16IntraPrediction16x16(width, height);
+    add PrintMBlockIntsResult();
+    
+}
+
+/**
+ * This is the main feedback structure of the 16x16 intra prediction stage. A 
+ * feedback loop design was chosen because of the fact that each predicted
+ * block must work from previously encoded and decoded samples. When a block
+ * is encoded and decoded.
+ * 
+ * Since intraprediction of a frame involves transform/quantization, it is grouped
+ * in this stage, and in the end, the output will be the transformed and 
+ * quantized macroblock along with its prediction mode.
+ *
+ * @input 256 (16x16) luma values (raster) of a macroblock (macroblocks are in 
+ *        raster scan order as it comes in)
+ * @output 256 luma values, transformed and quantized, followed by the prediction
+ *         mode chosen
+ */
+
+int->int feedbackloop Luma16x16IntraPrediction16x16(int width, int height) { 
+    
+    // 256 pixel values from original 16x16 block
+    // 16+16+1 pixel values of H, V, and X used for predicting the current block
+    // H = top horizontal pixels; V = left side vertical pixels
+    // X = top left pixel
+    join roundrobin(256, 33);
+    
+    int QStep = 10;
+    
+    body LumaIntraPred16x16AndTQ(QStep); 
+    // pipeline that does prediction, T and Q
+    
+    loop QTAndHVX(width, height, QStep); 
+    // pipeline that does Q, T, and delays side and top pixels to send back
+    split duplicate;
+    // output 256 transformed and quantized ints + HVX + mode
+    // stream going back to loop will have 
+    for (int i=0; i<0; i++) {
+	  enqueue(-1);
+    }
+    // enqueue???
+    
+}
+
+/**
+ * This pipeline has the prediction stage and the transform and quantization stage.
+ * It is part of the forward filter of the feedback loop.
+ *
+ * @input 16x16 original block = 256 pixels + HVX Pixels (16x2 + 1) = 289
+ * @output transformed and quantized block with mode used + HVX = 256 + 1 + 32 
+ */
+int->int pipeline LumaIntraPred16x16AndTQ(int QStep) {    
+    
+    
+    add LumaIntraPredictionModes16x16();
+    add splitjoin {
+	  split roundrobin(256,34);
+	  // left filter - T and Q, output int[4][4] (set of 16)
+	  add pipeline {
+		add Transform16x16LumaIntra();
+		add Factorized4x4Quantization(QStep); 
+		// quantization process is the same for all blocks
+		add Matrix4x4ToInt();
+		// at this point pixels are getting transmitted 
+		// by chunks of 4x4 blocks!!!
+		// each chunk is transmitted raster scan order within a macroblock
+		// note that this is not the same as the raster scan order 
+		// within a macroblock.
+	  }
+	  // right filter - do nothing, pass the prediction mode used
+	  add Identity<int>; // passes the mode + HVX down
+	  // join the transformed and quantized block with its mode
+	  join roundrobin(256,34);
+    }
+    
+}
+
+/**
+ * This pipeline encapsulates the splitjoin that calculates all prediction modes.
+ * The end filter chooses the best mode and keeps the best mode # along with its
+ * residual.
+ *
+ * For Intra Prediction 16x16 Luma mode calculations, see: PredictionModes16x16.str
+ *
+ * @input 256+H+V pixels to be intra predicted
+ * @output 256 residual values + best mode + HVX
+ */
+
+int->int pipeline LumaIntraPredictionModes16x16() {
+    
+    add splitjoin {
+	  split duplicate;
+	  add Prediction16x16Mode0AndSAE;
+	  add Prediction16x16Mode1AndSAE;
+	  add Prediction16x16Mode2AndSAE;
+	  add Prediction16x16Mode3AndSAE;
+	  // 256 = residual
+	  // 1 = sum of absolute errors
+	  join roundrobin(290);
+    }
+    add FindBestPredictionMode16x16();
+
+    add PredictionResultPrinter();
+}
+
+
+
+/**
+ * This pipeline reorders the stream if ints into 4x4 blocks, and a basic
+ * core transform will be performed. Since the block was intra predicted in
+ * 16x16 mode, 
+ */
+        
+int->int[4][4] pipeline Transform16x16LumaIntra() {
+    
+    // take a macroblock and split into 4x4 units for transform
+    add splitjoin {
+	  split roundrobin(4);
+	  for (int i=0; i<4; i++) {
+		add Identity<int>;
+	  }
+	  join roundrobin(16);
+    }
+    add IntTo4x4Matrix();
+    // 4x4 blocks are sent out
+    add FactorizedCoreDCT4x4Transform();
+    add Matrix4x4ToInt();
+    
+    add splitjoin {
+	  // picks out DC coefficients
+	  split roundrobin(1,15);
+	  // hierarchial transform
+	  // collect 16 of those DC coefficients and perform 4x4 Hadamard Transform
+	  add pipeline {
+		add IntTo4x4Matrix();
+		add Hadamard4x4();
+		add Matrix4x4ToInt();
+	  }	  
+	  add Identity<int>;
+	  join roundrobin(1, 15);
+    
+    }
+    add IntTo4x4Matrix();
+    
+}
+
+
+
+
+/**
+ * This pipeline captures the backward loop that does the following:
+ * 1. Hadamard (surprising yes, but it's true, it does go before rescaling)
+ * 2. Rescaling
+ * 3. Inverse Core Transform
+ * 4. Reconstruct
+ * 5. Keep 3 sets: 
+ *    - right edge pixels (16) for the next block -H
+ *    - bottom right corner pixel (1) for N-1 next block -X
+ *    - bottom edge pixels (16) for the N next block -V
+ *    (where N is the number of macroblocks along the width)
+ * 6. Delay these pixels using a filter, roundrobin join and feed back to the loop
+ *
+ * @input 256 pixels transformed and quantized, in 4x4 chunks, sent in raster order 
+ *        within a macroblock, and also withing the chunk. (int stream) + mode + HVX
+ * @output The H, V, and X pixels needed for the next forward prediction and
+ *         transform/quantization.
+ */
+
+int->int pipeline QTAndHVX(int width, int height, int QStep) {
+    
+    // see a set a possible QSteps in reference white paper
+    // may be adjusted to fit with each block, but right now
+    // it is fixed.
+   
+    add splitjoin {
+	  split roundrobin(256, 34); // separates block from mode + HVX
+	  // left stream
+	  add pipeline {
+		
+		// hadamard on DC coefficients
+		add splitjoin {
+		    split roundrobin(1,15); 
+		    // split out DC coefficients from rest of the 4x4 block
+		    add pipeline {
+			  add IntTo4x4Matrix();
+			  add Hadamard4x4();
+			  add Matrix4x4ToInt();
+		    }
+		    add Identity<int>;
+		    join roundrobin(1,15);
+		}
+		add IntTo4x4Matrix();
+		add Factorized4x4Rescale(QStep); // QStep is fixed for now
+		add FactorizedCoreInverseDCT4x4Transform();
+		add Matrix4x4ToInt();
+
+		// splitjoin to reorder pixels back to original raster order
+		add splitjoin {
+		    split roundrobin(16); // 4 streams of 4x4 blocks
+		    // 4 streams, one per column
+		    for (int i=0; i<4; i++) {
+			  add Identity<int>;
+		    }
+		    join roundrobin(4); // peal off 4 pixels at a time, left->right
+		    // 4 peels make 16 pixels in a row... back to 16x16 acroblock
+		}
+	  }
+	  // right stream
+	  add Identity<int>;
+	  join roundrobin(256,34);
+    }
+    add Reconstruct16x16LumaIntraPredFromHVX();
+    add DelayHVX(width, height);
+}
+
+/**
+ * This splitjoin puts the proper delay for the reconstructed H, V, X pixels
+ * for the next intra predicted 16x16 Luma block. It would provide the appropriate
+ * H, V, X for the next block. Consequently, this filter needs to store pixels
+ * in a buffer.
+ *
+ *    - right edge pixels (16) for the next block -H
+ *    - bottom right corner pixel (1) for N-1 next block -X
+ *    - bottom edge pixels (16) for the N next block -V
+ *    (where N is the number of macroblocks along the width)
+ *
+ * @input H,V,X from the previous block
+ * @output delayed, appropriate H,V,X for the next block
+ */
+int->int splitjoin DelayHVX(int width, int height) {
+
+    // number of macroblocks on width and height
+    int w = width>>4;
+    int h = height>>4;
+    split roundrobin(16, 16, 1); // separate H, V, X
+    // H
+    add pipeline {
+	  add splitjoin {
+		// first splitjoin gets rid of H pixels that are not needed
+		// such as H pixels at the bottom of the frame
+		split roundrobin(16*(w*(h-1)), 16*w);
+		add Identity<int>;
+		add Dead();
+		join roundrobin(1,0);
+	  }
+	  add splitjoin {
+		split roundrobin(0,1);
+		add Negative1s();
+		add Identity<int>;
+		join roundrobin(16*w, 16*(w*(h-1)));
+	  }
+	  //add PrintInts();
+    }
+
+    // V
+    add pipeline {
+	  add splitjoin {
+		split roundrobin(16*(w-1),16);
+		add Identity<int>;
+		add Dead();
+		join roundrobin(1,0);
+	  }
+	  add splitjoin {
+		split roundrobin(0,1);
+		add Negative1s();
+		add Identity<int>;
+		join roundrobin(16,16*(w-1));
+	  }
+	  //add PrintInts();
+    }
+    
+
+    // X
+    
+    add pipeline {
+	  add splitjoin {
+		split roundrobin(w-1,1);
+		add Identity<int>;
+		add Dead();
+		join roundrobin(1,0);
+	  }
+	  add splitjoin {
+		split roundrobin((h-1)*(w-1),w-1);
+		add Identity<int>;
+		add Dead();
+		join roundrobin(1,0);
+	  }
+	  add splitjoin {
+		split roundrobin(0,1);
+		add Negative1s();
+		add Identity<int>;
+		join roundrobin(1,w-1);
+	  }
+	  add splitjoin {
+		split roundrobin(0,1);
+		add Negative1s();
+		add Identity<int>;
+		join roundrobin(w,w*(h-1));
+	  }
+	  //add PrintInts();
+	  
+	  }
+    //add Identity<int>;
+    
+
+    join roundrobin(16,16,1);
+}
+
+
+//////////////////////////////////////////////////////
+// INTERNALS
+//////////////////////////////////////////////////////
+
+int->int[4][4] filter IntTo4x4Matrix() {
+    // 4x4 blocks are sent here in raster order
+    // following filter converts the int stream to an int[4][4] stream
+    work pop 16 push 1 {
+	  //println("int to 4x4 matrix");
+	 
+	  int[4][4] out;
+	  for (int row=0; row<4; row++) {
+		for (int col=0; col<4; col++) {
+		    out[row][col]=peek(row*4+col);
+		    //println("out: "+out[row][col]);
+		}
+	  }
+	  push(out);
+	  for (int j=0; j<16; j++) {
+		pop();
+	  }
+    }
+
+}
+
+
+int[4][4]->int filter Matrix4x4ToInt() {
+
+    work pop 1 push 16 {
+	  //println("matrix 4x4 to ints");
+	  int[4][4] in = peek(0);
+	  for (int row=0; row<4; row++) {
+		for (int col=0; col<4; col++) {
+		    push(in[row][col]);
+		    //println("in[row][col]: "+in[row][col]);
+		}
+	  }
+	  pop();
+    }
+}
+
+int->void filter Dead() {
+    work pop 1 {
+	  pop();
+    }
+}
+
+void->int filter Negative1s() {
+    work push 1 {
+	  push(-1);
+    }
+}
+
+int->void filter PrintInts() {
+    work pop 1 {
+	  print(peek(0)+" ");
+	  //push(peek(0));
+	  pop();
+    }
+}
+
+int->void filter PrintHVXIntsResult() {
+
+    int blockNum = 1;
+    work pop 33 {
+	  println("Block "+blockNum);
+	  for (int i=0; i<33; i++) {
+		print(peek(i)+" ");
+		if (i==15 || i==31) {
+		    println(" ");
+		}    
+	  }
+	  blockNum++;
+	  println(" ");
+	  for (int i=0; i<33; i++) {
+		pop();
+	  }
+    }
+}
+
+int->void filter PrintMBlockIntsResult() {
+
+    int blockNum = 1;
+    work pop 290 {
+	  println("Block "+blockNum);
+	  for (int r=0; r<16; r++) {
+		for (int c=0; c<16; c++) {
+		    print(peek(r*16+c)+" ");
+		    
+		}    
+		println(" ");
+	  }
+	  println("Mode "+peek(256));
+	  for (int count=257; count<290; count++) {
+		print(peek(count)+" ");
+	  }
+	  println(" ");
+	  blockNum++;
+	  println(" ");
+	  for (int i=0; i<290; i++) {
+		pop();
+	  }
+    }
+}
+
+void->int filter IntStream() {
+    int x=0;
+    work push 1 {
+	  push(x);
+	  //println("int stream: "+x);
+	  if (x > 255 && x < 289) {
+		x=0; // hvx = 0
+	  } else {
+		x++; // block
+	  }
+	  //x++;
+    }
+}

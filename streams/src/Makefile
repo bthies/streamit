@@ -59,12 +59,12 @@ all: $(JAVA_SRCS)
 	$(MAKE) moreall
 
 moreall:
-	(cd streamit/frontend; `find . -name "*.java" | xargs -tn1 $(JAVAC)`)
-	(cd streamit/library; `find . -name "*.java" | xargs -tn1 $(JAVAC)`)
-	(cd streamit/misc; `find . -name "*.java" | xargs -tn1 $(JAVAC)`)
-	(cd streamit/scheduler1; `find . -name "*.java" | xargs -tn1 $(JAVAC)`)
-	(cd streamit/scheduler2; `find . -name "*.java" | xargs -tn1 $(JAVAC)`)
-	(cd at; `find . -name "*.java" | xargs -tn1 $(JAVAC)`)
+	(cd streamit/frontend; `find . -name "*.java" | xargs -s20480 $(JAVAC)`)
+	(cd streamit/library; `find . -name "*.java" | xargs -s20480 $(JAVAC)`)
+	(cd streamit/misc; `find . -name "*.java" | xargs -s20480 $(JAVAC)`)
+	(cd streamit/scheduler1; `find . -name "*.java" | xargs -s20480 $(JAVAC)`)
+	(cd streamit/scheduler2; `find . -name "*.java" | xargs -s20480 $(JAVAC)`)
+	(cd at; `find . -name "*.java" | xargs -s20480 $(JAVAC)`)
 
 %.class: %.java
 	$(JAVAC) $(JAVAC_FLAGS) $<

@@ -15,13 +15,14 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Constants.java,v 1.2 2006-01-25 17:00:38 thies Exp $
+ * $Id: Constants.java,v 1.3 2007-03-26 19:15:45 dimock Exp $
  */
 
 package at.dms.classfile;
 
 /**
  * Constants used in JVM class files
+ * See {@link at.dms.kjc.Constants} for other compiler constants.
  */
 public interface Constants {
 

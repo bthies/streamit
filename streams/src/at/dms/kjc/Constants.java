@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Constants.java,v 1.5 2006-10-11 17:49:42 dimock Exp $
+ * $Id: Constants.java,v 1.6 2007-03-26 19:15:45 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -23,7 +23,8 @@ package at.dms.kjc;
 import java.util.Vector;
 
 /**
- * Defines all constants shared by compiler
+ * Defines some constants shared by compiler.
+ * Also see {@link at.dms.classfile.Constants}
  */
 public interface Constants extends at.dms.classfile.Constants {
 

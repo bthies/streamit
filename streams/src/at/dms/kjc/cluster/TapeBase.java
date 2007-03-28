@@ -73,7 +73,8 @@ public abstract class TapeBase implements Tape {
         // the src and dest nodes to run at different rates, but use
         // different mechanisms).
         if (ClusterBackend.streamGraph.parentMap.get(srcNode) 
-                != ClusterBackend.streamGraph.parentMap.get(destNode)) {
+                != ClusterBackend.streamGraph.parentMap.get(destNode)
+                || (KjcOptions.standalone && KjcOptions.dynamicRatesEverywhere)) {
 // Commenting out the following will make --cluster n fail for n > 1!!
 // Done here, now, because have not hacked in ability of cluster tapes
 // to deal with dynamic rates: setting up fixed peek buffer sizes!!! XXX

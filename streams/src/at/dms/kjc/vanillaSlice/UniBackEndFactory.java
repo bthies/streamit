@@ -93,6 +93,7 @@ public class UniBackEndFactory extends BackEndFactory<
     @Override
     public void processFilterSlices(Slice slice, 
             SchedulingPhase whichPhase, UniProcessors computeNodes) {
+        throw new AssertionError("processFilterSlices called, back end should be calling processFilterSlice(singular)");
         
     }
 
@@ -106,7 +107,7 @@ public class UniBackEndFactory extends BackEndFactory<
 
     public void processFilterSliceNode(FilterSliceNode filter,
             SchedulingPhase whichPhase, UniProcessors computeNodes) {
-        
+        ProcessFilterSliceNode.processFilterSliceNode(filter,whichPhase,this);
     }
 
     /**

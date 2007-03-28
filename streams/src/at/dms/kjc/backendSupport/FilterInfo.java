@@ -126,6 +126,7 @@ public class FilterInfo {
         }
     }
     
+    /** @return true if two stage filter */
     public boolean isTwoStage() {
         return filter.isTwoStage();
     }
@@ -197,19 +198,28 @@ public class FilterInfo {
         return remaining;
     }
 
+    /** @return true if filter calculates a linear combination of its inputs */
     public boolean isLinear() {
         return linear;
     }
 
-    // does this filter require a receive buffer during code
-    // generation
+    /** Does this filter require a receive buffer during code
+     * generation?
+     * 
+     * @return  true if (two-stage) filter never peeks
+     */
     public boolean noBuffer() {
         if (peek == 0 && prePeek == 0)
             return true;
         return false;
     }
 
-    // can we use a simple (non-circular) receive buffer for this filter
+    /**
+     * Can we use a simple (non-circular, non-copy-down) 
+     * receive buffer for this filter?
+     * @return true if (two-stage) peeks == pops and remaining == 0, 
+     *  except false if {@link #noBuffer()} is true.
+     */
     public boolean isSimple() {
         if (noBuffer())
             return false;
@@ -219,7 +229,7 @@ public class FilterInfo {
         return false;
     }
 
-    // return the number of items produced in the init stage
+    /** @return the number of items produced in the init stage */
     public int initItemsSent() {
         int items = push * initMult;
         if (isTwoStage()) {
@@ -404,6 +414,7 @@ public class FilterInfo {
         return items;
     }
 
+    /** A printable representation.  Not committed to format. */
     public String toString() {
         return sliceNode.toString();
     }

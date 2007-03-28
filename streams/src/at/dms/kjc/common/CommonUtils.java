@@ -11,18 +11,14 @@ import at.dms.kjc.CEmittedTextType;
 import at.dms.kjc.JArrayAccessExpression;
 import at.dms.kjc.JClassExpression;
 import at.dms.kjc.JFieldDeclaration;
-import at.dms.kjc.JMethodDeclaration;
-import at.dms.kjc.SLIREmptyVisitor;
 import at.dms.kjc.sir.SIRStructure;
 import at.dms.kjc.JFieldAccessExpression;
 import at.dms.kjc.JLocalVariableExpression;
 import at.dms.kjc.JThisExpression;
 import at.dms.kjc.KjcOptions;
 import at.dms.kjc.flatgraph.FlatNode;
-import at.dms.kjc.sir.SIRCodeUnit;
 import at.dms.kjc.sir.SIRFilter;
 import at.dms.kjc.sir.SIRJoiner;
-import at.dms.kjc.sir.SIRPeekExpression;
 import at.dms.kjc.sir.SIRSplitter;
 //import at.dms.kjc.sir.SIRStream;
 //import at.dms.kjc.sir.SIRContainer;
@@ -383,39 +379,6 @@ public class CommonUtils {
             common = commonSIRAncestor(common,iter.next());
         }
         return common;
-    }
-
-
-    /**
-     * Asks the question "Is a peek present in this unit of code?".
-     * <br/>
-     * Kopi2SIR seets the peek rate for a filter = max(declared peek rate, declared pop rate).
-     * For some optimizations it is of interest whether the code actually contains any
-     * peeks, or if it only contains pops.
-     * 
-     * @param filter  Anything that implements SIRCodeUnit so that its methods can be scanned.
-     * @return true if a peek is found in any method, false otherwise.
-     */
-    public static boolean hasPeeks(SIRCodeUnit filter) {
-        /** Extend Error here rather than Exception because overridden visitor
-         *  can not declare it as an excpetion */
-        class BreakOutException extends Error{};
-    
-        try {
-            for (JMethodDeclaration meth : filter.getMethods()) {
-                meth.accept(new SLIREmptyVisitor(){
-                    @Override
-                    public void visitPeekExpression(SIRPeekExpression self,
-                            CType tapeType,
-                            JExpression arg) {
-                        throw new BreakOutException();
-                    }
-                });
-            }
-        } catch (BreakOutException e) {
-            return true;
-        }
-        return false;
     }
     
 }

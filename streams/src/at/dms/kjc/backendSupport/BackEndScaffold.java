@@ -1,4 +1,4 @@
-// $Id: BackEndScaffold.java,v 1.4 2007-03-14 14:22:06 dimock Exp $
+// $Id: BackEndScaffold.java,v 1.5 2007-03-28 21:39:12 dimock Exp $
 package at.dms.kjc.backendSupport;
 
 import java.util.*;
@@ -14,6 +14,11 @@ import at.dms.kjc.KjcOptions;
  * Connections between the ComputeNode s are returned as 
  * under-specified {@link at.dms.kjc.backendSupport.Channel Buffer}s.
  * @author dimock
+ * @param <ComputeNodesType> type needs to match the one in your instance of BackEndFactory
+ * @param <ComputeNodeType> type needs to match the one in your instance of BackEndFactory
+ * @param <CodeStoreType> type needs to match the one in your instance of BackEndFactory
+ * @param <ComputeNodeSelectorArgType> type needs to match the one in your instance of BackEndFactory
+ * 
  */
 public class BackEndScaffold<
 ComputeNodesType extends ComputeNodesI<?>, 
@@ -21,23 +26,25 @@ ComputeNodeType extends ComputeNode<?>,
 CodeStoreType extends ComputeCodeStore<?>, 
 ComputeNodeSelectorArgType extends Object> {
     
-    /* used to pass back-end factory around */
+    /** used to pass back-end factory around */
     protected BackEndFactory<ComputeNodesType,ComputeNodeType,CodeStoreType, ComputeNodeSelectorArgType> resources;
 
     /**
-     * Use in subclasses to perform work before code is created
+     * Use in subclasses to perform work before code is created.
+     * Only needed if subclassing and need to share data generated in beforeScheduling code.
      * for any schedule.
      * @param schedule
      * @param resources the BackEndFactory used to redirect to correct code generation routines.
      */
     protected void beforeScheduling(BasicSpaceTimeSchedule schedule,
             BackEndFactory resources) {
-        // nothing to do.
+        // nothing to do in default case.
     }
     
     /**
      * Use in subclasses to perform work after code is created for all schedules.
-     * @param schedule
+       Only needed if subclassing and need to share data generated beforeScheduling or schedule code.
+    * @param schedule
      * @param resources
      */
     protected void afterScheduling(BasicSpaceTimeSchedule schedule,
@@ -67,10 +74,10 @@ ComputeNodeSelectorArgType extends Object> {
      * and a set of (underspecified) {@link at.dms.kjc.backendSupport.Channel Buffer}s filled in.
      * @param schedule
      * @param computeNodes
-     * @param buffers
+     * @param resources The instance of BackEndFactory to be used for callbacks, data.
      */
     public void run(BasicSpaceTimeSchedule schedule,
-            BackEndFactory<ComputeNodesType,ComputeNodeType,CodeStoreType, ComputeNodeSelectorArgType> resources, Set<Channel> buffers) {
+            BackEndFactory<ComputeNodesType,ComputeNodeType,CodeStoreType, ComputeNodeSelectorArgType> resources) {
    
         ComputeNodesType computeNodes = resources.getComputeNodes();
         this.resources = resources;
@@ -291,7 +298,7 @@ ComputeNodeSelectorArgType extends Object> {
      * @param filterInfo
      */
     private void addComputeCode(SchedulingPhase whichPhase,
-                                       ComputeNodeType computeNode, FilterInfo filterInfo) {
+            ComputeNodeType computeNode, FilterInfo filterInfo) {
         switch (whichPhase) {
         case INIT:
             computeNode.getComputeCode().addSliceInit(filterInfo, resources.getLayout());

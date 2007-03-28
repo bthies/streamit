@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.48 2007-03-12 18:09:09 dimock Exp $
+ * $Id: Utils.java,v 1.49 2007-03-28 21:39:13 dimock Exp $
  */
 
 package at.dms.util;
@@ -1265,6 +1265,39 @@ public abstract class Utils implements Serializable, DeepCloneable {
         }
     }
     
+
+    /**
+     * Asks the question "Is a peek present in this unit of code?".
+     * <br/>
+     * Kopi2SIR seets the peek rate for a filter = max(declared peek rate, declared pop rate).
+     * For some optimizations it is of interest whether the code actually contains any
+     * peeks, or if it only contains pops.
+     * 
+     * @param filter  Anything that implements SIRCodeUnit so that its methods can be scanned.
+     * @return true if a peek is found in any method, false otherwise.
+     */
+    public static boolean hasPeeks(SIRCodeUnit filter) {
+        /** Extend Error here rather than Exception because overridden visitor
+         *  can not declare it as an excpetion */
+        class BreakOutException extends Error{};
+    
+        try {
+            for (JMethodDeclaration meth : filter.getMethods()) {
+                meth.accept(new SLIREmptyVisitor(){
+                    @Override
+                    public void visitPeekExpression(SIRPeekExpression self,
+                            CType tapeType,
+                            JExpression arg) {
+                        throw new BreakOutException();
+                    }
+                });
+            }
+        } catch (BreakOutException e) {
+            return true;
+        }
+        return false;
+    }
+
     // ----------------------------------------------------------------------
     // DATA MEMBERS
     // ----------------------------------------------------------------------

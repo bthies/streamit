@@ -378,7 +378,8 @@ public class CommonPasses {
     
     
     /**
-     * Get the original stream for statistics gathering
+     * Get the original stream for statistics gathering.
+     * Returns null unless KjcOptions.stats
      * @return the stream before any graph structure modifications.
      */
     public SIRStream getOrigSTR() {

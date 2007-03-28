@@ -6,10 +6,13 @@ import java.util.List;
 import java.util.LinkedList;
 
 import at.dms.kjc.slicegraph.Edge;
+import at.dms.kjc.slicegraph.InterSliceEdge;
 import at.dms.kjc.slicegraph.SliceNode;
 import at.dms.kjc.slicegraph.Util;
 import at.dms.kjc.spacetime.BasicSpaceTimeSchedule;
+import at.dms.kjc.spacetime.InterSliceBuffer;
 import at.dms.kjc.*;
+import at.dms.util.Utils;
 
 /**
  * A Buffer is an implementation of an Edge in a back end.
@@ -71,6 +74,14 @@ public class Channel {
         this(Util.srcDstToEdge(src, dst));
     }
     
+    public static Channel getChannel(Edge edge) {
+        if (!bufferStore.containsKey(edge)) {
+            System.out.println("Creating Channel from " + edge.getSrc() + " to " + edge.getDest());
+            bufferStore.put(edge, new Channel(edge));
+        }
+        return (InterSliceBuffer) bufferStore.get(edge);
+    }
+
     /**
      * Reset the buffer store and create all number buffer objects.  
      * Used if one wants to munge the trace graph.
@@ -183,11 +194,36 @@ public class Channel {
     public String popManyMethodName() {
         return "__popN_" + unique_id;
     }
-    /** void pop(int N) */
-    public JMethodDeclaration popManyMethod() {
-        return null;
-    }
+ 
+    JMethodDeclaration popManyCode = null;
     
+    /** void pop(int N).  This default version just calls pop() N times. */
+    public JMethodDeclaration popManyMethod() {
+        if (popManyCode != null) {
+            return popManyCode;
+        }
+        
+        String formalParamName = "n";
+        CType formalParamType = CStdType.Integer;
+        
+        JVariableDefinition nPopsDef = new JVariableDefinition(formalParamType, formalParamName);
+        JExpression nPops = new JLocalVariableExpression(nPopsDef);
+        
+        JVariableDefinition loopIndex = new JVariableDefinition(formalParamType, "i");
+        
+        JStatement popOne = new JExpressionStatement(
+                new JMethodCallExpression(popMethodName(),new JExpression[0]));
+        
+        JBlock body = new JBlock();
+        body.addStatement(Utils.makeForLoop(popOne, nPops, loopIndex));
+        
+        popManyCode = new JMethodDeclaration(CStdType.Void,
+                popManyMethodName(),
+                new JFormalParameter[]{new JFormalParameter(formalParamType, formalParamName)},
+                body);
+        return popManyCode;
+     }
+
     public String assignFromPopMethodName() {
         return "__popv_" + unique_id;
     }

@@ -28,14 +28,17 @@ public class ComputeCodeStore<ComputeNodeType extends ComputeNode<?>> implements
      * (actually any) class override. */
     static { if ("".equals(mainName)) mainName = "__MAIN__";}
     
+    /** generate / add code for a slice for the init phase */
     public void addSliceInit(FilterInfo filterInfo, Layout layout) {
         throw new at.dms.util.NotImplementedException();
     }
 
+    /** generate / add code for a slice for the primt-pump phase */
     public void addSlicePrimePump(FilterInfo filterInfo, Layout layout) {
         throw new at.dms.util.NotImplementedException();
     }
 
+    /** generate / add code for a slice for the steady-state phase. */
     public void addSliceSteady(FilterInfo filterInfo, Layout layout) {
         throw new at.dms.util.NotImplementedException();
     }
@@ -99,7 +102,7 @@ public class ComputeCodeStore<ComputeNodeType extends ComputeNode<?>> implements
      }
     
      /**
-      * @param stmt  statement to add after any other statements in init code.
+      * @param stmt  statement to add after any other statements in steady-state code.
       * 
       */
     public void addSteadyLoopStatement(JStatement stmt) {
@@ -109,8 +112,8 @@ public class ComputeCodeStore<ComputeNodeType extends ComputeNode<?>> implements
 
     
     /**
-     * Bill's code adds method <pre>meth</pre> to this, if <pre>meth</pre> is not already
-     * registered as a method of this. Requires that <pre>method</pre> is non-null.
+     * Bill's code adds method <b>meth</b> to this, if <b>meth</b> is not already
+     * registered as a method of this. Requires that <b>method</b> is non-null.
      */
     public void addMethod(JMethodDeclaration method) {
         assert method != null;
@@ -142,7 +145,7 @@ public class ComputeCodeStore<ComputeNodeType extends ComputeNode<?>> implements
     }
 
     /**
-     * Adds <pre>f</pre> to the fields of this. Does not check for duplicates.
+     * Adds <b>f</b> to the fields of this. Does not check for duplicates.
      */
     public void addFields(JFieldDeclaration[] f) {
         JFieldDeclaration[] newFields = new JFieldDeclaration[fields.length
@@ -157,8 +160,9 @@ public class ComputeCodeStore<ComputeNodeType extends ComputeNode<?>> implements
     }
 
     /**
-     * adds field <pre>field</pre> to this, if <pre>field</pre> is not already registered as a
+     * Adds field <b>field</b> to this, if <b>field</b> is not already registered as a
      * field of this.
+     * (existing field is checked for with ==).
      */
     public void addField(JFieldDeclaration field) {
         // see if we already have <field> in this
@@ -180,7 +184,7 @@ public class ComputeCodeStore<ComputeNodeType extends ComputeNode<?>> implements
     }
 
     /**
-     * Adds <pre>m</pre> to the methods of this. Does not check for duplicates.
+     * Adds <b>m</b> to the methods of this. Does not check for duplicates.
      */
     public void addMethods(JMethodDeclaration[] m) {
         JMethodDeclaration[] newMethods = new JMethodDeclaration[methods.length
@@ -197,7 +201,7 @@ public class ComputeCodeStore<ComputeNodeType extends ComputeNode<?>> implements
     /**
      * @param meth
      * @return Return true if this compute code store already has the
-     * declaration of <pre>meth</pre> in its method array.
+     * declaration of <b>meth</b> in its method array.
      */
     public boolean hasMethod(JMethodDeclaration meth) {
         for (int i = 0; i < methods.length; i++)

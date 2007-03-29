@@ -79,7 +79,7 @@ public class Channel {
             System.out.println("Creating Channel from " + edge.getSrc() + " to " + edge.getDest());
             bufferStore.put(edge, new Channel(edge));
         }
-        return (InterSliceBuffer) bufferStore.get(edge);
+        return bufferStore.get(edge);
     }
 
     /**

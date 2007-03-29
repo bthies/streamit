@@ -2,12 +2,10 @@ package at.dms.kjc.vanillaSlice;
 
 import at.dms.kjc.sir.*;
 import at.dms.kjc.*;
-import at.dms.kjc.backendSupport.CommonPasses;
-import at.dms.kjc.backendSupport.Layout;
-import at.dms.kjc.backendSupport.BasicGreedyLayout;
-import at.dms.kjc.backendSupport.NoSWPipeLayout;
-import at.dms.kjc.backendSupport.SpaceTimeScheduleAndPartitioner;
+import at.dms.kjc.backendSupport.*;
+import at.dms.kjc.slicegraph.DataFlowOrder;
 import at.dms.kjc.slicegraph.Partitioner;
+import at.dms.kjc.spacetime.BasicGenerateSteadyStateSchedule;
 import at.dms.kjc.spacetime.EmitStandaloneCode;
 
 /**
@@ -36,12 +34,23 @@ public class UniBackEnd {
         CommonPasses commonPasses = new CommonPasses();
         /*Slice[] sliceGraph = */ commonPasses.run(str, interfaces, 
                 interfaceTables, structs, helpers, global, numCores);
+        // guarantee tha we are not going to hack properties of filters
+        FilterInfo.canUse();
+
         // partitioner contains information about the Slice graph.
         Partitioner partitioner = commonPasses.getPartitioner();
+        // decompose any pipelines of filters in the Slice graph.
         partitioner.ensureSimpleSlices();
-        
-        
+
+        // Set schedules for initialization, priming (if --spacetime), and steady state.
         SpaceTimeScheduleAndPartitioner schedule = new SpaceTimeScheduleAndPartitioner(partitioner);
+        // set init schedule in standard order
+        schedule.setInitSchedule(DataFlowOrder.getTraversal(partitioner.getSliceGraph()));
+        // set prime pump schedule (if --spacetime and not --noswpipe)
+        new at.dms.kjc.spacetime.GeneratePrimePumpSchedule(schedule).schedule(partitioner.getSliceGraph());
+        // set steady schedule in standard order unless --spacetime in which case in 
+        // decreasing order of estimated work
+        new BasicGenerateSteadyStateSchedule(schedule, partitioner).schedule();
 
         // create a collection of (very uninformative) processor descriptions.
         UniProcessors processors = new UniProcessors(numCores);

@@ -51,7 +51,7 @@ public class ProcessFilterSliceNode implements Constants {
         // determine connectivity, needed to know what buffers to ask for
         // and whether to create splitter or joiner code.
         
-        boolean has_upstream_buffer = false;
+        boolean has_upstream_channel = false;
         boolean make_peek_buffer = false;
         boolean make_joiner = false;
         /*
@@ -62,7 +62,7 @@ public class ProcessFilterSliceNode implements Constants {
             assert filterNode.getFilter().getInputType() == CStdType.Void;
         } else {
             // there is an upstream, need inter-slice buffer
-            has_upstream_buffer = true;
+            has_upstream_channel = true;
             if (info.isSimple()) {
                 // there is no need for a peek buffer in front of upstream buffer.
                 if (joiner.getWidth() == 1) {
@@ -91,11 +91,11 @@ public class ProcessFilterSliceNode implements Constants {
         /*
          * Determine downstream connectivity
          */
-        boolean has_downstream_buffer = false;
+        boolean has_downstream_channel = false;
         boolean make_splitter = false;
         if (info.push > 0 || info.prePush > 0) {
             assert filterNode.getFilter().getOutputType() != CStdType.Void;
-            has_downstream_buffer = true;
+            has_downstream_channel = true;
             if (splitter.getWidth() > 1) {
                 make_splitter = true;
             }
@@ -128,7 +128,7 @@ public class ProcessFilterSliceNode implements Constants {
             
             outputChannel =  UnbufferredPushChannel.getChannel(filterNode.getEdgeToNext(),
                     splitter_code.getMethods()[0].getName());
-        } else {
+        } else if (has_downstream_channel) {
             outputChannel = Channel.getChannel(splitter.getDests()[0][0]);
         }
         
@@ -138,7 +138,15 @@ public class ProcessFilterSliceNode implements Constants {
          */
         
         if (make_peek_buffer) {
-            if (! make_joiner) {
+            if (make_joiner) {
+                // The filter pops from the peek buffer, which connects from the joiner.
+                inputChannel = Channel.getChannel(joiner.getEdgeToNext());
+            } else {
+                // The filter pops from the peek buffer, which connects from an upstream slice.
+                inputChannel = Channel.getChannel(joiner.getSingleEdge());
+            }
+        } else {
+            if (! make_joiner && has_upstream_channel) {
                 inputChannel = Channel.getChannel(joiner.getSingleEdge());
             }
         }
@@ -153,7 +161,7 @@ public class ProcessFilterSliceNode implements Constants {
      * Take a code unit (here a FilterContent) and return one with all push, peek, pop 
      * replaced with calls to channel routines.
      * Clones the input methods and munges on the clones, further changes to the returned code
-     * will not affect the 
+     * will not affect the methods of the input code unit.
      * @param code           The code (fields and methods)
      * @param inputChannel   The input channel -- specified routines to call to replace peek, pop.
      * @param outputChannel  The output channel -- specified routeines to call to replace push.
@@ -162,11 +170,27 @@ public class ProcessFilterSliceNode implements Constants {
     private static SIRCodeUnit makeFilterCode(SIRCodeUnit code, 
             Channel inputChannel, Channel outputChannel) {
         
-        final String peekName = inputChannel.peekMethodName();
-        final String popName = inputChannel.popMethodName();
-        final String pushName = outputChannel.pushMethodName();
-        final String popManyName = inputChannel.popManyMethodName();
+        final String peekName;
 
+        final String popName;
+        final String pushName;
+        final String popManyName;
+
+        if (inputChannel != null) {
+            peekName = inputChannel.peekMethodName();
+            popName = inputChannel.popMethodName();
+            popManyName = inputChannel.popManyMethodName();
+        } else {
+            peekName = "/* peek from non-existent channel */";
+            popName = "/* pop() from non-existent channel */";
+            popManyName = "/* pop(N) from non-existent channel */";
+        }
+        
+        if (outputChannel != null) {
+            pushName = outputChannel.pushMethodName();
+        } else {
+            pushName = "/* push() to non-existent channel */";
+        }
         
         JMethodDeclaration[] oldMethods = code.getMethods();
         JMethodDeclaration[] methods = new JMethodDeclaration[oldMethods.length];

@@ -13,7 +13,7 @@ import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.OutputSliceNode;
 import at.dms.kjc.slicegraph.Slice;
-
+import at.dms.kjc.slicegraph.Partitioner;
 
 /**
  * @author mgordon
@@ -21,26 +21,34 @@ import at.dms.kjc.slicegraph.Slice;
  */
 public class NoSWPipeLayout<T extends ComputeNode, Ts extends ComputeNodesI> extends SimulatedAnnealing implements Layout<T> {
     
-    private SpaceTimeScheduleAndPartitioner spaceTime;
+    private Partitioner partitioner;
     private Ts chip;
     private LinkedList<Slice> scheduleOrder;
     private LinkedList<SliceNode> assignedFilters;
     private Random rand;
     
+    /** from assignment when done with simulated annealing */
     private HashMap<SliceNode, T> layout;
     
     public NoSWPipeLayout(SpaceTimeScheduleAndPartitioner spaceTime, Ts chip) {
         this.chip = chip;
+        this.partitioner = spaceTime.getPartitioner();
         scheduleOrder = 
             DataFlowOrder.getTraversal(spaceTime.getPartitioner().getSliceGraph());
         assignedFilters = new LinkedList<SliceNode>();
         rand = new Random(17);
     }
     
+    /**
+     * only valid after run();
+     */
     public T getComputeNode(SliceNode node) {
         return layout.get(node);
     }
     
+    /**
+     * only valid after run()
+     */
     public void setComputeNode(SliceNode node, T tile) {
         layout.put(node, tile);
     }
@@ -102,8 +110,8 @@ public class NoSWPipeLayout<T extends ComputeNode, Ts extends ComputeNodesI> ext
         HashMap<FilterSliceNode, Double> endTime = new HashMap<FilterSliceNode, Double>();
         while (slices.hasNext()) {
             Slice slice = slices.next();
-            T tile = getComputeNode(slice.getHead().getNextFilter());
-            double traceWork = spaceTime.getPartitioner().getSliceBNWork(slice); 
+            T tile = (T)assignment.get(slice.getHead().getNextFilter());
+            double traceWork = partitioner.getSliceBNWork(slice); 
             double startTime = 0;
             //now find the start time
             
@@ -113,11 +121,11 @@ public class NoSWPipeLayout<T extends ComputeNode, Ts extends ComputeNodesI> ext
             Iterator<InterSliceEdge> inEdges = input.getSourceSet().iterator();
             while (inEdges.hasNext()) {
                 InterSliceEdge edge = inEdges.next();
-                if (spaceTime.getPartitioner().isIO(edge.getSrc().getParent()))
+                if (partitioner.isIO(edge.getSrc().getParent()))
                     continue;
                 FilterSliceNode upStream = edge.getSrc().getPrevFilter();
                 
-                ComputeNode upTile = getComputeNode(upStream);
+                ComputeNode upTile = (T)assignment.get(upStream);
                 assert endTime.containsKey(upStream);
                 if (endTime.get(upStream).doubleValue() > maxDepStartTime)
                     maxDepStartTime = endTime.get(upStream).doubleValue();
@@ -170,17 +178,18 @@ public class NoSWPipeLayout<T extends ComputeNode, Ts extends ComputeNodesI> ext
 
         // set assignments for all SliceNodes in layout
         Set<Map.Entry> entries = assignment.entrySet();
+        layout = new HashMap<SliceNode, T>();
         for (Map.Entry<SliceNode, T> snode_cnode : entries) {
             T cnode = snode_cnode.getValue();
             SliceNode snode = snode_cnode.getKey();
             
             if (snode instanceof FilterSliceNode) {
-                layout.put(snode,cnode);
+                setComputeNode(snode,cnode);
                 if (snode.getPrevious() instanceof InputSliceNode) {
-                    layout.put(snode.getPrevious(),cnode);
+                    setComputeNode(snode.getPrevious(),cnode);
                 }
                 if (snode.getNext() instanceof OutputSliceNode) {
-                    layout.put(snode.getNext(),cnode);
+                    setComputeNode(snode.getNext(),cnode);
                 }
             }
         }

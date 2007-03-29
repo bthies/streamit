@@ -4,11 +4,12 @@
 package at.dms.kjc.spacetime;
 
 import java.util.*;
-
 import at.dms.kjc.backendSupport.SpaceTimeScheduleAndPartitioner;
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.slicegraph.DataFlowOrder;
 import at.dms.kjc.slicegraph.Slice;
+import at.dms.kjc.KjcOptions;
+
 /**
  * This class operates on the SpaceTimeSchedule and generates the preloop
  * schedule for the partitioned stream graph.  It will create a pre loop schedule
@@ -35,7 +36,7 @@ public class GeneratePrimePumpSchedule {
      */
     public void schedule(Slice[] sliceGraph) {
         LinkedList<LinkedList<Slice>> preLoopSchedule = new LinkedList<LinkedList<Slice>>();
-        if (SpaceTimeBackend.NO_SWPIPELINE) {
+        if (! KjcOptions.spacetime || KjcOptions.noswpipe) {
             spaceTimeSchedule.setPrimePumpSchedule(preLoopSchedule);
             return;
         }

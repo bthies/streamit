@@ -9,6 +9,7 @@ import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.slicegraph.DataFlowOrder;
 import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.slicegraph.Partitioner;
+import at.dms.kjc.KjcOptions;
 
 /**
  * @author mgordon / dimock
@@ -19,7 +20,7 @@ import at.dms.kjc.slicegraph.Partitioner;
  * track File Readers and File Writers).
  * 
  * The current scheduling algorithm:
- * If NO_SWPIPELINE is set, then schedule in DataFlowOrder.
+ * If KjcOptions.spacetime is not set or if KjcOptions.noswpipe is set, then schedule in DataFlowOrder.
  * Else schedule in decreasing order by amount of work (CompareSliceBNWork / Partitioner)
  */
 public class BasicGenerateSteadyStateSchedule {
@@ -42,7 +43,7 @@ public class BasicGenerateSteadyStateSchedule {
     
     
     public void schedule() {
-        if (SpaceTimeBackend.NO_SWPIPELINE) {
+        if (! KjcOptions.spacetime || KjcOptions.noswpipe) {
             spaceTime.setSchedule(DataFlowOrder.getTraversal
                     (partitioner.getSliceGraph()));
         }

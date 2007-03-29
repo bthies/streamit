@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.118 2007-03-22 18:33:12 psung Exp $
+# $Id: strc,v 1.119 2007-03-29 18:28:00 dimock Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -170,7 +170,7 @@ sub non_streamit_backend_defined {
     $opts{cluster} || 
     $opts{raw} || $opts{spacedynamic} || $opts{spacetime} || 
     $opts{rstream} || $opts{simpleC} ||
-    $opts{newSimple} || 
+    defined($opts{newSimple}) || 
 	$opts{uni} 
 	;
 }
@@ -833,7 +833,7 @@ sub get_compiler_opts
     $opts{optfile} && ($copts .= " --optfile " . $opts{optfile});
     $opts{modfusion} && ($copts .= " --modfusion");
     $opts{manuallayout} && ($copts .= " --manuallayout");
-    $opts{newSimple} && ($copts .= " --newSimple");
+    $opts{newSimple} && ($copts .= " --newSimple " . $opts{newSimple});
     $opts{nodatacollapse} && ($copts .= " --nodatacollapse");
     $opts{nolinearcollapse} && ($copts .= " --nolinearcollapse");
     $opts{numbers} && ($copts .= " --numbers " . $opts{numbers});

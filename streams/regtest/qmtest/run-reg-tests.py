@@ -2,7 +2,7 @@
 #
 # run-reg-tests.py: Yet another test to run regression tests
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: run-reg-tests.py,v 1.41 2007-03-30 17:32:03 dimock Exp $
+# $Id: run-reg-tests.py,v 1.42 2007-03-30 22:21:45 dimock Exp $
 #
 # Taking history from run_reg_tests.pl: this is the third implementation
 # of a script to run StreamIt regression tests.  It is written in Python,
@@ -28,8 +28,20 @@ admins = 'streamit-regtest-log@cag.lcs.mit.edu'
 users = 'streamit-regtest@cag.lcs.mit.edu'
 #admins = 'dimock@csail.mit.edu'
 #users = 'dimock@csail.mit.edu'
+#
+# The following were munged to run on a system requiring a different version
+# of python than the one in /usr/uns/bin/pyton and a different version
+# of gcc than the one in /usr/uns/bin/gcc
+#
 # invoke_qmtest = 'qmtest'
 invoke_qmtest = '/usr/bin/python /home/bits7/dimock/qm-2.3/bin/qmtest'
+# invoke_build_prefix = ''
+invoke_build_prefix = '/usr/bin/python '
+# make_flags = ''
+make_flags = ' CC=/usr/bin/gcc CXX=/usr/bin/g++ '
+#
+#
+#
 cvs_root = '/projects/raw/cvsroot'
 regtest_parent = '/home/bits8/streamit'
 regtest_root = os.path.join(regtest_parent, 'regtest')
@@ -115,7 +127,8 @@ class RunRegTests:
         os.environ['LPATH'] = ld_library_path
         os.environ['C_INCLUDE_PATH'] = c_include_path
         os.environ['CPATH'] = c_include_path
-
+        # perl libraries needed by strc 
+        os.environ['PERL5LIB'] = '/usr/uns/encap/perl-5.8.0/lib/5.8.0/:/usr/uns/lib/site_perl/5.8.0:/home/streamit/lib/perl5/site_perl/5.8.0:/home/streamit/lib/perl5/site_perl/5.8.0/i386-linux-thread-multi'
         # Eclipse crud:
 #        eclipse_base = '/home/bits7/NO_BACKUP/streamit/eclipse/plugins'
 #        ecl = eclipse_base + '/org.eclipse.'
@@ -191,7 +204,7 @@ class RunRegTests:
         status = pop.wait()
 
         logfile = os.path.join(self.working_dir, filename)
-        f = open(logfile, 'w')
+        f = open(logfile, mode='a')
         f.write(msgs)
         f.close()
 
@@ -225,18 +238,32 @@ class RunRegTests:
             except:
                 self.cvs_date = ''
         
-        self.run_and_log('make -C %s/src' % self.streamit_home, 'makeLog',
+        self.run_and_log('make -C %s/src' % self.streamit_home +
+                         make_flags, 'makeLog',
                          'Building the compiler')
-        self.run_and_log('make -C %s/library/c' % self.streamit_home,
+        self.run_and_log('make -C %s/library/c' % self.streamit_home +
+                         make_flags,
                          'makeCLog', 'Building the C library')
-        self.run_and_log('make -C %s/library/cluster' % self.streamit_home,
+        self.run_and_log('make -C %s/library/cluster' % self.streamit_home +
+                         make_flags,
                          'makeClusterLog', 'Building the cluster library')
-        self.run_and_log('make -C %s/misc/raw' % self.streamit_home, 'rawLog',
+        self.run_and_log('make -C %s/misc/raw' % self.streamit_home +
+                         make_flags, 'rawLog',
                          'Building the RAW tree', permissible=1)
         # No error results on this yet.
         os.chdir(self.streamit_home)
-        os.spawnl(os.P_WAIT, self.streamit_home + '/regtest/qmtest/streamitqm',
-                  'streamitqm', 'setup')
+        self.run_and_log('mkdir QMTest', 'setupLog', 'making QM database',
+                         permissible=1)
+        self.run_and_log('cp regtest/qmtest/classes.qmc QMTest/', 'setupLog',
+                         'making QM database')
+        self.run_and_log('cp regtest/qmtest/configuration QMTest/', 'setupLog',
+                         'making QM database')
+        self.run_and_log('cp regtest/qmtest/streamit.py QMTest/', 'setupLog',
+                         'making QM database')
+        self.run_and_log(invoke_build_prefix + self.streamit_home +
+                         '/regtest/qmtest/build-qmtest.py' + ' ' +
+                         self.streamit_home + '/regtest/qmtest/regtest.xml',
+                          'setupLog', 'making QM database')
 
     def run_tests(self):
         # set to run several tests at once if sufficient cpus.

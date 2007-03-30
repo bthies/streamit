@@ -2,7 +2,7 @@
 #
 # run-reg-tests.py: Yet another test to run regression tests
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: run-reg-tests.py,v 1.40 2007-01-17 18:14:17 dimock Exp $
+# $Id: run-reg-tests.py,v 1.41 2007-03-30 17:32:03 dimock Exp $
 #
 # Taking history from run_reg_tests.pl: this is the third implementation
 # of a script to run StreamIt regression tests.  It is written in Python,
@@ -28,6 +28,8 @@ admins = 'streamit-regtest-log@cag.lcs.mit.edu'
 users = 'streamit-regtest@cag.lcs.mit.edu'
 #admins = 'dimock@csail.mit.edu'
 #users = 'dimock@csail.mit.edu'
+# invoke_qmtest = 'qmtest'
+invoke_qmtest = '/usr/bin/python /home/bits7/dimock/qm-2.3/bin/qmtest'
 cvs_root = '/projects/raw/cvsroot'
 regtest_parent = '/home/bits8/streamit'
 regtest_root = os.path.join(regtest_parent, 'regtest')
@@ -255,12 +257,12 @@ class RunRegTests:
                 cpu_count = cpu_count - 1
         except:
             pass
-        run_command = 'qmtest run'
+        run_command = invoke_qmtest + ' run'
         #if cpu_count:
         #    run_command = run_command + ' -j' + str(cpu_count)
         # ok, now run with thread count as set above
         os.chdir(self.streamit_home)
-        self.run_and_log('qmtest create-target -a processes='
+        self.run_and_log(invoke_qmtest + ' create-target -a processes='
                          + str(cpu_count) + ' p' + str(cpu_count) + ' '
                          + 'process_target.ProcessTarget p',
                          'qmtestTargetLog', 'Setting Process target')
@@ -270,7 +272,7 @@ class RunRegTests:
         self.endtime = time.localtime()
 
     def pre_report(self):
-        self.run_and_log('qmtest report -o ' +
+        self.run_and_log(invoke_qmtest + ' report -o ' +
                          os.path.join(self.streamit_home, xmlresults)
                          + ' ' +
                          os.path.join(self.streamit_home, 'results.qmr'),

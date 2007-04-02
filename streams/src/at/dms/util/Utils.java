@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.49 2007-03-28 21:39:13 dimock Exp $
+ * $Id: Utils.java,v 1.50 2007-04-02 21:14:09 dimock Exp $
  */
 
 package at.dms.util;
@@ -981,7 +981,7 @@ public abstract class Utils implements Serializable, DeepCloneable {
     /**
      * Set to true to get a stack trace of callers inserted as a comment.
      * 
-     * Limitation: only provides info for loops taht are created as loops: 
+     * Limitation: only provides info for loops that are created as loops: 
      * i.e. those with trip count > 1. 
      */
 
@@ -989,7 +989,7 @@ public abstract class Utils implements Serializable, DeepCloneable {
     
     /**
      * Returns a block with a loop counter declaration and a for loop
-     * that executes <pre>body</pre> for <pre>count</pre> number of times.  If the
+     * that executes <b>body</b> for <b>count</b> number of times.  If the
      * count is just one, then return the body instead of a loop.
      */
     public static JStatement makeForLoop(JStatement body, int count) {
@@ -998,7 +998,9 @@ public abstract class Utils implements Serializable, DeepCloneable {
 
     /**
      * Returns a block with a loop counter declaration and a for loop
-     * that executes <pre>body</pre> for <pre>count</pre> number of times.
+     * that executes <b>body</b> for <b>count</b> number of times.
+     * <br/>
+     * Optimizes output in cases where <b>count</b> is a literal and == 0 or == 1.
      */
     public static JStatement makeForLoop(JStatement body, JExpression count) {
         if (count instanceof JIntLiteral) {
@@ -1023,11 +1025,13 @@ public abstract class Utils implements Serializable, DeepCloneable {
 
     /**
      * Returns a block with a loop counter declaration and a for loop
-     * that executes <pre>body</pre> for <pre>count</pre> number of times.  Executes in
+     * that executes <b>body</b> for <b>count</b> number of times.  Executes in
      * the forward direction, counting up from 0 to count-1 with
-     * <pre>loopIndex</pre> as the loop counter.
-     *
-     * Note that <pre>loopIndex</pre> should not appear in a different variable
+     * <b>loopIndex</b> as the loop counter.
+     * <br/>
+     * Optimizes if loopIndex == 0 or loopIndex == 1
+     * <br/>
+     * Note that <b>loopIndex</b> should not appear in a different variable
      * decl; it will get one in this routine.
      */
     public static JStatement makeForLoop(JStatement body, JExpression count, final JVariableDefinition loopIndex) {
@@ -1121,11 +1125,13 @@ public abstract class Utils implements Serializable, DeepCloneable {
 
     /**
      * Returns a block with a loop counter declaration and a for loop
-     * that executes <pre>body</pre> for <pre>count</pre> number of times.  Executes in
+     * that executes <b>body</b> for <b>count</b> number of times.  Executes in
      * the backwards direction, counting down from count-1 to zero
-     * with <pre>loopIndex</pre> as the loop counter.  
-     *
-     * Note that <pre>loopIndex</pre> should not appear in a different variable
+     * with <b>loopIndex</b> as the loop counter.  
+     * <br/>
+     * Optimizes in the cases where count is literal and == 0 or == 1.
+     * <br/>
+     * Note that <b>loopIndex</b> should not appear in a different variable
      * decl; it will get one in this routine.
      */
     public static JStatement makeCountdownForLoop(JStatement body, JExpression count, JVariableDefinition loopIndex) {
@@ -1205,6 +1211,109 @@ public abstract class Utils implements Serializable, DeepCloneable {
         // return the block
         JStatement[] statements = {varDecl, forStatement};
         return new JBlock(null, statements, null);
+    }
+
+    /**
+     * Returns a for loop that uses local <b>var</b> to count
+     * <b>count</b> times with the body of the loop being <b>body</b>.  
+     * If count is non-positive, just returns empty (!not legal in the general case)
+     * 
+     * @param body The body of the for loop.  (null OK: returns empty statement)
+     * @param local The local to use as the index variable.
+     * @param count The trip count of the loop.
+     * 
+     * @return The for loop.
+     */
+    public static JStatement makeForLoopLocalIndex(JStatement body,
+            JVariableDefinition local,
+            JExpression count) {
+        if (body == null)
+            return new JEmptyStatement(null, null);
+    
+        // make init statement - assign zero to <pre>var</pre>.  We need to use
+        // an expression list statement to follow the convention of
+        // other for loops and to get the codegen right.
+        JExpression initExpr[] = {
+            new JAssignmentExpression(null,
+                    new JLocalVariableExpression(local),
+                    new JIntLiteral(0)) };
+        JStatement init = new JExpressionListStatement(null, initExpr, null);
+        // if count==0, just return init statement
+        if (count instanceof JIntLiteral) {
+            int intCount = ((JIntLiteral)count).intValue();
+            if (intCount<=0) {
+                // return assignment statement
+                return new JEmptyStatement(null, null);
+            }
+        }
+        // make conditional - test if <pre>var</pre> less than <pre>count</pre>
+        JExpression cond = 
+            new JRelationalExpression(null,
+                                      Constants.OPE_LT,
+                                      new JLocalVariableExpression(local),
+                                      count);
+        JExpression incrExpr = 
+            new JPostfixExpression(null, 
+                                   Constants.OPE_POSTINC, 
+                                   new JLocalVariableExpression(local));
+        JStatement incr = 
+            new JExpressionStatement(null, incrExpr, null);
+    
+        return new JForStatement(null, init, cond, incr, body, null);
+    }
+
+    /**
+     * Returns a for loop that uses field <b>var</b> to count
+     * <b>count</b> times with the body of the loop being <b>body</b>.  
+     * If count is non-positive, just returns empty (!not legal in the general case)
+     * 
+     * @param body The body of the for loop.  (null OK: returns empty statement)
+     * @param var The field to use as the index variable.
+     * @param count The trip count of the loop.
+     * 
+     * @return The for loop.
+     */
+    public static JStatement makeForLoopFieldIndex(JStatement body,
+            JVariableDefinition var,
+            JExpression count) {
+        if (body == null)
+            return new JEmptyStatement(null, null);
+    
+        // make init statement - assign zero to <pre>var</pre>.  We need to use
+        // an expression list statement to follow the convention of
+        // other for loops and to get the codegen right.
+        JExpression initExpr[] = {
+            new JAssignmentExpression(null,
+                                      new JFieldAccessExpression(null, 
+                                                                 new JThisExpression(null),
+                                                                 var.getIdent()),
+                                      new JIntLiteral(0)) };
+        JStatement init = new JExpressionListStatement(null, initExpr, null);
+        // if count==0, just return init statement
+        if (count instanceof JIntLiteral) {
+            int intCount = ((JIntLiteral)count).intValue();
+            if (intCount<=0) {
+                // return assignment statement
+                return new JEmptyStatement(null, null);
+            }
+        }
+        // make conditional - test if <pre>var</pre> less than <pre>count</pre>
+        JExpression cond = 
+            new JRelationalExpression(null,
+                                      Constants.OPE_LT,
+                                      new JFieldAccessExpression(null, 
+                                                                 new JThisExpression(null),
+                                                                 var.getIdent()),
+                                      count);
+        JExpression incrExpr = 
+            new JPostfixExpression(null, 
+                                   Constants.OPE_POSTINC, 
+                                   new JFieldAccessExpression(null, new JThisExpression(null),
+                                                              var.getIdent()));
+        JStatement incr = 
+            new JExpressionStatement(null, incrExpr, null);
+    
+        return new JForStatement(null, init, cond, incr, body, null);
     }
 
     /**

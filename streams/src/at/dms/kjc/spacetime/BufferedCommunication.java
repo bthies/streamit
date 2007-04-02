@@ -481,7 +481,7 @@ public class BufferedCommunication extends RawExecutionCode
         
             //add the code to receive the items into the buffer from the network
             statements.addStatement
-                (makeForLoopFieldIndex(receiveCode(filter, filter.getInputType(), 
+                (Utils.makeForLoopFieldIndex(receiveCode(filter, filter.getInputType(), 
                                          generatedVariables),
                              generatedVariables.exeIndex,
                              new JIntLiteral(filterInfo.prePeek)));
@@ -510,7 +510,7 @@ public class BufferedCommunication extends RawExecutionCode
         
             if (filterInfo.bottomPeek > 0) {
                 statements.addStatement
-                    (makeForLoopFieldIndex(receiveCode(filter, filter.getInputType(),
+                    (Utils.makeForLoopFieldIndex(receiveCode(filter, filter.getInputType(),
                                              generatedVariables),
                                  generatedVariables.exeIndex,
                                  new JIntLiteral(filterInfo.bottomPeek)));
@@ -525,7 +525,7 @@ public class BufferedCommunication extends RawExecutionCode
         //but not consumed by this filter in the initialization stage
         if (filterInfo.remaining > 0) {
             statements.addStatement
-                (makeForLoopFieldIndex(receiveCode(filter, filter.getInputType(),
+                (Utils.makeForLoopFieldIndex(receiveCode(filter, filter.getInputType(),
                                          generatedVariables),
                              generatedVariables.exeIndex,
                              new JIntLiteral(filterInfo.remaining))); 
@@ -604,7 +604,7 @@ public class BufferedCommunication extends RawExecutionCode
         //add the statements to receive pop into the buffer
         //execute this before the for loop that has the work function
         block.addStatement
-            (makeForLoopFieldIndex(receiveCode(filter, filter.getInputType(),
+            (Utils.makeForLoopFieldIndex(receiveCode(filter, filter.getInputType(),
                                      generatedVariables),
                          generatedVariables.exeIndex,
                          new JIntLiteral(filterInfo.pop)));
@@ -641,7 +641,7 @@ public class BufferedCommunication extends RawExecutionCode
                                                                       workCounter,
                                                                       null);
          
-            JStatement loop = makeForLoopLocalIndex(block, loopCounter, new JIntLiteral(mult));
+            JStatement loop = Utils.makeForLoopLocalIndex(block, loopCounter, new JIntLiteral(mult));
             block = new JBlock(null, new JStatement[0], null);
             block.addStatement(new JVariableDeclarationStatement(null,
                                                                  loopCounter,
@@ -721,7 +721,7 @@ public class BufferedCommunication extends RawExecutionCode
         }
         */
         JStatement innerReceiveLoop = 
-            makeForLoopFieldIndex(receiveCode(filter, filter.getInputType(),
+            Utils.makeForLoopFieldIndex(receiveCode(filter, filter.getInputType(),
                                     generatedVariables),
                         generatedVariables.exeIndex,
                         new JIntLiteral(filter.getPopInt()));
@@ -759,7 +759,7 @@ public class BufferedCommunication extends RawExecutionCode
     
         //return the for loop that executes the block init - 1
         //times
-        return makeForLoopFieldIndex(block, generatedVariables.exeIndex1, 
+        return Utils.makeForLoopFieldIndex(block, generatedVariables.exeIndex1, 
                            new JIntLiteral(initFire - 1));
     }
 
@@ -792,7 +792,7 @@ public class BufferedCommunication extends RawExecutionCode
         //just receive pop * filterInfo.steadyMult in the buffer and we can
         //run for an entire filterInfo.steadyMult state
         block.addStatement
-            (makeForLoopFieldIndex(receiveCode(filter, filter.getInputType(),
+            (Utils.makeForLoopFieldIndex(receiveCode(filter, filter.getInputType(),
                                      generatedVariables),
                          generatedVariables.exeIndex,
                          new JIntLiteral(filterInfo.pop * filterInfo.steadyMult)));
@@ -838,7 +838,7 @@ public class BufferedCommunication extends RawExecutionCode
 
         //add the cloned work function to the block
         block.addStatement
-            (makeForLoopFieldIndex(workBlock, generatedVariables.exeIndex,
+            (Utils.makeForLoopFieldIndex(workBlock, generatedVariables.exeIndex,
                          new JIntLiteral(filterInfo.steadyMult)));
     
         //now add the code to push the output buffer onto the static network and 
@@ -862,7 +862,7 @@ public class BufferedCommunication extends RawExecutionCode
             JExpressionStatement send = new JExpressionStatement(null, pushExp, null);
         
             block.addStatement
-                (makeForLoopFieldIndex(send, generatedVariables.exeIndex,
+                (Utils.makeForLoopFieldIndex(send, generatedVariables.exeIndex,
                              new JIntLiteral(filterInfo.steadyMult * filterInfo.push * 
                                              Util.getTypeSize(filter.getOutputType()))));
             //reset the send buffer index

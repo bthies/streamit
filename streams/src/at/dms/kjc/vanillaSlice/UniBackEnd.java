@@ -6,7 +6,6 @@ import at.dms.kjc.backendSupport.*;
 import at.dms.kjc.slicegraph.DataFlowOrder;
 import at.dms.kjc.slicegraph.Partitioner;
 import at.dms.kjc.spacetime.BasicGenerateSteadyStateSchedule;
-import at.dms.kjc.spacetime.EmitStandaloneCode;
 
 /**
  * The entry to the back end for a uniprocesor or cluster.

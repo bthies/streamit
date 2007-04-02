@@ -1,5 +1,5 @@
 // $Id
-package at.dms.kjc.spacetime;
+package at.dms.kjc.vanillaSlice;
 
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;

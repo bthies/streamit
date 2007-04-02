@@ -233,6 +233,11 @@ public class ProcessFilterSliceNode implements Constants {
         return new MinCodeUnit(code.getFields(),methods);
     }
     
+    
+//    public JBlock getWorkFunctionBlock(SchedulingPhase whichPhase, ) {
+//        
+//    }
+    
     /**
      * Create fields and code for a joiner, as follows.
      * Do not create a joiner if all weights are 0: this code
@@ -428,6 +433,8 @@ static inline T joiner_M_unrolled() {
         
         return retval;
     }
+    
+    
     
     /**
      * Create fields and code for a splitter, as follows.

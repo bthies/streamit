@@ -2,7 +2,7 @@
 #
 # run-reg-tests.py: Yet another test to run regression tests
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: run-reg-tests.py,v 1.42 2007-03-30 22:21:45 dimock Exp $
+# $Id: run-reg-tests.py,v 1.43 2007-04-02 18:34:41 dimock Exp $
 #
 # Taking history from run_reg_tests.pl: this is the third implementation
 # of a script to run StreamIt regression tests.  It is written in Python,
@@ -40,6 +40,8 @@ invoke_build_prefix = '/usr/bin/python '
 # make_flags = ''
 make_flags = ' CC=/usr/bin/gcc CXX=/usr/bin/g++ '
 #
+# fixed_path ='/usr/uns/jdk1.5.0_01/bin:/usr/uns/bin:/usr/bin/X11:/bin:/usr/bin'
+fixed_path = '/usr/uns/jdk1.5.0_01/bin:/usr/bin/X11:/bin:/usr/bin:/usr/uns/bin'
 #
 #
 cvs_root = '/projects/raw/cvsroot'
@@ -105,9 +107,7 @@ class RunRegTests:
         os.environ['STREAMIT_HOME'] = self.streamit_home
         #os.environ['TOPDIR'] = os.path.join(self.streamit_home, 'misc', 'raw')
         os.environ['TOPDIR'] = '/home/bits6/mgordon/starsearch'
-        os.environ['PATH'] = self.streamit_home + \
-                             ":/usr/uns/jdk1.5.0_01/bin" + \
-                             ":/usr/uns/bin:/usr/bin/X11:/bin:/usr/bin"
+        os.environ['PATH'] = self.streamit_home + ':' + fixed_path
 
         # Vaguely overcomplicated assembly of the CLASSPATH.
         # WIBNI we could read this from dot-bashrc?
@@ -128,7 +128,8 @@ class RunRegTests:
         os.environ['C_INCLUDE_PATH'] = c_include_path
         os.environ['CPATH'] = c_include_path
         # perl libraries needed by strc 
-        os.environ['PERL5LIB'] = '/usr/uns/encap/perl-5.8.0/lib/5.8.0/:/usr/uns/lib/site_perl/5.8.0:/home/streamit/lib/perl5/site_perl/5.8.0:/home/streamit/lib/perl5/site_perl/5.8.0/i386-linux-thread-multi'
+#        os.environ['PERL5LIB'] = '/usr/uns/encap/perl-5.8.0/lib/5.8.0/:/usr/uns/lib/site_perl/5.8.0:/home/streamit/lib/perl5/site_perl/5.8.0:/home/streamit/lib/perl5/site_perl/5.8.0/i386-linux-thread-multi'
+        os.environ['PERL5LIB'] = '/usr/uns/encap/perl-5.8.0/lib/5.8.0/:/u/dimock/lib/site_perl/5.8.0'
         # Eclipse crud:
 #        eclipse_base = '/home/bits7/NO_BACKUP/streamit/eclipse/plugins'
 #        ecl = eclipse_base + '/org.eclipse.'
@@ -452,14 +453,27 @@ is the QMTest results file.
 
     def set_latest(self):
         """Repoint the 'latest' symlink at this directory."""
-        try:
-            os.remove(os.path.join(regtest_root, 'latest'))
-        except:
-            pass
-        try:
-            os.symlink(self.working_dir,
-		       os.path.join(regtest_root, 'latest'))
-        except:
+        if os.access(os.path.join(self.working_dir,
+                                  'rt/Summary'),
+                     os.F_OK):
+            try:
+                os.remove(os.path.join(regtest_root, 'latest'))
+            except:
+                pass
+            try:
+                os.symlink(self.working_dir,
+                           os.path.join(regtest_root, 'latest'))
+            except:
+                pass
+        else:
+            # repointing latest will cause error in rt application
+            # if rt/Summary does not exist.  Proper fix should be a check
+            # in /home/rt/local/html/index.html as part of check for a
+            # StreamIt user or in /home/rt/local/html/Elements/StreamIt
+            # which refers to <& /StreamIt/Summary &> , which following
+            # several symbolic links turn out to be
+            # /home/rt/local/html/StreamIt -> /projects/streamit/www/rt  ,
+            # /projects/streamit/www/rt -> /home/bits8/streamit/regtest/latest/rt
             pass
 
 if __name__ == "__main__":

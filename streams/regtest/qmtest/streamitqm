@@ -2,7 +2,12 @@
 #
 # streamitqm: Prepare the StreamIt tree for QMTest
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: streamitqm,v 1.4 2006-08-07 21:21:01 dimock Exp $
+# $Id: streamitqm,v 1.5 2007-04-03 23:45:08 dimock Exp $
+#
+# the $PYTHON variable can be used to override the #! specification in
+# build-qmtest.py
+#
+# (This script is no longer called from run-reg-tests.py)
 #
 
 cd "$STREAMIT_HOME"
@@ -13,10 +18,10 @@ case "$1" in
 	test -d QMTest || mkdir QMTest
 	for f in $FILES; do cp ./regtest/qmtest/$f QMTest; done
 	if [ -z "$2" ]; then
-	    ./regtest/qmtest/build-qmtest.py ./regtest/qmtest/regtest.xml
+	  $PYTHON  ./regtest/qmtest/build-qmtest.py ./regtest/qmtest/regtest.xml
         else
 	    shift
-            ./regtest/qmtest/build-qmtest.py "$@"
+          $PYTHON  ./regtest/qmtest/build-qmtest.py "$@"
         fi
 	;;
 

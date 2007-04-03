@@ -2,7 +2,7 @@
 #
 # run-reg-tests.py: Yet another test to run regression tests
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: run-reg-tests.py,v 1.43 2007-04-02 18:34:41 dimock Exp $
+# $Id: run-reg-tests.py,v 1.44 2007-04-03 23:45:08 dimock Exp $
 #
 # Taking history from run_reg_tests.pl: this is the third implementation
 # of a script to run StreamIt regression tests.  It is written in Python,
@@ -33,10 +33,13 @@ users = 'streamit-regtest@cag.lcs.mit.edu'
 # of python than the one in /usr/uns/bin/pyton and a different version
 # of gcc than the one in /usr/uns/bin/gcc
 #
+# command to start up qmtest
 # invoke_qmtest = 'qmtest'
 invoke_qmtest = '/usr/bin/python /home/bits7/dimock/qm-2.3/bin/qmtest'
+# prefix to line to run build-qmtest.py.
 # invoke_build_prefix = ''
 invoke_build_prefix = '/usr/bin/python '
+# flags for make of libraries, raw 
 # make_flags = ''
 make_flags = ' CC=/usr/bin/gcc CXX=/usr/bin/g++ '
 #
@@ -109,6 +112,9 @@ class RunRegTests:
         os.environ['TOPDIR'] = '/home/bits6/mgordon/starsearch'
         os.environ['PATH'] = self.streamit_home + ':' + fixed_path
 
+        # hack to make simpleC compiles work on some machines.
+        # may need to remove when changing machines.
+        os.environ['CC'] = '/usr/bin/gcc'
         # Vaguely overcomplicated assembly of the CLASSPATH.
         # WIBNI we could read this from dot-bashrc?
         class_path = ['src', '3rdparty', '3rdparty/cplex/cplex.jar',
@@ -129,7 +135,7 @@ class RunRegTests:
         os.environ['CPATH'] = c_include_path
         # perl libraries needed by strc 
 #        os.environ['PERL5LIB'] = '/usr/uns/encap/perl-5.8.0/lib/5.8.0/:/usr/uns/lib/site_perl/5.8.0:/home/streamit/lib/perl5/site_perl/5.8.0:/home/streamit/lib/perl5/site_perl/5.8.0/i386-linux-thread-multi'
-        os.environ['PERL5LIB'] = '/usr/uns/encap/perl-5.8.0/lib/5.8.0/:/u/dimock/lib/site_perl/5.8.0'
+        os.environ['PERL5LIB'] = '/usr/uns/encap/perl-5.8.0/lib/5.8.0:/u/dimock/lib/site_perl/5.8.0'
         # Eclipse crud:
 #        eclipse_base = '/home/bits7/NO_BACKUP/streamit/eclipse/plugins'
 #        ecl = eclipse_base + '/org.eclipse.'

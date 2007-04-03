@@ -2,7 +2,7 @@
 #
 # build-qmtest.py: build QMTest XML files from the StreamIt tree
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: build-qmtest.py,v 1.19 2006-08-07 21:21:01 dimock Exp $
+# $Id: build-qmtest.py,v 1.20 2007-04-03 23:45:08 dimock Exp $
 #
 
 import os
@@ -199,6 +199,7 @@ def DoQMTestDir(path, control):
         for make in makes:
             mnode=make.firstChild
             mn=mnode.data
+            print >> sys.stderr, "cd "+srcdir+";make -f "+mn
             run=os.popen("cd "+srcdir+";make -f "+mn,'r')
             run.close()
             

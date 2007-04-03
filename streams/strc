@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.119 2007-03-29 18:28:00 dimock Exp $
+# $Id: strc,v 1.120 2007-04-03 19:35:26 mgordon Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -450,6 +450,8 @@ sub get_options
 			    "steadymult=i",
 			    "slicethresh=i",
 			    "st_cyc_per_wd=i",
+			    "dcachesize=i",
+			    "icachesize=i",
 			    "dup=i",
 			    "ssoutputs=i",
 			    "asciifileio",
@@ -882,6 +884,8 @@ sub get_compiler_opts
     $opts{steadymult} && ($copts .= " --steadymult ". $opts{steadymult});
     $opts{slicethresh} && ($copts .= " --slicethresh ". $opts{slicethresh});
     $opts{st_cyc_per_wd} && ($copts .= " --st_cyc_per_wd ". $opts{st_cyc_per_wd});
+    $opts{icachesize} && ($copts .= " --icachesize ". $opts{icachesize});
+    $opts{dcachesize} && ($copts .= " --dcachesize ". $opts{dcachesize});
     $opts{dup} && ($copts .= " --dup ". $opts{dup});
     $opts{ssoutputs} && ($copts .= " --ssoutputs ". $opts{ssoutputs});
     $opts{layoutfile} && ($copts .= " --layoutfile ". $opts{layoutfile});

@@ -40,7 +40,7 @@ public class Schedule extends AssertedClass
     /**
      * all the sub-schedules that are contained by this schedule
      */
-    final private Vector<Pair> subScheds;
+    final private Vector<Pair<Schedule,Integer>> subScheds;
 
     /**
      * Work function associated with bottom-level schedule
@@ -62,7 +62,7 @@ public class Schedule extends AssertedClass
      */
     public Schedule(streamit.scheduler2.iriter.Iterator stream)
     {
-        subScheds = new Vector<Pair>();
+        subScheds = new Vector<Pair<Schedule,Integer>>();
         workFunc = null;
         workStream = stream;
     }
@@ -71,8 +71,7 @@ public class Schedule extends AssertedClass
      * Create the schedule to be a bottom schedule with a single
      * work function.
      */
-    public Schedule(
-                    Object workFunction,
+    public Schedule(Object workFunction,
                     streamit.scheduler2.iriter.Iterator stream)
     {
         workFunc = workFunction;

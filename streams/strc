@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.120 2007-04-03 19:35:26 mgordon Exp $
+# $Id: strc,v 1.121 2007-04-03 23:35:19 dimock Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -42,6 +42,9 @@ if ($ENV{"STRC_HOST_TYPE"} eq "x86-windows") {
     $java = $java . " -cp \"$translated_classpath\"";
     $javac = $javac . " -cp \"$translated_classpath\"";
 }
+
+# Allow $cc to be overridden by $CC environment variable
+$cc = $ENV{"CC"}  if (defined($ENV{"CC"}));
 
 # Turn off warnings: code is currently a mix of 1.4 and 1.5.
 $javac = $javac . " -nowarn";

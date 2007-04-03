@@ -113,7 +113,7 @@ public class BCFile {
         // filters or joiners
         fw.write("global gMappedTiles = " + layout.getTilesAssigned()
                 + ";\n");
-        fw.write("global gStreamItTiles = " + rawChip.getTotalTiles() + ";\n");
+        fw.write("global gStreamItTiles = " + rawChip.getTotalSimulatedTiles() + ";\n");
         fw.write("global gMHz = 450;\n");
         fw.write("global gStreamItUnrollFactor = " + KjcOptions.unroll + ";\n");
         fw.write("global streamit_home = getenv(\"STREAMIT_HOME\");\n");
@@ -299,7 +299,6 @@ public class BCFile {
         buf.append("global to_file_numbers_path = malloc(strlen(streamit_home) + 40);\n"); 
         buf.append("sprintf(to_file_numbers_path, \"%s%s\", streamit_home, \"/include/to_file_numbers.bc\");\n"); 
         buf.append("include(to_file_numbers_path);\n"); 
-        buf.append("global gStreamItTiles = " + rawChip.getYSize() * rawChip.getXSize() + ";\n");
         //define the vars
         //define the number of items received so far and zero it
         buf.append("global gNGItems;\n");

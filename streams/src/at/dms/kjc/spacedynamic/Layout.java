@@ -305,7 +305,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
                 FlatNode n = (FlatNode) downstream.next();
                 if (!assignToATile(n))
                     continue;
-                // System.out.println(" " + n);
+                System.out.println(" " + n);
                 buf.append("tile" + getTileNumber(node) + " -> tile"
                            + getTileNumber(n) + " [weight = 1]");
                 int thisRow = getTile(n).getY();
@@ -973,9 +973,9 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
         int column = 0;
 
         // start laying out at top right corner
-        for (row = 0; row < rawChip.getYSize(); row++) {
+        for (row = 0; row < rawChip.getSimulatedYSize(); row++) {
             if (row % 2 == 0) {
-                for (column = rawChip.getXSize() - 1; column >= 0;) {
+                for (column = rawChip.getSimulatedXSize() - 1; column >= 0;) {
                     if (!traversal.hasNext())
                         break;
                     FlatNode node = traversal.next();
@@ -983,7 +983,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
                     column--;
                 }
             } else {
-                for (column = 0; column < rawChip.getXSize();) {
+                for (column = 0; column < rawChip.getSimulatedXSize();) {
                     if (!traversal.hasNext())
                         break;
                     FlatNode node = traversal.next();
@@ -1063,8 +1063,8 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
 
         // find 2 suitable nodes to swap
         while (true) {
-            first = getRandom();
-            second = getRandom();
+            first = getRandomTileNumber();
+            second = getRandomTileNumber();
             // do not swap same tile or two null tiles
             if (first == second)
                 continue;
@@ -1107,8 +1107,20 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
         }
     }
 
-    private int getRandom() {
-        return random.nextInt(rawChip.getTotalTiles());
+    /**
+     * @return a random tile number that is within the range of tiles that
+     * we are simulating, meaning that although we are targeting either a 
+     * 4x4 or 8x8 because that is all the simulator handles, 
+     * we might be simulating another config.
+     */
+    private int getRandomTileNumber() {
+        while (true) {
+            int r = random.nextInt(rawChip.getTotalTiles());
+            RawTile tile = rawChip.getTile(r);    
+            if (tile.getX() < rawChip.getSimulatedXSize() &&
+                 tile.getY() < rawChip.getSimulatedYSize())
+                return r;
+        }
     }
 
     /***************************************************************************
@@ -1150,6 +1162,12 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
         //don't need this joiner if it is connected to a joiner downstream
         if (node.getEdges()[0] != null && node.getEdges()[0].isJoiner())
             return false;
+        
+        //if we are ratematching and we are data-parallelizing (dup == 1),
+        //then don't map the joiner in the application
+        if (KjcOptions.ratematch && KjcOptions.dup == 1) {
+            return false;
+        }
         
         return true;
     }

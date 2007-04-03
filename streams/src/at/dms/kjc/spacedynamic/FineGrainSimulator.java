@@ -21,10 +21,10 @@ import java.util.Iterator;
  * schedule and one steady state execution of the schedule
  */
 public class FineGrainSimulator extends Simulator {
-
+        
     public void simulate() {
         System.out.println("FineGrainSimulator Running...");
-
+        
         initJoinerCode = new HashMap<FlatNode, JoinerScheduleNode>();
         steadyJoinerCode = new HashMap<FlatNode, JoinerScheduleNode>();
 
@@ -385,6 +385,11 @@ public class FineGrainSimulator extends Simulator {
                                    SimulationCounter counters) {
         FlatNode start = current;
 
+        //if we are rate matching, then get the firing order from the rate match
+        //object
+        if (KjcOptions.ratematch && KjcOptions.dup == 1 && !initSimulation)
+            return ssg.rateMatch.getNextNode();
+        
         if (start == null)
             start = toplevel;
         HashSet<FlatNode> visited = new HashSet<FlatNode>();

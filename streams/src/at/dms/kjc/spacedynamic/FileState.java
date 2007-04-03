@@ -62,15 +62,20 @@ public class FileState implements StreamGraphVisitor, FlatVisitor {
         fileWriters = new HashMap<Object, FileWriterDevice>();
         fileNodes = new HashSet<Object>();
         
-        if (rawChip.getTotalTiles() == 1) {
-            readerPort = 0;
-            writerPort = 0;
-        }
-        else {
-            readerPort = 0;
+        switch (rawChip.getTotalSimulatedTiles()) {
+        case 1: readerPort = 0; writerPort = 0; break;
+        case 2: readerPort = 0; writerPort = 0; break;
+        case 4: readerPort = 1; writerPort = 14; break;
+        case 9: readerPort = 1; writerPort = 14; break;
+        case 16: readerPort = 1; writerPort = 9; break;
+        case 25: readerPort = 2; writerPort = 29; break;
+        case 36: readerPort = 3; writerPort = 28; break;
+        case 49: readerPort = 3; writerPort = 27; break;
+        case 64: readerPort = 3; writerPort = 18; break;
+        default: readerPort = 0;
             writerPort = (rawChip.getNumPorts() / 2) + (rawChip.getXSize());
         }
-
+       
         if (KjcOptions.devassignfile != null) {
             try { // read from the file specified...
                 inputBuffer = new BufferedReader(new FileReader(

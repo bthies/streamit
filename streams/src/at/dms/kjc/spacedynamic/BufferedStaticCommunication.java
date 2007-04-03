@@ -714,7 +714,15 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
 
     }
 
-    // generate the code for the steady state loop
+    /**
+     * Generate and return the SIR code required to fire the filter's work function
+     * in the steady state including all the code necessary for receiving items from
+     * the network. 
+     * 
+     * @param filter The fitler to fire
+     * @param localVariables The structure of compiler-generated variables
+     * @return The code to fire the filter.
+     */
     JStatement generateSteadyStateLoop(SIRFilter filter,
                                        LocalVariables localVariables) {
 

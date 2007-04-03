@@ -40,6 +40,7 @@ public class RawWorkEstimator extends EmptyStreamVisitor
             return 0;
         }
 
+	boolean oldHWICValue = KjcOptions.hwic;
         boolean oldMagicNetValue = KjcOptions.magic_net;
         boolean oldRateMatchValue = KjcOptions.ratematch;
         boolean oldSimulateWorkValue = KjcOptions.simulatework;
@@ -75,7 +76,8 @@ public class RawWorkEstimator extends EmptyStreamVisitor
         KjcOptions.ratematch = false;
         //turn off output limiting
         KjcOptions.outputs = -1;
-
+	//turn off hardware icaching
+	KjcOptions.hwic = false;
 
         //VarDecl Raise to move array assignments up
         new VarDeclRaiser().raiseVars(filter);
@@ -236,6 +238,7 @@ public class RawWorkEstimator extends EmptyStreamVisitor
         KjcOptions.magic_net = oldMagicNetValue;
         KjcOptions.ratematch = oldRateMatchValue;
         KjcOptions.outputs = oldOutputsValue;
+	KjcOptions.hwic = oldHWICValue;
         return work;
     }
 

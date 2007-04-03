@@ -27,14 +27,16 @@ import java.util.*;
  */
 
 public class SpdStaticStreamGraph  extends at.dms.kjc.flatgraph.ScheduledStaticStreamGraph {
-
-    // the number of tiles assigned to this subgraph
+    /** Ratematching information for this static stream graph */
+    public RateMatch rateMatch;
+    
+    /** the number of tiles assigned to this subgraph */
     private int numTilesAssigned;
 
     // the tiles assigned
     //private RawTile[] tilesAssigned;
 
-    // the communication scheduler we are going to use for this graph...
+    /** the communication scheduler we are going to use for this graph... */
     public Simulator simulator;
 
 
@@ -44,6 +46,15 @@ public class SpdStaticStreamGraph  extends at.dms.kjc.flatgraph.ScheduledStaticS
      **************************************************************************/
      public SpdStaticStreamGraph(StreamGraph sg, FlatNode realTop) {
          super(sg,realTop);
+         
+         //try to rate match if it is enabled
+         if (KjcOptions.ratematch) {
+             rateMatch = new RateMatch(this);
+             if (!rateMatch.check()) {
+                 System.out.println("Cannot Rate Match!  Exiting...");
+                 System.exit(1);
+             }
+         }
      }
 
     /**

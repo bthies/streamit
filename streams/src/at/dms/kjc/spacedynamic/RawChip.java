@@ -6,13 +6,23 @@ import at.dms.kjc.*;
 /** This class represents the RawChip we are compiling to * */
 
 public class RawChip {
-    // the indices are x, y
+    /** the indices are array of raw tiles of the configuration */
     private RawTile[][] tiles;
-
+    /** number of tiles in the x direction, of the chip we are targeting, either 4 or 8 */
     private int gXSize;
-
+    /** number of tiles in the y direction, of the chip we targeting, either 4 or 8 */    
     private int gYSize;
-
+    //the next two fields are needed because we can only simulate on 4x4 or 8x8, and we 
+    //may want to target other configurations
+    /** number of tiles in the x direction of the chip config we would like to simulate 
+     * (passed by the user)
+     */
+    private int simulatedXSize;
+    /** number of tiles in the y direction of the chip config we would like to simulate 
+     * (passed by the user)
+     */      
+    private int simulatedYSize;
+    
     public static final int cacheLineBytes = 32;
 
     public static final int cacheLineWords = 8;
@@ -22,12 +32,23 @@ public class RawChip {
     private IOPort[] ports;
 
     public RawChip(int xSize, int ySize) {
-        gXSize = xSize;
-        gYSize = ySize;
+        simulatedXSize = xSize;
+        simulatedYSize = ySize;
 
-        tiles = new RawTile[xSize][ySize];
-        for (int x = 0; x < xSize; x++)
-            for (int y = 0; y < ySize; y++)
+        //do some trickery because we can only simulate configurations with
+        //4x4 or 8x8 tiles.  Everything else must use these 2 configs 
+        if (xSize > 4 || ySize > 4) {
+            gXSize = 8;
+            gYSize = 8;
+        }
+        else {
+           gXSize = 4;
+           gYSize = 4;
+        }
+       
+        tiles = new RawTile[gXSize][gYSize];
+        for (int x = 0; x < gXSize; x++)
+            for (int y = 0; y < gYSize; y++)
                 tiles[x][y] = new RawTile(x, y, this);
 
         ports = new IOPort[2 * gXSize + 2 * gYSize];
@@ -90,16 +111,58 @@ public class RawChip {
         return tiles[x][y];
     }
 
+    /**
+     * @return The total number of tiles for the configuration we are targeting
+     * (this is either 4 or 8).
+     */
     public int getTotalTiles() {
         return gXSize * gYSize;
     }
 
+    /**
+     * @return The total number of tiles for the configuration we are simulating
+     * (remember this might not be equal to the number of tiles we are targeting on the
+     * simulator or the actual chip).
+     */
+    public int getTotalSimulatedTiles() {
+        return simulatedXSize * simulatedYSize;
+    }    
+    /**
+     * Return the number of tiles in the Y direction for the chip  
+     * configuration.
+     *    
+     * @return the number of tiles in the Y direction for the chip  
+     * configuration.
+     */
     public int getXSize() {
         return gXSize;
     }
-
+    
+    /**
+    * Return the number of tiles in the Y direction for the chip  
+    * configuration.
+    * 
+    * @return the number of tiles in the Y direction for the chip  
+    * configuration.
+    */
     public int getYSize() {
-        return gYSize;
+        return gYSize;   
+    }
+    
+    /**
+     * @return The number of tiles in the x direction for the chip size we would 
+     * like to simulate (as passed by the user).
+     */
+    public int getSimulatedXSize() {
+        return simulatedXSize;
+    }
+    
+    /**
+     * @return The number of tiles in the y direction for the chip size we would 
+     * like to simulate (as passed by the user).
+     */
+    public int getSimulatedYSize() {
+        return simulatedYSize;
     }
 
     public boolean areNeighbors(ComputeNode tile1, ComputeNode tile2) {

@@ -61,13 +61,85 @@ public class MakefileGenerator {
                 // fw.write("BTL-DEVICES += -enable_all_sides_for_dram -dram
                 // lhs\n");
 
-                fw.write("ATTRIBUTES = IMEM_EXTRA_LARGE\n");
+                //fw.write("ATTRIBUTES = IMEM_EXTRA_LARGE\n");
+                
                 //fw.write("MEMORY_LAYOUT=FOUR_SIDES\n");
                 //fw.write("BTL-DEVICES += -dram lhs -enable_all_sides_for_dram -dram ths -dram bhs \n");
             }
-
+            
+            if (KjcOptions.dcachesize != 32768) {
+                fw.write("EXTRA_BTL_ARGS += -dcache_size " +  
+                        KjcOptions.dcachesize + "\n"); 
+            }
+            
+            if (KjcOptions.icachesize != 32768) {
+                switch (KjcOptions.icachesize) {    
+                case 262144:
+                    fw.write("ATTRIBUTES = IMEM_EXTRA_LARGE\n"); 
+                    break;
+                case 131072:
+                    fw.write("ATTRIBUTES = IMEM_LARGE\n"); 
+                    break;
+                case 65536:
+                    fw.write("ATTRIBUTES = IMEM_MEDIUM\n"); 
+                    break;
+                default:
+                    assert KjcOptions.icachesize == 16384 ||
+                    KjcOptions.icachesize == 8192 ||
+                    KjcOptions.icachesize == 4096 ||
+                    KjcOptions.icachesize == 2048 ||
+                    KjcOptions.icachesize == 1024 ||
+                    KjcOptions.icachesize == 512 : "icache size not set correctly";
+                    fw.write("ATTRIBUTES = IMEM_" + KjcOptions.icachesize 
+                            + "\n"); 
+                    break;
+                }
+                        
+            }
+            
+           /*
+             //restrict memory sizes for larger tile configurations
+            switch (rawChip.getSimulatedXSize()) {
+            case 1: 
+                //fw.write("ATTRIBUTES = IMEM_EXTRA_LARGE\n"); 
+                fw.write("EXTRA_BTL_ARGS += -dcache_size 262144\n"); 
+                break;
+            case 2: 
+                //fw.write("ATTRIBUTES = IMEM_MEDIUM\n"); 
+                //fw.write("EXTRA_BTL_ARGS += -dcache_size 65536\n"); 
+                break;
+                //case 3 is normal so don't do anything
+            case 4: 
+                //fw.write("ATTRIBUTES = IMEM_16384\n");
+                fw.write("EXTRA_BTL_ARGS += -dcache_size 8192\n"); 
+                break;
+            case 5: 
+                //fw.write("ATTRIBUTES = IMEM_8192\n");
+                fw.write("EXTRA_BTL_ARGS += -dcache_size 8192\n"); 
+                break;
+            case 6: 
+                //fw.write("ATTRIBUTES = IMEM_4096\n");
+                fw.write("EXTRA_BTL_ARGS += -dcache_size 4096\n"); 
+                break;
+            case 7: 
+                //fw.write("ATTRIBUTES = IMEM_2048\n");
+                fw.write("EXTRA_BTL_ARGS += -dcache_size 2048\n"); 
+                break;
+            case 8: 
+                //fw.write("ATTRIBUTES = IMEM_1024\n");
+                fw.write("EXTRA_BTL_ARGS += -dcache_size 2048\n"); 
+                break;
+            }
+           */
             if (KjcOptions.hwic) {
                 fw.write("ATTRIBUTES += HWIC\n");
+            }
+            
+            //if we are data-parallelizing then for comparision to spacetime, 
+            //enable drams on all sides
+            if (KjcOptions.dup == 1) {
+                //fw.write("MEMORY_LAYOUT=FOUR_SIDES\n");
+                //fw.write("BTL-DEVICES += -dram lhs -enable_all_sides_for_dram -dram ths -dram bhs\n"); 
             }
             
             //magic instruction support for printing...

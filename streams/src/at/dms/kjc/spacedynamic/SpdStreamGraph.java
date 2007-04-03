@@ -30,7 +30,7 @@ public class SpdStreamGraph extends at.dms.kjc.flatgraph.StreamGraph {
 
     /** the tile assignment for the stream graph * */
     private Layout layout;
-
+    
     /** Information on all the file readers and writer of the graph * */
     private FileState fileState;
 
@@ -215,6 +215,8 @@ public class SpdStreamGraph extends at.dms.kjc.flatgraph.StreamGraph {
         // gather the information on file readers and writers in the graph
         fileState = new FileState(this);
 
+       
+                
         // now ready to layout
         layout = new Layout(this);
         // call the appropriate layout function

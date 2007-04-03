@@ -205,7 +205,6 @@ public class SpaceDynamicBackend {
                 int count = new GraphFlattener(ssg.getTopLevelSIR()).getNumTiles();
                 //partition this sub graph based on the number of tiles it is assigned...
                 int numTiles = ssg.getNumTiles();//SpaceDynamicBackend.rawRows * SpaceDynamicBackend.rawColumns;
-                System.out.println(numTiles);
                 boolean manual = KjcOptions.optfile != null;
                 //we may automatically turn dynamic programming partitioning on, so remember the old val of the option
                 boolean oldKjcDP = KjcOptions.partition_dp;

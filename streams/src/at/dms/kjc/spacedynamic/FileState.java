@@ -101,7 +101,7 @@ public class FileState implements StreamGraphVisitor, FlatVisitor {
             System.exit(1);
         }
 
-        if (rawChip.getTotalTiles() == 1) {
+        if (rawChip.getTotalSimulatedTiles() == 1) {
             assert fileReaders.keySet().size() < 2 && 
                 fileWriters.keySet().size() < 2 &&
                 fileReaders.keySet().size() + fileWriters.keySet().size() <= 2 :

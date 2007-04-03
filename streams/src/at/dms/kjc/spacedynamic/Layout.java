@@ -391,7 +391,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
      **************************************************************************/
     public void singleFilterAssignment() {
         assert assigned.size() == 1;
-        assert rawChip.getTotalTiles() == 1;
+        assert rawChip.getTotalSimulatedTiles() == 1;
         assert (FlatNode) (assigned.toArray()[0]) == streamGraph
             .getStaticSubGraphs()[0].getTopLevel();
         //assign the one filter

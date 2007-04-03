@@ -103,7 +103,7 @@ public class SpdStreamGraph extends at.dms.kjc.flatgraph.StreamGraph {
      * filter of the one SSG, all these conditions must be true
      */
     public void tileAssignmentOneFilter() {
-        assert rawChip.getTotalTiles() == 1;
+        assert rawChip.getTotalSimulatedTiles() == 1;
         assert staticSubGraphs.length == 1;
 
         SpdStaticStreamGraph ssg = (SpdStaticStreamGraph)staticSubGraphs[0];
@@ -175,11 +175,11 @@ public class SpdStreamGraph extends at.dms.kjc.flatgraph.StreamGraph {
     public void tileAssignment() {
         // if there is just one ssg, give all the tiles to it...
         if (staticSubGraphs.length == 1) {
-            ((SpdStaticStreamGraph)staticSubGraphs[0]).setNumTiles(rawChip.getTotalTiles());
+            ((SpdStaticStreamGraph)staticSubGraphs[0]).setNumTiles(rawChip.getTotalSimulatedTiles());
             return;
         }
 
-        int numTilesToAssign = rawChip.getTotalTiles();
+        int numTilesToAssign = rawChip.getTotalSimulatedTiles();
         SpdStaticStreamGraph current;
 
         // for right now just assign exactly the number of tiles as needed

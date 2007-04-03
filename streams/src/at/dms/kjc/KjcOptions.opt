@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.96 2007-03-19 17:20:24 dimock Exp $
+ * $Id: KjcOptions.opt,v 1.97 2007-04-03 19:34:25 mgordon Exp $
  */
 
 prefix Kjc
@@ -614,7 +614,7 @@ longname 		"backendvalues"
 
 longname 		"slicethresh"
 	type 		int
-	default		"0"
+	default		"101"
 	requireArgument
 	help 		"For the spacetime backend, set the slice threshold to be <int> percent."
 
@@ -670,6 +670,19 @@ longname		"workestunroll"
 	type 		boolean
 	default		"false"
 	help		"For the SpaceTime Backend, perform unrolling on filters for work estimation."
+
+longname		"dcachesize"
+	type		int
+	default		"32768"
+	requireArgument
+	help		"For Raw, set the dcache size for each tile (use a power of 2)."
+
+longname		"icachesize"
+	type		int
+	default		"32768"
+	requireArgument
+	help		"For Raw, set the dcache size for each tile (use a power of 2)."
+
 
 /* remove: now default */
 /* longname 		"noverbose" */

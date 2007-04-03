@@ -311,52 +311,51 @@ featureListPair->featureListPair filter FLPID(){
 ~~~~fileRead~~~~
 ~~~~~~~~~~~~~~*/
 
-// The following uncommented code matches functionality of:
-// void->int splitjoin fileRead() {
-// 	split roundrobin(0);
-// 	for(int i=1; i<=numImages; i++)
-// 	{ 	 
-// 		add FileReader<int>("bin/" + i + "b.bin");
-// 	}
-// 	join roundrobin(imageWidth*imageHeight*3);
-// }
+void->int splitjoin fileRead() {
+	split roundrobin(0);
+	for(int i=1; i<=numImages; i++)
+	{ 	 
+		add FileReader<int>("bin/" + i + "b.bin");
+	}
+	join roundrobin(imageWidth*imageHeight*3);
+}
+
 // but for dynamic rates we need a filter as the very first
 // operator in a static-rate portion of the graph that has
-// an outgoing dynamic-rate edge.
-
-void->int pipeline fileRead()
-{	
-    // filter to make dynamic rates happy.
-    add void->int filter {
-	work push 1 {
-	    push(0);
-	}
-    }
-    add int->int splitjoin {
-	split roundrobin(1,0);
-	add Identity<int>;     // push dummy on through
-	add void->int splitjoin {
-	    split roundrobin(0);
-	    for(int i=1; i<=numImages; i++)
-		{ 	 
-		    add FileReader<int>("bin/" + i + "b.bin");
-		}
-	    join roundrobin(imageWidth*imageHeight*3);
-	}
-	join roundrobin(1,numImages*imageWidth*imageHeight*3);
-    }
-    // next filter will have to eliminate dummy.
-    // but filter following use of fileRead() just pops 3.
-    add int->int filter {
-	work pop numImages*imageWidth*imageHeight*3 + 1 
-	    push numImages*imageWidth*imageHeight*3 {
-	    pop();
-	    for (int i = 0; i < numImages*imageWidth*imageHeight*3; i++) {
-		push(pop());
-	    }
-	}
-    }
-}
+// an outgoing dynamic-rate edge:
+// void->int pipeline fileRead()
+// {	
+//     // filter to make dynamic rates happy.
+//     add void->int filter {
+// 	work push 1 {
+// 	    push(0);
+// 	}
+//     }
+//     add int->int splitjoin {
+// 	split roundrobin(1,0);
+// 	add Identity<int>;     // push dummy on through
+// 	add void->int splitjoin {
+// 	    split roundrobin(0);
+// 	    for(int i=1; i<=numImages; i++)
+// 		{ 	 
+// 		    add FileReader<int>("bin/" + i + "b.bin");
+// 		}
+// 	    join roundrobin(imageWidth*imageHeight*3);
+// 	}
+// 	join roundrobin(1,numImages*imageWidth*imageHeight*3);
+//     }
+//     // next filter will have to eliminate dummy.
+//     // but filter following use of fileRead() just pops 3.
+//     add int->int filter {
+// 	work pop numImages*imageWidth*imageHeight*3 + 1 
+// 	    push numImages*imageWidth*imageHeight*3 {
+// 	    pop();
+// 	    for (int i = 0; i < numImages*imageWidth*imageHeight*3; i++) {
+// 		push(pop());
+// 	    }
+// 	}
+//     }
+// }
 
 
 

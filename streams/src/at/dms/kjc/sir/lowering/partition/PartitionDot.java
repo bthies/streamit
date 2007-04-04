@@ -5,6 +5,8 @@ import java.io.*;
 
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
+import at.dms.kjc.sir.lowering.fission.StatelessDuplicate;
+import at.dms.kjc.sir.lowering.SIRScheduler;
 
 /**
  * This class extends the main streamit dot printer to annotate the
@@ -12,6 +14,10 @@ import at.dms.kjc.sir.*;
  **/
 public class PartitionDot extends StreamItDot {
     private String prefixLabel;
+    private boolean simple; // if true, then use simple labels for filters (no numbers)
+    private boolean markStateful; // if true, then indicate which filters are stateful
+    private boolean markIO; // if true, marks pop and push rates in filters
+    private HashMap[] execCounts; // schedule for stream (only used if markIO is true)
     private HashMap<SIROperator, Object> partitions;
     // randomized order of color table so that like colors do not end up next to each other.
     private static final String[] color_table = {"white",
@@ -55,13 +61,24 @@ public class PartitionDot extends StreamItDot {
 
     /**
      * PrefixLabel is a prefix for each node.
+     * If 'simple' is true, then filter names are simple idents (not unique).
      */
-    public PartitionDot(PrintStream outputstream,
+    public PartitionDot(SIRStream str, PrintStream outputstream,
                         HashMap<SIROperator, Object> partitions,
-                        String prefixLabel) {
+                        String prefixLabel,
+                        boolean simple,
+                        boolean markStateful,
+                        boolean markIO) {
         super(outputstream);
         this.partitions = partitions;
         this.prefixLabel = prefixLabel;
+        this.simple = simple;
+        this.markStateful = markStateful;
+        this.markIO = markIO;
+        // initialize execution counts if we are marking I/O
+        if (markIO) {
+            execCounts = SIRScheduler.getExecutionCounts(str);
+        }
     }
 
     /**
@@ -77,7 +94,28 @@ public class PartitionDot extends StreamItDot {
         }
         int offset = (partition + 1) % color_table.length;
         if (offset < 0) { offset = color_table.length + offset; }
-        return origLabel + prefixLabel + partitions.get(op) + 
+
+        // label for any mutable state
+        String stateLabel = "";
+        if (markStateful && (op instanceof SIRFilter) && 
+            StatelessDuplicate.hasMutableState((SIRFilter)op)) {
+            stateLabel = "\\n*** STATEFUL ***";
+        }
+        
+        // label for communication rates
+        String ioLabel = "";
+        if (markIO && (op instanceof SIRFilter)) {
+            SIRFilter filter = (SIRFilter)op;
+            ioLabel = "\\nI/O: " + 
+                filter.getPopForSchedule(execCounts) + "->" + 
+                filter.getPushForSchedule(execCounts);
+            // indicate peeking prominently
+            if (filter.getPeekInt() > filter.getPopInt()) {
+                ioLabel += "\\n*** PEEKS " + (filter.getPeekInt() - filter.getPopInt()) + " AHEAD ***";
+            }
+        }
+
+        return origLabel + prefixLabel + partitions.get(op) + ioLabel + stateLabel +
             "\" color=\"" + color_table[offset] + "\" style=\"filled";
     }
 
@@ -91,7 +129,10 @@ public class PartitionDot extends StreamItDot {
     {
         assert partitions.containsKey(self):
             "Not assigned to tile: " + self.getName();
-        return new NamePair(makeLabelledNode(makePartitionLabel(self, self.getName())));
+        return new NamePair(makeLabelledNode(makePartitionLabel(self, 
+                                                                simple ?
+                                                                self.getIdent() :
+                                                                self.getName())));
     }
 
     /* visit a splitter */
@@ -160,13 +201,13 @@ public class PartitionDot extends StreamItDot {
     public static void printPartitionGraph(SIRStream str, 
                                            String filename,
                                            HashMap<SIROperator, Object> partitions) {
-        printGraph(str, filename, partitions, "\\npartition=");
+        printGraph(str, filename, partitions, "\\npartition=", false, true, false);
     }
 
     static void printWorkGraph(SIRStream str,
                                String filename,
                                HashMap<SIROperator, Object> partitions) {
-        printGraph(str, filename, partitions, "\\nwork=");
+        printGraph(str, filename, partitions, "\\nwork=", true, true, true);
     
     }
 
@@ -202,16 +243,21 @@ public class PartitionDot extends StreamItDot {
             }
             stringMap.put(op, string);
         }
-        printGraph(str, filename, stringMap, "");
+        printGraph(str, filename, stringMap, "", false, false, false);
     }
 
     private static void printGraph(SIRStream str, 
                                    String filename,
                                    HashMap<SIROperator, Object> partitions,
-                                   String prefixLabel) {
+                                   String prefixLabel,
+                                   boolean simple,
+                                   boolean markStateful,
+                                   boolean markIO) {
         try {
             FileOutputStream out = new FileOutputStream(filename);
-            StreamItDot dot = new PartitionDot(new PrintStream(out), partitions, prefixLabel);
+            StreamItDot dot = new PartitionDot(str, 
+                                               new PrintStream(out), partitions, prefixLabel,
+                                               simple, markStateful, markIO);
             dot.print("digraph streamit {\n");
             str.accept(dot);
             dot.print("}\n");

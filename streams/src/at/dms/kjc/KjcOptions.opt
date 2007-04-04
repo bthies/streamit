@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.97 2007-04-03 19:34:25 mgordon Exp $
+ * $Id: KjcOptions.opt,v 1.98 2007-04-04 14:09:15 dimock Exp $
  */
 
 prefix Kjc
@@ -671,13 +671,14 @@ longname		"workestunroll"
 	default		"false"
 	help		"For the SpaceTime Backend, perform unrolling on filters for work estimation."
 
-longname		"dcachesize"
+/* Note "icachesize" makes the existing -i switch ambiguous so prefix w "raw"*/
+longname		"rawdcachesize"
 	type		int
 	default		"32768"
 	requireArgument
 	help		"For Raw, set the dcache size for each tile (use a power of 2)."
 
-longname		"icachesize"
+longname		"rawicachesize"
 	type		int
 	default		"32768"
 	requireArgument

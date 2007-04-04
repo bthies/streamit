@@ -67,13 +67,13 @@ public class MakefileGenerator {
                 //fw.write("BTL-DEVICES += -dram lhs -enable_all_sides_for_dram -dram ths -dram bhs \n");
             }
             
-            if (KjcOptions.dcachesize != 32768) {
+            if (KjcOptions.rawdcachesize != 32768) {
                 fw.write("EXTRA_BTL_ARGS += -dcache_size " +  
-                        KjcOptions.dcachesize + "\n"); 
+                        KjcOptions.rawdcachesize + "\n"); 
             }
             
-            if (KjcOptions.icachesize != 32768) {
-                switch (KjcOptions.icachesize) {    
+            if (KjcOptions.rawicachesize != 32768) {
+                switch (KjcOptions.rawicachesize) {    
                 case 262144:
                     fw.write("ATTRIBUTES = IMEM_EXTRA_LARGE\n"); 
                     break;
@@ -84,13 +84,13 @@ public class MakefileGenerator {
                     fw.write("ATTRIBUTES = IMEM_MEDIUM\n"); 
                     break;
                 default:
-                    assert KjcOptions.icachesize == 16384 ||
-                    KjcOptions.icachesize == 8192 ||
-                    KjcOptions.icachesize == 4096 ||
-                    KjcOptions.icachesize == 2048 ||
-                    KjcOptions.icachesize == 1024 ||
-                    KjcOptions.icachesize == 512 : "icache size not set correctly";
-                    fw.write("ATTRIBUTES = IMEM_" + KjcOptions.icachesize 
+                    assert KjcOptions.rawicachesize == 16384 ||
+                    KjcOptions.rawicachesize == 8192 ||
+                    KjcOptions.rawicachesize == 4096 ||
+                    KjcOptions.rawicachesize == 2048 ||
+                    KjcOptions.rawicachesize == 1024 ||
+                    KjcOptions.rawicachesize == 512 : "icache size not set correctly";
+                    fw.write("ATTRIBUTES = IMEM_" + KjcOptions.rawicachesize 
                             + "\n"); 
                     break;
                 }

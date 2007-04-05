@@ -2,7 +2,6 @@ package at.dms.kjc.vanillaSlice;
 
 import java.util.*;
 import at.dms.kjc.backendSupport.*;
-import at.dms.kjc.lir.LIRStreamType;
 import at.dms.kjc.slicegraph.*;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
@@ -16,10 +15,11 @@ import at.dms.util.Utils;
 public class ProcessFilterSliceNode implements Constants {
     
     private static int uid = 0;
-    private static int getUid() {
+    static int getUid() {
         return uid++;
     }
 
+     /** map from a SliceNode to the CIRCodeUnit generated for it. */
     public static Map<SliceNode,SIRCodeUnit> codesForSlices = new HashMap<SliceNode,SIRCodeUnit>();
     
     /**
@@ -101,37 +101,15 @@ public class ProcessFilterSliceNode implements Constants {
             }
         }
 
+        System.err.println(
+                "filter " + info.filter +
+                ", make_joiner " + UniChannel.sliceNeedsJoinerCode(filterNode.getParent()) + 
+                ", make_peek_buffer " + UniChannel.filterNeedsPeekBuffer(filterNode) +
+                ", has_upstream_channel " + UniChannel.sliceHasUpstreamChannel(filterNode.getParent()) +
+                ", make_splitter " + UniChannel.sliceNeedsSplitterCode(filterNode.getParent()) +
+                ", has_downstream_channel " + UniChannel.sliceNeedsJoinerCode(filterNode.getParent()));
         
-        /*
-         * Make joiner and/or splitter if necesary.
-         */
-
         Channel inputChannel = null;
-        
-
-        if (make_joiner) {
-            SIRCodeUnit joiner_code = makeJoinerCode(joiner);
-            codeStore.addFields(joiner_code.getFields());
-            codeStore.addMethods(joiner_code.getMethods());
-            if (! make_peek_buffer) {
-                inputChannel = UnbufferredPopChannel.getChannel(joiner.getEdgeToNext(), 
-                        joiner_code.getMethods()[0].getName());
-            }
-        }
-        
-        Channel outputChannel = null;
-        
-        if (make_splitter) {
-            SIRCodeUnit splitter_code =  makeSplitterCode(splitter);
-            codeStore.addFields(splitter_code.getFields());
-            codeStore.addMethods(splitter_code.getMethods());
-            
-            outputChannel =  UnbufferredPushChannel.getChannel(filterNode.getEdgeToNext(),
-                    splitter_code.getMethods()[0].getName());
-        } else if (has_downstream_channel) {
-            outputChannel = Channel.getChannel(splitter.getDests()[0][0]);
-        }
-        
         
         /*
          * Make Channel for peek buffer if necessary.
@@ -140,19 +118,51 @@ public class ProcessFilterSliceNode implements Constants {
         if (make_peek_buffer) {
             if (make_joiner) {
                 // The filter pops from the peek buffer, which connects from the joiner.
-                inputChannel = Channel.getChannel(joiner.getEdgeToNext());
+                inputChannel = backEndBits.getChannel(joiner.getEdgeToNext());
             } else {
                 // The filter pops from the peek buffer, which connects from an upstream slice.
-                inputChannel = Channel.getChannel(joiner.getSingleEdge());
+                inputChannel = backEndBits.getChannel(joiner.getSingleEdge());
             }
         } else {
             if (! make_joiner && has_upstream_channel) {
-                inputChannel = Channel.getChannel(joiner.getSingleEdge());
+                inputChannel = backEndBits.getChannel(joiner.getSingleEdge());
+            }
+        }
+
+        
+        /*
+         * Make joiner and/or splitter code if necesary.
+         */
+
+        if (make_joiner) {
+            SIRCodeUnit joiner_code = makeJoinerCode(joiner,backEndBits);
+            codeStore.addFields(joiner_code.getFields());
+            codeStore.addMethods(joiner_code.getMethods());
+            if (make_peek_buffer) {
+                // Make a work function for the joiner code.
+                
+            } else {
+                inputChannel = UnbufferredPopChannel.getChannel(joiner.getEdgeToNext(), 
+                        joiner_code.getMethods()[0].getName());
             }
         }
         
-        SIRCodeUnit filter_code = makeFilterCode(filterNode.getFilter(), inputChannel, outputChannel);
+        Channel outputChannel = null;
         
+        if (make_splitter) {
+            SIRCodeUnit splitter_code =  ProcessOutputSliceNode.getSplitterCode(splitter,backEndBits);
+            
+            outputChannel =  UnbufferredPushChannel.getChannel(filterNode.getEdgeToNext(),
+                    splitter_code.getMethods()[0].getName());
+        } else if (has_downstream_channel) {
+            outputChannel = backEndBits.getChannel(splitter.getDests()[0][0]);
+        }
+        
+        
+        SIRCodeUnit filter_code = makeFilterCode(filterNode.getFilter(), inputChannel, outputChannel);
+        codeStore.addFields(filter_code.getFields());
+        codeStore.addMethods(filter_code.getMethods());
+       
         codesForSlices.put(filterNode, filter_code);
     }
 
@@ -234,10 +244,6 @@ public class ProcessFilterSliceNode implements Constants {
     }
     
     
-//    public JBlock getWorkFunctionBlock(SchedulingPhase whichPhase, ) {
-//        
-//    }
-    
     /**
      * Create fields and code for a joiner, as follows.
      * Do not create a joiner if all weights are 0: this code
@@ -308,7 +314,7 @@ static inline T joiner_M_unrolled() {
      * @param joiner An InputSliceNode specifying joiner weights and edges.
      * @return a SIRCodeUnit (fields and single method declaration) implementing the joiner
      */
-    private static SIRCodeUnit makeJoinerCode(InputSliceNode joiner) {
+    private static <T extends BackEndFactory> SIRCodeUnit makeJoinerCode(InputSliceNode joiner, T backEndBits) {
         String joiner_name = "_joiner_" + getUid();
         
         // size is number of edges with non-zero weight.
@@ -393,7 +399,7 @@ static inline T joiner_M_unrolled() {
             for (int j = 0; j < joiner.getWeights().length; j++) {
                 if (joiner.getWeights()[j] != 0) {
                     JMethodCallExpression pop = new JMethodCallExpression(
-                            Channel.getChannel(joiner.getSources()[j]).popMethodName(),
+                            backEndBits.getChannel(joiner.getSources()[j]).popMethodName(),
                             new JExpression[0]);
                     pop.setType(joiner.getType());
 
@@ -433,260 +439,6 @@ static inline T joiner_M_unrolled() {
         
         return retval;
     }
-    
-    
-    
-    /**
-     * Create fields and code for a splitter, as follows.
-     * Do not create a splitter if all weights are 0: this code
-     * fails rather than creating nonsensical kopi code.
-     * <pre>
-splitter as a state machine, driven off arrays:
-
-void push_1_1(T v) {fprintf(stderr, "push_1_1 %d\n", v);}
-void push_3_1(T v) {fprintf(stderr, "push_3_1 %d\n", v);}
-void push_3_2(T v) {fprintf(stderr, "push_3_2 %d\n", v);}
-
-/ *
- Splitter as state machine.
- Need arity (3 here), max duplication (2 here).
- Special case if arity == 1: always call push_N_M directly.
- * /
-
-static int splitter_N_dim1 = 3-1;
-static int splitter_N_weight = 0;
-
-static inline void splitter_N (T val) {
-  static void (*pushes[3][2])(T) = {
-    {push_1_1, NULL},       / * edge * /
-    {NULL, NULL},       / * 0-weight edge * /
-    {push_3_1, push_3_2}    / * duplicating edge * /
-  };
-
-  static const int weights[3] = {1, 0, 4};
-  int dim2;
-
-  while (splitter_N_weight == 0) {
-      splitter_N_dim1 = (splitter_N_dim1 + 1) % 3;
-      splitter_N_weight = weights[splitter_N_dim1];
-  }
-
-  dim2 = 0;
-  while (dim2 < 2 && pushes[splitter_N_dim1][dim2] != NULL) {
-    pushes[splitter_N_dim1][dim2++](val);
-  }
-  splitter_N_weight--;
 }
 
-
-splitter as actually implemented:
-
-/ * inline the array stuff, 
- * remove 0-weight edge 
- * /
-static int splitter_N_unrolled_edge = 2 - 1;
-static int splitter_N_unrolled_weight = 0;
-
-static inline void splitter_N_unrolled(T val) {
-
-  static const int weights[2] = {1-1,4-1};
-
-  if (--splitter_N_unrolled_weight < 0) {
-    splitter_N_unrolled_edge = (splitter_N_unrolled_edge + 1) % 2;
-    splitter_N_unrolled_weight = weights[splitter_N_unrolled_edge];
-  }
-
-  switch (splitter_N_unrolled_edge) {
-  case 0:
-    push_1_1(val);
-    break;
-  case 1:
-    push_3_1(val); 
-    push_3_2(val);
-    break;
-  }
-}
-
-     </pre>
-     * @param splitter
-     * @return
-     */
-    private static SIRCodeUnit makeSplitterCode(OutputSliceNode splitter) {
-        String splitter_name = "_splitter_" + getUid();
-        
-        // size is number of edges with non-zero weight.
-        int size = 0;
-        for (int w : splitter.getWeights()) {
-            if (w != 0) {size++;}
-        }
-        
-        assert size > 0 : "asking for code generation for null splitter";
-        
-        String edge_name = splitter_name + "_edge";
-        String weight_name = splitter_name + "_weight";
-
-        String param_name = "arg";
-        JFormalParameter arg = new JFormalParameter(splitter.getType(),param_name);
-        JExpression argExpr = new JLocalVariableExpression(arg);
-        
-        JVariableDefinition edgeVar = new JVariableDefinition(
-                ACC_STATIC,
-                CStdType.Integer,
-                edge_name,
-                new JIntLiteral(0));
-        
-        JFieldDeclaration edgeDecl = new JFieldDeclaration(edgeVar);
-        JFieldAccessExpression edgeExpr = new JFieldAccessExpression(edge_name);
-        
-        JVariableDefinition weightVar = new JVariableDefinition(
-                ACC_STATIC,
-                CStdType.Integer,
-                weight_name,
-                new JIntLiteral(size - 1));
-
-        JFieldDeclaration weightDecl = new JFieldDeclaration(weightVar);
-        JFieldAccessExpression weightExpr = new JFieldAccessExpression(weight_name);
-        
-        JIntLiteral[] weightVals = new JIntLiteral[size];
-        {
-            int i = 0;
-            for (int w : splitter.getWeights()) {
-                if (w != 0) {
-                    weightVals[i++] = new JIntLiteral(w);
-                }
-            }
-        }
-        
-        JVariableDefinition weightsArray = new JVariableDefinition(
-                ACC_STATIC | ACC_FINAL,  // static const in C
-                new CArrayType(CStdType.Integer,
-                        1, new JExpression[]{new JIntLiteral(size)}),
-                "weights",
-                new JArrayInitializer(weightVals));
-        JLocalVariableExpression weightsExpr = new JLocalVariableExpression(weightsArray);
-        
-        JStatement next_edge_weight_stmt = new JIfStatement(null,
-                new JRelationalExpression(OPE_LT,
-                        new JPrefixExpression(null,
-                                OPE_PREDEC,
-                                weightExpr),
-                        new JIntLiteral(0)),
-                new JBlock(new JStatement[]{
-                        new JExpressionStatement(new JAssignmentExpression(
-                                edgeExpr,
-                                new JModuloExpression(null,
-                                        new JAddExpression(
-                                                edgeExpr,
-                                                new JIntLiteral(1)),
-                                        new JIntLiteral(size)))),
-                        new JExpressionStatement(new JAssignmentExpression(
-                                weightExpr,
-                                new JArrayAccessExpression(weightsExpr,
-                                        edgeExpr)
-                                ))
-                }),
-                new JEmptyStatement(),
-                null);
-
-        
-        JSwitchGroup[] cases = new JSwitchGroup[size]; // fill in later.
-        JStatement switch_on_edge_stmt = new JSwitchStatement(null,
-                edgeExpr,
-                new JSwitchGroup[size],
-                null);
-        
-        {
-            int i = 0;
-            for (int j = 0; j < splitter.getWeights().length; j++) {
-                if (splitter.getWeights()[j] != 0) {
-                    Edge[] edges = splitter.getDests()[j];
-                    JStatement[] pushes = new JStatement[edges.length + 1];
-                    for (int k = 0; k < pushes.length; k++) {
-                        pushes[k] = new JExpressionStatement(
-                            new JMethodCallExpression(
-                                Channel.getChannel(edges[k]).pushMethodName(),
-                                new JExpression[]{argExpr}));
-                    }
-                    pushes[edges.length] = new JBreakStatement(null,null,null);
-                    
-                    cases[i] = new JSwitchGroup(null,
-                            new JSwitchLabel[]{new JSwitchLabel(null,new JIntLiteral(i))},
-                            pushes);
-                    i++;
-                }
-            }
-        }
-
-        JMethodDeclaration splitter_method = new JMethodDeclaration(
-                null, ACC_STATIC /* | ACC_INLINE */,  // there is no ACC_INLINE
-                CStdType.Void,
-                splitter_name,
-                new JFormalParameter[]{},
-                new CClassType[]{},
-                new JBlock(),
-                null, null);
-        
-        JBlock splitter_block = splitter_method.getBody();
-        
-        splitter_block.addStatement(
-                new JVariableDeclarationStatement(
-                        new JVariableDefinition[]{weightsArray}));
-        splitter_block.addStatement(next_edge_weight_stmt);
-        splitter_block.addStatement(switch_on_edge_stmt);
-        
-        
-        SIRCodeUnit retval = new MinCodeUnit(
-                new JFieldDeclaration[]{edgeDecl, weightDecl},
-                new JMethodDeclaration[]{splitter_method});
-        
-        return retval;
-
-    }
-}
-
-/**
- * Minimum effort usable implementation of SIRCodeUnit interface.
- * 
- * @author dimock
- *
- */
-class MinCodeUnit extends SIRStream implements SIRCodeUnit {
-    
-    private static final long serialVersionUID = 873884375283692159L;
-    
-    MinCodeUnit(JFieldDeclaration[] fields, JMethodDeclaration[]methods) {
-        this.fields = fields;
-        this.methods = methods;
-    }
-
-    @Override
-    public CType getInputType() {
-        throw new AssertionError("unusable method");
-    }
-
-    @Override
-    public CType getOutputType() {
-        throw new AssertionError("unusable method");
-    }
-
-    @Override
-    public int getPopForSchedule(HashMap[] counts) {
-        throw new AssertionError("unusable method");
-    }
-
-    @Override
-    public int getPushForSchedule(HashMap[] counts) {
-        throw new AssertionError("unusable method");
-    }
-
-    @Override
-    public LIRStreamType getStreamType() {
-        throw new AssertionError("unusable method");
-    }
-
-    @Override
-    public Object accept(AttributeStreamVisitor v) {
-        throw new AssertionError("unusable method");
-    }
-}
 

@@ -616,35 +616,6 @@ public class RawComputeCodeStore extends ComputeCodeStore<RawTile> implements SI
         addInitFunctionCall(filterInfo);
     }
 
-    /**
-     * Add the call the init function as the first statement in the
-     * init stage.
-     * 
-     * @param filterInfo The filter.
-     */
-    private void addInitFunctionCall(FilterInfo filterInfo) {
-        // create the params list, for some reason
-        // calling toArray() on the list breaks a later pass
-       /*
-        List paramList = filterInfo.filter.getParams();
-       
-        JExpression[] paramArray;
-        if (paramList == null || paramList.size() == 0)
-            paramArray = new JExpression[0];
-        else
-            paramArray = (JExpression[]) paramList.toArray(new JExpression[0]);
-            */
-        JMethodDeclaration init = filterInfo.filter.getInit();
-        if (init != null)
-            mainMethod.addStatementFirst
-            (new JExpressionStatement(null,
-                    new JMethodCallExpression(null, new JThisExpression(null),
-                            filterInfo.filter.getInit().getName(), new JExpression[0]),
-                            null));
-        else
-            System.out.println(" ** Warning: Init function is null");
-
-    }
 
     /**
      * Add filterInfo's prime pump block to the current position of the

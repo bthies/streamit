@@ -23,7 +23,7 @@ public class UnbufferredPushChannel extends Channel {
      */
     public static UnbufferredPushChannel getChannel(Edge edge, String pushName) {
         Channel oldChan = Channel.bufferStore.get(edge);
-        if (edge == null) {
+        if (oldChan == null) {
             UnbufferredPushChannel chan = new UnbufferredPushChannel(edge, pushName);
             Channel.bufferStore.put(edge, chan);
             return chan;
@@ -34,13 +34,17 @@ public class UnbufferredPushChannel extends Channel {
         }
     }
     
-    private UnbufferredPushChannel(Edge edge, String popName) {
+    private UnbufferredPushChannel(Edge edge, String pushName) {
         super(edge);
-        this.pushName = popName;
+        this.pushName = pushName;
     }
     
     public String pushMethodName() {
         return pushName;
+    }
+    
+    public void updatePushMethodName(String pushName) {
+        this.pushName = pushName;
     }
 
 }

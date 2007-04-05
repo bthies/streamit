@@ -120,7 +120,7 @@ public class InterSliceEdge extends Edge {
         itemsReceived = (int) ((prev.steadyMult * prev.push) * ((double) ((OutputSliceNode)src)
                                                                 .getWeight(this) / ((OutputSliceNode)src).totalWeights()));
 
-        assert (itemsSent == itemsReceived) : "Calculating steady state: items received != items send on buffer "
+        assert (itemsSent == itemsReceived) : "Calculating steady state: items received != items sent on buffer "
             + itemsSent + " " + itemsReceived + " " + prev + " " + next;
 
         return itemsSent;

@@ -1,14 +1,21 @@
 package at.dms.kjc.backendSupport;
 
+import java.util.*;
 import at.dms.kjc.CClassType;
 import at.dms.kjc.CStdType;
 import at.dms.kjc.JBlock;
 import at.dms.kjc.JBooleanLiteral;
+import at.dms.kjc.JExpression;
+import at.dms.kjc.JExpressionStatement;
 import at.dms.kjc.JFieldDeclaration;
 import at.dms.kjc.JFormalParameter;
+import at.dms.kjc.JMethodCallExpression;
 import at.dms.kjc.JMethodDeclaration;
 import at.dms.kjc.JStatement;
+import at.dms.kjc.JThisExpression;
 import at.dms.kjc.JWhileStatement;
+import at.dms.kjc.sir.SIRCodeUnit;
+import at.dms.kjc.slicegraph.SliceNode;
 
 /**
  * A data structure for associating code with each filter at each phase.
@@ -20,7 +27,7 @@ import at.dms.kjc.JWhileStatement;
  *
  * @param ComputeNodeType 
  */
-public class ComputeCodeStore<ComputeNodeType extends ComputeNode<?>> implements at.dms.kjc.sir.SIRCodeUnit {
+public class ComputeCodeStore<ComputeNodeType extends ComputeNode<?>> implements SIRCodeUnit {
 
     /** the name of the main function for each tile */
     public static String mainName = "";
@@ -63,6 +70,7 @@ public class ComputeCodeStore<ComputeNodeType extends ComputeNode<?>> implements
     /** the block that executes each slicenode's init schedule, as calculated currently */
     protected JBlock initBlock;
 
+    
     /**
      * Constructor
      * @param parent a ComputeCodeStore or an instance of some subclass.
@@ -245,6 +253,24 @@ public class ComputeCodeStore<ComputeNodeType extends ComputeNode<?>> implements
      */
     public JMethodDeclaration getMainFunction() {
         return mainMethod;
+    }
+
+    /**
+     * Add the call the init function for a filter as the first statement in "main".
+     * 
+     * @param filterInfo The filter.
+     */
+    public void addInitFunctionCall(FilterInfo filterInfo) {
+        JMethodDeclaration init = filterInfo.filter.getInit();
+        if (init != null)
+            mainMethod.addStatementFirst
+            (new JExpressionStatement(null,
+                    new JMethodCallExpression(null, new JThisExpression(null),
+                            filterInfo.filter.getInit().getName(), new JExpression[0]),
+                            null));
+        else
+            System.err.println(" ** Warning: Init function is null in " + filterInfo);
+
     }
 
 }

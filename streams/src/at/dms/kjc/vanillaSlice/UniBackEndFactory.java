@@ -2,11 +2,14 @@ package at.dms.kjc.vanillaSlice;
 
 import at.dms.kjc.backendSupport.BackEndFactory;
 import at.dms.kjc.backendSupport.BackEndScaffold;
+import at.dms.kjc.backendSupport.Channel;
 import at.dms.kjc.backendSupport.SchedulingPhase;
+import at.dms.kjc.slicegraph.Edge;
 import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.OutputSliceNode;
+import at.dms.kjc.slicegraph.SliceNode;
 //import at.dms.kjc.spacetime.ComputeNodesI;
 /**
  * Stub for uniprocessor backend.
@@ -121,5 +124,15 @@ public class UniBackEndFactory extends BackEndFactory<
     public void processOutputSliceNode(OutputSliceNode output,
             SchedulingPhase whichPhase, UniProcessors computeNodes) {
         
+    }
+
+    @Override
+    public Channel getChannel(Edge e) {
+        return UniChannel.getOrMakeChannel(e);
+    }
+
+    @Override
+    public Channel getChannel(SliceNode src, SliceNode dst) {
+        throw new AssertionError("Getting channel by src, dst not supported.");
     }
 }

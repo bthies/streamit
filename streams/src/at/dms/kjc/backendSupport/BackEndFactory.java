@@ -130,4 +130,22 @@ public abstract class BackEndFactory<
     public Collection<Channel> getChannels() {
         return Channel.getBuffers();
     }
+    
+    /**
+     * Back end needs to generate subclasses of channel.
+     * Routine here to get a channel that implements communication over an edge.
+     * @param e the edge.
+     * @return a channel: preexisting or newly created.
+     */
+    
+    public abstract Channel getChannel(Edge e);
+    
+    /**
+     * Back end needs to generate subclasses of channel.
+     * Routine here to get a channel from a source to a destination.
+     * @param src
+     * @param dst
+     * @return a channel: preexisting or newly created.
+     */
+    public abstract Channel getChannel(SliceNode src, SliceNode dst);
 }

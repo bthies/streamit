@@ -53,7 +53,8 @@ public class Channel {
     }
 
     /**
-     * Create a buffer given an edge.
+     * Create a channel given an edge.
+     * Subclasses should provide factories for their channel types.
      * @param edge
      */
     protected Channel(Edge edge) {
@@ -61,7 +62,7 @@ public class Channel {
         theEdge = edge;
         edge.getType(); // side effect of catching error if source and dest types not the same
         unique_id = unique_id_generator++;
-        ident = "__buf__" + unique_id + "__";
+        ident = "__chan__" + unique_id + "__";
         rotationLength = 1;
     }
     
@@ -74,14 +75,24 @@ public class Channel {
         this(Util.srcDstToEdge(src, dst));
     }
     
-    public static Channel getChannel(Edge edge) {
-        if (!bufferStore.containsKey(edge)) {
-            System.out.println("Creating Channel from " + edge.getSrc() + " to " + edge.getDest());
-            bufferStore.put(edge, new Channel(edge));
-        }
+    
+    /**
+     * Determine whther a channel for an edge exists in out collection of channels.
+     * @param edge  Edge that the channel should implement
+     * @return an existing channel if there is one, else null.
+     */
+    public static Channel findChannel(Edge edge) {
         return bufferStore.get(edge);
     }
 
+    /**
+     * Add a Channel to our collection of channels.
+     * @param c Channel to add to our collection of channels. 
+     */
+    public static void addChannel(Channel c) {
+        bufferStore.put(c.theEdge, c);
+    }
+    
     /**
      * Reset the buffer store and create all number buffer objects.  
      * Used if one wants to munge the trace graph.
@@ -100,6 +111,13 @@ public class Channel {
         }
     }
 
+    /**
+     * @return a string uniquely identifying the channel.
+     */
+    public String getIdent() {
+        return ident;
+    }
+    
     /** @return of the buffers of this stream program */
     public static Collection<Channel> getBuffers() {
         return bufferStore.values();

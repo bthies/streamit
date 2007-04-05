@@ -5,6 +5,8 @@ package at.dms.kjc.spacetime;
 
 import java.util.*;
 
+
+import at.dms.kjc.slicegraph.Partitioner;
 import at.dms.kjc.backendSupport.FilterInfo;
 import at.dms.kjc.slicegraph.FilterContent;
 import at.dms.kjc.sir.SIRFilter;
@@ -35,8 +37,10 @@ import at.dms.kjc.*;
  *
  */
 public class AddBuffering {
-    private SpaceTimeSchedule spaceTime;
+    private Partitioner spaceTime;
     private HashSet<Slice> editedSlices;
+    private boolean limitTiles;
+    private int totalTiles;
     
     /**
      * Fix the input slice node and output slice node multiplicity to be
@@ -44,13 +48,15 @@ public class AddBuffering {
      *  
      * @param spaceTime The space time schedule.
      */
-    public static void doit(SpaceTimeSchedule spaceTime) {
+    public static void doit(Partitioner spaceTime, boolean limitTiles, int totalTiles) {
         System.out.println("Equalizing splits and joins by buffering...");
-        new AddBuffering(spaceTime).doitInternal();
+        new AddBuffering(spaceTime,limitTiles,totalTiles).doitInternal();
     }
     
-    private AddBuffering(SpaceTimeSchedule st) {
+    private AddBuffering(Partitioner st, boolean limit, int tt) {
         this.spaceTime = st;
+        this.limitTiles = limit;
+        this.totalTiles = tt;
         editedSlices = new HashSet<Slice>();
     }
     
@@ -66,8 +72,8 @@ public class AddBuffering {
      * then create an id filter to buffer items to make it integral.
      */
     private void checkOutputNodes() {
-        for (int t = 0; t < spaceTime.getPartitioner().getSliceGraph().length; t++) {
-            Slice slice = spaceTime.getPartitioner().getSliceGraph()[t];
+        for (int t = 0; t < spaceTime.getSliceGraph().length; t++) {
+            Slice slice = spaceTime.getSliceGraph()[t];
             //check all the outgoing edges to see if they are balanced in the init
             //and fix them if we have to
             fixOutputNode(slice.getTail());
@@ -121,8 +127,8 @@ public class AddBuffering {
         do {
             //System.out.println("Iteration " + i++);
             change = false;
-            for (int t = 0; t < spaceTime.getPartitioner().getSliceGraph().length; t++) {
-                Slice slice = spaceTime.getPartitioner().getSliceGraph()[t];
+            for (int t = 0; t < spaceTime.getSliceGraph().length; t++) {
+                Slice slice = spaceTime.getSliceGraph()[t];
                 //check all the outgoing edges to see if they are balanced in the init
                 //and fix them if we have to
                 boolean currentChange 
@@ -134,8 +140,8 @@ public class AddBuffering {
             FilterInfo.reset();
             //tell the partitioner that new slices maybe have been added!
             LinkedList<Slice> newSlices = 
-                DataFlowOrder.getTraversal(spaceTime.getPartitioner().getSliceGraph());
-            spaceTime.getPartitioner().setSliceGraphNewIds(
+                DataFlowOrder.getTraversal(spaceTime.getSliceGraph());
+            spaceTime.setSliceGraphNewIds(
                     newSlices.toArray(new Slice[newSlices.size()]));
                     
         } while (change);
@@ -319,8 +325,7 @@ public class AddBuffering {
     private boolean legalToAddBufferingInSlice(Slice slice, int initItemsSent) {
         if (KjcOptions.greedysched || KjcOptions.noswpipe)
             return false;
-        if (slice.getNumFilters() >=
-                spaceTime.getTotalNodes()/*getRawChip().getTotalTiles()*/)
+        if (limitTiles && slice.getNumFilters() >= totalTiles)
             return false;
         
         OutputSliceNode output = slice.getTail();
@@ -391,10 +396,14 @@ public class AddBuffering {
      */
     private void addIDToSlice(Slice slice, int initMult) {
         FilterSliceNode oldLast = slice.getTail().getPrevFilter();
-     
+
+// removed check: can always convert to SimpleSlices
+// and check would fail for UniProcessor every time...
+        if (limitTiles) {
         assert slice.getNumFilters() < 
-            spaceTime.getTotalNodes()/*getRawChip().getTotalTiles()*/ : 
-                "Cannot add buffering to slice because it has (filters == tiles).";
+            totalTiles : 
+               "Cannot add buffering to slice because it has (filters == tiles).";
+        }
         
         //create the identity
         SIRFilter identity = new SIRIdentity(oldLast.getFilter().getOutputType());
@@ -416,7 +425,7 @@ public class AddBuffering {
         slice.getTail().setPrevious(filter);
         slice.finish();
         
-        spaceTime.getPartitioner().addFilterToSlice(filter, slice);
+        spaceTime.addFilterToSlice(filter, slice);
     }
     
     /**

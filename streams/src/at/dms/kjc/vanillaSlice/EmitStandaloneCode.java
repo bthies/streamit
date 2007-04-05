@@ -1,59 +1,202 @@
 // $Id
 package at.dms.kjc.vanillaSlice;
 
+import java.util.*;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
-import at.dms.kjc.backendSupport.FilterInfo;
-import at.dms.kjc.common.*;
+import at.dms.kjc.backendSupport.*;
 import at.dms.kjc.slicegraph.*;
+import at.dms.kjc.common.*;
 
 /**
+ * Takes a ComputeNode collection, a collection of Channel's, 
+ * and a mapping from Channel x end -> ComputeNode and emits code for the ComputeNode. 
  * @author dimock
  *
  */
-public class EmitStandaloneCode extends ToC implements SLIRVisitor,CodeGenerator {
+public class EmitStandaloneCode<T extends BackEndFactory>  {
 
     // variable name prefix for copying arrays.
     private static final String ARRAY_COPY = "__array_copy__";
-
-    /**
-     * Emit C code for a slice graph with exactly one FilterSlice
-     * @param sliceGraph
-     */
-    public static void emitForSingleSlice(Slice[] sliceGraph) {
-        assert sliceGraph.length == 1;
-        // make sure we have a single Slice in the SliceGraph
-        Slice slice = sliceGraph[0];
-        // sanity check that SliceGraph really is a single slice
-        assert slice.getHead().getWidth() == 0;
-        assert slice.getTail().getWidth() == 0;
-        // make sure that this slice contains a single Filter
-        assert slice.getHead().getNext().isFilterSlice();
-        assert slice.getTail().getPrevious().isFilterSlice();
-        assert slice.getHead().getNext() == slice.getTail().getPrevious();
-        
-        // having checked, emit code into a CodegenPrintWriter
-        EmitStandaloneCode emitter = new EmitStandaloneCode();
-        emitter.singleSlice(slice);
-        
-        // now copy emitted code out to a file
-        try {
-            java.io.FileWriter fw = new java.io.FileWriter("standalone.c");
-            fw.write(emitter.getPrinter().getString());
-            fw.close();
-        } catch (Exception e) {
-            System.err.println("Error writing code to file.");
-            e.printStackTrace();
-            System.exit(-1);
-        }
-    }
+    private T backendbits;
+    private CodeGen codegen;
+    
+//    /**
+//     * Emit C code for a slice graph with exactly one FilterSlice
+//     * @param sliceGraph
+//     */
+//    public static void emitForSingleSlice(Slice[] sliceGraph) {
+//        assert sliceGraph.length == 1;
+//        // make sure we have a single Slice in the SliceGraph
+//        Slice slice = sliceGraph[0];
+//        // sanity check that SliceGraph really is a single slice
+//        assert slice.getHead().getWidth() == 0;
+//        assert slice.getTail().getWidth() == 0;
+//        // make sure that this slice contains a single Filter
+//        assert slice.getHead().getNext().isFilterSlice();
+//        assert slice.getTail().getPrevious().isFilterSlice();
+//        assert slice.getHead().getNext() == slice.getTail().getPrevious();
+//        
+//        // having checked, emit code into a CodegenPrintWriter
+//        EmitStandaloneCode emitter = new EmitStandaloneCode();
+//        emitter.singleSlice(slice);
+//        
+//        // now copy emitted code out to a file
+//        try {
+//            java.io.FileWriter fw = new java.io.FileWriter("standalone.c");
+//            fw.write(emitter.codegen.getPrinter().getString());
+//            fw.close();
+//        } catch (Exception e) {
+//            System.err.println("Error writing code to file.");
+//            e.printStackTrace();
+//            System.exit(-1);
+//        }
+//    }
     
     /**
      * 
      */
-    public EmitStandaloneCode() {
+    public EmitStandaloneCode(
+            T backendbits) {
         super();
+        this.backendbits = backendbits;
+        codegen = null;
     }
+    
+    /**
+     * Given a ComputeNode and a CodegenPrintWrite, print all code for the ComputeNode.
+     * Channel information relevant to the ComputeNode is printed based on data in the
+     * BackEndFactory passed when this class was instantiated.
+     * @param n The ComputeNode to emit code for.
+     * @param p The CodegenPrintWriter (left open on return).
+     */
+    public void emitCodeForComputeNode (ComputeNode n, 
+            CodegenPrintWriter p) {
+        codegen = new CodeGen(p);
+        
+        SIRCodeUnit fieldsAndMethods = n.getComputeCode();
+        
+        // Standard final optimization of a code unit before code emission:
+        // unrolling and constant prop as allowed, DCE, array destruction into scalars.
+        (new at.dms.kjc.sir.lowering.FinalUnitOptimize()).optimize(fieldsAndMethods);
+        
+        p.println("// code for processor " + n.getUniqueId());
+        
+        // generate function prototypes for methods so that they can call each other
+        // in C.
+        codegen.setDeclOnly(true);
+        for (JMethodDeclaration method : fieldsAndMethods.getMethods()) {
+            method.accept(codegen);
+        }
+        p.println("");
+        codegen.setDeclOnly(false);
+
+        // generate code for ends of channels that connect to code on this ComputeNode
+        Set<Channel> upstreamEnds = getUpstreamEnds(n);
+        Set<Channel> downstreamEnds = getDownstreamEnds(n);
+        
+        // externs
+        for (Channel c : upstreamEnds) {
+            if (c.writeDeclsExtern() != null) {
+                for (JStatement d : c.writeDeclsExtern()) { d.accept(codegen); }
+            }
+        }
+       
+        for (Channel c : downstreamEnds) {
+            if (c.readDeclsExtern() != null) {
+                for (JStatement d : c.readDeclsExtern()) { d.accept(codegen); }
+            }
+        }
+
+        for (Channel c : upstreamEnds) {
+            if (c.dataDecls() != null) {
+                // wrap in #ifndef for case where different ends have
+                // are in different files that eventually get concatenated.
+                p.println("#ifndef " + c.getIdent() + "_UPSTREAMEXTERNS");
+                for (JStatement d : c.dataDecls()) { d.accept(codegen); }
+                p.println("#define " + c.getIdent() + "_UPSTREAMEXTERNS");
+                p.println("#endif");
+            }
+        }
+        
+        for (Channel c : downstreamEnds) {
+            if (c.dataDecls() != null && ! upstreamEnds.contains(c)) {
+                p.println("#ifndef " + c.getIdent() + "_UPSTREAMEXTERNS");
+                for (JStatement d : c.dataDecls()) { d.accept(codegen); }
+                p.println("#define " + c.getIdent() + "_UPSTREAMEXTERNS");
+                p.println("#endif");
+            }
+        }
+
+        for (Channel c : upstreamEnds) {
+            if (c.writeDecls() != null) {
+                for (JStatement d : c.writeDecls()) { d.accept(codegen); }
+            }
+            if (c.pushMethod() != null) { c.pushMethod().accept(codegen); }
+        }
+
+        for (Channel c : downstreamEnds) {
+            if (c.readDecls() != null) {
+                for (JStatement d : c.readDecls()) { d.accept(codegen); }
+            }
+            if (c.peekMethod() != null) { c.peekMethod().accept(codegen); }
+            if (c.assignFromPeekMethod() != null) { c.assignFromPeekMethod().accept(codegen); }
+            if (c.popMethod() != null) { c.popMethod().accept(codegen); }
+            if (c.assignFromPopMethod() != null) { c.assignFromPopMethod().accept(codegen); }
+            if (c.popManyMethod() != null) { c.popManyMethod().accept(codegen); }
+         }
+        p.println("");
+        
+        // generate declarations for fields
+        for (JFieldDeclaration field : fieldsAndMethods.getFields()) {
+            field.accept(codegen);
+        }
+        p.println("");
+        
+        // generate functions for methods
+        codegen.setDeclOnly(false);
+        for (JMethodDeclaration method : fieldsAndMethods.getMethods()) {
+            method.accept(codegen);
+        }
+    }
+    
+    /**
+     * Get all channels having an upstream end on ComputeNode <b>n</b>.
+     * @param n 
+     * @return A collection of channels.
+     */
+    private Set<Channel> getUpstreamEnds (ComputeNode n) {
+        Set<Channel> retval = new HashSet<Channel>();
+        Layout l = backendbits.getLayout();
+        Collection<Channel> channels = backendbits.getChannels();
+        for (Channel c : channels) {
+            SliceNode s = c.getSource();
+            if (l.getComputeNode(s) == n) {
+                retval.add(c);
+            }
+        }
+        return retval;
+    }
+    
+    
+    /**
+     * Get all channels having an downstream end on ComputeNode <b>n</b>.
+     * @param n 
+     * @return A collection of channels.
+     */
+    private Set<Channel> getDownstreamEnds (ComputeNode n) {
+        Set<Channel> retval = new HashSet<Channel>();
+        Layout l = backendbits.getLayout();
+        Collection<Channel> channels = backendbits.getChannels();
+        for (Channel c : channels) {
+            SliceNode s = c.getDest();
+            if (l.getComputeNode(s) == n) {
+                retval.add(c);
+            }
+        }
+        return retval;
+    }
+    
     
     /**
      * called for emitForSingleSlice after an object is set up.
@@ -82,29 +225,28 @@ public class EmitStandaloneCode extends ToC implements SLIRVisitor,CodeGenerator
         // may eventually want FilterInfo, not currently
         //FilterInfo filterinfo = FilterInfo.getFilterInfo(filternode);
         
-        this.hasBoolType = false;  // emitting C, not C++, so no "boolean"
-
         // write out fixed header information
         generateHeader();
         
         // generate function prototypes for methods
-        this.setDeclOnly(true);
+        codegen.setDeclOnly(true);
         for (JMethodDeclaration method : filtercontent.getMethods()) {
-            method.accept(this);
+            method.accept(codegen);
         }
-        this.setDeclOnly(false);
-        p.println("");
+        codegen.setDeclOnly(false);
+
+        codegen.getPrinter().println("");
         
         // generate globals for fields
         for (JFieldDeclaration field : filtercontent.getFields()) {
-            field.accept(this);
+            field.accept(codegen);
         }
-        p.println("");
+        codegen.getPrinter().println("");
         
         // generate functions for methods
-        this.setDeclOnly(false);
+        codegen.setDeclOnly(false);
         for (JMethodDeclaration method : filtercontent.getMethods()) {
-            method.accept(this);
+            method.accept(codegen);
         }
         
         // generate a main() function
@@ -114,9 +256,9 @@ public class EmitStandaloneCode extends ToC implements SLIRVisitor,CodeGenerator
     
     /**
      * Standard code for front of the file here.
-     *
      */
     private void generateHeader() {
+        CodegenPrintWriter p = codegen.getPrinter();
         p.println("// Global Header Code Here");
         p.println("#include <math.h>");
     }
@@ -125,6 +267,7 @@ public class EmitStandaloneCode extends ToC implements SLIRVisitor,CodeGenerator
      * Generate a "main" function.
      */
     private void generateMain() {
+        CodegenPrintWriter p = codegen.getPrinter();
         p.println();
         p.println();
         p.println("// main() Function Here");
@@ -151,9 +294,20 @@ public class EmitStandaloneCode extends ToC implements SLIRVisitor,CodeGenerator
         );
     }
     
-
+    /**
+     * Class to actually emit code.
+     * @author dimock
+     *
+     */
+    private class CodeGen extends ToC implements SLIRVisitor,CodeGenerator {
     // Overridden methods from ToC, ToCCommon, SLIRVisitor
-    
+
+    CodeGen(CodegenPrintWriter p) {
+        super(p);
+        // emitting C, not C++, so no "boolean"
+        hasBoolType = false;
+    }
+        
     @Override
     public void visitPeekExpression(SIRPeekExpression self,
             CType tapeType,
@@ -368,5 +522,6 @@ public class EmitStandaloneCode extends ToC implements SLIRVisitor,CodeGenerator
 
         p.newLine();
         method = null;
+    }
     }
 }

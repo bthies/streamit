@@ -5,12 +5,17 @@ import at.dms.kjc.*;
 import at.dms.kjc.backendSupport.*;
 import at.dms.kjc.slicegraph.DataFlowOrder;
 import at.dms.kjc.slicegraph.Partitioner;
+import at.dms.kjc.spacetime.AddBuffering;
 import at.dms.kjc.spacetime.BasicGenerateSteadyStateSchedule;
-
+import at.dms.kjc.common.CodegenPrintWriter;
+import java.io.*;
 /**
  * The entry to the back end for a uniprocesor or cluster.
  */
 public class UniBackEnd {
+    /** holds pointer to BackEndFactory instance during back end portion of this compiler. */
+    public static UniBackEndFactory backEndBits = null;
+    
     /**
      * Top level method for SpaceTime backend, called via reflection from {@link at.dms.kjc.Main}.
      * @param str               SIRStream from {@link at.dms.kjc.Kopi2SIR}
@@ -33,13 +38,16 @@ public class UniBackEnd {
         CommonPasses commonPasses = new CommonPasses();
         /*Slice[] sliceGraph = */ commonPasses.run(str, interfaces, 
                 interfaceTables, structs, helpers, global, numCores);
-        // guarantee tha we are not going to hack properties of filters
-        FilterInfo.canUse();
 
         // partitioner contains information about the Slice graph.
         Partitioner partitioner = commonPasses.getPartitioner();
+        // fix any rate skew introduced in conversion to Slice graph.
+        AddBuffering.doit(partitioner,false,numCores);
         // decompose any pipelines of filters in the Slice graph.
         partitioner.ensureSimpleSlices();
+
+        // guarantee tha we are not going to hack properties of filters
+        FilterInfo.canUse();
 
         // Set schedules for initialization, priming (if --spacetime), and steady state.
         SpaceTimeScheduleAndPartitioner schedule = new SpaceTimeScheduleAndPartitioner(partitioner);
@@ -64,18 +72,29 @@ public class UniBackEnd {
         layout.run();
  
         // create other info needed to convert Slice graphs to Kopi code + Channels
-        UniBackEndFactory backEndBits = new UniBackEndFactory(processors);
-        backEndBits.setLayout(layout);
+        UniBackEndFactory uniBackEndBits  = new UniBackEndFactory(processors);
+        backEndBits = uniBackEndBits;
+        uniBackEndBits.setLayout(layout);
         
         // now convert to Kopi code plus channels.
-        backEndBits.getBackEndMain().run(schedule, backEndBits);
+        uniBackEndBits.getBackEndMain().run(schedule, uniBackEndBits);
 
         /*
-         * Quite a lot to do here
+         * Emit code to str.c
          */
-        
-        // write out C code, currently only for single slice...
-        EmitStandaloneCode.emitForSingleSlice(partitioner.getSliceGraph());
+        String outputFileName = "str.c";
+        try {
+        CodegenPrintWriter p = new CodegenPrintWriter(new BufferedWriter(new FileWriter(outputFileName, false)));
+        // write out C code
+        EmitStandaloneCode codeEmitter = new EmitStandaloneCode(uniBackEndBits);
+        // Concat emitted code for all nodes into one file.
+        for (ComputeNode n : uniBackEndBits.getComputeNodes().toArray()) {
+            codeEmitter.emitCodeForComputeNode(n,p);
+        }
+        p.close();
+        } catch (IOException e) {
+            throw new AssertionError("I/O error on " + outputFileName + ": " + e);
+        }
         // return success
         System.exit(0);
     }

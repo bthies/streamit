@@ -3,12 +3,16 @@ package at.dms.kjc.spacetime;
 import at.dms.kjc.KjcOptions;
 import at.dms.kjc.backendSupport.BackEndFactory;
 import at.dms.kjc.backendSupport.BackEndScaffold;
+import at.dms.kjc.backendSupport.Channel;
 import at.dms.kjc.backendSupport.Layout;
 import at.dms.kjc.backendSupport.SchedulingPhase;
+import at.dms.kjc.slicegraph.Edge;
+import at.dms.kjc.slicegraph.InterSliceEdge;
 import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.OutputSliceNode;
+import at.dms.kjc.slicegraph.SliceNode;
 
 /**
  * Factor out parts of RAW (at.dms.kjc.spacetime) back end that need matching types.
@@ -143,5 +147,32 @@ public class RawBackEndFactory extends BackEndFactory<RawChip, RawTile, RawCompu
      */
     public Layout<RawTile> getLayout() {
         return layout;
+    }
+
+    @Override
+    public Channel getChannel(Edge e) {
+        if (e instanceof InterSliceEdge) {
+            return InterSliceBuffer.getBuffer((InterSliceEdge)e);
+        } else {
+            // insist on types
+            if (e.getSrc() instanceof FilterSliceNode) {
+                return IntraSliceBuffer.getBuffer((FilterSliceNode)(e.getSrc()), (OutputSliceNode)(e.getDest()));
+            } else {
+                return IntraSliceBuffer.getBuffer((InputSliceNode)(e.getSrc()), (FilterSliceNode)(e.getDest()));
+            }
+        }
+    }
+
+    @Override
+    public Channel getChannel(SliceNode src, SliceNode dst) {
+        if (src instanceof OutputSliceNode && dst instanceof InputSliceNode) {
+            return InterSliceBuffer.getBuffer(new InterSliceEdge((OutputSliceNode)src, (InputSliceNode)dst));
+        } else {
+            if (src instanceof FilterSliceNode) {
+                return IntraSliceBuffer.getBuffer((FilterSliceNode)(src), (OutputSliceNode)(dst));
+            } else {
+                return IntraSliceBuffer.getBuffer((InputSliceNode)(src), (FilterSliceNode)(dst));
+            }
+        }
     }
 }

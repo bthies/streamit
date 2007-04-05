@@ -154,7 +154,7 @@ public class SpaceTimeBackend {
         //check to see if we need to add any buffering before splitters or joiners
         //for correct execution of the init stage and steady state
         if (KjcOptions.raw > 0) {
-            AddBuffering.doit(spaceTimeSchedule);
+            AddBuffering.doit(partitioner,true,rawChip.getTotalTiles());
         }
         
         //generate the schedule modeling values for each filter/slice 

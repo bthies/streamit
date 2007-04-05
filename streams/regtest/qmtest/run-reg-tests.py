@@ -2,7 +2,7 @@
 #
 # run-reg-tests.py: Yet another test to run regression tests
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: run-reg-tests.py,v 1.44 2007-04-03 23:45:08 dimock Exp $
+# $Id: run-reg-tests.py,v 1.45 2007-04-05 13:13:36 dimock Exp $
 #
 # Taking history from run_reg_tests.pl: this is the third implementation
 # of a script to run StreamIt regression tests.  It is written in Python,
@@ -34,17 +34,17 @@ users = 'streamit-regtest@cag.lcs.mit.edu'
 # of gcc than the one in /usr/uns/bin/gcc
 #
 # command to start up qmtest
-# invoke_qmtest = 'qmtest'
-invoke_qmtest = '/usr/bin/python /home/bits7/dimock/qm-2.3/bin/qmtest'
+invoke_qmtest = 'qmtest'
+# invoke_qmtest = '/usr/bin/python /home/bits7/dimock/qm-2.3/bin/qmtest'
 # prefix to line to run build-qmtest.py.
-# invoke_build_prefix = ''
-invoke_build_prefix = '/usr/bin/python '
+invoke_build_prefix = ''
+# invoke_build_prefix = '/usr/bin/python '
 # flags for make of libraries, raw 
-# make_flags = ''
-make_flags = ' CC=/usr/bin/gcc CXX=/usr/bin/g++ '
+make_flags = ''
+# make_flags = ' CC=/usr/bin/gcc CXX=/usr/bin/g++ '
 #
-# fixed_path ='/usr/uns/jdk1.5.0_01/bin:/usr/uns/bin:/usr/bin/X11:/bin:/usr/bin'
-fixed_path = '/usr/uns/jdk1.5.0_01/bin:/usr/bin/X11:/bin:/usr/bin:/usr/uns/bin'
+fixed_path ='/usr/uns/jdk1.5.0_01/bin:/usr/uns/bin:/usr/bin/X11:/bin:/usr/bin'
+# fixed_path = '/usr/uns/jdk1.5.0_01/bin:/usr/bin/X11:/bin:/usr/bin:/usr/uns/bin'
 #
 #
 cvs_root = '/projects/raw/cvsroot'
@@ -114,7 +114,8 @@ class RunRegTests:
 
         # hack to make simpleC compiles work on some machines.
         # may need to remove when changing machines.
-        os.environ['CC'] = '/usr/bin/gcc'
+        # os.environ['CC'] = '/usr/bin/gcc'
+        
         # Vaguely overcomplicated assembly of the CLASSPATH.
         # WIBNI we could read this from dot-bashrc?
         class_path = ['src', '3rdparty', '3rdparty/cplex/cplex.jar',
@@ -276,21 +277,21 @@ class RunRegTests:
         # set to run several tests at once if sufficient cpus.
         # we should probably also check for sufficient virtual memory
         cpu_count = 1
-        re_pattern=re.compile('^processor\s+:')
-        try:
-            f = open('/proc/cpuinfo', 'r')
-            while 1:
-                line = f.readline()
-                if (not line):
-                    break
-                if re_pattern.match (line):
-                    cpu_count += 1
-            f.close()
-            if cpu_count > 1:
-                # set number of cpus to number found
-                cpu_count = cpu_count - 1
-        except:
-            pass
+#         re_pattern=re.compile('^processor\s+:')
+#         try:
+#             f = open('/proc/cpuinfo', 'r')
+#             while 1:
+#                 line = f.readline()
+#                 if (not line):
+#                     break
+#                 if re_pattern.match (line):
+#                     cpu_count += 1
+#             f.close()
+#             if cpu_count > 1:
+#                 # set number of cpus to number found
+#                 cpu_count = cpu_count - 1
+#         except:
+#             pass
         run_command = invoke_qmtest + ' run'
         #if cpu_count:
         #    run_command = run_command + ' -j' + str(cpu_count)

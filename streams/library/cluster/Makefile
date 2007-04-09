@@ -7,7 +7,7 @@ CFLAGS += 	-I.
 LIBRARY =       libcluster.a
 LIBRARYP =      libcluster_p.a
 
-// init_instance.cpp needs to know whether we're compiling with Cygwin
+# init_instance.cpp needs to know whether we're compiling with Cygwin
 ifeq ($(STRC_HOST_TYPE), x86-windows)
   STRC_HOST_FLAG = -DHOST_X86_WINDOWS
 else

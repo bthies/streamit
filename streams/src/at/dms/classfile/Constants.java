@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Constants.java,v 1.3 2007-03-26 19:15:45 dimock Exp $
+ * $Id: Constants.java,v 1.4 2007-04-09 18:17:14 dimock Exp $
  */
 
 package at.dms.classfile;
@@ -81,6 +81,10 @@ public interface Constants {
 
     int     ACC_SUPER = 0x0020;
 
+    // not a valid Java flag but useful to StreamIt as an indicator
+    // when translating to C or C++
+    int     ACC_INLINE = 0x1000;
+    
     // ----------------------------------------------------------------------
     // ATTRIBUTES
     // ----------------------------------------------------------------------

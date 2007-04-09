@@ -21,6 +21,7 @@ public class UniChannel  {
             assert dst instanceof FilterSliceNode;
             
         } else if (dst instanceof OutputSliceNode) {
+            assert src instanceof FilterSliceNode;
             // filter --> output
             Slice s = dst.getParent();
             if (sliceNeedsSplitterCode(s)) {
@@ -34,9 +35,10 @@ public class UniChannel  {
                 // there is no splitter code, this channel has no effect except delegating
                 // to downstream channel.
                 Channel downstream = getOrMakeChannel(((OutputSliceNode)dst).getDests()[0][0]);
-                c = DelegateToDownstreamChannel.getChannel(((OutputSliceNode)dst).getDests()[0][0], downstream);
+                c = DelegatingChannel.getChannel(((OutputSliceNode)dst).getDests()[0][0], downstream);
             }
         } else {
+            assert src instanceof OutputSliceNode && dst instanceof InputSliceNode;
             c = ChannelAsArray.getChannel(e); 
         }
         

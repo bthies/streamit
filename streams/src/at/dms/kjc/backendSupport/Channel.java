@@ -111,8 +111,8 @@ public class Channel {
         }
     }
 
-    /**
-     * @return a string uniquely identifying the channel.
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#getIdent()
      */
     public String getIdent() {
         return ident;
@@ -123,42 +123,38 @@ public class Channel {
         return bufferStore.values();
     }
 
-    /** Get the type of data to be stored in the buffer 
-     * You can not set the type, it is determined at buffer
-     * creation time.
-     * @return type of data to be stored in the buffer */
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#getType()
+     */
     public CType getType() {
         return theEdge.getType();
     }
 
 
-    /** 
-     * Determine whether logical buffer has extra
-     * physical space for double-bufferring.
-     * If 0 then no double bufferring.
-     * If 1 then double bufferring.
-     * If > 1 then n+1 bufferring.
-     * @return number of extra comm buffers for double bufferring or 0 if none.
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#getExtraCount()
      */
     public int getExtraCount() {
         return extraCount;
     }
     
-    /**
-     * Call with 1 to set double bufferring.
-     * Or > 1 for n+1-bufferring.
-     * No effect after {@link #setRotationLengths} has been called.
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#setExtralength(int)
      */
     public void setExtralength(int extracount) {
         this.extraCount = extracount;
     }
     
-    /** get the source (upstream) SliceNode for this buffer. */
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#getSource()
+     */
     public SliceNode getSource() {
         return theEdge.getSrc();
     }
 
-    /** get the destination (downstream) SliceNode for this buffer. */
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#getDest()
+     */
     public SliceNode getDest() {
         return theEdge.getDest();
     }
@@ -200,22 +196,32 @@ public class Channel {
      * Set to empty values, since many do not need to be overridden in many backends. 
      */
     
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#popMethodName()
+     */
     public String popMethodName() {
         return "__pop_" + unique_id;
     }
-    /** input_type pop() */
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#popMethod()
+     */
     public JMethodDeclaration popMethod() {
         return null;
     }
     
     
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#popManyMethodName()
+     */
     public String popManyMethodName() {
         return "__popN_" + unique_id;
     }
  
     JMethodDeclaration popManyCode = null;
     
-    /** void pop(int N).  This default version just calls pop() N times. */
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#popManyMethod()
+     */
     public JMethodDeclaration popManyMethod() {
         if (popManyCode != null) {
             return popManyCode;
@@ -242,121 +248,167 @@ public class Channel {
         return popManyCode;
      }
 
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#assignFromPopMethodName()
+     */
     public String assignFromPopMethodName() {
         return "__popv_" + unique_id;
     }
-    /** void pop(input_type val)  generally assign if val is not an array, else memcpy */
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#assignFromPopMethod()
+     */
     public JMethodDeclaration assignFromPopMethod() {
         return null;
     }
     
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#peekMethodName()
+     */
     public String peekMethodName() {
         return "__peek_" + unique_id;
     }
-    /** input_type peek(int offset) */
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#peekMethod()
+     */
     public JMethodDeclaration peekMethod() {
         return null;
     }
     
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#assignFromPeekMethodName()
+     */
     public String assignFromPeekMethodName() {
         return "__peekv_" + unique_id;
     }
-    /** void peek(input_type val, int offset)  generally assign if val is not an array, else memcpy */
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#assignFromPeekMethod()
+     */
     public JMethodDeclaration assignFromPeekMethod() {
         return null;
     }
     
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#pushMethodName()
+     */
     public String pushMethodName() {
         return "__push_" + unique_id;
     }
-    /** void push(output_type val) */
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#pushMethod()
+     */
     public JMethodDeclaration pushMethod() {
         return null;
     }
     
-    /** Statements for beginning of init() on read (downstream) end of buffer */
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#beginInitRead()
+     */
     public List<JStatement> beginInitRead() {
         return new LinkedList<JStatement>(); 
     }
 
-    /** Statements for end of init() on read (downstream) end of buffer */
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#endInitRead()
+     */
     public List<JStatement> endInitRead() {
         return new LinkedList<JStatement>(); 
     }
 
-    /** Statements for beginning of init() on write (upstream) end of buffer */
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#beginInitWrite()
+     */
     public List<JStatement> beginInitWrite() {
         return new LinkedList<JStatement>(); 
     }
 
-    /** Statements for end of init() on write (upstream) end of buffer */
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#endInitWrite()
+     */
     public List<JStatement> endInitWrite() {
         return new LinkedList<JStatement>(); 
     }
     
-    /** Statements for beginning of steady state iteration on read (downstream) end of buffer */
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#beginSteadyRead()
+     */
     public List<JStatement> beginSteadyRead() {
         return new LinkedList<JStatement>(); 
     }
 
-    /** Statements for end of steady state iteration on read (downstream) end of buffer */
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#endSteadyRead()
+     */
     public List<JStatement> endSteadyRead() {
         return new LinkedList<JStatement>(); 
     }
 
-    /** Statements for beginning of steady state iteration on write (upstream) end of buffer */
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#beginSteadyWrite()
+     */
     public List<JStatement> beginSteadyWrite() {
         return new LinkedList<JStatement>(); 
     }
 
-    /** Statements for end of steady state iteration on write (upstream) end of buffer */
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#endSteadyWrite()
+     */
     public List<JStatement> endSteadyWrite() {
         return new LinkedList<JStatement>(); 
     }
     
-    /** Statements for beginning of work function.
-     * May be more convenient than at top of steady state if work function iterated. */
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#topOfWorkSteadyRead()
+     */
     public List<JStatement> topOfWorkSteadyRead() {
         return new LinkedList<JStatement>(); 
     }
     
-    /** Statements for beginning of work function.
-     * May be more convenient than at top of steady state if work function iterated. */
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#topOfWorkSteadyWrite()
+     */
     public List<JStatement> topOfWorkSteadyWrite() {
         return new LinkedList<JStatement>(); 
     }
  
-    /** Statements for data declaration in .h file */
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#dataDeclsH()
+     */
     public List<JStatement> dataDeclsH() {
         return new LinkedList<JStatement>();
     }
     
-    /** Statements for data declaration at top of .c / .cpp file */
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#dataDecls()
+     */
     public List<JStatement> dataDecls() {
         return new LinkedList<JStatement>();
     }
     
-    /** Statements for extern declarations needed for read 
-     * in steady state but at global scope in .c / .cpp */
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#readDeclsExtern()
+     */
     public List<JStatement> readDeclsExtern() {
         return new LinkedList<JStatement>();
     }   
     
-    /** Statements for other declarations needed for read  
-     * in steady state but at file scope in .c / .cpp */
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#readDecls()
+     */
     public List<JStatement> readDecls() {
         return new LinkedList<JStatement>();
     }   
     
     
-    /** Statements for extern declarations needed for write 
-     * in steady state but at global scope in .c / .cpp */
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#writeDeclsExtern()
+     */
     public List<JStatement> writeDeclsExtern() {
         return new LinkedList<JStatement>();
     }   
     
-    /** Statements for other declarations needed for write
-     * in steady state but at file scope in .c / .cpp */
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#writeDecls()
+     */
     public List<JStatement> writeDecls() {
         return new LinkedList<JStatement>();
     }   

@@ -7,6 +7,13 @@ CFLAGS += 	-I.
 LIBRARY =       libcluster.a
 LIBRARYP =      libcluster_p.a
 
+// init_instance.cpp needs to know whether we're compiling with Cygwin
+ifeq ($(STRC_HOST_TYPE), x86-windows)
+  STRC_HOST_FLAG = -DHOST_X86_WINDOWS
+else
+  STRC_HOST_FLAG =
+endif
+
 # unsupported versions
 CC_IA64 =       ecc
 CC_ARM = 	arm343 #arm-linux-gcc
@@ -90,7 +97,7 @@ $(LIBRARYP): $(OBJSP)
 
 
 %.o: %.cpp
-	$(CXX) $(CFLAGS) -c -o $@ $<
+	$(CXX) $(CFLAGS) -c $(STRC_HOST_FLAG) -o $@ $<
 
 %_ia64.o: %.cpp
 	$(CC_IA64) $(CFLAGS) -c -o $@ $<

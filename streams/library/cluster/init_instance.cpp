@@ -13,6 +13,20 @@
  * this software for any purpose.  It is provided "as is"
  * without express or implied warranty.
  */
+
+#ifdef HOST_X86_WINDOWS
+// Cygwin headers don't define some types, so we define them here
+typedef unsigned char u_char;
+typedef unsigned short int u_short;
+typedef unsigned int u_int;
+typedef unsigned long int u_long;
+
+typedef unsigned int u_int8_t __attribute__ ((__mode__ (__QI__)));
+typedef unsigned int u_int16_t __attribute__ ((__mode__ (__HI__)));
+typedef unsigned int u_int32_t __attribute__ ((__mode__ (__SI__)));
+typedef unsigned int u_int64_t __attribute__ ((__mode__ (__DI__)));
+#endif
+
 #include <assert.h>
 #include <netinet/tcp.h>
 #include <init_instance.h>

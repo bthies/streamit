@@ -15,7 +15,7 @@ public class SliceNodeToCodeUnit {
      * @param s  A SliceNode
      * @return  The SIRCodeUnit added for the SliceNode by addCodeForSlice.
      */
-    public static SIRCodeUnit findCodeForSlice(SliceNode s) {
+    public static SIRCodeUnit findCodeForSliceNode(SliceNode s) {
         return sliceNodeToCodeUnit.get(s);
     }
    
@@ -25,7 +25,7 @@ public class SliceNodeToCodeUnit {
      * @param s a SliceNode
      * @param u a SIRCodeUnit
      */
-    public static void addCodeForSlice(SliceNode s, SIRCodeUnit u) {
+    public static void addCodeForSliceNode(SliceNode s, SIRCodeUnit u) {
         sliceNodeToCodeUnit.put(s, u);
     }
    

@@ -226,7 +226,8 @@ public class ProcessOutputSliceNode {
             }
     
             JMethodDeclaration splitter_method = new JMethodDeclaration(
-                    null, at.dms.kjc.Constants.ACC_STATIC /* | ACC_INLINE */,  // there is no ACC_INLINE
+                    null, 
+                    at.dms.kjc.Constants.ACC_STATIC | at.dms.kjc.Constants.ACC_INLINE,
                     CStdType.Void,
                     splitter_name,
                     new JFormalParameter[]{},
@@ -252,24 +253,37 @@ public class ProcessOutputSliceNode {
         }
 
         
-    /**
-     * Get code for a splitter.
-     * If code not yet made, then makes the code and adds it to the appropriate ComputeCodeStore
-     * @param <T>
-     * @param splitter
-     * @param backEndBits
-     * @return
-     */
-    static <T extends BackEndFactory> SIRCodeUnit getSplitterCode(OutputSliceNode splitter, T backEndBits) {
-        SIRCodeUnit splitter_code = SliceNodeToCodeUnit.findCodeForSlice(splitter);
-        if (splitter_code == null) {
-            splitter_code = makeSplitterCode(splitter,backEndBits);
-            ComputeNode location = backEndBits.getLayout().getComputeNode(splitter);
-            if (location != null) {
+        /**
+         * Get code for a splitter.
+         * If code not yet made, then makes it.
+         * @param <T>
+         * @param splitter
+         * @param backEndBits
+         * @return
+         */
+        static <T extends BackEndFactory> SIRCodeUnit getSplitterCode(OutputSliceNode splitter, T backEndBits) {
+            SIRCodeUnit splitter_code = SliceNodeToCodeUnit.findCodeForSliceNode(splitter);
+            if (splitter_code == null) {
+                splitter_code = makeSplitterCode(splitter,backEndBits);
+            }
+            return splitter_code;
+        }
+
+        /**
+         * Get code for a joiner and add it to the appropriate ComputeCodeStore.
+         * If code not yet made, then makes the code and adds it to the appropriate ComputeCodeStore
+         * @param <T> Type of the caller's BackEndFactory.
+         * @param splitter
+         * @param backEndBits
+         */
+        static <T extends BackEndFactory> void addSplitterCode(OutputSliceNode splitter, T backEndBits) {
+            SIRCodeUnit splitter_code = SliceNodeToCodeUnit.findCodeForSliceNode(splitter);
+            if (splitter_code == null) {
+                splitter_code = makeSplitterCode(splitter,backEndBits);
+                ComputeNode location = backEndBits.getLayout().getComputeNode(splitter);
+                assert location != null;
                 location.getComputeCode().addFields(splitter_code.getFields());
                 location.getComputeCode().addMethods(splitter_code.getMethods());
             }
         }
-        return splitter_code;
-    }
 }

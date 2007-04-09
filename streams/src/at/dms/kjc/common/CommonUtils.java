@@ -1,6 +1,7 @@
 package at.dms.kjc.common;
  
 import at.dms.kjc.CStdType;
+import at.dms.kjc.Constants;
 import at.dms.kjc.JIntLiteral;
 import at.dms.kjc.JExpression;
 import at.dms.kjc.CType;
@@ -11,6 +12,7 @@ import at.dms.kjc.CEmittedTextType;
 import at.dms.kjc.JArrayAccessExpression;
 import at.dms.kjc.JClassExpression;
 import at.dms.kjc.JFieldDeclaration;
+import at.dms.kjc.JVariableDefinition;
 import at.dms.kjc.sir.SIRStructure;
 import at.dms.kjc.JFieldAccessExpression;
 import at.dms.kjc.JLocalVariableExpression;
@@ -379,6 +381,60 @@ public class CommonUtils {
             common = commonSIRAncestor(common,iter.next());
         }
         return common;
+    }
+
+
+    /**
+     * Make a JVariableDefinition for a static array.
+     * 
+     * If you want an initializer, set one in the returned definition.
+     * 
+     * The tricky part here is that the element type may itself be an array type
+     * in which case we want to make an array with one more dimension than the
+     * element type rather than making an array of arrays.
+     * @param numElements  Number of elements
+     * @param elementType  Type of elements
+     * @param arrayName    Name of array
+     * @return JVariableDefinition, or null if asked for array of 0 elements or array storing void.
+     */
+    public static JVariableDefinition makeArrayVariableDefn(int numElements,
+            CType elementType,
+            String arrayName) {
+        if (numElements == 0 || elementType == CStdType.Void)
+            return null;
+    
+        // the dimensionality of the array (1 by default)
+        int dim = 1;
+    
+        //the dims of the element type we are passing over the channel
+        JExpression[] elementDims = new JExpression[0];
+        
+        //we have an array type
+        if (elementType.isArrayType()) {
+            elementDims = ((CArrayType)elementType).getDims();
+            dim += elementDims.length;
+        }
+    
+        JExpression[] dims = new JExpression[dim];
+        //set the 0 dim to the size of the buffer
+        dims[0] = new JIntLiteral(numElements);
+    
+        //set the remaining dims to be equal to the dims
+        //of the elements, if we have an array
+        for (int i = 1; i < dims.length; i++)
+            dims[i] = elementDims[i-1];
+    
+        CArrayType bufferType = new CArrayType(elementType, 
+                                               1,
+                                               dims);
+    
+        //return the var def..
+        return new JVariableDefinition(null,
+                                       at.dms.kjc.Constants.ACC_FINAL,
+                                       bufferType,
+                                       arrayName,
+                                       null);
+    
     }
     
 }

@@ -22,27 +22,27 @@ public class FilterInfo {
     public int prePop;
     /** pushed amount in pre-work in two-stage filter */
     public int prePush;
-
+    /** number of items remaining in buffer between steady states ?? */
     public int remaining;
 
     public int bottomPeek;
-
+    /** multiplicity of calls to work function from init stage */
     public int initMult;
-
+    /** multiplicity of calls to work function in steady state */
     public int steadyMult;
-
+    /** number of items pushed by a call to the work function */
     public int push;
-
+    /** number of items popped by a call to the work function */
     public int pop;
-
+    /** peek depth of work function, (includes pops?) */
     public int peek;
 
     public int initItemsNeeded;
     
     private boolean linear;
-
+    /** The FilterNode with this info. */
     public FilterSliceNode sliceNode;
-
+    /** The FilterContent with this info. */
     public FilterContent filter;
 
     /** HashMap of all the filter infos FilterSliceNode -> FilterInfo */
@@ -62,7 +62,6 @@ public class FilterInfo {
      * Call this when it is safe to use filter infos, meaning all the 
      * information that they collect has been calculated so the information
      * can be presented.
-     *
      */
     public static void canUse() {
         canuse = true;
@@ -70,12 +69,12 @@ public class FilterInfo {
 
     /**
      * Force the filter info to be recalculated.
-     *
      */
     public static void reset() {
         filterInfos = new HashMap<FilterSliceNode, FilterInfo>();
     }
     
+    /** Return a stored FilterInfo or calculate a new one as needed. */
     public static FilterInfo getFilterInfo(FilterSliceNode sliceNode) {
         assert canuse;
         if (!filterInfos.containsKey(sliceNode)) {

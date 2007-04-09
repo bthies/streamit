@@ -112,18 +112,21 @@ public class EmitStandaloneCode<T extends BackEndFactory>  {
             if (c.dataDecls() != null) {
                 // wrap in #ifndef for case where different ends have
                 // are in different files that eventually get concatenated.
-                p.println("#ifndef " + c.getIdent() + "_UPSTREAMEXTERNS");
+                p.println();
+                p.println("#ifndef " + c.getIdent() + "_CHANNEL_DATA");
                 for (JStatement d : c.dataDecls()) { d.accept(codegen); }
-                p.println("#define " + c.getIdent() + "_UPSTREAMEXTERNS");
+                p.println();
+                p.println("#define " + c.getIdent() + "_CHANNEL_DATA");
                 p.println("#endif");
             }
         }
         
         for (Channel c : downstreamEnds) {
             if (c.dataDecls() != null && ! upstreamEnds.contains(c)) {
-                p.println("#ifndef " + c.getIdent() + "_UPSTREAMEXTERNS");
+                p.println("#ifndef " + c.getIdent() + "_CHANNEL_DATA");
                 for (JStatement d : c.dataDecls()) { d.accept(codegen); }
-                p.println("#define " + c.getIdent() + "_UPSTREAMEXTERNS");
+                p.println();
+                p.println("#define " + c.getIdent() + "_CHANNEL_DATA");
                 p.println("#endif");
             }
         }
@@ -487,7 +490,7 @@ public class EmitStandaloneCode<T extends BackEndFactory>  {
             MacroConversion.doConvert(self, isDeclOnly(), this);
             return;
         }
-
+        if (! this.isDeclOnly()) { p.newLine(); } // some extra space if not just declaration.
         p.newLine();
         printType(returnType);
         p.print(" ");

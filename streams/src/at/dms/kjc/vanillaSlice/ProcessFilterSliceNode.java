@@ -1,26 +1,23 @@
 package at.dms.kjc.vanillaSlice;
 
-import java.util.*;
+//import java.util.*;
 import at.dms.kjc.backendSupport.*;
 import at.dms.kjc.slicegraph.*;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
-import at.dms.kjc.Constants;
-import at.dms.util.Utils;
+//import at.dms.util.Utils;
 /**
  * Process a FilterSliceNode creating code in the code store and buffers for connectivity.
  * @author dimock
  *
  */
-public class ProcessFilterSliceNode implements Constants {
+public class ProcessFilterSliceNode {
     
     private static int uid = 0;
     static int getUid() {
         return uid++;
     }
 
-     /** map from a SliceNode to the CIRCodeUnit generated for it. */
-    public static Map<SliceNode,SIRCodeUnit> codesForSlices = new HashMap<SliceNode,SIRCodeUnit>();
     
     /**
      * Create code for a FilterSliceNode (actually for the whole slice).
@@ -34,136 +31,30 @@ public class ProcessFilterSliceNode implements Constants {
 
         // We should only generate code once for a filter node.
         
-        if (codesForSlices.containsKey(filterNode)) {
-            return; 
-        }
-        
-        FilterInfo info = FilterInfo.getFilterInfo(filterNode);
-        Slice slice = filterNode.getParent();
-        assert slice instanceof SimpleSlice;  // we only handle joiner -- filter -- splitter pattern.
-
-        ComputeNode computeNode = backEndBits.getLayout().getComputeNode(filterNode);
-        ComputeCodeStore codeStore = computeNode.getComputeCode();
-        
-        InputSliceNode joiner = slice.getHead();    // get associated joiner and splitter
-        OutputSliceNode splitter = slice.getTail();
-        
-        // determine connectivity, needed to know what buffers to ask for
-        // and whether to create splitter or joiner code.
-        
-        boolean has_upstream_channel = false;
-        boolean make_peek_buffer = false;
-        boolean make_joiner = false;
-        /*
-         * Determine upstream connectivity
-         */
-        if (info.noBuffer()) {
-            // there is no upstream
-            assert filterNode.getFilter().getInputType() == CStdType.Void;
-        } else {
-            // there is an upstream, need inter-slice buffer
-            has_upstream_channel = true;
-            if (info.isSimple()) {
-                // there is no need for a peek buffer in front of upstream buffer.
-                if (joiner.getWidth() == 1) {
-                    // no joining logic: just connect to the inter-slice buffer.
-                } else {
-                    // needs a joiner
-                    make_joiner = true;
-                    if (Utils.hasPeeks(filterNode.getFilter())) {
-                        // if peeks as well as pops, we will give it a peek buffer
-                        // rather than trying to peek through a joiner.
-                        make_peek_buffer = true;
-                    }
-                }
-            } else {
-                // need a peek buffer
-                make_peek_buffer = true;
-                if (joiner.getWidth() == 1) {
-                    // no joining logic: just connect to the inter-slice buffer.
-                    // can even do without peek buffer if inter-slice buffer supports copy-down
-                } else {
-                    // needs a joiner
-                    make_joiner = true;
-                }
-            }
-        }
-        /*
-         * Determine downstream connectivity
-         */
-        boolean has_downstream_channel = false;
-        boolean make_splitter = false;
-        if (info.push > 0 || info.prePush > 0) {
-            assert filterNode.getFilter().getOutputType() != CStdType.Void;
-            has_downstream_channel = true;
-            if (splitter.getWidth() > 1) {
-                make_splitter = true;
-            }
-        }
-
-        System.err.println(
-                "filter " + info.filter +
-                ", make_joiner " + UniChannel.sliceNeedsJoinerCode(filterNode.getParent()) + 
-                ", make_peek_buffer " + UniChannel.filterNeedsPeekBuffer(filterNode) +
-                ", has_upstream_channel " + UniChannel.sliceHasUpstreamChannel(filterNode.getParent()) +
-                ", make_splitter " + UniChannel.sliceNeedsSplitterCode(filterNode.getParent()) +
-                ", has_downstream_channel " + UniChannel.sliceNeedsJoinerCode(filterNode.getParent()));
-        
-        Channel inputChannel = null;
-        
-        /*
-         * Make Channel for peek buffer if necessary.
-         */
-        
-        if (make_peek_buffer) {
-            if (make_joiner) {
-                // The filter pops from the peek buffer, which connects from the joiner.
-                inputChannel = backEndBits.getChannel(joiner.getEdgeToNext());
-            } else {
-                // The filter pops from the peek buffer, which connects from an upstream slice.
-                inputChannel = backEndBits.getChannel(joiner.getSingleEdge());
-            }
-        } else {
-            if (! make_joiner && has_upstream_channel) {
-                inputChannel = backEndBits.getChannel(joiner.getSingleEdge());
-            }
-        }
-
-        
-        /*
-         * Make joiner and/or splitter code if necesary.
-         */
-
-        if (make_joiner) {
-            SIRCodeUnit joiner_code = makeJoinerCode(joiner,backEndBits);
-            codeStore.addFields(joiner_code.getFields());
-            codeStore.addMethods(joiner_code.getMethods());
-            if (make_peek_buffer) {
-                // Make a work function for the joiner code.
-                
-            } else {
-                inputChannel = UnbufferredPopChannel.getChannel(joiner.getEdgeToNext(), 
-                        joiner_code.getMethods()[0].getName());
-            }
-        }
-        
-        Channel outputChannel = null;
-        
-        if (make_splitter) {
-            SIRCodeUnit splitter_code =  ProcessOutputSliceNode.getSplitterCode(splitter,backEndBits);
+        if (SliceNodeToCodeUnit.findCodeForSliceNode(filterNode) == null) {
+            System.err.println(
+                    "filter " + filterNode.getFilter() +
+                    ", make_joiner " + UniChannel.sliceNeedsJoinerCode(filterNode.getParent()) + 
+                    ", make_peek_buffer " + UniChannel.filterNeedsPeekBuffer(filterNode) +
+                    ", has_upstream_channel " + UniChannel.sliceHasUpstreamChannel(filterNode.getParent()) +
+                    ", make_splitter " + UniChannel.sliceNeedsSplitterCode(filterNode.getParent()) +
+                    ", has_downstream_channel " + UniChannel.sliceHasDownstreamChannel(filterNode.getParent()));
             
-            outputChannel =  UnbufferredPushChannel.getChannel(filterNode.getEdgeToNext(),
-                    splitter_code.getMethods()[0].getName());
-        } else if (has_downstream_channel) {
-            outputChannel = backEndBits.getChannel(splitter.getDests()[0][0]);
+            Channel inputChannel = null;
+            
+            if (UniChannel.sliceHasUpstreamChannel(filterNode.getParent())) {
+                inputChannel = backEndBits.getChannel(filterNode.getPrevious().getEdgeToNext());
+            }
+            
+            Channel outputChannel = null;
+            
+            if (UniChannel.sliceHasDownstreamChannel(filterNode.getParent())) {
+                outputChannel = backEndBits.getChannel(filterNode.getEdgeToNext());
+            }
+            
+            SIRCodeUnit filter_code = addFilterCode(filterNode,inputChannel,outputChannel,backEndBits);
         }
-        
-        
-        SIRCodeUnit filter_code = makeFilterCode(filterNode.getFilter(), inputChannel, outputChannel);
-        codeStore.addFields(filter_code.getFields());
-        codeStore.addMethods(filter_code.getMethods());
-       
-        codesForSlices.put(filterNode, filter_code);
+
     }
 
     
@@ -173,8 +64,8 @@ public class ProcessFilterSliceNode implements Constants {
      * Clones the input methods and munges on the clones, further changes to the returned code
      * will not affect the methods of the input code unit.
      * @param code           The code (fields and methods)
-     * @param inputChannel   The input channel -- specified routines to call to replace peek, pop.
-     * @param outputChannel  The output channel -- specified routeines to call to replace push.
+     * @param inputChannel   The input channel -- specifies routines to call to replace peek, pop.
+     * @param outputChannel  The output channel -- specifies routines to call to replace push.
      * @return a SIRCodeUnit with no push, peek, or pop instructions.
      */
     private static SIRCodeUnit makeFilterCode(SIRCodeUnit code, 
@@ -243,202 +134,47 @@ public class ProcessFilterSliceNode implements Constants {
         return new MinCodeUnit(code.getFields(),methods);
     }
     
-    
     /**
-     * Create fields and code for a joiner, as follows.
-     * Do not create a joiner if all weights are 0: this code
-     * fails rather than creating nonsensical kopi code.
-     * <pre>
-joiner as a state machine, driven off arrays:
-
-/ * joiner (unless single edge, just delegated to a channel 
-    arity (4) and weight s but not duplication.
-  * /
-
-T pop_1_M() {fprintf(stderr, "pop_1_M\n"); return 0;}
-T pop_2_M() {fprintf(stderr, "pop_2_M\n"); return 0;}
-T pop_4_M() {fprintf(stderr, "pop_4_M\n"); return 0;}
-
-
-static int joiner_M_edge = 4 - 1;
-static int joiner_M_weight = 0;
-
-static inline T joiner_M() {
-
-  / * attempt to place const eitherapplies it to function, or gives parse error
-   * do we need to move this to file scope to convince inliner to work on joiner_M?
-   * /
-  static T (*pops[4])() = {
-    pop_1_M,
-    pop_2_M,
-    0,              / * 0-weight edge * /
-    pop_4_M
-  };
-
-  static const int weights[4] = {2, 1, 0, 2};
-
-  while (joiner_M_weight == 0) { / * "if" if do not generate for 0-length edges. * /
-    joiner_M_edge = (joiner_M_edge + 1) % 4;
-    joiner_M_weight = weights[joiner_M_edge];
-  }
-  joiner_M_weight--;
-
-  return pops[joiner_M_edge]();
-}
-
-joiner as a case statement, which is what we implement:
-
-
-static int joiner_M_unrolled_edge = 3 - 1;
-static int joiner_M_unrolled_weight = 0;
-
-static inline T joiner_M_unrolled() {
-
-  static const int weights[3] = {2-1, 1-1, 2-1};
-
-  if (--joiner_M_unrolled_weight < 0) {
-    joiner_M_unrolled_edge = (joiner_M_unrolled_edge + 1) % 3;
-    joiner_M_unrolled_weight = weights[joiner_M_unrolled_edge];
-  }
-
-  switch (joiner_M_unrolled_edge) {
-  case 0:
-    return pop_1_M();
-  case 1:
-    return pop_2_M();
-  case 2:
-    return pop_4_M();
-  }
-}
-     * </pre>
-     * @param joiner An InputSliceNode specifying joiner weights and edges.
-     * @return a SIRCodeUnit (fields and single method declaration) implementing the joiner
+     * Get code for a filter.
+     * If code not yet made, then makes it.
+     * @param <T>
+     * @param filter         A FilterSliceNode for which we want code.
+     * @param inputChannel   The input channel -- specified routines to call to replace peek, pop.
+     * @param outputChannel  The output channel -- specified routeines to call to replace push.
+     * @param backEndBits
+     * @return
      */
-    private static <T extends BackEndFactory> SIRCodeUnit makeJoinerCode(InputSliceNode joiner, T backEndBits) {
-        String joiner_name = "_joiner_" + getUid();
-        
-        // size is number of edges with non-zero weight.
-        int size = 0;
-        for (int w : joiner.getWeights()) {
-            if (w != 0) {size++;}
+    static <T extends BackEndFactory> SIRCodeUnit getFilterCode(FilterSliceNode filter, 
+            Channel inputChannel, Channel outputChannel, T backEndBits) {
+        SIRCodeUnit filter_code = SliceNodeToCodeUnit.findCodeForSliceNode(filter);
+        if (filter_code == null) {
+            filter_code = makeFilterCode(filter.getFilter(),inputChannel,outputChannel);
         }
-        
-        assert size > 0 : "asking for code generation for null joiner";
-        
-        String edge_name = joiner_name + "_edge";
-        String weight_name = joiner_name + "_weight";
-
-        JVariableDefinition edgeVar = new JVariableDefinition(
-                ACC_STATIC,
-                CStdType.Integer,
-                edge_name,
-                new JIntLiteral(0));
-        
-        JFieldDeclaration edgeDecl = new JFieldDeclaration(edgeVar);
-        JFieldAccessExpression edgeExpr = new JFieldAccessExpression(edge_name);
-        
-        JVariableDefinition weightVar = new JVariableDefinition(
-                ACC_STATIC,
-                CStdType.Integer,
-                weight_name,
-                new JIntLiteral(size - 1));
-
-        JFieldDeclaration weightDecl = new JFieldDeclaration(weightVar);
-        JFieldAccessExpression weightExpr = new JFieldAccessExpression(weight_name);
-        
-        JIntLiteral[] weightVals = new JIntLiteral[size];
-        {
-            int i = 0;
-            for (int w : joiner.getWeights()) {
-                if (w != 0) {
-                    weightVals[i++] = new JIntLiteral(w);
-                }
-            }
-        }
-        
-        JVariableDefinition weightsArray = new JVariableDefinition(
-                ACC_STATIC | ACC_FINAL,  // static const in C
-                new CArrayType(CStdType.Integer,
-                        1, new JExpression[]{new JIntLiteral(size)}),
-                "weights",
-                new JArrayInitializer(weightVals));
-        JLocalVariableExpression weightsExpr = new JLocalVariableExpression(weightsArray);
-        
-        JStatement next_edge_weight_stmt = new JIfStatement(null,
-                new JRelationalExpression(OPE_LT,
-                        new JPrefixExpression(null,
-                                OPE_PREDEC,
-                                weightExpr),
-                        new JIntLiteral(0)),
-                new JBlock(new JStatement[]{
-                        new JExpressionStatement(new JAssignmentExpression(
-                                edgeExpr,
-                                new JModuloExpression(null,
-                                        new JAddExpression(
-                                                edgeExpr,
-                                                new JIntLiteral(1)),
-                                        new JIntLiteral(size)))),
-                        new JExpressionStatement(new JAssignmentExpression(
-                                weightExpr,
-                                new JArrayAccessExpression(weightsExpr,
-                                        edgeExpr)
-                                ))
-                }),
-                new JEmptyStatement(),
-                null);
-
-        
-        JSwitchGroup[] cases = new JSwitchGroup[size]; // fill in later.
-        JStatement switch_on_edge_stmt = new JSwitchStatement(null,
-                edgeExpr,
-                new JSwitchGroup[size],
-                null);
-        
-        {
-            int i = 0;
-            for (int j = 0; j < joiner.getWeights().length; j++) {
-                if (joiner.getWeights()[j] != 0) {
-                    JMethodCallExpression pop = new JMethodCallExpression(
-                            backEndBits.getChannel(joiner.getSources()[j]).popMethodName(),
-                            new JExpression[0]);
-                    pop.setType(joiner.getType());
-
-                    cases[i] = new JSwitchGroup(null,
-                            new JSwitchLabel[]{new JSwitchLabel(null,new JIntLiteral(i))},
-                            new JStatement[]{
-                               new JReturnStatement(null,
-                                       pop,
-                                       null)});
-                    i++;
-                }
-            }
-        }
-
-        
-        JMethodDeclaration joiner_method = new JMethodDeclaration(
-                null, ACC_STATIC /* | ACC_INLINE */,  // there is no ACC_INLINE
-                joiner.getType(),
-                joiner_name,
-                new JFormalParameter[]{},
-                new CClassType[]{},
-                new JBlock(),
-                null, null);
-        
-        JBlock joiner_block = joiner_method.getBody();
-        
-        joiner_block.addStatement(
-                new JVariableDeclarationStatement(
-                        new JVariableDefinition[]{weightsArray}));
-        joiner_block.addStatement(next_edge_weight_stmt);
-        joiner_block.addStatement(switch_on_edge_stmt);
-        
-        
-        SIRCodeUnit retval = new MinCodeUnit(
-                new JFieldDeclaration[]{edgeDecl, weightDecl},
-                new JMethodDeclaration[]{joiner_method});
-        
-        return retval;
+        return filter_code;
     }
+  
+    /**
+     * Get code for a filter and add it to the appropriate ComputeCodeStore.
+     * If code not yet made, then makes the code and adds it to the appropriate ComputeCodeStore
+     * @param <T> Type of the caller's BackEndFactory.
+     * @param filter         A FilterSliceNode for which we want code.
+     * @param inputChannel   The input channel -- specified routines to call to replace peek, pop.
+     * @param outputChannel  The output channel -- specified routeines to call to replace push.
+     * @param backEndBits
+     */
+    static <T extends BackEndFactory> SIRCodeUnit addFilterCode(FilterSliceNode filter, 
+            Channel inputChannel, Channel outputChannel, T backEndBits) {
+        SIRCodeUnit filter_code = SliceNodeToCodeUnit.findCodeForSliceNode(filter);
+        if (filter_code == null) {
+            filter_code = makeFilterCode(filter.getFilter(),inputChannel,outputChannel);
+            ComputeNode location = backEndBits.getLayout().getComputeNode(filter);
+            assert location != null;
+            location.getComputeCode().addFields(filter_code.getFields());
+            location.getComputeCode().addMethods(filter_code.getMethods());
+        }
+        return filter_code;
+    }
+  
 }
 
 

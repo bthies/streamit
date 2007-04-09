@@ -35,12 +35,12 @@ public class JEmittedTextExpression extends JExpression {
     }
     
     /** create with a text string */
-    JEmittedTextExpression(String text) {
+    public JEmittedTextExpression(String text) {
         this.parts = new Object[]{text};
     }
     
     /** create with a misture of text strings, expressions, and types */
-    JEmittedTextExpression(Object[] parts) {
+    public JEmittedTextExpression(Object[] parts) {
         for (Object o : parts) {
             assert (o instanceof String 
                     || o instanceof JExpression

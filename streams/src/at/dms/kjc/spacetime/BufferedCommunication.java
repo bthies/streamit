@@ -769,6 +769,7 @@ public class BufferedCommunication extends RawExecutionCode
      * @param filter
      * @return Got me?
      */
+    @Deprecated
     JBlock generateRateMatchSteadyState(FilterContent filter)
                 
     {

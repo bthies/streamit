@@ -41,7 +41,7 @@ public class ALocalVariable {
      * Change variable name.
      * @param varName the new variable name to set (affects declaration and references)
      */
-    public void setVarName(String varName) {
+    public void setName(String varName) {
         varDefn.setIdent(varName);
     }
 
@@ -49,7 +49,7 @@ public class ALocalVariable {
      * Get variable name
      * @return the variable name
      */
-    public String getVarName() {
+    public String getName() {
         return varDefn.getIdent();
     }
     
@@ -57,7 +57,7 @@ public class ALocalVariable {
      * Set the initial value of the variable.
      * @param initExpr expression that will be produced for the variable declaration.
      */
-    public void setVarInitializer(JExpression initExpr) {
+    public void setInitializer(JExpression initExpr) {
         varDefn.setInitializer(initExpr);
     }
     
@@ -65,21 +65,21 @@ public class ALocalVariable {
      * Get the expression for the initial value of the variable.
      * @return expression, will be null unless {@link #setVarInitializer(JExpression)} has been called (or equivalent hacking)
      */
-    public JExpression getVarInitializer() {
+    public JExpression getInitializer() {
         return varDefn.getValue();
     }
 
     /**
      * @return the variable declaration statement.
      */
-    public JVariableDeclarationStatement getVarDecl() {
+    public JVariableDeclarationStatement getDecl() {
         return varDecl;
     }
 
     /**
      * @return expression referencing the variable.
      */
-    public JLocalVariableExpression getVarRef() {
+    public JLocalVariableExpression getRef() {
         return varRef;
     }
     

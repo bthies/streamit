@@ -19,7 +19,23 @@ public class UniChannel  {
         SliceNode dst = e.getDest();
         if (src instanceof InputSliceNode) {
             assert dst instanceof FilterSliceNode;
-            
+            // input -> filter
+            Slice s = dst.getParent();
+            if (sliceNeedsJoinerCode(s) && !filterNeedsPeekBuffer((FilterSliceNode)dst)) {
+                String popName = 
+                    ProcessInputSliceNode.getJoinerCode((InputSliceNode)src,UniBackEnd.backEndBits).
+                       getMethods()[0].getName();
+                c = UnbufferredPopChannel.getChannel(e,popName);
+            } else if (!filterNeedsPeekBuffer((FilterSliceNode)dst)) {
+                // single edge to InputSliceNode, no need for peek buffer: 
+                // delegate to channel for InputSliceNode.
+                Channel upstream = getOrMakeChannel(((InputSliceNode)src).getSingleEdge());
+                c = DelegatingChannel.getChannel(e, upstream);
+            } else {
+                // make peek buffer as a channel
+                // TODO: refine -- simple peek buffer as array vs fancy peek buffer as circular buffer.
+                c = ChannelAsArray.getChannel(e);
+            }
         } else if (dst instanceof OutputSliceNode) {
             assert src instanceof FilterSliceNode;
             // filter --> output
@@ -35,7 +51,7 @@ public class UniChannel  {
                 // there is no splitter code, this channel has no effect except delegating
                 // to downstream channel.
                 Channel downstream = getOrMakeChannel(((OutputSliceNode)dst).getDests()[0][0]);
-                c = DelegatingChannel.getChannel(((OutputSliceNode)dst).getDests()[0][0], downstream);
+                c = DelegatingChannel.getChannel(e, downstream);
             }
         } else {
             assert src instanceof OutputSliceNode && dst instanceof InputSliceNode;
@@ -47,10 +63,12 @@ public class UniChannel  {
     
     
     /**
-     * Assumes 1 filter per slice...
-     * Answer is <b>false</b> if ...
+     * Does filter need a peek buffer upstream of it?
+     * Assumes 1 filter per slice.
+     * Answer is <b>false</b> unless bufferring is needed to deal with
+     * extra inputs between the InputliceNode and the FilterSliceNode.
      * @param filter
-     * @return
+     * @return  whether filter needs peek buffer.
      */
     public static boolean filterNeedsPeekBuffer(FilterSliceNode filter) {
         if (! sliceHasUpstreamChannel(filter.getParent())) {
@@ -60,7 +78,7 @@ public class UniChannel  {
         FilterInfo info = FilterInfo.getFilterInfo(filter);
         if (info.noBuffer()) {
             // a filter with a 0 peek rate can just pop from
-            // from 
+            // joiner code if any.
             return false;
         }
         if (! info.isSimple() || 
@@ -68,7 +86,7 @@ public class UniChannel  {
                  ! Utils.hasPeeks(filter.getFilter()))) {
             return true;
         } else {
-            return true;
+            return false;
         }
     }
 
@@ -100,7 +118,8 @@ public class UniChannel  {
      * @return
      */
     public static boolean sliceNeedsJoinerWorkFunction(Slice s) {
-        return sliceNeedsJoinerCode(s) && filterNeedsPeekBuffer(s.getFilterNodes().get(0));
+        // if needs peek buffer then needs joiner work function to transfer into peek buffer.
+        return /*sliceNeedsJoinerCode(s) &&*/ filterNeedsPeekBuffer(s.getFilterNodes().get(0));
     }
 
     /**

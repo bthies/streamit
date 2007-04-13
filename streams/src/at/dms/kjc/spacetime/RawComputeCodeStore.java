@@ -558,7 +558,6 @@ public class RawComputeCodeStore extends ComputeCodeStore<RawTile> implements SI
      * @param filterInfo The filter to add to the steady-state schedule.
      * @param layout The layout of the application.
      */
-    @Override
     public void addSliceSteady(FilterInfo filterInfo, Layout layout) {
         if (debugging) {System.err.println("addSliceSteady " + filterInfo);}
     
@@ -613,7 +612,7 @@ public class RawComputeCodeStore extends ComputeCodeStore<RawTile> implements SI
         // add the helper methods
         addMethods(exeCode.getHelperMethods());
         // add the init function
-        addInitFunctionCall(filterInfo);
+        addInitFunctionCall(filterInfo.filter.getInit());
     }
 
 
@@ -624,7 +623,6 @@ public class RawComputeCodeStore extends ComputeCodeStore<RawTile> implements SI
      * @param filterInfo The filter.
      * @param layout The layout of the application.
      */
-    @Override
     public void addSlicePrimePump(FilterInfo filterInfo, Layout layout) {
         if (debugging) {System.err.println("addSlicePrimePump " + filterInfo);}
      
@@ -667,7 +665,6 @@ public class RawComputeCodeStore extends ComputeCodeStore<RawTile> implements SI
      * @param filterInfo The filter.
      * @param layout The layout of the application.
      */
-    @Override
     public void addSliceInit(FilterInfo filterInfo, Layout layout) {
         if (debugging) {System.err.println("addSliceInit " + filterInfo);}
     

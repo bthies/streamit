@@ -1,48 +1,20 @@
 package at.dms.kjc.vanillaSlice;
 
-import at.dms.kjc.CArrayType;
-import at.dms.kjc.CClassType;
-import at.dms.kjc.CStdType;
-import at.dms.kjc.JAddExpression;
-import at.dms.kjc.JArrayAccessExpression;
-import at.dms.kjc.JArrayInitializer;
-import at.dms.kjc.JAssignmentExpression;
-import at.dms.kjc.JBlock;
-import at.dms.kjc.JEmptyStatement;
-import at.dms.kjc.JExpression;
-import at.dms.kjc.JExpressionStatement;
-import at.dms.kjc.JFieldAccessExpression;
-import at.dms.kjc.JFieldDeclaration;
-import at.dms.kjc.JFormalParameter;
-import at.dms.kjc.JIfStatement;
-import at.dms.kjc.JIntLiteral;
-import at.dms.kjc.JLocalVariableExpression;
-import at.dms.kjc.JMethodCallExpression;
-import at.dms.kjc.JMethodDeclaration;
-import at.dms.kjc.JModuloExpression;
-import at.dms.kjc.JPrefixExpression;
-import at.dms.kjc.JRelationalExpression;
-import at.dms.kjc.JReturnStatement;
-import at.dms.kjc.JStatement;
-import at.dms.kjc.JSwitchGroup;
-import at.dms.kjc.JSwitchLabel;
-import at.dms.kjc.JSwitchStatement;
-import at.dms.kjc.JVariableDeclarationStatement;
-import at.dms.kjc.JVariableDefinition;
-import at.dms.kjc.backendSupport.BackEndFactory;
-import at.dms.kjc.backendSupport.BufferSize;
-import at.dms.kjc.backendSupport.ComputeNode;
-import at.dms.kjc.backendSupport.MinCodeUnit;
-import at.dms.kjc.backendSupport.SchedulingPhase;
-import at.dms.kjc.backendSupport.SliceNodeToCodeUnit;
-import at.dms.kjc.sir.SIRCodeUnit;
-import at.dms.kjc.slicegraph.InputSliceNode;
+import java.util.*;
+import at.dms.kjc.*;
+import at.dms.kjc.backendSupport.*;
+import at.dms.kjc.slicegraph.*;
+import at.dms.kjc.common.*;
 /**
  * Create kopi code for an {@link at.dms.kjc.slicegraph.InputSliceNode}.
  * @author dimock
  */
 public class ProcessInputSliceNode {
     
+    /** set of filters for which we have written basic code. */
+    // uses WeakHashMap to be self-cleaning, but now have to insert some value.
+    private static Map<SliceNode,Boolean>  basicCodeWritten = new WeakHashMap<SliceNode,Boolean>();
+
     /**
      * Create code for a InputSliceNode.
      * @param <T>          type of a BackEndFactory to access layout, etc.
@@ -52,20 +24,69 @@ public class ProcessInputSliceNode {
      */
     public static <T extends BackEndFactory> void processInputSliceNode(InputSliceNode inputNode, 
             SchedulingPhase whichPhase, T backEndBits) {
-        /* An input slice needs a work function if downstream filter can not call the joiner
-         * code directly, which happens if there is a peek buffer between the joiner and
-         * the downstream filter: Something needs to push into the peek buffer.
-         */
-        if (UniChannel.sliceNeedsJoinerCode(inputNode.getParent())) {
-            int initPushes = inputNode.getNextFilter().getFilter().initItemsNeeded();
-            int steadyPushes = inputNode.getNextFilter().getFilter().getPopInt() *
-                inputNode.getNextFilter().getFilter().getSteadyMult();
-            // create joiner code and preWork, work Functions to push into next Channel.
-            // add these...
+        // No code generated for inputNode if there is no input.
+        if (!UniChannel.sliceHasUpstreamChannel(inputNode.getParent())) { return; }
+        
+        CodeStoreHelper joiner_code = CodeStoreHelper.findHelperForSliceNode(inputNode);
+        
+        if (joiner_code == null) {
+            joiner_code = getJoinerCode(inputNode,backEndBits);
         }
-    
-    }   
+        
+        ComputeNode location = backEndBits.getLayout().getComputeNode(inputNode);
+        assert location != null;
+        ComputeCodeStore codeStore = location.getComputeCode();
+        switch (whichPhase) {
+        case INIT:
+            // Have the main function for the CodeStore call our init if any
+            codeStore.addInitFunctionCall(joiner_code.getInitMethod());
+            JMethodDeclaration workAtInit = joiner_code.getInitStageMethod();
+            if (workAtInit != null) {
+                // if there are calls to work needed at init time then add
+                // method to general pool of methods
+                codeStore.addMethod(workAtInit);
+                // and add call to list of calls made at init time.
+                // Note: these calls must execute in the order of the
+                // initialization schedule -- so caller of this routine 
+                // must follow order of init schedule.
+                codeStore.addInitStatement(new JExpressionStatement(null,
+                        new JMethodCallExpression(null, new JThisExpression(null),
+                                workAtInit.getName(), new JExpression[0]), null));
+            }
+            break;
+        case PRIMEPUMP:
+            JMethodDeclaration primePump = joiner_code.getPrimePumpMethod();
+            if (primePump != null && ! codeStore.hasMethod(primePump)) {
+                // Add method -- but only once
+                codeStore.addMethod(primePump);
+            }
+            if (primePump != null) {
+                // for each time this method is called, it adds another call
+                // to the primePump routine to the initialization.
+                codeStore.addInitStatement(new JExpressionStatement(
+                                null,
+                                new JMethodCallExpression(null,
+                                        new JThisExpression(null), primePump
+                                                .getName(), new JExpression[0]),
+                                null));
 
+            }
+            break;
+        case STEADY:
+            JStatement steadyBlock = joiner_code.getSteadyBlock();
+            // helper has now been used for the last time, so we can write the basic code.
+            // write code deemed useful by the helper into the corrrect ComputeCodeStore.
+            // write only once if multiple calls for steady state.
+            if (!basicCodeWritten.containsKey(inputNode)) {
+                codeStore.addFields(joiner_code.getUsefulFields());
+                codeStore.addMethods(joiner_code.getUsefulMethods());
+                basicCodeWritten.put(inputNode,true);
+            }
+            codeStore.addSteadyLoopStatement(steadyBlock);
+            break;
+        }
+
+    }
     /**
          * Create fields and code for a joiner, as follows.
          * Do not create a joiner if all weights are 0: this code
@@ -136,10 +157,13 @@ public class ProcessInputSliceNode {
     }
          * </pre>
          * @param joiner An InputSliceNode specifying joiner weights and edges.
-         * @return a SIRCodeUnit (fields and single method declaration) implementing the joiner
+         * @param backEndBits to get info from appropriate BackEndFactory
+         * @param helper CodeStoreHelper to get the fields and method implementing the joiner
          */
-        static <T extends BackEndFactory> SIRCodeUnit makeJoinerCode(InputSliceNode joiner, T backEndBits) {
+        static <T extends BackEndFactory> void makeJoinerCode(InputSliceNode joiner,
+                T backEndBits, CodeStoreHelper helper) {
             String joiner_name = "_joiner_" + ProcessFilterSliceNode.getUid();
+            String joiner_method_name =  joiner_name + joiner.getNextFilter().getFilter().getName();
             
             // size is number of edges with non-zero weight.
             int size = 0;
@@ -242,7 +266,7 @@ public class ProcessInputSliceNode {
             JMethodDeclaration joiner_method = new JMethodDeclaration(
                     null, at.dms.kjc.Constants.ACC_STATIC | at.dms.kjc.Constants.ACC_INLINE,
                     joiner.getType(),
-                    joiner_name,
+                    joiner_method_name,
                     new JFormalParameter[]{},
                     new CClassType[]{},
                     new JBlock(),
@@ -257,13 +281,93 @@ public class ProcessInputSliceNode {
             joiner_block.addStatement(switch_on_edge_stmt);
             
             
-            SIRCodeUnit retval = new MinCodeUnit(
-                    new JFieldDeclaration[]{edgeDecl, weightDecl},
-                    new JMethodDeclaration[]{joiner_method});
-            
-            return retval;
+            helper.addFields(new JFieldDeclaration[]{edgeDecl, weightDecl});
+            helper.addMethod(joiner_method);
         }
 
+        /** select a helper to keep track of / generate code for slice */
+        private static <T extends BackEndFactory> CodeStoreHelper selectHelper (InputSliceNode joiner,
+                T backEndBits) {
+                return new CodeStoreHelperJoiner(joiner,backEndBits);
+        }
+        
+        /**
+         * Make a work function for a joiner 
+         */
+        
+        static <T extends BackEndFactory> void makeJoinerWork(InputSliceNode joiner,
+                T backEndBits, CodeStoreHelper joiner_code) {
+            JMethodDeclaration joinerWork;
+
+            // the work function will need a temporary variable
+            ALocalVariable t = ALocalVariable.makeTmp(joiner.getEdgeToNext().getType());
+
+            Channel downstream = backEndBits.getChannel(joiner.getEdgeToNext());
+
+            // the body of the work method
+            JBlock body = new JBlock();
+            
+            if (UniChannel.sliceNeedsJoinerCode(joiner.getParent())) {
+                // There should be generated code for the joiner
+                // state machine in the CodeStoreHelper as the only method.
+                //
+                // generated code is
+                // T tmp;
+                // tmp = joiner_code();
+                // push(tmp);
+                //
+                // TODO: inline the joiner code at the call site,
+                // if inlining, delete joiner code after inlining leaving
+                // only this method in the helper.
+                assert joiner_code.getMethods().length == 1;
+                JMethodDeclaration callable_joiner = joiner_code.getMethods()[0];
+                
+                body.addStatement(t.getDecl());
+                body.addStatement(new JExpressionStatement(
+                        new JAssignmentExpression(
+                                t.getRef(),
+                                new JMethodCallExpression(
+                                        callable_joiner.getName(),
+                                        new JExpression[0]
+                                ))));
+                body.addStatement(new JExpressionStatement(
+                        new JMethodCallExpression(
+                                downstream.pushMethodName(),
+                                new JExpression[]{t.getRef()})));
+            } else {
+                // slice does not need joiner code, so just transfer from upstream
+                // to downstream buffer.
+                //
+                // generated code is
+                // T tmp;
+                // tmp = pop();
+                // push(tmp);
+                //
+                assert joiner.getWidth() == 1;
+                Channel upstream = backEndBits.getChannel(joiner.getSingleEdge());
+
+                body.addStatement(t.getDecl());
+                body.addStatement(new JExpressionStatement(
+                        new JAssignmentExpression(
+                                t.getRef(),
+                                new JMethodCallExpression(
+                                        upstream.popMethodName(),
+                                        new JExpression[0]
+                                ))));
+                body.addStatement(new JExpressionStatement(
+                        new JMethodCallExpression(
+                                downstream.pushMethodName(),
+                                new JExpression[]{t.getRef()})));
+
+            }
+            joinerWork = new JMethodDeclaration(
+                    CStdType.Void,
+                    "_joinerWork_" + joiner.getNextFilter().getFilter().getName(),
+                    JFormalParameter.EMPTY,
+                    body);
+            joiner_code.setWorkMethod(joinerWork);
+        }
+        
         /**
          * Get code for a joiner.
          * If code not yet made then makes it.
@@ -272,28 +376,17 @@ public class ProcessInputSliceNode {
          * @param backEndBits
          * @return
          */
-        static <T extends BackEndFactory> SIRCodeUnit getJoinerCode(InputSliceNode joiner, T backEndBits) {
-            SIRCodeUnit joiner_code = SliceNodeToCodeUnit.findCodeForSliceNode(joiner);
+        static <T extends BackEndFactory> CodeStoreHelper getJoinerCode(InputSliceNode joiner, T backEndBits) {
+            CodeStoreHelper joiner_code = CodeStoreHelper.findHelperForSliceNode(joiner);
             if (joiner_code == null) {
-                joiner_code = makeJoinerCode(joiner,backEndBits);
+                joiner_code = selectHelper(joiner,backEndBits);
+                if  (UniChannel.sliceNeedsJoinerCode(joiner.getParent())) {
+                    makeJoinerCode(joiner,backEndBits,joiner_code);
+                }
+                if (UniChannel.sliceNeedsJoinerWorkFunction(joiner.getParent())) {
+                    makeJoinerWork(joiner,backEndBits,joiner_code);
+                }
             }
             return joiner_code;
-        }
- 
-        /**
-         * Get code for a joiner and add it to the appropriate ComputeCodeStore.
-         * @param <T> Type of the caller's BackEndFactory.
-         * @param joiner
-         * @param backEndBits
-         */
-        static <T extends BackEndFactory> void addJoinerCode(InputSliceNode joiner, T backEndBits) {
-            SIRCodeUnit joiner_code = SliceNodeToCodeUnit.findCodeForSliceNode(joiner);
-            if (joiner_code == null) {
-                joiner_code = makeJoinerCode(joiner,backEndBits);
-                ComputeNode location = backEndBits.getLayout().getComputeNode(joiner);
-                assert location != null;
-                location.getComputeCode().addFields(joiner_code.getFields());
-                location.getComputeCode().addMethods(joiner_code.getMethods());
-            }
         }
 }

@@ -25,30 +25,27 @@ import at.dms.kjc.slicegraph.SliceNode;
  * 
  * @author mgodon / dimock
  *
- * @param ComputeNodeType 
+ * @param <ComputeNodeType> nasty recursive type, historical relic.  TODO: get rid of. 
  */
 public class ComputeCodeStore<ComputeNodeType extends ComputeNode<?>> implements SIRCodeUnit {
 
-    /** the name of the main function for each tile */
+    /** The name of the main function for each tile. 
+     * This static field is passed to {@link #setMyMainName(String)} which can use it or
+     * ignore it in setting up a local name for the main loop in each ComputeCodeStore.
+     * Assuming that there is only a single subclass of ComputeCodeStore in a given back end
+     * you could attempt to override this local field by:
+     * <pre>
+     * static { if ("".equals(mainName)) mainName = "__MAIN__";}
+     * </pre>
+     * But you would need to understand your class loader to know what the value would be
+     * if multiple subclasses of ComputeCodeStore are loaded in a back end.
+     * You are generally better off calling {@link #setMyMainName(String)} in your constructor
+     * and ignoring this field.
+     */
     public static String mainName = "";
-    /* attempt to give a default name but let derived
-     * (actually any) class override. */
-    static { if ("".equals(mainName)) mainName = "__MAIN__";}
-    
-    /** generate / add code for a slice for the init phase */
-    public void addSliceInit(FilterInfo filterInfo, Layout layout) {
-        throw new at.dms.util.NotImplementedException();
-    }
 
-    /** generate / add code for a slice for the primt-pump phase */
-    public void addSlicePrimePump(FilterInfo filterInfo, Layout layout) {
-        throw new at.dms.util.NotImplementedException();
-    }
-
-    /** generate / add code for a slice for the steady-state phase. */
-    public void addSliceSteady(FilterInfo filterInfo, Layout layout) {
-        throw new at.dms.util.NotImplementedException();
-    }
+    /** name that may be unique per processor. */
+    protected String myMainName;
 
     /** set to false if you do not want to generate
      * the work functions calls or inline them
@@ -70,43 +67,62 @@ public class ComputeCodeStore<ComputeNodeType extends ComputeNode<?>> implements
     /** the block that executes each slicenode's init schedule, as calculated currently */
     protected JBlock initBlock;
 
-    
+
     /**
      * Constructor
      * @param parent a ComputeCodeStore or an instance of some subclass.
+     * @param addSteadyLoop if true 
      */
     public ComputeCodeStore(ComputeNodeType parent) {
         this.parent = parent;
         methods = new JMethodDeclaration[0];
         fields = new JFieldDeclaration[0];
-        mainMethod = new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
-                                         CStdType.Void, mainName, JFormalParameter.EMPTY, CClassType.EMPTY,
-                                         new JBlock(null, new JStatement[0], null), null, null);
-
+        mainMethod = new JMethodDeclaration(null,
+                at.dms.kjc.Constants.ACC_PUBLIC, CStdType.Void,
+                getMyMainName(), JFormalParameter.EMPTY, CClassType.EMPTY,
+                new JBlock(null, new JStatement[0], null), null, null);
+        this.setMyMainName(mainName);
         // add the block for the init stage calls
         initBlock = new JBlock(null, new JStatement[0], null);
         mainMethod.addStatement(initBlock);
-        /*
-         * //add the call to free the init buffers rawMain.addStatement(new
-         * JExpressionStatement (null, new JMethodCallExpression(null, new
-         * JThisExpression(null), CommunicateAddrs.freeFunctName, new
-         * JExpression[0]), null));
-         */
         // create the body of steady state loop
         steadyLoop = new JBlock(null, new JStatement[0], null);
-        // add it to the while statement
-        mainMethod.addStatement(new JWhileStatement(null, new JBooleanLiteral(
-                                                                           null, true), steadyLoop, null));
         addMethod(mainMethod);
-
+        addSteadyLoop();
     }
 
+    /**
+     * Add a way of iterating steadyLoop to the main method.
+     * If you do not want the steady state to loop infinitely then
+     * you should override this method.
+     */
+    protected void addSteadyLoop() {
+        // add it to the while statement
+        mainMethod.addStatement(new JWhileStatement(null, new JBooleanLiteral(
+                null, true), steadyLoop, null));
+    }
+    
+    /** Override to get different MAIN names on different ComputeNode's */
+    protected void setMyMainName(String mainName) {
+        myMainName = mainName;
+        if (mainMethod != null) { mainMethod.setName(mainName); }
+    }
+    
+    /** get name for MAIN method in this code store. 
+     * @return name from a JMethodDeclaration */
+    public String getMyMainName() {
+        if (myMainName == null) {
+            setMyMainName(mainName);
+        }
+        return myMainName;
+    }
+    
     /**
      * @param stmt  statement to add after any other statements in init code.
      * 
      */
      public void addInitStatement(JStatement stmt) {
-         initBlock.addStatement(stmt);
+         if (stmt != null) initBlock.addStatement(stmt);
      }
     
      /**
@@ -114,10 +130,18 @@ public class ComputeCodeStore<ComputeNodeType extends ComputeNode<?>> implements
       * 
       */
     public void addSteadyLoopStatement(JStatement stmt) {
-         steadyLoop.addStatement(stmt);
+        if (stmt != null) steadyLoop.addStatement(stmt);
      }
      
-
+    /**
+     * You should generally manipulate the code for the steady state by {@link #addSteadyLoopStatement(JStatement)}
+     * but if you specify that ComputeCodeStore does not generate an infinite loop in main calling steadyLoop,
+     * then you will need {@link #getSteadyLoop()} to add steadyLoop yourself.
+     * @return The steady loop block.
+     */
+    public JBlock getSteadyLoop() {
+        return steadyLoop;
+    }
     
     /**
      * Bill's code adds method <b>meth</b> to this, if <b>meth</b> is not already
@@ -173,6 +197,7 @@ public class ComputeCodeStore<ComputeNodeType extends ComputeNode<?>> implements
      * (existing field is checked for with ==).
      */
     public void addField(JFieldDeclaration field) {
+        assert field != null;
         // see if we already have <field> in this
         for (int i = 0; i < fields.length; i++) {
             if (fields[i] == field) {
@@ -260,16 +285,16 @@ public class ComputeCodeStore<ComputeNodeType extends ComputeNode<?>> implements
      * 
      * @param filterInfo The filter.
      */
-    public void addInitFunctionCall(FilterInfo filterInfo) {
-        JMethodDeclaration init = filterInfo.filter.getInit();
+    public void addInitFunctionCall(JMethodDeclaration init) {
+        //JMethodDeclaration init = filterInfo.filter.getInit();
         if (init != null)
             mainMethod.addStatementFirst
             (new JExpressionStatement(null,
                     new JMethodCallExpression(null, new JThisExpression(null),
-                            filterInfo.filter.getInit().getName(), new JExpression[0]),
+                            init.getName(), new JExpression[0]),
                             null));
         else
-            System.err.println(" ** Warning: Init function is null in " + filterInfo);
+            System.err.println(" ** Warning: Init function is null");
 
     }
 

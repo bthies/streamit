@@ -1,11 +1,11 @@
 package at.dms.kjc.vanillaSlice;
 
-//import java.util.*;
+import java.util.*;
 import at.dms.kjc.backendSupport.*;
 import at.dms.kjc.slicegraph.*;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
-//import at.dms.util.Utils;
+
 /**
  * Process a FilterSliceNode creating code in the code store and buffers for connectivity.
  * @author dimock
@@ -18,6 +18,9 @@ public class ProcessFilterSliceNode {
         return uid++;
     }
 
+    /** set of filters for which we have written basic code. */
+    // uses WeakHashMap to be self-cleaning, but now have to insert some value.
+    private static Map<SliceNode,Boolean>  basicCodeWritten = new WeakHashMap<SliceNode,Boolean>();
     
     /**
      * Create code for a FilterSliceNode (actually for the whole slice).
@@ -29,9 +32,11 @@ public class ProcessFilterSliceNode {
     public static <T extends BackEndFactory> void processFilterSliceNode(FilterSliceNode filterNode, 
             SchedulingPhase whichPhase, T backEndBits) {
 
+        CodeStoreHelper filter_code = CodeStoreHelper.findHelperForSliceNode(filterNode);
+        
         // We should only generate code once for a filter node.
         
-        if (SliceNodeToCodeUnit.findCodeForSliceNode(filterNode) == null) {
+        if (filter_code == null) {
             System.err.println(
                     "filter " + filterNode.getFilter() +
                     ", make_joiner " + UniChannel.sliceNeedsJoinerCode(filterNode.getParent()) + 
@@ -51,12 +56,74 @@ public class ProcessFilterSliceNode {
             if (UniChannel.sliceHasDownstreamChannel(filterNode.getParent())) {
                 outputChannel = backEndBits.getChannel(filterNode.getEdgeToNext());
             }
-            
-            SIRCodeUnit filter_code = addFilterCode(filterNode,inputChannel,outputChannel,backEndBits);
-        }
 
+            filter_code = getFilterCode(filterNode,inputChannel,outputChannel,backEndBits);
+        } 
+
+       ComputeNode location = backEndBits.getLayout().getComputeNode(filterNode);
+       assert location != null;
+       ComputeCodeStore codeStore = location.getComputeCode();
+
+       switch (whichPhase) {
+        case INIT:
+            // Have the main function for the CodeStore call out init.
+            codeStore.addInitFunctionCall(filter_code.getInitMethod());
+            JMethodDeclaration workAtInit = filter_code.getInitStageMethod();
+            if (workAtInit != null) {
+                // if there are calls to work needed at init time then add
+                // method to general pool of methods
+                codeStore.addMethod(workAtInit);
+                // and add call to list of calls made at init time.
+                // Note: these calls must execute in the order of the
+                // initialization schedule -- so caller of this routine 
+                // must follow order of init schedule.
+                codeStore.addInitStatement(new JExpressionStatement(null,
+                        new JMethodCallExpression(null, new JThisExpression(null),
+                                workAtInit.getName(), new JExpression[0]), null));
+            }
+            break;
+        case PRIMEPUMP:
+            JMethodDeclaration primePump = filter_code.getPrimePumpMethod();
+            if (primePump != null && ! codeStore.hasMethod(primePump)) {
+                // Add method -- but only once
+                codeStore.addMethod(primePump);
+            }
+            if (primePump != null) {
+                // for each time this method is called, it adds another call
+                // to the primePump routine to the initialization.
+                codeStore.addInitStatement(new JExpressionStatement(
+                                null,
+                                new JMethodCallExpression(null,
+                                        new JThisExpression(null), primePump
+                                                .getName(), new JExpression[0]),
+                                null));
+
+            }
+            break;
+        case STEADY:
+            JStatement steadyBlock = filter_code.getSteadyBlock();
+            // helper has now been used for the last time, so we can write the basic code.
+            // write code deemed useful by the helper into the corrrect ComputeCodeStore.
+            // write only once if multiple calls for steady state.
+            if (!basicCodeWritten.containsKey(filterNode)) {
+                codeStore.addFields(filter_code.getUsefulFields());
+                codeStore.addMethods(filter_code.getUsefulMethods());
+                basicCodeWritten.put(filterNode,true);
+            }
+            codeStore.addSteadyLoopStatement(steadyBlock);
+            break;
+        }
     }
 
+    /**
+     * Pick the kind of CodeStoreHelper needed for this filter and return a new one.
+     * @param sliceNode  a FilterSliceNode.
+     * @return
+     */
+    private static <T extends BackEndFactory> CodeStoreHelper selectHelper(FilterSliceNode sliceNode,
+            T backEndBits) {
+        return new CodeStoreHelperSimple(sliceNode, sliceNode.getFilter(), backEndBits);
+    }
     
     /**
      * Take a code unit (here a FilterContent) and return one with all push, peek, pop 
@@ -66,10 +133,11 @@ public class ProcessFilterSliceNode {
      * @param code           The code (fields and methods)
      * @param inputChannel   The input channel -- specifies routines to call to replace peek, pop.
      * @param outputChannel  The output channel -- specifies routines to call to replace push.
-     * @return a SIRCodeUnit with no push, peek, or pop instructions.
+     * @return a CodeStoreHelper with no push, peek, or pop instructions in the methods.
      */
-    private static SIRCodeUnit makeFilterCode(SIRCodeUnit code, 
-            Channel inputChannel, Channel outputChannel) {
+    private static <T extends BackEndFactory> CodeStoreHelper makeFilterCode(FilterSliceNode filter, 
+            Channel inputChannel, Channel outputChannel,
+            T backEndBits) {
         
         final String peekName;
 
@@ -93,12 +161,11 @@ public class ProcessFilterSliceNode {
             pushName = "/* push() to non-existent channel */";
         }
         
-        JMethodDeclaration[] oldMethods = code.getMethods();
-        JMethodDeclaration[] methods = new JMethodDeclaration[oldMethods.length];
-        for (int i = 0; i < oldMethods.length; i++) {
-            methods[i] = (JMethodDeclaration)AutoCloner.deepCopy(oldMethods[i]);
-        }
-        
+        CodeStoreHelper helper = selectHelper(filter, backEndBits);
+        JMethodDeclaration[] methods = helper.getMethods();
+       
+        // relies on fact that a JMethodDeclaration is not replaced so 
+        // work, init, preWork are still identifiable after replacement.
         for (JMethodDeclaration method : methods) {
             method.accept(new SLIRReplacingVisitor(){
                 @Override
@@ -129,9 +196,13 @@ public class ProcessFilterSliceNode {
                     return new JMethodCallExpression(pushName, new JExpression[]{newArg});
                 }
             });
+            // Add markers to code for debugging of emitted code:
+            String methodName = "filter " + filter.getFilter().getName() + "." + method.getName();
+            method.addStatementFirst(new SIRBeginMarker(methodName));
+            method.addStatement(new SIREndMarker(methodName));
         }
         
-        return new MinCodeUnit(code.getFields(),methods);
+        return helper;
     }
     
     /**
@@ -144,37 +215,15 @@ public class ProcessFilterSliceNode {
      * @param backEndBits
      * @return
      */
-    static <T extends BackEndFactory> SIRCodeUnit getFilterCode(FilterSliceNode filter, 
+    static <T extends BackEndFactory> CodeStoreHelper getFilterCode(FilterSliceNode filter, 
             Channel inputChannel, Channel outputChannel, T backEndBits) {
-        SIRCodeUnit filter_code = SliceNodeToCodeUnit.findCodeForSliceNode(filter);
+        CodeStoreHelper filter_code = CodeStoreHelper.findHelperForSliceNode(filter);
         if (filter_code == null) {
-            filter_code = makeFilterCode(filter.getFilter(),inputChannel,outputChannel);
+            filter_code = makeFilterCode(filter,inputChannel,outputChannel,backEndBits);
+            CodeStoreHelper.addHelperForSliceNode(filter, filter_code);
         }
         return filter_code;
     }
-  
-    /**
-     * Get code for a filter and add it to the appropriate ComputeCodeStore.
-     * If code not yet made, then makes the code and adds it to the appropriate ComputeCodeStore
-     * @param <T> Type of the caller's BackEndFactory.
-     * @param filter         A FilterSliceNode for which we want code.
-     * @param inputChannel   The input channel -- specified routines to call to replace peek, pop.
-     * @param outputChannel  The output channel -- specified routeines to call to replace push.
-     * @param backEndBits
-     */
-    static <T extends BackEndFactory> SIRCodeUnit addFilterCode(FilterSliceNode filter, 
-            Channel inputChannel, Channel outputChannel, T backEndBits) {
-        SIRCodeUnit filter_code = SliceNodeToCodeUnit.findCodeForSliceNode(filter);
-        if (filter_code == null) {
-            filter_code = makeFilterCode(filter.getFilter(),inputChannel,outputChannel);
-            ComputeNode location = backEndBits.getLayout().getComputeNode(filter);
-            assert location != null;
-            location.getComputeCode().addFields(filter_code.getFields());
-            location.getComputeCode().addMethods(filter_code.getMethods());
-        }
-        return filter_code;
-    }
-  
 }
 
 

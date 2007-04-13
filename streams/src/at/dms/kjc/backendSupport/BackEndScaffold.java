@@ -1,4 +1,4 @@
-// $Id: BackEndScaffold.java,v 1.5 2007-03-28 21:39:12 dimock Exp $
+// $Id: BackEndScaffold.java,v 1.6 2007-04-13 22:46:02 dimock Exp $
 package at.dms.kjc.backendSupport;
 
 import java.util.*;
@@ -82,45 +82,51 @@ ComputeNodeSelectorArgType extends Object> {
         ComputeNodesType computeNodes = resources.getComputeNodes();
         this.resources = resources;
         
-        Slice traces[];
+        Slice slices[];
 
         beforeScheduling(schedule,resources);
         
-        //the initialization stage!!
-        traces = schedule.getInitSchedule();
-        iterateInorder(traces, SchedulingPhase.INIT, computeNodes);
-        //the prime pump stage!!
-        traces = schedule.getPrimePumpScheduleFlat();
-        iterateInorder(traces, SchedulingPhase.PRIMEPUMP, computeNodes);
-        //the steady-state!!
-        traces = schedule.getSchedule();
+        // schedule the initialization phase.
+        slices = schedule.getInitSchedule();
+        iterateInorder(slices, SchedulingPhase.INIT, computeNodes);
+        // schedule the prime pump phase.
+        // (schedule should be empty if not spacetime)
+        slices = schedule.getPrimePumpScheduleFlat();
+        iterateInorder(slices, SchedulingPhase.PRIMEPUMP, computeNodes);
+        // schedule the steady-state phase.
+        slices = schedule.getSchedule();
         
-        if (KjcOptions.noswpipe) {
+
+        if (KjcOptions.noswpipe && KjcOptions.spacetime) {
             iterateNoSWPipe(schedule.getScheduleList(), SchedulingPhase.STEADY, computeNodes);
-        } else {
+        } else if (KjcOptions.spacetime) {
             //iterate over the joiners then the filters then 
             //the splitter, this will create a data-redistribution 
             //stage between the iterations that will improve performance 
-            iterateJoinFiltersSplit(traces, SchedulingPhase.STEADY, computeNodes);
+            //(can only work for spacetime since requires priming the pump
+            // for the joiners to have work available).
+            iterateJoinFiltersSplit(slices, SchedulingPhase.STEADY, computeNodes);
+        } else {
+            iterateInorder(slices, SchedulingPhase.STEADY, computeNodes);
         }
         afterScheduling(schedule, resources);
     }
  
     /**
-     * Iterate over the schedule of traces and over each node of each trace and 
+     * Iterate over the schedule of slices and over each node of each slice and 
      * generate the code necessary to fire the schedule.  Generate splitters and 
      * joiners intermixed with the trace execution...
      * 
-     * @param traces The schedule to execute.
+     * @param slices The schedule to execute.
      * @param whichPhase True if the init stage.
      * @param computeNodes The collection of compute nodes.
      */
-    private void iterateInorder(Slice traces[], SchedulingPhase whichPhase,
+    private void iterateInorder(Slice slices[], SchedulingPhase whichPhase,
                                        ComputeNodesType computeNodes) {
         Slice slice;
 
-        for (int i = 0; i < traces.length; i++) {
-            slice = (Slice) traces[i];
+        for (int i = 0; i < slices.length; i++) {
+            slice = (Slice) slices[i];
             //create code for joining input to the trace
             resources.processInputSliceNode((InputSliceNode)slice.getHead(),
                     whichPhase, computeNodes);
@@ -135,27 +141,27 @@ ComputeNodeSelectorArgType extends Object> {
     }
     
     /**
-     * Iterate over the schedule of traces and over each node of each trace and 
+     * Iterate over the schedule of slices and over each node of each slice and 
      * generate the code necessary to fire the schedule.  Generate splitters and 
-     * joiners first so that they will data will be redistributed before the filters
+     * joiners first so that the data will be redistributed before the filters
      * execute.
      * 
-     * @param traces The schedule to execute.
+     * @param slices The schedule to execute.
      * @param whichPhase True if the init stage.
      * @param rawChip The raw chip
      */
-    private void iterateJoinFiltersSplit(Slice traces[], SchedulingPhase whichPhase,
+    private void iterateJoinFiltersSplit(Slice slices[], SchedulingPhase whichPhase,
                                                 ComputeNodesType computeNodes) {
         Slice slice;
 
-        for (int i = 0; i < traces.length; i++) {
-            slice = (Slice) traces[i];
+        for (int i = 0; i < slices.length; i++) {
+            slice = (Slice) slices[i];
             //create code for joining input to the trace
             resources.processInputSliceNode((InputSliceNode)slice.getHead(),
                     whichPhase, computeNodes);
         }
-        for (int i = 0; i < traces.length; i++) {
-            slice = (Slice) traces[i];
+        for (int i = 0; i < slices.length; i++) {
+            slice = (Slice) slices[i];
             //create the compute code and the communication code for the
             //filters of the trace
             if (slice instanceof SimpleSlice) {
@@ -164,14 +170,15 @@ ComputeNodeSelectorArgType extends Object> {
                 resources.processFilterSlices(slice, whichPhase, computeNodes);
             }
         }
-        for (int i = 0; i < traces.length; i++) {
-            slice = (Slice) traces[i];
+        for (int i = 0; i < slices.length; i++) {
+            slice = (Slice) slices[i];
             //create communication code for splitting the output
             resources.processOutputSliceNode((OutputSliceNode)slice.getTail(),
                     whichPhase, computeNodes);
         }
     }
     
+    /** Special scheduling for --spacetime --noswpipe */
     private void iterateNoSWPipe(List<Slice> scheduleList, SchedulingPhase whichPhase,
             ComputeNodesType computeNodes) {
         HashSet<OutputSliceNode> hasBeenSplit = new HashSet<OutputSliceNode>();
@@ -272,50 +279,5 @@ ComputeNodeSelectorArgType extends Object> {
         }
 
     }
-    
-//    private void processOutputSliceNode(OutputSliceNode node, SchedulingPhase whichPhase, ComputeNodesI computeNodes) {
-//        // TODO
-//    }
-//    
-//    private void processInputSliceNode(InputSliceNode node, SchedulingPhase whichPhase, ComputeNodesI computeNodes) {
-//        // TODO
-//    }
-//    
-//    private void processFilterSliceNode(FilterSliceNode node, SchedulingPhase whichPhase, ComputeNodesI computeNodes) {
-//        ComputeNode tile = layout.getComputeNode(node);
-//        FilterInfo filterInfo = FilterInfo.getFilterInfo(node);
-//        addComputeCode(whichPhase, tile, filterInfo);
-//    }
-    
-    /** 
-     * Based on what phase we are currently in, generate the compute code 
-     * (filter) code to execute the phase at this currently.  This is done 
-     * in ComputeCodeStore.java.
-     * 
-     * @param init
-     * @param primepump
-     * @param tile
-     * @param filterInfo
-     */
-    private void addComputeCode(SchedulingPhase whichPhase,
-            ComputeNodeType computeNode, FilterInfo filterInfo) {
-        switch (whichPhase) {
-        case INIT:
-            computeNode.getComputeCode().addSliceInit(filterInfo, resources.getLayout());
-            break;
-
-        case PRIMEPUMP:
-            computeNode.getComputeCode().addSlicePrimePump(filterInfo, resources.getLayout());
-            break;
-            
-        case STEADY:
-            computeNode.getComputeCode().addSliceSteady(filterInfo, resources.getLayout());
-            break;
-
-        default:
-            throw new AssertionError("" + whichPhase);
-        }
-    }
-
     
 }

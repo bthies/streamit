@@ -18,8 +18,7 @@ public class UniProcessors  implements ComputeNodesI<UniComputeCodeStore>{
     public UniProcessors(Integer numberOfNodes) {
         nodes = new Vector<UniProcessor>(numberOfNodes);
         for (int i = 0; i < numberOfNodes; i++) {
-            UniProcessor node = new UniProcessor();
-            node.setUniqueId(i);
+            UniProcessor node = new UniProcessor(i);
             nodes.add(node);
         }
     }
@@ -40,7 +39,7 @@ public class UniProcessors  implements ComputeNodesI<UniComputeCodeStore>{
     }
 
     public int newComputeNode() {
-        nodes.add(new UniProcessor());
+        nodes.add(new UniProcessor(nodes.size()));
         return nodes.size() - 1;
     }
 

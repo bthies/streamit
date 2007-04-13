@@ -1,7 +1,5 @@
 package at.dms.kjc.backendSupport;
 
-import java.util.LinkedList;
-
 import at.dms.kjc.slicegraph.ProcElement;
 import at.dms.kjc.slicegraph.SliceNode;
 
@@ -17,10 +15,6 @@ public class ComputeNode<StoreType extends ComputeCodeStore<?>> extends ProcElem
 
     protected StoreType computeCode;
     
-    private LinkedList<SliceNode> initFilters;
-    private LinkedList<SliceNode> primepumpFilters;
-    private LinkedList<SliceNode> steadyFilters;
-
     private int uniqueId = 0;
     private boolean uniqueIdIsSet = false;
     
@@ -30,15 +24,11 @@ public class ComputeNode<StoreType extends ComputeCodeStore<?>> extends ProcElem
      * you should call as:
      * <pre>
        MyComputeNodeType computenode = new MyComputeNodeType<MyCodeStoreType>();
-       computenode.setComputeNode(new MyCodeStoreType<MyComputeNodeTyp>();
+       computenode.setComputeNode(new MyCodeStoreType<MyComputeNodeTyp>(computenode);
      * </pre>
-     *
      */
     public ComputeNode() {
-        initFilters = new LinkedList<SliceNode>();
-        primepumpFilters = new LinkedList<SliceNode>();
-        steadyFilters = new LinkedList<SliceNode>();
-        computeCode = (StoreType)new ComputeCodeStore<ComputeNode<StoreType>>(this);
+        computeCode = (StoreType)null;
     }
     
     /**
@@ -58,35 +48,6 @@ public class ComputeNode<StoreType extends ComputeCodeStore<?>> extends ProcElem
         this.computeCode = computeCode;
     }
 
-    /**
-     * Add a FilterSliceNode to the the filters associated with this node. 
-     * @param init        true if init stage, false if primepump or steady stage
-     * @param primepump   true if primepump stage, false if init or steady stage
-     * @param node      FilterSliceNode to add
-     */
-    public void addSliceNode(boolean init, boolean primepump, SliceNode node) {
-        if (init)
-            initFilters.add(node);
-        else if (primepump)
-            primepumpFilters.add(node);
-        else
-            steadyFilters.add(node);
-    }
-
-    /**
-     * Get the filters associated with this node.
-     * @param init       true if init stage, false if primepump or steady stage
-     * @param primepump  true if primepump stage, false if init or steady stage
-     * @return the FilterSliceNodes added by addFilterSlice for the passed values of init and primepump
-     */
-    public Iterable<SliceNode> getSliceNodes(boolean init, boolean primepump) {
-        if (init)
-            return initFilters;
-        else if (primepump)
-            return primepumpFilters;
-        else
-            return steadyFilters;
-    }
 
     /**
      * set unique integer representing this compute node.

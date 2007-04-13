@@ -4,13 +4,12 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.LinkedList;
-
 import at.dms.kjc.slicegraph.Edge;
-import at.dms.kjc.slicegraph.InterSliceEdge;
+//import at.dms.kjc.slicegraph.InterSliceEdge;
 import at.dms.kjc.slicegraph.SliceNode;
 import at.dms.kjc.slicegraph.Util;
 import at.dms.kjc.spacetime.BasicSpaceTimeSchedule;
-import at.dms.kjc.spacetime.InterSliceBuffer;
+//import at.dms.kjc.spacetime.InterSliceBuffer;
 import at.dms.kjc.*;
 import at.dms.util.Utils;
 
@@ -304,6 +303,13 @@ public class Channel {
      * @see at.dms.kjc.backendSupport.ChannelI#beginInitRead()
      */
     public List<JStatement> beginInitRead() {
+        return new LinkedList<JStatement>(); 
+    }
+
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#beginInitRead()
+     */
+    public List<JStatement> postPreworkInitRead() {
         return new LinkedList<JStatement>(); 
     }
 

@@ -204,7 +204,7 @@ public class ChannelAsArray extends Channel {
         JLocalVariableExpression valRef = new JLocalVariableExpression(val);
         JBlock body = new JBlock();
         JMethodDeclaration retval = new JMethodDeclaration(CStdType.Void,
-                popManyMethodName(),
+                pushMethodName(),
                 new JFormalParameter[]{val},
                 body);
         body.addStatement(

@@ -467,7 +467,7 @@ public class Rawify {
      * @param filterInfo
      */
     private static void addComputeCode(boolean init, boolean primepump,
-                                       ComputeNode tile, FilterInfo filterInfo) {
+                                       RawTile tile, FilterInfo filterInfo) {
         if (init)
             tile.getComputeCode().addSliceInit(filterInfo, layout);
         else if (primepump)

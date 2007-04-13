@@ -132,6 +132,8 @@ public class EmitStandaloneCode<T extends BackEndFactory>  {
         }
 
         for (Channel c : upstreamEnds) {
+            p.println("/* upstream end of " + c + " */");
+            p.println("/* " + upstreamDescription(c) + " -> " + downstreamDescription(c) + " */");
             if (c.writeDecls() != null) {
                 for (JStatement d : c.writeDecls()) { d.accept(codegen); }
             }
@@ -139,6 +141,8 @@ public class EmitStandaloneCode<T extends BackEndFactory>  {
         }
 
         for (Channel c : downstreamEnds) {
+            p.println("/* downstream end of " + c + " */");
+            p.println("/* " + upstreamDescription(c) + " -> " + downstreamDescription(c) + " */");
             if (c.readDecls() != null) {
                 for (JStatement d : c.readDecls()) { d.accept(codegen); }
             }
@@ -198,6 +202,16 @@ public class EmitStandaloneCode<T extends BackEndFactory>  {
             }
         }
         return retval;
+    }
+    
+    /** representation of upstream end of channel for debugging */
+    private String upstreamDescription(Channel c) {
+        return c.getSource().toString();
+    }
+    
+    /** representation of downstream end of channel for debugging */
+    private String downstreamDescription(Channel c) {
+        return c.getDest().toString();
     }
     
     
@@ -311,25 +325,25 @@ public class EmitStandaloneCode<T extends BackEndFactory>  {
         hasBoolType = false;
     }
         
-    @Override
-    public void visitPeekExpression(SIRPeekExpression self,
-            CType tapeType,
-            JExpression num) {
-        throw new AssertionError("Single Slice code emitter should see no peek expressions");
-    }
-
-    @Override
-    public void visitPopExpression(SIRPopExpression self,
-            CType tapeType) {
-        throw new AssertionError("Single Slice code emitter should see no pop expressions");
-    }
-
-    @Override
-    public void visitPushExpression(SIRPushExpression self,
-            CType tapeType,
-            JExpression val) {
-        throw new AssertionError("Single Slice code emitter should see no push expressions");
-    }
+//    @Override
+//    public void visitPeekExpression(SIRPeekExpression self,
+//            CType tapeType,
+//            JExpression num) {
+//        throw new AssertionError("Single Slice code emitter should see no peek expressions");
+//    }
+//
+//    @Override
+//    public void visitPopExpression(SIRPopExpression self,
+//            CType tapeType) {
+//        throw new AssertionError("Single Slice code emitter should see no pop expressions");
+//    }
+//
+//    @Override
+//    public void visitPushExpression(SIRPushExpression self,
+//            CType tapeType,
+//            JExpression val) {
+//        throw new AssertionError("Single Slice code emitter should see no push expressions");
+//    }
   
     @Override
     public void visitAssignmentExpression(JAssignmentExpression self,

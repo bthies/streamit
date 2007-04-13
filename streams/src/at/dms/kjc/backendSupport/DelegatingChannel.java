@@ -16,7 +16,10 @@ import at.dms.kjc.slicegraph.*;
  * for the InterSliceEdge.
  * 
  *  A {@link DelegatingChannel} has its own source and destination
- *  but all other operatoins are delegated.
+ *  but all other operations are delegated.
+ *  It does not produce any method (or other) declarations since
+ *  these would be redundant with the channel delegated to.
+ *  
  * @author dimock
  */
 public class DelegatingChannel extends Channel {
@@ -45,172 +48,178 @@ public class DelegatingChannel extends Channel {
         this.other = other;
     }
 
+    @Override
     public JMethodDeclaration assignFromPeekMethod() {
-        // TODO Auto-generated method stub
-        return other.assignFromPeekMethod();
+        return null;
     }
 
+    @Override
     public String assignFromPeekMethodName() {
-        // TODO Auto-generated method stub
         return other.assignFromPeekMethodName();
     }
 
+    @Override
     public JMethodDeclaration assignFromPopMethod() {
-        // TODO Auto-generated method stub
-        return other.assignFromPopMethod();
+        return null;
     }
 
+    @Override
     public String assignFromPopMethodName() {
-        // TODO Auto-generated method stub
         return other.assignFromPopMethodName();
     }
 
+    @Override
     public List<JStatement> beginInitRead() {
-        // TODO Auto-generated method stub
         return other.beginInitRead();
     }
 
+    @Override
     public List<JStatement> beginInitWrite() {
-        // TODO Auto-generated method stub
         return other.beginInitWrite();
     }
 
+    @Override
     public List<JStatement> beginSteadyRead() {
-        // TODO Auto-generated method stub
         return other.beginSteadyRead();
     }
 
+    @Override
     public List<JStatement> beginSteadyWrite() {
-        // TODO Auto-generated method stub
         return other.beginSteadyWrite();
     }
 
+    @Override
     public List<JStatement> dataDecls() {
-        // TODO Auto-generated method stub
-        return other.dataDecls();
+        return null;
     }
 
+    @Override
     public List<JStatement> dataDeclsH() {
-        // TODO Auto-generated method stub
-        return other.dataDeclsH();
+        return null;
     }
 
+    @Override
     public List<JStatement> endInitRead() {
-        // TODO Auto-generated method stub
         return other.endInitRead();
     }
 
+    @Override
     public List<JStatement> endInitWrite() {
-        // TODO Auto-generated method stub
         return other.endInitWrite();
     }
 
+    @Override
     public List<JStatement> endSteadyRead() {
-        // TODO Auto-generated method stub
         return other.endSteadyRead();
     }
 
+    @Override
     public List<JStatement> endSteadyWrite() {
-        // TODO Auto-generated method stub
         return other.endSteadyWrite();
     }
 
+    @Override
     public int getExtraCount() {
-        // TODO Auto-generated method stub
         return other.getExtraCount();
     }
 
+    @Override
     public String getIdent() {
-        // TODO Auto-generated method stub
         return ident;
     }
 
+    @Override
     public SliceNode getDest() {
-        // TODO Auto-generated method stub
         return theEdge.getDest();
     }
+
+    @Override
     public SliceNode getSource() {
-        // TODO Auto-generated method stub
         return theEdge.getSrc();
     }
 
+    @Override
     public CType getType() {
-        // TODO Auto-generated method stub
         return theEdge.getType();
     }
 
+    @Override
     public JMethodDeclaration peekMethod() {
-        // TODO Auto-generated method stub
-        return other.peekMethod();
+        return null;
     }
 
+    @Override
     public String peekMethodName() {
-        // TODO Auto-generated method stub
         return other.peekMethodName();
     }
 
+    @Override
     public JMethodDeclaration popManyMethod() {
-        // TODO Auto-generated method stub
-        return other.popManyMethod();
+        return null;
     }
 
+    @Override
     public String popManyMethodName() {
-        // TODO Auto-generated method stub
         return other.popManyMethodName();
     }
 
+    @Override
     public JMethodDeclaration popMethod() {
-        // TODO Auto-generated method stub
-        return other.popMethod();
+        return null;
     }
 
+    @Override
     public String popMethodName() {
-        // TODO Auto-generated method stub
         return other.popMethodName();
     }
 
-    public JMethodDeclaration pushMethod() {
-        // TODO Auto-generated method stub
-        return other.pushMethod();
+    @Override
+    public List<JStatement> postPreworkInitRead() {
+        return other.postPreworkInitRead();
     }
 
+    @Override
+    public JMethodDeclaration pushMethod() {
+        return null;
+    }
+
+    @Override
     public String pushMethodName() {
-        // TODO Auto-generated method stub
         return other.pushMethodName();
     }
 
+    @Override
     public List<JStatement> readDecls() {
-        // TODO Auto-generated method stub
-        return other.readDecls();
+        return null;
     }
 
+    @Override
     public List<JStatement> readDeclsExtern() {
-        // TODO Auto-generated method stub
-        return other.readDeclsExtern();
+        return null;
     }
 
+    @Override
     public void setExtralength(int extracount) {
-        // TODO Auto-generated method stub
         other.setExtralength(extracount);
     }
 
+    @Override
     public List<JStatement> topOfWorkSteadyRead() {
-        // TODO Auto-generated method stub
         return other.topOfWorkSteadyRead();
     }
 
+    @Override
     public List<JStatement> topOfWorkSteadyWrite() {
-        // TODO Auto-generated method stub
         return other.topOfWorkSteadyWrite();
     }
 
+    @Override
     public List<JStatement> writeDecls() {
-        // TODO Auto-generated method stub
-        return other.writeDecls();
+        return null;
     }
 
+    @Override
     public List<JStatement> writeDeclsExtern() {
-        // TODO Auto-generated method stub
-        return other.writeDeclsExtern();
+        return null;
     }
 }

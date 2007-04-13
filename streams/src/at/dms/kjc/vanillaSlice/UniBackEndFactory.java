@@ -136,4 +136,9 @@ public class UniBackEndFactory extends BackEndFactory<
     public Channel getChannel(SliceNode src, SliceNode dst) {
         throw new AssertionError("Getting channel by src, dst not supported.");
     }
+    
+
+    /** name of variable used as bound for number of iterations. */
+    public static final String iterationBound = "_iteration_bound";
+
 }

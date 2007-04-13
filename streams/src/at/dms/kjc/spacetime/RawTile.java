@@ -1,10 +1,9 @@
 package at.dms.kjc.spacetime;
 
 import at.dms.kjc.*;
-import at.dms.kjc.slicegraph.FilterSliceNode;
+import at.dms.kjc.slicegraph.*;
 import at.dms.util.Utils;
-import java.util.HashSet;
-import java.util.Vector;
+import java.util.*;
 
 /**
  * This class represents a raw tile on the raw chip with its compute
@@ -31,6 +30,11 @@ public class RawTile extends RawComputeNode {
 
     private HashSet<OffChipBuffer> offChipBuffers;
 
+    /** seems to only be used in {@link LayoutDot} */
+    private LinkedList<SliceNode> initFilters;
+    private LinkedList<SliceNode> primepumpFilters;
+    private LinkedList<SliceNode> steadyFilters;
+
     public RawTile(int x, int y, RawChip rawChip) {
         super(rawChip);
         X = x;
@@ -43,6 +47,10 @@ public class RawTile extends RawComputeNode {
         computeCode = new RawComputeCodeStore(this);
         IODevices = new IODevice[0];
         offChipBuffers = new HashSet<OffChipBuffer>();
+        initFilters = new LinkedList<SliceNode>();
+        primepumpFilters = new LinkedList<SliceNode>();
+        steadyFilters = new LinkedList<SliceNode>();
+
     }
 
     public String toString() {
@@ -184,6 +192,44 @@ public class RawTile extends RawComputeNode {
         if (Y + 1 < rawChip.getYSize())
             ret.add(rawChip.getTile(X, Y + 1));
         return ret;
+    }
+    
+  /**
+     * Add a SliceNode to the the filters associated with this node.
+     * 
+     * @param init
+     *            true if init stage, false if primepump or steady stage
+     * @param primepump
+     *            true if primepump stage, false if init or steady stage
+     * @param node
+     *            SliceNode to add
+     */
+    public void addSliceNode(boolean init, boolean primepump, SliceNode node) {
+        if (init)
+            initFilters.add(node);
+        else if (primepump)
+            primepumpFilters.add(node);
+        else
+            steadyFilters.add(node);
+    }
+
+    /**
+     * Get the SliceNode's associated with this ComputeNode.
+     * 
+     * @param init
+     *            true if init stage, false if primepump or steady stage
+     * @param primepump
+     *            true if primepump stage, false if init or steady stage
+     * @return the FilterSliceNodes added by addFilterSlice for the passed
+     *         values of init and primepump
+     */
+    public Iterable<SliceNode> getSliceNodes(boolean init, boolean primepump) {
+        if (init)
+            return initFilters;
+        else if (primepump)
+            return primepumpFilters;
+        else
+            return steadyFilters;
     }
 
 }

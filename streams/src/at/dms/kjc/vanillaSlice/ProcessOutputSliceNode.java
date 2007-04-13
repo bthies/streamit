@@ -32,7 +32,6 @@ import at.dms.kjc.JVariableDefinition;
 import at.dms.kjc.backendSupport.BackEndFactory;
 import at.dms.kjc.backendSupport.ComputeNode;
 import at.dms.kjc.backendSupport.MinCodeUnit;
-import at.dms.kjc.backendSupport.SliceNodeToCodeUnit;
 import at.dms.kjc.sir.SIRCodeUnit;
 import at.dms.kjc.slicegraph.Edge;
 import at.dms.kjc.slicegraph.OutputSliceNode;
@@ -262,7 +261,7 @@ public class ProcessOutputSliceNode {
          * @return
          */
         static <T extends BackEndFactory> SIRCodeUnit getSplitterCode(OutputSliceNode splitter, T backEndBits) {
-            SIRCodeUnit splitter_code = SliceNodeToCodeUnit.findCodeForSliceNode(splitter);
+            SIRCodeUnit splitter_code = CodeStoreHelper.findHelperForSliceNode(splitter);
             if (splitter_code == null) {
                 splitter_code = makeSplitterCode(splitter,backEndBits);
             }
@@ -277,7 +276,7 @@ public class ProcessOutputSliceNode {
          * @param backEndBits
          */
         static <T extends BackEndFactory> void addSplitterCode(OutputSliceNode splitter, T backEndBits) {
-            SIRCodeUnit splitter_code = SliceNodeToCodeUnit.findCodeForSliceNode(splitter);
+            SIRCodeUnit splitter_code = CodeStoreHelper.findHelperForSliceNode(splitter);
             if (splitter_code == null) {
                 splitter_code = makeSplitterCode(splitter,backEndBits);
                 ComputeNode location = backEndBits.getLayout().getComputeNode(splitter);

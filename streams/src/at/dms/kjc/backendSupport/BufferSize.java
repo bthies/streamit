@@ -20,14 +20,14 @@ public class BufferSize {
      * @return
      */
     public static int calculateSize(Edge theEdge) {
-        if (theEdge.getSrc().isFilterSlice()) {  // filter->splitter
+        if (theEdge.getSrc().isFilterSlice()) {  // filter->filter
             // the init size is the max of the multiplicities for init and prime-pump
             // times the push rate
             FilterInfo fi = FilterInfo.getFilterInfo((FilterSliceNode) theEdge.getSrc());
             int maxItems = Math.max(initPush(fi), steadyPush(fi));
             // steady is just pop * mult
             return maxItems;
-        } else if (theEdge.getDest().isFilterSlice()) { // joiner->filter or filter->filter
+        } else if (theEdge.getDest().isFilterSlice()) { // joiner->filter
             // this is not a perfect estimation but who cares
             FilterInfo fi = FilterInfo.getFilterInfo((FilterSliceNode) theEdge.getDest());
             int maxItems = Math.max(initPop(fi), steadyPop(fi));

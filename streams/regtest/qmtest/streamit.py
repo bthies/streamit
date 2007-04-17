@@ -3,7 +3,7 @@
 # streamit.py: Python extensions to QMTest for StreamIt
 # original author    David Maze <dmaze@cag.lcs.mit.edu>
 # maintained by      Allyn Dimock <dimock@csail.mit.edu>
-# $Id: streamit.py,v 1.30 2006-08-22 16:43:38 dimock Exp $
+# $Id: streamit.py,v 1.31 2007-04-17 20:41:35 dimock Exp $
 #
 
 # TODO: implement own_output to spec:
@@ -173,7 +173,7 @@ class RunStrcTest(qm.test.test.Test):
       path = os.path.join(os.environ['STREAMIT_HOME'], 'strc')
       # Figure out what flags to use for the backend
       if self.backend == 'uni':
-          backend = []
+          backend = ['--newSimple']
       elif self.backend == 'simpleC':
           backend = ['--simpleC']
       elif self.backend == 'library':

@@ -436,5 +436,22 @@ public class CommonUtils {
                                        null);
     
     }
+
+    /** 
+     * Compute the smallest power of 2 that is >= <b>i</b> and >= 0.
+     * @param i
+     * @return the next power of 2.
+     */
+    public static int nextPow2(int i) {
+        String str = Integer.toBinaryString(i);
+        if (str.indexOf('1') == -1)
+            return 0;
+        int bit = str.length() - str.indexOf('1');
+        int ret = (int) Math.pow(2, bit);
+        if (ret == i * 2)
+            return i;
+        return ret;
+    
+    }
     
 }

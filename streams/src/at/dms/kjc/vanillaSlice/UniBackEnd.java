@@ -80,17 +80,34 @@ public class UniBackEnd {
         uniBackEndBits.getBackEndMain().run(schedule, uniBackEndBits);
 
         /*
+         * Emit code to structs.h
+         */
+        
+        String outputFileName = "structs.h";
+        try {
+            CodegenPrintWriter p = new CodegenPrintWriter(new BufferedWriter(new FileWriter(outputFileName, false)));
+            // write out C code
+            EmitStandaloneCode.emitTypedefs(structs,backEndBits,p);
+            p.close();
+        } catch (IOException e) {
+            throw new AssertionError("I/O error on " + outputFileName + ": " + e);
+        }
+    
+        
+        /*
          * Emit code to str.c
          */
-        String outputFileName = "str.c";
+        outputFileName = "str.c";
         try {
         CodegenPrintWriter p = new CodegenPrintWriter(new BufferedWriter(new FileWriter(outputFileName, false)));
         // write out C code
         EmitStandaloneCode codeEmitter = new EmitStandaloneCode(uniBackEndBits);
+        codeEmitter.generateCHeader(p);
         // Concat emitted code for all nodes into one file.
         for (ComputeNode n : uniBackEndBits.getComputeNodes().toArray()) {
             codeEmitter.emitCodeForComputeNode(n,p);
         }
+        codeEmitter.generateMain(p);
         p.close();
         } catch (IOException e) {
             throw new AssertionError("I/O error on " + outputFileName + ": " + e);

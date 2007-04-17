@@ -33,8 +33,13 @@ public class UniChannel  {
                 c = DelegatingChannel.getChannel(e, upstream);
             } else {
                 // make peek buffer as a channel
-                // TODO: refine -- simple peek buffer as array vs fancy peek buffer as circular buffer.
-                c = ChannelAsArray.getChannel(e);
+                if (FilterInfo.getFilterInfo((FilterSliceNode)dst).isSimple()) { 
+                    // no items remain in channel between steady states.
+                    c = ChannelAsArray.getChannel(e);
+                } else {
+                    // items remain in channel, need circular buffer (or copy-down, but circular is what we have)
+                    c = ChannelAsCircularArray.getChannel(e);
+                }
             }
         } else if (dst instanceof OutputSliceNode) {
             assert src instanceof FilterSliceNode;
@@ -90,11 +95,13 @@ public class UniChannel  {
         }
     }
 
+    /** @return true if slice has an upstream channel, false otherwise */
     public static boolean sliceHasUpstreamChannel(Slice s) {
         return s.getHead().getWidth() > 0;
         // s.getHead().getNext().getAsFilter().getFilter().getInputType() != CStdType.Void;
     }
     
+    /** @return true if slice has a downstream channel, false otherwise */
     public static boolean sliceHasDownstreamChannel(Slice s) {
         return s.getTail().getWidth() > 0;
         //s.getTail().getPrevious().getAsFilter().getFilter().getOutputType() != CStdType.Void;

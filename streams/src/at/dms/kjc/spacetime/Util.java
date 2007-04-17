@@ -55,18 +55,6 @@ public class Util {
         fileVarNames = new HashMap<PredefinedContent, String>();
     }
 
-    public static int nextPow2(int i) {
-        String str = Integer.toBinaryString(i);
-        if (str.indexOf('1') == -1)
-            return 0;
-        int bit = str.length() - str.indexOf('1');
-        int ret = (int) Math.pow(2, bit);
-        if (ret == i * 2)
-            return i;
-        return ret;
-
-    }
-
     /**
      * Print to screen the mapping of multiplicities
      * 

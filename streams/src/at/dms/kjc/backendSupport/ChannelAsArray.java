@@ -105,10 +105,14 @@ public class ChannelAsArray extends Channel {
     /** input_type pop(). */
     public JMethodDeclaration popMethod() {
         JBlock body = new JBlock();
-        JMethodDeclaration retval = new JMethodDeclaration(theEdge.getType(),
+        JMethodDeclaration retval = new JMethodDeclaration(
+                null,
+                /*at.dms.kjc.Constants.ACC_PUBLIC | at.dms.kjc.Constants.ACC_STATIC |*/ at.dms.kjc.Constants.ACC_INLINE,
+                theEdge.getType(),
                 popMethodName(),
                 new JFormalParameter[0],
-                body);
+                CClassType.EMPTY,
+                body, null, null);
         body.addStatement(
         new JReturnStatement(null,
                 bufRef(new JPostfixExpression(at.dms.kjc.Constants.OPE_POSTINC, tail)),null));
@@ -123,10 +127,14 @@ public class ChannelAsArray extends Channel {
                 parameterName);
         JLocalVariableExpression nRef = new JLocalVariableExpression(n);
         JBlock body = new JBlock();
-        JMethodDeclaration retval = new JMethodDeclaration(CStdType.Void,
+        JMethodDeclaration retval = new JMethodDeclaration(
+                null,
+                /*at.dms.kjc.Constants.ACC_PUBLIC | at.dms.kjc.Constants.ACC_STATIC |*/ at.dms.kjc.Constants.ACC_INLINE,
+                CStdType.Void,
                 popManyMethodName(),
                 new JFormalParameter[]{n},
-                body);
+                CClassType.EMPTY,
+                body, null, null);
         body.addStatement(
         new JExpressionStatement(new JCompoundAssignmentExpression(null,
                 at.dms.kjc.Constants.OPE_PLUS,
@@ -142,10 +150,14 @@ public class ChannelAsArray extends Channel {
                 parameterName);
         JLocalVariableExpression valRef = new JLocalVariableExpression(val);
         JBlock body = new JBlock();
-        JMethodDeclaration retval = new JMethodDeclaration(CStdType.Void,
+        JMethodDeclaration retval = new JMethodDeclaration(
+                null,
+                /*at.dms.kjc.Constants.ACC_PUBLIC | at.dms.kjc.Constants.ACC_STATIC |*/ at.dms.kjc.Constants.ACC_INLINE,
+                CStdType.Void,
                 assignFromPopMethodName(),
                 new JFormalParameter[]{val},
-                body);
+                CClassType.EMPTY,
+                body, null, null);
         body.addStatement(
                 new JExpressionStatement(
                         new JEmittedTextExpression(
@@ -161,10 +173,14 @@ public class ChannelAsArray extends Channel {
                 parameterName);
         JLocalVariableExpression offsetRef = new JLocalVariableExpression(offset);
         JBlock body = new JBlock();
-        JMethodDeclaration retval = new JMethodDeclaration(theEdge.getType(),
+        JMethodDeclaration retval = new JMethodDeclaration(
+                null,
+                /*at.dms.kjc.Constants.ACC_PUBLIC | at.dms.kjc.Constants.ACC_STATIC |*/ at.dms.kjc.Constants.ACC_INLINE,
+                theEdge.getType(),
                 peekMethodName(),
-                new JFormalParameter[0],
-                body);
+                new JFormalParameter[]{offset},
+                CClassType.EMPTY,
+                body, null, null);
         body.addStatement(
         new JReturnStatement(null,
                 bufRef(new JAddExpression(tail, offsetRef)),null));
@@ -184,11 +200,15 @@ public class ChannelAsArray extends Channel {
                 offsetName);
         JLocalVariableExpression offsetRef = new JLocalVariableExpression(offset);
         JBlock body = new JBlock();
-        JMethodDeclaration retval = new JMethodDeclaration(CStdType.Void,
-                assignFromPopMethodName(),
+        JMethodDeclaration retval = new JMethodDeclaration(
+                null,
+                /*at.dms.kjc.Constants.ACC_PUBLIC | at.dms.kjc.Constants.ACC_STATIC |*/ at.dms.kjc.Constants.ACC_INLINE,
+                CStdType.Void,
+                assignFromPeekMethodName(),
                 new JFormalParameter[]{val,offset},
-                body);
-        body.addStatement(
+                CClassType.EMPTY,
+                body, null, null);
+         body.addStatement(
                 new JExpressionStatement(
                         new JEmittedTextExpression(
                                 "/* assignFromPeekMethod not yet implemented */")));
@@ -203,15 +223,18 @@ public class ChannelAsArray extends Channel {
                 valName);
         JLocalVariableExpression valRef = new JLocalVariableExpression(val);
         JBlock body = new JBlock();
-        JMethodDeclaration retval = new JMethodDeclaration(CStdType.Void,
+        JMethodDeclaration retval = new JMethodDeclaration(
+                null,
+                /*at.dms.kjc.Constants.ACC_PUBLIC | at.dms.kjc.Constants.ACC_STATIC |*/ at.dms.kjc.Constants.ACC_INLINE,
+                CStdType.Void,
                 pushMethodName(),
                 new JFormalParameter[]{val},
-                body);
+                CClassType.EMPTY,
+                body, null, null);
         body.addStatement(
-        new JExpressionStatement(new JCompoundAssignmentExpression(null,
-                at.dms.kjc.Constants.OPE_PLUS,
-                new JPostfixExpression(at.dms.kjc.Constants.OPE_POSTINC,
-                        head),
+        new JExpressionStatement(new JAssignmentExpression(
+                bufRef(new JPostfixExpression(at.dms.kjc.Constants.OPE_POSTINC,
+                        head)),
                 valRef)));
         return retval;
      }
@@ -219,7 +242,7 @@ public class ChannelAsArray extends Channel {
     /** Statements for beginning of init() on read (downstream) end of buffer */
     public List<JStatement> beginInitRead() {
         List<JStatement> retval = new LinkedList<JStatement>();
-        retval.add(zeroOutHead());
+        retval.add(zeroOutTail());
         return retval; 
     }
 
@@ -231,7 +254,7 @@ public class ChannelAsArray extends Channel {
     /** Statements for beginning of init() on write (upstream) end of buffer */
     public List<JStatement> beginInitWrite() {
         List<JStatement> retval = new LinkedList<JStatement>();
-        retval.add(zeroOutTail());
+        retval.add(zeroOutHead());
         return retval; 
     }
 
@@ -243,7 +266,7 @@ public class ChannelAsArray extends Channel {
     /** Statements for beginning of steady state iteration on read (downstream) end of buffer */
     public List<JStatement> beginSteadyRead() {
         List<JStatement> retval = new LinkedList<JStatement>();
-        retval.add(zeroOutHead());
+        retval.add(zeroOutTail());
         return retval; 
     }
 
@@ -255,7 +278,7 @@ public class ChannelAsArray extends Channel {
     /** Statements for beginning of steady state iteration on write (upstream) end of buffer */
     public List<JStatement> beginSteadyWrite() {
         List<JStatement> retval = new LinkedList<JStatement>();
-        retval.add(zeroOutTail());
+        retval.add(zeroOutHead());
         return retval; 
     }
 
@@ -298,7 +321,7 @@ public class ChannelAsArray extends Channel {
     /** Statements for other declarations needed for read  
      * in steady state but at file scope in .c / .cpp */
     public List<JStatement> readDecls() {
-        JStatement headDecl = new JVariableDeclarationStatement(headDefn);
+        JStatement headDecl = new JVariableDeclarationStatement(tailDefn);
         List<JStatement> retval = new LinkedList<JStatement>();
         retval.add(headDecl);
         return retval;
@@ -314,7 +337,7 @@ public class ChannelAsArray extends Channel {
     /** Statements for other declarations needed for write
      * in steady state but at file scope in .c / .cpp */
     public List<JStatement> writeDecls() {
-        JStatement tailDecl = new JVariableDeclarationStatement(tailDefn);
+        JStatement tailDecl = new JVariableDeclarationStatement(headDefn);
         List<JStatement> retval = new LinkedList<JStatement>();
         retval.add(tailDecl);
         return retval;

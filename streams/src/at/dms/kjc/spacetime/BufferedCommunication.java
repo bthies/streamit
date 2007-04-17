@@ -208,7 +208,7 @@ public class BufferedCommunication extends RawExecutionCode
                 //decls.add(new JFieldDeclaration(null, simpleIndexVar, null, null));
             }
             else { //filter with remaing items on the buffer after initialization 
-                buffersize = Util.nextPow2(maxpeek + filterInfo.remaining);
+                buffersize = CommonUtils.nextPow2(maxpeek + filterInfo.remaining);
             }
 
         

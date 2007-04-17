@@ -12,7 +12,7 @@ performed, followed by an upsample, delay, and filter.
     <impl lang="C" dir="c">
       <file>filterbank.c</file>
     </impl>
-    <impl lang="StreamIt" dir="streamit">
+    <impl lang="StreamIt" dir="streamit" compile_time="2400">
       <file class="source">FilterBankNew.str</file>
       <file class="output">FilterBankNew.out</file>
     </impl>

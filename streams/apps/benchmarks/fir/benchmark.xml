@@ -11,7 +11,7 @@ more parallelism to the compiler.
     <impl lang="C" dir="c">
       <file>firref.c</file>
     </impl>
-    <impl lang="StreamIt" dir="streamit" compile_time="2400">
+    <impl lang="StreamIt" dir="streamit" compile_time="3600">
       <file>FIR.str</file>
       <file class="output">FIRfine.out</file>
     </impl>

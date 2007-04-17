@@ -199,7 +199,7 @@ public class ProcessOutputSliceNode {
             JSwitchGroup[] cases = new JSwitchGroup[size]; // fill in later.
             JStatement switch_on_edge_stmt = new JSwitchStatement(null,
                     edgeExpr,
-                    new JSwitchGroup[size],
+                    cases,
                     null);
             
             {
@@ -208,7 +208,7 @@ public class ProcessOutputSliceNode {
                     if (splitter.getWeights()[j] != 0) {
                         Edge[] edges = splitter.getDests()[j];
                         JStatement[] pushes = new JStatement[edges.length + 1];
-                        for (int k = 0; k < pushes.length; k++) {
+                        for (int k = 0; k < edges.length; k++) {
                             pushes[k] = new JExpressionStatement(
                                 new JMethodCallExpression(
                                         backEndBits.getChannel(edges[k]).pushMethodName(),

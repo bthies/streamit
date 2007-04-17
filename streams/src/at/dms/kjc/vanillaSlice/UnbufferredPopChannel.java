@@ -25,16 +25,15 @@ public class UnbufferredPopChannel extends Channel {
      * @return A channel for the passed edge with a where popMethodName() returns <b>popName</b>.
      */
     public static UnbufferredPopChannel getChannel(Edge edge, String popName) {
-        Channel oldChan = Channel.bufferStore.get(edge);
-        if (edge == null) {
-            UnbufferredPopChannel chan = new UnbufferredPopChannel(edge, popName);
+        Channel chan = Channel.bufferStore.get(edge);
+        if (chan == null) {
+            chan = new UnbufferredPopChannel(edge, popName);
             Channel.bufferStore.put(edge, chan);
-            return chan;
-       } else {
-            assert oldChan instanceof UnbufferredPopChannel 
-                && oldChan.popMethodName().equals(popName);
-            return (UnbufferredPopChannel)oldChan;
+        } else {
+            assert chan instanceof UnbufferredPopChannel
+                    && chan.popMethodName().equals(popName);
         }
+        return (UnbufferredPopChannel) chan;
     }
     
     private UnbufferredPopChannel(Edge edge, String popName) {

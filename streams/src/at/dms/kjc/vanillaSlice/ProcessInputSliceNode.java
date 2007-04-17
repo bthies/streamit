@@ -239,7 +239,7 @@ public class ProcessInputSliceNode {
             JSwitchGroup[] cases = new JSwitchGroup[size]; // fill in later.
             JStatement switch_on_edge_stmt = new JSwitchStatement(null,
                     edgeExpr,
-                    new JSwitchGroup[size],
+                    cases,
                     null);
             
             {

@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.121 2007-04-03 23:35:19 dimock Exp $
+# $Id: strc,v 1.122 2007-04-17 20:50:48 dimock Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -150,6 +150,7 @@ if (! $opts{noexecutable}) {
     my $executablename = $opts{output}  || "a.out";
     if ($opts{simpleC} || 
 	$opts{uni} || 
+	defined($opts{newSimple}) ||
 	($opts{standalone} && $opts{spacetime})) {
 	$fns = c_to_out($fns, $executablename);
     } elsif ($opts{cluster}) {
@@ -730,9 +731,9 @@ sub run_in_library
 
 ###
 #
-# Take output of --simpleC or --uni and create executable.
-#
-# eventually expand to create output for --cluster 1 -standalone (TODO) 
+# Take a .c file name(s) as reference to array in first argument
+# and create executable.  If no executable name passed as second argument
+# then defaults.
 #
 ###
 
@@ -740,7 +741,6 @@ sub c_to_out
   {
     my ($fns, $target) = @_;
     return [] if !@$fns;
-    my $tfn = $target || "a.out";
     $target = $target ? "-o$target" : ""; # but never undef
     my $sh = $opts{home};
     my ($gcc, $libs);
@@ -777,6 +777,7 @@ sub c_to_out
 
     my $result = call("$gcc $ccflags $target " . join(' ', @$fns) . " $incflags $libflags $libs");
     return undef if $result != 0;
+    my $tfn = $target || "a.out";
     return [$tfn];
   }
 

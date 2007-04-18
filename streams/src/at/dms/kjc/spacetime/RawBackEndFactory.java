@@ -4,6 +4,7 @@ import at.dms.kjc.KjcOptions;
 import at.dms.kjc.backendSupport.BackEndFactory;
 import at.dms.kjc.backendSupport.BackEndScaffold;
 import at.dms.kjc.backendSupport.Channel;
+import at.dms.kjc.backendSupport.CodeStoreHelper;
 import at.dms.kjc.backendSupport.Layout;
 import at.dms.kjc.backendSupport.SchedulingPhase;
 import at.dms.kjc.slicegraph.Edge;
@@ -174,5 +175,14 @@ public class RawBackEndFactory extends BackEndFactory<RawChip, RawTile, RawCompu
                 return IntraSliceBuffer.getBuffer((InputSliceNode)(src), (FilterSliceNode)(dst));
             }
         }
+    }
+
+    /**
+     * Eventually make RawExecutionCode a subclass of CodeStoreHelper, but unused for now.
+     */
+    @Override
+    public CodeStoreHelper getCodeStoreHelper(SliceNode node) {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

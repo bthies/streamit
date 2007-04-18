@@ -1,14 +1,12 @@
-package at.dms.kjc.vanillaSlice;
+package at.dms.kjc.backendSupport;
 
 import java.util.*;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.SIRBeginMarker;
 import at.dms.kjc.sir.SIREndMarker;
-import at.dms.kjc.backendSupport.BackEndFactory;
-import at.dms.kjc.backendSupport.FilterInfo;
-import at.dms.kjc.backendSupport.MinCodeUnit;
 import at.dms.kjc.slicegraph.FilterContent;
 import at.dms.kjc.slicegraph.SliceNode;
+import at.dms.kjc.vanillaSlice.UniChannel;
 
 /**
  * For creation of additional code necessary to getting filter / joiner / splitter code hooked
@@ -16,23 +14,30 @@ import at.dms.kjc.slicegraph.SliceNode;
  * @author dimock / concept and stolen code from mgordon
  */
 public abstract  class CodeStoreHelper extends MinCodeUnit {
+    /** possible prefix for functions in initialization */
     public static String initStage = "__INITSTAGE__";
+    /** possible prefix for functions in steady state */
     public static String steadyStage = "__STEADYSTAGE__";
+    /** possible prefix for functions in prime-pump stage */
     public static String primePumpStage = "__PRIMEPUMP__";
+    /** possible prefix for loop counters for iterating work function */
     public static String workCounter = "__WORKCOUNTER__";
-
+    /** Do we want to inline work functions or just call a single copy? */
     public static boolean INLINE_WORK = true;
     
+    /** The slice node that we are generating helper code for */
     protected SliceNode sliceNode;
     
+    /** a BackEndFactory for getting information about other parts of the back end */
     protected BackEndFactory backEndBits;
     
     //keep a unique integer for each filter in each trace
     //so var names do not clash
     private static int globalID = 0;
+    /** a value that should be unique per instance, useful in generating non-clashing variable names. */
     protected int uniqueID;
-
-    public static int getUniqueID() 
+    /** a way of setting the unique value */
+    protected static int getUniqueID() 
     {
         return globalID++;
     }
@@ -178,13 +183,13 @@ public abstract  class CodeStoreHelper extends MinCodeUnit {
         
         JBlock statements = new JBlock();
         // channel code before work block
-        if (UniChannel.sliceHasUpstreamChannel(sliceNode.getParent())) {
+        if (backEndBits.sliceHasUpstreamChannel(sliceNode.getParent())) {
             for (JStatement stmt : backEndBits.getChannel(
                     sliceNode.getPrevious().getEdgeToNext()).beginSteadyRead()) {
                 statements.addStatement(stmt);
             }
         }
-        if (UniChannel.sliceHasDownstreamChannel(sliceNode.getParent())) {
+        if (backEndBits.sliceHasDownstreamChannel(sliceNode.getParent())) {
             for (JStatement stmt : backEndBits.getChannel(
                     sliceNode.getEdgeToNext()).beginSteadyWrite()) {
                 statements.addStatement(stmt);
@@ -193,13 +198,13 @@ public abstract  class CodeStoreHelper extends MinCodeUnit {
         // add the calls to the work function for the priming of the pipeline
         statements.addStatement(getWorkFunctionBlock(filterInfo.steadyMult));
         // channel code after work block
-        if (UniChannel.sliceHasUpstreamChannel(sliceNode.getParent())) {
+        if (backEndBits.sliceHasUpstreamChannel(sliceNode.getParent())) {
             for (JStatement stmt : backEndBits.getChannel(
                     sliceNode.getPrevious().getEdgeToNext()).endSteadyRead()) {
                 statements.addStatement(stmt);
             }
         }
-        if (UniChannel.sliceHasDownstreamChannel(sliceNode.getParent())) {
+        if (backEndBits.sliceHasDownstreamChannel(sliceNode.getParent())) {
             for (JStatement stmt : backEndBits.getChannel(
                     sliceNode.getEdgeToNext()).endSteadyWrite()) {
                 statements.addStatement(stmt);
@@ -225,9 +230,9 @@ public abstract  class CodeStoreHelper extends MinCodeUnit {
     protected abstract JBlock getWorkFunctionBlock(int mult);
 
     /**
-       * Return the code that will call the work work function once.
+       * Return the code that will call the work function once.
        * It will either be the entire function inlined or a function call.
-       * Do not call if the CodeStoreHelper does not conatain a work function.
+       * Do not call if the CodeStoreHelper does not contain a work function.
        * @see CodeStoreHelper#INLINE_WORK
        * @return The code to execute the work function once.
        */

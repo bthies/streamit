@@ -16,6 +16,7 @@ public class ProcessOutputSliceNode {
     private static Map<SliceNode,Boolean>  basicCodeWritten = new WeakHashMap<SliceNode,Boolean>();
 
     /**
+<<<<<<< ProcessOutputSliceNode.java
      * Create code for a OutputSliceNode.
      * @param <T>          type of a BackEndFactory to access layout, etc.
      * @param outputNode    the OutputSliceNode that may need code generated.
@@ -25,7 +26,7 @@ public class ProcessOutputSliceNode {
     public static <T extends BackEndFactory> void processOutputSliceNode(OutputSliceNode outputNode, 
             SchedulingPhase whichPhase, T backEndBits) {
         // No code generated for outputNode if there is not needed.
-        if (! UniChannel.sliceNeedsSplitterCode(outputNode.getParent())) {
+        if (! backEndBits.sliceNeedsSplitterCode(outputNode.getParent())) {
             return;
         }
         
@@ -274,7 +275,7 @@ public class ProcessOutputSliceNode {
         static <T extends BackEndFactory> CodeStoreHelper getSplitterCode(OutputSliceNode splitter, T backEndBits) {
             CodeStoreHelper splitter_code = CodeStoreHelper.findHelperForSliceNode(splitter);
             if (splitter_code == null) {
-                splitter_code = selectHelper(splitter,backEndBits);
+                splitter_code = backEndBits.getCodeStoreHelper(splitter);
                 makeSplitterCode(splitter,backEndBits,splitter_code);
                 CodeStoreHelper.addHelperForSliceNode(splitter,splitter_code);
             }
@@ -299,10 +300,5 @@ public class ProcessOutputSliceNode {
 //            }
 //        }
 
-        /** select a helper to keep track of / generate code for slice */
-        private static <T extends BackEndFactory> CodeStoreHelper selectHelper (SliceNode splitter,
-                T backEndBits) {
-                return new CodeStoreHelperJoiner(splitter,backEndBits);
         }
 
-}

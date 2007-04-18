@@ -14,7 +14,7 @@ import java.io.*;
  */
 public class UniBackEnd {
     /** holds pointer to BackEndFactory instance during back end portion of this compiler. */
-    public static UniBackEndFactory backEndBits = null;
+    public static BackEndFactory<UniProcessors, UniProcessor, UniComputeCodeStore, Integer> backEndBits = null;
     
     /**
      * Top level method for SpaceTime backend, called via reflection from {@link at.dms.kjc.Main}.
@@ -72,7 +72,7 @@ public class UniBackEnd {
         layout.run();
  
         // create other info needed to convert Slice graphs to Kopi code + Channels
-        UniBackEndFactory uniBackEndBits  = new UniBackEndFactory(processors);
+        BackEndFactory<UniProcessors, UniProcessor, UniComputeCodeStore, Integer> uniBackEndBits  = new UniBackEndFactory(processors);
         backEndBits = uniBackEndBits;
         uniBackEndBits.setLayout(layout);
         

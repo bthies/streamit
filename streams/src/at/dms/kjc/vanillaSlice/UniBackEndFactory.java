@@ -3,6 +3,7 @@ package at.dms.kjc.vanillaSlice;
 import at.dms.kjc.backendSupport.BackEndFactory;
 import at.dms.kjc.backendSupport.BackEndScaffold;
 import at.dms.kjc.backendSupport.Channel;
+import at.dms.kjc.backendSupport.CodeStoreHelper;
 import at.dms.kjc.backendSupport.SchedulingPhase;
 import at.dms.kjc.slicegraph.Edge;
 import at.dms.kjc.slicegraph.Slice;
@@ -10,7 +11,7 @@ import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.OutputSliceNode;
 import at.dms.kjc.slicegraph.SliceNode;
-//import at.dms.kjc.spacetime.ComputeNodesI;
+
 /**
  * Stub for uniprocessor backend.
  * @author dimock
@@ -141,5 +142,17 @@ public class UniBackEndFactory extends BackEndFactory<
 
     /** name of variable used as bound for number of iterations. */
     public static final String iterationBound = "_iteration_bound";
+
+    @Override
+    public CodeStoreHelper getCodeStoreHelper(SliceNode node) {
+        if (node instanceof FilterSliceNode) {
+            // simply do appropriate wrapping of calls...
+            return new CodeStoreHelperSimple(node,((FilterSliceNode)node).getFilter(),this);
+        } else {
+            // CodeStoreHelper that does not expect a work function.
+            // Can we combine with above?
+            return new CodeStoreHelperJoiner(node, this);
+        }
+    }
 
 }

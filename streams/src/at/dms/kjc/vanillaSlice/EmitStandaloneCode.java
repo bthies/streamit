@@ -24,7 +24,7 @@ public class EmitStandaloneCode extends EmitCode {
      * @param backendbits indicates BackEndFactory containing all useful info.
      */
     public EmitStandaloneCode(
-            UniBackEndFactory backendbits) {
+            BackEndFactory<UniProcessors, UniProcessor, UniComputeCodeStore, Integer> backendbits) {
         super(backendbits);
     }
     

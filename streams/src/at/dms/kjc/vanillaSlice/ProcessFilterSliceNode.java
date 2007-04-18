@@ -39,21 +39,21 @@ public class ProcessFilterSliceNode {
         if (filter_code == null) {
             System.err.println(
                     "filter " + filterNode.getFilter() +
-                    ", make_joiner " + UniChannel.sliceNeedsJoinerCode(filterNode.getParent()) + 
-                    ", make_peek_buffer " + UniChannel.filterNeedsPeekBuffer(filterNode) +
-                    ", has_upstream_channel " + UniChannel.sliceHasUpstreamChannel(filterNode.getParent()) +
-                    ", make_splitter " + UniChannel.sliceNeedsSplitterCode(filterNode.getParent()) +
-                    ", has_downstream_channel " + UniChannel.sliceHasDownstreamChannel(filterNode.getParent()));
+                    ", make_joiner " + backEndBits.sliceNeedsJoinerCode(filterNode.getParent()) + 
+                    ", make_peek_buffer " + backEndBits.filterNeedsPeekBuffer(filterNode) +
+                    ", has_upstream_channel " + backEndBits.sliceHasUpstreamChannel(filterNode.getParent()) +
+                    ", make_splitter " + backEndBits.sliceNeedsSplitterCode(filterNode.getParent()) +
+                    ", has_downstream_channel " + backEndBits.sliceHasDownstreamChannel(filterNode.getParent()));
             
             Channel inputChannel = null;
             
-            if (UniChannel.sliceHasUpstreamChannel(filterNode.getParent())) {
+            if (backEndBits.sliceHasUpstreamChannel(filterNode.getParent())) {
                 inputChannel = backEndBits.getChannel(filterNode.getPrevious().getEdgeToNext());
             }
             
             Channel outputChannel = null;
             
-            if (UniChannel.sliceHasDownstreamChannel(filterNode.getParent())) {
+            if (backEndBits.sliceHasDownstreamChannel(filterNode.getParent())) {
                 outputChannel = backEndBits.getChannel(filterNode.getEdgeToNext());
             }
 
@@ -115,15 +115,6 @@ public class ProcessFilterSliceNode {
         }
     }
 
-    /**
-     * Pick the kind of CodeStoreHelper needed for this filter and return a new one.
-     * @param sliceNode  a FilterSliceNode.
-     * @return
-     */
-    private static <T extends BackEndFactory> CodeStoreHelper selectHelper(FilterSliceNode sliceNode,
-            T backEndBits) {
-        return new CodeStoreHelperSimple(sliceNode, sliceNode.getFilter(), backEndBits);
-    }
     
     /**
      * Take a code unit (here a FilterContent) and return one with all push, peek, pop 
@@ -161,7 +152,7 @@ public class ProcessFilterSliceNode {
             pushName = "/* push() to non-existent channel */";
         }
         
-        CodeStoreHelper helper = selectHelper(filter, backEndBits);
+        CodeStoreHelper helper = backEndBits.getCodeStoreHelper(filter);
         JMethodDeclaration[] methods = helper.getMethods();
        
         // relies on fact that a JMethodDeclaration is not replaced so 

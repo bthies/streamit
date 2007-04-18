@@ -1,6 +1,7 @@
 package at.dms.kjc.backendSupport;
 
 import at.dms.kjc.slicegraph.*;
+import at.dms.util.Utils;
 
 import java.util.Collection;
 
@@ -148,4 +149,98 @@ public abstract class BackEndFactory<
      * @return a channel: preexisting or newly created.
      */
     public abstract Channel getChannel(SliceNode src, SliceNode dst);
+
+    /**
+     * Select a CodeStoreHelper subclass given a SliceNode.
+     * A CodeStoreHelper generates wrapper code combining code
+     * for channels with code for a SliceNode.
+     * @param node the SliceNode.
+     * @return an instance of CodeStoreHelper
+     */
+    public abstract CodeStoreHelper getCodeStoreHelper(SliceNode node);
+
+    /**
+     * Does filter need a peek buffer upstream of it?
+     * Assumes 1 filter per slice.
+     * Answer is <b>false</b> unless bufferring is needed to deal with
+     * unconsumed inputs or extra peeks.
+     * @param filter
+     * @return  whether filter needs peek buffer.
+     */
+    public boolean filterNeedsPeekBuffer(FilterSliceNode filter) {
+        if (! this.sliceHasUpstreamChannel(filter.getParent())) {
+            // first filter on a slice with no input
+            return false;
+        }
+        FilterInfo info = FilterInfo.getFilterInfo(filter);
+        if (info.noBuffer()) {
+            // a filter with a 0 peek rate does not need
+            // a peek buffer (is this redundant with !sliceHasUpstreamChannel ?)
+            return false;
+        }
+        if (! info.isSimple() || 
+                (this.sliceNeedsJoinerCode(filter.getParent()) && 
+                 Utils.hasPeeks(filter.getFilter()))) {
+            // if filter has remaining input items between steady states
+            // or if filter performs peeks and has joiner code upstream
+            // then filter needs a peek buffer.
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /** @return true if slice has an upstream channel, false otherwise */
+    public boolean sliceHasUpstreamChannel(Slice s) {
+        return s.getHead().getWidth() > 0;
+        // s.getHead().getNext().getAsFilter().getFilter().getInputType() != CStdType.Void;
+    }
+
+    /** @return true if slice has a downstream channel, false otherwise */
+    public boolean sliceHasDownstreamChannel(Slice s) {
+        return s.getTail().getWidth() > 0;
+        //s.getTail().getPrevious().getAsFilter().getFilter().getOutputType() != CStdType.Void;
+    }
+
+    /**
+     * Slice needs code for a joiner if it has input from more than one source.
+     * @param s Slice
+     * @return 
+     */
+    public boolean sliceNeedsJoinerCode(Slice s) {
+        return s.getHead().getWidth() > 1;
+    }
+
+    /**
+     * Slice needs work function for a joiner if it has needs a joiner
+     * and needs a peek buffer.  (Otherwise if it needs a joiner, it can
+     * call the joiner as a function).
+     * 
+     * @param s Slice
+     * @return
+     */
+    public boolean sliceNeedsJoinerWorkFunction(Slice s) {
+        // if needs peek buffer then needs joiner work function to transfer into peek buffer.
+        return /*this.sliceNeedsJoinerCode(s) &&*/ this.filterNeedsPeekBuffer(s.getFilterNodes().get(0));
+    }
+
+    /**
+     * Slice needs code for a splitter if it has output on more than one edge.
+     * @param s
+     * @return
+     */
+    public boolean sliceNeedsSplitterCode(Slice s) {
+        return s.getTail().getWidth() > 1;
+    }
+
+    /**
+     * Haven't yet found a situation where we need to buffer output to splitter
+     * but may well: perhaps if prework pushes different number of items from
+     * what work pushes?
+     * @param s
+     * @return
+     */
+    public boolean sliceNeedsSplitterWorkFunction(Slice s) {
+        return false;
+    }
 }

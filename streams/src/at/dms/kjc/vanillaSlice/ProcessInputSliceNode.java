@@ -25,7 +25,7 @@ public class ProcessInputSliceNode {
     public static <T extends BackEndFactory> void processInputSliceNode(InputSliceNode inputNode, 
             SchedulingPhase whichPhase, T backEndBits) {
         // No code generated for inputNode if there is no input.
-        if (!UniChannel.sliceHasUpstreamChannel(inputNode.getParent())) { return; }
+        if (!backEndBits.sliceHasUpstreamChannel(inputNode.getParent())) { return; }
         
         CodeStoreHelper joiner_code = CodeStoreHelper.findHelperForSliceNode(inputNode);
         
@@ -285,12 +285,7 @@ public class ProcessInputSliceNode {
             helper.addMethod(joiner_method);
         }
 
-        /** select a helper to keep track of / generate code for slice */
-        private static <T extends BackEndFactory> CodeStoreHelper selectHelper (InputSliceNode joiner,
-                T backEndBits) {
-                return new CodeStoreHelperJoiner(joiner,backEndBits);
-        }
-        
+         
         /**
          * Make a work function for a joiner 
          */
@@ -307,7 +302,7 @@ public class ProcessInputSliceNode {
             // the body of the work method
             JBlock body = new JBlock();
             
-            if (UniChannel.sliceNeedsJoinerCode(joiner.getParent())) {
+            if (backEndBits.sliceNeedsJoinerCode(joiner.getParent())) {
                 // There should be generated code for the joiner
                 // state machine in the CodeStoreHelper as the only method.
                 //
@@ -379,11 +374,11 @@ public class ProcessInputSliceNode {
         static <T extends BackEndFactory> CodeStoreHelper getJoinerCode(InputSliceNode joiner, T backEndBits) {
             CodeStoreHelper joiner_code = CodeStoreHelper.findHelperForSliceNode(joiner);
             if (joiner_code == null) {
-                joiner_code = selectHelper(joiner,backEndBits);
-                if  (UniChannel.sliceNeedsJoinerCode(joiner.getParent())) {
+                joiner_code = backEndBits.getCodeStoreHelper(joiner);
+                if (backEndBits.sliceNeedsJoinerCode(joiner.getParent())) {
                     makeJoinerCode(joiner,backEndBits,joiner_code);
                 }
-                if (UniChannel.sliceNeedsJoinerWorkFunction(joiner.getParent())) {
+                if (backEndBits.sliceNeedsJoinerWorkFunction(joiner.getParent())) {
                     makeJoinerWork(joiner,backEndBits,joiner_code);
                 }
                 CodeStoreHelper.addHelperForSliceNode(joiner, joiner_code);

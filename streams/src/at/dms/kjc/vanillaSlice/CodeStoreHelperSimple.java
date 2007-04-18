@@ -50,13 +50,13 @@ public class CodeStoreHelperSimple extends CodeStoreHelper {
             FilterContent filter = ((FilterSliceNode)sliceNode).getFilter();
 
             // channel code before work block
-        if (UniChannel.sliceHasUpstreamChannel(sliceNode.getParent())) {
+        if (backEndBits.sliceHasUpstreamChannel(sliceNode.getParent())) {
             for (JStatement stmt : backEndBits.getChannel(
                     sliceNode.getPrevious().getEdgeToNext()).beginInitRead()) {
                 statements.addStatement(stmt);
             }
         }
-        if (UniChannel.sliceHasDownstreamChannel(sliceNode.getParent())) {
+        if (backEndBits.sliceHasDownstreamChannel(sliceNode.getParent())) {
             for (JStatement stmt : backEndBits.getChannel(
                     sliceNode.getEdgeToNext()).beginInitWrite()) {
                 statements.addStatement(stmt);
@@ -65,13 +65,13 @@ public class CodeStoreHelperSimple extends CodeStoreHelper {
         // add the calls for the work function in the initialization stage
         statements.addStatement(generateInitWorkLoop(filter));
         // channel code afterwork block
-        if (UniChannel.sliceHasUpstreamChannel(sliceNode.getParent())) {
+        if (backEndBits.sliceHasUpstreamChannel(sliceNode.getParent())) {
             for (JStatement stmt : backEndBits.getChannel(
                     sliceNode.getPrevious().getEdgeToNext()).endInitRead()) {
                 statements.addStatement(stmt);
             }
         }
-        if (UniChannel.sliceHasDownstreamChannel(sliceNode.getParent())) {
+        if (backEndBits.sliceHasDownstreamChannel(sliceNode.getParent())) {
             for (JStatement stmt : backEndBits.getChannel(
                     sliceNode.getEdgeToNext()).endInitWrite()) {
                 statements.addStatement(stmt);
@@ -134,13 +134,13 @@ public class CodeStoreHelperSimple extends CodeStoreHelper {
     public JBlock getSteadyBlock() {
         JBlock statements = new JBlock();
         // channel code before work block
-        if (UniChannel.sliceHasUpstreamChannel(sliceNode.getParent())) {
+        if (backEndBits.sliceHasUpstreamChannel(sliceNode.getParent())) {
             for (JStatement stmt : backEndBits.getChannel(
                     sliceNode.getPrevious().getEdgeToNext()).beginSteadyRead()) {
                 statements.addStatement(stmt);
             }
         }
-        if (UniChannel.sliceHasDownstreamChannel(sliceNode.getParent())) {
+        if (backEndBits.sliceHasDownstreamChannel(sliceNode.getParent())) {
             for (JStatement stmt : backEndBits.getChannel(
                     sliceNode.getEdgeToNext()).beginSteadyWrite()) {
                 statements.addStatement(stmt);
@@ -150,13 +150,13 @@ public class CodeStoreHelperSimple extends CodeStoreHelper {
         statements.addStatement(getWorkFunctionBlock(FilterInfo
                 .getFilterInfo((FilterSliceNode) sliceNode).steadyMult));
         // channel code after work block
-        if (UniChannel.sliceHasUpstreamChannel(sliceNode.getParent())) {
+        if (backEndBits.sliceHasUpstreamChannel(sliceNode.getParent())) {
             for (JStatement stmt : backEndBits.getChannel(
                     sliceNode.getPrevious().getEdgeToNext()).endSteadyRead()) {
                 statements.addStatement(stmt);
             }
         }
-        if (UniChannel.sliceHasDownstreamChannel(sliceNode.getParent())) {
+        if (backEndBits.sliceHasDownstreamChannel(sliceNode.getParent())) {
             for (JStatement stmt : backEndBits.getChannel(
                     sliceNode.getEdgeToNext()).endSteadyWrite()) {
                 statements.addStatement(stmt);

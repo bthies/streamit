@@ -84,6 +84,7 @@ public class EmitStandaloneCode extends EmitCode {
         p.println(
                 backendbits.getComputeNodes().getNthComputeNode(0).getComputeCode().getMainFunction().getName()
                 + "();");
+        p.println("return 0;");
         p.outdent();
         p.println("}");
     }

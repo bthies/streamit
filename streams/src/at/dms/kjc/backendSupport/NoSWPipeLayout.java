@@ -110,6 +110,7 @@ public class NoSWPipeLayout<T extends ComputeNode, Ts extends ComputeNodesI> ext
         HashMap<FilterSliceNode, Double> endTime = new HashMap<FilterSliceNode, Double>();
         while (slices.hasNext()) {
             Slice slice = slices.next();
+            //System.err.println(slice.toString());
             T tile = (T)assignment.get(slice.getHead().getNextFilter());
             double traceWork = partitioner.getSliceBNWork(slice); 
             double startTime = 0;
@@ -126,7 +127,7 @@ public class NoSWPipeLayout<T extends ComputeNode, Ts extends ComputeNodesI> ext
                 FilterSliceNode upStream = edge.getSrc().getPrevFilter();
                 
                 ComputeNode upTile = (T)assignment.get(upStream);
-                assert endTime.containsKey(upStream);
+                assert endTime.containsKey(upStream); // TODO: assertion fails on fedback loop.
                 if (endTime.get(upStream).doubleValue() > maxDepStartTime)
                     maxDepStartTime = endTime.get(upStream).doubleValue();
             }

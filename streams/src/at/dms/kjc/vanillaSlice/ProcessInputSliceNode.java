@@ -386,6 +386,7 @@ public class ProcessInputSliceNode {
                 if (UniChannel.sliceNeedsJoinerWorkFunction(joiner.getParent())) {
                     makeJoinerWork(joiner,backEndBits,joiner_code);
                 }
+                CodeStoreHelper.addHelperForSliceNode(joiner, joiner_code);
             }
             return joiner_code;
         }

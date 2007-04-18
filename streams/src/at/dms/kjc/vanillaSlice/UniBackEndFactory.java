@@ -124,7 +124,8 @@ public class UniBackEndFactory extends BackEndFactory<
     @Override
     public void processOutputSliceNode(OutputSliceNode output,
             SchedulingPhase whichPhase, UniProcessors computeNodes) {
-        // We never generate code for an output slice node.
+        ProcessOutputSliceNode.processOutputSliceNode(output,whichPhase,this);
+
     }
 
     @Override

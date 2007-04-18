@@ -2,7 +2,8 @@ package at.dms.kjc.vanillaSlice;
 
 import at.dms.kjc.backendSupport.Channel;
 import at.dms.kjc.slicegraph.Edge;
-
+import java.util.*;
+import at.dms.kjc.JMethodDeclaration;
 /**
  * A Channel with the single purpose of holding the name of a push() routine.
  * Such a channel is used to connect a filter to a splitter
@@ -39,6 +40,7 @@ public class UnbufferredPushChannel extends Channel {
         this.pushName = pushName;
     }
     
+    @Override
     public String pushMethodName() {
         return pushName;
     }
@@ -46,5 +48,5 @@ public class UnbufferredPushChannel extends Channel {
     public void updatePushMethodName(String pushName) {
         this.pushName = pushName;
     }
-
+    
 }

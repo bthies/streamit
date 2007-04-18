@@ -218,12 +218,16 @@ public class Channel {
  
     JMethodDeclaration popManyCode = null;
     
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#popManyMethod()
+    /**
+     * Pop many items at once ignoring them.
+     * Default method generated here to call popMethod() repeatedly.
      */
     public JMethodDeclaration popManyMethod() {
         if (popManyCode != null) {
             return popManyCode;
+        }
+        if (popMethod() == null) {
+            return null;
         }
         
         String formalParamName = "n";

@@ -101,7 +101,7 @@ public class EmitCode<T extends BackEndFactory> {
         }
 
         for (Channel c : upstreamEnds) {
-            p.println("/* upstream end of " + c + " */");
+            p.println("/* upstream end of " + c + "(" + c.getIdent() + ") */");
             p.println("/* " + upstreamDescription(c) + " -> " + downstreamDescription(c) + " */");
             if (c.writeDecls() != null) {
                 for (JStatement d : c.writeDecls()) { d.accept(codegen); }
@@ -110,7 +110,7 @@ public class EmitCode<T extends BackEndFactory> {
         }
 
         for (Channel c : downstreamEnds) {
-            p.println("/* downstream end of " + c + " */");
+            p.println("/* downstream end of " + c + "(" + c.getIdent() + ") */");
             p.println("/* " + upstreamDescription(c) + " -> " + downstreamDescription(c) + " */");
             if (c.readDecls() != null) {
                 for (JStatement d : c.readDecls()) { d.accept(codegen); }

@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.50 2007-04-02 21:14:09 dimock Exp $
+ * $Id: Utils.java,v 1.51 2007-04-18 20:04:01 dimock Exp $
  */
 
 package at.dms.util;
@@ -1387,7 +1387,7 @@ public abstract class Utils implements Serializable, DeepCloneable {
      */
     public static boolean hasPeeks(SIRCodeUnit filter) {
         /** Extend Error here rather than Exception because overridden visitor
-         *  can not declare it as an excpetion */
+         *  can not declare it as an exception */
         class BreakOutException extends Error{};
     
         try {

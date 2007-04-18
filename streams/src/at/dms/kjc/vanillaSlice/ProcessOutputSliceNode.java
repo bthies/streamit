@@ -1,40 +1,9 @@
 package at.dms.kjc.vanillaSlice;
 
-import at.dms.kjc.CArrayType;
-import at.dms.kjc.CClassType;
-import at.dms.kjc.CStdType;
-import at.dms.kjc.JAddExpression;
-import at.dms.kjc.JArrayAccessExpression;
-import at.dms.kjc.JArrayInitializer;
-import at.dms.kjc.JAssignmentExpression;
-import at.dms.kjc.JBlock;
-import at.dms.kjc.JBreakStatement;
-import at.dms.kjc.JEmptyStatement;
-import at.dms.kjc.JExpression;
-import at.dms.kjc.JExpressionStatement;
-import at.dms.kjc.JFieldAccessExpression;
-import at.dms.kjc.JFieldDeclaration;
-import at.dms.kjc.JFormalParameter;
-import at.dms.kjc.JIfStatement;
-import at.dms.kjc.JIntLiteral;
-import at.dms.kjc.JLocalVariableExpression;
-import at.dms.kjc.JMethodCallExpression;
-import at.dms.kjc.JMethodDeclaration;
-import at.dms.kjc.JModuloExpression;
-import at.dms.kjc.JPrefixExpression;
-import at.dms.kjc.JRelationalExpression;
-import at.dms.kjc.JStatement;
-import at.dms.kjc.JSwitchGroup;
-import at.dms.kjc.JSwitchLabel;
-import at.dms.kjc.JSwitchStatement;
-import at.dms.kjc.JVariableDeclarationStatement;
-import at.dms.kjc.JVariableDefinition;
-import at.dms.kjc.backendSupport.BackEndFactory;
-import at.dms.kjc.backendSupport.ComputeNode;
-import at.dms.kjc.backendSupport.MinCodeUnit;
-import at.dms.kjc.sir.SIRCodeUnit;
-import at.dms.kjc.slicegraph.Edge;
-import at.dms.kjc.slicegraph.OutputSliceNode;
+import java.util.*;
+import at.dms.kjc.*;
+import at.dms.kjc.backendSupport.*;
+import at.dms.kjc.slicegraph.*;
 
 /**
  * Create kopi code for an {@link at.dms.kjc.slicegraph.OutputSliceNode}.
@@ -42,7 +11,51 @@ import at.dms.kjc.slicegraph.OutputSliceNode;
  *
  */
 public class ProcessOutputSliceNode {
+    /** set of filters for which we have written basic code. */
+    // uses WeakHashMap to be self-cleaning, but now have to insert some value.
+    private static Map<SliceNode,Boolean>  basicCodeWritten = new WeakHashMap<SliceNode,Boolean>();
 
+    /**
+     * Create code for a OutputSliceNode.
+     * @param <T>          type of a BackEndFactory to access layout, etc.
+     * @param outputNode    the OutputSliceNode that may need code generated.
+     * @param whichPhase   a scheduling phase {@link SchedulingPhase}
+     * @param backEndBits  a BackEndFactory to access layout, etc.
+     */
+    public static <T extends BackEndFactory> void processOutputSliceNode(OutputSliceNode outputNode, 
+            SchedulingPhase whichPhase, T backEndBits) {
+        // No code generated for outputNode if there is not needed.
+        if (! UniChannel.sliceNeedsSplitterCode(outputNode.getParent())) {
+            return;
+        }
+        
+        CodeStoreHelper splitter_code = CodeStoreHelper.findHelperForSliceNode(outputNode);
+        if (splitter_code == null) {
+            splitter_code = getSplitterCode(outputNode,backEndBits);
+        }
+        
+        ComputeNode location = backEndBits.getLayout().getComputeNode(outputNode);
+        assert location != null;
+        ComputeCodeStore codeStore = location.getComputeCode();
+        switch (whichPhase) {
+        case INIT:
+            break;
+        case PRIMEPUMP:
+            break;
+        case STEADY:
+            // helper has now been used for the last time, so we can write the basic code.
+            // write code deemed useful by the helper into the corrrect ComputeCodeStore.
+            // write only once if multiple calls for steady state.
+            if (!basicCodeWritten.containsKey(outputNode)) {
+                codeStore.addFields(splitter_code.getUsefulFields());
+                codeStore.addMethods(splitter_code.getUsefulMethods());
+                basicCodeWritten.put(outputNode,true);
+            }
+
+            break;
+        }
+    }
+    
     /**
          * Create fields and code for a splitter, as follows.
          * Do not create a splitter if all weights are 0: this code
@@ -118,9 +131,11 @@ public class ProcessOutputSliceNode {
          * @param splitter
          * @return
          */
-        static <T extends BackEndFactory> SIRCodeUnit makeSplitterCode(OutputSliceNode splitter, T backEndBits) {
+        static <T extends BackEndFactory> void makeSplitterCode(OutputSliceNode splitter, 
+                T backEndBits, CodeStoreHelper helper) {
             String splitter_name = "_splitter_" + ProcessFilterSliceNode.getUid();
-            
+            String splitter_method_name =  splitter_name + splitter.getPrevFilter().getFilter().getName();
+
             // size is number of edges with non-zero weight.
             int size = 0;
             for (int w : splitter.getWeights()) {
@@ -228,8 +243,8 @@ public class ProcessOutputSliceNode {
                     null, 
                     at.dms.kjc.Constants.ACC_STATIC | at.dms.kjc.Constants.ACC_INLINE,
                     CStdType.Void,
-                    splitter_name,
-                    new JFormalParameter[]{},
+                    splitter_method_name,
+                    new JFormalParameter[]{arg},
                     new CClassType[]{},
                     new JBlock(),
                     null, null);
@@ -243,12 +258,8 @@ public class ProcessOutputSliceNode {
             splitter_block.addStatement(switch_on_edge_stmt);
             
             
-            SIRCodeUnit retval = new MinCodeUnit(
-                    new JFieldDeclaration[]{edgeDecl, weightDecl},
-                    new JMethodDeclaration[]{splitter_method});
-            
-            return retval;
-    
+            helper.setFields(new JFieldDeclaration[]{edgeDecl, weightDecl});
+            helper.setMethods(new JMethodDeclaration[]{splitter_method});
         }
 
         
@@ -260,29 +271,38 @@ public class ProcessOutputSliceNode {
          * @param backEndBits
          * @return
          */
-        static <T extends BackEndFactory> SIRCodeUnit getSplitterCode(OutputSliceNode splitter, T backEndBits) {
-            SIRCodeUnit splitter_code = CodeStoreHelper.findHelperForSliceNode(splitter);
+        static <T extends BackEndFactory> CodeStoreHelper getSplitterCode(OutputSliceNode splitter, T backEndBits) {
+            CodeStoreHelper splitter_code = CodeStoreHelper.findHelperForSliceNode(splitter);
             if (splitter_code == null) {
-                splitter_code = makeSplitterCode(splitter,backEndBits);
+                splitter_code = selectHelper(splitter,backEndBits);
+                makeSplitterCode(splitter,backEndBits,splitter_code);
+                CodeStoreHelper.addHelperForSliceNode(splitter,splitter_code);
             }
             return splitter_code;
         }
 
-        /**
-         * Get code for a joiner and add it to the appropriate ComputeCodeStore.
-         * If code not yet made, then makes the code and adds it to the appropriate ComputeCodeStore
-         * @param <T> Type of the caller's BackEndFactory.
-         * @param splitter
-         * @param backEndBits
-         */
-        static <T extends BackEndFactory> void addSplitterCode(OutputSliceNode splitter, T backEndBits) {
-            SIRCodeUnit splitter_code = CodeStoreHelper.findHelperForSliceNode(splitter);
-            if (splitter_code == null) {
-                splitter_code = makeSplitterCode(splitter,backEndBits);
-                ComputeNode location = backEndBits.getLayout().getComputeNode(splitter);
-                assert location != null;
-                location.getComputeCode().addFields(splitter_code.getFields());
-                location.getComputeCode().addMethods(splitter_code.getMethods());
-            }
+//        /**
+//         * Get code for a joiner and add it to the appropriate ComputeCodeStore.
+//         * If code not yet made, then makes the code and adds it to the appropriate ComputeCodeStore
+//         * @param <T> Type of the caller's BackEndFactory.
+//         * @param splitter
+//         * @param backEndBits
+//         */
+//        static <T extends BackEndFactory> void addSplitterCode(OutputSliceNode splitter, T backEndBits) {
+//            SIRCodeUnit splitter_code = CodeStoreHelper.findHelperForSliceNode(splitter);
+//            if (splitter_code == null) {
+//                splitter_code = makeSplitterCode(splitter,backEndBits);
+//                ComputeNode location = backEndBits.getLayout().getComputeNode(splitter);
+//                assert location != null;
+//                location.getComputeCode().addFields(splitter_code.getFields());
+//                location.getComputeCode().addMethods(splitter_code.getMethods());
+//            }
+//        }
+
+        /** select a helper to keep track of / generate code for slice */
+        private static <T extends BackEndFactory> CodeStoreHelper selectHelper (SliceNode splitter,
+                T backEndBits) {
+                return new CodeStoreHelperJoiner(splitter,backEndBits);
         }
+
 }

@@ -9,7 +9,7 @@ public class CodeStoreHelperJoiner extends CodeStoreHelper {
 
     
     
-    public CodeStoreHelperJoiner(InputSliceNode node, BackEndFactory backEndBits) {
+    public CodeStoreHelperJoiner(SliceNode node, BackEndFactory backEndBits) {
         super(node, backEndBits);
     }
     @Override
@@ -114,6 +114,7 @@ public class CodeStoreHelperJoiner extends CodeStoreHelper {
         for (JStatement stmt : backEndBits.getChannel(sliceNode.getEdgeToNext()).beginSteadyWrite()) {
             statements.addStatement(stmt);
         }
+        // work block / work call
         statements.addStatement(getWorkFunctionBlock(filterInfo.totalItemsReceived(SchedulingPhase.STEADY)));
         // channel code after work block
         for (InterSliceEdge e : sliceNode.getAsInput().getSourceList()) {

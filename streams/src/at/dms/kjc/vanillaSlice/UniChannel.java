@@ -5,8 +5,18 @@ import at.dms.kjc.slicegraph.*;
 import at.dms.kjc.*;
 import at.dms.util.Utils;
 
+/**
+ * Create channels of appropriate type for this back end.
+ * @author dimock
+ *
+ */
+
 public class UniChannel  {
-    
+    /**
+     * Given an edge <b>e</b>, make the correct sort of channel for it.
+     * @param e  an edge.
+     * @return an existing channel if one exists, else a newly made channel.
+     */
     public static Channel getOrMakeChannel(Edge e) {
         Channel c = Channel.findChannel(e);
         if (c != null) {
@@ -88,7 +98,7 @@ public class UniChannel  {
         }
         if (! info.isSimple() || 
                 (sliceNeedsJoinerCode(filter.getParent()) && 
-                 ! Utils.hasPeeks(filter.getFilter()))) {
+                 Utils.hasPeeks(filter.getFilter()))) {
             return true;
         } else {
             return false;

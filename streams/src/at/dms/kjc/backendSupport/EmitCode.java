@@ -303,35 +303,45 @@ backendbits.getComputeNodes().getNthComputeNode(0).getComputeCode().getMainFunct
         //    "Array dimensions of variables of array assignment do not match";
     
         //find the number of dimensions
-        int bound = ((CArrayType)right.getType()).getArrayBound();
-        //find the extent of each dimension
-        int[] dims = CommonUtils.makeArrayInts(((CArrayType)var.getType()).getDims());
+        int rbound = ((CArrayType)right.getType()).getArrayBound();
+        int lbound = ((CArrayType)var.getType()).getArrayBound();
         //if we are assigning elements from a lower dimension array to a higher
         //dim array, remember the difference
-        int diff = dims.length - bound;
+        int diff = lbound - rbound;
+        //find the extent of each dimension
+        int dims[];
+        try {
+            dims = CommonUtils.makeArrayInts(((CArrayType)var.getType()).getDims());
+        } catch (AssertionError e) {
+            // Constant prop didn't get to lhs (can happen in field array = local array).
+            // get dimensions from rhs.
+            dims = CommonUtils.makeArrayInts(((CArrayType)right.getType()).getDims());
+            // In this case, so far has been safe to assume that arrays have same number of dimensions.
+            assert lbound == rbound;
+        }
     
         assert diff >= 0 : "Error in array copy: " + left + " = " + right;
 
-        assert bound > 0;
+        assert rbound > 0;
 
         //print out a loop that will perform the element-wise copy
         p.print("{\n");
         p.print("int ");
         //print the index var decls
-        for (int i = 0; i < bound -1; i++)
+        for (int i = 0; i < rbound -1; i++)
             p.print(EmitCode.ARRAY_COPY + i + ", ");
-        p.print(EmitCode.ARRAY_COPY + (bound - 1));
+        p.print(EmitCode.ARRAY_COPY + (rbound - 1));
         p.print(";\n");
-        for (int i = 0; i < bound; i++) {
+        for (int i = 0; i < rbound; i++) {
             p.print("for (" + EmitCode.ARRAY_COPY + i + " = 0; " + EmitCode.ARRAY_COPY + i +  
                     " < " + dims[i + diff] + "; " + EmitCode.ARRAY_COPY + i + "++)\n");
         }
         left.accept(this);
-        for (int i = 0; i < bound; i++)
+        for (int i = 0; i < rbound; i++)
             p.print("[" + EmitCode.ARRAY_COPY + i + "]");
         p.print(" = ");
         right.accept(this);
-        for (int i = 0; i < bound; i++)
+        for (int i = 0; i < rbound; i++)
             p.print("[" + EmitCode.ARRAY_COPY + i + "]");
         p.print(";\n}\n");
         return;

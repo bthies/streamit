@@ -3,8 +3,7 @@ package at.dms.kjc.backendSupport;
 import java.util.*;
 
 import at.dms.kjc.common.CommonUtils;
-import at.dms.kjc.slicegraph.Edge;
-import at.dms.kjc.slicegraph.SliceNode;
+import at.dms.kjc.slicegraph.*;
 import at.dms.kjc.*;
 
 /**
@@ -56,6 +55,10 @@ public class ChannelAsArray extends Channel {
                 new JAssignmentExpression(tail, new JIntLiteral(0)));
     }
     
+    /** Actual Buffer size: use for diagnostic info only. */
+    public int getBufSize() {
+        return bufSize;
+    }
     /**
      * Make a new Channel or return an already-made channel.
      * @param edge     The edge that this channel implements.

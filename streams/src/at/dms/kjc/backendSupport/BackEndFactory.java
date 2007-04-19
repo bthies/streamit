@@ -37,7 +37,7 @@ public abstract class BackEndFactory<
      */
 
     public abstract <T 
-        extends BackEndScaffold<ComputeNodesType,ComputeNodeType,CodeStoreType, ComputeNodeSelectorArgType>
+        extends BackEndScaffold/*<ComputeNodesType,ComputeNodeType,CodeStoreType, ComputeNodeSelectorArgType>*/
         > T getBackEndMain();
 
     /**

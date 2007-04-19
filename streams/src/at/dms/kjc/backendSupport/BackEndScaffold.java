@@ -1,4 +1,4 @@
-// $Id: BackEndScaffold.java,v 1.6 2007-04-13 22:46:02 dimock Exp $
+// $Id: BackEndScaffold.java,v 1.7 2007-04-19 16:35:33 dimock Exp $
 package at.dms.kjc.backendSupport;
 
 import java.util.*;
@@ -20,14 +20,14 @@ import at.dms.kjc.KjcOptions;
  * @param <ComputeNodeSelectorArgType> type needs to match the one in your instance of BackEndFactory
  * 
  */
-public class BackEndScaffold<
+public class BackEndScaffold /*<
 ComputeNodesType extends ComputeNodesI<?>, 
 ComputeNodeType extends ComputeNode<?>, 
 CodeStoreType extends ComputeCodeStore<?>, 
-ComputeNodeSelectorArgType extends Object> {
+ComputeNodeSelectorArgType extends Object>*/ /*<T extends BackEndFactory>*/ {
     
     /** used to pass back-end factory around */
-    protected BackEndFactory<ComputeNodesType,ComputeNodeType,CodeStoreType, ComputeNodeSelectorArgType> resources;
+    protected /*BackEndFactory<ComputeNodesType,ComputeNodeType,CodeStoreType, ComputeNodeSelectorArgType>*//*T*/ BackEndFactory resources;
 
     /**
      * Use in subclasses to perform work before code is created.
@@ -77,9 +77,9 @@ ComputeNodeSelectorArgType extends Object> {
      * @param resources The instance of BackEndFactory to be used for callbacks, data.
      */
     public void run(BasicSpaceTimeSchedule schedule,
-            BackEndFactory<ComputeNodesType,ComputeNodeType,CodeStoreType, ComputeNodeSelectorArgType> resources) {
+            /*BackEndFactory<ComputeNodesType,ComputeNodeType,CodeStoreType, ComputeNodeSelectorArgType>*/ /*T*/BackEndFactory resources) {
    
-        ComputeNodesType computeNodes = resources.getComputeNodes();
+        ComputeNodesI/*Type*/ computeNodes = resources.getComputeNodes();
         this.resources = resources;
         
         Slice slices[];
@@ -122,7 +122,7 @@ ComputeNodeSelectorArgType extends Object> {
      * @param computeNodes The collection of compute nodes.
      */
     private void iterateInorder(Slice slices[], SchedulingPhase whichPhase,
-                                       ComputeNodesType computeNodes) {
+                                       ComputeNodesI/*Type*/ computeNodes) {
         Slice slice;
 
         for (int i = 0; i < slices.length; i++) {
@@ -151,7 +151,7 @@ ComputeNodeSelectorArgType extends Object> {
      * @param rawChip The raw chip
      */
     private void iterateJoinFiltersSplit(Slice slices[], SchedulingPhase whichPhase,
-                                                ComputeNodesType computeNodes) {
+                                                ComputeNodesI/*Type*/ computeNodes) {
         Slice slice;
 
         for (int i = 0; i < slices.length; i++) {
@@ -180,7 +180,7 @@ ComputeNodeSelectorArgType extends Object> {
     
     /** Special scheduling for --spacetime --noswpipe */
     private void iterateNoSWPipe(List<Slice> scheduleList, SchedulingPhase whichPhase,
-            ComputeNodesType computeNodes) {
+            ComputeNodesI/*Type*/ computeNodes) {
         HashSet<OutputSliceNode> hasBeenSplit = new HashSet<OutputSliceNode>();
         HashSet<InputSliceNode> hasBeenJoined = new HashSet<InputSliceNode>();
         LinkedList<Slice> scheduled = new LinkedList<Slice>();

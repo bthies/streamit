@@ -74,10 +74,11 @@ public class UniBackEnd {
         // create other info needed to convert Slice graphs to Kopi code + Channels
         BackEndFactory<UniProcessors, UniProcessor, UniComputeCodeStore, Integer> uniBackEndBits  = new UniBackEndFactory(processors);
         backEndBits = uniBackEndBits;
-        uniBackEndBits.setLayout(layout);
+        backEndBits.setLayout(layout);
         
-        // now convert to Kopi code plus channels.
-        uniBackEndBits.getBackEndMain().run(schedule, uniBackEndBits);
+        // now convert to Kopi code plus channels.  (Java goves error if folowing two lines are combined)
+        BackEndScaffold top_call = backEndBits.getBackEndMain();
+        top_call.run(schedule, backEndBits);
 
         /*
          * Emit code to structs.h

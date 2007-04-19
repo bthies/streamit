@@ -74,6 +74,32 @@ public class UniChannel  {
             c = ChannelAsArray.getChannel(e); 
         }
         
+        // purely for debugging purposes...
+        System.err.print("(Channel ");
+        System.err.print(c.getClass().getSimpleName());
+        if (src instanceof FilterSliceNode) {
+            System.err.print(" " + src.getAsFilter().getFilter().getName());
+        } else if (src instanceof InputSliceNode) {
+            System.err.print(" " + "joiner_"+src.getNext().getAsFilter().getFilter().getName());
+        } else {
+            assert src instanceof OutputSliceNode;
+            System.err.print(" " + "splitter_"+src.getPrevious().getAsFilter().getFilter().getName());
+        }
+        if (dst instanceof FilterSliceNode) {
+            System.err.print(" " + dst.getAsFilter().getFilter().getName());
+        } else if (dst instanceof InputSliceNode) {
+            System.err.print(" " + "joiner_"+dst.getNext().getAsFilter().getFilter().getName());
+        } else {
+            assert dst instanceof OutputSliceNode;
+            System.err.print(" " + "splitter_"+dst.getPrevious().getAsFilter().getFilter().getName());
+        }
+        System.err.print(" " + BufferSize.calculateSize(e));
+        if (c instanceof ChannelAsArray) {
+            System.err.print(" " + ((ChannelAsArray)c).getBufSize());
+        }
+        System.err.println(")");
+
+        
         return c;
     }
 }

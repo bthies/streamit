@@ -40,7 +40,7 @@ public class RawBackEndFactory extends BackEndFactory<RawChip, RawTile, RawCompu
     }
     
     // Singleton...
-    private BackEndScaffold<RawChip, RawTile, RawComputeCodeStore, int[]> scaffolding = null;
+    private BackEndScaffold/*<RawChip, RawTile, RawComputeCodeStore, int[]>*//*<RawBackEndFactory>*/ scaffolding = null;
     /**
      * The converter from a Schedule to ComputeNode's with completed ComputeCodeStore's
      * and Buffer's.
@@ -48,9 +48,9 @@ public class RawBackEndFactory extends BackEndFactory<RawChip, RawTile, RawCompu
      * @see Rawify 
      * */
     @Override
-    public BackEndScaffold<RawChip, RawTile, RawComputeCodeStore, int[]> getBackEndMain() {
+    public BackEndScaffold/*<RawChip, RawTile, RawComputeCodeStore, int[]>*//*<RawBackEndFactory>*/ getBackEndMain() {
         if (scaffolding == null) {
-            scaffolding  = new BackEndScaffold<RawChip, RawTile, RawComputeCodeStore, int[]>();
+            scaffolding  = new BackEndScaffold/*<RawChip, RawTile, RawComputeCodeStore, int[]>*//*<RawBackEndFactory>*/();
         }
         return scaffolding;
     }

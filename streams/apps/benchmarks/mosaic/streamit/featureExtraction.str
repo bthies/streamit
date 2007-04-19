@@ -11,7 +11,7 @@ float[320][240]->imageAndFeatures
 	add generateMinorEigs(startx, starty, imageWidth, imageHeight, 
 					winWidth, winHeight, iweight, qweight, patchsize);
 
-	add chooseEigsAndHighlight(imageWidth, imageHeight);
+	add chooseEigs(imageWidth, imageHeight);
 }
 
 /*~~~~~~~~~~~~~~~~~~~~~~~
@@ -226,67 +226,65 @@ float[320][240]->float[320][240]
 	//println("genMinorEig completed...");
 	}
 }
-/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-~~~~chooseEigsAndHighlight~~~~
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+/*~~~~~~~~~~~~~~~~
+~~~~chooseEigs~~~~
+~~~~~~~~~~~~~~~~~~*/
 
 /*now we have a yiqStruct matrix with all its eigenvalues (within the window specified
 in the main pipeline) set.  now, we have to rank them, and also make sure that the pixels we do pick
 do not exist in overlapping patches.*/
 
 float[320][240]->imageAndFeatures
-filter chooseEigsAndHighlight(int imageWidth, int imageHeight)
+filter chooseEigs(int imageWidth, int imageHeight)
 {
 	float[320][240] eigenMatrix;
+	boolean[320][240] clearMatrix;
+	boolean[320][240] patchMarkMatrix;
 	bestFeatures[40] best;
 	int h;
 	boolean inPatch;
 	imageAndFeatures featExtOutput;
+	float thisItersMaxVal;
+	int thisItersMaxX;
+	int thisItersMaxY;
 	
 	work pop 4 push 1 peek 1
 	{
-
+	
 	eigenMatrix = peek(3);
-
 	for(int k = 0; k < iters; k++){	
-	for(int j = 0; j< imageHeight; j++){
-		for(int i = 0; i < imageWidth; i++){
-		h = 0;
-		inPatch = false;
-		while( h < k)
-		{	//check to see if we're in any of the patches
-			//corresponding to a good feature
-			if( i>=(best[h].x-(patchsize-1))&&i<=(best[h].x+patchsize-1)
-			  &&j>=(best[h].y-(patchsize-1))&&j<=(best[h].y+patchsize-1)){
-			inPatch = true;				
+		thisItersMaxVal = 0;
+		thisItersMaxX = 0;
+		thisItersMaxY = 0;
+		for(int j = 0; j< imageHeight; j++){
+			for(int i = 0; i < imageWidth; i++){
+				if(eigenMatrix[i][j]>thisItersMaxVal)
+				{
+					if(!patchMarkMatrix[i][j])
+					{	thisItersMaxVal = eigenMatrix[i][j];							
+						thisItersMaxX = i;
+						thisItersMaxY = j;
+					}
+				}
 			}
-			if(inPatch){
-				h=k;
-			}
-			h++;
-		}	
-		if(eigenMatrix[i][j] > best[k].val && (!inPatch)){
-			best[k].x = i;
-			best[k].y = j;
-			best[k].val = eigenMatrix[i][j];
 		}
 		
-		}
+		//mark the patch in the patchMarkMatrix
 		
+		for(int i=(thisItersMaxX-(patchsize-1));i<=(thisItersMaxX+patchsize-1);i++){
+			for(int j=(thisItersMaxY-(patchsize-1)); j<=(thisItersMaxY+patchsize-1);j++){
+				patchMarkMatrix[i][j] = true;
+			}
+		}
+		//update your bestFeatures list 'best'
+		
+		best[k].x = thisItersMaxX;
+		best[k].y = thisItersMaxY;
+		best[k].val = thisItersMaxVal;
 	}
-	}
-/*	println("best values: ");
-	for(int i = 0; i< iters; i++){
-	println(best[i].val);}
-
-	println("bestx's");
-	for(int i = 0; i< iters; i++){
-	println(best[i].x);}
-
-	println("besty's");
-	for(int i = 0; i< iters; i++){
-	println(best[i].y);}
-*/
+	
+	patchMarkMatrix = clearMatrix;
+ 
 	featExtOutput.yImage = pop();
 	featExtOutput.iImage = pop();
 	featExtOutput.qImage = pop();

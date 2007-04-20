@@ -76,10 +76,13 @@ public class UniBackEnd {
         backEndBits = uniBackEndBits;
         backEndBits.setLayout(layout);
         
-        // now convert to Kopi code plus channels.  (Java goves error if folowing two lines are combined)
+        // now convert to Kopi code plus channels.  (Javac gives error if folowing two lines are combined)
         BackEndScaffold top_call = backEndBits.getBackEndMain();
         top_call.run(schedule, backEndBits);
 
+        /** Dump graphical representation */
+        DumpSlicesAndChannels.dumpGraph("slicesAndChannels.dot", partitioner, backEndBits);
+        
         /*
          * Emit code to structs.h
          */

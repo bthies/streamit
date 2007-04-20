@@ -31,24 +31,29 @@ public class UniChannel  {
             assert dst instanceof FilterSliceNode;
             // input -> filter
             Slice s = dst.getParent();
-            if (UniBackEnd.backEndBits.sliceNeedsJoinerCode(s) && 
-                    !UniBackEnd.backEndBits.filterNeedsPeekBuffer((FilterSliceNode)dst)) {
-                String popName = 
-                    ProcessInputSliceNode.getJoinerCode((InputSliceNode)src,UniBackEnd.backEndBits).
-                       getMethods()[0].getName();
-                c = UnbufferredPopChannel.getChannel(e,popName);
-            } else if (!UniBackEnd.backEndBits.filterNeedsPeekBuffer((FilterSliceNode)dst)) {
-                // single edge to InputSliceNode, no need for peek buffer: 
-                // delegate to channel for InputSliceNode.
-                Channel upstream = getOrMakeChannel(((InputSliceNode)src).getSingleEdge());
-                c = DelegatingChannel.getChannel(e, upstream);
+            if (!UniBackEnd.backEndBits.sliceNeedsPeekBuffer(s)) {
+                // do not make a peek buffer
+                if (UniBackEnd.backEndBits.sliceNeedsJoinerCode(s)) {
+                    // joiner code connected directly to filter via a channel
+                    // containing no storage
+                    String popName = ProcessInputSliceNode.getJoinerCode(
+                            (InputSliceNode) src, UniBackEnd.backEndBits)
+                            .getMethods()[0].getName();
+                    c = UnbufferredPopChannel.getChannel(e, popName);
+                } else if (!UniBackEnd.backEndBits.sliceNeedsJoinerCode(s)) {
+                    // no joiner at all: delegate to the channel for InputSliceNode.
+                    Channel upstream = getOrMakeChannel(((InputSliceNode) src)
+                            .getSingleEdge());
+                    c = DelegatingChannel.getChannel(e, upstream);
+                }
             } else {
                 // make peek buffer as a channel
-                if (FilterInfo.getFilterInfo((FilterSliceNode)dst).isSimple()) { 
+                if (FilterInfo.getFilterInfo((FilterSliceNode) dst).isSimple()) {
                     // no items remain in channel between steady states.
                     c = ChannelAsArray.getChannel(e);
                 } else {
-                    // items remain in channel, need circular buffer (or copy-down, but circular is what we have)
+                    // items remain in channel, need circular buffer (or
+                    // copy-down, but circular is what we have)
                     c = ChannelAsCircularArray.getChannel(e);
                 }
             }
@@ -70,8 +75,15 @@ public class UniChannel  {
                 c = DelegatingChannel.getChannel(e, downstream);
             }
         } else {
-            assert src instanceof OutputSliceNode && dst instanceof InputSliceNode;
-            c = ChannelAsArray.getChannel(e); 
+            assert src instanceof OutputSliceNode && dst instanceof InputSliceNode
+            && e instanceof InterSliceEdge;
+            if (((InterSliceEdge)e).initItems() > ((InterSliceEdge)e).steadyItems()) {
+                // items left on channel
+                c = ChannelAsCircularArray.getChannel(e);
+            } else {
+                // no items left on channel
+                c = ChannelAsArray.getChannel(e);
+            }
         }
         
         // purely for debugging purposes...

@@ -40,7 +40,7 @@ public class ProcessFilterSliceNode {
             System.err.println(
                     "filter " + filterNode.getFilter() +
                     ", make_joiner " + backEndBits.sliceNeedsJoinerCode(filterNode.getParent()) + 
-                    ", make_peek_buffer " + backEndBits.filterNeedsPeekBuffer(filterNode) +
+                    ", make_peek_buffer " + backEndBits.sliceNeedsPeekBuffer(filterNode.getParent()) +
                     ", has_upstream_channel " + backEndBits.sliceHasUpstreamChannel(filterNode.getParent()) +
                     ", make_splitter " + backEndBits.sliceNeedsSplitterCode(filterNode.getParent()) +
                     ", has_downstream_channel " + backEndBits.sliceHasDownstreamChannel(filterNode.getParent()));
@@ -111,6 +111,21 @@ public class ProcessFilterSliceNode {
                 basicCodeWritten.put(filterNode,true);
             }
             codeStore.addSteadyLoopStatement(steadyBlock);
+            
+            // debug info only: expected splitter and joiner firings.
+            System.err.print("(Filter" + filterNode.getFilter().getName());
+            System.err.print(" " + FilterInfo.getFilterInfo(filterNode).getMult(SchedulingPhase.INIT));
+            System.err.print(" " + FilterInfo.getFilterInfo(filterNode).getMult(SchedulingPhase.STEADY));
+            System.err.println(")");
+            System.err.print("(Joiner joiner_" + filterNode.getFilter().getName());
+            System.err.print(" " + FilterInfo.getFilterInfo(filterNode).totalItemsReceived(SchedulingPhase.INIT));
+            System.err.print(" " + FilterInfo.getFilterInfo(filterNode).totalItemsReceived(SchedulingPhase.STEADY));
+            System.err.println(")");
+            System.err.print("(Splitter splitter_" + filterNode.getFilter().getName());
+            System.err.print(" " + FilterInfo.getFilterInfo(filterNode).totalItemsSent(SchedulingPhase.INIT));
+            System.err.print(" " + FilterInfo.getFilterInfo(filterNode).totalItemsSent(SchedulingPhase.STEADY));
+            System.err.println(")");
+            
             break;
         }
     }

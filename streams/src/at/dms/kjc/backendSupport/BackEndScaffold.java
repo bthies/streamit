@@ -1,4 +1,4 @@
-// $Id: BackEndScaffold.java,v 1.7 2007-04-19 16:35:33 dimock Exp $
+// $Id: BackEndScaffold.java,v 1.8 2007-04-20 22:00:57 dimock Exp $
 package at.dms.kjc.backendSupport;
 
 import java.util.*;
@@ -12,22 +12,13 @@ import at.dms.kjc.KjcOptions;
  * Create code for a partitioning of {@link at.dms.kjc.slicegraph.Slice Slice}s 
  * on a collection of {@link at.dms.kjc.backendSupport.ComputeNode ComputeNode}s.
  * Connections between the ComputeNode s are returned as 
- * under-specified {@link at.dms.kjc.backendSupport.Channel Buffer}s.
+ * {@link at.dms.kjc.backendSupport.Channel Buffer}s.
  * @author dimock
- * @param <ComputeNodesType> type needs to match the one in your instance of BackEndFactory
- * @param <ComputeNodeType> type needs to match the one in your instance of BackEndFactory
- * @param <CodeStoreType> type needs to match the one in your instance of BackEndFactory
- * @param <ComputeNodeSelectorArgType> type needs to match the one in your instance of BackEndFactory
- * 
- */
-public class BackEndScaffold /*<
-ComputeNodesType extends ComputeNodesI<?>, 
-ComputeNodeType extends ComputeNode<?>, 
-CodeStoreType extends ComputeCodeStore<?>, 
-ComputeNodeSelectorArgType extends Object>*/ /*<T extends BackEndFactory>*/ {
+  */
+public class BackEndScaffold  {
     
     /** used to pass back-end factory around */
-    protected /*BackEndFactory<ComputeNodesType,ComputeNodeType,CodeStoreType, ComputeNodeSelectorArgType>*//*T*/ BackEndFactory resources;
+    protected  BackEndFactory resources;
 
     /**
      * Use in subclasses to perform work before code is created.
@@ -76,10 +67,9 @@ ComputeNodeSelectorArgType extends Object>*/ /*<T extends BackEndFactory>*/ {
      * @param computeNodes
      * @param resources The instance of BackEndFactory to be used for callbacks, data.
      */
-    public void run(BasicSpaceTimeSchedule schedule,
-            /*BackEndFactory<ComputeNodesType,ComputeNodeType,CodeStoreType, ComputeNodeSelectorArgType>*/ /*T*/BackEndFactory resources) {
+    public void run(BasicSpaceTimeSchedule schedule, BackEndFactory resources) {
    
-        ComputeNodesI/*Type*/ computeNodes = resources.getComputeNodes();
+        ComputeNodesI computeNodes = resources.getComputeNodes();
         this.resources = resources;
         
         Slice slices[];
@@ -122,7 +112,7 @@ ComputeNodeSelectorArgType extends Object>*/ /*<T extends BackEndFactory>*/ {
      * @param computeNodes The collection of compute nodes.
      */
     private void iterateInorder(Slice slices[], SchedulingPhase whichPhase,
-                                       ComputeNodesI/*Type*/ computeNodes) {
+                                       ComputeNodesI computeNodes) {
         Slice slice;
 
         for (int i = 0; i < slices.length; i++) {
@@ -151,7 +141,7 @@ ComputeNodeSelectorArgType extends Object>*/ /*<T extends BackEndFactory>*/ {
      * @param rawChip The raw chip
      */
     private void iterateJoinFiltersSplit(Slice slices[], SchedulingPhase whichPhase,
-                                                ComputeNodesI/*Type*/ computeNodes) {
+                                                ComputeNodesI computeNodes) {
         Slice slice;
 
         for (int i = 0; i < slices.length; i++) {
@@ -180,7 +170,7 @@ ComputeNodeSelectorArgType extends Object>*/ /*<T extends BackEndFactory>*/ {
     
     /** Special scheduling for --spacetime --noswpipe */
     private void iterateNoSWPipe(List<Slice> scheduleList, SchedulingPhase whichPhase,
-            ComputeNodesI/*Type*/ computeNodes) {
+            ComputeNodesI computeNodes) {
         HashSet<OutputSliceNode> hasBeenSplit = new HashSet<OutputSliceNode>();
         HashSet<InputSliceNode> hasBeenJoined = new HashSet<InputSliceNode>();
         LinkedList<Slice> scheduled = new LinkedList<Slice>();

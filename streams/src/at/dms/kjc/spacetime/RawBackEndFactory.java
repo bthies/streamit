@@ -40,7 +40,7 @@ public class RawBackEndFactory extends BackEndFactory<RawChip, RawTile, RawCompu
     }
     
     // Singleton...
-    private BackEndScaffold/*<RawChip, RawTile, RawComputeCodeStore, int[]>*//*<RawBackEndFactory>*/ scaffolding = null;
+    private BackEndScaffold scaffolding = null;
     /**
      * The converter from a Schedule to ComputeNode's with completed ComputeCodeStore's
      * and Buffer's.
@@ -48,9 +48,9 @@ public class RawBackEndFactory extends BackEndFactory<RawChip, RawTile, RawCompu
      * @see Rawify 
      * */
     @Override
-    public BackEndScaffold/*<RawChip, RawTile, RawComputeCodeStore, int[]>*//*<RawBackEndFactory>*/ getBackEndMain() {
+    public BackEndScaffold getBackEndMain() {
         if (scaffolding == null) {
-            scaffolding  = new BackEndScaffold/*<RawChip, RawTile, RawComputeCodeStore, int[]>*//*<RawBackEndFactory>*/();
+            scaffolding  = new BackEndScaffold();
         }
         return scaffolding;
     }
@@ -182,7 +182,6 @@ public class RawBackEndFactory extends BackEndFactory<RawChip, RawTile, RawCompu
      */
     @Override
     public CodeStoreHelper getCodeStoreHelper(SliceNode node) {
-        // TODO Auto-generated method stub
         return null;
     }
 }

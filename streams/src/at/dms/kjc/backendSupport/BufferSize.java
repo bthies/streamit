@@ -20,7 +20,7 @@ public class BufferSize {
      * @return
      */
     public static int calculateSize(Edge theEdge) {
-        if (theEdge.getSrc().isFilterSlice()) {  // filter->filter
+        if (theEdge.getSrc().isFilterSlice()) {  // filter->filter, filter->output
             // the init size is the max of the multiplicities for init and prime-pump
             // times the push rate
             FilterInfo fi = FilterInfo.getFilterInfo((FilterSliceNode) theEdge.getSrc());
@@ -28,11 +28,18 @@ public class BufferSize {
             // steady is just pop * mult
             return maxItems;
         } else if (theEdge.getDest().isFilterSlice()) { // joiner->filter
-            // this is not a perfect estimation but who cares
+            // calculate the maximum number of elements that we may need 
+            // upstream of a filter.
             FilterInfo fi = FilterInfo.getFilterInfo((FilterSliceNode) theEdge.getDest());
-            int maxItems = Math.max(initPop(fi), steadyPop(fi));
-            // steady is just pop * mult
-            return maxItems;
+            // on init: have calculation:
+            int initSize = fi.initItemsReceived();
+            // in steady state: max(peek, pop+remaining) if multiplicity == 1
+            // if multiplicity > 1, then account for more popped.
+            int steadySize = (fi.steadyMult - 1) * fi.pop +
+            Math.max(fi.peek, fi.pop+fi.remaining);
+            // return larger of two.
+            int maxSize = Math.max(initSize, steadySize);
+            return maxSize;
         } else {
             assert theEdge instanceof InterSliceEdge;
             int maxItems = Math.max(((InterSliceEdge)theEdge).initItems(), 
@@ -42,10 +49,11 @@ public class BufferSize {
     }
     
     /** number of items pushed during init / pre-work, prime-pump?? */
-    public static int initPush(FilterInfo fi) {
-        int items= fi.initMult;
-        items = fi.push;
-        // account for the initpush
+    private static int initPush(FilterInfo fi) {
+        int items= fi.initMult * fi.push;
+        // account for the initpush.
+        // currently overestimates if there is a preWork and it pushes
+        // less than work does.
         if (fi.push < fi.prePush) {
             items += (fi.prePush - fi.push);
         }
@@ -53,21 +61,8 @@ public class BufferSize {
     }
     
     /** number of items pushed in a steady state (takes multiplicity into account). */
-    public static int steadyPush(FilterInfo fi) {
+    private static int steadyPush(FilterInfo fi) {
         return fi.push*fi.steadyMult;
     }
     
-    /** (Somewhat innaccurate according to Gordo) number of items popped in init state. */
-    public static int initPop(FilterInfo fi) {
-        int items = fi.initMult;
-        items *= fi.pop;
-        // now account for initpop, initpeek, peek
-        items += (fi.prePeek + fi.prePop + fi.prePeek);
-        return items;
-    }
-    
-    /** number of items popped in a steady state (takes multiplicity into account). */
-    public static int steadyPop(FilterInfo fi) {
-        return fi.pop* fi.steadyMult;
-    }
 }

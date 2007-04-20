@@ -36,9 +36,7 @@ public abstract class BackEndFactory<
      * @param <...> needs same parameterization as this so as to be able to refer to this.
      */
 
-    public abstract <T 
-        extends BackEndScaffold/*<ComputeNodesType,ComputeNodeType,CodeStoreType, ComputeNodeSelectorArgType>*/
-        > T getBackEndMain();
+    public abstract <T extends BackEndScaffold> T getBackEndMain();
 
     /**
      * Process an input slice node: find the correct ProcElement(s) and add joiner code, and buffers.
@@ -160,46 +158,57 @@ public abstract class BackEndFactory<
     public abstract CodeStoreHelper getCodeStoreHelper(SliceNode node);
 
     /**
-     * Does filter need a peek buffer upstream of it?
-     * Assumes 1 filter per slice.
+     * Does slice need a buffer between its final filter and its splitter?
+     */
+    public boolean sliceNeedsPokeBuffer(Slice s) {
+        return false;
+    }
+
+    /**
+     * Does slice need a peek buffer before first filter?
+     * Really depends on where input is coming from: filter on this ComputeNode?
+     * Joiner on this ComputeNode?,  Filter on another Compute Node?  If so is there
+     * shared memory? ...
      * Answer is <b>false</b> unless bufferring is needed to deal with
      * unconsumed inputs or extra peeks.
-     * @param filter
-     * @return  whether filter needs peek buffer.
+     * @param s a Slice
+     * @return  whether first filter needs a peek buffer.
      */
-    public boolean filterNeedsPeekBuffer(FilterSliceNode filter) {
-        if (! this.sliceHasUpstreamChannel(filter.getParent())) {
+    public boolean sliceNeedsPeekBuffer(Slice s) {
+        // todo:  push this down to UniBackEndFactory.
+        if (! sliceHasUpstreamChannel(s)) {
             // first filter on a slice with no input
             return false;
         }
+        FilterSliceNode filter = s.getFilterNodes().get(0);
         FilterInfo info = FilterInfo.getFilterInfo(filter);
         if (info.noBuffer()) {
             // a filter with a 0 peek rate does not need
             // a peek buffer (is this redundant with !sliceHasUpstreamChannel ?)
             return false;
         }
-        if (! info.isSimple() || 
-                (this.sliceNeedsJoinerCode(filter.getParent()) && 
-                 Utils.hasPeeks(filter.getFilter()))) {
-            // if filter has remaining input items between steady states
-            // or if filter performs peeks and has joiner code upstream
-            // then filter needs a peek buffer.
+        if (sliceNeedsJoinerCode(filter.getParent()) && 
+                 Utils.hasPeeks(filter.getFilter())) {
+            // if filter performs peeks and has joiner code upstream
+            // then filter needs a peek buffer since it can not peek through a joiner.
             return true;
         } else {
-            return false;
+            return info.initItemsReceived() != info.initItemsNeeded;
         }
     }
 
-    /** @return true if slice has an upstream channel, false otherwise */
+    /** @return true if slice has an upstream channel that it needs to receive data from, false otherwise.
+     * May want to set false if upstream channel is to off-chip device and code for a filter controls that
+     * device, but this implementation seems a good default. */
     public boolean sliceHasUpstreamChannel(Slice s) {
         return s.getHead().getWidth() > 0;
-        // s.getHead().getNext().getAsFilter().getFilter().getInputType() != CStdType.Void;
     }
 
-    /** @return true if slice has a downstream channel, false otherwise */
+    /** @return true if slice has a downstream channel that it needs to send data to, false otherwise 
+     * May want to set false if downstream channel is to off-chip device and code for a filter controls that
+     * device, but this implementation seems a good default. */
     public boolean sliceHasDownstreamChannel(Slice s) {
         return s.getTail().getWidth() > 0;
-        //s.getTail().getPrevious().getAsFilter().getFilter().getOutputType() != CStdType.Void;
     }
 
     /**
@@ -212,16 +221,17 @@ public abstract class BackEndFactory<
     }
 
     /**
-     * Slice needs work function for a joiner if it has needs a joiner
-     * and needs a peek buffer.  (Otherwise if it needs a joiner, it can
-     * call the joiner as a function).
+     * Slice needs work function for a joiner.
+     * We distinguish this from {@link #sliceNeedsJoinerCode(Slice)} since
+     * there may need to be code generated for a joiner, but the work function may be
+     * rolled into the code for a filter.
      * 
      * @param s Slice
      * @return
      */
     public boolean sliceNeedsJoinerWorkFunction(Slice s) {
         // if needs peek buffer then needs joiner work function to transfer into peek buffer.
-        return /*this.sliceNeedsJoinerCode(s) &&*/ this.filterNeedsPeekBuffer(s.getFilterNodes().get(0));
+        return sliceNeedsPeekBuffer(s);
     }
 
     /**

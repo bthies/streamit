@@ -46,13 +46,12 @@ public class UniBackEndFactory extends BackEndFactory<
         this.processors = processors;
     }
     
-    private BackEndScaffold/*<UniProcessors, UniProcessor, UniComputeCodeStore, Integer>*//*<UniBackEndFactory>*/ scaffolding = null;
+    private BackEndScaffold scaffolding = null;
 
     @Override
-    public  BackEndScaffold/*<
-    UniProcessors, UniProcessor, UniComputeCodeStore, Integer>*//*<UniBackEndFactory>*/ getBackEndMain() {
+    public  BackEndScaffold getBackEndMain() {
         if (scaffolding == null) {
-            scaffolding  = new BackEndScaffold/*<UniProcessors, UniProcessor, UniComputeCodeStore, Integer>*//*<UniBackEndFactory>*/();
+            scaffolding  = new BackEndScaffold();
         }
         return scaffolding;
     }

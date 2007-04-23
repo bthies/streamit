@@ -29,8 +29,13 @@ public class CodeStoreHelperSimple extends CodeStoreHelper {
         }
     }
     
-    public CodeStoreHelperSimple(SliceNode node, FilterContent filter, BackEndFactory backEndBits) {
-        super(node,filter,backEndBits);
+    /**
+     * Constructor
+     * @param node          A filter slice node to wrap code for.
+     * @param backEndBits   The back end factory as a source of data and back end specific functions.
+     */
+    public CodeStoreHelperSimple(FilterSliceNode node, BackEndFactory backEndBits) {
+        super(node,node.getAsFilter().getFilter(),backEndBits);
     }
 
     /**
@@ -45,11 +50,11 @@ public class CodeStoreHelperSimple extends CodeStoreHelper {
      */
     @Override
     public JMethodDeclaration getInitStageMethod() {
-            JBlock statements = new JBlock();
-            assert sliceNode instanceof FilterSliceNode;
-            FilterContent filter = ((FilterSliceNode)sliceNode).getFilter();
+        JBlock statements = new JBlock();
+        assert sliceNode instanceof FilterSliceNode;
+        FilterContent filter = ((FilterSliceNode) sliceNode).getFilter();
 
-            // channel code before work block
+        // channel code before work block
         if (backEndBits.sliceHasUpstreamChannel(sliceNode.getParent())) {
             for (JStatement stmt : backEndBits.getChannel(
                     sliceNode.getPrevious().getEdgeToNext()).beginInitRead()) {
@@ -63,8 +68,26 @@ public class CodeStoreHelperSimple extends CodeStoreHelper {
             }
         }
         // add the calls for the work function in the initialization stage
+        if (FilterInfo.getFilterInfo((FilterSliceNode) sliceNode).isTwoStage()) {
+
+            JMethodCallExpression initWorkCall = new JMethodCallExpression(
+                    null, new JThisExpression(null), filter.getInitWork()
+                            .getName(), new JExpression[0]);
+
+            statements.addStatement(new JExpressionStatement(initWorkCall));
+
+            if (backEndBits.sliceHasUpstreamChannel(sliceNode.getParent())) {
+                for (JStatement stmt : backEndBits.getChannel(
+                        sliceNode.getPrevious().getEdgeToNext())
+                        .postPreworkInitRead()) {
+                    statements.addStatement(stmt);
+                }
+            }
+        }
+
         statements.addStatement(generateInitWorkLoop(filter));
-        // channel code afterwork block
+
+        // channel code after work block
         if (backEndBits.sliceHasUpstreamChannel(sliceNode.getParent())) {
             for (JStatement stmt : backEndBits.getChannel(
                     sliceNode.getPrevious().getEdgeToNext()).endInitRead()) {
@@ -77,27 +100,24 @@ public class CodeStoreHelperSimple extends CodeStoreHelper {
                 statements.addStatement(stmt);
             }
         }
-           
-            return new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
-                                          CStdType.Void,
-                                          initStage + uniqueID,
-                                          JFormalParameter.EMPTY,
-                                          CClassType.EMPTY,
-                                          statements,
-                                          null,
-                                          null);
+
+        return new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
+                CStdType.Void, initStage + uniqueID, JFormalParameter.EMPTY,
+                CClassType.EMPTY, statements, null, null);
     }
 
     /**
-     * Generate the loop for the work function firings in the 
-     * initialization schedule.  This does not include receiving the
-     * necessary items for the first firing.  This is handled in  
-     * {@link DirectCommunication#getInitStageMethod}.
-     * This block will generate code to receive items for all subsequent 
-     * calls of the work function in the init stage plus the class themselves. 
-     *
-     * @param filter The filter 
-     * @param generatedVariables The vars to use.
+     * Generate the loop for the work function firings in the initialization
+     * schedule. This does not include receiving the necessary items for the
+     * first firing. This is handled in
+     * {@link DirectCommunication#getInitStageMethod}. This block will generate
+     * code to receive items for all subsequent calls of the work function in
+     * the init stage plus the class themselves.
+     * 
+     * @param filter
+     *            The filter
+     * @param generatedVariables
+     *            The vars to use.
      * 
      * @return The code to fire the work function in the init stage.
      */

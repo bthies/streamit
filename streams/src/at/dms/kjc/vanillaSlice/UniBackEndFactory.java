@@ -146,7 +146,7 @@ public class UniBackEndFactory extends BackEndFactory<
     public CodeStoreHelper getCodeStoreHelper(SliceNode node) {
         if (node instanceof FilterSliceNode) {
             // simply do appropriate wrapping of calls...
-            return new CodeStoreHelperSimple(node,((FilterSliceNode)node).getFilter(),this);
+            return new CodeStoreHelperSimple((FilterSliceNode)node,this);
         } else if (node instanceof InputSliceNode) {
             // CodeStoreHelper that does not expect a work function.
             // Can we combine with above?

@@ -147,11 +147,14 @@ public class UniBackEndFactory extends BackEndFactory<
         if (node instanceof FilterSliceNode) {
             // simply do appropriate wrapping of calls...
             return new CodeStoreHelperSimple(node,((FilterSliceNode)node).getFilter(),this);
-        } else {
+        } else if (node instanceof InputSliceNode) {
             // CodeStoreHelper that does not expect a work function.
             // Can we combine with above?
-            return new CodeStoreHelperJoiner(node, this);
+            return new CodeStoreHelperJoiner((InputSliceNode)node, this);
+        } else {
+            return new CodeStoreHelperSplitter((OutputSliceNode)node,this);
         }
+        
     }
 
 }

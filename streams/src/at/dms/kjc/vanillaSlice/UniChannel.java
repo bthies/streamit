@@ -40,6 +40,9 @@ public class UniChannel  {
                             (InputSliceNode) src, UniBackEnd.backEndBits)
                             .getMethods()[0].getName();
                     c = UnbufferredPopChannel.getChannel(e, popName);
+                    for (InterSliceEdge joiner_edge : ((InputSliceNode) src).getSourceList()) {
+                        ((UnbufferredPopChannel)c).addChannelForHeaders(getOrMakeChannel(joiner_edge));
+                    }
                 } else if (!UniBackEnd.backEndBits.sliceNeedsJoinerCode(s)) {
                     // no joiner at all: delegate to the channel for InputSliceNode.
                     Channel upstream = getOrMakeChannel(((InputSliceNode) src)
@@ -68,6 +71,10 @@ public class UniChannel  {
                     ProcessOutputSliceNode.getSplitterCode((OutputSliceNode)dst,UniBackEnd.backEndBits).
                         getMethods()[0].getName();
                 c = UnbufferredPushChannel.getChannel(e,pushName);
+                for (InterSliceEdge joiner_edge : ((OutputSliceNode) dst).getDestSequence()) {
+                    ((UnbufferredPushChannel)c).addChannelForHeaders(getOrMakeChannel(joiner_edge));
+                }
+
             } else if (UniBackEnd.backEndBits.sliceHasDownstreamChannel(s)) {
                 // there is no splitter code, this channel has no effect except delegating
                 // to downstream channel.

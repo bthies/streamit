@@ -175,7 +175,7 @@ public class ProcessOutputSliceNode {
                 int i = 0;
                 for (int w : splitter.getWeights()) {
                     if (w != 0) {
-                        weightVals[i++] = new JIntLiteral(w);
+                        weightVals[i++] = new JIntLiteral(w - 1);
                     }
                 }
             }

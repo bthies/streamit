@@ -7,6 +7,7 @@ import at.dms.kjc.sir.SIREndMarker;
 import at.dms.kjc.slicegraph.FilterContent;
 import at.dms.kjc.slicegraph.SliceNode;
 import at.dms.kjc.vanillaSlice.UniChannel;
+import at.dms.util.Utils;
 
 /**
  * For creation of additional code necessary to getting filter / joiner / splitter code hooked
@@ -223,20 +224,38 @@ public abstract  class CodeStoreHelper extends MinCodeUnit {
     }
 
     /**
-     * Get some statement that calls the work function multiple times.
-     * @param mult multiplicity
-     * @return statement causing work function to be executed multiple times.
+     * Return a JBlock that iterates <b>mult</b> times the result of calling <b>getWorkFunctionCall()</b>.
+     * @param mult Number of times to iterate work function.
+     * @return as described, or <b>null</b> if <b>getWorkFunctionCall()</b> returns null;
      */
-    protected abstract JBlock getWorkFunctionBlock(int mult);
+     protected JBlock getWorkFunctionBlock(int mult) {
+        if (getWorkMethod() == null) { return null; }
+        JBlock block = new JBlock();
+        JStatement workStmt = getWorkFunctionCall();
+        JVariableDefinition loopCounter = new JVariableDefinition(null,
+                0,
+                CStdType.Integer,
+                workCounter,
+                null);
+
+        JStatement loop = 
+            Utils.makeForLoopLocalIndex(workStmt, loopCounter, new JIntLiteral(mult));
+        block.addStatement(new JVariableDeclarationStatement(null,
+                loopCounter,
+                null));
+
+        block.addStatement(loop);
+        return block;
+    }
 
     /**
        * Return the code that will call the work function once.
        * It will either be the entire function inlined or a function call.
-       * Do not call if the CodeStoreHelper does not contain a work function.
        * @see CodeStoreHelper#INLINE_WORK
-       * @return The code to execute the work function once.
+       * @return The code to execute the work function once or <b>null</b> if there is no work function.
        */
     protected JStatement getWorkFunctionCall() {
+        if (this.getWorkMethod() == null) { return null; }
           if (INLINE_WORK) {
               JBlock body = (JBlock)ObjectDeepCloner.deepCopy(this.getWorkMethod().getBody());
               if (!(body.getStatement(0) instanceof SIRBeginMarker)) {

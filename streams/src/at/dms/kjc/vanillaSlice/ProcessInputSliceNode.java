@@ -199,7 +199,7 @@ public class ProcessInputSliceNode {
                 int i = 0;
                 for (int w : joiner.getWeights()) {
                     if (w != 0) {
-                        weightVals[i++] = new JIntLiteral(w);
+                        weightVals[i++] = new JIntLiteral(w - 1);
                     }
                 }
             }

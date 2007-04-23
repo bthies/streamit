@@ -164,38 +164,4 @@ public class CodeStoreHelperSimple extends CodeStoreHelper {
         }
         return statements;
     }
-
-    /**
-     * Generate code to receive data and call the work function mult times.
-     * 
-     * @param steady if true, then steady state, if false, then primepump
-     * @param mult the work function will be called this many times.
-     * 
-     * @return code to receive data and call the work function mult times.
-     **/
-      @Override
-    protected JBlock getWorkFunctionBlock(int mult) {
-          JBlock block = new JBlock(null, new JStatement[0], null);
-          JBlock workBlock = new JBlock(null, new JStatement[0], null);
-          
-          
-          workBlock.addStatement(getWorkFunctionCall());
-              
-          //create the for loop that will execute the work function
-          //local variable for the work loop
-          JVariableDefinition loopCounter = new JVariableDefinition(null,
-                                                                    0,
-                                                                    CStdType.Integer,
-                                                                    workCounter,
-                                                                    null);
-          JStatement loop = 
-              Utils.makeForLoopLocalIndex(workBlock, loopCounter, new JIntLiteral(mult));
-      
-          block.addStatement(new JVariableDeclarationStatement(null,
-                                                               loopCounter,
-                                                               null));
-          
-          block.addStatement(loop);
-         return block;
-    }
 }

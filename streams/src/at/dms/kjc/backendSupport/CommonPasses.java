@@ -280,6 +280,8 @@ public class CommonPasses {
         
         setWorkEstimate(WorkEstimate.getWorkEstimate(str)); 
         
+        StreamItDot.printGraph(str, "after-partition.dot");
+        
         // get the execution counts from the scheduler
         HashMap[] executionCounts = SIRScheduler.getExecutionCounts(str);
         if (numCores > 1) {

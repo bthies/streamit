@@ -84,6 +84,9 @@ public class SpaceTimeBackend {
         
         numCores = rawRows * rawColumns;
 
+        //create the RawChip
+        rawChip = new RawChip(rawColumns, rawRows);
+        
         // Perform all standard optimization passes on SIR graph 
         // and convert into a Slice graph.
         CommonPasses commonPasses = new CommonPasses();
@@ -107,8 +110,6 @@ public class SpaceTimeBackend {
         
         Partitioner partitioner = commonPasses.getPartitioner();
 
-        //create the RawChip
-        rawChip = new RawChip(rawColumns, rawRows);
 
         //We have to create multilevel splits and/or joins if their width
         //is greater than the number of memories of the chip...

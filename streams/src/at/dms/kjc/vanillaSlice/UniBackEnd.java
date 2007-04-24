@@ -41,13 +41,13 @@ public class UniBackEnd {
 
         // partitioner contains information about the Slice graph.
         Partitioner partitioner = commonPasses.getPartitioner();
+
+        // guarantee that we are not going to hack properties of filters
+        FilterInfo.canUse();
         // fix any rate skew introduced in conversion to Slice graph.
         AddBuffering.doit(partitioner,false,numCores);
         // decompose any pipelines of filters in the Slice graph.
         partitioner.ensureSimpleSlices();
-
-        // guarantee tha we are not going to hack properties of filters
-        FilterInfo.canUse();
 
         // Set schedules for initialization, priming (if --spacetime), and steady state.
         SpaceTimeScheduleAndPartitioner schedule = new SpaceTimeScheduleAndPartitioner(partitioner);

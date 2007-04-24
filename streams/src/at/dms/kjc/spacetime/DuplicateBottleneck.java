@@ -40,16 +40,16 @@ public class DuplicateBottleneck {
      * to create load-balanced bins.
      *  
      * @param str The stream graph
-     * @param chip The raw chip we are targeting
+     * @param numCores The number of processors we are targeting
      * @return The modified str graph
      */
-    public SIRStream smarterDuplicateStreamline(SIRStream str, RawChip chip) {
+    public SIRStream smarterDuplicateStreamline(SIRStream str, int numCores) {
         double threshold = 0.9;
         SIRStream oldStr;
         //get the first work estimate
         WorkEstimate work = WorkEstimate.getWorkEstimate(str);
         //bin pack the shits
-        GreedyBinPacking binPacker = new GreedyBinPacking(str, chip.getTotalTiles(), work);
+        GreedyBinPacking binPacker = new GreedyBinPacking(str, numCores, work);
         binPacker.pack();
         //get the max bin weight for the packing
         int oldWork = binPacker.maxBinWeight();
@@ -102,7 +102,7 @@ public class DuplicateBottleneck {
             //get the new work estimate
             work = WorkEstimate.getWorkEstimate(str);
             //greedy bin pack the shits
-            binPacker = new GreedyBinPacking(str, chip.getTotalTiles(), work);
+            binPacker = new GreedyBinPacking(str, numCores, work);
             binPacker.pack();
             newWork = binPacker.maxBinWeight();
             newOutputsPerSteady = Util.outputsPerSteady(str, work.getExecutionCounts());
@@ -212,17 +212,17 @@ public class DuplicateBottleneck {
         }
     }
     
-    /**
-     * Use the cousins algorithm to duplicate each stateless filter.  See
-     * Asplos 06 paper for an explanation.  
-     * 
-     * This call assumes that we are compiling to a spacetime raw chip.
-     * 
-     * @param str The stream graph
-     */
-    public void smarterDuplicate(SIRStream str) {
-        smarterDuplicate(str, SpaceTimeBackend.getRawChip().getTotalTiles());
-    }
+//    /**
+//     * Use the cousins algorithm to duplicate each stateless filter.  See
+//     * Asplos 06 paper for an explanation.  
+//     * 
+//     * This call assumes that we are compiling to a spacetime raw chip.
+//     * 
+//     * @param str The stream graph
+//     */
+//    public void smarterDuplicate(SIRStream str) {
+//        smarterDuplicate(str, SpaceTimeBackend.getRawChip().getTotalTiles());
+//    }
     
     /**
      * Use the cousins algorithm specifying the number of tiles.  Duplicate each
@@ -325,10 +325,10 @@ public class DuplicateBottleneck {
      * An experimental method for data-parallelization.
      * 
      * @param str The stream graph
-     * @param chip The raw chip
+     * @param numCores The number pf processors
      * @return The modified stream graph.
      */
-    public SIRStream smartDuplication(SIRStream str, RawChip chip) {
+    public SIRStream smartDuplication(SIRStream str, int numCores) {
         percentStateless(str);
         WorkEstimate work = WorkEstimate.getWorkEstimate(str);
         WorkList workList = work.getSortedFilterWork();
@@ -342,7 +342,7 @@ public class DuplicateBottleneck {
             totalWork += filterWork;
         }
         //find the ideal work distribution
-        int idealWork = totalWork / chip.getTotalTiles();
+        int idealWork = totalWork / numCores;
         boolean change = false;
         System.out.println("Ideal Work: " + idealWork);
         

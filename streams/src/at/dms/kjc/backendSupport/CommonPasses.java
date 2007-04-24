@@ -165,7 +165,7 @@ public class CommonPasses {
             dup.percentStateless(str);
             str = FusePipelines.fusePipelinesOfStatelessStreams(str);
             StreamItDot.printGraph(str, "after-fuse-stateless.dot");
-            dup.smarterDuplicate(str);
+            dup.smarterDuplicate(str, numCores);
         } else if (KjcOptions.dup == numCores) {
             //if we want to use fine-grained parallelization
             //then set dup to be the number of tiles (cores)

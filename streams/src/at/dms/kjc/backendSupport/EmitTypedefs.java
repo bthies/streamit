@@ -46,16 +46,15 @@ public class EmitTypedefs {
                     }
                 });
             }
-            for (String v : vectorTypeDefs) {
-                p.println(v);
-            }
-            p.println(CVectorType.miscStrings());
+        }
+        for (String v : vectorTypeDefs) {
+            p.println(v);
+        }
+        p.println(CVectorType.miscStrings());
 
-            // structs
-            for (SIRStructure s : structs) {
-                p.println(CommonUtils.structToTypedef(s,false));
-            }
+        // structs
+        for (SIRStructure s : structs) {
+            p.println(CommonUtils.structToTypedef(s, false));
         }
     }
-
 }

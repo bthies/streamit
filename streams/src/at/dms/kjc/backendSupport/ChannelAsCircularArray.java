@@ -40,7 +40,10 @@ public class ChannelAsCircularArray extends ChannelAsArray {
      */
     public ChannelAsCircularArray(Edge edge) {
         super(edge);
+        // fix up buffer size to be next power of 2
         bufSize = CommonUtils.nextPow2(bufSize);
+        bufDefn = CommonUtils.makeArrayVariableDefn(bufSize,edge.getType(),bufName);
+        // create mask for anding sith offset to make modulo power of 2.
         offsetMask = bufSize - 1;
     }
     
@@ -179,7 +182,7 @@ public class ChannelAsCircularArray extends ChannelAsArray {
     public JMethodDeclaration pushMethod() {
         String valName = "__val";
         JFormalParameter val = new JFormalParameter(
-                CStdType.Integer,
+                theEdge.getType(),
                 valName);
         JLocalVariableExpression valRef = new JLocalVariableExpression(val);
         JBlock body = new JBlock();

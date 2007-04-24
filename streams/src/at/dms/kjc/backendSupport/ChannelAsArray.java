@@ -222,7 +222,7 @@ public class ChannelAsArray extends Channel {
     public JMethodDeclaration pushMethod() {
         String valName = "__val";
         JFormalParameter val = new JFormalParameter(
-                CStdType.Integer,
+                theEdge.getType(),
                 valName);
         JLocalVariableExpression valRef = new JLocalVariableExpression(val);
         JBlock body = new JBlock();

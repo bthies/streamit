@@ -16,7 +16,6 @@ public class ProcessOutputSliceNode {
     private static Map<SliceNode,Boolean>  basicCodeWritten = new WeakHashMap<SliceNode,Boolean>();
 
     /**
-<<<<<<< ProcessOutputSliceNode.java
      * Create code for a OutputSliceNode.
      * @param <T>          type of a BackEndFactory to access layout, etc.
      * @param outputNode    the OutputSliceNode that may need code generated.
@@ -156,7 +155,7 @@ public class ProcessOutputSliceNode {
                     at.dms.kjc.Constants.ACC_STATIC,
                     CStdType.Integer,
                     edge_name,
-                    new JIntLiteral(0));
+                    new JIntLiteral(size - 1));
             
             JFieldDeclaration edgeDecl = new JFieldDeclaration(edgeVar);
             JFieldAccessExpression edgeExpr = new JFieldAccessExpression(edge_name);
@@ -165,7 +164,7 @@ public class ProcessOutputSliceNode {
                     at.dms.kjc.Constants.ACC_STATIC,
                     CStdType.Integer,
                     weight_name,
-                    new JIntLiteral(size - 1));
+                    new JIntLiteral(0));
     
             JFieldDeclaration weightDecl = new JFieldDeclaration(weightVar);
             JFieldAccessExpression weightExpr = new JFieldAccessExpression(weight_name);

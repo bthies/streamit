@@ -470,7 +470,7 @@ public class FilterContent implements SIRCodeUnit {
     }
     
     /**
-     * Returns list of initialization state methods.
+     * Returns array of initialization state methods.
      */
     public JMethodDeclaration[] getPrework() {
         return prework;
@@ -607,6 +607,7 @@ public class FilterContent implements SIRCodeUnit {
 
     /**
      * Returns push amount of init stage.
+     * result may be garbage or error if !isTwoStage()
      */
     public int getPreworkPush() {
         return prework[0].getPushInt();
@@ -614,6 +615,7 @@ public class FilterContent implements SIRCodeUnit {
 
     /**
      * Returns pop amount of init stage.
+     * result may be garbage or error if !isTwoStage()
      */
     public int getPreworkPop() {
         return prework[0].getPopInt();
@@ -621,6 +623,7 @@ public class FilterContent implements SIRCodeUnit {
 
     /**
      * Returns peek amount of init stage.
+     * result may be garbage or error if !isTwoStage()
      */
     public int getPreworkPeek() {
         return prework[0].getPeekInt();
@@ -643,6 +646,7 @@ public class FilterContent implements SIRCodeUnit {
     
     /**
      * Returns init-work method declaration.
+     * result may be garbage or error if !isTwoStage()
      */
     public JMethodDeclaration getInitWork() {
         return prework[0];
@@ -650,6 +654,7 @@ public class FilterContent implements SIRCodeUnit {
     
     /**
      * Set the init work of this filter to meth.
+     * result may be garbage or error if !isTwoStage()
      * 
      * @param meth The new init work method.
      */

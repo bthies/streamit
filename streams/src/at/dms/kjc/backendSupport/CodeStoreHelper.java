@@ -67,7 +67,7 @@ public abstract  class CodeStoreHelper extends MinCodeUnit {
                 initMethod = getMethods()[i];
             } else if (filter.getMethods()[i] == filter.getWork()) {
                 workMethod = getMethods()[i];
-            } else if (filter.getMethods()[i] == filter.getInitWork()) {
+            } else if (filter.isTwoStage() && filter.getMethods()[i] == filter.getInitWork()) {
                 preWorkMethod = getMethods()[i];
             }
         }

@@ -83,4 +83,11 @@ public class FileOutputContent extends OutputContent {
     {
         return getInputType().isFloatingPoint();
     }
+    
+    /**
+     * Create kopi code that when translated to C will manipulate the file.
+     */
+    public void createContent() {
+    }
+
 }

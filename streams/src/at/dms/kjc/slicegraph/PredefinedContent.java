@@ -14,7 +14,7 @@ import at.dms.kjc.sir.linear.*;
  * filters.
  * @author jasperln
  */
-public class PredefinedContent extends FilterContent {
+public abstract class PredefinedContent extends FilterContent {
     /**
      * Copy constructor for PredefinedContent.
      * @param content The PredefinedContent to copy.
@@ -38,4 +38,10 @@ public class PredefinedContent extends FilterContent {
     public PredefinedContent(UnflatFilter unflat) {
         super(unflat);
     }
+    
+    /**
+     * Subclasses of {@link  PredefinedContent} must be able to create their content.
+     * (fields, methods, work function if appropriate, multiplicities, rates)
+     */
+    public abstract void createContent();
 }

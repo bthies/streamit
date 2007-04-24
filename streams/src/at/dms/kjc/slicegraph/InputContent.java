@@ -12,7 +12,7 @@ import at.dms.kjc.sir.*;
  * and can hold code common for predefined input.
  * @author jasperln
  */
-public class InputContent extends PredefinedContent {
+public abstract class InputContent extends PredefinedContent {
     /**
      * Copy constructor for InputContent.
      * @param content The InputContent to copy.
@@ -36,4 +36,6 @@ public class InputContent extends PredefinedContent {
     public InputContent(UnflatFilter unflat) {
         super(unflat);
     }
+    
+    public abstract void createContent();
 }

@@ -63,4 +63,11 @@ public class FileInputContent extends InputContent {
     public CType getType() {
         return getOutputType();
     }
+    
+
+    /**
+     * Create kopi code that when translated to C will manipulate the file.
+     */
+    public void createContent() {
+    }
 }

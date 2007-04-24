@@ -12,7 +12,7 @@ import at.dms.kjc.sir.linear.*;
  * and can hold code common for predefined output.
  * @author jasperln
  */
-public class OutputContent extends PredefinedContent {
+public abstract class OutputContent extends PredefinedContent {
     /**
      * Copy constructor for OutputContent.
      * @param content The OutputContent to copy.
@@ -36,4 +36,6 @@ public class OutputContent extends PredefinedContent {
     public OutputContent(UnflatFilter unflat) {
         super(unflat);
     }
+    
+    public abstract void createContent();
 }

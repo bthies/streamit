@@ -677,4 +677,18 @@ public abstract class Partitioner {
             bottleNeckFilter.put(ss,ss.getBody());
         }
     }
+    
+    /**
+     * Force creation of kopi methods and fields for predefined filters.
+     */
+    public void createPredefinedContent() {
+        for (Slice s : getSliceGraph()) {
+            for (FilterSliceNode n : s.getFilterNodes()) {
+                if (n.getFilter() instanceof PredefinedContent) {
+                    ((PredefinedContent)n.getFilter()).createContent();
+                }
+            }
+        }
+
+    }
 }

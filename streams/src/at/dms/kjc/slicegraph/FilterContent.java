@@ -22,27 +22,29 @@ import at.dms.kjc.spacetime.SafeFileReaderWriterPositions;
  * @author jasperln
  */
 public class FilterContent implements SIRCodeUnit {
-    /** Unique id used in new name if one FilterContent created from another. */
+    /** Static unique id used in new name if one FilterContent created from another. */
     private static int unique_ID = 0; 
+    /** The unique id given to this FilterContent for use in constructing names */
+    protected int my_unique_ID;
     /** Filter name */
     private String name; 
     /** PreWork and Work method declarations */
-    private JMethodDeclaration[] prework,steady; 
+    protected JMethodDeclaration[] prework,steady; 
     /** Input and output types */
-    private CType inputType,outputType; 
+    protected CType inputType,outputType; 
     /** Multiplicities from scheduler */
     private int initMult, steadyMult; 
     /** Other method declarations */
     private JMethodDeclaration[] methods;
-    /** Init function for two-stage filters */
-    private JMethodDeclaration initFunction; 
+    /** Init function for filter */
+    protected JMethodDeclaration initFunction; 
     /** Is true when two-stage filter */
     private boolean is2stage; 
     /** Field declarations */  
     private JFieldDeclaration[] fields; 
-    /** For all filters, the pop count **/
+    /** For linear filters, the pop count **/
     private int popCount;
-    /** For all filters, the peek count **/
+    /** For linear filters, the peek count **/
     private int peek;
 
     /////////////////////////
@@ -72,7 +74,8 @@ public class FilterContent implements SIRCodeUnit {
      * @param content The FilterContent to copy.
      */
     public FilterContent(FilterContent content) {
-        name = content.name + unique_ID++;
+        my_unique_ID = unique_ID++;
+        name = content.name + my_unique_ID;
         prework = content.prework;
         steady  =  content.steady;
         inputType = content.inputType;
@@ -100,6 +103,7 @@ public class FilterContent implements SIRCodeUnit {
      * @param filter SIRPhasedFilter to construct from.
      */
     public FilterContent(SIRPhasedFilter filter) {
+        my_unique_ID = unique_ID++;
         name = filter.getName();
         prework = filter.getInitPhases();
         steady = filter.getPhases();
@@ -137,6 +141,7 @@ public class FilterContent implements SIRCodeUnit {
                     unflat.steadyMult + " steadyMult");
         }
         
+        my_unique_ID = unique_ID++;
         name = filter.getName();
         inputType = filter.getInputType();
         outputType = filter.getOutputType();
@@ -669,6 +674,17 @@ public class FilterContent implements SIRCodeUnit {
         throw new AssertionError("should not call");
     }
 
+    /** but subclasses can add fields */
+    protected void addAField(JFieldDeclaration field) {
+        JFieldDeclaration[] newFields = 
+            new JFieldDeclaration[fields.length + 1];
+        for (int i=0; i<fields.length; i++) {
+            newFields[i] = fields[i];
+        }
+        newFields[fields.length] = field;
+        this.fields = newFields;
+    }
+    
     /**
      * Method exists to allow SIRCodeUnit interface but should not be called.
      */
@@ -683,6 +699,17 @@ public class FilterContent implements SIRCodeUnit {
         throw new AssertionError("should not call");
     }
 
+    /** but subclasses can add methods */
+    protected void addAMethod(JMethodDeclaration method) {
+        JMethodDeclaration[] newMethods = 
+            new JMethodDeclaration[methods.length + 1];
+        for (int i=0; i<methods.length; i++) {
+            newMethods[i] = methods[i];
+        }
+        newMethods[methods.length] = method;
+        this.methods = newMethods;
+    }
+    
     /**
      * Method exists to allow SIRCodeUnit interface but should not be called.
      */

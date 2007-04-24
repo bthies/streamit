@@ -3,8 +3,7 @@ package at.dms.kjc.vanillaSlice;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.*;
 import at.dms.kjc.backendSupport.*;
-import at.dms.kjc.slicegraph.DataFlowOrder;
-import at.dms.kjc.slicegraph.Partitioner;
+import at.dms.kjc.slicegraph.*;
 import at.dms.kjc.spacetime.AddBuffering;
 import at.dms.kjc.spacetime.BasicGenerateSteadyStateSchedule;
 import at.dms.kjc.common.CodegenPrintWriter;
@@ -41,8 +40,9 @@ public class UniBackEnd {
 
         // partitioner contains information about the Slice graph.
         Partitioner partitioner = commonPasses.getPartitioner();
-
-        // guarantee that we are not going to hack properties of filters
+        // Create code for predefined content: file readers, file writers.
+        partitioner.createPredefinedContent();
+        // guarantee that we are not going to hack properties of filters in the future
         FilterInfo.canUse();
         // fix any rate skew introduced in conversion to Slice graph.
         AddBuffering.doit(partitioner,false,numCores);
@@ -80,13 +80,12 @@ public class UniBackEnd {
         BackEndScaffold top_call = backEndBits.getBackEndMain();
         top_call.run(schedule, backEndBits);
 
-        /** Dump graphical representation */
+        // Dump graphical representation
         DumpSlicesAndChannels.dumpGraph("slicesAndChannels.dot", partitioner, backEndBits);
         
         /*
          * Emit code to structs.h
          */
-        
         String outputFileName = "structs.h";
         try {
             CodegenPrintWriter p = new CodegenPrintWriter(new BufferedWriter(new FileWriter(outputFileName, false)));

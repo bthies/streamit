@@ -1,0 +1,86 @@
+<benchmark>
+<name>asplos06</name>
+  <desc>Benchmarks for Asplos'06 paper</desc>
+  <description>
+These are variants of benchmarks occurring elsewhere in the benchmark suite.
+
+To compile and execute these benchmarks under thre regression test software, 
+rename this file to benchmark.xml in your directory.
+
+Need extension of regression test to verify against file output.
+  </description>
+  <implementations>
+    <impl lang="StreamIt" 
+     id="beamformer1" dir="beamformer/streamit/" iters="1000">
+       <file class="source">BeamFormer1.str</file>
+    </impl>
+    <impl lang="StreamIt" 
+     id="bitonicsort2" dir="bitonic-sort/streamit/" iters="1000">
+       <file class="source">BitonicSort2.str</file>
+       <file class="data" relative="true">../input/BitonicSort2.in</file>
+    </impl>
+    <impl lang="StreamIt" 
+     id="channelvocoder" dir="channelvocoder/streamit/" iters="1000">
+       <file class="source">ChannelVocoder7.str</file>
+       <file class="data" relative="true">../input/input</file>
+    </impl>
+    <impl lang="StreamIt" 
+     id="dct2" dir="dct/streamit/" iters="10000">
+       <file class="source">DCT2.str</file>
+       <file class="data" relative="true">../input/idct-input-small.bin</file>
+    </impl>
+    <impl lang="StreamIt" 
+     id="des2" dir="des/streamit/" iters="1000">
+       <file class="source">DES2.str</file>
+       <file class="data" relative="true">../input/input</file>
+    </impl>
+    <impl lang="StreamIt" 
+     id="fft5" dir="fft/streamit/" iters="1000">
+       <file class="source">FFT5.str</file>
+       <file class="data" relative="true">../input/FFT5.in</file>
+    </impl>
+    <impl lang="StreamIt" 
+     id="filterbank6" dir="filterbank/streamit/" iters="1000">
+       <file class="source">FilterBank6.str</file>
+       <file class="data" relative="true">../input/input</file>
+    </impl>
+    <impl lang="StreamIt" 
+     id="fmradio5" dir="fm/streamit/" iters="1000">
+       <file class="source">FMRadio5.str</file>
+       <file class="data" relative="true">../input/input</file>
+    </impl>
+    <impl lang="StreamIt" 
+     id="mpegdecoder_nomessage_5_3" dir="mpeg2/streamit/" iters="1000">
+       <file class="source">MPEGdecoder_nomessage_5_3.str</file>
+       <file class="data" relative="true">../input/dec_nm_parsed.int</file>
+    </impl>
+    <impl lang="StreamIt" 
+     id="serpent_full" dir="serpent_full/streamit/" iters="1000">
+       <file class="source">Serpent_full.str</file>
+       <file class="data" relative="true">../input/input</file>
+    </impl>
+    <impl lang="StreamIt" 
+     id="tde_pp" dir="tde_pp/streamit/" iters="1">
+       <file class="source">tde_pp.str</file>
+       <file class="data" relative="true">../input/tde_pp.in</file>
+    </impl>
+    <impl lang="StreamIt" 
+     id="vocoder" dir="vocoder/streamit/" iters="1000">
+       <file class="source">VocoderTopLevel.str</file>
+    </impl>
+<!--
+    <impl lang="StreamIt" 
+     id="vocoder2" dir="vocoder/streamit/" iters="1000">
+       <file class="source">VocoderExample2.str</file>
+    </impl>
+    <impl lang="StreamIt" 
+     id="vocoder4" dir="vocoder/streamit/" iters="1000">
+       <file class="source">VocoderExample4.str</file>
+    </impl>
+    <impl lang="StreamIt" 
+     id="vocoder5" dir="vocoder/streamit/" iters="1000">
+       <file class="source">VocoderExample5.str</file>
+    </impl>
+-->
+  </implementations>
+</benchmark>

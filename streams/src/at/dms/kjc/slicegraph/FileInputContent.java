@@ -112,6 +112,7 @@ public class FileInputContent extends InputContent {
                                                                  file.getVariable().getIdent()),
                                       fopen);
     
+        initBlock.addStatement(new JExpressionStatement(null, fass, null));
         // do some standard C error checking here.
         // do we need to put this in a separate method to allow subclass to override?
         initBlock.addStatement(new JExpressionStatement(
@@ -122,8 +123,6 @@ public class FileInputContent extends InputContent {
                                 file.getVariable().getIdent()),
                         " == NULL) { perror(\"error opening "+ filename + "\"); }"
                 })));
-        //set this as the init function...
-        initBlock.addStatement(new JExpressionStatement(null, fass, null));
         //set this as the init function...
         JMethodDeclaration initMethod = new JMethodDeclaration(null,
                 at.dms.kjc.Constants.ACC_PUBLIC,

@@ -2,6 +2,7 @@ package at.dms.kjc.vanillaSlice;
 
 import java.util.*;
 import at.dms.kjc.*;
+import at.dms.kjc.sir.*;
 import at.dms.kjc.backendSupport.*;
 import at.dms.kjc.slicegraph.*;
 import at.dms.util.Utils;
@@ -136,7 +137,10 @@ public class CodeStoreHelperSimple extends CodeStoreHelper {
 //                                       new JStringLiteral(null, filter.getName() + " firing (init)."),
 //                                       null));
 //        }
-    
+
+        if (workBlock == null) {
+            workBlock = new SIRBeginMarker("Empty Work Block!!");
+        }
         block.addStatement(workBlock);
     
         //return the for loop that executes the block init - 1

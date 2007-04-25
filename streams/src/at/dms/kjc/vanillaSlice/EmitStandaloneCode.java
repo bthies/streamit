@@ -51,7 +51,8 @@ public class EmitStandaloneCode extends EmitCode {
      * 
      */
     public void generateCHeader(CodegenPrintWriter p) {
-        p.println("#include <math.h>");
+        p.println("#include <math.h>");     // in case math functions
+        p.println("#include <stdio.h>");    // in case of FileReader / FileWriter
         p.println("#include \"structs.h\"");
         p.newLine();
         p.println("int " + UniBackEndFactory.iterationBound + ";");

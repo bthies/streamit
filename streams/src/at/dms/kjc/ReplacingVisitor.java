@@ -786,7 +786,7 @@ public class ReplacingVisitor extends EmptyAttributeVisitor {
                 if (newExp!=null && newExp!=parts[i]) {
                     parts[i] = newExp;
                 } else {
-                    assert parts[i] instanceof String || parts[i] instanceof CType;
+                    assert parts[i] instanceof String || parts[i] instanceof CType || parts[i] instanceof JExpression;
                 }
             }
         }

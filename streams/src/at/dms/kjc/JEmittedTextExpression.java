@@ -34,6 +34,9 @@ public class JEmittedTextExpression extends JExpression {
         return parts;
     }
     
+    /** for cloner only */
+    protected JEmittedTextExpression() {}
+    
     /** create with a text string */
     public JEmittedTextExpression(String text) {
         this.parts = new Object[]{text};
@@ -72,6 +75,23 @@ public class JEmittedTextExpression extends JExpression {
     @Override
     public void genCode(CodeSequence code, boolean discardValue) {
         throw new UnsupportedOperationException();
+    } 
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.JEmittedTextExpression other = new at.dms.kjc.JEmittedTextExpression();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
     }
 
+    /** Clones all fields of this into <pre>pre</pre>other</pre> */
+    protected void deepCloneInto(at.dms.kjc.JEmittedTextExpression other) {
+        super.deepCloneInto(other);
+        other.parts = (java.lang.Object[])at.dms.kjc.AutoCloner.cloneToplevel(this.parts);
+        other.type = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.type);
+    }
+
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

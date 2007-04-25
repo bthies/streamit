@@ -3,8 +3,7 @@ package at.dms.kjc.slicegraph;
 import at.dms.kjc.CType;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.*;
-import java.util.*;
-import at.dms.kjc.sir.linear.*;
+import at.dms.kjc.common.*;
 
 /**
  * Predefined FilterContent for file input.
@@ -67,22 +66,29 @@ public class FileInputContent extends InputContent {
 
     /**
      * Create kopi code that when translated to C will manipulate the file.
+     * The C file will need to include <stdio.h>
      * current version handles int and floating point only.
      * Should be expanded to handle structs and arrays.
      */
     public void createContent() {
+        // on entry: 
+        // name is set to something reasonable
+        // input and output types set correctly
+        // bogus init function exists
+        // bogus work function exists
+        // methods set to the two bogus functions.
+        
+        // push rate referred to in a few places.
         int pushrate = 1;
         
-        String fileVar = this.getName() + "_v";
+        String fileVar = "_fileReader_" + my_unique_ID;
         
-        this.inputType = CStdType.Void;
-
         //create fields
         JFieldDeclaration file = 
             new JFieldDeclaration(null,
                                   new JVariableDefinition(null,
                                                           0,
-                                                          CStdType.Integer,
+                                                          new CEmittedTextType("FILE *"),
                                                           fileVar,
                                                           null),
                                   null, null);
@@ -106,6 +112,17 @@ public class FileInputContent extends InputContent {
                                                                  file.getVariable().getIdent()),
                                       fopen);
     
+        // do some standard C error checking here.
+        // do we need to put this in a separate method to allow subclass to override?
+        initBlock.addStatement(new JExpressionStatement(
+                new JEmittedTextExpression(new Object[]{
+                        "if (",
+                        new JFieldAccessExpression(
+                                new JThisExpression(null),
+                                file.getVariable().getIdent()),
+                        " == NULL) { perror(\"error opening "+ filename + "\"); }"
+                })));
+        //set this as the init function...
         initBlock.addStatement(new JExpressionStatement(null, fass, null));
         //set this as the init function...
         JMethodDeclaration initMethod = new JMethodDeclaration(null,
@@ -117,20 +134,13 @@ public class FileInputContent extends InputContent {
                 initBlock,
                 null,
                 null);
-        this.addAMethod(initMethod);
         this.initFunction = initMethod;
         
         //create work function
         JBlock workBlock = new JBlock(null, new JStatement[0], null);
-    
-        JVariableDefinition value = new JVariableDefinition(null,
-                                                            0,
-                                                            getOutputType(),
-                                                            "__value__" + my_unique_ID,
-                                                            null);
-        workBlock.addStatement
-            (new JVariableDeclarationStatement(null, value, null));
-    
+        ALocalVariable tmp = ALocalVariable.makeTmp(getOutputType());
+        workBlock.addStatement(tmp.getDecl());
+        
         // RMR { support ascii or binary file operations for reading
         JMethodCallExpression fileio;
 
@@ -143,7 +153,7 @@ public class FileInputContent extends InputContent {
             fscanfParams[1] = new JStringLiteral(null,
                                                  getOutputType().isFloatingPoint() ?
                                                  "%f\\n" : "%d\\n");
-            fscanfParams[2] = new JLocalVariableExpression(null, value);
+            fscanfParams[2] = tmp.getRef();
             
             //fscanf call
             JMethodCallExpression fscanf = 
@@ -160,7 +170,7 @@ public class FileInputContent extends InputContent {
             // the first parameter: &(variable); treat the & operator as a function call
             JExpression[] addressofParameters = new JExpression[1];
             
-            addressofParameters[0] = new JLocalVariableExpression(null, value);
+            addressofParameters[0] = tmp.getRef();
             
             JMethodCallExpression addressofCall =
                 new JMethodCallExpression(null, "&", addressofParameters);
@@ -202,8 +212,7 @@ public class FileInputContent extends InputContent {
         workBlock.addStatement(new JExpressionStatement(null, fileio, null));
     
         SIRPushExpression push = 
-            new SIRPushExpression(new JLocalVariableExpression(null, value), 
-                                  getOutputType());
+            new SIRPushExpression(tmp.getRef(), getOutputType());
         
         workBlock.addStatement(new JExpressionStatement(null, push, null));
 
@@ -219,8 +228,9 @@ public class FileInputContent extends InputContent {
         workMethod.setPop(0);
         workMethod.setPeek(0);
         workMethod.setPush(pushrate);
-        this.addAMethod(workMethod);
         this.steady = new JMethodDeclaration[]{workMethod};
+        // discard old dummy methods and set up the new ones.
+        this.setTheMethods(new JMethodDeclaration[]{initMethod,workMethod});
     }
 
     

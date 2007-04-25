@@ -17,6 +17,10 @@ public class CEmittedTextType extends CType {
         super(typeId);
     }
 
+    public CEmittedTextType(String typeString) {
+        this.parts = new Object[]{typeString};
+    }
+     
     public CEmittedTextType(Object[] parts) {
         for (Object part : parts) {
             assert part instanceof String
@@ -66,4 +70,22 @@ public class CEmittedTextType extends CType {
         return java.util.Arrays.toString(parts);
     }
 
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.CEmittedTextType other = new at.dms.kjc.CEmittedTextType();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
+
+    /** Clones all fields of this into <pre>pre</pre>other</pre> */
+    protected void deepCloneInto(at.dms.kjc.CEmittedTextType other) {
+        super.deepCloneInto(other);
+        other.parts = (java.lang.Object[])at.dms.kjc.AutoCloner.cloneToplevel(this.parts);
+    }
+
+
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

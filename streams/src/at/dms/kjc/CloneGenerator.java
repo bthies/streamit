@@ -358,6 +358,7 @@ public class CloneGenerator {
         "at.dms.kjc.CConstructorContext",
         "at.dms.kjc.CContext",
         "at.dms.kjc.CDoubleType",
+        "at.dms.kjc.CEmittedTextType",
         "at.dms.kjc.CExpressionContext",
         //"at.dms.kjc.CExpressionError", -- ignore the error classes
         "at.dms.kjc.CField",
@@ -434,6 +435,7 @@ public class CloneGenerator {
         "at.dms.kjc.JDivideExpression",
         "at.dms.kjc.JDoStatement",
         "at.dms.kjc.JDoubleLiteral",
+        "at.dms.kjc.JEmittedTextExpression",
         "at.dms.kjc.JEmptyStatement",
         "at.dms.kjc.JEqualityExpression",
         "at.dms.kjc.JExpression",

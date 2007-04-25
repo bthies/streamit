@@ -733,6 +733,15 @@ public class FilterContent implements SIRCodeUnit {
     }
     
     /**
+     * Allow subclasses to replace methods array
+     */
+    protected void setTheMethods(JMethodDeclaration[] methods) {
+        this.methods = methods;
+    }
+    
+    
+    
+    /**
      * Returns list of paramters.
      
     public List getParams() {

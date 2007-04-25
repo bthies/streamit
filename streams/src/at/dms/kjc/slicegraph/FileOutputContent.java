@@ -5,6 +5,7 @@ import at.dms.kjc.sir.*;
 import at.dms.kjc.*;
 import java.util.*;
 import at.dms.kjc.sir.linear.*;
+import at.dms.kjc.common.*;
 
 /**
  * Predefined FilterContent for file output.
@@ -86,9 +87,17 @@ public class FileOutputContent extends OutputContent {
     
     /**
      * Create kopi code that when translated to C will manipulate the file.
+     * The C file will need to include <stdio.h>
      */
     public void createContent() {
-        String fileVar = this.getName() + "_v";
+        // on entry: 
+        // name is set to something reasonable
+        // input and output types set correctly
+        // bogus init function exists
+        // bogus work function exists
+        // methods set to the two bogus functions.
+ 
+        String fileVar = "_fileWriter_" + my_unique_ID;
 
         this.outputType = CStdType.Void;
 
@@ -97,7 +106,7 @@ public class FileOutputContent extends OutputContent {
             new JFieldDeclaration(null,
                                   new JVariableDefinition(null,
                                                           0,
-                                                          CStdType.Integer,
+                                                          new CEmittedTextType("FILE *"),
                                                           fileVar,
                                                           null),
                                   null, null);
@@ -124,6 +133,17 @@ public class FileOutputContent extends OutputContent {
                                       fopen);
     
         initBlock.addStatement(new JExpressionStatement(null, fass, null));
+        
+        // do some standard C error checking here.
+        // do we need to put this in a separate method to allow subclass to override?
+        initBlock.addStatement(new JExpressionStatement(
+                new JEmittedTextExpression(new Object[]{
+                        "if (",
+                        new JFieldAccessExpression(
+                                new JThisExpression(null),
+                                file.getVariable().getIdent()),
+                        " == NULL) { perror(\"error opening "+ filename + "\"); }"
+                })));
         //set this as the init function...
         JMethodDeclaration initMethod = new JMethodDeclaration(null,
                 at.dms.kjc.Constants.ACC_PUBLIC,
@@ -134,13 +154,15 @@ public class FileOutputContent extends OutputContent {
                 initBlock,
                 null,
                 null);
-        this.addAMethod(initMethod);
         this.initFunction = initMethod;
     
         //create work function
         JBlock workBlock = new JBlock(null, new JStatement[0], null);
     
         SIRPopExpression pop = new SIRPopExpression(getInputType());
+        ALocalVariable tmp = ALocalVariable.makeTmp(getInputType());
+        workBlock.addStatement(tmp.getDecl());
+        workBlock.addStatement(new JExpressionStatement(new JAssignmentExpression(tmp.getRef(),pop)));
     
     
         // RMR { support ascii or binary file operations for reading
@@ -154,7 +176,7 @@ public class FileOutputContent extends OutputContent {
             fprintfParams[1] = new JStringLiteral(null,
                                                   getInputType().isFloatingPoint() ?
                                                   "%f\\n" : "%d\\n");
-            fprintfParams[2] = pop;
+            fprintfParams[2] = tmp.getRef();
             
             JMethodCallExpression fprintf = 
                 new JMethodCallExpression(null, new JThisExpression(null),
@@ -163,13 +185,14 @@ public class FileOutputContent extends OutputContent {
             fileio = fprintf;
         }
         else {
+            
             // create the params for fwrite(&variable, sizeof(type), 1, file)
             JExpression[] fwriteParams = new JExpression[4];
             
             // the first parameter: &(variable); treat the & operator as a function call
             JExpression[] addressofParameters = new JExpression[1];
             
-            addressofParameters[0] = pop;
+            addressofParameters[0] = tmp.getRef();
             
             JMethodCallExpression addressofCall =
                 new JMethodCallExpression(null, "&", addressofParameters);
@@ -211,7 +234,7 @@ public class FileOutputContent extends OutputContent {
 
         workBlock.addStatement(new JExpressionStatement(null, fileio, null));
         
-        JMethodDeclaration workFunction = new JMethodDeclaration(null,
+        JMethodDeclaration workMethod = new JMethodDeclaration(null,
                 at.dms.kjc.Constants.ACC_PUBLIC,
                 CStdType.Void,
                 "work_filewrite" + my_unique_ID ,
@@ -221,11 +244,12 @@ public class FileOutputContent extends OutputContent {
                 null,
                 null);
 
-        workFunction.setPop(1);
-        workFunction.setPeek(1);
-        workFunction.setPush(0);
-        this.addAMethod(workFunction);
-        this.steady = new JMethodDeclaration[]{workFunction};
+        workMethod.setPop(1);
+        workMethod.setPeek(1);
+        workMethod.setPush(0);
+        this.steady = new JMethodDeclaration[]{workMethod};
+        // discard old dummy methods and set up the new ones.
+        this.setTheMethods(new JMethodDeclaration[]{initMethod,workMethod});
     }
 
 }

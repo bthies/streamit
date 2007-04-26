@@ -168,7 +168,6 @@ void->void pipeline mosaic{
     int winWidth  = imageWidth - patchsize - startx - 1; 
 	int winHeight = imageHeight - patchsize - starty - 1;
 	int corrWindowSize = 25;
-	bestFeatures nullItem;
 	//  initial work
 	
 	add fileRead();
@@ -220,6 +219,7 @@ void->void pipeline mosaic{
 				featureListPair fLP;
 				imageAndFeatures iAF1;			
 				imageAndFeatures iAF2;			
+				bestFeatures nullItem;
 
 				work pop 1 push 2{
 					fLP = pop();

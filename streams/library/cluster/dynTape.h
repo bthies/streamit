@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 by the Massachusetts Institute of Technology.
+ * Copyright 2007 by the Massachusetts Institute of Technology.
  *
  * Permission to use, copy, modify, and distribute this
  * software and its documentation for any purpose and without
@@ -15,13 +15,14 @@
  */
 #ifndef __DYNTAPE
 #define __DYNTAPE
-#include <stdlib.h>		// malloc
-#include <string.h>		// memcpy
-
+#include <cstdlib>	// malloc
+#include <string>	// memcpy
+#include <cassert>      // assert
+#include <cstdarg>      // va_* macros
 /**
  * Representation of a tape as a dynamic buffer that can grow to meet
  * demands of upstream end.  Created with a pointer to the upstream work
- * function.
+ * function so that the buffer may be filled on demand.
  *
  * If the upstream worker tries to push more items than the buffer can fit,
  * the buffer will be expanded to accomodate them.
@@ -34,37 +35,61 @@
  * the caller's size estimate by 1.  
  * head == tail                ==> buffer is empty
  * head == tail -1  mod size   ==> buffer is full
+ *
+ * The program actually uses varargs for an arbitrary number of work functions
+ * this is to allow variable rates to joiners so long as all connections to
+ * the joiner are variable rate.
+ */
+
+/* Implementation note: buffer size is always power of 2 in number of elements
+ * because &= is less expensive than %=.  If this creates too much waste, 
+ * make a subclass to use %=.
  */
 
 template <class T>
 class dynTape {
+  typedef void (*worker_type)(int); 
+
   T* bufp;			/* pointer to buffer */
   int size;			/* current buffer size, power of 2, > 1 */
   int mask;			/* mask for modular arithmetic == size - 1 */
   int head;			/* position to push. */
   int tail;			/* position to pop */
-  void (*worker)(int);		/* upstream work function */
+  int num_workers;	        /* number of functions to call upstream */
+  worker_type* workers;         /* upstream work functions */
 
 public:
  
   /**
    * Constructor: pass initial size estimate, and pass the upstream
-   * work function.
+   * work function(s).
    */
-  dynTape(int _size, void(*f)(int)) {
+  dynTape(int _size, int _num_workers, worker_type f, ...) {
     size = p2ceil(_size + 1);	// power of 2 && >= _size && > 1
     mask = size - 1;		// mask: all 1 bits.
     bufp = (T*)malloc(size * sizeof(T));	
     head = 0;			// head == tail ==> buffer is empty
     tail = 0;
-    worker = f;
 
+    assert (_num_workers > 0);
+    num_workers = _num_workers;
+    workers = (worker_type*)malloc(num_workers * sizeof(worker_type));
+    va_list va;
+    va_start(va,f);
+    
+    workers[0] = f;
+    for (int i = 1; i < _num_workers; i++) {
+      workers[i] = va_arg(va, void (*)(int));  
+    }
+    va_end(va);
   }
 
 
   /**
    * Default constructor if declared but not initialized.
    * Always use other constructor before using a dynTape.
+   * This constructor was once used for creating a place holder.
+   * TODO: Remove when no longer needed.
    */
   dynTape() {
   }
@@ -87,18 +112,37 @@ public:
    */
   inline T pop() {
     while (head == tail) {	// while buffer empty
-      (*worker)(1);		// 1 steady state of upstream work
+      for (int i = 0; i < num_workers; i++) {
+      (*(workers[i]))(1);	// 1 steady state of upstream work
+      }
     }
     T tmp = bufp[tail++];
     tail &= mask;
     return tmp;
   }
 
+  /**
+   * pop N elements from buffer
+   */
+  inline void popN(int n) {
+    for (int i = 0; i < n; i++) {
+        while (head == tail) {	// while buffer empty
+	  for (int i = 0; i < num_workers; i++) {
+	    (*(workers[i]))(1);	// 1 steady state of upstream work
+	  }
+	}
+	tail++;
+	tail &= mask;
+    }
+  }
+
   inline T peek(int n) {
     // make sure sufficient in buffer.
     while ((head >= tail && head - tail <= n)
 	   || size - tail + head <= n) {
-      (*worker)(1);		// 1 steady state of upstream work
+      for (int i = 0; i < num_workers; i++) {
+      (*(workers[i]))(1);	// 1 steady state of upstream work
+      }
     } 
     return bufp[(tail + n) & mask];
   }
@@ -126,6 +170,9 @@ private:
   void makeRoom() {
     int newSize = size * 2;	// maintain size == power of 2
     T* newBufp = (T*)malloc(newSize * sizeof(T));
+    if (newBufp ==0) {
+      perror("malloc returned 0 in dynTape");
+    }
     int afterCopy = 0;
     /* copy tail to end.  if head == size - 1 then copy one too many.*/
     memcpy(newBufp, &(bufp[tail]), (size - tail) * sizeof(T));

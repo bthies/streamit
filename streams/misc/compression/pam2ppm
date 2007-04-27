@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# This script converts a PAM file to a PPM file, viewable with xv.
+#
+if [ $# -ne 1 ]
+then
+  echo "Usage: pam2ppm input-file.pam"
+  exit $E_BADARGS
+fi
+
+export LD_LIBRARY_PATH=/projects/streamit/tools/pam-viewer
+
+/projects/streamit/tools/pam-viewer/pamtotga $1 > $1.tga
+tgatoppm $1.tga > $1.tga.ppm

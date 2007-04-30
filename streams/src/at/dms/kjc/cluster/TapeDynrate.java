@@ -96,7 +96,7 @@ public class TapeDynrate extends TapeBase implements Tape {
                 + "> " + tapeName);
         s.append(" = " + className + "<"
                 + declTypeString + ">(" + bufsize
-                + ", " + workname + ");\n");
+                + ", 1, " + workname + ");\n");
         return s.toString();
     }
 

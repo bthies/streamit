@@ -105,44 +105,44 @@ public abstract class TapeBase implements Tape {
                 t = new TapeCluster(src,dest,type);
             }
         }
-        // for debugging only
-        System.err.print("(Channel");
-        System.err.print(" " + t.getClass().getSimpleName());
-        if (srcNode.contents instanceof SIRFilter) {
-            System.err.print(" " + srcNode.contents.getName());
-        } else if (srcNode.contents instanceof SIRJoiner) {
-            if (srcNode.getEdges() != null && srcNode.getEdges().length > 0 && srcNode.getEdges()[0].contents instanceof SIRFilter) {
-                System.err.print (" joiner_" + ((SIRFilter)(srcNode.getEdges()[0].contents)).getName());
-            } else {
-                System.err.print(" joiner_" + srcNode.contents.toString());
-            }
-        } else {
-            if (srcNode.incoming != null && srcNode.incoming.length > 0 && srcNode.incoming[0].contents instanceof SIRFilter) {
-                System.err.print (" splitter_" + ((SIRFilter)(srcNode.incoming[0].contents)).getName());
-            } else {
-                System.err.print(" splitter_" + srcNode.contents.toString());
-            }
-        }
-        if (destNode.contents instanceof SIRFilter) {
-            System.err.print(" " + destNode.contents.getName());
-        } else if (destNode.contents instanceof SIRJoiner) {
-            if (destNode.incoming != null && destNode.incoming.length > 0 && destNode.incoming[0].contents instanceof SIRFilter) {
-                System.err.print (" joiner_" + ((SIRFilter)(destNode.incoming[0].contents)).getName());
-            } else {
-                System.err.print(" joiner_" + destNode.contents.toString());
-            }
-        } else {
-            if (destNode.incoming != null && destNode.incoming.length > 0 && destNode.incoming[0].contents instanceof SIRFilter) {
-                System.err.print (" splitter_" + ((SIRFilter)(destNode.incoming[0].contents)).getName());
-            } else {
-                System.err.print(" splitter_" + destNode.contents.toString());
-            }
-        }
-        if (t instanceof TapeFixedBase) {
-            System.err.print(" " + (((TapeFixedBase)t).getItems() + ((TapeFixedBase)t).getExtra()));
-            System.err.print(" " + ((TapeFixedBase)t).getExtra());
-        }
-        System.err.println(")");
+//        // for debugging only
+//        System.err.print("(Channel");
+//        System.err.print(" " + t.getClass().getSimpleName());
+//        if (srcNode.contents instanceof SIRFilter) {
+//            System.err.print(" " + srcNode.contents.getName());
+//        } else if (srcNode.contents instanceof SIRJoiner) {
+//            if (srcNode.getEdges() != null && srcNode.getEdges().length > 0 && srcNode.getEdges()[0].contents instanceof SIRFilter) {
+//                System.err.print (" joiner_" + ((SIRFilter)(srcNode.getEdges()[0].contents)).getName());
+//            } else {
+//                System.err.print(" joiner_" + srcNode.contents.toString());
+//            }
+//        } else {
+//            if (srcNode.incoming != null && srcNode.incoming.length > 0 && srcNode.incoming[0].contents instanceof SIRFilter) {
+//                System.err.print (" splitter_" + ((SIRFilter)(srcNode.incoming[0].contents)).getName());
+//            } else {
+//                System.err.print(" splitter_" + srcNode.contents.toString());
+//            }
+//        }
+//        if (destNode.contents instanceof SIRFilter) {
+//            System.err.print(" " + destNode.contents.getName());
+//        } else if (destNode.contents instanceof SIRJoiner) {
+//            if (destNode.incoming != null && destNode.incoming.length > 0 && destNode.incoming[0].contents instanceof SIRFilter) {
+//                System.err.print (" joiner_" + ((SIRFilter)(destNode.incoming[0].contents)).getName());
+//            } else {
+//                System.err.print(" joiner_" + destNode.contents.toString());
+//            }
+//        } else {
+//            if (destNode.incoming != null && destNode.incoming.length > 0 && destNode.incoming[0].contents instanceof SIRFilter) {
+//                System.err.print (" splitter_" + ((SIRFilter)(destNode.incoming[0].contents)).getName());
+//            } else {
+//                System.err.print(" splitter_" + destNode.contents.toString());
+//            }
+//        }
+//        if (t instanceof TapeFixedBase) {
+//            System.err.print(" " + (((TapeFixedBase)t).getItems() + ((TapeFixedBase)t).getExtra()));
+//            System.err.print(" " + ((TapeFixedBase)t).getExtra());
+//        }
+//        System.err.println(")");
         return t;
     }
 

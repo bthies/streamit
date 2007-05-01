@@ -4,9 +4,6 @@ import at.dms.kjc.backendSupport.BackEndFactory;
 import at.dms.kjc.backendSupport.BackEndScaffold;
 import at.dms.kjc.backendSupport.Channel;
 import at.dms.kjc.backendSupport.CodeStoreHelper;
-import at.dms.kjc.backendSupport.ComputeCodeStore;
-import at.dms.kjc.backendSupport.ComputeNode;
-import at.dms.kjc.backendSupport.ComputeNodesI;
 import at.dms.kjc.backendSupport.SchedulingPhase;
 import at.dms.kjc.slicegraph.Edge;
 import at.dms.kjc.slicegraph.FilterSliceNode;
@@ -15,8 +12,34 @@ import at.dms.kjc.slicegraph.OutputSliceNode;
 import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.slicegraph.SliceNode;
 
-public class CellBackendFactory extends BackEndFactory {
+public class CellBackendFactory 
+    extends BackEndFactory<CellChip, SPU, CellComputeCodeStore, Integer> {
 
+    private CellChip cellChip;
+    
+    /**
+     * Constructor if creating UniBackEndFactory before layout
+     * Creates <b>numProcessors</b> processors.
+     * @param numProcessors  number of processors to create.
+     */
+    public CellBackendFactory(Integer numProcessors) {
+       this(new CellChip(numProcessors));
+    }
+    
+    /**
+     * Constructor if creating UniBackEndFactory after layout.
+     * Call it with same collection of processors used in Layout.
+     * @param processors  the existing collection of processors.
+     */
+    public CellBackendFactory(CellChip processors) {
+        if (processors == null) {
+            processors = new CellChip(1);
+        }
+        this.cellChip = processors;
+    }
+    
+    private BackEndScaffold scaffolding = null;
+    
     @Override
     public BackEndScaffold getBackEndMain() {
         // TODO Auto-generated method stub
@@ -42,47 +65,47 @@ public class CellBackendFactory extends BackEndFactory {
     }
 
     @Override
-    public ComputeCodeStore getComputeCodeStore(ComputeNode parent) {
+    public CellComputeCodeStore getComputeCodeStore(SPU parent) {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public ComputeNode getComputeNode(Object specifier) {
+    public SPU getComputeNode(Integer specifier) {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public ComputeNodesI getComputeNodes() {
+    public CellChip getComputeNodes() {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public void processFilterSliceNode(FilterSliceNode filter,
-            SchedulingPhase whichPhase, ComputeNodesI computeNodes) {
+            SchedulingPhase whichPhase, CellChip computeNodes) {
         // TODO Auto-generated method stub
 
     }
 
     @Override
     public void processFilterSlices(Slice slice, SchedulingPhase whichPhase,
-            ComputeNodesI computeNodes) {
+            CellChip computeNodes) {
         // TODO Auto-generated method stub
 
     }
 
     @Override
     public void processInputSliceNode(InputSliceNode input,
-            SchedulingPhase whichPhase, ComputeNodesI computeNodes) {
+            SchedulingPhase whichPhase, CellChip computeNodes) {
         // TODO Auto-generated method stub
 
     }
 
     @Override
     public void processOutputSliceNode(OutputSliceNode output,
-            SchedulingPhase whichPhase, ComputeNodesI computeNodes) {
+            SchedulingPhase whichPhase, CellChip computeNodes) {
         // TODO Auto-generated method stub
 
     }

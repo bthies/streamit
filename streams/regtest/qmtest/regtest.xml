@@ -1,11 +1,12 @@
 <regtest>
   <test root="apps"/>
   <option target="cluster"/>
-  <option target="raw4">--hwic</option>
+  <option target="raw4"></option>
   <option target="library"/>
   <option target="cluster">-O2</option>
+  <option target="uni"/>
   <option target="simpleC"/>
-  <option target="raw4">-O2 --hwic</option>
+  <option target="raw4">-O2</option>
   <option target="cluster">-standalone</option>
   <option target="raw4">-spacetime --hwic</option>
 </regtest>

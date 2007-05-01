@@ -137,6 +137,18 @@ public class ClusterCode {
 
         ClusterCodeGenerator gen = new ClusterCodeGenerator(splitter, new JFieldDeclaration[0]);
 
+//        // debugging only
+//        System.err.print("(Splitter");
+//        if (node.incoming != null && node.incoming.length > 0 && node.incoming[0].contents instanceof SIRFilter) {
+//            System.err.print (" splitter_" + ((SIRFilter)(node.incoming[0].contents)).getName());
+//        } else {
+//            System.err.print(" splitter_" + node.contents.toString());
+//        }
+//        System.err.print(" " + init_counts);
+//        System.err.print(" " + steady_counts);
+//        System.err.println(")");
+//        
+        // comment in output file
         p.println("// init counts: "+init_counts+" steady counts: "+steady_counts); 
         p.newLine();
 
@@ -320,6 +332,18 @@ public class ClusterCode {
         
         ClusterCodeGenerator gen = new ClusterCodeGenerator(joiner, new JFieldDeclaration[0]);
 
+//        // debugging only
+//        System.err.print("(Joiner");
+//        if (node.getEdges() != null && node.getEdges().length > 0 && node.getEdges()[0].contents instanceof SIRFilter) {
+//            System.err.print (" joiner_" + ((SIRFilter)(node.getEdges()[0].contents)).getName());
+//        } else {
+//            System.err.print(" joiner_" + node.contents.toString());
+//        }
+//        System.err.print(" " + init_counts);
+//        System.err.print(" " + steady_counts);
+//        System.err.println(")");
+        
+ 
         p.print("// init counts: "+init_counts+" steady counts: "+steady_counts+"\n"); 
         p.newLine();
 

@@ -8,7 +8,7 @@ import at.dms.kjc.CType;
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.KjcOptions;
 import at.dms.kjc.flatgraph.FlatNode;
-
+import at.dms.kjc.sir.*;
 
 /**
  * @author dimock
@@ -81,10 +81,9 @@ public abstract class TapeBase implements Tape {
 //            if (KjcOptions.standalone ||
 //                    ClusterFusion.fusedWith(srcNode).
 //                    contains(destNode)) {
-                return new TapeDynrate(src,dest,type);
+                t =  new TapeDynrate(src,dest,type);
 //            }
-        }
-        if (KjcOptions.standalone) {
+        } else if (KjcOptions.standalone) {
         // If the --standalone option has been given, then a schedule
         // is precomputed for each static-rate region and communication
         // between src and dest within a static-rate region is over a
@@ -94,7 +93,7 @@ public abstract class TapeBase implements Tape {
             } else {    
                 t = new TapeFixedCopydown(src,dest,type);
             }
-        } else 
+        } else {
         // Compiling for a cluster.  Either use one thread per
         // node and communicate through a a socket, or if the 
         // src and dest threads are fused, communicate via a
@@ -105,6 +104,45 @@ public abstract class TapeBase implements Tape {
             } else {
                 t = new TapeCluster(src,dest,type);
             }
+        }
+        // for debugging only
+        System.err.print("(Channel");
+        System.err.print(" " + t.getClass().getSimpleName());
+        if (srcNode.contents instanceof SIRFilter) {
+            System.err.print(" " + srcNode.contents.getName());
+        } else if (srcNode.contents instanceof SIRJoiner) {
+            if (srcNode.getEdges() != null && srcNode.getEdges().length > 0 && srcNode.getEdges()[0].contents instanceof SIRFilter) {
+                System.err.print (" joiner_" + ((SIRFilter)(srcNode.getEdges()[0].contents)).getName());
+            } else {
+                System.err.print(" joiner_" + srcNode.contents.toString());
+            }
+        } else {
+            if (srcNode.incoming != null && srcNode.incoming.length > 0 && srcNode.incoming[0].contents instanceof SIRFilter) {
+                System.err.print (" splitter_" + ((SIRFilter)(srcNode.incoming[0].contents)).getName());
+            } else {
+                System.err.print(" splitter_" + srcNode.contents.toString());
+            }
+        }
+        if (destNode.contents instanceof SIRFilter) {
+            System.err.print(" " + destNode.contents.getName());
+        } else if (destNode.contents instanceof SIRJoiner) {
+            if (destNode.incoming != null && destNode.incoming.length > 0 && destNode.incoming[0].contents instanceof SIRFilter) {
+                System.err.print (" joiner_" + ((SIRFilter)(destNode.incoming[0].contents)).getName());
+            } else {
+                System.err.print(" joiner_" + destNode.contents.toString());
+            }
+        } else {
+            if (destNode.incoming != null && destNode.incoming.length > 0 && destNode.incoming[0].contents instanceof SIRFilter) {
+                System.err.print (" splitter_" + ((SIRFilter)(destNode.incoming[0].contents)).getName());
+            } else {
+                System.err.print(" splitter_" + destNode.contents.toString());
+            }
+        }
+        if (t instanceof TapeFixedBase) {
+            System.err.print(" " + (((TapeFixedBase)t).getItems() + ((TapeFixedBase)t).getExtra()));
+            System.err.print(" " + ((TapeFixedBase)t).getExtra());
+        }
+        System.err.println(")");
         return t;
     }
 

@@ -131,7 +131,7 @@ public class TapeDynrate extends TapeBase implements Tape {
         s.append("inline " + typeString + " " + pop_name + "() {\n");
         // p.indent();
         if (type instanceof CArrayType) {
-            s.append ("  static " + typedefName + " res = " + 
+            s.append ("  static " + typedefName + " res;\n  res = " + 
                     tapeName + ".pop();\n");
             s.append("  " + "return &res;\n");
         } else {
@@ -165,7 +165,7 @@ public class TapeDynrate extends TapeBase implements Tape {
                     + "(int offs) {\n");
             // p.indent();
             if (type instanceof CArrayType) {
-                s.append ("  static " + typedefName + " res = " + 
+                s.append ("  static " + typedefName + " res;\n  res = " + 
                         tapeName + ".peek(offs);\n");
                 s.append("  " + "return &res;\n");
             } else {

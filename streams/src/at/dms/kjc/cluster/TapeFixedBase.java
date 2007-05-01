@@ -36,6 +36,16 @@ public abstract class TapeFixedBase extends TapeBase implements Tape {
     protected String popArrayRefPrefix;
     protected String popArrayRefSuffix;
     
+    /** for debugging only */
+    public int getItems() {
+        return items;
+    }
+    
+    /** for debugginf only */
+    public int getExtra() {
+        return extra;
+    }
+    
     /**
      * @param source
      * @param dest

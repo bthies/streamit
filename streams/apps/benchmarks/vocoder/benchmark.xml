@@ -10,7 +10,7 @@
   </description>
   <reference>(none)</reference>
   <implementations>
-    <impl lang="StreamIt" dir="streamit" compile_time="1800" run_time="1800">
+    <impl lang="StreamIt" dir="streamit" compile_time="2400" run_time="1800">
       <desc>Extra run time on cluster probably a hang so removed
             Extra compile time for raw: is borderline at 1200sec</desc>
       <file class="source">VocoderTopLevel.str</file>

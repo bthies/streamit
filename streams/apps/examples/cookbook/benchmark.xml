@@ -25,7 +25,7 @@ These are the examples in the StreamIt Cookbook.
       <file class="source">BPFProgram.str</file>
       <file class="output">BPFProgram.out</file>
     </impl>
-    <impl lang="StreamIt" id="equalizer">
+    <impl lang="StreamIt" id="equalizer" compile_time="2400">
       <desc>Equalizer, section 2.5</desc>
       <file class="source">EqualizerProgram.str</file>
       <file class="output">EqualizerProgram.out</file>
@@ -40,7 +40,7 @@ These are the examples in the StreamIt Cookbook.
       <file class="source">FibProgram.str</file>
       <file class="output">FibProgram.out</file>
     </impl>
-    <impl lang="StreamIt" id="fmradio">
+    <impl lang="StreamIt" id="fmradio" compile_time="2400">
       <desc>FMRadio with equalizer, section 3</desc>
       <file class="source">FMRadio.str</file>
       <file class="output">FMRadio.out</file>

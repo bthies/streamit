@@ -1,0 +1,508 @@
+
+/*~~~~~~~~~~~~~~~~~~~~~~~
+~~~~featureExtraction~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
+float[320][240]->imageAndFeatures
+		pipeline featureExtraction(int startx, int starty, 
+					int imageWidth, int imageHeight, int winWidth, int winHeight, 
+					float iweight, float qweight, int patchsize)
+{
+	add generateMinorEigs(startx, starty, imageWidth, imageHeight, 
+					winWidth, winHeight, iweight, qweight, patchsize);
+
+	add chooseEigs(imageWidth, imageHeight, patchsize);
+}
+
+/*~~~~~~~~~~~~~~~~~~~~~~~
+~~~~generateMinorEigs~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
+/*the backbone filter of feature detection.  this filter calculates the minor eigenvalue as per 
+the klt (kanade-lucas-tomasi algorithm) for each pixel in the window under consideration 
+(startx to (startx + winWidth), and starty to  (starty + winHeight)).  the minor eigenvalues
+of each pixel are embedded in the eigenMatrix, and so the 'return value' of meaning here is the eigenMatrix.  
+
+the filter works like this.  first, it computes eigenvalues for the first row of pixels.  In order
+not to waste computation time, we first sum the gradient values for each column of the winWidth +
+patchsize number of columns:
+
+-------|<--patchsize/2-->|<----------winWidth---------->|<--patchsize/2-->|----------------------
+ 	   |	  /\										  				  |
+	   |      |									        			 	  |
+	   |	  |									        				  |
+	   |  patchsize								        				  |
+       |      |		first row of pixels here, half way down			   	  |
+	   | 	  |									        				  |
+	   | 	  |									        		 		  |
+	   |      |									        				  |
+	   | 	  \/									        		 	  |
+-------|------------------------------------------------------------------|----------------------
+
+each column is, as noted above, patchsize tall.
+
+
+
+
+A gradient value in the x direction is simply the square of the difference of the pixel values on 
+either side of the selected pixel.  The gyy value (the gradient value in the y direction) is the same 
+but for the y direction, and the gxy value is the x difference times the y difference.  
+
+once these summations are computed for each column and placed in Garray, we do the same for the next row,
+but rather than computing the sum of a whole column again, we just use the old column value, and add one 
+new value and subtract an old value since everything in between hasn't changed.  we do this for every 
+row subsequently until finished.
+*/
+
+
+float[320][240]->float[320][240] 
+		filter generateMinorEigs(int startx, int starty, 
+					int imageWidth, int imageHeight, int winWidth, int winHeight, 
+					float iweight, float qweight, int patchsize)
+{
+	float[320][240] yMatrix;	
+	float[320][240] iMatrix;	
+	float[320][240] qMatrix;		
+	float[320][240] eigenMatrix;
+	int r;
+	float gx; float gy; float gxi; float gyi; float gxq; float gyq;	
+	Gstruct tempSum;
+	float minorEig;
+	float newgx; 
+	float newgy;
+	float newgxi; 
+	float newgyi;
+	float newgxq; 
+	float newgyq;
+	float oldgx;
+	float oldgy;
+	float oldgxi;
+	float oldgyi;
+	float oldgxq;
+	float oldgyq;
+	int row;
+	//check to make sure that the window has a half-patchsize cushion around it plus one.  
+	//actually, since patchsizes are odd, it's half-patchsize - 1/2 cushion plus one). 
+	work pop 3 push 4
+	{
+	
+	Gstruct[320 + patchsize - 1] Garray;
+	yMatrix = pop();	
+	iMatrix = pop();	
+	qMatrix = pop();
+	
+	r = (patchsize-1)/2;
+	
+	if(
+		(startx-(r + 1))<0 || 
+		(starty-(r + 1))<0 ||
+	    ((startx + winWidth + r + 1)>imageWidth) ||
+		((starty + winHeight+ r + 1)>imageHeight)
+	  )
+	{
+		println("Either the window is too big, the patchsize is too big,");
+		println("or there is a problem with your start indices");
+		return;
+	}
+		
+	for(int i = startx-r; i< (startx+winWidth+r); i++)
+	{
+		for(int j = starty-r; j< (starty+r); j++)
+		{
+			//we calculate gradient values for the y, i, and q dimensions.  then,
+			//we weigh each gradient value based on how important we deem each
+			//and the variables iweight and qweight determine how important they are
+
+			gx = (yMatrix[i+1][j] - yMatrix[i-1][j])/2;
+			gy = (yMatrix[i][j+1] - yMatrix[i][j-1])/2;
+			gxi = (iMatrix[i+1][j] - iMatrix[i-1][j])/2;
+			gyi = (iMatrix[i][j+1] - iMatrix[i][j-1])/2;
+			gxq = (qMatrix[i+1][j] - qMatrix[i-1][j])/2;
+			gyq = (qMatrix[i][j+1] - qMatrix[i][j-1])/2;
+			Garray[i - (startx-r)].gxx+=gx*gx + iweight*gxi*gxi + qweight*gxq*gxq;
+			Garray[i - (startx-r)].gyy+=gy*gy + iweight*gyi*gyi + qweight*gyq*gyq;
+			Garray[i - (startx-r)].gxy+=gx*gy + iweight*gxi*gyi + qweight*gxq*gyq;	
+		}
+	}
+	/*println(Garray[0].gxx);
+	println(Garray[0].gxy);
+	println(Garray[0].gyy);
+
+	println(Garray[winWidth + patchsize - 1].gxx);
+	println(Garray[winWidth + patchsize - 1].gxy);
+	println(Garray[winWidth + patchsize - 1].gyy);*/
+		
+	tempSum.gxx = 0;	
+	tempSum.gyy = 0;
+	tempSum.gxy = 0;
+	
+	for(int i = 0; i<patchsize; i++){
+		tempSum.gxx+=Garray[i].gxx;
+		tempSum.gyy+=Garray[i].gyy;
+		tempSum.gxy+=Garray[i].gxy;
+	}
+	//go across one row in your window, pixel by pixel, and calcultate the eigen
+	//value there.  then, update the Garray so that the next column is included
+	//and the leftmost column used before is excluded
+
+	for(int i = 0; i < winWidth; i++){
+		eigenMatrix[startx + i][starty] = (tempSum.gxx + tempSum.gyy - 
+			sqrt((tempSum.gxx - tempSum.gyy)*(tempSum.gxx - tempSum.gyy) +
+				4*(tempSum.gxy*tempSum.gxy)))/2;
+	/*	Matrix[startx + i][starty].y = Matrix[startx + i][starty].y*0.99;*/
+
+		tempSum.gxx+=(Garray[i+patchsize].gxx - Garray[i].gxx);
+		tempSum.gyy+=(Garray[i+patchsize].gyy - Garray[i].gyy);
+		tempSum.gxy+=(Garray[i+patchsize].gxy - Garray[i].gxy);			
+	}
+
+	row = starty;
+	row++;
+
+
+	for(int j=row; j< starty+winHeight; j++)
+	{	
+		for(int i = startx-r; i< (startx+winWidth+r); i++)
+		{	 	
+			newgx = (yMatrix[i+1][j+r] - yMatrix[i-1][j+r])/2;
+			newgy = (yMatrix[i][j+r+1] - yMatrix[i][j+r-1])/2;
+			newgxi = (iMatrix[i+1][j+r] - iMatrix[i-1][j+r])/2;
+			newgyi = (iMatrix[i][j+r+1] - iMatrix[i][j+r-1])/2;
+			newgxq = (qMatrix[i+1][j+r] - qMatrix[i-1][j+r])/2;
+			newgyq = (qMatrix[i][j+r+1] - qMatrix[i][j+r-1])/2;
+	
+				
+			oldgx = (yMatrix[i+1][j-r-1] - yMatrix[i-1][j-r-1])/2;
+			oldgy = (yMatrix[i][j-r] - yMatrix[i][j-r-2])/2;
+			oldgxi = (iMatrix[i+1][j-r-1] - iMatrix[i-1][j-r-1])/2;
+			oldgyi = (iMatrix[i][j-r] - iMatrix[i][j-r-2])/2;
+			oldgxq = (qMatrix[i+1][j-r-1] - qMatrix[i-1][j-r-1])/2;
+			oldgyq = (qMatrix[i][j-r] - qMatrix[i][j-r-2])/2;
+			
+
+			Garray[i - (startx-r)].gxx+=
+			(newgx*newgx+iweight*newgxi*newgxi+qweight*newgxq*newgxq)-
+			 (oldgx*oldgx+iweight*oldgxi*oldgxi+qweight*oldgxq*oldgxq);
+			Garray[i - (startx-r)].gyy+=
+			(newgy*newgy+iweight*newgyi*newgyi+qweight*newgyq*newgyq)-
+			 (oldgy*oldgy+iweight*oldgyi*oldgyi+qweight*oldgyq*oldgyq);
+			Garray[i - (startx-r)].gxy+=
+			(newgx*newgy+iweight*newgxi*newgyi+qweight*newgxq*newgyq)-
+			 (oldgx*oldgy+iweight*oldgxi*oldgyi+qweight*oldgxq*oldgyq);
+		}			
+		
+		tempSum.gxx = 0;	
+		tempSum.gyy = 0;
+		tempSum.gxy = 0;
+		
+		for(int i = 0; i<patchsize; i++){
+			tempSum.gxx+=Garray[i].gxx;
+			tempSum.gyy+=Garray[i].gyy;
+			tempSum.gxy+=Garray[i].gxy;
+			}
+		
+		//go across one row in your window, pixel by pixel, and calcultate the eigen
+		//value there.  then, update the Garray so that the next column is included
+		//and the leftmost column used before is excluded
+		
+		for(int i = 0; i < winWidth; i++)
+		{	
+			eigenMatrix[startx + i][j] = (tempSum.gxx + tempSum.gyy - 
+				sqrt((tempSum.gxx - tempSum.gyy)*(tempSum.gxx - tempSum.gyy) +
+					4*(tempSum.gxy*tempSum.gxy)))/2;
+			/*Matrix[startx + i][j].y = Matrix[startx + i][j].y*0.90;*/
+			tempSum.gxx+=Garray[i+patchsize].gxx - Garray[i].gxx;
+			tempSum.gyy+=Garray[i+patchsize].gyy - Garray[i].gyy;
+			tempSum.gxy+=Garray[i+patchsize].gxy - Garray[i].gxy;	
+		}	
+		
+	
+	}
+	
+	push(yMatrix);
+	push(iMatrix);
+	push(qMatrix);
+	push(eigenMatrix);
+	//println("genMinorEig completed...");
+	}
+}
+/*~~~~~~~~~~~~~~~~
+~~~~chooseEigs~~~~
+~~~~~~~~~~~~~~~~~~*/
+
+/*now we have a yiqStruct matrix with all its eigenvalues (within the window specified
+in the main pipeline) set.  now, we have to rank them, and also make sure that the pixels we do pick
+do not exist in overlapping patches.*/
+
+float[320][240]->imageAndFeatures
+filter chooseEigs(int imageWidth, int imageHeight, int patchsize)
+{
+	float[320][240] eigenMatrix;
+	int[320][240] clearMatrix;
+	int[320][240] patchMarkMatrix;
+	//v2: boolean inPatch;
+	imageAndFeatures featExtOutput;
+	/*float thisItersMaxVal;
+	int thisItersMaxX;
+	int thisItersMaxY;
+	*/
+
+	//added 
+	int[40] linkedList;
+	bestFeatures[40] best;
+	int minIndex, newMinIndex, prevIndex, nextIndex;
+	int x,y, tempPatchMarkMatrixVal;
+	bestFeatures temp;
+	
+	init{
+		//set patchMarkMatrix to -1 because 0 is a valid index
+		for(int m = 0; m < imageWidth; m++){
+			for(int n = 0; n < imageHeight; n++){
+				clearMatrix[m][n] = -1;
+			}
+		}
+	}
+	
+	work pop 4 push 1 peek 1
+	{
+	
+	eigenMatrix = peek(3);
+	//wipe the patchMarkMatrix clean
+	patchMarkMatrix = clearMatrix;
+	
+	//populate the list Best
+	for(int i = 0; i < iters; i++){		
+		best[i].x = (patchsize-1) + i;
+		best[i].y = (patchsize-1);
+		linkedList[i] = i+1;	//initialize the linked list for the case where the values are pre-sorted, which we do coming up
+		best[i].val = i+patchsize;//eigenMatrix[best[i].x][best[i].y];
+		//println(best[i].val);		
+	}
+	linkedList[40 - 1] = -2;
+	
+	
+	//**special note about linked lists -- values must be interpreted mod iters (%iters)
+	minIndex = 0;
+
+	//	(ascending) sort the list 'best' with a good ole bubblesort -- from minimum to maximum (ascending)
+	for (int i = (iters - 1); i >= 0; i--)
+	{
+	  for (int j = 1; j <= i; j++)
+	  {
+		if (best[j-1].val > best[j].val)
+		{
+		  temp = best[j-1];
+		  best[j-1] = best[j];
+		  best[j] = temp;
+		}
+	  }
+	}
+	/*println("index\t\tx\t\ty\t\tval\t\tLL");
+	for(int i = 0; i < iters; i++){		
+		println(i+ "\t\t" + best[i].x + "\t\t" + best[i].y + "\t\t" + best[i].val + "\t\t" + linkedList[i]);
+	}*/
+	//*****mark the patches of this sorted list? necessary?
+	
+
+	for(int m = 0; m < imageWidth*imageHeight; m++){	
+		x = m%imageWidth;
+		y = m/imageWidth;
+//		if(y == 240) println("y is 240 and m = " + m);
+		/*if(best[minIndex].val < 13858 && best[minIndex].val < 13857){
+			println("prevIndex = " + prevIndex + "nextIndex = " + nextIndex);
+
+		}*/
+		if(eigenMatrix[x][y] > best[minIndex].val && x+patchsize<=320 && x-patchsize>=0 && y+patchsize<=240 && y-patchsize>=0) // if this pixel is even worth considering
+		{	
+			
+			if(patchMarkMatrix[x][y] < 0){	//if not in an existing patch...so you end up replacing the min guy
+//				erase min in list from patchMark:
+				for(int i=(best[minIndex].x-(patchsize-1));i<=(best[minIndex].x+patchsize-1);i++){
+					for(int j=(best[minIndex].y-(patchsize-1)); j<=(best[minIndex].y+patchsize-1);j++){
+						patchMarkMatrix[i][j] = -1;
+					}
+				}
+				//println("A");
+				//println("A : eigenMatrix[x][y] = " + eigenMatrix[x][y] + " and best[minIndex].val = " + best[minIndex].val);
+					
+				//replace min value with new value.  
+				best[minIndex].val 	= eigenMatrix[x][y];
+				best[minIndex].x 	= x;
+				best[minIndex].y 	= y;
+				
+				//find out where you belong in the array
+				prevIndex = minIndex;
+				nextIndex = linkedList[minIndex];
+				
+				while(nextIndex!=-2 && eigenMatrix[x][y] > best[nextIndex].val) 
+				{	
+					prevIndex=nextIndex; 
+					nextIndex=linkedList[nextIndex];
+					//println("nextIndex = " + nextIndex + " and best[" + nextIndex +  "and eigen[x][y] = " + eigenMatrix[x][y]);
+					
+				}
+				
+				//println("1nextIndex = " + nextIndex + "prevIndex = " + prevIndex + " minIndex  = " + minIndex +  "and eigen[x][y] = " + eigenMatrix[x][y]);
+				
+				if(minIndex!=prevIndex){
+					newMinIndex = linkedList[minIndex];
+					linkedList[minIndex] = nextIndex;
+					linkedList[prevIndex] = minIndex;
+					minIndex = newMinIndex;	//the new minIndex is what the old minguy used to point to.
+				}
+				
+				//println("2nextIndex = " + nextIndex + "prevIndex = " + prevIndex + " minIndex  = " + minIndex + "and eigen[x][y] = " + eigenMatrix[x][y]);
+				
+				/*for (int i = 0; i < iters; i++)
+				{
+					println(i+ "\t" + best[i].val + "\t" + best[i].x + "\t" + best[i].y + "\t" + linkedList[i]);
+				}*/
+				//write in the new patch
+				for(int i=(best[linkedList[prevIndex]].x-(patchsize-1));i<=(best[linkedList[prevIndex]].x+patchsize-1);i++){
+					for(int j=(best[linkedList[prevIndex]].y-(patchsize-1)); j<=(best[linkedList[prevIndex]].y+patchsize-1);j++){
+						patchMarkMatrix[i][j] = linkedList[prevIndex];
+					}
+				}
+								
+			}
+			else {//if in an existing patch
+				if(eigenMatrix[x][y] > best[patchMarkMatrix[x][y]].val){	//and you're bigger than the existing guy whose patch you're in	
+//					erase oldguy in list from patchMark:
+					
+					//println("B : eigenMatrix[x][y] = " + eigenMatrix[x][y] + " and best[patchMarkMatrix[x][y]].val = " + best[patchMarkMatrix[x][y]].val);
+					//println("B");			
+					tempPatchMarkMatrixVal = patchMarkMatrix[x][y]; // since patchMarkMatrix[x][y] is soon to be written over
+					//println("tempPatchMarkMatrixVal  = " + tempPatchMarkMatrixVal );
+					for(int i=(best[tempPatchMarkMatrixVal].x-(patchsize-1));i<=(best[tempPatchMarkMatrixVal].x+patchsize-1);i++){
+						for(int j=(best[tempPatchMarkMatrixVal].y-(patchsize-1)); j<=(best[tempPatchMarkMatrixVal].y+patchsize-1);j++){
+							//println("i = " + i + " j = " + j + "best[minIndex].val for minIndex = " + minIndex + "  is " + best[minIndex].val);
+							patchMarkMatrix[i][j] = -1;
+						}
+					}
+					//replace his value with your value.  
+					best[tempPatchMarkMatrixVal].val = eigenMatrix[x][y];
+					best[tempPatchMarkMatrixVal].x 	= x;
+					best[tempPatchMarkMatrixVal].y 	= y;
+							   	
+				   	/*for(int i = 0; i < iters; i++){
+				   		if(nextIndex!=-2){
+					   		println("val = " + best[nextIndex].val + "\tprev\t" + prevIndex + "\tnext\t" + nextIndex);
+							prevIndex=nextIndex; 
+							nextIndex=linkedList[nextIndex];
+				   		}
+				   	}*/
+				   	/*here, get rid of the old pointer to the guy you are trying to now get rid of*/
+				   	prevIndex = minIndex;
+					nextIndex = linkedList[minIndex];
+					//println("1nextIndex = " + nextIndex + "prevIndex = " + prevIndex + " minIndex  = " + minIndex + "and eigen[x][y] = " + eigenMatrix[x][y]);
+					
+					while(minIndex!=tempPatchMarkMatrixVal && nextIndex!=tempPatchMarkMatrixVal)
+					{	//println("WOOHOO nextIndex = " + nextIndex);
+						prevIndex=nextIndex; 
+						nextIndex=linkedList[nextIndex];							
+					}	
+					  	
+				   
+					//println("2nextIndex = " + nextIndex + "prevIndex = " + prevIndex + " minIndex  = " + minIndex + "and eigen[x][y] = " + eigenMatrix[x][y]);
+				   
+					if(minIndex!=tempPatchMarkMatrixVal && linkedList[tempPatchMarkMatrixVal]!=-2 && best[tempPatchMarkMatrixVal].val > best[linkedList[tempPatchMarkMatrixVal]].val)	linkedList[prevIndex] = linkedList[tempPatchMarkMatrixVal];
+				   	
+					prevIndex = tempPatchMarkMatrixVal;
+					nextIndex = linkedList[tempPatchMarkMatrixVal];
+					//println("B");
+				   	while(nextIndex!=-2 && nextIndex!=tempPatchMarkMatrixVal && eigenMatrix[x][y] > best[nextIndex].val)
+				   	{	
+						//println("nextIndex = " + nextIndex + " and best[" + nextIndex + "].val there = " + best[nextIndex].val + "and eigen[x][y] = " + eigenMatrix[x][y]);
+						prevIndex=nextIndex; 
+		 			   	nextIndex=linkedList[nextIndex];
+		 			   	//println("prev = " + prevIndex + " and nextIndex = " + nextIndex);
+		 		   	}
+					//println("1nextIndex = " + nextIndex + "prevIndex = " + prevIndex + " minIndex  = " + minIndex + " and best[" + nextIndex + "].val there = " + best[nextIndex].val + "and eigen[x][y] = " + eigenMatrix[x][y]);
+					if(tempPatchMarkMatrixVal!=prevIndex){
+						linkedList[tempPatchMarkMatrixVal] = nextIndex;
+						linkedList[prevIndex] = tempPatchMarkMatrixVal;
+					}
+					//println("2nextIndex = " + nextIndex + "prevIndex = " + prevIndex + " minIndex  = " + minIndex + " and best[" + nextIndex + "].val there = " + best[nextIndex].val + "and eigen[x][y] = " + eigenMatrix[x][y]);
+				
+				/*	for (int i = 0; i < iters; i++)
+					{
+						println(i+ "\t" + best[i].val + "\t" + best[i].x + "\t" + best[i].y + "\t" + linkedList[i]);
+					}*/
+					for(int i=(best[tempPatchMarkMatrixVal].x-(patchsize-1));i<=(best[tempPatchMarkMatrixVal].x+patchsize-1);i++){
+						for(int j=(best[tempPatchMarkMatrixVal].y-(patchsize-1)); j<=(best[tempPatchMarkMatrixVal].y+patchsize-1);j++){
+							patchMarkMatrix[i][j] = tempPatchMarkMatrixVal;
+						}
+					}
+		
+					
+				}
+			}
+		}
+	}
+	
+	for (int i = (iters - 1); i >= 0; i--)
+	{
+	  for (int j = 1; j <= i; j++)
+	  {
+		if (best[j-1].val < best[j].val)
+		{
+		  temp = best[j-1];
+		  best[j-1] = best[j];
+		  best[j] = temp;
+		}
+	  }
+	}
+	println("i\t\tbest[i].val\t\t.x\t\t.y");
+	for (int i = 1; i < iters; i++)
+	{
+		println(i+ " " + best[i].val + " " + best[i].x + " " + best[i].y);
+	}   
+	/* 
+	chooseEigenVals v1
+	for(int k = 0; k < iters; k++){	
+		thisItersMaxVal = 0;
+		thisItersMaxX = 0;
+		thisItersMaxY = 0;
+		for(int j = 0; j< imageHeight; j++){
+			for(int i = 0; i < imageWidth; i++){
+				if(eigenMatrix[i][j]>thisItersMaxVal)
+				{
+					if(!patchMarkMatrix[i][j])
+					{	thisItersMaxVal = eigenMatrix[i][j];							
+						thisItersMaxX = i;
+						thisItersMaxY = j;
+					}
+				}
+			}
+		}
+		
+		//mark the patch in the patchMarkMatrix
+		
+		for(int i=(thisItersMaxX-(patchsize-1));i<=(thisItersMaxX+patchsize-1);i++){
+			for(int j=(thisItersMaxY-(patchsize-1)); j<=(thisItersMaxY+patchsize-1);j++){
+				patchMarkMatrix[i][j] = true;
+			}
+		}
+		//update your bestFeatures list 'best'
+		
+		best[k].x = thisItersMaxX;
+		best[k].y = thisItersMaxY;
+		best[k].val = thisItersMaxVal;
+	}
+	
+	patchMarkMatrix = clearMatrix;
+*/
+    
+	//	(descending) sort the list 'best' with a good ole bubblesort -- from minimum to maximum (descending)
+	
+    
+	featExtOutput.yImage = pop();
+	featExtOutput.iImage = pop();
+	featExtOutput.qImage = pop();
+	pop(); //the eigenvalues are no longer necessary
+	featExtOutput.myBest = best;
+	featExtOutput.goodPts = iters;
+	push(featExtOutput);
+	//println("chooseEigs completed...");
+	}
+}

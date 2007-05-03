@@ -24,13 +24,12 @@ public class ProcessFilterSliceNode {
     
     /**
      * Create code for a FilterSliceNode (actually for the whole slice).
-     * @param <T>          type of a BackEndFactory to access layout, etc.
      * @param filterNode   the filterNode that needs code generated.
      * @param whichPhase   a scheduling phase {@link SchedulingPhase}
      * @param backEndBits  a BackEndFactory to access layout, etc.
      */
-    public static <T extends BackEndFactory> void processFilterSliceNode(FilterSliceNode filterNode, 
-            SchedulingPhase whichPhase, T backEndBits) {
+    public static  void processFilterSliceNode(FilterSliceNode filterNode, 
+            SchedulingPhase whichPhase, BackEndFactory backEndBits) {
 
         CodeStoreHelper filter_code = CodeStoreHelper.findHelperForSliceNode(filterNode);
         
@@ -141,9 +140,9 @@ public class ProcessFilterSliceNode {
      * @param outputChannel  The output channel -- specifies routines to call to replace push.
      * @return a CodeStoreHelper with no push, peek, or pop instructions in the methods.
      */
-    private static <T extends BackEndFactory> CodeStoreHelper makeFilterCode(FilterSliceNode filter, 
+    private static CodeStoreHelper makeFilterCode(FilterSliceNode filter, 
             Channel inputChannel, Channel outputChannel,
-            T backEndBits) {
+            BackEndFactory backEndBits) {
         
         final String peekName;
 
@@ -214,15 +213,14 @@ public class ProcessFilterSliceNode {
     /**
      * Get code for a filter.
      * If code not yet made, then makes it.
-     * @param <T>
      * @param filter         A FilterSliceNode for which we want code.
      * @param inputChannel   The input channel -- specified routines to call to replace peek, pop.
      * @param outputChannel  The output channel -- specified routeines to call to replace push.
      * @param backEndBits
      * @return
      */
-    static <T extends BackEndFactory> CodeStoreHelper getFilterCode(FilterSliceNode filter, 
-            Channel inputChannel, Channel outputChannel, T backEndBits) {
+    public static  CodeStoreHelper getFilterCode(FilterSliceNode filter, 
+            Channel inputChannel, Channel outputChannel, BackEndFactory backEndBits) {
         CodeStoreHelper filter_code = CodeStoreHelper.findHelperForSliceNode(filter);
         if (filter_code == null) {
             filter_code = makeFilterCode(filter,inputChannel,outputChannel,backEndBits);

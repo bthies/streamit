@@ -17,13 +17,12 @@ public class ProcessInputSliceNode {
 
     /**
      * Create code for a InputSliceNode.
-     * @param <T>          type of a BackEndFactory to access layout, etc.
      * @param inputNode    the InputSliceNode that may need code generated.
      * @param whichPhase   a scheduling phase {@link SchedulingPhase}
      * @param backEndBits  a BackEndFactory to access layout, etc.
      */
-    public static <T extends BackEndFactory> void processInputSliceNode(InputSliceNode inputNode, 
-            SchedulingPhase whichPhase, T backEndBits) {
+    public static  void processInputSliceNode(InputSliceNode inputNode, 
+            SchedulingPhase whichPhase, BackEndFactory backEndBits) {
         // No code generated for inputNode if there is no input.
         if (!backEndBits.sliceHasUpstreamChannel(inputNode.getParent())) { return; }
         
@@ -160,8 +159,8 @@ public class ProcessInputSliceNode {
          * @param backEndBits to get info from appropriate BackEndFactory
          * @param helper CodeStoreHelper to get the fields and method implementing the joiner
          */
-        static <T extends BackEndFactory> void makeJoinerCode(InputSliceNode joiner,
-                T backEndBits, CodeStoreHelper helper) {
+        private static  void makeJoinerCode(InputSliceNode joiner,
+                BackEndFactory backEndBits, CodeStoreHelper helper) {
             String joiner_name = "_joiner_" + ProcessFilterSliceNode.getUid();
             String joiner_method_name =  joiner_name + joiner.getNextFilter().getFilter().getName();
             
@@ -288,10 +287,13 @@ public class ProcessInputSliceNode {
          
         /**
          * Make a work function for a joiner 
+         * @param joiner  the InputSliceNode that we are generating code for.
+         * @param backEndBits way to refer to other portions of backend
+         * @param joiner_code  place to put code
          */
         
-        static <T extends BackEndFactory> void makeJoinerWork(InputSliceNode joiner,
-                T backEndBits, CodeStoreHelper joiner_code) {
+        public static  void makeJoinerWork(InputSliceNode joiner,
+                BackEndFactory backEndBits, CodeStoreHelper joiner_code) {
             JMethodDeclaration joinerWork;
 
             // the work function will need a temporary variable
@@ -366,12 +368,11 @@ public class ProcessInputSliceNode {
         /**
          * Get code for a joiner.
          * If code not yet made then makes it.
-         * @param <T> Type of the caller's BackEndFactory.
          * @param joiner
          * @param backEndBits
          * @return
          */
-        static <T extends BackEndFactory> CodeStoreHelper getJoinerCode(InputSliceNode joiner, T backEndBits) {
+        public static  CodeStoreHelper getJoinerCode(InputSliceNode joiner, BackEndFactory backEndBits) {
             CodeStoreHelper joiner_code = CodeStoreHelper.findHelperForSliceNode(joiner);
             if (joiner_code == null) {
                 joiner_code = backEndBits.getCodeStoreHelper(joiner);

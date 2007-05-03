@@ -4,6 +4,7 @@ import at.dms.kjc.backendSupport.BackEndFactory;
 import at.dms.kjc.backendSupport.BackEndScaffold;
 import at.dms.kjc.backendSupport.Channel;
 import at.dms.kjc.backendSupport.CodeStoreHelper;
+import at.dms.kjc.backendSupport.GetOrMakeChannel;
 import at.dms.kjc.backendSupport.SchedulingPhase;
 import at.dms.kjc.slicegraph.Edge;
 import at.dms.kjc.slicegraph.Slice;
@@ -128,9 +129,11 @@ public class UniBackEndFactory extends BackEndFactory<
 
     }
 
+    private GetOrMakeChannel channelTypeSelector = new GetOrMakeChannel(this);
+    
     @Override
     public Channel getChannel(Edge e) {
-        return UniChannel.getOrMakeChannel(e);
+        return channelTypeSelector.getOrMakeChannel(e);
     }
 
     @Override

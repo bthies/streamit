@@ -6,7 +6,6 @@ import at.dms.kjc.sir.SIRBeginMarker;
 import at.dms.kjc.sir.SIREndMarker;
 import at.dms.kjc.slicegraph.FilterContent;
 import at.dms.kjc.slicegraph.SliceNode;
-import at.dms.kjc.vanillaSlice.UniChannel;
 import at.dms.util.Utils;
 
 /**

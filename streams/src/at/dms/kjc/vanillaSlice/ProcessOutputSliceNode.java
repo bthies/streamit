@@ -17,13 +17,12 @@ public class ProcessOutputSliceNode {
 
     /**
      * Create code for a OutputSliceNode.
-     * @param <T>          type of a BackEndFactory to access layout, etc.
      * @param outputNode    the OutputSliceNode that may need code generated.
      * @param whichPhase   a scheduling phase {@link SchedulingPhase}
      * @param backEndBits  a BackEndFactory to access layout, etc.
      */
-    public static <T extends BackEndFactory> void processOutputSliceNode(OutputSliceNode outputNode, 
-            SchedulingPhase whichPhase, T backEndBits) {
+    public static  void processOutputSliceNode(OutputSliceNode outputNode, 
+            SchedulingPhase whichPhase, BackEndFactory backEndBits) {
         // No code generated for outputNode if there is not needed.
         if (! backEndBits.sliceNeedsSplitterCode(outputNode.getParent())) {
             return;
@@ -131,8 +130,8 @@ public class ProcessOutputSliceNode {
          * @param splitter
          * @return
          */
-        static <T extends BackEndFactory> void makeSplitterCode(OutputSliceNode splitter, 
-                T backEndBits, CodeStoreHelper helper) {
+        private static void makeSplitterCode(OutputSliceNode splitter, 
+                BackEndFactory backEndBits, CodeStoreHelper helper) {
             String splitter_name = "_splitter_" + ProcessFilterSliceNode.getUid();
             String splitter_method_name =  splitter_name + splitter.getPrevFilter().getFilter().getName();
 
@@ -266,12 +265,11 @@ public class ProcessOutputSliceNode {
         /**
          * Get code for a splitter.
          * If code not yet made, then makes it.
-         * @param <T>
          * @param splitter
          * @param backEndBits
          * @return
          */
-        static <T extends BackEndFactory> CodeStoreHelper getSplitterCode(OutputSliceNode splitter, T backEndBits) {
+        public static  CodeStoreHelper getSplitterCode(OutputSliceNode splitter, BackEndFactory backEndBits) {
             CodeStoreHelper splitter_code = CodeStoreHelper.findHelperForSliceNode(splitter);
             if (splitter_code == null) {
                 splitter_code = backEndBits.getCodeStoreHelper(splitter);
@@ -281,23 +279,6 @@ public class ProcessOutputSliceNode {
             return splitter_code;
         }
 
-//        /**
-//         * Get code for a joiner and add it to the appropriate ComputeCodeStore.
-//         * If code not yet made, then makes the code and adds it to the appropriate ComputeCodeStore
-//         * @param <T> Type of the caller's BackEndFactory.
-//         * @param splitter
-//         * @param backEndBits
-//         */
-//        static <T extends BackEndFactory> void addSplitterCode(OutputSliceNode splitter, T backEndBits) {
-//            SIRCodeUnit splitter_code = CodeStoreHelper.findHelperForSliceNode(splitter);
-//            if (splitter_code == null) {
-//                splitter_code = makeSplitterCode(splitter,backEndBits);
-//                ComputeNode location = backEndBits.getLayout().getComputeNode(splitter);
-//                assert location != null;
-//                location.getComputeCode().addFields(splitter_code.getFields());
-//                location.getComputeCode().addMethods(splitter_code.getMethods());
-//            }
-//        }
 
-        }
+}
 

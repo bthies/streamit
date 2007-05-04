@@ -42,8 +42,10 @@ public class CellBackendFactory
     
     @Override
     public BackEndScaffold getBackEndMain() {
-        // TODO Auto-generated method stub
-        return null;
+        if (scaffolding == null) {
+            scaffolding  = new BackEndScaffold();
+        }
+        return scaffolding;
     }
 
     @Override
@@ -72,8 +74,7 @@ public class CellBackendFactory
 
     @Override
     public SPU getComputeNode(Integer specifier) {
-        // TODO Auto-generated method stub
-        return null;
+        return cellChip.getNthComputeNode(specifier);
     }
 
     @Override

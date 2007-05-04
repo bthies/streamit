@@ -8,6 +8,7 @@ import at.dms.kjc.backendSupport.ComputeNodesI;
 public class CellChip implements ComputeNodesI<CellComputeCodeStore> {
     
     private Vector<SPU> spus;
+    private PPU ppu;
     
     /**
      * Construct a new collection and fill it with {@link ComputeNode}s.

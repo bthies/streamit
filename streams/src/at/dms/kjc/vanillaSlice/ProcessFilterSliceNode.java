@@ -114,6 +114,9 @@ public class ProcessFilterSliceNode {
             if (!basicCodeWritten.containsKey(filterNode)) {
                 codeStore.addFields(filter_code.getUsefulFields());
                 codeStore.addMethods(filter_code.getUsefulMethods());
+                if (filterNode.getFilter() instanceof FileOutputContent) {
+                    codeStore.addCleanupStatement(((FileOutputContent)filterNode.getFilter()).closeFile());
+                }
                 basicCodeWritten.put(filterNode,true);
             }
             codeStore.addSteadyLoopStatement(steadyBlock);

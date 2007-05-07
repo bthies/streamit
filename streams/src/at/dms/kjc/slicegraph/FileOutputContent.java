@@ -85,6 +85,21 @@ public class FileOutputContent extends OutputContent {
         return getInputType().isFloatingPoint();
     }
     
+    JMethodDeclaration closeMethod;
+    
+    /**
+     * Return a statement closing the file.
+     * Only valid after calling {@link #createContent()}.
+     * @return statement to put in cleanup section of code.
+     */
+    public JStatement closeFile() {
+        JMethodCallExpression close = 
+            new JMethodCallExpression(null, new JThisExpression(null), 
+                                      closeMethod.getName(), JExpression.EMPTY);
+ 
+        return new JExpressionStatement(close);
+    }
+    
     /**
      * Create kopi code that when translated to C will manipulate the file.
      * The C file will need to include <stdio.h>
@@ -98,18 +113,17 @@ public class FileOutputContent extends OutputContent {
         // methods set to the two bogus functions.
  
         String fileVar = "_fileWriter_" + my_unique_ID;
-
+        
         this.outputType = CStdType.Void;
 
+        JVariableDefinition fileDefn = new JVariableDefinition(null,
+                0,
+                new CEmittedTextType("FILE *"),
+                fileVar,
+                null);
         //create fields
         JFieldDeclaration file = 
-            new JFieldDeclaration(null,
-                                  new JVariableDefinition(null,
-                                                          0,
-                                                          new CEmittedTextType("FILE *"),
-                                                          fileVar,
-                                                          null),
-                                  null, null);
+            new JFieldDeclaration(null,fileDefn, null, null);
         this.addAField(file);
     
         //create init function
@@ -129,7 +143,7 @@ public class FileOutputContent extends OutputContent {
             new JAssignmentExpression(null, 
                                       new JFieldAccessExpression(null,
                                                                  new JThisExpression(null),
-                                                                 file.getVariable().getIdent()),
+                                                                 fileDefn.getIdent()),
                                       fopen);
     
         initBlock.addStatement(new JExpressionStatement(null, fass, null));
@@ -172,7 +186,7 @@ public class FileOutputContent extends OutputContent {
             //the params for the fprintf call
             JExpression[] fprintfParams = new JExpression[3];
             fprintfParams[0] = new JFieldAccessExpression(null, new JThisExpression(null),
-                                                          file.getVariable().getIdent());
+                                                          fileDefn.getIdent());
             fprintfParams[1] = new JStringLiteral(null,
                                                   getInputType().isFloatingPoint() ?
                                                   "%f\\n" : "%d\\n");
@@ -221,7 +235,7 @@ public class FileOutputContent extends OutputContent {
             
             // the last parameter: the file pointer
             fwriteParams[3] = new JFieldAccessExpression(null, new JThisExpression(null),
-                                                         file.getVariable().getIdent());
+                                                         fileDefn.getIdent());
             
             JMethodCallExpression fwrite = 
                 new JMethodCallExpression(null, new JThisExpression(null),
@@ -248,8 +262,30 @@ public class FileOutputContent extends OutputContent {
         workMethod.setPeek(1);
         workMethod.setPush(0);
         this.steady = new JMethodDeclaration[]{workMethod};
+        
+        
+        JMethodCallExpression close = 
+            new JMethodCallExpression(null, new JThisExpression(null),
+                                      "fclose", new JExpression[]{
+                new JFieldAccessExpression(null,
+                        new JThisExpression(null),
+                        fileDefn.getIdent())
+            });
+        JBlock body = new JBlock();
+        body.addStatement(new JExpressionStatement(close));
+        
+        JMethodDeclaration closeMethod = new JMethodDeclaration(null,
+                at.dms.kjc.Constants.ACC_PUBLIC,
+                CStdType.Void,
+                "close_filewrite" + my_unique_ID ,
+                JFormalParameter.EMPTY,
+                CClassType.EMPTY,
+                body,
+                null,
+                null);
+
         // discard old dummy methods and set up the new ones.
-        this.setTheMethods(new JMethodDeclaration[]{initMethod,workMethod});
+        this.setTheMethods(new JMethodDeclaration[]{initMethod,workMethod,closeMethod});
     }
 
 }

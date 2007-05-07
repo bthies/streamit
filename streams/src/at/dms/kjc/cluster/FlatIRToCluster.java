@@ -24,6 +24,9 @@ import at.dms.kjc.common.CommonUtils;
  */
 public class FlatIRToCluster extends InsertTimers implements
                                                       StreamVisitor, CodeGenerator {
+    /** set to true when declarations are local (so in methods, not in fields).  
+     * Tested to determine whether to add declarations. */
+    private boolean declsAreLocal = false;
 
     /**
      * Set to true to print comments on code generation.
@@ -875,6 +878,7 @@ public class FlatIRToCluster extends InsertTimers implements
     public void visitMethodDeclaration(JMethodDeclaration self, int modifiers,
                                        CType returnType, String ident, JFormalParameter[] parameters,
                                        CClassType[] exceptions, JBlock body) {
+        declsAreLocal = true;
         if (filter != null && filter instanceof SIRPredefinedFilter
             && self.getName().startsWith("init") && !isDeclOnly()) {
             BuiltinsCodeGen.predefinedFilterInit((SIRPredefinedFilter) filter,
@@ -898,6 +902,7 @@ public class FlatIRToCluster extends InsertTimers implements
         // try converting to macro
         if (MacroConversion.shouldConvert(self)) {
             MacroConversion.doConvert(self, isDeclOnly(), this);
+            declsAreLocal = false;
             return;
         }
 
@@ -965,6 +970,7 @@ public class FlatIRToCluster extends InsertTimers implements
         }
         p.newLine();
         isInit = false;
+        declsAreLocal = false;
         method = null;
     }
 
@@ -1024,16 +1030,26 @@ public class FlatIRToCluster extends InsertTimers implements
                 expr.accept (this);
             } 
 // 05-Dec-2006: Do not initialize unless initialized in Kopi code.
-// For arrays of vector type was creating code that coulf not be converted to C.
+// For arrays of vector type was creating code that could not be converted to C.
 // For arrays from fusion was causing unnecessary overhead.
 // Assume now that compiler writers know whether variable needs initailization!
-//            else if (type.isOrdinal())
-//                p.print(" = 0");
-//            else if (type.isFloatingPoint())
-//                p.print(" = 0.0f");
-//            else if (type.isArrayType())
-//                p.print(" = {0}");
-
+            else if (declsAreLocal) {
+                if (type.isOrdinal()) { p.print(" = 0"); }
+                else if (type.isFloatingPoint()) {p.print(" = 0.0f"); }
+                else if (type.isArrayType()) {
+                    if (! (((CArrayType)type).getBaseType() instanceof CVectorType)
+                     && ! (((CArrayType)type).getBaseType() instanceof CVectorTypeLow)) {
+                            p.print(" = {0}");
+                        } 
+                    }
+                else if (type.isClassType()) {
+                    if (((CClassType)type).toString().equals("java.lang.String")) {
+                        p.print(" = NULL;"); 
+                    } else {
+                        p.print(" = {0}");
+                    }
+                }
+            }
             p.print(";/* " + type + " */");
         }
     }

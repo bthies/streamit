@@ -17,12 +17,12 @@ public class UniComputeCodeStore extends ComputeCodeStore<UniProcessor> {
     }
 
     /**
-     * 
+     * We always use an iteration bound, so override version in superclass. 
      */
     @Override
     protected void addSteadyLoop() {
         ALocalVariable bound = ALocalVariable.makeVar(CStdType.Integer, UniBackEndFactory.iterationBound);
-        mainMethod.addStatement(at.dms.util.Utils.makeForLoop(steadyLoop, bound.getRef()));
+        super.addSteadyLoop(bound);
     }
     
     /**

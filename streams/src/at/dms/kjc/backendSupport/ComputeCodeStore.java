@@ -1,6 +1,6 @@
 package at.dms.kjc.backendSupport;
 
-import java.util.*;
+//import java.util.*;
 import at.dms.kjc.CClassType;
 import at.dms.kjc.CStdType;
 import at.dms.kjc.JBlock;
@@ -15,13 +15,34 @@ import at.dms.kjc.JStatement;
 import at.dms.kjc.JThisExpression;
 import at.dms.kjc.JWhileStatement;
 import at.dms.kjc.sir.SIRCodeUnit;
-import at.dms.kjc.slicegraph.SliceNode;
+//import at.dms.kjc.slicegraph.SliceNode;
+import at.dms.kjc.common.ALocalVariable;
 
 /**
- * A data structure for associating code with each filter at each phase.
+ * A data structure for associating code with each compute node at each phase.
+ * 
+ * A Code Store implements a SIRCodeUnit so that you can add fields and methods as needed.
+ * A ComputeCodeStore also has a main method (of type void->void).  The main method has three
+ * predefined parts: 
+ * {@link #addInitStatement(JStatement)} can be used to add a statement that
+ * is performed before the steady state.  This is normally called to add statments calling (or inlining) 
+ * a work method that needs to be run at initialization time to pre-load data needed for peeks.
+ * {@link #addSteadyLoopStatement(JStatement)} can be used to add a statement that is performed 
+ * in the steady state loop.
+ * {@link #addCleanupStatement(JStatement)} can be used to add a statement that is performed 
+ * after the steady state loop.
+ * It may be useful to call {@link #addInitFunctionCall(JMethodDeclaration)} to add a call to some
+ * method to the beginning of the main method.  As the name implies, this is usually used to add calls
+ * to the init() functions in filters.
+ * 
+ * Use constructors without the iterationBound parameter to run the steady state indefinitely (and thus
+ * make {@link #addCleanupStatement(JStatement)} useless).
+ * Use constructors with the iterationBound parameter to run the steady state for the number of times
+ * determined at run time by the value of the iterationBound.
  * 
  * As lifted from MGordon's code there is a mutually-recursive type problem:
  * ComputeCodeStore and ComputeNode types are extended in parallel, and each refers to the other.
+ * New constructors allow ComputeCodeStore to be constructed without reference to a ComputeNode.
  * 
  * @author mgodon / dimock
  *
@@ -66,15 +87,52 @@ public class ComputeCodeStore<ComputeNodeType extends ComputeNode<?>> implements
     protected JBlock steadyLoop;
     /** the block that executes each slicenode's init schedule, as calculated currently */
     protected JBlock initBlock;
-
+    /** the block executed after the steadyLoop */
+    protected JBlock cleanupBlock;
 
     /**
-     * Constructor
-     * @param parent a ComputeCodeStore or an instance of some subclass.
-     * @param addSteadyLoop if true 
+     * Constructor: steady state loops indefinitely, code store has pointer back to a compute node.
+     * @param parent a ComputeNode.
      */
     public ComputeCodeStore(ComputeNodeType parent) {
         this.parent = parent;
+        constructorCommon();
+        addSteadyLoop();
+        getMainFunction().addStatement(cleanupBlock);
+    }
+
+    /**
+     * Constructor: caller will add code to bound number of iterations, code store has pointer back to a compute node.
+     * @param parent a ComputeNode.
+     * @param iterationBound a variable that will be defined locally in 
+     */
+    public ComputeCodeStore(ComputeNodeType parent, ALocalVariable iterationBound) {
+        this.parent = parent;
+        constructorCommon();
+        addSteadyLoop(iterationBound);
+        getMainFunction().addStatement(cleanupBlock);
+    }
+    
+    /**
+     * Constructor: caller will add code to bound number of iterations, no pointer back to compute node.
+     * @param iterationBound a variable that will be defined locally by <code>getMainFunction().addAllStatments(0,stmts);</code>
+     */
+    public ComputeCodeStore(ALocalVariable iterationBound) {
+        constructorCommon();
+        addSteadyLoop(iterationBound);
+        getMainFunction().addStatement(cleanupBlock);
+    }
+    
+    /**
+     * Constructor: steady state loops indefinitely, no pointer back to compute node.
+     */
+    public ComputeCodeStore() {
+        constructorCommon();
+        addSteadyLoop();
+        getMainFunction().addStatement(cleanupBlock);
+    }
+    
+    private void constructorCommon() {
         methods = new JMethodDeclaration[0];
         fields = new JFieldDeclaration[0];
         mainMethod = new JMethodDeclaration(null,
@@ -87,8 +145,8 @@ public class ComputeCodeStore<ComputeNodeType extends ComputeNode<?>> implements
         mainMethod.addStatement(initBlock);
         // create the body of steady state loop
         steadyLoop = new JBlock(null, new JStatement[0], null);
+        cleanupBlock = new JBlock(null, new JStatement[0], null);
         addMethod(mainMethod);
-        addSteadyLoop();
     }
 
     /**
@@ -100,6 +158,18 @@ public class ComputeCodeStore<ComputeNodeType extends ComputeNode<?>> implements
         // add it to the while statement
         mainMethod.addStatement(new JWhileStatement(null, new JBooleanLiteral(
                 null, true), steadyLoop, null));
+    }
+    
+    /**
+     * Add a way of iterating steadyLoop to the main method.
+     * This version takes a local variable (add declaration to mainMethod) that will hold the iteration count.
+     * Current implementation is a simple for loop counting up.
+     * XXX: The proper behavior is to loop forever if this variable is set to -1, but the
+     * current implementation will loop only INT_MAX times.
+     * @param iterationBound  the local variable that will hold the iteration count.
+     */
+    protected void addSteadyLoop(ALocalVariable iterationBound) {
+        mainMethod.addStatement(at.dms.util.Utils.makeForLoop(steadyLoop, iterationBound.getRef()));
     }
     
     /** Override to get different MAIN names on different ComputeNode's */
@@ -124,7 +194,25 @@ public class ComputeCodeStore<ComputeNodeType extends ComputeNode<?>> implements
      public void addInitStatement(JStatement stmt) {
          if (stmt != null) initBlock.addStatement(stmt);
      }
+
+     /**
+      * Add a statement to the end of the cleanup code.
+      * 
+      * Make sure to <pre>getMainFunction().addStatement(getCleanupBlock());</pre>
+      * after calling 
+      * @param stmt  statement to add after any other statements in cleanup code.
+      */
+      public void addCleanupStatement(JStatement stmt) {
+          if (stmt != null) cleanupBlock.addStatement(stmt);
+      }
     
+//      /**
+//       * @return the block contatining any cleanup code.
+//       */
+//      public JBlock getCleanupBlock() {
+//          return cleanupBlock;
+//      }
+//      
      /**
       * @param stmt  statement to add after any other statements in steady-state code.
       * 
@@ -133,15 +221,6 @@ public class ComputeCodeStore<ComputeNodeType extends ComputeNode<?>> implements
         if (stmt != null) steadyLoop.addStatement(stmt);
      }
      
-    /**
-     * You should generally manipulate the code for the steady state by {@link #addSteadyLoopStatement(JStatement)}
-     * but if you specify that ComputeCodeStore does not generate an infinite loop in main calling steadyLoop,
-     * then you will need {@link #getSteadyLoop()} to add steadyLoop yourself.
-     * @return The steady loop block.
-     */
-    public JBlock getSteadyLoop() {
-        return steadyLoop;
-    }
     
     /**
      * Bill's code adds method <b>meth</b> to this, if <b>meth</b> is not already
@@ -283,7 +362,7 @@ public class ComputeCodeStore<ComputeNodeType extends ComputeNode<?>> implements
     /**
      * Add the call the init function for a filter as the first statement in "main".
      * 
-     * @param filterInfo The filter.
+     * @param init the init function, a call to it will be added.
      */
     public void addInitFunctionCall(JMethodDeclaration init) {
         //JMethodDeclaration init = filterInfo.filter.getInit();

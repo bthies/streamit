@@ -15,18 +15,17 @@ import at.dms.kjc.common.*;
     * Inner class CodeGen is the visitor that emits the code for a JPhylum.
     * @author dimock
     */
-public class EmitCode<T extends BackEndFactory> {
+public class EmitCode {
     // variable name prefix for copying arrays.
     protected static final String ARRAY_COPY = "__array_copy__";
-    protected T backendbits;
+    protected BackEndFactory backendbits;
     protected CodeGen codegen;
 
     /**
      * Constructor.
      * @param backendbits indicates BackEndFactory containing all useful info.
      */
-    public EmitCode(
-            T backendbits) {
+    public EmitCode(BackEndFactory backendbits) {
         super();
         this.backendbits = backendbits;
         codegen = null;
@@ -220,7 +219,12 @@ backendbits.getComputeNodes().getNthComputeNode(0).getComputeCode().getMainFunct
      */
     protected class CodeGen extends ToC implements SLIRVisitor,CodeGenerator {
     // Overridden methods from ToC, ToCCommon, SLIRVisitor
+      
+    /** set to true when declarations are local (so in methods, not in fields).  
+     * Tested to determine whether to add declarations. */
+    private boolean declsAreLocal = false;
 
+    
     CodeGen(CodegenPrintWriter p) {
         super(p);
         // emitting C, not C++, so no "boolean"
@@ -374,6 +378,31 @@ backendbits.getComputeNodes().getNthComputeNode(0).getComputeCode().getMainFunct
             if (expr != null && !(expr instanceof JNewArrayExpression)) {
                 p.print (" = ");
                 expr.accept (this);
+            } else if (declsAreLocal) {
+                // C stack allocation: StreamIt variables are initialized to 0
+                // (StreamIt Language Specification 2.1, section 3.3.3) but C
+                // does not automatically zero out variables on the stack so we
+                // need to do it here.
+                // TODO: gcc does not always eliminate array initialization code
+                // in the situation where all elements are written before they are read.
+                // we should probably put that check here.
+                if (type.isOrdinal()) { p.print(" = 0"); }
+                else if (type.isFloatingPoint()) {p.print(" = 0.0f"); }
+                else if (type.isArrayType()) {
+                    // gcc 4.1.1 will not zero out an array of vectors using this syntax!
+                    if (! (((CArrayType)type).getBaseType() instanceof CVectorType)
+                     && ! (((CArrayType)type).getBaseType() instanceof CVectorTypeLow)) {
+                            p.print(" = {0}");
+                        } 
+                    }
+                else if (type.isClassType()) {
+                    if (((CClassType)type).toString().equals("java.lang.String")) {
+                        p.print(" = NULL;"); 
+                    } else {
+                        p.print(" = {0}");
+                    }
+                }
+
             }
         }
         p.print(";");
@@ -416,6 +445,7 @@ backendbits.getComputeNodes().getNthComputeNode(0).getComputeCode().getMainFunct
             MacroConversion.doConvert(self, isDeclOnly(), this);
             return;
         }
+        declsAreLocal = true;
         if (! this.isDeclOnly()) { p.newLine(); } // some extra space if not just declaration.
         p.newLine();
         if ((modifiers & at.dms.kjc.Constants.ACC_PUBLIC) == 0) {
@@ -443,6 +473,7 @@ backendbits.getComputeNodes().getNthComputeNode(0).getComputeCode().getMainFunct
         //print the declaration then return
         if (isDeclOnly()) {
             p.print(";");
+            declsAreLocal = false;
             return;
         }
 
@@ -456,6 +487,7 @@ backendbits.getComputeNodes().getNthComputeNode(0).getComputeCode().getMainFunct
             p.print(";");
 
         p.newLine();
+        declsAreLocal = false;
         method = null;
     }
     }

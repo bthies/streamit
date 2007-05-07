@@ -12,6 +12,11 @@ import at.dms.kjc.sir.*;
  *
  */
 public class ProcessFilterSliceNode {
+    /**
+     * print debugging info?
+     */
+    public static boolean debug = false;
+    
     
     private static int uid = 0;
     static int getUid() {
@@ -36,13 +41,15 @@ public class ProcessFilterSliceNode {
         // We should only generate code once for a filter node.
         
         if (filter_code == null) {
-            System.err.println(
+            if (debug) {
+              System.err.println(
                     "filter " + filterNode.getFilter() +
                     ", make_joiner " + backEndBits.sliceNeedsJoinerCode(filterNode.getParent()) + 
                     ", make_peek_buffer " + backEndBits.sliceNeedsPeekBuffer(filterNode.getParent()) +
                     ", has_upstream_channel " + backEndBits.sliceHasUpstreamChannel(filterNode.getParent()) +
                     ", make_splitter " + backEndBits.sliceNeedsSplitterCode(filterNode.getParent()) +
                     ", has_downstream_channel " + backEndBits.sliceHasDownstreamChannel(filterNode.getParent()));
+            }
             
             Channel inputChannel = null;
             
@@ -111,19 +118,35 @@ public class ProcessFilterSliceNode {
             }
             codeStore.addSteadyLoopStatement(steadyBlock);
             
-            // debug info only: expected splitter and joiner firings.
-            System.err.print("(Filter" + filterNode.getFilter().getName());
-            System.err.print(" " + FilterInfo.getFilterInfo(filterNode).getMult(SchedulingPhase.INIT));
-            System.err.print(" " + FilterInfo.getFilterInfo(filterNode).getMult(SchedulingPhase.STEADY));
-            System.err.println(")");
-            System.err.print("(Joiner joiner_" + filterNode.getFilter().getName());
-            System.err.print(" " + FilterInfo.getFilterInfo(filterNode).totalItemsReceived(SchedulingPhase.INIT));
-            System.err.print(" " + FilterInfo.getFilterInfo(filterNode).totalItemsReceived(SchedulingPhase.STEADY));
-            System.err.println(")");
-            System.err.print("(Splitter splitter_" + filterNode.getFilter().getName());
-            System.err.print(" " + FilterInfo.getFilterInfo(filterNode).totalItemsSent(SchedulingPhase.INIT));
-            System.err.print(" " + FilterInfo.getFilterInfo(filterNode).totalItemsSent(SchedulingPhase.STEADY));
-            System.err.println(")");
+            if (debug) {
+                // debug info only: expected splitter and joiner firings.
+                System.err.print("(Filter" + filterNode.getFilter().getName());
+                System.err.print(" "
+                        + FilterInfo.getFilterInfo(filterNode).getMult(
+                                SchedulingPhase.INIT));
+                System.err.print(" "
+                        + FilterInfo.getFilterInfo(filterNode).getMult(
+                                SchedulingPhase.STEADY));
+                System.err.println(")");
+                System.err.print("(Joiner joiner_"
+                        + filterNode.getFilter().getName());
+                System.err.print(" "
+                        + FilterInfo.getFilterInfo(filterNode)
+                                .totalItemsReceived(SchedulingPhase.INIT));
+                System.err.print(" "
+                        + FilterInfo.getFilterInfo(filterNode)
+                                .totalItemsReceived(SchedulingPhase.STEADY));
+                System.err.println(")");
+                System.err.print("(Splitter splitter_"
+                        + filterNode.getFilter().getName());
+                System.err.print(" "
+                        + FilterInfo.getFilterInfo(filterNode).totalItemsSent(
+                                SchedulingPhase.INIT));
+                System.err.print(" "
+                        + FilterInfo.getFilterInfo(filterNode).totalItemsSent(
+                                SchedulingPhase.STEADY));
+                System.err.println(")");
+            }
             
             break;
         }

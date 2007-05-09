@@ -7,4 +7,11 @@ public class SPU extends CellPU {
         super(uniqueId);
     }
     
+    public boolean isPPU() {
+        return false;
+    }
+    
+    public boolean isSPU() {
+        return true;
+    }  
 }

@@ -2,11 +2,14 @@ package at.dms.kjc.cell;
 
 import at.dms.kjc.backendSupport.ComputeNode;
 
-public class CellPU extends ComputeNode<CellComputeCodeStore> {
+public abstract class CellPU extends ComputeNode<CellComputeCodeStore> {
 
     protected CellPU(int uniqueId) {
         super();
         setUniqueId(uniqueId);
         computeCode = new CellComputeCodeStore(this);
     }
+    
+    abstract public boolean isPPU();
+    abstract public boolean isSPU();
 }

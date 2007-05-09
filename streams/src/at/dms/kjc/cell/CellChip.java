@@ -7,8 +7,9 @@ import at.dms.kjc.backendSupport.ComputeNodesI;
 
 public class CellChip implements ComputeNodesI<CellComputeCodeStore> {
     
-    private Vector<SPU> spus;
-    private PPU ppu;
+    private Vector<CellPU> cellPUs;
+    private int numSPUs;
+    private int totalCellPUs;
     
     /**
      * Construct a new collection and fill it with {@link ComputeNode}s.
@@ -16,10 +17,13 @@ public class CellChip implements ComputeNodesI<CellComputeCodeStore> {
      * @param numberOfNodes
      */
     public CellChip(Integer numberOfSpus) {
-        spus = new Vector<SPU>(numberOfSpus);
-        for (int i = 0; i < numberOfSpus; i++) {
+        numSPUs = numberOfSpus;
+        totalCellPUs = numSPUs + 1;
+        cellPUs = new Vector<CellPU>(totalCellPUs);
+        cellPUs.add(new PPU(0));
+        for (int i = 1; i < totalCellPUs; i++) {
             SPU spu = new SPU(i);
-            spus.add(spu);
+            cellPUs.add(spu);
         }
     }
 
@@ -27,25 +31,29 @@ public class CellChip implements ComputeNodesI<CellComputeCodeStore> {
         return true;
     }
 
-    public SPU getNthComputeNode(int n) {
-        return spus.elementAt(n);
+    public CellPU getNthComputeNode(int n) {
+        return cellPUs.elementAt(n);
+    }
+    
+    public PPU getPPU() {
+        return (PPU) cellPUs.elementAt(0);
     }
 
-    public boolean isValidComputeNodeNumber(int spuNumber) {
-        return 0 <= spuNumber && spuNumber < spus.size();
+    public boolean isValidComputeNodeNumber(int cellpuNumber) {
+        return 0 <= cellpuNumber && cellpuNumber < cellPUs.size();
     }
 
     public int newComputeNode() {
-        spus.add(new SPU(spus.size()));
-        return spus.size() - 1;
+        cellPUs.add(new SPU(cellPUs.size()));
+        return cellPUs.size() - 1;
     }
 
     public int size() {
-        return spus.size();
+        return cellPUs.size();
     }
     
-    public SPU[] toArray() {
-        return spus.toArray(new SPU[spus.size()]);
+    public CellPU[] toArray() {
+        return cellPUs.toArray(new CellPU[cellPUs.size()]);
     }
 
 }

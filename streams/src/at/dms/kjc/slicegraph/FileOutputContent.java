@@ -274,7 +274,7 @@ public class FileOutputContent extends OutputContent {
         JBlock body = new JBlock();
         body.addStatement(new JExpressionStatement(close));
         
-        JMethodDeclaration closeMethod = new JMethodDeclaration(null,
+        closeMethod = new JMethodDeclaration(null,
                 at.dms.kjc.Constants.ACC_PUBLIC,
                 CStdType.Void,
                 "close_filewrite" + my_unique_ID ,

@@ -96,7 +96,7 @@ public class CellBackendFactory
     public void processFilterSliceNode(FilterSliceNode filter,
             SchedulingPhase whichPhase, CellChip computeNodes) {
         System.out.println("processfilterslidenode");
-        ProcessCellFilterSliceNode.processFilterSliceNode(filter, whichPhase, this);
+        //ProcessCellFilterSliceNode.processFilterSliceNode(filter, whichPhase, this);
     }
 
     @Override

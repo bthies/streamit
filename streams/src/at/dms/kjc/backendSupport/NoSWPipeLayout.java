@@ -21,11 +21,11 @@ import at.dms.kjc.slicegraph.Partitioner;
  */
 public class NoSWPipeLayout<T extends ComputeNode, Ts extends ComputeNodesI> extends SimulatedAnnealing implements Layout<T> {
     
-    private Partitioner partitioner;
-    private Ts chip;
-    private LinkedList<Slice> scheduleOrder;
-    private LinkedList<SliceNode> assignedFilters;
-    private Random rand;
+    protected Partitioner partitioner;
+    protected Ts chip;
+    protected LinkedList<Slice> scheduleOrder;
+    protected LinkedList<SliceNode> assignedFilters;
+    protected Random rand;
     
     /** from assignment when done with simulated annealing */
     private HashMap<SliceNode, T> layout;

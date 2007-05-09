@@ -27,17 +27,22 @@ public class ProcessFilterSliceNode {
     // uses WeakHashMap to be self-cleaning, but now have to insert some value.
     private static Map<SliceNode,Boolean>  basicCodeWritten = new WeakHashMap<SliceNode,Boolean>();
     
-    /**
-     * Create code for a FilterSliceNode (actually for the whole slice).
-     * @param filterNode   the filterNode that needs code generated.
-     * @param whichPhase   a scheduling phase {@link SchedulingPhase}
-     * @param backEndBits  a BackEndFactory to access layout, etc.
-     */
-    public static  void processFilterSliceNode(FilterSliceNode filterNode, 
+    protected CodeStoreHelper filter_code;
+    protected ComputeCodeStore codeStore;
+    protected FilterSliceNode filterNode;
+    protected SchedulingPhase whichPhase;
+    protected BackEndFactory backEndBits;
+    protected ComputeNode location;
+    
+    private ProcessFilterSliceNode(FilterSliceNode filterNode, 
             SchedulingPhase whichPhase, BackEndFactory backEndBits) {
-
-        CodeStoreHelper filter_code = CodeStoreHelper.findHelperForSliceNode(filterNode);
-        
+        this.filterNode = filterNode;
+        this.whichPhase = whichPhase;
+        this.backEndBits = backEndBits;
+    }
+    
+    private void doit() {
+        filter_code = CodeStoreHelper.findHelperForSliceNode(filterNode);
         // We should only generate code once for a filter node.
         
         if (filter_code == null) {
@@ -66,95 +71,141 @@ public class ProcessFilterSliceNode {
             filter_code = getFilterCode(filterNode,inputChannel,outputChannel,backEndBits);
         } 
 
-       ComputeNode location = backEndBits.getLayout().getComputeNode(filterNode);
+        location = backEndBits.getLayout().getComputeNode(filterNode);
        assert location != null;
-       ComputeCodeStore codeStore = location.getComputeCode();
+       codeStore = location.getComputeCode();
 
        switch (whichPhase) {
         case INIT:
-            // Have the main function for the CodeStore call out init.
-            codeStore.addInitFunctionCall(filter_code.getInitMethod());
-            JMethodDeclaration workAtInit = filter_code.getInitStageMethod();
-            if (workAtInit != null) {
-                // if there are calls to work needed at init time then add
-                // method to general pool of methods
-                codeStore.addMethod(workAtInit);
-                // and add call to list of calls made at init time.
-                // Note: these calls must execute in the order of the
-                // initialization schedule -- so caller of this routine 
-                // must follow order of init schedule.
-                codeStore.addInitStatement(new JExpressionStatement(null,
-                        new JMethodCallExpression(null, new JThisExpression(null),
-                                workAtInit.getName(), new JExpression[0]), null));
-            }
+            standardInitProcessing();
+            additionalInitProcessing();
             break;
         case PRIMEPUMP:
-            JMethodDeclaration primePump = filter_code.getPrimePumpMethod();
-            if (primePump != null && ! codeStore.hasMethod(primePump)) {
-                // Add method -- but only once
-                codeStore.addMethod(primePump);
-            }
-            if (primePump != null) {
-                // for each time this method is called, it adds another call
-                // to the primePump routine to the initialization.
-                codeStore.addInitStatement(new JExpressionStatement(
-                                null,
-                                new JMethodCallExpression(null,
-                                        new JThisExpression(null), primePump
-                                                .getName(), new JExpression[0]),
-                                null));
-
-            }
+            standardPrimePumpProcessing();
+            additionalPrimePumpProcessing();
             break;
         case STEADY:
-            JStatement steadyBlock = filter_code.getSteadyBlock();
-            // helper has now been used for the last time, so we can write the basic code.
-            // write code deemed useful by the helper into the corrrect ComputeCodeStore.
-            // write only once if multiple calls for steady state.
-            if (!basicCodeWritten.containsKey(filterNode)) {
-                codeStore.addFields(filter_code.getUsefulFields());
-                codeStore.addMethods(filter_code.getUsefulMethods());
-                if (filterNode.getFilter() instanceof FileOutputContent) {
-                    codeStore.addCleanupStatement(((FileOutputContent)filterNode.getFilter()).closeFile());
-                }
-                basicCodeWritten.put(filterNode,true);
-            }
-            codeStore.addSteadyLoopStatement(steadyBlock);
-            
-            if (debug) {
-                // debug info only: expected splitter and joiner firings.
-                System.err.print("(Filter" + filterNode.getFilter().getName());
-                System.err.print(" "
-                        + FilterInfo.getFilterInfo(filterNode).getMult(
-                                SchedulingPhase.INIT));
-                System.err.print(" "
-                        + FilterInfo.getFilterInfo(filterNode).getMult(
-                                SchedulingPhase.STEADY));
-                System.err.println(")");
-                System.err.print("(Joiner joiner_"
-                        + filterNode.getFilter().getName());
-                System.err.print(" "
-                        + FilterInfo.getFilterInfo(filterNode)
-                                .totalItemsReceived(SchedulingPhase.INIT));
-                System.err.print(" "
-                        + FilterInfo.getFilterInfo(filterNode)
-                                .totalItemsReceived(SchedulingPhase.STEADY));
-                System.err.println(")");
-                System.err.print("(Splitter splitter_"
-                        + filterNode.getFilter().getName());
-                System.err.print(" "
-                        + FilterInfo.getFilterInfo(filterNode).totalItemsSent(
-                                SchedulingPhase.INIT));
-                System.err.print(" "
-                        + FilterInfo.getFilterInfo(filterNode).totalItemsSent(
-                                SchedulingPhase.STEADY));
-                System.err.println(")");
-            }
-            
+            standardSteadyProcessing();
+            additionalSteadyProcessing();
             break;
         }
     }
+    
+    /**
+     * Create code for a FilterSliceNode (actually for the whole slice).
+     * @param filterNode   the filterNode that needs code generated.
+     * @param whichPhase   a scheduling phase {@link SchedulingPhase}
+     * @param backEndBits  a BackEndFactory to access layout, etc.
+     */
+    public static  void processFilterSliceNode(FilterSliceNode filterNode, 
+            SchedulingPhase whichPhase, BackEndFactory backEndBits) {
 
+        // have an instance so we can override methods.
+        ProcessFilterSliceNode self = new ProcessFilterSliceNode(filterNode,whichPhase,backEndBits);
+        self.doit();
+    }
+        
+        
+
+
+    public void standardInitProcessing() {
+        // Have the main function for the CodeStore call out init.
+        codeStore.addInitFunctionCall(filter_code.getInitMethod());
+        JMethodDeclaration workAtInit = filter_code.getInitStageMethod();
+        if (workAtInit != null) {
+            // if there are calls to work needed at init time then add
+            // method to general pool of methods
+            codeStore.addMethod(workAtInit);
+            // and add call to list of calls made at init time.
+            // Note: these calls must execute in the order of the
+            // initialization schedule -- so caller of this routine 
+            // must follow order of init schedule.
+            codeStore.addInitStatement(new JExpressionStatement(null,
+                    new JMethodCallExpression(null, new JThisExpression(null),
+                            workAtInit.getName(), new JExpression[0]), null));
+        }
+
+    }
+    
+    public void additionalInitProcessing() {
+        
+    }
+    
+    public void standardPrimePumpProcessing() {
+        
+        JMethodDeclaration primePump = filter_code.getPrimePumpMethod();
+        if (primePump != null && ! codeStore.hasMethod(primePump)) {
+            // Add method -- but only once
+            codeStore.addMethod(primePump);
+        }
+        if (primePump != null) {
+            // for each time this method is called, it adds another call
+            // to the primePump routine to the initialization.
+            codeStore.addInitStatement(new JExpressionStatement(
+                            null,
+                            new JMethodCallExpression(null,
+                                    new JThisExpression(null), primePump
+                                            .getName(), new JExpression[0]),
+                            null));
+
+        }
+
+    }
+    
+    public void additionalPrimePumpProcessing() {
+        
+    }
+    
+    public void standardSteadyProcessing() {
+        JStatement steadyBlock = filter_code.getSteadyBlock();
+        // helper has now been used for the last time, so we can write the basic code.
+        // write code deemed useful by the helper into the corrrect ComputeCodeStore.
+        // write only once if multiple calls for steady state.
+        if (!basicCodeWritten.containsKey(filterNode)) {
+            codeStore.addFields(filter_code.getUsefulFields());
+            codeStore.addMethods(filter_code.getUsefulMethods());
+            if (filterNode.getFilter() instanceof FileOutputContent) {
+                codeStore.addCleanupStatement(((FileOutputContent)filterNode.getFilter()).closeFile());
+            }
+            basicCodeWritten.put(filterNode,true);
+        }
+        codeStore.addSteadyLoopStatement(steadyBlock);
+        
+        if (debug) {
+            // debug info only: expected splitter and joiner firings.
+            System.err.print("(Filter" + filterNode.getFilter().getName());
+            System.err.print(" "
+                    + FilterInfo.getFilterInfo(filterNode).getMult(
+                            SchedulingPhase.INIT));
+            System.err.print(" "
+                    + FilterInfo.getFilterInfo(filterNode).getMult(
+                            SchedulingPhase.STEADY));
+            System.err.println(")");
+            System.err.print("(Joiner joiner_"
+                    + filterNode.getFilter().getName());
+            System.err.print(" "
+                    + FilterInfo.getFilterInfo(filterNode)
+                            .totalItemsReceived(SchedulingPhase.INIT));
+            System.err.print(" "
+                    + FilterInfo.getFilterInfo(filterNode)
+                            .totalItemsReceived(SchedulingPhase.STEADY));
+            System.err.println(")");
+            System.err.print("(Splitter splitter_"
+                    + filterNode.getFilter().getName());
+            System.err.print(" "
+                    + FilterInfo.getFilterInfo(filterNode).totalItemsSent(
+                            SchedulingPhase.INIT));
+            System.err.print(" "
+                    + FilterInfo.getFilterInfo(filterNode).totalItemsSent(
+                            SchedulingPhase.STEADY));
+            System.err.println(")");
+        }
+        
+    }
+    
+    public void additionalSteadyProcessing() {
+        
+    }
     
     /**
      * Take a code unit (here a FilterContent) and return one with all push, peek, pop 

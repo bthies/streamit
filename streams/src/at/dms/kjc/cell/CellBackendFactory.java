@@ -11,11 +11,15 @@ import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.OutputSliceNode;
 import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.slicegraph.SliceNode;
+import at.dms.kjc.vanillaSlice.CodeStoreHelperJoiner;
+import at.dms.kjc.vanillaSlice.CodeStoreHelperSimple;
+import at.dms.kjc.vanillaSlice.CodeStoreHelperSplitter;
 
 public class CellBackendFactory 
-    extends BackEndFactory<CellChip, SPU, CellComputeCodeStore, Integer> {
+    extends BackEndFactory<CellChip, CellPU, CellComputeCodeStore, Integer> {
 
     private CellChip cellChip;
+    private GetOrMakeCellChannel channelMaker = new GetOrMakeCellChannel(this);
     
     /**
      * Constructor if creating UniBackEndFactory before layout
@@ -43,15 +47,14 @@ public class CellBackendFactory
     @Override
     public BackEndScaffold getBackEndMain() {
         if (scaffolding == null) {
-            scaffolding  = new BackEndScaffold();
+            scaffolding = new BackEndScaffold();
         }
         return scaffolding;
     }
 
     @Override
     public Channel getChannel(Edge e) {
-        // TODO Auto-generated method stub
-        return null;
+        return channelMaker.getOrMakeChannel(e);
     }
 
     @Override
@@ -62,32 +65,38 @@ public class CellBackendFactory
 
     @Override
     public CodeStoreHelper getCodeStoreHelper(SliceNode node) {
-        // TODO Auto-generated method stub
-        return null;
+        if (node instanceof FilterSliceNode) {
+            // simply do appropriate wrapping of calls...
+            return new CodeStoreHelperSimple((FilterSliceNode)node,this);
+        } else if (node instanceof InputSliceNode) {
+            // CodeStoreHelper that does not expect a work function.
+            // Can we combine with above?
+            return new CodeStoreHelperJoiner((InputSliceNode)node, this);
+        } else {
+            return new CodeStoreHelperSplitter((OutputSliceNode)node,this);
+        }
     }
 
     @Override
-    public CellComputeCodeStore getComputeCodeStore(SPU parent) {
-        // TODO Auto-generated method stub
-        return null;
+    public CellComputeCodeStore getComputeCodeStore(CellPU parent) {
+        return parent.getComputeCode();
     }
 
     @Override
-    public SPU getComputeNode(Integer specifier) {
+    public CellPU getComputeNode(Integer specifier) {
         return cellChip.getNthComputeNode(specifier);
     }
 
     @Override
     public CellChip getComputeNodes() {
-        // TODO Auto-generated method stub
-        return null;
+        return cellChip;
     }
 
     @Override
     public void processFilterSliceNode(FilterSliceNode filter,
             SchedulingPhase whichPhase, CellChip computeNodes) {
-        // TODO Auto-generated method stub
-
+        System.out.println("processfilterslidenode");
+        ProcessCellFilterSliceNode.processFilterSliceNode(filter, whichPhase, this);
     }
 
     @Override
@@ -101,6 +110,7 @@ public class CellBackendFactory
     public void processInputSliceNode(InputSliceNode input,
             SchedulingPhase whichPhase, CellChip computeNodes) {
         // TODO Auto-generated method stub
+        System.out.println("processinputslidenode");
 
     }
 
@@ -108,7 +118,7 @@ public class CellBackendFactory
     public void processOutputSliceNode(OutputSliceNode output,
             SchedulingPhase whichPhase, CellChip computeNodes) {
         // TODO Auto-generated method stub
-
+        System.out.println("processoutputslidenode");
     }
 
 }

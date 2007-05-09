@@ -5,16 +5,12 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 import at.dms.kjc.JInterfaceDeclaration;
-import at.dms.kjc.KjcOptions;
 import at.dms.kjc.backendSupport.BackEndFactory;
 import at.dms.kjc.backendSupport.BackEndScaffold;
-import at.dms.kjc.backendSupport.BasicGreedyLayout;
 import at.dms.kjc.backendSupport.CommonPasses;
-import at.dms.kjc.backendSupport.ComputeNode;
 import at.dms.kjc.backendSupport.DumpSlicesAndChannels;
 import at.dms.kjc.backendSupport.FilterInfo;
 import at.dms.kjc.backendSupport.Layout;
-import at.dms.kjc.backendSupport.NoSWPipeLayout;
 import at.dms.kjc.backendSupport.SpaceTimeScheduleAndPartitioner;
 import at.dms.kjc.common.CodegenPrintWriter;
 import at.dms.kjc.sir.SIRGlobal;
@@ -27,12 +23,10 @@ import at.dms.kjc.slicegraph.Partitioner;
 import at.dms.kjc.spacetime.AddBuffering;
 import at.dms.kjc.spacetime.BasicGenerateSteadyStateSchedule;
 import at.dms.kjc.vanillaSlice.EmitStandaloneCode;
-import at.dms.kjc.vanillaSlice.UniProcessor;
-import at.dms.kjc.vanillaSlice.UniProcessors;
 
 public class CellBackend {
     /** holds pointer to BackEndFactory instance during back end portion of this compiler. */
-    public static BackEndFactory<CellChip, SPU, CellComputeCodeStore, Integer> backEndBits = null;
+    public static BackEndFactory<CellChip, CellPU, CellComputeCodeStore, Integer> backEndBits = null;
 
     public static void run(SIRStream str,
             JInterfaceDeclaration[] interfaces,
@@ -42,7 +36,7 @@ public class CellBackend {
             SIRGlobal global) {
         System.out.println("Hi, I'm the new back end.");
         
-        int numCores = KjcOptions.newSimple;
+        int numCores = 6;
         
         // The usual optimizations
         CommonPasses commonPasses = new CommonPasses();
@@ -73,16 +67,16 @@ public class CellBackend {
         CellChip cellChip = new CellChip(numCores);
 
         // assign SliceNodes to processors
-        Layout<SPU> layout;
-        if (KjcOptions.spacetime && !KjcOptions.noswpipe) {
-            layout = new BasicGreedyLayout<SPU>(schedule, cellChip.toArray());
-        } else {
-            layout = new NoSWPipeLayout<SPU,CellChip>(schedule, cellChip);
-        }
+        Layout<CellPU> layout;
+//        if (KjcOptions.spacetime && !KjcOptions.noswpipe) {
+//            layout = new BasicGreedyLayout<CellPU>(schedule, cellChip.toArray());
+//        } else {
+            layout = new CellNoSWPipeLayout(schedule, cellChip);
+//        }
         layout.run();
  
         // create other info needed to convert Slice graphs to Kopi code + Channels
-        BackEndFactory<CellChip, SPU, CellComputeCodeStore, Integer> cellBackEndBits  = new CellBackendFactory(cellChip);
+        BackEndFactory<CellChip, CellPU, CellComputeCodeStore, Integer> cellBackEndBits  = new CellBackendFactory(cellChip);
         backEndBits = cellBackEndBits;
         backEndBits.setLayout(layout);
         

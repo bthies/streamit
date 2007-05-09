@@ -281,8 +281,10 @@ public class FusePipe {
     }
 
     /**
-     * Returns whether or note <str> is a candidate component for
+     * Returns whether or note <b>str</b> is a candidate component for
      * fusion.
+     * XXX: the current implementation only identifies fusable filters and rejects fusable containers.
+     * XXX: the calls from FuseSimpleSlit and FuseSplit are suspect.
      */
     public static boolean isFusable(SIRStream str) {
         // must be a filter to fuse

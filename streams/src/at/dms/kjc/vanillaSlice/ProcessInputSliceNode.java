@@ -14,6 +14,20 @@ public class ProcessInputSliceNode {
     /** set of filters for which we have written basic code. */
     // uses WeakHashMap to be self-cleaning, but now have to insert some value.
     private static Map<SliceNode,Boolean>  basicCodeWritten = new WeakHashMap<SliceNode,Boolean>();
+    
+    protected InputSliceNode inputNode;
+    protected SchedulingPhase whichPhase;
+    protected BackEndFactory backEndBits;
+    protected CodeStoreHelper joiner_code;
+    protected ComputeNode location;
+    protected ComputeCodeStore codeStore;
+    
+    private ProcessInputSliceNode(InputSliceNode inputNode,
+            SchedulingPhase whichPhase, BackEndFactory backEndBits) {
+        this.inputNode = inputNode;
+        this.whichPhase = whichPhase;
+        this.backEndBits = backEndBits;
+    }
 
     /**
      * Create code for a InputSliceNode.
@@ -23,69 +37,104 @@ public class ProcessInputSliceNode {
      */
     public static  void processInputSliceNode(InputSliceNode inputNode, 
             SchedulingPhase whichPhase, BackEndFactory backEndBits) {
+        
+        ProcessInputSliceNode self = 
+            new ProcessInputSliceNode(inputNode, whichPhase, backEndBits);
+        self.doit();
+    }
+    
+    private void doit() {
+        
         // No code generated for inputNode if there is no input.
         if (!backEndBits.sliceHasUpstreamChannel(inputNode.getParent())) { return; }
         
-        CodeStoreHelper joiner_code = CodeStoreHelper.findHelperForSliceNode(inputNode);
+        joiner_code = CodeStoreHelper.findHelperForSliceNode(inputNode);
         
         if (joiner_code == null) {
             joiner_code = getJoinerCode(inputNode,backEndBits);
         }
         
-        ComputeNode location = backEndBits.getLayout().getComputeNode(inputNode);
+        location = backEndBits.getLayout().getComputeNode(inputNode);
         assert location != null;
-        ComputeCodeStore codeStore = location.getComputeCode();
+        codeStore = location.getComputeCode();
         switch (whichPhase) {
         case INIT:
-            // Have the main function for the CodeStore call our init if any
-            codeStore.addInitFunctionCall(joiner_code.getInitMethod());
-            JMethodDeclaration workAtInit = joiner_code.getInitStageMethod();
-            if (workAtInit != null) {
-                // if there are calls to work needed at init time then add
-                // method to general pool of methods
-                codeStore.addMethod(workAtInit);
-                // and add call to list of calls made at init time.
-                // Note: these calls must execute in the order of the
-                // initialization schedule -- so caller of this routine 
-                // must follow order of init schedule.
-                codeStore.addInitStatement(new JExpressionStatement(null,
-                        new JMethodCallExpression(null, new JThisExpression(null),
-                                workAtInit.getName(), new JExpression[0]), null));
-            }
+            standardInitProcessing();
+            additionalInitProcessing();
             break;
         case PRIMEPUMP:
-            JMethodDeclaration primePump = joiner_code.getPrimePumpMethod();
-            if (primePump != null && ! codeStore.hasMethod(primePump)) {
-                // Add method -- but only once
-                codeStore.addMethod(primePump);
-            }
-            if (primePump != null) {
-                // for each time this method is called, it adds another call
-                // to the primePump routine to the initialization.
-                codeStore.addInitStatement(new JExpressionStatement(
-                                null,
-                                new JMethodCallExpression(null,
-                                        new JThisExpression(null), primePump
-                                                .getName(), new JExpression[0]),
-                                null));
-
-            }
+            standardPrimePumpProcessing();
+            additionalPrimePumpProcessing();
             break;
         case STEADY:
-            JStatement steadyBlock = joiner_code.getSteadyBlock();
-            // helper has now been used for the last time, so we can write the basic code.
-            // write code deemed useful by the helper into the corrrect ComputeCodeStore.
-            // write only once if multiple calls for steady state.
-            if (!basicCodeWritten.containsKey(inputNode)) {
-                codeStore.addFields(joiner_code.getUsefulFields());
-                codeStore.addMethods(joiner_code.getUsefulMethods());
-                basicCodeWritten.put(inputNode,true);
-            }
-            codeStore.addSteadyLoopStatement(steadyBlock);
+            standardSteadyProcessing();
+            additionalSteadyProcessing();
             break;
         }
-
     }
+    
+    protected void standardInitProcessing() {
+//      Have the main function for the CodeStore call our init if any
+        codeStore.addInitFunctionCall(joiner_code.getInitMethod());
+        JMethodDeclaration workAtInit = joiner_code.getInitStageMethod();
+        if (workAtInit != null) {
+            // if there are calls to work needed at init time then add
+            // method to general pool of methods
+            codeStore.addMethod(workAtInit);
+            // and add call to list of calls made at init time.
+            // Note: these calls must execute in the order of the
+            // initialization schedule -- so caller of this routine 
+            // must follow order of init schedule.
+            codeStore.addInitStatement(new JExpressionStatement(null,
+                    new JMethodCallExpression(null, new JThisExpression(null),
+                            workAtInit.getName(), new JExpression[0]), null));
+        }
+    }
+    
+    protected void additionalInitProcessing() {
+        
+    }
+    
+    protected void standardPrimePumpProcessing() {
+        JMethodDeclaration primePump = joiner_code.getPrimePumpMethod();
+        if (primePump != null && ! codeStore.hasMethod(primePump)) {
+            // Add method -- but only once
+            codeStore.addMethod(primePump);
+        }
+        if (primePump != null) {
+            // for each time this method is called, it adds another call
+            // to the primePump routine to the initialization.
+            codeStore.addInitStatement(new JExpressionStatement(
+                            null,
+                            new JMethodCallExpression(null,
+                                    new JThisExpression(null), primePump
+                                            .getName(), new JExpression[0]),
+                            null));
+
+        }
+    }
+    
+    protected void additionalPrimePumpProcessing() {
+        
+    }
+    
+    protected void standardSteadyProcessing() {
+        JStatement steadyBlock = joiner_code.getSteadyBlock();
+        // helper has now been used for the last time, so we can write the basic code.
+        // write code deemed useful by the helper into the corrrect ComputeCodeStore.
+        // write only once if multiple calls for steady state.
+        if (!basicCodeWritten.containsKey(inputNode)) {
+            codeStore.addFields(joiner_code.getUsefulFields());
+            codeStore.addMethods(joiner_code.getUsefulMethods());
+            basicCodeWritten.put(inputNode,true);
+        }
+        codeStore.addSteadyLoopStatement(steadyBlock);
+    }
+    
+    protected void additionalSteadyProcessing() {
+        
+    }
+    
     /**
          * Create fields and code for a joiner, as follows.
          * Do not create a joiner if all weights are 0: this code

@@ -41,6 +41,20 @@ public class ProcessFilterSliceNode {
         this.backEndBits = backEndBits;
     }
     
+    /**
+     * Create code for a FilterSliceNode (actually for the whole slice).
+     * @param filterNode   the filterNode that needs code generated.
+     * @param whichPhase   a scheduling phase {@link SchedulingPhase}
+     * @param backEndBits  a BackEndFactory to access layout, etc.
+     */
+    public static  void processFilterSliceNode(FilterSliceNode filterNode, 
+            SchedulingPhase whichPhase, BackEndFactory backEndBits) {
+
+        // have an instance so we can override methods.
+        ProcessFilterSliceNode self = new ProcessFilterSliceNode(filterNode,whichPhase,backEndBits);
+        self.doit();
+    }
+    
     private void doit() {
         filter_code = CodeStoreHelper.findHelperForSliceNode(filterNode);
         // We should only generate code once for a filter node.
@@ -91,24 +105,7 @@ public class ProcessFilterSliceNode {
         }
     }
     
-    /**
-     * Create code for a FilterSliceNode (actually for the whole slice).
-     * @param filterNode   the filterNode that needs code generated.
-     * @param whichPhase   a scheduling phase {@link SchedulingPhase}
-     * @param backEndBits  a BackEndFactory to access layout, etc.
-     */
-    public static  void processFilterSliceNode(FilterSliceNode filterNode, 
-            SchedulingPhase whichPhase, BackEndFactory backEndBits) {
-
-        // have an instance so we can override methods.
-        ProcessFilterSliceNode self = new ProcessFilterSliceNode(filterNode,whichPhase,backEndBits);
-        self.doit();
-    }
-        
-        
-
-
-    public void standardInitProcessing() {
+    protected void standardInitProcessing() {
         // Have the main function for the CodeStore call out init.
         codeStore.addInitFunctionCall(filter_code.getInitMethod());
         JMethodDeclaration workAtInit = filter_code.getInitStageMethod();
@@ -127,11 +124,11 @@ public class ProcessFilterSliceNode {
 
     }
     
-    public void additionalInitProcessing() {
+    protected void additionalInitProcessing() {
         
     }
     
-    public void standardPrimePumpProcessing() {
+    protected void standardPrimePumpProcessing() {
         
         JMethodDeclaration primePump = filter_code.getPrimePumpMethod();
         if (primePump != null && ! codeStore.hasMethod(primePump)) {
@@ -152,11 +149,11 @@ public class ProcessFilterSliceNode {
 
     }
     
-    public void additionalPrimePumpProcessing() {
+    protected void additionalPrimePumpProcessing() {
         
     }
     
-    public void standardSteadyProcessing() {
+    protected void standardSteadyProcessing() {
         JStatement steadyBlock = filter_code.getSteadyBlock();
         // helper has now been used for the last time, so we can write the basic code.
         // write code deemed useful by the helper into the corrrect ComputeCodeStore.
@@ -203,7 +200,7 @@ public class ProcessFilterSliceNode {
         
     }
     
-    public void additionalSteadyProcessing() {
+    protected void additionalSteadyProcessing() {
         
     }
     

@@ -15,6 +15,20 @@ public class ProcessOutputSliceNode {
     // uses WeakHashMap to be self-cleaning, but now have to insert some value.
     private static Map<SliceNode,Boolean>  basicCodeWritten = new WeakHashMap<SliceNode,Boolean>();
 
+    protected OutputSliceNode outputNode;
+    protected SchedulingPhase whichPhase;
+    protected BackEndFactory backEndBits;
+    protected CodeStoreHelper splitter_code;
+    protected ComputeNode location;
+    protected ComputeCodeStore codeStore;
+    
+    private ProcessOutputSliceNode(OutputSliceNode outputNode, 
+            SchedulingPhase whichPhase, BackEndFactory backEndBits) {
+        this.outputNode = outputNode;
+        this.whichPhase = whichPhase;
+        this.backEndBits = backEndBits;
+    }
+    
     /**
      * Create code for a OutputSliceNode.
      * @param outputNode    the OutputSliceNode that may need code generated.
@@ -23,36 +37,71 @@ public class ProcessOutputSliceNode {
      */
     public static  void processOutputSliceNode(OutputSliceNode outputNode, 
             SchedulingPhase whichPhase, BackEndFactory backEndBits) {
+        
+        ProcessOutputSliceNode self = 
+            new ProcessOutputSliceNode(outputNode, whichPhase, backEndBits);
+        self.doit();
+    }
+    
+    private void doit() {
         // No code generated for outputNode if there is not needed.
         if (! backEndBits.sliceNeedsSplitterCode(outputNode.getParent())) {
             return;
         }
         
-        CodeStoreHelper splitter_code = CodeStoreHelper.findHelperForSliceNode(outputNode);
+        splitter_code = CodeStoreHelper.findHelperForSliceNode(outputNode);
         if (splitter_code == null) {
             splitter_code = getSplitterCode(outputNode,backEndBits);
         }
         
-        ComputeNode location = backEndBits.getLayout().getComputeNode(outputNode);
+        location = backEndBits.getLayout().getComputeNode(outputNode);
         assert location != null;
-        ComputeCodeStore codeStore = location.getComputeCode();
+        codeStore = location.getComputeCode();
         switch (whichPhase) {
         case INIT:
+            standardInitProcessing();
+            additionalInitProcessing();
             break;
         case PRIMEPUMP:
+            standardPrimePumpProcessing();
+            additionalPrimePumpProcessing();
             break;
         case STEADY:
-            // helper has now been used for the last time, so we can write the basic code.
-            // write code deemed useful by the helper into the corrrect ComputeCodeStore.
-            // write only once if multiple calls for steady state.
-            if (!basicCodeWritten.containsKey(outputNode)) {
-                codeStore.addFields(splitter_code.getUsefulFields());
-                codeStore.addMethods(splitter_code.getUsefulMethods());
-                basicCodeWritten.put(outputNode,true);
-            }
-
+            standardSteadyProcessing();
+            additionalSteadyProcessing();
             break;
         }
+    }
+    
+    protected void standardInitProcessing() {
+        
+    }
+    
+    protected void additionalInitProcessing() {
+        
+    }
+    
+    protected void standardPrimePumpProcessing() {
+        
+    }
+    
+    protected void additionalPrimePumpProcessing() {
+        
+    }
+    
+    protected void standardSteadyProcessing() {
+        // helper has now been used for the last time, so we can write the basic code.
+        // write code deemed useful by the helper into the corrrect ComputeCodeStore.
+        // write only once if multiple calls for steady state.
+        if (!basicCodeWritten.containsKey(outputNode)) {
+            codeStore.addFields(splitter_code.getUsefulFields());
+            codeStore.addMethods(splitter_code.getUsefulMethods());
+            basicCodeWritten.put(outputNode,true);
+        }
+    }
+    
+    protected void additionalSteadyProcessing() {
+        
     }
     
     /**

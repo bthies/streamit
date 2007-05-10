@@ -28,7 +28,7 @@ public class Vectorizable {
      * Set to true to print out reasons to not vectorize a filter, and variables dependent on inputs
      * for filters that fail the data dependency check.
      */
-    static boolean debugging = false;
+    static boolean debugging = true;
     
     /**
      * reason for disqualifying a filter
@@ -62,13 +62,14 @@ public class Vectorizable {
      * <ul><li> Its input type or its output type is a 32-bit int or float.
      * </li><li> It has no loop-carried dependencies between steady states.
      * </li><li> It has no visible side effects.
-     * </li><li> It has no data-dependent branches. (Should preclude dynamic-rate filters.)
+     * </li><li> It has no data-dependent branches. (This should also preclude dynamic-rate filters.)
      * </li><li> It is not a descendant of a feedbackloop: This restriction can be lifted with
      * a bit of work: the problem is that vectorization changes the multiplicity of a filter,
      * if this multiplicity change propagates back to the top of a body (or loop) construct then
      * the multiplicity must also change in the corresponding loop (or body).  Furthermore,
      * the number of enqueued values will be insufficient, which means that we need to clone
      * non-vectorized versions to become part of pre-work functions in the body and loop.
+     * </li><li> It is not a message sender or a message receiver.
      * </li></ul>
      * TODO: Should allow filters with void input type to be vectorizable if the values
      * being constructed for the output do not participate in conditionals or array offset calculations
@@ -368,18 +369,19 @@ public class Vectorizable {
                     public void visitForStatement(JForStatement self,
                             JStatement init, JExpression cond, JStatement incr,
                             JStatement body) {
+                        flowsHere = false;
                         String oldReason = null;
                         delicateLocation++;
+                        if (debugging) { oldReason = reason[0]; reason[0] = "for init"; }
                         if (init != null) {
-                            if (debugging) { oldReason = reason[0]; reason[0] = "for init"; }
                             init.accept(this);
                         }
                         if (cond != null) {
-                            if (debugging) { oldReason = reason[0]; reason[0] = "for cond"; }
+                            if (debugging) { reason[0] = "for cond"; }
                             cond.accept(this);
                         }
                         if (incr != null) {
-                            if (debugging) { oldReason = reason[0]; reason[0] = "for incr"; }
+                            if (debugging) { reason[0] = "for incr"; }
                             incr.accept(this);
                         }
                         if (debugging) { reason[0] = oldReason; }
@@ -391,6 +393,7 @@ public class Vectorizable {
                     public void visitIfStatement(JIfStatement self,
                             JExpression cond, JStatement thenClause,
                             JStatement elseClause) {
+                        flowsHere = false;
                         String oldReason = null;
                         delicateLocation++;
                         if (debugging) { oldReason = reason[0]; reason[0] = "if"; }
@@ -406,6 +409,7 @@ public class Vectorizable {
                     @Override
                     public void visitDoStatement(JDoStatement self,
                             JExpression cond, JStatement body) {
+                        flowsHere = false;
                         String oldReason = null;
                         body.accept(this);
                         delicateLocation++;
@@ -418,6 +422,7 @@ public class Vectorizable {
                     @Override
                     public void visitWhileStatement(JWhileStatement self,
                             JExpression cond, JStatement body) {
+                        flowsHere = false;
                         String oldReason = null;
                         delicateLocation++;
                         if (debugging) { oldReason = reason[0]; reason[0] = "while"; }
@@ -431,6 +436,7 @@ public class Vectorizable {
                     public void visitSwitchStatement(JSwitchStatement self,
                             JExpression expr,
                             JSwitchGroup[] body) {
+                        flowsHere = false;
                         String oldReason = null;
                         delicateLocation++;
                         if (debugging) { oldReason = reason[0]; reason[0] = "switch"; }
@@ -461,6 +467,7 @@ public class Vectorizable {
                         // Is if compiling for cell and have math method..
                         if (KjcOptions.cell_vector_library && at.dms.util.Utils.cellMathEquivalent(prefix, ident) != null) {
                             // OK: (TODO: In fact, args must have vector type!)
+                            flowsHere = true;
                             visitArgs(args);
                         } else {
                             String oldReason = null;
@@ -476,6 +483,7 @@ public class Vectorizable {
                     @Override
                     public void visitReturnStatement(JReturnStatement self,
                                      JExpression expr) {
+                        flowsHere = false;
                         String oldReason = null;
                         delicateLocation++;
                         if (debugging) { oldReason = reason[0]; reason[0] = "return"; }
@@ -494,6 +502,15 @@ public class Vectorizable {
                             JExpression left,
                             JExpression right) {
                         if (KjcOptions.cell_vector_library) {
+                            left.accept(this);
+                            boolean oldflowshere = flowsHere;
+                            flowsHere = false; // shift amount can be either scalar or vector
+                            right.accept(this);
+                            if (flowsHere) {
+                                left.accept(this); // if shift by vector then shifted value must be vector.
+                            } else {
+                                flowsHere = oldflowshere;
+                            }
                             super.visitShiftExpression(self,oper,left,right);
                         } else {
                             String oldReason = null;
@@ -515,7 +532,9 @@ public class Vectorizable {
                             JExpression left,
                             JExpression right) {
                         delicateLocation++;
-                        super.visitRelationalExpression(self,oper,left,right);
+                        left.accept(this);
+                        right.accept(this);
+                        left.accept(this);  // left again so as to pass taint (flowshere) from right to left
                         delicateLocation--;
                     }
 
@@ -541,24 +560,54 @@ public class Vectorizable {
                             CType type) {
                         String oldReason = null;
                         delicateLocation++;
-                        if (debugging) { oldReason = reason[0]; reason[0] = "(cast)"; }
+                        if (debugging) { oldReason = reason[0]; reason[0] = "(promoting cast)"; }
                         super.visitUnaryPromoteExpression(self, expr,type);
                         if (debugging) { reason[0] = oldReason; }
                         delicateLocation--;
                     }
-                                  
-                    /** &&, !!, ==, != */
+                        
+                    @Override
+                    public void visitEqualityExpression(JEqualityExpression self, 
+                            boolean equal, JExpression left, JExpression right) {
+                        left.accept(this);
+                        right.accept(this);
+                        left.accept(this);  // left again so as to pass taint (flowshere) from right to left
+                    }
+                    
+                    @Override
+                    public void visitBitwiseExpression(JBitwiseExpression self,
+                            int oper, JExpression left, JExpression right) {
+                        String oldReason = null;
+                        delicateLocation++;
+                        if (debugging) { oldReason = reason[0]; reason[0] = "&, |, ^"; }
+                        super.visitBitwiseExpression(self,oper,left,right);
+                        left.accept(this);
+                        right.accept(this);
+                        left.accept(this);  // left again so as to pass taint (flowshere) from right to left
+                        if (debugging) { reason[0] = oldReason; }
+                        delicateLocation--;
+                    }
+                    
+                    /** &&, !!, +, -, *, /, % */
                     @Override
                     public void visitBinaryExpression(JBinaryExpression self,
                             String oper,
                             JExpression left,
                             JExpression right) {
                         String oldReason = null;
+                        if (oper.equals("&&") || oper.equals("||")) {
                         delicateLocation++;
                         if (debugging) { oldReason = reason[0]; reason[0] = oper; }
                         super.visitBinaryExpression(self,oper,left,right);
                         if (debugging) { reason[0] = oldReason; }
                         delicateLocation--;
+                        }
+                        else {
+                            // latest gcc should accept all of -, *, /, % 
+                            left.accept(this);
+                            right.accept(this);
+                            left.accept(this);  // left again so as to pass taint from right to left
+                        }
                     }
 
                     /* mostly for checking lhs's. Return names of all arrays accessed in expression. */

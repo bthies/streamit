@@ -1,8 +1,6 @@
 package at.dms.kjc.backendSupport;
 
 import at.dms.kjc.slicegraph.*;
-import at.dms.kjc.vanillaSlice.ProcessInputSliceNode;
-import at.dms.kjc.vanillaSlice.ProcessOutputSliceNode;
 import at.dms.kjc.vanillaSlice.UnbufferredPopChannel;
 import at.dms.kjc.vanillaSlice.UnbufferredPushChannel;
 

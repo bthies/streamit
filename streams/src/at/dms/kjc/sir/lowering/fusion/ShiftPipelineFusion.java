@@ -311,7 +311,7 @@ class ShiftPipelineFusion {
             return new JMethodDeclaration(null,
                                           at.dms.kjc.Constants.ACC_PUBLIC,
                                           CStdType.Void,
-                                          init ? INIT_WORK_NAME() : "work",
+                                          RenameAll.newName(init ? INIT_WORK_NAME() : "work"),
                                           JFormalParameter.EMPTY,
                                           CClassType.EMPTY,
                                           statements,
@@ -1125,7 +1125,7 @@ class ShiftPipelineFusion {
             this.initFunction = new JMethodDeclaration(null,
                                                        at.dms.kjc.Constants.ACC_PUBLIC,
                                                        CStdType.Void,
-                                                       "init",
+                                                       RenameAll.newName("init"),
                                                        fusedParam.toArray(new 
                                                                           JFormalParameter[0]),
                                                        CClassType.EMPTY,

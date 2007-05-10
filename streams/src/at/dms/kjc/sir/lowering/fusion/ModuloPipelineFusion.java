@@ -248,7 +248,7 @@ class ModuloPipelineFusion {
         } else {
             // return result
             return new JMethodDeclaration(CStdType.Void,
-                                          init ? INIT_WORK_NAME() : "work",
+                                          RenameAll.newName(init ? INIT_WORK_NAME() : "work"),
                                           JFormalParameter.EMPTY,
                                           statements);
 
@@ -850,7 +850,7 @@ class ModuloPipelineFusion {
         private int numFused;
 
         /**
-         * <fusedFilter> represents what -will- be the result of the
+         * <b>fusedFilter</b> represents what -will- be the result of the
          * fusion.  It has been allocated, but is not filled in with
          * correct values yet.
          */
@@ -932,7 +932,7 @@ class ModuloPipelineFusion {
             }
             // now we can make the init function
             this.initFunction = new JMethodDeclaration(CStdType.Void,
-                                                       "init",
+                                                       RenameAll.newName("init"),
                                                        fusedParam.toArray(new JFormalParameter[0]),
                                                        fusedBlock);
         }

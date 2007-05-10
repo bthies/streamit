@@ -24,7 +24,12 @@ public class RenameAll extends SLIRReplacingVisitor
         across filters, keep names distinct over all the filter */
     static public RenameAll globalRenamer;
     
-    private String newName(String oldName)
+    /**
+     * Return a new name of the form oldName__number
+     * @param oldName prefix for new name
+     * @return oldName + "__" + counter++  for some counter
+     */
+    public static String newName(String oldName)
     {
         String name = oldName + "__" + counter;
         counter++;

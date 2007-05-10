@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.51 2007-04-18 20:04:01 dimock Exp $
+ * $Id: Utils.java,v 1.52 2007-05-10 21:31:02 dimock Exp $
  */
 
 package at.dms.util;
@@ -146,52 +146,49 @@ public abstract class Utils implements Serializable, DeepCloneable {
      * Store information needed to translate math method names during code emission.
      * Should be extended to include the type information. (at.dms.kjc.CStdType.Float)
      * @author dimock
-     *
+     * (vector versions in simdmath.h)
      */
 
     private enum MathMethodInfo {
-        ACOS("acos", "acosf", "acosf", "acosf_v"),        // float -> float
-        ASIN("asin", "asinf", "asinf", "asinf_v"),        // float -> float
-        ATAN("atan", "atanf", "atanf", "atanf_v"),        // float -> float
-        // not supplied on cell but processed: atan2(x,y) => atanf_v(y/x)
+        ACOS("acos", "acosf", "acosf", "acosf4"),        // float -> float
+        ASIN("asin", "asinf", "asinf", "asinf4"),        // float -> float
+        ATAN("atan", "atanf", "atanf", "atanf4"),        // float -> float
+        // not supplied on cell but processed: atan2(x,y) => atanf4(y/x)
         // in $STREAMIT_HOME/misc/vectorization.h
-        ATAN2("atan2", "atan2f", "atan2f", "atan2f_v"),   // float x float -> float
-        CEIL("ceil", "ceilf", "ceilf", "ceilf_v"),
-        COS("cos", "cosf", "cosf", "cosf_v"),             // float -> float
-        SIN("sin", "sinf", "sinf", "sinf_v"),             // float -> float
-        // not supplied on cell.  (exp(x) + exp(- x)) / 2
-        // or Sum n=0...  x**(2*n) / fact(2*n)
-        COSH("cosh", "coshf", "coshf", null),             // float -> float
-        // not supplied on cell.  (exp(x) - exp(- x)) / 2
-        // or Sum n=0...  x**(2*n + 1) / fact(2*n + 1)
-        SINH("sinh", "sinhf", "sinhf", null),             // float -> float
-        EXP("exp", "expf", "expf", "expf_v"),             // float -> float
-// never used.        FABS("fabs", "fabsf", "fabsf", "fabsf_v"),        // float -> float
+        ATAN2("atan2", "atan2f", "atan2f", "atan2f4"),   // float x float -> float
+        CEIL("ceil", "ceilf", "ceilf", "ceilf4"),
+        COS("cos", "cosf", "cosf", "cosf4"),             // float -> float
+        SIN("sin", "sinf", "sinf", "sinf4"),             // float -> float
+        COSH("cosh", "coshf", "coshf", "coshf4"),             // float -> float
+        SINH("sinh", "sinhf", "sinhf", "sinhf4"),             // float -> float
+        EXP("exp", "expf", "expf", "expf4"),             // float -> float
+// never used.        FABS("fabs", "fabsf", "fabsf", "fabsf4"),        // float -> float
         // note int has %, vector int has fmod_i_v
-// never used        FMOD("fmod", "fmodf", "fmodf", "fmodf_v"),        // float -> float
-// never used        MODF("modf", "modf", "modf", "fmodf_v"),          // float x float* -> float
-// never used        FREXP("frexp", "frexpf", "frexpf", "frexpf_v"),   // float x int* -> float
-        FLOOR("floor", "floorf", "floorf", "floorf_v"),   // float -> float
-        LOG("log", "logf", "logf", "logf_v"),             // float -> float
-        LOG10("log10", "log10f", "log10f", "log10f_v"),   // float -> float
-        POW("pow", "powf", "powf", "powf_v"),             // float x float -> float
+// never used        FMOD("fmod", "fmodf", "fmodf", "fmodf4"),        // float -> float
+// never used        MODF("modf", "modf", "modf", "fmodf4"),          // float x float* -> float
+// never used        FREXP("frexp", "frexpf", "frexpf", "frexpf4"),   // float x int* -> float
+        FLOOR("floor", "floorf", "floorf", "floorf4"),   // float -> float
+        LOG("log", "logf", "logf", "logf4"),             // float -> float
+        LOG10("log10", "log10f", "log10f", "log10f4"),   // float -> float
+        POW("pow", "powf", "powf", "powf4"),             // float x float -> float
         RANDOM("random", "", "", ""),                     // void -> float in java, void -> int in C, C++
         __RANDOM("__random", "rand", "rand", "rand_v"),   // internal in translating random() to rand();
+                                                          // not in cell sdk 2 simdmath
         // round(x) should be replaced with trunc(x+0.5) to match java behavior
         // will still need casting to int.
-        ROUND("round", "roundf", "roundf", "roundf_v"),   // float -> float
+        ROUND("round", "roundf", "roundf", "roundf4"),   // float -> float
         // had been translated as rintf plus cast...
-        RINT("rint", "lrintf", "lrintf", "lrintf_v"),     // float -> int
-        SQRT("sqrt", "sqrtf", "sqrtf", "sqrtf_v"),        // float -> float
+        RINT("rint", "lrintf", "lrintf", "lrintf4"),     // float -> int  not in cell sdk 2 simdmath
+        SQRT("sqrt", "sqrtf", "sqrtf", "sqrtf4"),        // float -> float
         // not suplied on cell, (exp(x) - exp(- x)) / (exp(x) + exp(- x))
-        TANH("tanh", "tanhf", "tanhf", null),             // float -> float
-        TAN("tan", "tanf", "tanf", "tanf_v"),             // float -> float
+        TANH("tanh", "tanhf", "tanhf", null),             // float -> float  not in cell sdk 2 simdmath
+        TAN("tan", "tanf", "tanf", "tanf4"),             // float -> float
         // Some bad compromises follow:  These are used (in non-vector case)
         // at int and float types, thus use the double versions to allow an int 
         // to be cast, processed, and cast back without losing precision. 
-        ABS("abs", "fabs", "fabs", "fabsf_v"),            // double -> double (exc vector)
-        MAX("max", "maxf", "fmax", "fmaxf_v"),            // double x double -> double
-        MIN("min", "minf", "fmin", "fminf_v"),            // double x double -> double
+        ABS("abs", "fabs", "fabs", "fabsf4"),            // double -> double (exc vector: float->float)
+        MAX("max", "maxf", "fmax", "fmaxf4"),            // double x double -> double (exc vector)
+        MIN("min", "minf", "fmin", "fminf4"),            // double x double -> double (exc vector)
         ;
         
         MathMethodInfo(String streamit_name, String c_name, String cpp_name, String cell_name) {

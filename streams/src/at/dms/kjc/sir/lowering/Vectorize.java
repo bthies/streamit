@@ -36,7 +36,7 @@ import at.dms.util.Utils;
  * Changes: version 1.8
  * (o) Previous: load each field into vector.  
  *     Now: if stride != 1, copy into aligned buffer that is union of vector and scalar.
- * (o) Previous: put out one ellement on push and N-1 elements in poke buffer, copy out poke buffer at end.
+ * (o) Previous: put out one element on push and N-1 elements in poke buffer, copy out poke buffer at end.
  *     Now: if stride != 1, store vectors into aligned buffer, copy out all elements at end (more storage, 
  *     more copying, but 9% faster in dct kernel on Altivec.
  * (o) Previous: use union types on temporaries in work function.
@@ -57,8 +57,10 @@ public class Vectorize {
      * Do not call directly: {@link VectorizeEnable#vectorizeEnable(SIRStream, Map) vectorizeEnable}
      * controls the vectorization pass.
      * @param filter to convert.
+     * @param vectorInputTape set to true if input tape has / will have a vector type.
+     * @param vectorOutputTape is set to true if output tape should have a vector type.
      */
-    static void vectorize (SIRFilter filter) {
+    static boolean vectorize (SIRFilter filter, boolean vectorInputTape, boolean vectorOutputTape) {
         final boolean[] vectorizePush = {false};  // true if vector type reaches push statements.
         Map<String,CType> vectorIds;
         
@@ -126,6 +128,8 @@ public class Vectorize {
         if (filter.getPushInt() > 1 && vectorizePush[0]) {
             putInPokeBuffer(filter,pokeBufDefn,pokeBufRef,pokeBufOffsetDef,pokeBufOffset);
         }
+        
+        return vectorizePush[0];
   }
     
     /**
@@ -1110,10 +1114,16 @@ public class Vectorize {
      * <ul><li>if a peek or pop flows to the field or if the field is an array with push or pop flowing to its elements.
      * </li><li>if the peek or pop flows to a push
      * </ul>
-     * Note: this is not a full type inference, which would require a full bottom-up pass unifying the type from
-     * peek or pop with the type of an expression (LackWit for StreamIt).  We make no effort to unify types
-     * across complex expressions (the user can fix by simplifying the streamit code).  We make no effort to deal
-     * with vectorizable fields of structs (the user can not turn vectorization on).
+     * Note: This is a relatively dumb taint checker, working mostly on the structure of
+     * assignment statements, and reconstructing types as it goes.
+     * 
+     * A more elegant version might use type inference based on tainting the type of the input tape.
+     * A type ionference version would require a full bottom-up pass unifying the type from
+     * peek or pop with the type of an expression (LackWit for StreamIt).  
+     * 
+     * We make no effort to unify types across complex expressions (the user can fix by 
+     * simplifying the StreamIt code).  We make no effort to deal with vectorizable fields of structs.
+     * If the current inference is in error, the user can decide not to turn vectorization on.
      * 
      * @param filter whose methods are being checked for need for vectorization.
      * @param vectorizePush a second return value: do vector values reach push(E) expressions?
@@ -1348,62 +1358,4 @@ public class Vectorize {
         }
     }
 
-
-//    /**
-//     * A path to a place to put a vector type.
-//     * <pre>
-//     * (foo.myarr[0][0]).bar = pop();
-//     * need to remember myarr => foo.2.bar
-//     * 
-//     * Can we do something simpler: entire prefix to string,
-//     * 
-//     * somewhere are
-//     * struct B {
-//     * ...
-//     * float bar;
-//     * ...
-//     * } 
-//     * struct {
-//     *   ...
-//     *   B myarr[n][m]; 
-//     * } foo
-//     * </pre>
-//     * @author Allyn Dimock
-//     *
-//     */
-//    private class PathToVec {
-//        final PathToVec more;
-//        public PathToVec(PathToVec more) {this.more = more; }
-//    }
-//    private class Name extends PathToVec {
-//        final String name;
-//        public Name(String name, PathToVec more) {
-//            super (more);
-//            this.name = name;
-//        }
-//    }
-//    private class ArrayDepth extends PathToVec {
-//        final int numDims;
-//        public ArrayDepth(int numDims, PathToVec more) {
-//            super(more);
-//            this.numDims = numDims;
-//        }
-//    }
-//    private class Prefix extends PathToVec {
-//        final String prefix;
-//        public Prefix(String prefix, PathToVec more) {
-//            super(more);
-//            this.prefix = prefix;
-//        }
-//    }
 }
-//class SIRPokeExpression extends SIRPushExpression {
-//    int offset;
-//    public SIRPokeExpression(JExpression arg, int offset, CType tapeType)
-//    {
-//        super(arg, tapeType);
-//        this.offset = offset;
-//    }
-//    public int getOffset () { return offset; }
-//
-//}

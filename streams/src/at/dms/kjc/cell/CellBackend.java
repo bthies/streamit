@@ -9,6 +9,7 @@ import at.dms.kjc.backendSupport.BackEndFactory;
 import at.dms.kjc.backendSupport.BackEndScaffold;
 import at.dms.kjc.backendSupport.CommonPasses;
 import at.dms.kjc.backendSupport.DumpSlicesAndChannels;
+import at.dms.kjc.backendSupport.EmitCode;
 import at.dms.kjc.backendSupport.FilterInfo;
 import at.dms.kjc.backendSupport.Layout;
 import at.dms.kjc.backendSupport.SpaceTimeScheduleAndPartitioner;
@@ -101,24 +102,26 @@ public class CellBackend {
         }
     
         
-//        /*
-//         * Emit code to str.c
-//         */
-//        outputFileName = "str.c";
-//        try {
-//        CodegenPrintWriter p = new CodegenPrintWriter(new BufferedWriter(new FileWriter(outputFileName, false)));
-//        // write out C code
-//        EmitStandaloneCode codeEmitter = new EmitStandaloneCode(cellBackEndBits);
-//        codeEmitter.generateCHeader(p);
-//        // Concat emitted code for all nodes into one file.
-//        for (ComputeNode n : cellBackEndBits.getComputeNodes().toArray()) {
-//            codeEmitter.emitCodeForComputeNode(n,p);
-//        }
-//        codeEmitter.generateMain(p);
-//        p.close();
-//        } catch (IOException e) {
-//            throw new AssertionError("I/O error on " + outputFileName + ": " + e);
-//        }
+        /*
+         * Emit code to strN.c
+         */
+        for (int n = 0; n < cellBackEndBits.getComputeNodes().size(); n++) {
+            outputFileName = "str" + n + ".c";
+            try {
+                CodegenPrintWriter p = new CodegenPrintWriter(new BufferedWriter(new FileWriter(outputFileName, false)));
+                CellPU nodeN = cellBackEndBits.getComputeNode(n);
+                // write out C code
+            
+                EmitCode codeEmitter = new EmitCode(cellBackEndBits);
+                codeEmitter.generateCHeader(p);
+                codeEmitter.emitCodeForComputeNode(nodeN, p);
+                if (n == 0) { codeEmitter.generateMain(p); }
+                p.close();
+            } catch (IOException e) {
+                throw new AssertionError("I/O error on " + outputFileName + ": " + e);
+            }
+        }
+        
         System.exit(0);
     }
 }

@@ -1,8 +1,7 @@
-package at.dms.kjc.vanillaSlice;
+package at.dms.kjc.backendSupport;
 
 import java.util.*;
 
-import at.dms.kjc.backendSupport.Channel;
 import at.dms.kjc.slicegraph.Edge;
 import at.dms.kjc.*;
 

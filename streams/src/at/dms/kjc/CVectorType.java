@@ -158,10 +158,10 @@ public class CVectorType extends CType {
         low_type.typedefString() + "\n"
         // typedef for mixed vector and array for manipulating elements
         + "typedef union {"
-        + low_type.toString()
-        + " v; "
         + getBaseType().toString()
-        + " a[" + getWidthInBase() + "];} "
+        + " a[" + getWidthInBase() + "]; "
+        + low_type.toString()
+        + " v;} "
         + toString() + ";";
     }
     
@@ -186,7 +186,8 @@ public class CVectorType extends CType {
     
     /**
      * Return vector stuff to be included in a header file (including any final ";" and "\n").
-     * @return strings needed in a header file that aren't from @{link #typedefString() typedefString} but does include definitions from @{link #structDefs()}
+     * @return strings needed in a header file that aren't from @{link #typedefString() typedefString} 
+     * but does include definitions from @{link #structDefs()}
      */
     public static String miscStrings() {
         String includeString;

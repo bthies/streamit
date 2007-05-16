@@ -115,8 +115,17 @@ public class CVectorTypeLow extends CType {
      * @return typedefs with ";" and internal line terminators but no final line terminator.
      */
     public String typedefString() {
+        if (KjcOptions.cell_vector_library) {
+            String baseTypeString = base_type.toString();
+            if (baseTypeString.equals("int")) {
+                baseTypeString = "signed int";  // not sure this is necessary, but IBM code uses explicit "signed"
+            }
+            return
+            "typedef vector " + baseTypeString + toString() + ";";
+        }
         return 
-        // typedef for vector
+        // gcc typedef for vector uses attribute, works for Cell with
+        // spugcc, but not with spuxlc, thus the alternate version above.
         "typedef " + base_type.toString() + " " + toString() 
         + " __attribute__ ((vector_size (" + width + ")));";
  

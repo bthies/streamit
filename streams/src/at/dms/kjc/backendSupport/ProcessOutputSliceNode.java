@@ -22,7 +22,7 @@ public class ProcessOutputSliceNode {
     protected ComputeNode location;
     protected ComputeCodeStore codeStore;
     
-    private ProcessOutputSliceNode(OutputSliceNode outputNode, 
+    protected ProcessOutputSliceNode(OutputSliceNode outputNode, 
             SchedulingPhase whichPhase, BackEndFactory backEndBits) {
         this.outputNode = outputNode;
         this.whichPhase = whichPhase;
@@ -43,11 +43,13 @@ public class ProcessOutputSliceNode {
         self.doit();
     }
     
-    private void doit() {
+    protected void doit() {
         // No code generated for outputNode if there is not needed.
         if (! backEndBits.sliceNeedsSplitterCode(outputNode.getParent())) {
             return;
         }
+        
+        System.out.println("DOIT");
         
         splitter_code = CodeStoreHelper.findHelperForSliceNode(outputNode);
         if (splitter_code == null) {
@@ -59,6 +61,7 @@ public class ProcessOutputSliceNode {
         codeStore = location.getComputeCode();
         switch (whichPhase) {
         case INIT:
+            System.out.println("INIT");
             standardInitProcessing();
             additionalInitProcessing();
             break;

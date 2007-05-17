@@ -22,7 +22,7 @@ public class ProcessInputSliceNode {
     protected ComputeNode location;
     protected ComputeCodeStore codeStore;
     
-    private ProcessInputSliceNode(InputSliceNode inputNode,
+    protected ProcessInputSliceNode(InputSliceNode inputNode,
             SchedulingPhase whichPhase, BackEndFactory backEndBits) {
         this.inputNode = inputNode;
         this.whichPhase = whichPhase;
@@ -43,7 +43,7 @@ public class ProcessInputSliceNode {
         self.doit();
     }
     
-    private void doit() {
+    protected void doit() {
         
         // No code generated for inputNode if there is no input.
         if (!backEndBits.sliceHasUpstreamChannel(inputNode.getParent())) { return; }

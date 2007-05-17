@@ -34,7 +34,7 @@ public class ProcessFilterSliceNode {
     protected BackEndFactory backEndBits;
     protected ComputeNode location;
     
-    private ProcessFilterSliceNode(FilterSliceNode filterNode, 
+    protected ProcessFilterSliceNode(FilterSliceNode filterNode, 
             SchedulingPhase whichPhase, BackEndFactory backEndBits) {
         this.filterNode = filterNode;
         this.whichPhase = whichPhase;
@@ -55,7 +55,7 @@ public class ProcessFilterSliceNode {
         self.doit();
     }
     
-    private void doit() {
+    protected void doit() {
         filter_code = CodeStoreHelper.findHelperForSliceNode(filterNode);
         // We should only generate code once for a filter node.
         

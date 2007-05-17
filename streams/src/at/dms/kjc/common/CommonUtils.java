@@ -1,5 +1,6 @@
 package at.dms.kjc.common;
  
+import at.dms.kjc.CIntType;
 import at.dms.kjc.CStdType;
 import at.dms.kjc.Constants;
 import at.dms.kjc.JIntLiteral;

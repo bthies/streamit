@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.122 2007-04-17 20:50:48 dimock Exp $
+# $Id: strc,v 1.123 2007-05-17 18:55:23 shall07 Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -272,8 +272,12 @@ Usage: strc [options] file.str ...
   --l2  n             Level 2 cache size in KB for --cacheopt (default 256)
   --linearpartition, -L
                       Automatically select targets of linear analyses
+<<<<<<< strc
+* --compressedframe n Operate directly on Apple Animation-compressed data with frame size n.
+=======
 * --compressed        Operate directly on LZ77-compressed data.
 * --dynamicRatesEverywhere  For testing performance of dynamic rates.
+>>>>>>> 1.117
 * --numult            Do not increase multiplicity of partitions
 * --peekratio n       Expand filters so that (pops * n) >= (peeks - pops)
 + --profile           Add a timer for each filter body (cluster)
@@ -375,9 +379,10 @@ sub get_options
 			    "verbose|v",
 			    "optimize|O=i",
 			    "atlas!",
+			    "blender",
 			    "cell-vector-library|cell_vector_library",
 			    "clone-with-serialization|clone_with_serialization",
-			    "compressed!",
+			    "compressed",
 			    "countops!",
 			    "debug!",
 			    "decoupled",
@@ -387,6 +392,8 @@ sub get_options
 			    "fission=i",
 			    "fixseed",
 			    "frequencyreplacement|F",
+			    "frameheight=i",
+   			    "framewidth=i",
 			    "forceunroll",
 			    "fusion",
 			    "havefftw!",
@@ -866,7 +873,10 @@ sub get_compiler_opts
     $opts{cluster} && ($copts .= " --cluster " . $opts{cluster});
     $opts{destroyfieldarray} && ($copts .= " --destroyfieldarray");
     $opts{cacheopt} && ($copts .= " --cacheopt");
+    $opts{blender} && ($copts .= " --blender");
     $opts{compressed} && ($copts .= " --compressed");
+    $opts{frameheight} && ($copts .= " --frameheight " . $opts{frameheight});
+    $opts{framewidth} && ($copts .= " --framewidth " . $opts{framewidth});
     $opts{nomult} && ($copts .= " --nomult");
     $opts{peekratio} && ($copts .= " --peekratio " . $opts{peekratio});
     $opts{vectorize} && ($copts .= " --vectorize " . $opts{vectorize});

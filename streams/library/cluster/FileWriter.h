@@ -65,4 +65,28 @@ static inline void FileWriter_write(int fs_ptr, T data) {
     }
     // } RMR
 }
+
+template<>
+static inline void FileWriter_write(int fs_ptr, unsigned char data) {
+    FileWriter_state *fs = (FileWriter_state*)fs_ptr;
+
+    // Flush if adding data to the buffer would overflow the buffer
+    if (fs->buf_index >= BUF_SIZE) FileWriter_flush(fs_ptr);
+
+    // RMR { note this code assume that the data is placed in 
+    // consecutive words; which is the case for the current
+    // defintion of the <complex> data type
+    *(unsigned char*)(fs->file_buf + fs->buf_index) = data;
+    ++(fs->buf_index);
+    // } RMR
+}
+
+//template<>
+static inline void FileWriter_write(int fs_ptr, const void* data, int len) {
+    FileWriter_state *fs = (FileWriter_state*)fs_ptr;
+
+    FileWriter_flush(fs_ptr);
+    
+    write(fs->file_handle, data, len);	
+}
 #endif

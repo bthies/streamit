@@ -94,4 +94,79 @@ static inline T FileReader_read(int fs_ptr) {
 
     return res;
 }
+
+template<>
+static inline unsigned char FileReader_read(int fs_ptr) {
+  
+    FileReader_state *fs = (FileReader_state*)fs_ptr;
+
+    if (fs->buf_index >= BUF_SIZE) {
+        assert(fs->file_handle > -1);
+        fs->buf_index = 0;
+        while (fs->buf_index < BUF_SIZE) {
+            int ret_val = read(fs->file_handle, 
+                               fs->file_buf + fs->buf_index, 
+                               BUF_SIZE - fs->buf_index);
+     
+            if (ret_val == 0) {
+                lseek(fs->file_handle, 0, SEEK_SET);
+            } 
+      
+            else if (ret_val > 0) {
+                fs->buf_index += ret_val;
+            }
+
+            else if (ret_val == -1) {
+                if (errno != EINTR) {
+                    printf("ABORT! File-read\n");
+                    perror("Error Message");
+                    exit(1);
+                }
+            }
+        }	
+        fs->buf_index = 0;      
+    }
+
+    // RMR { note this code assume that the data is stored to
+    // consecutive words; which is the case for the current
+    // defintion of the <complex> data type
+    unsigned char res;
+    res = *(unsigned char*)(fs->file_buf + fs->buf_index);
+    ++(fs->buf_index);
+  
+    // Increment the offset (the virtual data pointer)
+    ++(fs->file_offset);
+    if (fs->file_offset >= fs->file_length) fs->file_offset %= fs->file_length; 
+    // } RMR
+    
+
+    return res;
+}
+
+//template<>
+static inline void FileReader_read(int fs_ptr, void* dest, int len) {
+  
+    FileReader_state *fs = (FileReader_state*)fs_ptr;
+
+    assert(fs->file_handle > -1);
+
+    int ret_val = read(fs->file_handle, dest, len);
+     
+    if (ret_val == 0) {
+        lseek(fs->file_handle, 0, SEEK_SET);
+    } 
+
+    else if (ret_val == -1) {
+        if (errno != EINTR) {
+            printf("ABORT! File-read\n");
+            perror("Error Message");
+            exit(1);
+        }
+    }
+  
+    // Increment the offset (the virtual data pointer)
+    fs->file_offset = (fs->file_offset + ret_val) % fs->file_length; 
+
+    //return ret_val;
+}
 #endif

@@ -99,7 +99,7 @@ public class FlatIRToCluster extends InsertTimers implements
     public void setGlobal(boolean g) {
         global = g;
     }
-
+    
     /**
      * Code generation for a SIRFilter FlatNode.
      * <br/>
@@ -107,17 +107,27 @@ public class FlatIRToCluster extends InsertTimers implements
      * @param node
      */
     public static void generateCode(FlatNode node) {
-        SIRFilter contentsAsFilter = (SIRFilter) node.contents;
+        generateCode((SIRFilter) node.contents);
+    }
+
+
+    /**
+     * Code generation for a SIRFilter.
+     * <br/>
+     * For splitter and joiner see {@link ClusterCode}
+     * @param node
+     */
+    public static void generateCode(SIRFilter filter) {
         // make sure SIRPopExpression's only pop one element
         // code generation doesn't handle generating multiple pops
         // from a single SIRPopExpression
         //RemoveMultiPops.doit(contentsAsFilter);
         
-        FlatIRToCluster toC = new FlatIRToCluster(contentsAsFilter);
+        FlatIRToCluster toC = new FlatIRToCluster(filter);
         // the code below only deals with user-defined filters.
         // on a PredefinedFilter we need to go generate special code.
-        if (node.contents instanceof SIRPredefinedFilter) {
-            IterFactory.createFactory().createIter(contentsAsFilter)
+        if (filter instanceof SIRPredefinedFilter) {
+            IterFactory.createFactory().createIter(filter)
                 .accept(toC);
             return;
         }
@@ -128,7 +138,7 @@ public class FlatIRToCluster extends InsertTimers implements
         // Optimizations
         if (ClusterBackend.debugging)
             System.out.println("Optimizing "
-                               + ((SIRFilter) node.contents).getName() + "...");
+                               + filter.getName() + "...");
         
 //        System.err.println("Filter at FlatIRToCluster");
 //        SIRToStreamIt.run(contentsAsFilter,
@@ -142,7 +152,7 @@ public class FlatIRToCluster extends InsertTimers implements
                 return !(unit instanceof SIRTwoStageFilter 
                         && method == ((SIRTwoStageFilter)unit).getInitWork());
             }
-        }).optimize((SIRFilter)node.contents);
+        }).optimize(filter);
 
 //        System.err.println("Filter after DCE");
 //        SIRToStreamIt.run(contentsAsFilter,
@@ -151,7 +161,7 @@ public class FlatIRToCluster extends InsertTimers implements
 //                new SIRStructure[0],
 //                new SIRGlobal[0]);
         
-        IterFactory.createFactory().createIter(contentsAsFilter).accept(toC);
+        IterFactory.createFactory().createIter(filter).accept(toC);
     }
 
     public FlatIRToCluster() {

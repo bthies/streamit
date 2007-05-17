@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.99 2007-04-26 18:48:06 qjli Exp $
+ * $Id: KjcOptions.opt,v 1.100 2007-05-17 18:49:16 shall07 Exp $
  */
 
 prefix Kjc
@@ -167,10 +167,28 @@ longname		"fusion"
 	default		"false"
 	help		"Perform maximal filter fusion"
 
+longname		"blender"
+	type		boolean
+	default		"false"
+	help		"Hook into Blender"
+
 longname		"compressed"
 	type		boolean
 	default		"false"
-	help		"Operate directly on compressed data"
+	help		"Operate directly on Apple Animation-compressed data"
+	
+longname		"frameheight"
+	type		int
+	default		"720"
+	requireArgument
+	help		"Uncompressed frame height (when operating directly on Apple Animation-compressed data)"
+
+longname		"framewidth"
+	type		int
+	default		"480"
+	requireArgument
+	help		"Uncompressed frame width (when operating directly on Apple Animation-compressed data)"
+
 
 longname		"unroll"
 	shortcut	"u"

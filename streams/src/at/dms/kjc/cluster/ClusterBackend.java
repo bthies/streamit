@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.123 2007-03-20 23:12:38 dimock Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.124 2007-05-17 18:50:58 shall07 Exp $
 package at.dms.kjc.cluster;
 
 import at.dms.kjc.flatgraph.FlatNode;
@@ -58,6 +58,16 @@ public class ClusterBackend {
      * <br/> Also read in several other modules.
      */
     static HashMap<FlatNode,Integer> steadyExecutionCounts;
+    
+    /**
+     * Given a filter, map to original push/pop/peek rates
+     */
+    static HashMap<SIRFilter,Integer[]> originalRates;
+    
+    /**
+     * Given a joiner, map to following filter
+     */
+    static HashMap<SIRJoiner,SIRFilter> joinerWork;
 
     /**
      * Holds passed structures until they can be handeed off to {@link StructureIncludeFile}.
@@ -75,7 +85,7 @@ public class ClusterBackend {
      * Generated in ClusterBackend, used in TapeBase.
      */
     static ClusterStreamGraph streamGraph;
-
+    
     /**
      * The cluster backend.
      * Called via reflection.
@@ -300,6 +310,8 @@ public class ClusterBackend {
         // Cumulative schedule information over all SSGs
         initExecutionCounts = new HashMap<FlatNode,Integer>();
         steadyExecutionCounts = new HashMap<FlatNode,Integer>();
+        originalRates = new HashMap<SIRFilter,Integer[]>();
+        joinerWork = new HashMap<SIRJoiner, SIRFilter>();
 
         for (int k = 0; k < numSsgs; k++) {
             ClusterStaticStreamGraph ssg = (ClusterStaticStreamGraph)streamGraph.getStaticSubGraphs()[k];
@@ -422,7 +434,65 @@ public class ClusterBackend {
 //                                  globals);
 //                System.err.println("// END str before vector fusing");
 //            }
-           // Vectorize here w.r.t. partition map, will invalidate schedule.
+            if (KjcOptions.compressed) {
+                final int framesize = KjcOptions.frameheight * KjcOptions.framewidth * 4;
+                ssg.getTopLevelSIR().accept(new EmptyAttributeStreamVisitor() {
+                    @Override
+                    public Object visitFilter(SIRFilter self, JFieldDeclaration[] fields, JMethodDeclaration[] methods, JMethodDeclaration init, JMethodDeclaration work, CType inputType, CType outputType) {
+                        originalRates.put(self, new Integer[]{
+                                self.getPushInt(),
+                                self.getPopInt(),
+                                self.getPeekInt()});    
+                        if (self.getPopInt() > 0) {
+                            self.setPop(framesize);
+                            self.setPeek(framesize);
+                        }
+                        if (self.getPushInt() > 0) {
+                            self.setPush(framesize);
+                        }
+                        return self;
+                    }
+                    
+                    @Override
+                    public Object visitJoiner(SIRJoiner self, SIRJoinType type, JExpression[] weights) {
+                        assert self.getParent() instanceof SIRSplitJoin : self.getParent();
+                        SIRSplitJoin parent = (SIRSplitJoin) self.getParent();
+                        parent.setJoiner(SIRJoiner.createUniformRR(parent, new JIntLiteral(framesize)));
+                        return parent.getJoiner();
+                    }
+                });
+                
+                ssg.getTopLevelSIR().accept(new EmptyAttributeStreamVisitor() {
+                    @Override
+                    public Object visitSplitJoin(SIRSplitJoin self, JFieldDeclaration[] fields, JMethodDeclaration[] methods, JMethodDeclaration init, SIRSplitter splitter, SIRJoiner joiner) {
+                        if (!(self.getParent() instanceof SIRPipeline)) {
+                            return self;
+                        }
+                        ListIterator<SIROperator> opIter = self.getParent().getChildren().listIterator();
+                        while (opIter.hasNext()) {
+                            if (opIter.next() == self && opIter.hasNext()) {
+                                SIROperator op = opIter.next();
+                                if (op instanceof SIRFilter) {
+                                    SIRFilter filter = (SIRFilter) op;
+                                    if (Arrays.equals(ClusterBackend.originalRates.get(filter), new Integer[]{1,2,2}) ||
+                                        Arrays.equals(ClusterBackend.originalRates.get(filter), new Integer[]{4,8,8})) {
+                                        joinerWork.put(self.getJoiner(), filter);
+                                        self.getParent().remove(filter);
+                                        break;
+                                    }
+                                } else {
+                                    opIter.previous();
+                                }
+                            }
+                        }
+                        return self;
+                    }
+                });
+                
+                
+            }
+            
+            // Vectorize here w.r.t. partition map, will invalidate schedule.
             ssg.setTopLevelSIR(
             VectorizeEnable.vectorizeEnable(ssg.getTopLevelSIR(),ssgPartitionMap));
 
@@ -461,10 +531,9 @@ public class ClusterBackend {
             // Note that any use of ssg.setTopLevelSIR rewrites nodes and
             // thus invalidates mappings from nodes to execution counts!
             // so put at end.
+            
             initExecutionCounts.putAll(ssg.getExecutionCounts(true));
             steadyExecutionCounts.putAll(ssg.getExecutionCounts(false));
-        
-      
         }  // end of operations on individual Static Stream Graphs
 
         // Any future reference to a dynamic rate should xlate
@@ -520,7 +589,7 @@ public class ClusterBackend {
 
         RegisterStreams.reset();
         RegisterStreams.init(strTop);   // set up NetStreams and associate vectors of NetStreams with node numbers
-        
+
         /*
         // Remove globals pass is broken in cluster !!!
         if (KjcOptions.removeglobals) { RemoveGlobals.doit(graphFlattener.top); }

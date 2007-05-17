@@ -5,8 +5,11 @@ import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.flatgraph.FlatVisitor;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
+
 import java.util.Vector;
 import at.dms.kjc.common.CodegenPrintWriter;
+
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.io.*;
@@ -45,15 +48,244 @@ public class ClusterCode {
         {
 
             if (node.contents instanceof SIRFilter) {
-                // find fields tht need to be included in checkpoint
-                DetectConst.detect(node);
-                // generate code for a filter.
-                FlatIRToCluster.generateCode(node);
+                SIRFilter filter = (SIRFilter) node.contents;
+                if (KjcOptions.compressed && 
+                        (Arrays.equals(ClusterBackend.originalRates.get(filter), new Integer[]{1,1,1}) ||
+                         Arrays.equals(ClusterBackend.originalRates.get(filter), new Integer[]{4,4,4})) &&
+                        !at.dms.kjc.sir.lowering.fission.StatelessDuplicate.hasMutableState(filter)) {
+                    JMethodDeclaration oldWork = filter.getWork();
+                    String originalName = oldWork.getName();
+                    oldWork.setName(originalName + "_ph");
+                    
+                    JFormalParameter[] formalParams = oldWork.getParameters();
+                    int length = formalParams.length;
+                    JExpression[] oldWorkParams = new JExpression[length];
+                    for (int i = 0; i < length; i++) {
+                        oldWorkParams[i] = new JLocalVariableExpression(formalParams[i]); 
+                    }
+                    
+                    JBlock methodCalls;
+                    
+                    if (ClusterBackend.originalRates.get(filter)[0] == 1) {
+                        methodCalls = new JBlock(new JStatement[]{
+                                new JExpressionStatement(
+                                        new JMethodCallExpression(oldWork.getName(), oldWorkParams)),
+                                new JExpressionStatement(
+                                        new JMethodCallExpression(oldWork.getName(), oldWorkParams)),
+                                new JExpressionStatement(
+                                        new JMethodCallExpression(oldWork.getName(), oldWorkParams)),
+                                new JExpressionStatement(
+                                        new JMethodCallExpression(oldWork.getName(), oldWorkParams))
+                        }); 
+                    } else {
+                        methodCalls = new JBlock(new JStatement[]{
+                                new JExpressionStatement(
+                                        new JMethodCallExpression(oldWork.getName(), oldWorkParams)),
+                        });
+                    }
+                    
+                    JBlock block = new JBlock();
+                   
+                    JVariableDefinition chunk_size = new JVariableDefinition(CStdType.Integer, "chunk_size");
+                    JVariableDefinition header = new JVariableDefinition(CStdType.Integer, "header");
+                    JVariableDefinition temp = new JVariableDefinition(CStdType.Integer, "temp");
+                    
+                    block.addStatement(new JVariableDeclarationStatement(chunk_size));
+                    block.addStatement(new JVariableDeclarationStatement(header));
+                    block.addStatement(new JVariableDeclarationStatement(temp));
+                    
+                    block.addStatement(new JExpressionStatement(new JAssignmentExpression(null, 
+                            new JLocalVariableExpression(temp), 
+                            new SIRPopExpression(CStdType.Integer))));
+                    
+                    block.addStatement(new JExpressionStatement(new SIRPushExpression( 
+                            new JLocalVariableExpression(temp), CStdType.Integer)));
+                    
+                    if (!KjcOptions.blender) {
+                        block.addStatement(new JExpressionStatement(new JAssignmentExpression(null, 
+                                new JLocalVariableExpression(chunk_size), 
+                                new JShiftExpression(null, Constants.OPE_SL, 
+                                        new JLocalVariableExpression(temp), new JIntLiteral(24)))));
+                    } else {
+                        block.addStatement(new JExpressionStatement(new JAssignmentExpression(null, 
+                                new JLocalVariableExpression(chunk_size), 
+                                new JLocalVariableExpression(temp))));
+                    }
+                    
+                    block.addStatement(new JExpressionStatement(new JAssignmentExpression(null, 
+                            new JLocalVariableExpression(temp), 
+                            new SIRPopExpression(CStdType.Integer))));
+                    
+                    block.addStatement(new JExpressionStatement(new SIRPushExpression( 
+                            new JLocalVariableExpression(temp), CStdType.Integer)));
+                       
+                    if (!KjcOptions.blender) {
+                        block.addStatement(new JExpressionStatement(new JCompoundAssignmentExpression(null, Constants.OPE_PLUS,
+                                new JLocalVariableExpression(chunk_size), 
+                                new JShiftExpression(null, Constants.OPE_SL,
+                                        new JLocalVariableExpression(temp), new JIntLiteral(16)))));
+                    } else {
+                        block.addStatement(new JExpressionStatement(new JCompoundAssignmentExpression(null, Constants.OPE_PLUS,
+                                new JLocalVariableExpression(chunk_size), 
+                                new JShiftExpression(null, Constants.OPE_SL,
+                                        new JLocalVariableExpression(temp), new JIntLiteral(8)))));
+                    }
+                    
+                    block.addStatement(new JExpressionStatement(new JAssignmentExpression(null, 
+                            new JLocalVariableExpression(temp), 
+                            new SIRPopExpression(CStdType.Integer))));
+                    
+                    block.addStatement(new JExpressionStatement(new SIRPushExpression( 
+                            new JLocalVariableExpression(temp), CStdType.Integer)));
+                    
+                    if (!KjcOptions.blender) {
+                        block.addStatement(new JExpressionStatement(new JCompoundAssignmentExpression(null, Constants.OPE_PLUS,
+                                new JLocalVariableExpression(chunk_size), 
+                                new JShiftExpression(null, Constants.OPE_SL,
+                                        new JLocalVariableExpression(temp), new JIntLiteral(8)))));
+                    } else {
+                        block.addStatement(new JExpressionStatement(new JCompoundAssignmentExpression(null, Constants.OPE_PLUS,
+                                new JLocalVariableExpression(chunk_size), 
+                                new JShiftExpression(null, Constants.OPE_SL,
+                                        new JLocalVariableExpression(temp), new JIntLiteral(16)))));
+                    }
+                    
+                    block.addStatement(new JExpressionStatement(new JAssignmentExpression(null, 
+                            new JLocalVariableExpression(temp), 
+                            new SIRPopExpression(CStdType.Integer))));
+                    
+                    block.addStatement(new JExpressionStatement(new SIRPushExpression( 
+                            new JLocalVariableExpression(temp), CStdType.Integer)));
+                    
+                    if (!KjcOptions.blender) {
+                        block.addStatement(new JExpressionStatement(new JCompoundAssignmentExpression(null, Constants.OPE_PLUS,
+                                new JLocalVariableExpression(chunk_size), 
+                                new JLocalVariableExpression(temp))));    
+                    } else {
+                        block.addStatement(new JExpressionStatement(new JCompoundAssignmentExpression(null, Constants.OPE_PLUS,
+                                new JLocalVariableExpression(chunk_size), 
+                                new JShiftExpression(null, Constants.OPE_SL,
+                                        new JLocalVariableExpression(temp), new JIntLiteral(24)))));
+                    }
+                    
+                    block.addStatement(new JIfStatement(null, new JRelationalExpression(null, Constants.OPE_LT,
+                            new JLocalVariableExpression(chunk_size), 
+                            new JIntLiteral(8)), new JContinueStatement(null, null, null), null, null));
+                    
+                    block.addStatement(new JExpressionStatement(new JAssignmentExpression(null, 
+                            new JLocalVariableExpression(temp), 
+                            new SIRPopExpression(CStdType.Integer))));
+                    
+                    block.addStatement(new JExpressionStatement(new SIRPushExpression( 
+                            new JLocalVariableExpression(temp), CStdType.Integer)));
+                    
+                    block.addStatement(new JExpressionStatement(new JAssignmentExpression(null,
+                            new JLocalVariableExpression(header), 
+                            new JShiftExpression(null, Constants.OPE_SL,
+                                    new JLocalVariableExpression(temp), new JIntLiteral(8)))));
+                    
+                    block.addStatement(new JExpressionStatement(new JAssignmentExpression(null, 
+                            new JLocalVariableExpression(temp), 
+                            new SIRPopExpression(CStdType.Integer))));
+                    
+                    block.addStatement(new JExpressionStatement(new SIRPushExpression( 
+                            new JLocalVariableExpression(temp), CStdType.Integer)));
+                    
+                    block.addStatement(new JExpressionStatement(new JCompoundAssignmentExpression(null, Constants.OPE_PLUS,
+                            new JLocalVariableExpression(header), 
+                            new JLocalVariableExpression(temp))));
+                    
+                    block.addStatement(new JIfStatement(null, new JEqualityExpression(null, true,
+                            new JLocalVariableExpression(header), 
+                            new JIntLiteral(8)), 
+                            new JBlock(new JStatement[]{
+                                    new JExpressionStatement(new SIRPushExpression(
+                                            new SIRPopExpression(CStdType.Integer), CStdType.Integer)),
+                                    new JExpressionStatement(new SIRPushExpression(
+                                            new SIRPopExpression(CStdType.Integer), CStdType.Integer)),
+                                    new JExpressionStatement(new SIRPushExpression(
+                                            new SIRPopExpression(CStdType.Integer), CStdType.Integer)),
+                                    new JExpressionStatement(new SIRPushExpression(
+                                            new SIRPopExpression(CStdType.Integer), CStdType.Integer)),
+                                    new JExpressionStatement(new SIRPushExpression(
+                                            new SIRPopExpression(CStdType.Integer), CStdType.Integer)),
+                                    new JExpressionStatement(new SIRPushExpression(
+                                            new SIRPopExpression(CStdType.Integer), CStdType.Integer)),
+                                    new JExpressionStatement(new SIRPushExpression(
+                                            new SIRPopExpression(CStdType.Integer), CStdType.Integer)),
+                                    new JExpressionStatement(new SIRPushExpression(
+                                            new SIRPopExpression(CStdType.Integer), CStdType.Integer))                         
+                            }), null, null));
+                    
+                    JBlock outer = new JBlock();
+                    
+                    block.addStatement(new JWhileStatement(null, new JBooleanLiteral(null, true), outer, null));
+                    
+                    JVariableDefinition rle_code = new JVariableDefinition(CStdType.Integer, "rle_code");
+                    JVariableDefinition skip_code = new JVariableDefinition(CStdType.Integer, "skip_code");
+                    
+                    outer.addStatement(new JVariableDeclarationStatement(rle_code));
+                    outer.addStatement(new JVariableDeclarationStatement(skip_code));
+                    
+                    outer.addStatement(new JExpressionStatement(new JAssignmentExpression(null, 
+                            new JLocalVariableExpression(skip_code), 
+                            new SIRPopExpression(CStdType.Integer))));
+                    
+                    outer.addStatement(new JExpressionStatement(new SIRPushExpression( 
+                            new JLocalVariableExpression(skip_code), CStdType.Integer)));
+                    
+                    outer.addStatement(new JIfStatement(null, new JEqualityExpression(null, true,
+                            new JLocalVariableExpression(skip_code), 
+                            new JIntLiteral(0)), new JReturnStatement(null, null, null), null, null));
+                    
+                    outer.addStatement(new JExpressionStatement(new JAssignmentExpression(null, 
+                            new JLocalVariableExpression(rle_code),
+                            new SIRPopExpression(CStdType.Integer))));
+                    
+                    outer.addStatement(new JExpressionStatement(new SIRPushExpression( 
+                            new JLocalVariableExpression(rle_code), CStdType.Integer)));
+                    
+                    JBlock inner = new JBlock();
+                    
+                    outer.addStatement(new JWhileStatement(null, new JEqualityExpression(null, false,
+                            new JLocalVariableExpression(rle_code), new JIntLiteral(255)), 
+                            inner, null));
+                    
+                    inner.addStatement(new JIfStatement(null, new JEqualityExpression(null, true,
+                            new JLocalVariableExpression(rle_code), new JIntLiteral(0)), 
+                            new JExpressionStatement(new SIRPushExpression(
+                                new SIRPopExpression(CStdType.Integer), CStdType.Integer)), 
+                            new JIfStatement(null, new JRelationalExpression(null, Constants.OPE_GE,
+                                new JLocalVariableExpression(rle_code), new JIntLiteral(128)), 
+                                methodCalls,
+                                new JWhileStatement(null, new JRelationalExpression(null, Constants.OPE_GT,
+                                    new JPostfixExpression(Constants.OPE_POSTDEC, new JLocalVariableExpression(rle_code)), 
+                                    new JIntLiteral(0)),
+                                    methodCalls, null), 
+                                null), 
+                            null));
+                    
+                    inner.addStatement(new JExpressionStatement(new JAssignmentExpression(null, 
+                            new JLocalVariableExpression(rle_code),
+                            new SIRPopExpression(CStdType.Integer))));
+    
+                    inner.addStatement(new JExpressionStatement(new SIRPushExpression( 
+                            new JLocalVariableExpression(rle_code), CStdType.Integer)));
+                    
+                    JMethodDeclaration newWork = new JMethodDeclaration(CStdType.Void, originalName, 
+                            oldWork.getParameters(), block);
 
+                    filter.setWork(newWork);
+                    filter.addMethod(oldWork);
+                }
+                // find fields tht need to be included in checkpoint
+                DetectConst.detect(filter);
+                // generate code for a filter.
+                FlatIRToCluster.generateCode(filter);
+                
                 // attempt to clean up program as generating code was commented out,
                 // left it commented out.
                 //((SIRFilter)node.contents).setMethods(JMethodDeclaration.EMPTY());
-
             } else 
             if (node.contents instanceof SIRSplitter) {
                 // generate code for a splitter
@@ -83,8 +315,7 @@ public class ClusterCode {
      * @param to    : tape being pushed to
      */
     private static void printCopyTapeElement(CodegenPrintWriter p, Tape from, Tape to) {
-        p.print(to.getPushName() + "(" + from.getPopName() + "())" );
-        p.print(";\n");
+        p.println(to.getPushName() + "(" + from.getPopName() + "());");
 
 // previous code, did not deal with arrays.        
 //        p.print(to.pushPrefix());
@@ -453,11 +684,428 @@ public class ClusterCode {
         if (joiner.getType().equals(SIRJoinType.ROUND_ROBIN)
                 || joiner.getType().equals(SIRJoinType.WEIGHTED_RR)) {
 
-            p.print("void __joiner_" + thread_id + "_work(int ____n) {\n");
-            p.print("  for (;____n > 0; ____n--) {\n");
+            String joinerWork = null;
+            int workCount = 4;
+            
+            if (KjcOptions.compressed && in.size() == 2) {
+                p.println("static unsigned char *__frame_" + in.get(0).getSource() + "_" + in.get(0).getDest() + " = NULL;");
+                p.println("static unsigned char *__frame_" + in.get(1).getSource() + "_" + in.get(1).getDest() + " = NULL;");
+                
+                if (ClusterBackend.joinerWork.containsKey(joiner)) {
+                    SIRFilter filter = ClusterBackend.joinerWork.get(joiner);
+                    JMethodDeclaration work = filter.getWork();
+                    workCount = 4 / ClusterBackend.originalRates.get(filter)[0];
+                    
+                    final JFormalParameter[] params = new JFormalParameter[]{
+                            new JFormalParameter(new CArrayType(CStdType.Char, 1, new JExpression[]{new JIntLiteral(4)}), "__tape_0"), 
+                            new JFormalParameter(new CArrayType(CStdType.Char, 1, new JExpression[]{new JIntLiteral(4)}), "__tape_1")};
+                    
+                    work.setName("__joiner_work_" + joiner.getNumber());
+                    
+                    work.setParameters(params);
+                    
+                    final String push = out.getPushName();
+                    
+                    work.getBody().accept(new SLIRReplacingVisitor(){
+                        private int popCount = -1;
+                        
+                        public Object visitPopExpression(SIRPopExpression self,
+                                                         CType tapeType) {
+                            ++popCount;
+                            return new JArrayAccessExpression(
+                                    new JLocalVariableExpression(params[popCount % 2]),
+                                    new JIntLiteral(popCount / 2));
+                        }
+
+                        public Object visitPushExpression(SIRPushExpression self, CType tapeType, JExpression arg) {
+                            return new JMethodCallExpression(push, new JExpression[]{arg});
+                        }
+                    });
+                    
+                    p.println("inline void " + work.getName() + "(const unsigned char* __tape_0, const unsigned char* __tape_1)");
+                    f2c.visitBlockStatement(work.getBody(), null);
+                    p.println();
+                    
+                    joinerWork = work.getName();
+                }
+            }
+            
+            p.println("void __joiner_" + thread_id + "_work(int ____n) {");
+            p.indent();
+            p.println("for (;____n > 0; ____n--) {");
+            p.indent();
 
             int sum = joiner.getSumOfWeights();
-
+            
+            if (KjcOptions.compressed && in.size() == 2) {
+                Tape tape0 = in.get(0);
+                Tape tape1 = in.get(1);
+                String buffer0 = "BUFFER_" + tape0.getSource() + "_" + tape0.getDest();
+                String tail0 = "TAIL_" + tape0.getSource() + "_" + tape0.getDest();
+                String frame0 = "__frame_" + tape0.getSource() + "_" + tape0.getDest();
+                String buffer1 = "BUFFER_" + tape1.getSource() + "_" + tape1.getDest();
+                String tail1 = "TAIL_" + tape1.getSource() + "_" + tape1.getDest();
+                String frame1 = "__frame_" + tape1.getSource() + "_" + tape1.getDest();
+                String pop0 = tape0.getPopName() + "()";
+                String pop1 = tape1.getPopName() + "()";
+                
+                String headOut = "HEAD_" + out.getSource() + "_" + out.getDest();
+                String push = out.getPushName();
+                
+                p.println("const unsigned int frameheight = " + KjcOptions.frameheight + ";");
+                p.println("const unsigned int framewidth = " + KjcOptions.framewidth + ";");
+                p.println("if (" + frame0 + " == NULL) {");
+                p.indent();
+                p.println(frame0 + " = (unsigned char*)calloc(4 * frameheight * framewidth, 1);");
+                p.println(frame1 + " = (unsigned char*)calloc(4 * frameheight * framewidth, 1);");
+                p.outdent();
+                p.println("}");
+                p.println("unsigned int size0 = " + pop0 + ";");
+                if (!KjcOptions.blender) {
+                    p.println("size0 <<= 8;");
+                    p.println("size0 += " + pop0 + ";");
+                    p.println("size0 <<= 8;");
+                    p.println("size0 += " + pop0 + ";");
+                    p.println("size0 <<= 8;");
+                    p.println("size0 += " + pop0 + ";");
+                } else {
+                    p.println("size0 += (" + pop0 + " << 8);");
+                    p.println("size0 += (" + pop0 + " << 16);");
+                    p.println("size0 += (" + pop0 + " << 24);");
+                }
+                p.println("unsigned int size1 = " + pop1 + ";");
+                if (!KjcOptions.blender) {
+                    p.println("size1 <<= 8;");
+                    p.println("size1 += " + pop1 + ";");
+                    p.println("size1 <<= 8;");
+                    p.println("size1 += " + pop1 + ";");
+                    p.println("size1 <<= 8;");
+                    p.println("size1 += " + pop1 + ";");
+                } else {
+                    p.println("size1 += (" + pop1 + " << 8);");
+                    p.println("size1 += (" + pop1 + " << 16);");
+                    p.println("size1 += (" + pop1 + " << 24);");
+                }
+                p.println("unsigned int header0 = " + pop0 + ";");
+                p.println("header0 <<= 8;");
+                p.println("header0 += " + pop0 + ";");
+                p.println("unsigned int header1 = " + pop1 + ";");
+                p.println("header1 <<= 8;");
+                p.println("header1 += " + pop1 + ";");
+                p.println("unsigned int start_line0, start_line1;");
+                p.println("unsigned int lines_to_change0, lines_to_change1;");
+                p.println("if (header0 & 0x0008) {");
+                p.indent();
+                p.println("start_line0 = " + pop0 + ";");
+                p.println("start_line0 <<= 8;");
+                p.println("start_line0 += " + pop0 + ";");
+                p.println(pop0 + "; " + pop0 + ";");
+                p.println("lines_to_change0 = " + pop0 + ";");
+                p.println("lines_to_change0 <<= 8;");
+                p.println("lines_to_change0 += " + pop0 + ";");
+                p.println(pop0 + "; " + pop0 + ";");
+                p.outdent();
+                p.println("} else {");
+                p.indent();
+                p.println("start_line0 = 0;");
+                p.println("lines_to_change0 = frameheight;");
+                p.outdent();
+                p.println("}");
+                p.println("if (header1 & 0x0008) {");
+                p.indent();
+                p.println("start_line1 = " + pop1 + ";");
+                p.println("start_line1 <<= 8;");
+                p.println("start_line1 += " + pop1 + ";");
+                p.println(pop1 + "; " + pop1 + ";");
+                p.println("lines_to_change1 = " + pop1 + ";");
+                p.println("lines_to_change1 <<= 8;");
+                p.println("lines_to_change1 += " + pop1 + ";");
+                p.println(pop1 + "; " + pop1 + ";");
+                p.outdent();
+                p.println("} else {");
+                p.indent();
+                p.println("start_line1 = 0;");
+                p.println("lines_to_change1 = frameheight;");
+                p.outdent();
+                p.println("}");
+                p.println();
+                p.println("unsigned int end_line0 = start_line0 + lines_to_change0;");
+                p.println("unsigned int end_line1 = start_line1 + lines_to_change1;");
+                p.println("unsigned int start_line_out = (start_line0 < start_line1 ? start_line0 : start_line1);");
+                p.println("unsigned int end_line_out = (end_line0 > end_line1 ? end_line0 : end_line1);");
+                p.println("unsigned int lines_to_change_out = end_line_out - start_line_out;\n");
+                p.println("unsigned int out_ptr = " + headOut + ";");
+                p.println(headOut + " = " + headOut + " + 4;");
+                p.println();
+                p.println("if (start_line_out == 0 && lines_to_change_out == frameheight) {");
+                p.indent();
+                p.println(push + "(0);");
+                p.println(push + "(0);");
+                p.outdent();
+                p.println("} else {");
+                p.indent();
+                p.println(push + "(0);");
+                p.println(push + "(8);");
+                p.println(push + "((start_line_out & 0xFF00) >> 8);");
+                p.println(push + "(start_line_out & 0xFF);");
+                p.println(push + "(0);");
+                p.println(push + "(0);");
+                p.println(push + "((lines_to_change_out & 0xFF00) >> 8);");
+                p.println(push + "(lines_to_change_out & 0xFF);");
+                p.println(push + "(0);");
+                p.println(push + "(0);");
+                p.outdent();
+                p.println("}");
+                p.println();
+                p.println("const unsigned char SKIP = 0;");
+                p.println("const unsigned char RLE = 1;");
+                p.println("const unsigned char NEW = 2;");
+                p.println("const unsigned char SKIP_LINE[2] = {1, (unsigned char) -1};");
+                p.println("const unsigned char *in0_loc, *in1_loc;");
+                p.println("in0_loc = " + buffer0 + " + " + tail0 + ";");
+                p.println("in1_loc = " + buffer1 + " + " + tail1 + ";");
+                p.println("for (int i = start_line_out; i < end_line_out; i++) {");
+                p.indent();
+                p.println("const unsigned char* in[2] = {");
+                p.indent();
+                p.indent();
+                p.println("(i<start_line0 || i>=end_line0) ? SKIP_LINE : in0_loc, ");
+                p.println("(i<start_line1 || i>=end_line1) ? SKIP_LINE : in1_loc};");
+                p.outdent();
+                p.outdent();
+                p.println();
+                p.println("int pos[2];");
+                p.println("unsigned char state[2];");
+                p.println("int front, back, rle_code;");
+                p.println("unsigned char* framepos0 = " + frame0 + " + 4*framewidth*i;");
+                p.println("unsigned char* framepos1 = " + frame1 + " + 4*framewidth*i;");
+                p.println("pos[0] = (*in[0] - 1) * 4;");
+                p.println("pos[1] = (*in[1] - 1) * 4;");
+                p.println("in[0]++; in[1]++;");
+                p.println("state[0] = SKIP; state[1] = SKIP;");
+                p.println("front = pos[0] > pos[1] ? 0 : 1;");
+                p.println("back = 1 - front;");
+                p.println(push + "(pos[back]/4 + 1);");
+                p.println("int commonpos = pos[back];");
+                p.println("framepos0 += pos[back];");
+                p.println("framepos1 += pos[back];");
+                p.println("while (commonpos < 4 * framewidth) {");
+                p.indent();
+                p.println("rle_code = (signed char)*in[back];");
+                p.println("in[back]++;");
+                p.println();
+                p.println("if (rle_code == -1) {");
+                p.indent();
+                p.println("pos[back] = framewidth * 4;");
+                p.println("state[back] = SKIP;");
+                p.println("in[back]--;");
+                p.outdent();
+                p.println("} else if (rle_code == 0) {");
+                p.indent();
+                p.println("pos[back] += (*in[back] - 1) * 4;");
+                p.println("in[back]++;");
+                p.println("state[back] = SKIP;");
+                p.outdent();
+                p.println("} else if (rle_code < 0) {");
+                p.indent();
+                p.println("pos[back] += -rle_code * 4;");
+                p.println("state[back] = RLE;");
+                p.outdent();
+                p.println("} else {");
+                p.indent();
+                p.println("pos[back] += rle_code * 4;");
+                p.println("state[back] = NEW;");
+                p.outdent();
+                p.println("}");
+                p.println();
+                p.println("front = pos[0] > pos[1] ? 0 : 1;");
+                p.println("back = 1 - front;");
+                p.println();
+                p.println("if (commonpos == pos[back]) {");
+                p.indent();
+                p.println("continue;");
+                p.outdent();
+                p.println("} else if (state[0] == SKIP && state[1] == SKIP) {");
+                p.indent();
+                p.println("int skip = (pos[back] - commonpos) / 4;");
+                p.println("if (pos[0] == 4 * framewidth && pos[1] == 4 * framewidth) {");
+                p.indent();
+                p.println("break;");
+                p.outdent();
+                p.println("} else {");
+                p.indent();
+                p.println("while (skip > 254) {");
+                p.indent();
+                p.println(push + "(0);");
+                p.println(push + "(255);");
+                p.println("framepos0 += 4 * 254;");
+                p.println("framepos1 += 4 * 254;");
+                p.println("skip -= 254;");
+                p.outdent();
+                p.println("}");
+                p.println(push + "(0);");
+                p.println(push + "(skip + 1);");
+                p.println("framepos0 += 4*skip;");
+                p.println("framepos1 += 4*skip;");
+                p.outdent();
+                p.println("}");
+                p.outdent();
+                p.println("} else if (state[0] == RLE && state[1] == RLE && (pos[back] - commonpos > 4)) {");
+                p.indent();
+                p.println("int rle_amt = (pos[back] - commonpos) / 4;");
+                p.println("for (int j = rle_amt; j > 0; j--) {");
+                p.indent();
+                p.println("*framepos0++ = in[0][0];");
+                p.println("*framepos0++ = in[0][1];");
+                p.println("*framepos0++ = in[0][2];");
+                p.println("*framepos0++ = in[0][3];");
+                p.println("*framepos1++ = in[1][0];");
+                p.println("*framepos1++ = in[1][1];");
+                p.println("*framepos1++ = in[1][2];");
+                p.println("*framepos1++ = in[1][3];");
+                p.outdent();
+                p.println("}");
+                p.println();
+                p.println(push + "(-rle_amt);");
+                if (joinerWork != null) {
+                    if (workCount == 1) {
+                        p.println(joinerWork + "((unsigned char*)in[0], (unsigned char*)in[1]);");
+                    } else {
+                        p.println("for (int index = 0; index < 4; index++) {");
+                        p.indent();
+                        p.println(joinerWork + "(((unsigned char*)in[0]) + index, ((unsigned char*)in[1]) + index);");
+                        p.outdent();
+                        p.println("}");
+                    }
+                }
+                p.println("in[back] += 4;");
+                p.println("if (pos[back] == pos[front]) {");
+                p.indent();
+                p.println("in[front] += 4;");
+                p.outdent();
+                p.println("}");
+                p.outdent();
+                p.println("} else {");
+                p.indent();
+                p.println("int total_stretch = (pos[back] - commonpos) / 4;");
+                p.println("do {");
+                p.indent();
+                p.println("int stretch = (total_stretch == 128) ? 127 : total_stretch;");
+                p.println(push + "(stretch);");
+                p.println();
+                p.println("unsigned char* __framepos0 = framepos0;");
+                p.println("if (state[0] == NEW) {");
+                p.indent();
+                p.println("for (int j = stretch * 4; j > 0; j--) {");
+                p.indent();
+                p.println("*__framepos0++ = *(in[0])++;");
+                p.outdent();
+                p.println("}");
+                p.outdent();
+                p.println("} else if (state[0] == RLE) {");
+                p.indent();
+                p.println("for (int j = 0; j < stretch; j++) {");
+                p.indent();
+                p.println("*__framepos0++ = in[0][0];");
+                p.println("*__framepos0++ = in[0][1];");
+                p.println("*__framepos0++ = in[0][2];");
+                p.println("*__framepos0++ = in[0][3];");
+                p.outdent();
+                p.println("}");
+                p.println("if (commonpos + 4*stretch == pos[0]) {");
+                p.indent();
+                p.println("in[0] += 4;");
+                p.outdent();
+                p.println("}");
+                p.outdent();
+                p.println("}");
+                p.println();
+                p.println("unsigned char* __framepos1 = framepos1;");
+                p.println("if (state[1] == NEW) {");
+                p.indent();
+                p.println("for (int j = stretch * 4; j > 0; j--) {");
+                p.indent();
+                p.println("*__framepos1++ = *(in[1])++;");
+                p.outdent();
+                p.println("}");
+                p.outdent();
+                p.println("} else if (state[1] == RLE) {");
+                p.indent();
+                p.println("for (int j = 0; j < stretch; j++) {");
+                p.indent();
+                p.println("*__framepos1++ = in[1][0];");
+                p.println("*__framepos1++ = in[1][1];");
+                p.println("*__framepos1++ = in[1][2];");
+                p.println("*__framepos1++ = in[1][3];");
+                p.outdent();
+                p.println("}");
+                p.println("if (commonpos + 4*stretch == pos[1]) {");
+                p.indent();
+                p.println("in[1] += 4;");
+                p.outdent();
+                p.println("}");
+                p.outdent();
+                p.println("}");
+                p.println();
+                p.println("for (int j = 0; j < stretch; j++) {");
+                p.indent();
+                if (joinerWork != null) {
+                    if (workCount == 1) {
+                        p.println(joinerWork + "(framepos0, framepos1);");
+                        p.println("framepos0 += 4;");
+                        p.println("framepos1 += 4;");
+                    } else {
+                        p.println("for (int index = 0; index < 4; index++) {");
+                        p.indent();
+                        p.println(joinerWork + "(framepos0++, framepos1++);");
+                        p.outdent();
+                        p.println("}");
+                    }
+                }
+                p.outdent();
+                p.println("}");
+                p.println("total_stretch -= 127;");
+                p.println("commonpos += 4 * 127;");
+                p.outdent();
+                p.println("} while (total_stretch > 0);");
+                p.outdent();
+                p.println("}");
+                p.println("commonpos = pos[back];");
+                p.outdent();
+                p.println("}");
+                p.println("in[0]++; in[1]++;");
+                p.println("if (start_line0 <= i && i < end_line0) {");
+                p.indent();
+                p.println("in0_loc = in[0];");
+                p.outdent();
+                p.println("}");
+                p.println("if (start_line1 <= i && i < end_line1) {");
+                p.indent();
+                p.println("in1_loc = in[1];");
+                p.outdent();
+                p.println("}");
+                p.println(push + "((unsigned char) -1);");
+                p.outdent();
+                p.println("}");
+                p.println();
+                p.println(push + "(0);");
+                p.println("unsigned int framesize = " + headOut + " - out_ptr;");            
+                p.println(headOut + " = out_ptr;");
+                if (!KjcOptions.blender) {
+                    p.println(push + "((framesize & 0xFF000000) >> 24);");
+                    p.println(push + "((framesize & 0xFF0000) >> 16);");
+                    p.println(push + "((framesize & 0xFF00) >> 8);");
+                    p.println(push + "(framesize & 0xFF);");
+                } else {
+                    p.println(push + "(framesize & 0xFF);");
+                    p.println(push + "((framesize & 0xFF00) >> 8);");
+                    p.println(push + "((framesize & 0xFF0000) >> 16);");
+                    p.println(push + "((framesize & 0xFF000000) >> 24);");
+                }
+                p.println(headOut + " = out_ptr + framesize;");
+                
+            }
+            else
             // depending on the weight unroll fully or by some constant factor
             if (sum < MAX_SUM_WEIGHTS_TO_UNROLL) {
                 // unroll fully!
@@ -479,12 +1127,14 @@ public class ClusterCode {
                         Tape s = in.get(i);
 
                         if (num / UNROLL_BY > 0) {
-                            p.println("  for (int __k = 0; __k < " + num
-                                    / UNROLL_BY + "; __k++) {\n");
+                            p.println("for (int __k = 0; __k < " + num
+                                    / UNROLL_BY + "; __k++) {");
+                            p.indent();
                             for (int y = 0; y < UNROLL_BY; y++) {
                                 printCopyTapeElement(p, s, out);
                             }
-                            p.println("  }\n");
+                            p.outdent();
+                            p.println("}");
                         }
 
                         int rem = num % UNROLL_BY;
@@ -494,8 +1144,10 @@ public class ClusterCode {
                     }
                 }
             }
-            p.print("  }\n");
-            p.print("}\n");
+            p.outdent();
+            p.println("}");
+            p.outdent();
+            p.println("}");
 
             p.newLine();
 

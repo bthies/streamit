@@ -19,6 +19,16 @@ import at.dms.kjc.common.CommonUtils;
 
 class FusionCode {
     public static int mult = 1;
+    
+    private static Comparator<SIROperator> filterSorter = new Comparator<SIROperator>() {
+        public int compare(SIROperator o1, SIROperator o2) {
+            if (!(o1 instanceof SIRFilter && o2 instanceof SIRFilter)) {
+                return 0;
+            }
+            
+            return new Integer(o1.getNumber()).compareTo(new Integer(o2.getNumber()));
+        }
+    };
 
     /**
      * estimates a multiplicity for execution scaling using cache sizes
@@ -262,20 +272,17 @@ class FusionCode {
 
             for (Tape stream : RegisterStreams.getNodeOutStreams(oper)) {
                 if (stream != null) {
-                    p.print(stream.dataDeclaration());
-//                int src = stream.getSource();
-//                int dst = stream.getDest();
-//                if (FixedBufferTape.isFixedBuffer(src, dst)) {
-//                    String type = ClusterUtils.CTypeToString(stream.getType());
-//
-//                    p.print(type + " BUFFER_" + src + "_" + dst
-//                            + "[__BUF_SIZE_MASK_" + src + "_" + dst
-//                            + " + 1];\n");
-//                    p.print("int HEAD_" + src + "_" + dst + " = 0;\n");
-//                    p.print("int TAIL_" + src + "_" + dst + " = 0;\n");
-//
-//                    p.newLine();
-//                }
+                    if (!KjcOptions.blender) {  
+                        p.print(stream.dataDeclaration());
+                    } else {
+                        int src = stream.getSource();
+                        int dst = stream.getDest();
+                        if (FixedBufferTape.isFixedBuffer(src, dst)) {
+                            p.println("unsigned char* BUFFER_" + src + "_" + dst + ";");
+                            p.println("int HEAD_" + src + "_" + dst + " = 0;");
+                            p.println("int TAIL_" + src + "_" + dst + " = 0;");
+                        }
+                    }
                 }
             }
         }
@@ -340,35 +347,75 @@ class FusionCode {
 
         p.newLine();
 
-        p.print("int main(int argc, char **argv) {\n");
+        if (KjcOptions.blender) {
+            p.println("/**/ extern \"C\" {");
+            p.println("void blender_hook(unsigned char* in0, unsigned char* in1, unsigned char* out) {");
+        } else {
+            p.println("int main(int argc, char **argv) {");
+        }
 
         // tell the profiler how many ID's there are
         if (KjcOptions.countops) {
-            p.println("  profiler::set_num_ids(" + InsertCounters.getNumIds() + ");");
+            p.indent();
+            p.println("profiler::set_num_ids(" + InsertCounters.getNumIds() + ");");
+            p.outdent();
+        }
+        
+        if (!KjcOptions.blender) {
+            p.indent();
+            p.println("read_setup::read_setup_file();");
+            p.println("__max_iteration = read_setup::max_iteration;");
+
+            p.println("for (int a = 1; a < argc; a++) {");
+            p.indent();
+            p.println("if (argc > a + 1 && strcmp(argv[a], \"-i\") == 0) {");
+            p.indent();
+            p.println("int tmp;");
+            p.println("sscanf(argv[a + 1], \"%d\", &tmp);");
+            p.outdent();
+            p.outdent();
+            p.outdent();
+            p.println("#ifdef VERBOSE");
+            p.indent();
+            p.indent();
+            p.indent();
+            p.println("fprintf(stderr,\"Number of Iterations: %d\\n\", tmp);");
+            p.outdent();
+            p.outdent();
+            p.outdent();
+            p.println("#endif");
+            p.indent();
+            p.indent();
+            p.indent();
+            p.println("__max_iteration = tmp;");
+            p.outdent();
+            p.println("}");
+
+            p.println("if (strcmp(argv[a], \"-t\") == 0) {");
+            p.outdent();
+            p.outdent();
+            p.println("#ifdef VERBOSE");
+            p.indent();
+            p.indent();
+            p.indent();
+            p.println("fprintf(stderr,\"Timer enabled.\\n\");");
+            p.outdent();
+            p.outdent();
+            p.outdent();
+            p.println("#endif");
+            p.indent();
+            p.indent();
+            p.indent();
+            p.println("__timer_enabled = 1;"); 
+            p.outdent();
+            p.println("}");
+
+            p.outdent();
+            p.println("}");
+            p.outdent();
         }
 
-        p.print("  read_setup::read_setup_file();\n");
-        p.print("  __max_iteration = read_setup::max_iteration;\n");
-
-        p.print("  for (int a = 1; a < argc; a++) {\n");
-        p.print("    if (argc > a + 1 && strcmp(argv[a], \"-i\") == 0) {\n");
-        p.print("      int tmp;\n");
-        p.print("      sscanf(argv[a + 1], \"%d\", &tmp);\n");
-        p.println("#ifdef VERBOSE");
-        p.print("      fprintf(stderr,\"Number of Iterations: %d\\n\", tmp);\n");
-        p.println("#endif");
-        p.print("      __max_iteration = tmp;\n");
-        p.print("    }\n");
-
-        p.print("    if (strcmp(argv[a], \"-t\") == 0) {\n"); 
-        p.println("#ifdef VERBOSE");
-        p.print("       fprintf(stderr,\"Timer enabled.\\n\");\n"); 
-        p.println("#endif");
-        p.print("       __timer_enabled = 1;"); 
-        p.print("    }\n");
-
-        p.print("  }\n");
-
+        
 // implicit_mult used to be a parameter, but entire peek-scaling
 // feature has been turned off since much more likely to be a pessimization
 // than an optimization
@@ -430,11 +477,7 @@ class FusionCode {
     
             //p.print("  // ============= Phase: "+ph+" =============\n");
 
-            HashSet<SIROperator> phase = d_sched.getAllOperatorsInPhase(ph);
-            Iterator<SIROperator> iter = phase.iterator();
-
-            while (iter.hasNext()) {
-                SIROperator oper = iter.next();
+            for (SIROperator oper : d_sched.getAllOperatorsInPhase(ph)) {
                 int id = NodeEnumerator.getSIROperatorId(oper);
                 FlatNode node = NodeEnumerator.getFlatNode(id);
 
@@ -446,7 +489,9 @@ class FusionCode {
                 int steady_int = 0;
                 if (steady != null) steady_int = (steady).intValue();
 
-                if (steady_int > 0) {
+                if (KjcOptions.blender && (oper instanceof SIRFileReader || oper instanceof SIRFileWriter)) {
+                    
+                } else if (steady_int > 0) {
 
                     if (init_int > 0) {
             
@@ -505,17 +550,24 @@ class FusionCode {
         p.println("  if (__timer_enabled) {");
         p.println("    tt.start();");
         p.println("  }");
-        p.print("  for (int n = 0; n < (__max_iteration " + (mult == 1? "" : " / __MULT") +  " ); n++) {\n");
+        if (!KjcOptions.blender) {
+            p.print("  for (int n = 0; n < (__max_iteration " + (mult == 1? "" : " / __MULT") +  " ); n++) {\n");
+        }
 
         for (int ph = 0; ph < n_phases; ph++) {
     
             //p.print("  // ============= Phase: "+ph+" =============\n");
 
-            HashSet<SIROperator> phase = d_sched.getAllOperatorsInPhase(ph);
-            Iterator<SIROperator> iter = phase.iterator();
+            ArrayList<SIROperator> phase = new ArrayList<SIROperator>();
+            phase.addAll(d_sched.getAllOperatorsInPhase(ph));
+            
+            if (KjcOptions.blender){
+                Collections.sort(phase, filterSorter);
+            }
+            
+            int blenderCount = 0;
 
-            while (iter.hasNext()) {
-                SIROperator oper = iter.next();
+            for (SIROperator oper : phase) {
                 int id = NodeEnumerator.getSIROperatorId(oper);
                 FlatNode node = NodeEnumerator.getFlatNode(id);
 
@@ -542,22 +594,41 @@ class FusionCode {
                             // of iteration
                             // e.g. copying down read-ahead in a non-circular
                             // buffer.
-                            p.print(stream.topOfWorkIteration());
-
+                            
+                            if (!KjcOptions.blender) {  
+                                p.print(stream.topOfWorkIteration());
+                            } else {
+                                int src = stream.getSource();
+                                int dst = stream.getDest();
+                                if (FixedBufferTape.isFixedBuffer(src, dst)) {
+                                    if (oper instanceof SIRFileReader) {
+                                        p.println("BUFFER_" + src + "_" + dst + " = in" + blenderCount++ + ";");
+                                    } else {
+                                        p.println("BUFFER_" + src + "_" + dst + " = out;");
+                                    }
+                                    p.println("HEAD_" + src + "_" + dst + " = 0;");
+                                    p.println("TAIL_" + src + "_" + dst + " = 0;");
+                                }
+                            }
                         }
                     }
                     if (rcv_msg)
                         p.print("    check_messages__" + id + "();\n");
-                    p.print("    " + get_work_function(oper) + "(" + steady_int
-                            + (mult == 1 ? "" : "*__MULT") + " );");
+                    if (!(KjcOptions.blender && (oper instanceof SIRFileReader || oper instanceof SIRFileWriter))) {
+                        p.print("    " + get_work_function(oper) + "(" + steady_int
+                                + (mult == 1 ? "" : "*__MULT") + " );");
+                    }
+                        
                 }
 
                 p.newLine();
             }
         }
         
-        p.print("  }\n");
-
+        if (!KjcOptions.blender) {
+            p.print("  }\n");
+        }
+        
 
         if (mult != 1) {
         
@@ -565,12 +636,7 @@ class FusionCode {
         p.print("  int rem = (__max_iteration % __MULT);\n\n");
 
         for (int ph = 0; ph < n_phases; ph++) {
-    
-            HashSet<SIROperator> phase = d_sched.getAllOperatorsInPhase(ph);
-            Iterator<SIROperator> iter = phase.iterator();
-
-            while (iter.hasNext()) {
-                SIROperator oper = iter.next();
+            for (SIROperator oper : d_sched.getAllOperatorsInPhase(ph)) {
                 int id = NodeEnumerator.getSIROperatorId(oper);
                 FlatNode node = NodeEnumerator.getFlatNode(id);
 
@@ -630,13 +696,9 @@ class FusionCode {
         }
 
         // close filereaders and filewriters
+        if (!KjcOptions.blender) {
         for (int ph = 0; ph < n_phases; ph++) {
-    
-            HashSet<SIROperator> phase = d_sched.getAllOperatorsInPhase(ph);
-            Iterator<SIROperator> iter = phase.iterator();
-
-            while (iter.hasNext()) {
-                SIROperator oper = iter.next();
+            for (SIROperator oper : d_sched.getAllOperatorsInPhase(ph)) {
                 int id = NodeEnumerator.getSIROperatorId(oper);
                 FlatNode node = NodeEnumerator.getFlatNode(id);
 
@@ -652,6 +714,7 @@ class FusionCode {
                     }
                 }
             }
+        }
         }
 
         
@@ -683,10 +746,16 @@ class FusionCode {
             p.println("  profiler::summarize();");
         }
 
-        p.println("return 0;");
+        if (!KjcOptions.blender) {
+            p.println("return 0;");            
+        }
         p.outdent();
 
         p.println("}");
+        
+        if (KjcOptions.blender) {
+            p.println("}");            
+        }
 
         try {
             p.close();

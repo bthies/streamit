@@ -42,6 +42,9 @@ public abstract class TapeBase implements Tape {
         this.dst = dest;
         this.type = type;
         this.typeString = CommonUtils.CTypeToStringA(type,true);
+        if (KjcOptions.compressed) {
+            this.typeString = "unsigned char"; 
+        }
         push_name = "__push_"+source+"_"+dest;
         pop_name = "__pop_"+source+"_"+dest;
         peek_name = "__peek_"+source+"_"+dest;

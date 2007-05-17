@@ -1,5 +1,6 @@
 package at.dms.kjc.iterator; 
 
+import at.dms.kjc.KjcOptions;
 import at.dms.kjc.sir.*;
 import at.dms.util.*;
 import streamit.scheduler2.iriter.*;
@@ -105,6 +106,9 @@ public class SIRSplitJoinIter extends SIRIterator implements SplitJoinIter {
         } else if (obj.getSplitter().getType()==SIRSplitType.NULL) {
             return 0;
         } else {
+            if (KjcOptions.compressed) {
+                return obj.getSplitter().getSumOfWeights() / obj.getSplitter().getWays();
+            }
             return obj.getSplitter().getSumOfWeights();
         }
     }
@@ -168,6 +172,9 @@ public class SIRSplitJoinIter extends SIRIterator implements SplitJoinIter {
         if (joiner.getType()==SIRJoinType.NULL) {
             return 0;
         } else {
+            if (KjcOptions.compressed) {
+                return joiner.getSumOfWeights() / joiner.getWays();
+            }
             return joiner.getSumOfWeights();
         }
     }

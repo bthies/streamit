@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/GenerateMakefile.java,v 1.11 2006-08-31 02:07:52 thies Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/GenerateMakefile.java,v 1.12 2007-05-17 18:50:58 shall07 Exp $
 package at.dms.kjc.cluster;
 
 import java.io.FileWriter;
@@ -80,12 +80,20 @@ public class GenerateMakefile {
         p.newLine();
 
         
-        p.println("all: " + executablename);
+        if (!KjcOptions.blender) {
+            p.println("all: " + executablename);
+        } else {
+            p.println("all: libstreamit.a");
+        }
         p.newLine();
 
 
         p.print("clean:\n");
-        p.println("\trm -f master*.o fusion*.o global*.o thread*.o combined_threads.o " + executablename);
+        if (!KjcOptions.blender) {
+            p.println("\trm -f master*.o fusion*.o global*.o thread*.o combined_threads.o " + executablename);
+        } else {
+            p.println("\trm -f master*.o fusion*.o global*.o thread*.o combined_threads.o libstreamit.a");
+        }
         p.newLine();
 
         p.print("combined_threads.cpp : ");
@@ -103,7 +111,11 @@ public class GenerateMakefile {
 //        } else {
 //            p.print(executablename + ": master.o global.o ");
 //        }
-        p.print(executablename + " : combined_threads.o ");
+        if (!KjcOptions.blender) {
+            p.print(executablename + " : combined_threads.o ");
+        } else {
+            p.print("libstreamit.a : combined_threads.o ");
+        }
         for (int y = 0; y < helpers.length; y++) {
             if (helpers[y].isNative()) {
                 p.print(helpers[y].getIdent() + ".o ");
@@ -122,7 +134,12 @@ public class GenerateMakefile {
                                "Without FFTW, you can still use --linearreplacement.\n");
             System.exit(1);
         }
-        p.print("\t$(CXX) $(CCFLAGS) -o $@ $^ -L$(LIB_CLUSTER) -lpthread -lcluster -lstdc++" + fftLib + "\n");
+        if (!KjcOptions.blender) {
+            p.print("\t$(CXX) $(CCFLAGS) -o $@ $^ -L$(LIB_CLUSTER) -lpthread -lcluster -lstdc++" + fftLib + "\n");
+        } else {
+            p.print("\tar r $@ $^\n");
+            p.print("\tranlib $@\n");
+        }
         p.newLine();
         
         // =============== %.o : %.cpp

@@ -199,11 +199,53 @@ class BuiltinsCodeGen {
         int d = out.getDest();
 
         // template code to generate, using symbolic free vars above.
-        String template = 
-            "\n  int __index;" + "\n" +
-            "  for (__index=0; __index < ____n; __index++) {" + "\n" +
-	        "    PUSH(FileReader_read<"+theType+">(__file_descr__"+selfID+"));\n" +
-	        "  }\n";
+        StringBuilder sb = new StringBuilder();
+        sb.append("\n  int __index;\n");
+        sb.append("  for (__index=0; __index < ____n; __index++) {\n");
+        if (KjcOptions.compressed) {
+            sb.append("    unsigned char __temp = 0;\n");
+            sb.append("    FileReader_read(__file_descr__");
+            sb.append(selfID);
+            sb.append(", &__temp, 1);\n");
+            sb.append("    PUSH(__temp);\n");
+            sb.append("    unsigned int __frame_size = __temp;\n");
+
+            sb.append("    FileReader_read(__file_descr__");
+            sb.append(selfID);
+            sb.append(", &__temp, 1);\n");
+            sb.append("    PUSH(__temp);\n");
+            sb.append("    __frame_size <<= 8;\n");
+            sb.append("    __frame_size += __temp;\n");
+
+            sb.append("    FileReader_read(__file_descr__");
+            sb.append(selfID);
+            sb.append(", &__temp, 1);\n");
+            sb.append("    PUSH(__temp);\n");
+            sb.append("    __frame_size <<= 8;\n");
+            sb.append("    __frame_size += __temp;\n");
+            
+            sb.append("    FileReader_read(__file_descr__");
+            sb.append(selfID);
+            sb.append(", &__temp, 1);\n");
+            sb.append("    PUSH(__temp);\n");
+            sb.append("    __frame_size <<= 8;\n");
+            sb.append("    __frame_size += __temp;\n");
+
+            // the frame size includes the four bytes used to state the frame size
+            sb.append("    FileReader_read(__file_descr__");
+            sb.append(selfID);
+            sb.append(", (void *)(BUFFER + HEAD), __frame_size - 4);\n");
+            sb.append("    HEAD += __frame_size - 4;\n");
+        } else {
+            sb.append("    PUSH(FileReader_read<");
+            sb.append(theType);
+            sb.append(">(__file_descr__");
+            sb.append(selfID);
+            sb.append("));\n");    
+        }
+        sb.append("  }\n");
+        
+        String template = sb.toString();
 
 	/*
             "  #ifdef FUSED" + "\n" +
@@ -451,10 +493,43 @@ class BuiltinsCodeGen {
         } else {
             // not a bit type.  write directly to file without needing to buffer bits.
 	    
-	    p.println("\n  int __index;" + "\n" +
-		      "  for (__index=0; __index < ____n; __index++) {" + "\n" +
-		      "    FileWriter_write<"+theType+">(__file_descr__"+selfID+", "+inputTape.getPopName()+"());\n" +
-		      "  }\n");
+	    p.println("\n  int __index;");
+	    p.println("  for (__index=0; __index < ____n; __index++) {");
+	    if (KjcOptions.compressed) {
+                Tape out = RegisterStreams.getFilterInStream(fw);
+                int s = out.getSource();
+                int d = out.getDest();
+                
+                String BUFFER = "BUFFER_" + s + "_" + d;
+                String TAIL = "TAIL_" + s + "_" + d;
+                
+                String pop = inputTape.getPopName() + "()";
+                p.println("    unsigned char __temp = " + pop + ";");
+                p.println("    FileWriter_write<unsigned char>(__file_descr__"+selfID+", __temp);");
+                p.println("    unsigned int __frame_size = __temp;");
+                
+                p.println("    __temp = " + pop + ";");
+                p.println("    FileWriter_write<unsigned char>(__file_descr__"+selfID+", __temp);");
+                p.println("    __frame_size <<= 8;");
+                p.println("    __frame_size += __temp;");
+
+                p.println("    __temp = " + pop + ";");
+                p.println("    FileWriter_write<unsigned char>(__file_descr__"+selfID+", __temp);");
+                p.println("    __frame_size <<= 8;");
+                p.println("    __frame_size += __temp;");
+                    
+                p.println("    __temp = " + pop + ";");
+                p.println("    FileWriter_write<unsigned char>(__file_descr__"+selfID+", __temp);");
+                p.println("    __frame_size <<= 8;");
+                p.println("    __frame_size += __temp;");
+
+                // the frame size includes the four bytes used to state the frame size
+                p.println("    FileWriter_write(__file_descr__"+selfID+", (void *)("+BUFFER+" + "+TAIL+"), __frame_size - 4);");
+                p.println("    "+TAIL+" += __frame_size - 4;");
+            } else {
+                p.println("    FileWriter_write<"+theType+">(__file_descr__"+selfID+", "+inputTape.getPopName()+"());");
+            }
+	    p.println("  }\n");
 
 	    /*
             NetStream in = RegisterStreams.getFilterInStream(fw);

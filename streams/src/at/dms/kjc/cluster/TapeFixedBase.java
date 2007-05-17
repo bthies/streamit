@@ -272,4 +272,16 @@ public abstract class TapeFixedBase extends TapeBase implements Tape {
             return varName + " = " + source + ";\n";
         }
     }
+    
+    public String getBufferName() {
+        return bufferName;
+    }
+    
+    public String getHeadName() {
+        return headName;
+    }
+    
+    public String getTailName() {
+        return tailName;
+    }
 }

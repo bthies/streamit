@@ -254,7 +254,7 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
                         {
                             // if the slitter is producing data, the child better
                             // be consuming it!
-                            assert numIn != 0;
+                            assert numIn != 0 : numOut;
 
                             if (splitRate == null)
                                 {

@@ -23,8 +23,13 @@ public class DetectConst extends SLIREmptyVisitor {
 
     public static void detect(FlatNode node) 
     {
-        DetectConst dc = new DetectConst((SIRFilter)node.contents);
-        dc.visitFilter((SIRFilter)node.contents);
+       detect((SIRFilter)node.contents);
+    }
+    
+    public static void detect(SIRFilter filter) 
+    {
+        DetectConst dc = new DetectConst(filter);
+        dc.visitFilter(filter);
     }
 
     public static DetectConst getInstance(SIRFilter filter) {

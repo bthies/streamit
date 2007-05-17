@@ -151,7 +151,7 @@ public class StaticStreamGraph {
      */
     void addTopLevelFlatNode(FlatNode node) {
         // System.out.println("AddTopLevelNode " + node + " to " + id) ;
-        assert node.isFilter() || node.isNullSplitter() || node.isFeedbackJoiner();
+        assert node.isFilter() || node.isNullSplitter() || node.isFeedbackJoiner() : node.contents;
         
         //nothing to do for a null splitter: there is no way to
         // go from a null splitter...

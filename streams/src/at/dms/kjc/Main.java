@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Main.java,v 1.25 2006-03-24 22:45:15 dimock Exp $
+ * $Id: Main.java,v 1.26 2007-05-17 18:49:16 shall07 Exp $
  */
 
 package at.dms.kjc;
@@ -99,14 +99,14 @@ public class Main extends Compiler {
         if (verboseMode()) {
             inform(CompilerMessages.COMPILATION_STARTED, new Integer(infiles.size()));
         }
-
+        
         try {
             infiles = verifyFiles(infiles);
         } catch (UnpositionedError e) {
             reportTrouble(e);
             return false;
         }
-
+        
         KjcOptions.destination = checkDestination(KjcOptions.destination);
 
         JCompilationUnit[]  tree = new JCompilationUnit[infiles.size()];
@@ -114,7 +114,7 @@ public class Main extends Compiler {
         if (KjcOptions.proc > tree.length) {
             KjcOptions.proc = tree.length;
         }
-
+        
         if (KjcOptions.multi) {
             parseMultiProc(tree);
         } else {

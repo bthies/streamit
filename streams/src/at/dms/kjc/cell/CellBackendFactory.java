@@ -1,5 +1,7 @@
 package at.dms.kjc.cell;
 
+import java.util.LinkedList;
+
 import at.dms.kjc.backendSupport.BackEndFactory;
 import at.dms.kjc.backendSupport.BackEndScaffold;
 import at.dms.kjc.backendSupport.Channel;
@@ -91,12 +93,19 @@ public class CellBackendFactory
     public CellChip getComputeNodes() {
         return cellChip;
     }
+    
+    public PPU getPPU() {
+        return cellChip.getPPU();
+    }
+    
+    public LinkedList<SPU> getSPUs() {
+        return cellChip.getSPUs();
+    }
 
     @Override
     public void processFilterSliceNode(FilterSliceNode filter,
             SchedulingPhase whichPhase, CellChip computeNodes) {
-        System.out.println("processfilterslidenode");
-        //ProcessCellFilterSliceNode.processFilterSliceNode(filter, whichPhase, this);
+        CellProcessFilterSliceNode.processFilterSliceNode(filter, whichPhase, this);
     }
 
     @Override
@@ -109,16 +118,13 @@ public class CellBackendFactory
     @Override
     public void processInputSliceNode(InputSliceNode input,
             SchedulingPhase whichPhase, CellChip computeNodes) {
-        // TODO Auto-generated method stub
-        System.out.println("processinputslidenode");
-
+         CellProcessInputSliceNode.processInputSliceNode(input, whichPhase, this);
     }
 
     @Override
     public void processOutputSliceNode(OutputSliceNode output,
             SchedulingPhase whichPhase, CellChip computeNodes) {
-        // TODO Auto-generated method stub
-        System.out.println("processoutputslidenode");
+        CellProcessOutputSliceNode.processOutputSliceNode(output, whichPhase, this);
     }
 
 }

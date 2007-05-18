@@ -22,11 +22,13 @@ public class CellProcessFilterSliceNode extends ProcessFilterSliceNode {
     
     @Override
     protected void additionalInitProcessing() {
+        System.out.println("overridden init");
         PPU ppu = ((CellBackendFactory) backEndBits).getPPU();
         CellComputeCodeStore ppuCS = ppu.getComputeCode();
         ppuCS.addWorkFunctionAddressField(filterNode);
         ppuCS.addSPUFilterDescriptionField(filterNode);
         ppuCS.addFilterDescriptionSetup(filterNode);
+        ppuCS.addSPUInitStatements(filterNode);
     }
     
     @Override
@@ -38,8 +40,6 @@ public class CellProcessFilterSliceNode extends ProcessFilterSliceNode {
     protected void additionalSteadyProcessing() {
         PPU ppu = ((CellBackendFactory) backEndBits).getPPU();
         CellComputeCodeStore ppuCS = ppu.getComputeCode();
-
-        System.out.println("overridden");
     }
     
 }

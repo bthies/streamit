@@ -77,7 +77,7 @@ public class CellBackend {
         layout.run();
  
         // create other info needed to convert Slice graphs to Kopi code + Channels
-        BackEndFactory<CellChip, CellPU, CellComputeCodeStore, Integer> cellBackEndBits  = new CellBackendFactory(cellChip);
+        CellBackendFactory cellBackEndBits  = new CellBackendFactory(cellChip);
         backEndBits = cellBackEndBits;
         backEndBits.setLayout(layout);
         
@@ -113,7 +113,7 @@ public class CellBackend {
                 // write out C code
             
                 EmitCode codeEmitter = new EmitCode(cellBackEndBits);
-                codeEmitter.generateCHeader(p);
+                //codeEmitter.generateCHeader(p);
                 codeEmitter.emitCodeForComputeNode(nodeN, p);
                 if (n == 0) { codeEmitter.generateMain(p); }
                 p.close();

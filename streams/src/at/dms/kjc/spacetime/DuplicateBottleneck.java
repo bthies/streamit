@@ -1,5 +1,5 @@
 /**
- * 
+ * Hello
  */
 package at.dms.kjc.spacetime;
 

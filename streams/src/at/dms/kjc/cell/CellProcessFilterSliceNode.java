@@ -29,6 +29,7 @@ public class CellProcessFilterSliceNode extends ProcessFilterSliceNode {
         ppuCS.addSPUFilterDescriptionField(filterNode);
         ppuCS.addFilterDescriptionSetup(filterNode);
         ppuCS.addSPUInitStatements(filterNode);
+        ppuCS.addCallBackFunction(filterNode);
     }
     
     @Override

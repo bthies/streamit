@@ -3,15 +3,18 @@ package at.dms.kjc.cell;
 import java.util.HashMap;
 
 import at.dms.kjc.CEmittedTextType;
+import at.dms.kjc.CStdType;
 import at.dms.kjc.JAssignmentExpression;
+import at.dms.kjc.JBlock;
 import at.dms.kjc.JEmittedTextExpression;
 import at.dms.kjc.JExpression;
 import at.dms.kjc.JExpressionStatement;
 import at.dms.kjc.JFieldAccessExpression;
 import at.dms.kjc.JFieldDeclaration;
+import at.dms.kjc.JFormalParameter;
 import at.dms.kjc.JIntLiteral;
 import at.dms.kjc.JMethodCallExpression;
-import at.dms.kjc.JStringLiteral;
+import at.dms.kjc.JMethodDeclaration;
 import at.dms.kjc.JVariableDefinition;
 import at.dms.kjc.backendSupport.ComputeCodeStore;
 import at.dms.kjc.slicegraph.FilterSliceNode;
@@ -42,14 +45,30 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
     private static final String INPUT_BUFFER_ADDR = "iba_";
     private static final String INPUT_BUFFER_SIZE = "ibs_";
     private static final String FCB = "fcb";
+    private static final String CB = "cb";
     
+    private static final String UINT32_T = "uint32_t";
+    private static final String PLUS = " + ";
+    
+    private static final int FILLER = 128;
+    private static final int FCB_SIZE = 128;
     private static final int BUFFER_OFFSET = 0;
     private static final int NO_DEPS = 0;
     
     private int id = 0;
+    private boolean cbdefined;
     
     public CellComputeCodeStore(CellPU parent) {
         super(parent);
+        cbdefined = false;
+    }
+    
+    public void addCallBackFunction(FilterSliceNode filterNode) {
+        if (cbdefined) return;
+        JFormalParameter tag = new JFormalParameter(new CEmittedTextType(UINT32_T), "tag");
+        JMethodDeclaration cb = new JMethodDeclaration(CStdType.Void, CB, new JFormalParameter[]{tag}, new JBlock());
+        addMethod(cb);
+        cbdefined = true;
     }
     
     public void addWorkFunctionAddressField(FilterSliceNode filterNode) {
@@ -116,6 +135,25 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
                 new JFieldAccessExpression(new JEmittedTextExpression(fd),SPU_FD_NUM_OUTPUTS),
                 new JIntLiteral(outputNode.getWidth())));
         addInitStatement(numoutputs);
+    }
+    
+    public void setupInputBufferAddresses(InputSliceNode inputNode) {
+        Integer id = getIdForSlice(inputNode.getParent());
+        
+        String buffaddr = INPUT_BUFFER_ADDR + id + "_" + 0;
+        JExpressionStatement expr = new JExpressionStatement(new JAssignmentExpression(
+                new JEmittedTextExpression(buffaddr),
+                new JEmittedTextExpression(FCB + PLUS + FCB_SIZE + PLUS + FILLER)));
+        addInitStatement(expr);
+        for (int i=1; i<inputNode.getWidth(); i++) {
+            String prev = new String(buffaddr);
+            String prevsize = INPUT_BUFFER_SIZE + id + "_" + (i-1);
+            buffaddr = INPUT_BUFFER_ADDR + id + "_" + i;
+            expr = new JExpressionStatement(new JAssignmentExpression(
+                    new JEmittedTextExpression(buffaddr),
+                    new JEmittedTextExpression(prev + PLUS + prevsize + PLUS + FILLER)));
+            addInitStatement(expr);
+        }
     }
     
     public void startNewFilter(InputSliceNode inputNode) {

@@ -27,6 +27,7 @@ public class CellProcessInputSliceNode extends ProcessInputSliceNode {
         CellComputeCodeStore ppuCS = ppu.getComputeCode();
         ppuCS.startNewFilter(inputNode);
         ppuCS.addFilterDescriptionSetup(inputNode);
+        ppuCS.setupInputBufferAddresses(inputNode);
         ppuCS.addNewGroupStatement(inputNode);
         ppuCS.addFilterLoad(inputNode);
         ppuCS.addInputBufferAllocAttach(inputNode);

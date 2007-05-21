@@ -45,12 +45,16 @@ public class CellProcessFilterSliceNode extends ProcessFilterSliceNode {
         
         ppuCS.setupInputBufferAddresses(inputNode);
         ppuCS.setupOutputBufferAddresses(outputNode);
+        ppuCS.setupDataAddress(filterNode);
         
         ppuCS.addNewGroupStatement(inputNode);
         ppuCS.addFilterLoad(inputNode);
         ppuCS.addInputBufferAllocAttach(inputNode);
+        ppuCS.addOutputBufferAllocAttach(outputNode);
         
         ppuCS.addNewGroupAndFilterUnload(outputNode);
+        
+        ppuCS.addIssueGroupAndWait(filterNode);
     }
     
     @Override

@@ -14,8 +14,6 @@ public class CellProcessOutputSliceNode extends ProcessOutputSliceNode {
     
     public static void processOutputSliceNode(OutputSliceNode outputNode, 
             SchedulingPhase whichPhase, BackEndFactory backEndBits) {
-
-        System.out.println("OUTPUT");
         // have an instance so we can override methods.
         CellProcessOutputSliceNode self = new CellProcessOutputSliceNode(outputNode,whichPhase,backEndBits);
         self.doit();
@@ -23,10 +21,6 @@ public class CellProcessOutputSliceNode extends ProcessOutputSliceNode {
     
     @Override
     protected void additionalInitProcessing() {
-        System.out.println("overridden output init");
-        PPU ppu = ((CellBackendFactory) backEndBits).getPPU();
-        CellComputeCodeStore ppuCS = ppu.getComputeCode();
-        ppuCS.addFilterDescriptionSetup(outputNode);
-        ppuCS.addFilterUnload(outputNode);
+        
     }
 }

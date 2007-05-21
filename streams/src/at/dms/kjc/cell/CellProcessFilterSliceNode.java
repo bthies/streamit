@@ -4,9 +4,11 @@ import at.dms.kjc.backendSupport.BackEndFactory;
 import at.dms.kjc.backendSupport.ProcessFilterSliceNode;
 import at.dms.kjc.backendSupport.SchedulingPhase;
 import at.dms.kjc.slicegraph.FilterSliceNode;
+import at.dms.kjc.slicegraph.InputSliceNode;
+import at.dms.kjc.slicegraph.OutputSliceNode;
 
 public class CellProcessFilterSliceNode extends ProcessFilterSliceNode {
-
+    
     private CellProcessFilterSliceNode(FilterSliceNode filterNode, 
             SchedulingPhase whichPhase, BackEndFactory backEndBits) {
         super(filterNode, whichPhase, backEndBits);
@@ -14,7 +16,11 @@ public class CellProcessFilterSliceNode extends ProcessFilterSliceNode {
     
     public static void processFilterSliceNode(FilterSliceNode filterNode, 
             SchedulingPhase whichPhase, BackEndFactory backEndBits) {
-
+        PPU ppu = ((CellBackendFactory) backEndBits).getPPU();
+        CellComputeCodeStore ppuCS = ppu.getComputeCode();
+        ppuCS.addSPUInit();
+        ppuCS.addCallBackFunction();
+        ppuCS.setInit();
         // have an instance so we can override methods.
         CellProcessFilterSliceNode self = new CellProcessFilterSliceNode(filterNode,whichPhase,backEndBits);
         self.doit();
@@ -22,14 +28,29 @@ public class CellProcessFilterSliceNode extends ProcessFilterSliceNode {
     
     @Override
     protected void additionalInitProcessing() {
-        System.out.println("overridden init");
+        InputSliceNode inputNode = filterNode.getParent().getHead();
+        OutputSliceNode outputNode = filterNode.getParent().getTail();
+        
         PPU ppu = ((CellBackendFactory) backEndBits).getPPU();
         CellComputeCodeStore ppuCS = ppu.getComputeCode();
+        
+        ppuCS.startNewFilter(inputNode);
+        
         ppuCS.addWorkFunctionAddressField(filterNode);
         ppuCS.addSPUFilterDescriptionField(filterNode);
+        
         ppuCS.addFilterDescriptionSetup(filterNode);
-        ppuCS.addSPUInitStatements(filterNode);
-        ppuCS.addCallBackFunction(filterNode);
+        ppuCS.addFilterDescriptionSetup(inputNode);
+        ppuCS.addFilterDescriptionSetup(outputNode);
+        
+        ppuCS.setupInputBufferAddresses(inputNode);
+        ppuCS.setupOutputBufferAddresses(outputNode);
+        
+        ppuCS.addNewGroupStatement(inputNode);
+        ppuCS.addFilterLoad(inputNode);
+        ppuCS.addInputBufferAllocAttach(inputNode);
+        
+        ppuCS.addNewGroupAndFilterUnload(outputNode);
     }
     
     @Override

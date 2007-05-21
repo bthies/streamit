@@ -14,7 +14,6 @@ public class CellProcessInputSliceNode extends ProcessInputSliceNode {
     
     public static void processInputSliceNode(InputSliceNode inputNode, 
             SchedulingPhase whichPhase, BackEndFactory backEndBits) {
-
         // have an instance so we can override methods.
         CellProcessInputSliceNode self = new CellProcessInputSliceNode(inputNode,whichPhase,backEndBits);
         self.doit();
@@ -22,15 +21,7 @@ public class CellProcessInputSliceNode extends ProcessInputSliceNode {
     
     @Override
     protected void additionalInitProcessing() {
-        System.out.println("overridden input init");
-        PPU ppu = ((CellBackendFactory) backEndBits).getPPU();
-        CellComputeCodeStore ppuCS = ppu.getComputeCode();
-        ppuCS.startNewFilter(inputNode);
-        ppuCS.addFilterDescriptionSetup(inputNode);
-        ppuCS.setupInputBufferAddresses(inputNode);
-        ppuCS.addNewGroupStatement(inputNode);
-        ppuCS.addFilterLoad(inputNode);
-        ppuCS.addInputBufferAllocAttach(inputNode);
+        
     }
 
 }

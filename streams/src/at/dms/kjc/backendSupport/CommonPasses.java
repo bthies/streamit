@@ -28,6 +28,8 @@ import at.dms.kjc.sir.lowering.partition.ManualPartition;
 import at.dms.kjc.sir.lowering.partition.SJToPipe;
 import at.dms.kjc.sir.lowering.partition.WorkEstimate;
 import at.dms.kjc.sir.lowering.partition.WorkList;
+import at.dms.kjc.spacetime.AddBuffering;
+import at.dms.kjc.spacetime.BasicGenerateSteadyStateSchedule;
 import at.dms.kjc.spacetime.DuplicateBottleneck;
 import at.dms.kjc.spacetime.GranularityAdjust;
 import at.dms.kjc.spacetime.GreedyBinPacking;
@@ -53,6 +55,9 @@ public class CommonPasses {
     
     /** stores the association between names of global variables duplicated locally */
     private Map<String,Set<String>> associatedGlobals;
+
+    /** number of cores to process for. */
+    private int numCores;
     
     /**
      * Top level method for executing passes common to some current and all future StreamIt compilers.
@@ -74,6 +79,8 @@ public class CommonPasses {
             SIRGlobal global,
             int numCores) {
 
+        this.numCores = numCores;
+        
         // make arguments to functions be three-address code so can replace max, min, abs
         // and possibly others with macros, knowing that there will be no side effects.
         SimplifyArguments.simplify(str);
@@ -276,6 +283,17 @@ public class CommonPasses {
         // If vectorization enabled, create (fused streams of) vectorized filters.
         // the top level compile script should not allow vectorization to be enabled
         // for processor types that do not support short vectors. 
+//        System.err.println("// str before vectorization");
+//        SIRGlobal[] globals;
+//        if (global != null) {
+//            globals = new SIRGlobal[1];
+//            globals[0] = global;
+//        } else {
+//            globals = new SIRGlobal[0];
+//        }
+//        SIRToStreamIt.run(str, interfaces, interfaceTables, structs,
+//                          globals);
+//        System.err.println("// END str before vectorization");
         VectorizeEnable.vectorizeEnable(str,null);
         
         setWorkEstimate(WorkEstimate.getWorkEstimate(str)); 
@@ -337,7 +355,46 @@ public class CommonPasses {
     }
 
 
+    /**
+     * This method performs some standard cleanup on the slice graph.
+     * On return, file readers and file writers are expanded to contain
+     * Kopi code to read and write files.  The slice graph
+     * will have any rate skew corrected and will be converted to 
+     * SimpleSlice's.  The FilterInfo class will be usable.
+     *
+     * Spacetime does not use this code since it allows general slices
+     * and generates its own code for file readers and file writers.
+     */
+    public void simplifySlices() {
+        // Create code for predefined content: file readers, file writers.
+        partitioner.createPredefinedContent();
+        // guarantee that we are not going to hack properties of filters in the future
+        FilterInfo.canUse();
+        // fix any rate skew introduced in conversion to Slice graph.
+        AddBuffering.doit(partitioner,false,numCores);
+        // decompose any pipelines of filters in the Slice graph.
+        partitioner.ensureSimpleSlices();
+        
+    }
 
+    /** 
+     * Create schedules for init, prime-pump and steady phases.
+     * Affected by KjcOptions.spacetime, KjcOptions.noswpipe.
+     * @return a Scheduler from which the schedules for the phases may be extracted. 
+     */
+    public SpaceTimeScheduleAndPartitioner scheduleSlices() {
+        // Set schedules for initialization, priming (if --spacetime), and steady state.
+        SpaceTimeScheduleAndPartitioner schedule = new SpaceTimeScheduleAndPartitioner(partitioner);
+        // set init schedule in standard order
+        schedule.setInitSchedule(DataFlowOrder.getTraversal(partitioner.getSliceGraph()));
+        // set prime pump schedule (if --spacetime and not --noswpipe)
+        new at.dms.kjc.spacetime.GeneratePrimePumpSchedule(schedule).schedule(partitioner.getSliceGraph());
+        // set steady schedule in standard order unless --spacetime in which case in 
+        // decreasing order of estimated work
+        new BasicGenerateSteadyStateSchedule(schedule, partitioner).schedule();
+        return schedule;
+    }
+    
     /**
      * Allows you to change the value returned by {@link #getPartitioner() getWorkEstimate} after
      * the initial value has been set by {@link #run(SIRStream, JInterfaceDeclaration[], SIRInterfaceTable[], SIRStructure[], SIRHelper[], SIRGlobal, int) run}.

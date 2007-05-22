@@ -4,8 +4,6 @@ import at.dms.kjc.sir.*;
 import at.dms.kjc.*;
 import at.dms.kjc.backendSupport.*;
 import at.dms.kjc.slicegraph.*;
-import at.dms.kjc.spacetime.AddBuffering;
-import at.dms.kjc.spacetime.BasicGenerateSteadyStateSchedule;
 import at.dms.kjc.common.CodegenPrintWriter;
 import java.io.*;
 /**
@@ -16,7 +14,7 @@ public class UniBackEnd {
     public static BackEndFactory<UniProcessors, UniProcessor, UniComputeCodeStore, Integer> backEndBits = null;
     
     /**
-     * Top level method for SpaceTime backend, called via reflection from {@link at.dms.kjc.Main}.
+     * Top level method for uniprocessor backend, called via reflection from {@link at.dms.kjc.StreaMITMain}.
      * @param str               SIRStream from {@link at.dms.kjc.Kopi2SIR}
      * @param interfaces        JInterfaceDeclaration[] from {@link at.dms.kjc.Kopi2SIR}
      * @param interfaceTables   SIRInterfaceTable[] from  {@link at.dms.kjc.Kopi2SIR}
@@ -33,31 +31,17 @@ public class UniBackEnd {
 
         int numCores = KjcOptions.newSimple;
         
-        // The usual optimizations
+        // The usual optimizations and transformation to slice graph
         CommonPasses commonPasses = new CommonPasses();
-        /*Slice[] sliceGraph = */ commonPasses.run(str, interfaces, 
-                interfaceTables, structs, helpers, global, numCores);
-
-        // partitioner contains information about the Slice graph.
+        // perform standard optimizations.
+        commonPasses.run(str, interfaces, interfaceTables, structs, helpers, global, numCores);
+        // perform some standard cleanup on the slice graph.
+        commonPasses.simplifySlices();
+        // Set schedules for initialization, prime-pump (if KjcOptions.spacetime), and steady state.
+        SpaceTimeScheduleAndPartitioner schedule = commonPasses.scheduleSlices();
+        // partitioner contains information about the Slice graph used by dumpGraph
         Partitioner partitioner = commonPasses.getPartitioner();
-        // Create code for predefined content: file readers, file writers.
-        partitioner.createPredefinedContent();
-        // guarantee that we are not going to hack properties of filters in the future
-        FilterInfo.canUse();
-        // fix any rate skew introduced in conversion to Slice graph.
-        AddBuffering.doit(partitioner,false,numCores);
-        // decompose any pipelines of filters in the Slice graph.
-        partitioner.ensureSimpleSlices();
 
-        // Set schedules for initialization, priming (if --spacetime), and steady state.
-        SpaceTimeScheduleAndPartitioner schedule = new SpaceTimeScheduleAndPartitioner(partitioner);
-        // set init schedule in standard order
-        schedule.setInitSchedule(DataFlowOrder.getTraversal(partitioner.getSliceGraph()));
-        // set prime pump schedule (if --spacetime and not --noswpipe)
-        new at.dms.kjc.spacetime.GeneratePrimePumpSchedule(schedule).schedule(partitioner.getSliceGraph());
-        // set steady schedule in standard order unless --spacetime in which case in 
-        // decreasing order of estimated work
-        new BasicGenerateSteadyStateSchedule(schedule, partitioner).schedule();
 
         // create a collection of (very uninformative) processor descriptions.
         UniProcessors processors = new UniProcessors(numCores);

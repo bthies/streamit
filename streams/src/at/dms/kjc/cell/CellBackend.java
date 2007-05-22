@@ -29,6 +29,15 @@ public class CellBackend {
     /** holds pointer to BackEndFactory instance during back end portion of this compiler. */
     public static BackEndFactory<CellChip, CellPU, CellComputeCodeStore, Integer> backEndBits = null;
 
+    /**
+     * Top level method for Cell backend, called via reflection from {@link at.dms.kjc.StreaMITMain}.
+     * @param str               SIRStream from {@link at.dms.kjc.Kopi2SIR}
+     * @param interfaces        JInterfaceDeclaration[] from {@link at.dms.kjc.Kopi2SIR}
+     * @param interfaceTables   SIRInterfaceTable[] from  {@link at.dms.kjc.Kopi2SIR}
+     * @param structs           SIRStructure[] from  {@link at.dms.kjc.Kopi2SIR}
+     * @param helpers           SIRHelper[] from {@link at.dms.kjc.Kopi2SIR}
+     * @param global            SIRGlobal from  {@link at.dms.kjc.Kopi2SIR}
+     */
     public static void run(SIRStream str,
             JInterfaceDeclaration[] interfaces,
             SIRInterfaceTable[] interfaceTables,
@@ -39,30 +48,16 @@ public class CellBackend {
         
         int numCores = 6;
         
-        // The usual optimizations
+        // The usual optimizations and transformation to slice graph
         CommonPasses commonPasses = new CommonPasses();
-        /*Slice[] sliceGraph = */ commonPasses.run(str, interfaces, 
-                interfaceTables, structs, helpers, global, numCores);
-        // partitioner contains information about the Slice graph.
+        // perform standard optimizations.
+        commonPasses.run(str, interfaces, interfaceTables, structs, helpers, global, numCores);
+        // perform some standard cleanup on the slice graph.
+        commonPasses.simplifySlices();
+        // Set schedules for initialization, prime-pump (if KjcOptions.spacetime), and steady state.
+        SpaceTimeScheduleAndPartitioner schedule = commonPasses.scheduleSlices();
+        // partitioner contains information about the Slice graph used by dumpGraph
         Partitioner partitioner = commonPasses.getPartitioner();
-        // Create code for predefined content: file readers, file writers.
-        partitioner.createPredefinedContent();
-        // guarantee that we are not going to hack properties of filters in the future
-        FilterInfo.canUse();
-        // fix any rate skew introduced in conversion to Slice graph.
-        AddBuffering.doit(partitioner,false,numCores);
-        // decompose any pipelines of filters in the Slice graph.
-        partitioner.ensureSimpleSlices();
-
-        // Set schedules for initialization, priming (if --spacetime), and steady state.
-        SpaceTimeScheduleAndPartitioner schedule = new SpaceTimeScheduleAndPartitioner(partitioner);
-        // set init schedule in standard order
-        schedule.setInitSchedule(DataFlowOrder.getTraversal(partitioner.getSliceGraph()));
-        // set prime pump schedule (if --spacetime and not --noswpipe)
-        new at.dms.kjc.spacetime.GeneratePrimePumpSchedule(schedule).schedule(partitioner.getSliceGraph());
-        // set steady schedule in standard order unless --spacetime in which case in 
-        // decreasing order of estimated work
-        new BasicGenerateSteadyStateSchedule(schedule, partitioner).schedule();
 
         // create a collection of (very uninformative) processor descriptions.
         CellChip cellChip = new CellChip(numCores);

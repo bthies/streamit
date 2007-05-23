@@ -2,8 +2,7 @@ package at.dms.kjc.cell;
 
 import java.util.HashMap;
 
-import javax.print.attribute.standard.JobHoldUntil;
-
+import at.dms.kjc.CClassType;
 import at.dms.kjc.CEmittedTextType;
 import at.dms.kjc.CStdType;
 import at.dms.kjc.JAssignmentExpression;
@@ -13,12 +12,24 @@ import at.dms.kjc.JExpression;
 import at.dms.kjc.JExpressionStatement;
 import at.dms.kjc.JFieldAccessExpression;
 import at.dms.kjc.JFieldDeclaration;
+import at.dms.kjc.JForStatement;
 import at.dms.kjc.JFormalParameter;
 import at.dms.kjc.JIntLiteral;
+import at.dms.kjc.JLocalVariableExpression;
 import at.dms.kjc.JMethodCallExpression;
 import at.dms.kjc.JMethodDeclaration;
+import at.dms.kjc.JStatement;
+import at.dms.kjc.JStringLiteral;
+import at.dms.kjc.JThisExpression;
+import at.dms.kjc.JVariableDeclarationStatement;
 import at.dms.kjc.JVariableDefinition;
+import at.dms.kjc.KjcOptions;
 import at.dms.kjc.backendSupport.ComputeCodeStore;
+import at.dms.kjc.common.ALocalVariable;
+import at.dms.kjc.sir.SIRPopExpression;
+import at.dms.kjc.sir.SIRPushExpression;
+import at.dms.kjc.slicegraph.FileInputContent;
+import at.dms.kjc.slicegraph.FileOutputContent;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.OutputSliceNode;
@@ -51,6 +62,12 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
     private static final String INPUT_BUFFER_SIZE = "ibs";
     private static final String OUTPUT_BUFFER_ADDR = "oba_";
     private static final String OUTPUT_BUFFER_SIZE = "obs";
+    private static final String PPU_INPUT_BUFFER_ADDR = "piba_";
+    private static final String PPU_INPUT_BUFFER_SIZE = "pibs";
+    private static final String PPU_INPUT_BUFFER_CB = "picb_";
+    private static final String PPU_OUTPUT_BUFFER_ADDR = "poba_";
+    private static final String PPU_OUTPUT_BUFFER_SIZE = "pobs";
+    private static final String PPU_OUTPUT_BUFFER_CB = "pocb_";
     private static final String DATA_ADDR = "da_";
     private static final String FCB = "fcb";
     private static final String CB = "cb";
@@ -58,6 +75,8 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
     private static final String CACHE_SIZE = "CACHE_SIZE";
     private static final String SPULIB_INIT = "spulib_init";
     private static final String SPULIB_WAIT = "spulib_wait";
+    private static final String ALLOC_BUFFER = "alloc_buffer";
+    private static final String BUFFER_GET_CB = "buffer_get_cb";
     
     private static final String SPUINC = "\"spu.inc\"";
     
@@ -72,29 +91,417 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
     private static final int FCB_SIZE = 128;
     private static final int BUFFER_OFFSET = 0;
     private static final int NO_DEPS = 0;
-    private static final String WAIT_MASK = "0x17";
+    private static final String WAIT_MASK = "0x1f";
     
     private int id = 0;
-    private boolean init;
     
     public CellComputeCodeStore(CellPU parent) {
         super(parent);
-        init = false;
-    }
-    
-    public void setInit() {
-        init = true;
     }
     
     public void addCallBackFunction() {
-        if (init) return;
         JFormalParameter tag = new JFormalParameter(new CEmittedTextType(UINT32_T), "tag");
         JMethodDeclaration cb = new JMethodDeclaration(CStdType.Void, CB, new JFormalParameter[]{tag}, new JBlock());
         addMethod(cb);
     }
     
+    public void addFileReader(FilterSliceNode filterNode) {
+        int pushrate = 1;
+        
+        FileInputContent fic = (FileInputContent) filterNode.getFilter();
+        
+        String fileVar = "_fileReader_";
+        
+        //create fields
+        JFieldDeclaration file = 
+            new JFieldDeclaration(null,
+                                  new JVariableDefinition(null,
+                                                          0,
+                                                          new CEmittedTextType("FILE *"),
+                                                          fileVar,
+                                                          null),
+                                  null, null);
+        addField(file);
+        //create init function
+        JBlock initBlock = new JBlock(null, new JStatement[0], null);
+        //create the file open command
+        JExpression[] params = {
+            new JStringLiteral(null, fic.getFileName()),
+            new JStringLiteral(null, "r")
+        };
+        
+        JMethodCallExpression fopen = 
+            new JMethodCallExpression(null, new JThisExpression(null),
+                                      "fopen", params);
+        //assign to the file handle
+        JAssignmentExpression fass = 
+            new JAssignmentExpression(null, 
+                                      new JFieldAccessExpression(null,
+                                                                 new JThisExpression(null),
+                                                                 file.getVariable().getIdent()),
+                                      fopen);
+    
+        addInitStatement(new JExpressionStatement(null, fass, null));
+        // do some standard C error checking here.
+        // do we need to put this in a separate method to allow subclass to override?
+        addInitStatement(new JExpressionStatement(
+                new JEmittedTextExpression(new Object[]{
+                        "if (",
+                        new JFieldAccessExpression(
+                                new JThisExpression(null),
+                                file.getVariable().getIdent()),
+                        " == NULL) { perror(\"error opening "+ fic.getFileName()+ "\"); }"
+                })));
+        //set this as the init function...
+        JMethodDeclaration initMethod = new JMethodDeclaration(null,
+                at.dms.kjc.Constants.ACC_PUBLIC,
+                CStdType.Void,
+                "init_fileread",
+                JFormalParameter.EMPTY,
+                CClassType.EMPTY,
+                initBlock,
+                null,
+                null);
+        //addInitFunctionCall(initMethod);
+        
+        //create work function
+        JBlock workBlock = new JBlock(null, new JStatement[0], null);
+        ALocalVariable tmp = ALocalVariable.makeTmp(fic.getOutputType());
+        addInitStatement(tmp.getDecl());
+        
+        // RMR { support ascii or binary file operations for reading
+        JMethodCallExpression fileio;
+
+        if (KjcOptions.asciifileio) {
+            //create a temp variable to hold the value we are reading
+            JExpression[] fscanfParams = new JExpression[3];
+            //create the params for fscanf
+            fscanfParams[0] = new JFieldAccessExpression(null, new JThisExpression(null),
+                                                         file.getVariable().getIdent());
+            fscanfParams[1] = new JStringLiteral(null,
+                                                 fic.getOutputType().isFloatingPoint() ?
+                                                 "%f\\n" : "%d\\n");
+            fscanfParams[2] = tmp.getRef();
+            
+            //fscanf call
+            JMethodCallExpression fscanf = 
+                new JMethodCallExpression(null, new JThisExpression(null),
+                        "fscanf",
+                        fscanfParams);        
+            
+            fileio = fscanf;
+        }
+        else {
+            // create the params for fread(&variable, sizeof(type), 1, file)
+            JExpression[] freadParams = new JExpression[4];
+            
+            // the first parameter: &(variable); treat the & operator as a function call
+            JExpression[] addressofParameters = new JExpression[1];
+            
+            addressofParameters[0] = tmp.getRef();
+            
+            JMethodCallExpression addressofCall =
+                new JMethodCallExpression(null, "&", addressofParameters);
+            
+            freadParams[0] = addressofCall;
+            
+            // the second parameter: the call to sizeof(type)
+            JExpression[] sizeofParameters = new JExpression[1];
+            
+            sizeofParameters[0] = 
+                new JLocalVariableExpression(null, 
+                                             new JVariableDefinition(null, 0,
+                                                                     CStdType.Integer,
+                                                                     (fic.getOutputType().isFloatingPoint() ? 
+                                                                      "float" : "int"),
+                                                                     null));
+            
+            JMethodCallExpression sizeofCall =
+                new JMethodCallExpression(null, "sizeof", sizeofParameters);
+            
+            freadParams[1] = sizeofCall;
+            
+            // the third parameter: read one element at a time
+            freadParams[2] = new JIntLiteral(pushrate);
+            
+            // the last parameter: the file pointer
+            freadParams[3] = new JFieldAccessExpression(null, new JThisExpression(null),
+                                                        file.getVariable().getIdent());
+            
+            JMethodCallExpression fread = 
+                new JMethodCallExpression(null, new JThisExpression(null),
+                                          "fread",
+                                          freadParams);
+
+            fileio = fread;
+        }
+        // } RMR
+        
+        addInitStatement(new JExpressionStatement(new JEmittedTextExpression("nd = n * 32")));
+    
+        JStatement forinit = new JExpressionStatement(new JEmittedTextExpression("int i = 0"));
+        JExpression forcond = new JEmittedTextExpression("i < nd");
+        JStatement forinc = new JExpressionStatement(new JEmittedTextExpression("i++"));
+        JBlock forbody = new JBlock();
+        forbody.addStatement(new JExpressionStatement(fileio));
+        JExpressionStatement set = new JExpressionStatement(new JAssignmentExpression(
+                new JEmittedTextExpression("((int *)" + PPU_INPUT_BUFFER_ADDR + ")[i]"),
+                tmp.getRef()));
+        forbody.addStatement(set);
+        JForStatement readloop = new JForStatement(forinit, forcond, forinc, forbody);
+        addInitStatement(readloop);
+        
+        addInitStatement(new JExpressionStatement(new JEmittedTextExpression(PPU_INPUT_BUFFER_CB + "->tail = nd * 4")));
+        addInitStatement(new JExpressionStatement(new JEmittedTextExpression("IF_CHECK(" + PPU_INPUT_BUFFER_CB + "->otail = " + PPU_INPUT_BUFFER_CB + "->tail)")));
+    
+        SIRPushExpression push = 
+            new SIRPushExpression(tmp.getRef(), fic.getOutputType());
+        
+        //addInitStatement(new JExpressionStatement(null, push, null));
+
+        JMethodDeclaration workMethod = new JMethodDeclaration(null,
+                at.dms.kjc.Constants.ACC_PUBLIC,
+                CStdType.Void,
+                "work_fileread",
+                JFormalParameter.EMPTY,
+                CClassType.EMPTY,
+                workBlock,
+                null,
+                null);
+        workMethod.setPop(0);
+        workMethod.setPeek(0);
+        workMethod.setPush(pushrate);
+        //addInitFunctionCall(workMethod);
+
+    }
+    
+    public void addFileWriter(FilterSliceNode filterNode) {
+        String fileVar = "_fileWriter_";
+    
+        FileOutputContent foc = (FileOutputContent) filterNode.getFilter();
+        
+        //this.outputType = CStdType.Void;
+
+        JVariableDefinition fileDefn = new JVariableDefinition(null,
+                0,
+                new CEmittedTextType("FILE *"),
+                fileVar,
+                null);
+        //create fields
+        JFieldDeclaration file = 
+            new JFieldDeclaration(null,fileDefn, null, null);
+        addField(file);
+    
+        //create init function
+        JBlock initBlock = new JBlock(null, new JStatement[0], null);
+        //create the file open command
+        JExpression[] params = 
+            {
+                new JStringLiteral(null, foc.getFileName()),
+                new JStringLiteral(null, "w")
+            };
+    
+        JMethodCallExpression fopen = 
+            new JMethodCallExpression(null, new JThisExpression(null),
+                                      "fopen", params);
+        //assign to the file handle
+        JAssignmentExpression fass = 
+            new JAssignmentExpression(null, 
+                                      new JFieldAccessExpression(null,
+                                                                 new JThisExpression(null),
+                                                                 fileDefn.getIdent()),
+                                      fopen);
+    
+        initBlock.addStatement(new JExpressionStatement(null, fass, null));
+        
+        // do some standard C error checking here.
+        // do we need to put this in a separate method to allow subclass to override?
+        initBlock.addStatement(new JExpressionStatement(
+                new JEmittedTextExpression(new Object[]{
+                        "if (",
+                        new JFieldAccessExpression(
+                                new JThisExpression(null),
+                                file.getVariable().getIdent()),
+                        " == NULL) { perror(\"error opening "+ foc.getFileName() + "\"); }"
+                })));
+        //set this as the init function...
+        JMethodDeclaration initMethod = new JMethodDeclaration(null,
+                at.dms.kjc.Constants.ACC_PUBLIC,
+                CStdType.Void,
+                "init_filewrite",
+                JFormalParameter.EMPTY,
+                CClassType.EMPTY,
+                initBlock,
+                null,
+                null);
+        addInitStatement(initBlock);
+    
+        //create work function
+        JBlock workBlock = new JBlock(null, new JStatement[0], null);
+    
+//        SIRPopExpression pop = new SIRPopExpression(foc.getInputType());
+        ALocalVariable tmp = ALocalVariable.makeTmp(foc.getInputType());
+//        workBlock.addStatement(tmp.getDecl());
+//        workBlock.addStatement(new JExpressionStatement(new JAssignmentExpression(tmp.getRef(),pop)));
+    
+    
+        // RMR { support ascii or binary file operations for reading
+        JMethodCallExpression fileio;
+
+        if (KjcOptions.asciifileio) {
+            //the params for the fprintf call
+            JExpression[] fprintfParams = new JExpression[3];
+            fprintfParams[0] = new JFieldAccessExpression(null, new JThisExpression(null),
+                                                          fileDefn.getIdent());
+            fprintfParams[1] = new JStringLiteral(null,
+                                                  foc.getInputType().isFloatingPoint() ?
+                                                  "%f\\n" : "%d\\n");
+            fprintfParams[2] = tmp.getRef();
+            
+            JMethodCallExpression fprintf = 
+                new JMethodCallExpression(null, new JThisExpression(null),
+                                          "fprintf",
+                                          fprintfParams);
+            fileio = fprintf;
+        }
+        else {
+            
+            // create the params for fwrite(&variable, sizeof(type), 1, file)
+            JExpression[] fwriteParams = new JExpression[4];
+            
+            // the first parameter: &(variable); treat the & operator as a function call
+            JExpression[] addressofParameters = new JExpression[1];
+            
+            addressofParameters[0] = new JEmittedTextExpression(PPU_OUTPUT_BUFFER_ADDR);
+            
+            JMethodCallExpression addressofCall =
+                new JMethodCallExpression(null, "&", addressofParameters);
+
+            fwriteParams[0] = addressofCall;
+            
+            // the second parameter: the call to sizeof(type)
+            JExpression[] sizeofParameters = new JExpression[1];
+            
+            sizeofParameters[0] = 
+                new JLocalVariableExpression(null, 
+                                             new JVariableDefinition(null, 0,
+                                                                     CStdType.Integer,
+                                                                     (foc.getInputType().isFloatingPoint() ? 
+                                                                      "float" : "int"),
+                                                                     null));
+            
+            JMethodCallExpression sizeofCall =
+                new JMethodCallExpression(null, "sizeof", sizeofParameters);
+            sizeofCall.setTapeType(CStdType.Integer);
+            
+            fwriteParams[1] = sizeofCall;
+            
+            // the third parameter: read one element at a time
+            fwriteParams[2] = new JIntLiteral(1);
+            
+            // the last parameter: the file pointer
+            fwriteParams[3] = new JFieldAccessExpression(null, new JThisExpression(null),
+                                                         fileDefn.getIdent());
+            
+            JMethodCallExpression fwrite = 
+                new JMethodCallExpression(null, new JThisExpression(null),
+                                          "fwrite",
+                                          fwriteParams);
+            fwrite.setTapeType(CStdType.Void);
+
+            fileio = fwrite;
+        }
+
+        workBlock.addStatement(new JExpressionStatement(null, fileio, null));
+        
+        JMethodDeclaration workMethod = new JMethodDeclaration(null,
+                at.dms.kjc.Constants.ACC_PUBLIC,
+                CStdType.Void,
+                "work_filewrite",
+                JFormalParameter.EMPTY,
+                CClassType.EMPTY,
+                workBlock,
+                null,
+                null);
+
+        workMethod.setPop(1);
+        workMethod.setPeek(1);
+        workMethod.setPush(0);
+        
+        addInitStatement(workBlock);
+        
+        JMethodCallExpression close = 
+            new JMethodCallExpression(null, new JThisExpression(null),
+                                      "fclose", new JExpression[]{
+                new JFieldAccessExpression(null,
+                        new JThisExpression(null),
+                        fileDefn.getIdent())
+            });
+        JBlock body = new JBlock();
+        body.addStatement(new JExpressionStatement(close));
+        addInitStatement(body);
+        
+//        closeMethod = new JMethodDeclaration(null,
+//                at.dms.kjc.Constants.ACC_PUBLIC,
+//                CStdType.Void,
+//                "close_filewrite" + my_unique_ID ,
+//                JFormalParameter.EMPTY,
+//                CClassType.EMPTY,
+//                body,
+//                null,
+//                null);
+
+        // discard old dummy methods and set up the new ones.
+        //this.setTheMethods(new JMethodDeclaration[]{initMethod,workMethod,closeMethod});
+    }
+    
+    public void addPSPLayout(FilterSliceNode filterNode) {
+        Integer id = getIdForSlice(filterNode.getParent());
+        
+        JVariableDeclarationStatement l = new JVariableDeclarationStatement(
+                new JVariableDefinition(new CEmittedTextType("EXT_PSP_LAYOUT"), "l"));
+        JVariableDeclarationStatement r = new JVariableDeclarationStatement(
+                new JVariableDefinition(new CEmittedTextType("EXT_PSP_RATES"), "r"));
+        addInitStatement(l);
+        addInitStatement(r);
+        
+        addInitStatement(new JExpressionStatement(new JEmittedTextExpression(
+                "l.cmd_id = 4")));
+        addInitStatement(new JExpressionStatement(new JEmittedTextExpression(
+                "l.da = " + DATA_ADDR)));
+        addInitStatement(new JExpressionStatement(new JEmittedTextExpression(
+                "l.spu_in_buf_data = " + INPUT_BUFFER_ADDR + id)));
+        addInitStatement(new JExpressionStatement(new JEmittedTextExpression(
+                "l.spu_out_buf_data = " + OUTPUT_BUFFER_ADDR + id)));
+        addInitStatement(new JExpressionStatement(new JEmittedTextExpression(
+                "l.filt = " + FCB + id)));
+        
+        addInitStatement(new JExpressionStatement(new JEmittedTextExpression(
+                "r.in_bytes = 128")));
+        addInitStatement(new JExpressionStatement(new JEmittedTextExpression(
+                "r.run_iters = 32")));
+        addInitStatement(new JExpressionStatement(new JEmittedTextExpression(
+                "r.out_bytes = 128")));
+    }
+    
+    public void addDataParallel() {
+        addInitStatement(new JExpressionStatement(new JEmittedTextExpression(
+                "ext_data_parallel_shared(0, &l, " + PPU_INPUT_BUFFER_ADDR +
+                ", " + PPU_OUTPUT_BUFFER_ADDR + ", &r, n, cb, 0)")));
+        addInitStatement(new JExpressionStatement(new JEmittedTextExpression(
+                "spulib_poll_while(done != 0)")));
+    }
+    
+    public void addIssueUnload(FilterSliceNode filterNode) {
+        Integer id = getIdForSlice(filterNode.getParent());
+        
+        addInitStatement(new JExpressionStatement(new JEmittedTextExpression(
+            "spu_issue_group(" + id + ", 1, " + DATA_ADDR + id + ")")));
+        addInitStatement(new JExpressionStatement(new JEmittedTextExpression(
+            "spulib_wait(" + id + ", 1)")));
+    }
+    
     public void addSPUInit() {
-        if (init) return;
         JExpressionStatement includespuinc = new JExpressionStatement(new JEmittedTextExpression(INCLUDE + SPUINC));
         addInitStatement(includespuinc);
         JExpressionStatement spudatastart = new JExpressionStatement(new JAssignmentExpression(
@@ -117,10 +524,20 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
     
     public void addWorkFunctionAddressField(FilterSliceNode filterNode) {
         Integer id = getIdForSlice(filterNode.getParent());
-        JVariableDefinition wf = new JVariableDefinition(
-                new CEmittedTextType(WFA), WFA_PREFIX+id);
-        System.out.println(wf.toString());
-        addField(new JFieldDeclaration(wf));
+//        JVariableDefinition wf = new JVariableDefinition(
+//                new CEmittedTextType(WFA), WFA_PREFIX+id);
+//        System.out.println(wf.toString());
+//        addField(new JFieldDeclaration(wf));
+//        
+        JFieldDeclaration file = 
+            new JFieldDeclaration(null,
+                                  new JVariableDefinition(null,
+                                                          0,
+                                                          new CEmittedTextType(WFA),
+                                                          WFA_PREFIX+id,
+                                                          null),
+                                  null, null);
+        addField(file);
     }
     
     public void addSPUFilterDescriptionField(FilterSliceNode filterNode) {
@@ -237,6 +654,39 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
                     new JEmittedTextExpression(prev + PLUS + prevsize + PLUS + FILLER)));
             addInitStatement(expr);
         }
+    }
+    
+    public void addPPUBuffers() {
+        JExpressionStatement inputaddr = new JExpressionStatement(new JAssignmentExpression(
+                new JEmittedTextExpression(PPU_INPUT_BUFFER_ADDR),
+                new JMethodCallExpression(
+                        ALLOC_BUFFER,
+                        new JExpression[]{
+                                new JEmittedTextExpression(PPU_INPUT_BUFFER_SIZE),
+                                new JIntLiteral(0)})));
+        addInitStatement(inputaddr);
+        JExpressionStatement outputaddr = new JExpressionStatement(new JAssignmentExpression(
+                new JEmittedTextExpression(PPU_OUTPUT_BUFFER_ADDR),
+                new JMethodCallExpression(
+                        ALLOC_BUFFER,
+                        new JExpression[]{
+                                new JEmittedTextExpression(PPU_OUTPUT_BUFFER_SIZE),
+                                new JIntLiteral(0)})));
+        addInitStatement(outputaddr);
+        JExpressionStatement inputcb = new JExpressionStatement(new JAssignmentExpression(
+                new JEmittedTextExpression(PPU_INPUT_BUFFER_CB),
+                new JMethodCallExpression(
+                        BUFFER_GET_CB,
+                        new JExpression[]{
+                                new JEmittedTextExpression(PPU_INPUT_BUFFER_ADDR)})));
+        addInitStatement(inputcb);
+        JExpressionStatement outputcb = new JExpressionStatement(new JAssignmentExpression(
+                new JEmittedTextExpression(PPU_OUTPUT_BUFFER_CB),
+                new JMethodCallExpression(
+                        BUFFER_GET_CB,
+                        new JExpression[]{
+                                new JEmittedTextExpression(PPU_OUTPUT_BUFFER_ADDR)})));
+        addInitStatement(outputcb);
     }
     
     public void setupDataAddress(FilterSliceNode filterNode) {

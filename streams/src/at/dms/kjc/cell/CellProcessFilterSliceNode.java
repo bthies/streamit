@@ -16,18 +16,28 @@ public class CellProcessFilterSliceNode extends ProcessFilterSliceNode {
     
     public static void processFilterSliceNode(FilterSliceNode filterNode, 
             SchedulingPhase whichPhase, BackEndFactory backEndBits) {
+        
         PPU ppu = ((CellBackendFactory) backEndBits).getPPU();
         CellComputeCodeStore ppuCS = ppu.getComputeCode();
-        ppuCS.addSPUInit();
-        ppuCS.addCallBackFunction();
-        ppuCS.setInit();
+
         // have an instance so we can override methods.
         CellProcessFilterSliceNode self = new CellProcessFilterSliceNode(filterNode,whichPhase,backEndBits);
-        self.doit();
+        if (filterNode.isFileInput()) {
+            if (whichPhase == SchedulingPhase.INIT) {
+                ppuCS.addFileReader(filterNode);
+                //self.doit();
+            }
+        } else if (filterNode.isFileOutput()) {
+            if (whichPhase == SchedulingPhase.INIT)
+                ppuCS.addFileWriter(filterNode);
+        } else {
+            self.doit();
+        }
     }
     
     @Override
     protected void additionalInitProcessing() {
+        //Thread.dumpStack();
         InputSliceNode inputNode = filterNode.getParent().getHead();
         OutputSliceNode outputNode = filterNode.getParent().getTail();
         
@@ -55,6 +65,11 @@ public class CellProcessFilterSliceNode extends ProcessFilterSliceNode {
         ppuCS.addNewGroupAndFilterUnload(outputNode);
         
         ppuCS.addIssueGroupAndWait(filterNode);
+        
+        ppuCS.addPSPLayout(filterNode);
+        ppuCS.addDataParallel();
+        
+        ppuCS.addIssueUnload(filterNode);
     }
     
     @Override
@@ -64,8 +79,6 @@ public class CellProcessFilterSliceNode extends ProcessFilterSliceNode {
     
     @Override
     protected void additionalSteadyProcessing() {
-        PPU ppu = ((CellBackendFactory) backEndBits).getPPU();
-        CellComputeCodeStore ppuCS = ppu.getComputeCode();
     }
     
 }

@@ -14,15 +14,7 @@ public class GetOrMakeCellChannel extends GetOrMakeChannel {
     
     @Override
     public Channel makeInterSliceChannel(InterSliceEdge e) {
-        Channel c;
-        if (e.initItems() > e.steadyItems()) {
-            // items left on channel between steady states
-            c = ChannelAsCircularArray.getChannel(e);
-        } else {
-            // no items left on channel between steady states
-            c = ChannelAsArray.getChannel(e);
-        }
-        return c;
+        return new InterSPUChannel(e);
     }
     
 }

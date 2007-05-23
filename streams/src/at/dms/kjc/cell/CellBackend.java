@@ -52,8 +52,16 @@ public class CellBackend {
         CommonPasses commonPasses = new CommonPasses();
         // perform standard optimizations.
         commonPasses.run(str, interfaces, interfaceTables, structs, helpers, global, numCores);
+        
         // perform some standard cleanup on the slice graph.
         commonPasses.simplifySlices();
+//        // guarantee that we are not going to hack properties of filters in the future
+//        FilterInfo.canUse();
+//        // fix any rate skew introduced in conversion to Slice graph.
+//        AddBuffering.doit(commonPasses.getPartitioner(),false,numCores);
+//        // decompose any pipelines of filters in the Slice graph.
+//        commonPasses.getPartitioner().ensureSimpleSlices();
+        
         // Set schedules for initialization, prime-pump (if KjcOptions.spacetime), and steady state.
         SpaceTimeScheduleAndPartitioner schedule = commonPasses.scheduleSlices();
         // partitioner contains information about the Slice graph used by dumpGraph
@@ -75,11 +83,18 @@ public class CellBackend {
         CellBackendFactory cellBackEndBits  = new CellBackendFactory(cellChip);
         backEndBits = cellBackEndBits;
         backEndBits.setLayout(layout);
+
+        CellComputeCodeStore ppuCS = cellBackEndBits.getPPU().getComputeCode();        
+        ppuCS.addSPUInit();
+        ppuCS.addCallBackFunction();
+        ppuCS.addPPUBuffers();
+        //ppuCS.addFileReader();
+        //ppuCS.addFileWriter();
         
         // now convert to Kopi code plus channels.  (Javac gives error if folowing two lines are combined)
         BackEndScaffold top_call = backEndBits.getBackEndMain();
         top_call.run(schedule, backEndBits);
-
+        
         // Dump graphical representation
         DumpSlicesAndChannels.dumpGraph("slicesAndChannels.dot", partitioner, backEndBits);
         

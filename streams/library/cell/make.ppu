@@ -1,0 +1,21 @@
+PROGRAM_ppu		:= $(PPU_PROGRAM)
+
+# OBJS is set in environment
+VPATH			:= $(SRC_DIR)
+# PPU_INCLUDE in environment has extra include paths
+INCLUDE			:= $(PPU_INCLUDE) -I $(SPULIB_TOP)/include
+# IMPORTS in environment initially has extra libraries
+IMPORTS			:= $(addsuffix .a,$(SPU_PROGRAMS)) spusymbols.ld \
+                   $(IMPORTS) \
+                   $(SPULIB_OUTPUT_DIR)/spulib.a -lspe
+
+ifdef SPULIB_CONFIG_FILE
+  CFLAGS		:= -D 'SPULIB_CONFIG_FILE="$(SPULIB_CONFIG_FILE)"'
+endif
+
+CFLAGS_gcc		= -std=gnu99
+CFLAGS_xlc		= -qkeyword=typeof
+# CC_OPT_LEVEL is set in environment
+
+# Use SDK build environment
+include $(CELL_TOP)/make.footer

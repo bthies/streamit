@@ -5,14 +5,14 @@ MAKE_ACTUAL		:= $(MAKE) -f $(SPULIB_SRC_DIR)/make.common
 
 all:
 	@$(MAKE_ACTUAL)
-ifneq "$(SPULIB_OUTPUT_DIR)" "$(SPULIB_SRC_DIR)"
+ifneq "$(SPULIB_OUTPUT_DIR)" "$(shell pwd)"
 	@mkdir -p $(SPULIB_OUTPUT_DIR)
 	@cp -upf spulib_spu.a $(SPULIB_OUTPUT_DIR)/spulib_spu.a
 endif
 
 clean:
 	@$(MAKE_ACTUAL) clean
-ifneq "$(SPULIB_OUTPUT_DIR)" "$(SPULIB_SRC_DIR)"
+ifneq "$(SPULIB_OUTPUT_DIR)" "$(shell pwd)"
 ifneq "$(wildcard $(SPULIB_OUTPUT_DIR))" ""
 	@rm -f $(SPULIB_OUTPUT_DIR)/spulib_spu.a
 	@rmdir -p --ignore-fail-on-non-empty $(SPULIB_OUTPUT_DIR)

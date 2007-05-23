@@ -52,5 +52,9 @@
 #undef peek
 #undef pop
 #undef push
+#undef get_input
+#undef get_output
+#undef advance_input
+#undef advance_output
 
 #endif

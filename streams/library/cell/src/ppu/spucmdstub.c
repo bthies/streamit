@@ -83,7 +83,7 @@ spu_done_command(SPU_CMD_GROUP *g, SPU_CMD_HEADER *cmd)
 DECLARE_SPU_COMMAND(load_data, LOAD_DATA,
                     SPU_ADDRESS dest_da, void *src_addr, uint32_t num_bytes)
 {
-  cmd->dest_lsa = spu_lsa(dest_da);
+  cmd->dest_lsa = spu_lsa(g->spu_id, dest_da);
   cmd->src_addr = src_addr;
   cmd->num_bytes = num_bytes;
 
@@ -97,7 +97,7 @@ END_SPU_COMMAND
 DECLARE_SPU_COMMAND(filter_load, FILTER_LOAD,
                     SPU_ADDRESS filt, SPU_FILTER_DESC *desc)
 {
-  cmd->filt = spu_lsa(filt);
+  cmd->filt = spu_lsa(g->spu_id, filt);
   cmd->desc = *(SPU_INT_FILTER_DESC *)desc;
 
   cmd->state = 0;
@@ -110,7 +110,7 @@ END_SPU_COMMAND
 DECLARE_SPU_COMMAND(filter_unload, FILTER_UNLOAD,
                     SPU_ADDRESS filt)
 {
-  cmd->filt = spu_lsa(filt);
+  cmd->filt = spu_lsa(g->spu_id, filt);
 
   cmd->state = 0;
 }
@@ -122,9 +122,9 @@ END_SPU_COMMAND
 DECLARE_SPU_COMMAND(filter_attach_input, FILTER_ATTACH_INPUT,
                     SPU_ADDRESS filt, uint32_t tape_id, SPU_ADDRESS buf_data)
 {
-  cmd->filt = spu_lsa(filt);
+  cmd->filt = spu_lsa(g->spu_id, filt);
   cmd->tape_id = tape_id;
-  cmd->buf_data = spu_lsa(buf_data);
+  cmd->buf_data = spu_lsa(g->spu_id, buf_data);
 }
 END_SPU_COMMAND
 
@@ -134,9 +134,9 @@ END_SPU_COMMAND
 DECLARE_SPU_COMMAND(filter_attach_output, FILTER_ATTACH_OUTPUT,
                     SPU_ADDRESS filt, uint32_t tape_id, SPU_ADDRESS buf_data)
 {
-  cmd->filt = spu_lsa(filt);
+  cmd->filt = spu_lsa(g->spu_id, filt);
   cmd->tape_id = tape_id;
-  cmd->buf_data = spu_lsa(buf_data);
+  cmd->buf_data = spu_lsa(g->spu_id, buf_data);
 }
 END_SPU_COMMAND
 
@@ -146,7 +146,7 @@ END_SPU_COMMAND
 DECLARE_SPU_COMMAND(filter_run, FILTER_RUN,
                     SPU_ADDRESS filt, uint32_t iters)
 {
-  cmd->filt = spu_lsa(filt);
+  cmd->filt = spu_lsa(g->spu_id, filt);
   cmd->iters = iters;
 
   IF_CHECK(cmd->state = 0);
@@ -159,7 +159,7 @@ END_SPU_COMMAND
 DECLARE_SPU_COMMAND(buffer_alloc, BUFFER_ALLOC,
                     SPU_ADDRESS buf_data, uint32_t size, uint32_t data_offset)
 {
-  cmd->buf_data = spu_lsa(buf_data);
+  cmd->buf_data = spu_lsa(g->spu_id, buf_data);
   cmd->mask = size - 1;
   cmd->data_offset = data_offset;
 }
@@ -171,7 +171,7 @@ END_SPU_COMMAND
 DECLARE_SPU_COMMAND(buffer_align, BUFFER_ALIGN,
                     SPU_ADDRESS buf_data, uint32_t data_offset)
 {
-  cmd->buf_data = spu_lsa(buf_data);
+  cmd->buf_data = spu_lsa(g->spu_id, buf_data);
   cmd->data_offset = data_offset;
 }
 END_SPU_COMMAND
@@ -183,7 +183,7 @@ DECLARE_SPU_COMMAND(dt_in_back, DT_IN_BACK,
                     SPU_ADDRESS buf_data, void *src_buf_data,
                     uint32_t src_buf_size, uint32_t num_bytes)
 {
-  cmd->buf_data = spu_lsa(buf_data);
+  cmd->buf_data = spu_lsa(g->spu_id, buf_data);
   cmd->src_buf_data = src_buf_data;
   cmd->src_buf_mask = src_buf_size - 1;
   cmd->num_bytes = num_bytes;
@@ -199,7 +199,7 @@ DECLARE_SPU_COMMAND(dt_out_front, DT_OUT_FRONT,
                     SPU_ADDRESS buf_data, void *dest_buf_data,
                     uint32_t num_bytes)
 {
-  cmd->buf_data = spu_lsa(buf_data);
+  cmd->buf_data = spu_lsa(g->spu_id, buf_data);
   cmd->dest_buf_data = dest_buf_data;
   cmd->num_bytes = num_bytes;
 
@@ -214,7 +214,7 @@ DECLARE_SPU_COMMAND(dt_out_front_ppu, DT_OUT_FRONT_PPU,
                     SPU_ADDRESS buf_data, void *dest_buf_data,
                     uint32_t dest_buf_size, uint32_t num_bytes)
 {
-  cmd->buf_data = spu_lsa(buf_data);
+  cmd->buf_data = spu_lsa(g->spu_id, buf_data);
   cmd->dest_buf_data = dest_buf_data;
   cmd->dest_buf_mask = dest_buf_size - 1;
   cmd->num_bytes = num_bytes;

@@ -12,20 +12,12 @@
 #include "../buffer.h"
 #include <libspe.h>
 
-// Number of SPUs to initialize. Must be <= number of free physical SPUs.
-#define NUM_SPU 6
-
 /*-----------------------------------------------------------------------------
  * SPU management.
  *---------------------------------------------------------------------------*/
 
 // Local store address relative to spu_data_start.
 typedef uint32_t SPU_ADDRESS;
-
-// Start (LS address) and size of the region on each SPU available for program
-// data.
-extern LS_ADDRESS spu_data_start;
-extern uint32_t spu_data_size;
 
 // Bookkeeping info for a SPU command group.
 typedef struct _SPU_CMD_GROUP {
@@ -63,9 +55,15 @@ typedef struct _EXTENDED_OP EXTENDED_OP;
 typedef struct _SPU_INFO {
   uint32_t spu_id;
 
+  // Start (LS address) and size of region on SPU available for program data.
+  // Size includes stack.
+  LS_ADDRESS data_start;
+  uint32_t data_size;
+
+  spe_program_handle_t *program;
   speid_t speid;
   // Memory address of start of region on SPU available for program data.
-  // (= memory address of LS + spu_data_start)
+  // (= memory address of LS + data_start)
   void *data_addr;
   volatile spe_spu_control_area_t *control;
 
@@ -107,9 +105,9 @@ extern SPU_INFO spu_info[NUM_SPU];
  * Converts a SPU data address to a local store address.
  *---------------------------------------------------------------------------*/
 static INLINE LS_ADDRESS
-spu_lsa(SPU_ADDRESS da)
+spu_lsa(uint32_t spu_id, SPU_ADDRESS da)
 {
-  return spu_data_start + da;
+  return spu_info[spu_id].data_start + da;
 }
 
 /*-----------------------------------------------------------------------------

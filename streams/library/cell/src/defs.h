@@ -20,7 +20,11 @@
 #include <altivec.h>
 #endif
 #include <vec_literal.h>
+#ifdef SPULIB_CONFIG_FILE
+#include SPULIB_CONFIG_FILE
+#else
 #include "config.h"
+#endif
 
 typedef uint8_t bool_t;
 

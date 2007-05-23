@@ -1,4 +1,9 @@
-DIRS			= spu ppu
+DIRS	:= spu ppu
 
-# Use SDK build environment
-include $(CELL_TOP)/make.footer
+.PHONY: all clean
+
+all:
+	@for d in $(DIRS); do $(MAKE) -C $$d; done
+
+clean:
+	@for d in $(DIRS); do $(MAKE) -C $$d clean; done

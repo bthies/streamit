@@ -10,11 +10,6 @@
 #include <sched.h>
 #include <signal.h>
 
-// TODO: Initialize these with a linker script or something. Otherwise they
-// must be set before calling spulib_init.
-LS_ADDRESS spu_data_start;
-uint32_t spu_data_size;
-
 SPU_INFO spu_info[NUM_SPU];
 
 static void spu_handle_complete(uint32_t spu_id, uint32_t mask);
@@ -86,7 +81,7 @@ spu_issue_group(uint32_t spu_id, uint32_t gid, SPU_ADDRESS da)
   check(_spe_in_mbox_status(spu->control) != 0);
   // Send request to SPU.
   _spe_in_mbox_write(spu->control,
-                     spu_cmd_compose_req(spu_lsa(da), gid, g->size));
+                     spu_cmd_compose_req(spu_lsa(spu_id, da), gid, g->size));
 }
 
 /*-----------------------------------------------------------------------------
@@ -258,8 +253,9 @@ spu_free_int_group(SPU_CMD_GROUP *g)
  *---------------------------------------------------------------------------*/
 
 void *
-spu_new_ext_op(SPU_INFO *spu, uint32_t spu_cmd_mask, void *handler,
-               GENERIC_COMPLETE_CB *cb, uint32_t tag, uint32_t data_size)
+spu_new_ext_op(SPU_INFO *spu, uint32_t spu_cmd_mask,
+               EXTENDED_OP_HANDLER *handler, GENERIC_COMPLETE_CB *cb,
+               uint32_t tag, uint32_t data_size)
 {
   EXTENDED_OP *op;
 
@@ -310,6 +306,9 @@ spulib_init()
     // Set SPU ID.
     spu->spu_id = spu_id;
 
+    spu->data_start = ROUND_UP(spu->data_start, CACHE_SIZE);
+    spu->data_size = LS_SIZE - spu->data_start;
+
     // Set SPU and command group IDs for all command groups.
     for (uint32_t gid = 0; gid < SPU_INT_MAX_CMD_GROUPS; gid++) {
       SPU_CMD_GROUP *g = &spu->cmd_groups[gid];
@@ -338,8 +337,8 @@ spulib_init()
 
   for (uint32_t i = 0; i < NUM_SPU; i++) {
     SPU_INFO *spu = &spu_info[i];
-    spu->speid = spe_create_thread(spulib_spe_gid, &spulib_spu, NULL, NULL, -1,
-                                   SPE_MAP_PS);
+    spu->speid = spe_create_thread(spulib_spe_gid, spu->program, NULL, NULL,
+                                   -1, SPE_MAP_PS);
     if (spu->speid == NULL) {
       // Kill previously created threads and report failure.
       while (i != 0) {
@@ -358,7 +357,7 @@ spulib_init()
   for (uint32_t i = 0; i < NUM_SPU; i++) {
     SPU_INFO *spu = &spu_info[i];
 
-    spu->data_addr = spe_get_ls(spu->speid) + spu_data_start;
+    spu->data_addr = spe_get_ls(spu->speid) + spu->data_start;
     spu->control = (spe_spu_control_area_t *)
       spe_get_ps_area(spu->speid, SPE_CONTROL_AREA);
 

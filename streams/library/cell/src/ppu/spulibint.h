@@ -62,9 +62,9 @@ struct _EXTENDED_OP {
   uint8_t data[];
 };
 
-void *spu_new_ext_op(SPU_INFO *spu, uint32_t spu_cmd_mask, void *handler,
-                     GENERIC_COMPLETE_CB *cb, uint32_t tag,
-                     uint32_t data_size);
+void *spu_new_ext_op(SPU_INFO *spu, uint32_t spu_cmd_mask,
+                     EXTENDED_OP_HANDLER *handler, GENERIC_COMPLETE_CB *cb,
+                     uint32_t tag, uint32_t data_size);
 
 #include "extpspint.h"
 

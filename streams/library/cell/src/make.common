@@ -1,0 +1,24 @@
+ifeq "$(SUBDIR)" "spu"
+  LIBRARY_spu	:= spulib_spu.a
+else
+  LIBRARY_ppu	:= spulib.a
+endif
+
+VPATH			:= $(SPULIB_SRC_DIR)/$(SUBDIR):$(SPULIB_SRC_DIR)
+INCLUDE			:= -I $(SPULIB_SRC_DIR)
+
+ifdef SPULIB_CONFIG_FILE
+  CFLAGS		:= -D 'SPULIB_CONFIG_FILE="$(SPULIB_CONFIG_FILE)"'
+endif
+
+CFLAGS_gcc		:= -std=gnu99
+CFLAGS_xlc		:= -qkeyword=typeof
+
+ifdef SPULIB_OPT_LEVEL
+  CC_OPT_LEVEL	:= $(SPULIB_OPT_LEVEL)
+else
+  CC_OPT_LEVEL	:= -g
+endif
+
+# Use SDK build environment
+include $(CELL_TOP)/make.footer

@@ -1,12 +1,13 @@
-LIBRARY_ppu		= ../../lib/spulib.a
+SPULIB_TOP					:= $(shell cd ../.. && pwd)
+export SPULIB_SRC_DIR		:= $(SPULIB_TOP)/src
+export SPULIB_OUTPUT_DIR	:= $(SPULIB_TOP)/lib
 
-# Common headers and sources
-INCLUDE			= -I..
-VPATH			= ..
+MAKE_PPU	:= $(MAKE) -f $(SPULIB_SRC_DIR)/ppu/make.dir
 
-CFLAGS_gcc		= -std=gnu99
-CFLAGS_xlc		= -qkeyword=typeof
-CC_OPT_LEVEL	= -g
+.PHONY: all clean
 
-# Use SDK build environment
-include $(CELL_TOP)/make.footer
+all:
+	@$(MAKE_PPU)
+
+clean:
+	@$(MAKE_PPU) clean

@@ -65,8 +65,7 @@
 #else
 #define _SPULIB_BEGINFILTER_H_
 
-#include "../src/defs.h"
-#include "../src/buffer.h"
+#include "filterdefs.h"
 
 #ifndef FILTER_NAME
 #error "FILTER_NAME must be defined."
@@ -257,11 +256,18 @@ DECORATE_FUNC_NAME(pop)(void *buf_data)
 }
 
 #if (NUM_INPUT_TAPES == 1)
-#define peek(n)     DECORATE_FUNC_NAME(peek)(_input, n)
-#define pop()       DECORATE_FUNC_NAME(pop)(_input)
+#define peek(n)             DECORATE_FUNC_NAME(peek)(_input, n)
+#define pop()               DECORATE_FUNC_NAME(pop)(_input)
+#define get_input()         \
+  ((INPUT_ITEM_TYPE *)(_input + buf_get_cb(_input)->head))
+#define advance_input(n)    buf_advance_head(_input, (n) * INPUT_ITEM_SIZE)
 #else
-#define peek(t, n)  DECORATE_FUNC_NAME(peek)(_inputs[t], n)
-#define pop(t)      DECORATE_FUNC_NAME(pop)(_inputs[t])
+#define peek(t, n)          DECORATE_FUNC_NAME(peek)(_inputs[t], n)
+#define pop(t)              DECORATE_FUNC_NAME(pop)(_inputs[t])
+#define get_input(t)        \
+  ((INPUT_ITEM_TYPE *)(_inputs[t] + buf_get_cb(_inputs[t])->head))
+#define advance_input(t, n) \
+  buf_advance_head(_inputs[t], (n) * INPUT_ITEM_SIZE)
 #endif
 
 #endif // NUM_INPUT_TAPES != 0
@@ -279,9 +285,16 @@ DECORATE_FUNC_NAME(push)(void *buf_data, OUTPUT_ITEM_TYPE item)
 }
 
 #if (NUM_OUTPUT_TAPES == 1)
-#define push(item)    DECORATE_FUNC_NAME(push)(_output, item)
+#define push(item)            DECORATE_FUNC_NAME(push)(_output, item)
+#define get_output()          \
+  ((OUTPUT_ITEM_TYPE *)(_output + buf_get_cb(_output)->tail))
+#define advance_output(n)     buf_advance_tail(_output, (n) * OUTPUT_ITEM_SIZE)
 #else
-#define push(t, item) DECORATE_FUNC_NAME(push)(_outputs[t], item)
+#define push(t, item)         DECORATE_FUNC_NAME(push)(_outputs[t], item)
+#define get_output(t)         \
+  ((OUTPUT_ITEM_TYPE *)(_outputs[t] + buf_get_cb(_outputs[t])->tail))
+#define advance_output(t, n)  \
+  buf_advance_tail(_outputs[t], (n) * OUTPUT_ITEM_SIZE)
 #endif
 
 #endif // NUM_OUTPUT_TAPES != 0

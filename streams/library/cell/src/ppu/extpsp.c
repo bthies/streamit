@@ -14,7 +14,7 @@
 #define PHASE_CLEANUP 3   //   r o
                           //     o
 
-static bool_t ext_psp_handler(EXT_PSP_DATA *d, uint32_t mask);
+static bool_t ext_psp_handler(void *data, uint32_t mask);
 
 static void ext_psp_setup_init(EXT_PSP_DATA *d);
 static void ext_psp_setup_steady(EXT_PSP_DATA *d, uint32_t slot);
@@ -48,6 +48,8 @@ ext_ppu_spu_ppu_internal(EXT_PSP_LAYOUT *l, EXT_PSP_RATES *r, uint32_t iters,
   EXT_PSP_DATA *d;
   SPU_INFO *spu = &spu_info[l->spu_id];
 
+  pcheck((l->cmd_id < SPU_MAX_COMMANDS - 6) && ((l->da & CACHE_MASK) == 0) &&
+         (iters != 0));
 #if !EXT_ALLOW_PSP_NO_INPUT
   pcheck(r->in_bytes != 0);
 #endif
@@ -56,7 +58,6 @@ ext_ppu_spu_ppu_internal(EXT_PSP_LAYOUT *l, EXT_PSP_RATES *r, uint32_t iters,
 #endif
   // If no data is transferred, why are you calling this anyway?
   pcheck((r->in_bytes != 0) || (r->out_bytes != 0));
-  pcheck(iters != 0);
 
   d = (EXT_PSP_DATA *)spu_new_ext_op(spu, (0x3f << l->cmd_id),
                                      &ext_psp_handler, cb, tag, sizeof(*d));
@@ -191,8 +192,10 @@ ext_psp_notify_output(void *op)
  *---------------------------------------------------------------------------*/
 
 static bool_t
-ext_psp_handler(EXT_PSP_DATA *d, uint32_t mask)
+ext_psp_handler(void *data, uint32_t mask)
 {
+  EXT_PSP_DATA *d = (EXT_PSP_DATA *)data;
+
   // Check for completion of data transfer into SPU.
   if ((mask & d->in.cmd_bit) != 0) {
     assert((d->r.in_bytes != 0) && !d->in.waiting);

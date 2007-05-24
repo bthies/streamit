@@ -13,6 +13,7 @@ print $csymf ("#ifndef _SPU_SYMBOLS_H_\n" .
 
 for my $progname (@ARGV) {
     print $csymf ("extern spe_program_handle_t ${progname}_program;\n");
+    print $csymf ("extern void *${progname}_data_start;\n");
 
     my @symbols = `nm ${progname}_program`;
 

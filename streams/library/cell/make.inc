@@ -97,7 +97,7 @@ else
 endif
 endif
 
-.PHONY: all clean $(SPU_PROGRAMS) spulib
+.PHONY: all clean $(SPU_PROGRAMS) spulib builddir
 
 # SPU_INCLUDE, PPU_INCLUDE, CC_OPT_LEVEL are exported to SDK makefiles
 #

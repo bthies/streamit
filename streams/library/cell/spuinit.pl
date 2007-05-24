@@ -14,6 +14,8 @@ for (my $i = 0; $i <= $#ARGV; $i++) {
     my $progname = $ARGV[$i];
 
     printf $cincf ("spu_info[${i}].program = &${progname}_program;\n");
+    printf $cincf ("spu_info[${i}].data_start = " .
+                   "(LS_ADDRESS)&${progname}_data_start;\n");
 }
 
 close($cincf);

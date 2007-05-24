@@ -1,10 +1,14 @@
 package at.dms.kjc.cell;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
+import at.dms.kjc.CArrayType;
 import at.dms.kjc.CClassType;
 import at.dms.kjc.CEmittedTextType;
 import at.dms.kjc.CStdType;
+import at.dms.kjc.Constants;
+import at.dms.kjc.JArrayAccessExpression;
 import at.dms.kjc.JAssignmentExpression;
 import at.dms.kjc.JBlock;
 import at.dms.kjc.JEmittedTextExpression;
@@ -18,15 +22,16 @@ import at.dms.kjc.JIntLiteral;
 import at.dms.kjc.JLocalVariableExpression;
 import at.dms.kjc.JMethodCallExpression;
 import at.dms.kjc.JMethodDeclaration;
+import at.dms.kjc.JMultExpression;
+import at.dms.kjc.JPostfixExpression;
+import at.dms.kjc.JRelationalExpression;
 import at.dms.kjc.JStatement;
 import at.dms.kjc.JStringLiteral;
 import at.dms.kjc.JThisExpression;
-import at.dms.kjc.JVariableDeclarationStatement;
 import at.dms.kjc.JVariableDefinition;
 import at.dms.kjc.KjcOptions;
 import at.dms.kjc.backendSupport.ComputeCodeStore;
 import at.dms.kjc.common.ALocalVariable;
-import at.dms.kjc.sir.SIRPopExpression;
 import at.dms.kjc.sir.SIRPushExpression;
 import at.dms.kjc.slicegraph.FileInputContent;
 import at.dms.kjc.slicegraph.FileOutputContent;
@@ -37,8 +42,12 @@ import at.dms.kjc.slicegraph.Slice;
 
 public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
     
+    static { if ("".equals(mainName)) mainName = "__MAIN__";}
+    
     private HashMap<Slice,Integer> sliceIdMap = new HashMap<Slice,Integer>();
     
+    private static final String SPU_ADDRESS = "SPU_ADDRESS";
+    private static final String SPU_CMD_GROUP = "SPU_CMD_GROUP *";
     private static final String WFA = "LS_ADDRESS";
     private static final String WFA_PREFIX = "wf_";
     private static final String SPU_DATA_START = "spu_data_start";
@@ -78,13 +87,15 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
     private static final String ALLOC_BUFFER = "alloc_buffer";
     private static final String BUFFER_GET_CB = "buffer_get_cb";
     
-    private static final String SPUINC = "\"spu.inc\"";
+    private static final String SPUINC = "\"spuinit.inc\"";
     
     private static final String UINT32_T = "uint32_t";
     private static final String PLUS = " + ";
     private static final String MINUS = " - ";
     private static final String INCLUDE = "#include";
     private static final String ROUND_UP = "ROUND_UP";
+    
+    private static final String N = "n", ND = "nd", DONE = "done";
     
     private static final int SPU_RESERVE_SIZE = 4096;
     private static final int FILLER = 128;
@@ -93,18 +104,644 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
     private static final int NO_DEPS = 0;
     private static final String WAIT_MASK = "0x1f";
     
+    private ArrayList<JFieldDeclaration> workfuncs = new ArrayList<JFieldDeclaration>();
+    private ArrayList<JFieldDeclaration> fds = new ArrayList<JFieldDeclaration>();
+    
     private int id = 0;
     
     public CellComputeCodeStore(CellPU parent) {
         super(parent);
     }
     
+    @Override
+    protected void addSteadyLoop() {
+        mainMethod.addStatement(steadyLoop);
+    }
+    
+    /**
+     *                        FIELDS
+     */
+    
+    /**
+     * Add work function address field: LS_ADDRESS wf_[i];
+     * @param filterNode
+     */
+    public void addWorkFunctionAddressField(FilterSliceNode filterNode) {
+        Integer id = getIdForSlice(filterNode.getParent());
+        JVariableDefinition wf = new JVariableDefinition(
+                new CEmittedTextType(WFA), WFA_PREFIX+id);
+        JFieldDeclaration field = new JFieldDeclaration(wf);
+        addField(field);
+        workfuncs.add(id.intValue(), field);
+    }
+    
+    /**
+     * Add SPU filter description field: SPU_FILTER_DESC fd_[i];
+     * @param filterNode
+     */
+    public void addSPUFilterDescriptionField(FilterSliceNode filterNode) {
+        Integer id = getIdForSlice(filterNode.getParent());
+        JVariableDefinition fd = new JVariableDefinition(
+                new CEmittedTextType(SPU_FD), SPU_FD_PREFIX+id);
+        JFieldDeclaration field = new JFieldDeclaration(fd);
+        addField(field);
+        fds.add(id.intValue(), field);
+    }
+    
+    public void addDataAddressField(FilterSliceNode filterNode) {
+        Integer id = getIdForSlice(filterNode.getParent());
+        JVariableDefinition da = new JVariableDefinition(
+                new CEmittedTextType(SPU_ADDRESS), DATA_ADDR+id);
+        JFieldDeclaration field = new JFieldDeclaration(da);
+        addField(field);
+    }
+    
+    
+    /**
+     *                          SETUP
+     */
+    
+    /**
+     * Sets up filter description's work_func and state_size fields
+     * @param filterNode
+     */
+    public void addFilterDescriptionSetup(FilterSliceNode filterNode) {
+        Integer id = getIdForSlice(filterNode.getParent());
+        String fd = idToFd(id);
+        String wfid = workfuncs.get(id.intValue()).getVariable().getIdent();
+        JExpressionStatement workfunc = new JExpressionStatement(new JAssignmentExpression(
+                new JFieldAccessExpression(new JFieldAccessExpression(fd),SPU_FD_WORK_FUNC),
+                new JEmittedTextExpression("(" + WFA + ")&" + wfid)));//JFieldAccessExpression(wfid)));
+        addInitStatement(workfunc);
+        JExpressionStatement statesize = new JExpressionStatement(new JAssignmentExpression(
+                new JFieldAccessExpression(new JFieldAccessExpression(fd),SPU_FD_STATE_SIZE),
+                new JIntLiteral(0)));
+        addInitStatement(statesize);
+    }
+    
+    /**
+     * Sets up filter description's num_inputs field
+     * @param inputNode
+     */
+    public void addFilterDescriptionSetup(InputSliceNode inputNode) {
+        Integer id = getIdForSlice(inputNode.getParent());
+        String fd = idToFd(id);
+        JExpressionStatement numinputs = new JExpressionStatement(new JAssignmentExpression(
+                new JFieldAccessExpression(new JFieldAccessExpression(fd),SPU_FD_NUM_INPUTS),
+                new JIntLiteral(inputNode.getWidth())));
+        addInitStatement(numinputs);
+    }
+    
+    /**
+     * Sets up filter description's num_outputs field
+     * @param outputNode
+     */
+    public void addFilterDescriptionSetup(OutputSliceNode outputNode) {
+        Integer id = getIdForSlice(outputNode.getParent());
+        String fd = idToFd(id);
+        JExpressionStatement numoutputs = new JExpressionStatement(new JAssignmentExpression(
+                new JFieldAccessExpression(new JFieldAccessExpression(fd),SPU_FD_NUM_OUTPUTS),
+                new JIntLiteral(outputNode.getWidth())));
+        addInitStatement(numoutputs);
+    }
+    
+
+    
     public void addCallBackFunction() {
         JFormalParameter tag = new JFormalParameter(new CEmittedTextType(UINT32_T), "tag");
-        JMethodDeclaration cb = new JMethodDeclaration(CStdType.Void, CB, new JFormalParameter[]{tag}, new JBlock());
+        JBlock body = new JBlock();
+        body.addStatement(new JExpressionStatement(new JPostfixExpression(Constants.OPE_POSTDEC, new JFieldAccessExpression(tag.getValue().getIdent()))));
+        JMethodDeclaration cb = new JMethodDeclaration(CStdType.Void, CB, new JFormalParameter[]{tag}, body);
         addMethod(cb);
     }
     
+    public void addPSPLayout(FilterSliceNode filterNode) {
+        Integer id = getIdForSlice(filterNode.getParent());
+//        JNewArrayExpression la = new JNewArrayExpression(new CEmittedTextType("EXT_PSP_LAYOUT"), new JExpression[0]);
+//        JNewArrayExpression ra = new JNewArrayExpression(new CEmittedTextType("EXT_PSP_RATES"), new JExpression[0]);
+        
+        JVariableDefinition l = new JVariableDefinition(new CArrayType(new CEmittedTextType("EXT_PSP_LAYOUT"), 1, new JExpression[]{new JIntLiteral(6)}), "l");
+        JVariableDefinition r = new JVariableDefinition(new CArrayType(new CEmittedTextType("EXT_PSP_RATES"), 1, new JExpression[]{new JIntLiteral(6)}), "r");
+        l.setInitializer(null);
+//        r.setInitializer(ra);
+        addField(new JFieldDeclaration(l));
+        addField(new JFieldDeclaration(r));
+        
+        JStatement init = new JExpressionStatement(new JEmittedTextExpression("int i=0"));
+        JExpression cond = new JEmittedTextExpression("i < 6");
+        JStatement incr = new JExpressionStatement(new JEmittedTextExpression("i++"));
+        JBlock body = new JBlock();
+        
+        body.addStatement(new JExpressionStatement(new JAssignmentExpression(
+                new JFieldAccessExpression(new JArrayAccessExpression(new JFieldAccessExpression(l.getIdent()), new JEmittedTextExpression("i")), "cmd_id"),
+                new JIntLiteral(4))));
+        body.addStatement(new JExpressionStatement(new JAssignmentExpression(
+                new JFieldAccessExpression(new JArrayAccessExpression(new JFieldAccessExpression(l.getIdent()), new JEmittedTextExpression("i")), "da"),
+                new JEmittedTextExpression(DATA_ADDR))));
+        body.addStatement(new JExpressionStatement(new JAssignmentExpression(
+                new JFieldAccessExpression(new JArrayAccessExpression(new JFieldAccessExpression(l.getIdent()), new JEmittedTextExpression("i")), "spu_in_buf_data"),
+                new JEmittedTextExpression(INPUT_BUFFER_ADDR + id + "_0"))));
+        body.addStatement(new JExpressionStatement(new JAssignmentExpression(
+                new JFieldAccessExpression(new JArrayAccessExpression(new JFieldAccessExpression(l.getIdent()), new JEmittedTextExpression("i")), "spu_out_buf_data"),
+                new JEmittedTextExpression(OUTPUT_BUFFER_ADDR + id + "_0"))));
+        body.addStatement(new JExpressionStatement(new JAssignmentExpression(
+                new JFieldAccessExpression(new JArrayAccessExpression(new JFieldAccessExpression(l.getIdent()), new JEmittedTextExpression("i")), "filt"),
+                new JEmittedTextExpression(FCB))));
+        
+        body.addStatement(new JExpressionStatement(new JAssignmentExpression(
+                new JFieldAccessExpression(new JArrayAccessExpression(new JFieldAccessExpression(r.getIdent()), new JEmittedTextExpression("i")), "in_bytes"),
+                new JIntLiteral(128))));
+        body.addStatement(new JExpressionStatement(new JAssignmentExpression(
+                new JFieldAccessExpression(new JArrayAccessExpression(new JFieldAccessExpression(r.getIdent()), new JEmittedTextExpression("i")), "run_iters"),
+                new JIntLiteral(32))));
+        body.addStatement(new JExpressionStatement(new JAssignmentExpression(
+                new JFieldAccessExpression(new JArrayAccessExpression(new JFieldAccessExpression(r.getIdent()), new JEmittedTextExpression("i")), "out_bytes"),
+                new JIntLiteral(128))));
+        
+        JForStatement forloop = new JForStatement(init, cond, incr, body);
+        addInitStatement(forloop);
+    }
+    
+    public void addDataParallel() {
+        addInitStatement(new JExpressionStatement(new JEmittedTextExpression(
+                "ext_data_parallel(6, &l, &r, n, cb, 0)")));
+        addInitStatement(new JExpressionStatement(new JEmittedTextExpression(
+                "spulib_poll_while(done != 0)")));
+    }
+    
+    public void addIssueUnload(FilterSliceNode filterNode) {
+        Integer id = getIdForSlice(filterNode.getParent());
+        
+        addInitStatement(new JExpressionStatement(new JEmittedTextExpression(
+            "spu_issue_group(" + id + ", 1, " + DATA_ADDR + id + ")")));
+        addInitStatement(new JExpressionStatement(new JEmittedTextExpression(
+            "spulib_wait(" + id + ", 1)")));
+    }
+    
+    public void addSPUInit() {
+        // #include "spu.inc"
+        JExpressionStatement includespuinc = new JExpressionStatement(new JEmittedTextExpression(INCLUDE + SPUINC));
+        addInitStatement(includespuinc);
+        
+//        // spu_data_start
+//        JExpressionStatement spudatastart = new JExpressionStatement(new JAssignmentExpression(
+//                new JEmittedTextExpression(SPU_DATA_START),
+//                new JMethodCallExpression(ROUND_UP, new JExpression[]{
+//                        new JEmittedTextExpression(SPU_DATA_START),
+//                        new JEmittedTextExpression(CACHE_SIZE)
+//                })));
+//        addInitStatement(spudatastart);
+//        
+//        // spu_data_size
+//        JExpressionStatement spudatasize = new JExpressionStatement(new JAssignmentExpression(
+//                new JEmittedTextExpression(SPU_DATA_SIZE),
+//                new JEmittedTextExpression(LS_SIZE + MINUS + SPU_RESERVE_SIZE + MINUS + SPU_DATA_START)));
+//        addInitStatement(spudatasize);
+        
+        // spu_lib_init()
+        JExpressionStatement spulibinit = new JExpressionStatement(
+                new JMethodCallExpression(
+                        SPULIB_INIT,
+                        new JExpression[]{}));
+        addInitStatement(spulibinit);
+        
+        JVariableDefinition group = new JVariableDefinition(new CEmittedTextType(SPU_CMD_GROUP), GROUP);
+        JFieldDeclaration field = new JFieldDeclaration(group);
+        addField(field);
+        
+        // SPU_ADDRESS fcb = 0;
+        JVariableDefinition fcb = new JVariableDefinition(new CEmittedTextType(SPU_ADDRESS), FCB);
+        fcb.setInitializer(new JIntLiteral(0));
+        field = new JFieldDeclaration(fcb);
+        addField(field);
+        
+        // uint32_t ibs = 32 * 1024;
+        JVariableDefinition ibs = new JVariableDefinition(new CEmittedTextType(UINT32_T), INPUT_BUFFER_SIZE);
+        ibs.setInitializer(new JEmittedTextExpression("32 * 1024"));
+        addField(new JFieldDeclaration(ibs));
+
+        // uint32_t obs = 32 * 1024;
+        JVariableDefinition obs = new JVariableDefinition(new CEmittedTextType(UINT32_T), OUTPUT_BUFFER_SIZE);
+        obs.setInitializer(new JEmittedTextExpression("32 * 1024"));
+        addField(new JFieldDeclaration(obs));
+
+        for (int i=0; i<6; i++) { 
+            // void * piba;
+            JVariableDefinition piba = new JVariableDefinition(new CEmittedTextType("void *"), PPU_INPUT_BUFFER_ADDR+i);
+            addField(new JFieldDeclaration(piba));
+    
+            // void * poba;
+            JVariableDefinition poba = new JVariableDefinition(new CEmittedTextType("void *"), PPU_OUTPUT_BUFFER_ADDR+i);
+            addField(new JFieldDeclaration(poba));
+    
+            // BUFFER_CB * picb;
+            JVariableDefinition picb = new JVariableDefinition(new CEmittedTextType("BUFFER_CB *"), PPU_INPUT_BUFFER_CB+i);
+            addField(new JFieldDeclaration(picb));
+    
+            // BUFFER_CB * pocb;
+            JVariableDefinition pocb = new JVariableDefinition(new CEmittedTextType("BUFFER_CB *"), PPU_OUTPUT_BUFFER_CB+i);
+            addField(new JFieldDeclaration(pocb));
+        }
+        
+        // uint32_t pibs = 32 * 1024;
+        JVariableDefinition pibs = new JVariableDefinition(new CEmittedTextType(UINT32_T), PPU_INPUT_BUFFER_SIZE);
+        pibs.setInitializer(new JEmittedTextExpression("32 * 1024"));
+        addField(new JFieldDeclaration(pibs));
+        
+        // uint32_t pobs = 32 * 1024;
+        JVariableDefinition pobs = new JVariableDefinition(new CEmittedTextType(UINT32_T), PPU_OUTPUT_BUFFER_SIZE);
+        pobs.setInitializer(new JEmittedTextExpression("32 * 1024"));
+        addField(new JFieldDeclaration(pobs));
+        
+        // int n = 32;
+        JVariableDefinition n = new JVariableDefinition(new CEmittedTextType("int"), N);
+        n.setInitializer(new JIntLiteral(32));
+        addField(new JFieldDeclaration(n));
+        
+        // int nd;
+        JVariableDefinition nd = new JVariableDefinition(new CEmittedTextType("int"), ND);
+        nd.setInitializer(new JMultExpression(new JFieldAccessExpression(N), new JIntLiteral(32)));
+        addField(new JFieldDeclaration(nd));
+        
+        // int done = 1;
+        JVariableDefinition done = new JVariableDefinition(new CEmittedTextType("int"), DONE);
+        done.setInitializer(new JIntLiteral(1));
+        addField(new JFieldDeclaration(done));
+        
+        
+        
+    }
+    
+    
+    public void addFilterLoad(InputSliceNode inputNode) {
+        Integer id = getIdForSlice(inputNode.getParent());
+        String fd = idToFd(id);
+        String group = GROUP + id;
+        JExpressionStatement filterLoad = new JExpressionStatement(new JMethodCallExpression(
+                SPU_FILTER_LOAD,
+                new JExpression[]{
+                        new JFieldAccessExpression(group),
+                        new JFieldAccessExpression(FCB),
+                        new JEmittedTextExpression("&" + fd),
+                        new JIntLiteral(0),
+                        new JIntLiteral(NO_DEPS)
+                }));
+        addInitStatement(filterLoad);
+    }
+    
+    /**
+     * Add fields for SPU input buffers, and set up their addresses.
+     * @param inputNode
+     */
+    public void setupInputBufferAddresses(InputSliceNode inputNode) {
+        if (inputNode.getWidth() == 0) return;
+        
+        Integer id = getIdForSlice(inputNode.getParent());
+        
+        // name of first input buffer
+        String buffaddr = INPUT_BUFFER_ADDR + id + "_" + 0;
+        
+        // add field for first input buffer
+        JVariableDefinition iba = new JVariableDefinition(
+                new CEmittedTextType(SPU_ADDRESS), buffaddr);
+        JFieldDeclaration field = new JFieldDeclaration(iba);
+        addField(field);
+        
+        // set up address for first input buffer
+        JExpressionStatement expr = new JExpressionStatement(new JAssignmentExpression(
+                new JFieldAccessExpression(buffaddr),
+                new JEmittedTextExpression(FCB + PLUS + FCB_SIZE + PLUS + FILLER)));
+        addInitStatement(expr);
+        
+        // set up remaining input buffers
+        for (int i=1; i<inputNode.getWidth(); i++) {
+            String prev = new String(buffaddr);
+            String prevsize = INPUT_BUFFER_SIZE;
+            buffaddr = INPUT_BUFFER_ADDR + id + "_" + i;
+            
+            iba = new JVariableDefinition(
+                    new CEmittedTextType(SPU_ADDRESS), buffaddr);
+            field = new JFieldDeclaration(iba);
+            addField(field);
+            
+            expr = new JExpressionStatement(new JAssignmentExpression(
+                    new JFieldAccessExpression(buffaddr),
+                    new JEmittedTextExpression(prev + PLUS + prevsize + PLUS + FILLER)));
+            addInitStatement(expr);
+        }
+    }
+    
+    public void setupOutputBufferAddresses(OutputSliceNode outputNode) {
+        if (outputNode.getWidth() == 0) return;
+        
+        Integer id = getIdForSlice(outputNode.getParent());
+        int numinputs = outputNode.getParent().getHead().getWidth();
+        
+        String buffaddr = OUTPUT_BUFFER_ADDR + id + "_" + 0;
+        String prev, prevsize;
+        JExpressionStatement expr;
+        
+        // no input buffers
+        if (numinputs == 0) {
+            prev = FCB;
+            prevsize = String.valueOf(FCB_SIZE);
+        } else {
+            prev = INPUT_BUFFER_ADDR + id + "_" + (numinputs-1);
+            prevsize = INPUT_BUFFER_SIZE;
+        }
+        
+        JVariableDefinition oba = new JVariableDefinition(
+                new CEmittedTextType(SPU_ADDRESS), buffaddr);
+        JFieldDeclaration field = new JFieldDeclaration(oba);
+        addField(field);
+
+        expr = new JExpressionStatement(new JAssignmentExpression(
+                new JFieldAccessExpression(buffaddr),
+                new JEmittedTextExpression(prev + PLUS + prevsize + PLUS + FILLER)));
+        addInitStatement(expr);
+        
+        for (int i=1; i<outputNode.getWidth(); i++) {
+            prev = new String(buffaddr);
+            prevsize = OUTPUT_BUFFER_SIZE;
+            buffaddr = OUTPUT_BUFFER_ADDR + id + "_" + i;
+            
+            oba = new JVariableDefinition(
+                    new CEmittedTextType(SPU_ADDRESS), buffaddr);
+            field = new JFieldDeclaration(oba);
+            addField(field);
+            
+            expr = new JExpressionStatement(new JAssignmentExpression(
+                    new JEmittedTextExpression(buffaddr),
+                    new JEmittedTextExpression(prev + PLUS + prevsize + PLUS + FILLER)));
+            addInitStatement(expr);
+        }
+    }
+    
+    public void addPPUBuffers() {
+        for (int i=0; i<6; i++) {
+            JExpressionStatement inputaddr = new JExpressionStatement(new JAssignmentExpression(
+                    new JFieldAccessExpression(PPU_INPUT_BUFFER_ADDR+i),
+                    new JMethodCallExpression(
+                            ALLOC_BUFFER,
+                            new JExpression[]{
+                                    new JFieldAccessExpression(PPU_INPUT_BUFFER_SIZE+i),
+                                    new JIntLiteral(0)})));
+            addInitStatement(inputaddr);
+            JExpressionStatement outputaddr = new JExpressionStatement(new JAssignmentExpression(
+                    new JFieldAccessExpression(PPU_OUTPUT_BUFFER_ADDR+i),
+                    new JMethodCallExpression(
+                            ALLOC_BUFFER,
+                            new JExpression[]{
+                                    new JFieldAccessExpression(PPU_OUTPUT_BUFFER_SIZE+i),
+                                    new JIntLiteral(0)})));
+            addInitStatement(outputaddr);
+            JExpressionStatement inputcb = new JExpressionStatement(new JAssignmentExpression(
+                    new JFieldAccessExpression(PPU_INPUT_BUFFER_CB+i),
+                    new JMethodCallExpression(
+                            BUFFER_GET_CB,
+                            new JExpression[]{
+                                    new JFieldAccessExpression(PPU_INPUT_BUFFER_ADDR+i)})));
+            addInitStatement(inputcb);
+            JExpressionStatement outputcb = new JExpressionStatement(new JAssignmentExpression(
+                    new JFieldAccessExpression(PPU_OUTPUT_BUFFER_CB+i),
+                    new JMethodCallExpression(
+                            BUFFER_GET_CB,
+                            new JExpression[]{
+                                    new JFieldAccessExpression(PPU_OUTPUT_BUFFER_ADDR+i)})));
+            addInitStatement(outputcb);
+        }
+    }
+    
+    public void setupDataAddress(FilterSliceNode filterNode) {
+        Integer id = getIdForSlice(filterNode.getParent());
+        
+        int numinputs = filterNode.getParent().getHead().getWidth();
+        int numoutputs = filterNode.getParent().getTail().getWidth();
+        
+        String dataaddr = DATA_ADDR + id;
+        String lastaddr = FCB;
+        String lastsize = String.valueOf(FCB_SIZE);
+        
+        if (numoutputs > 0) {
+            lastaddr = OUTPUT_BUFFER_ADDR + id + "_" + (numoutputs-1);
+            lastsize = OUTPUT_BUFFER_SIZE;
+        } else if (numinputs > 0) {
+            lastaddr = INPUT_BUFFER_ADDR + id + "_" + (numinputs-1);
+            lastsize = INPUT_BUFFER_SIZE;
+        }
+        
+        JExpressionStatement expr = new JExpressionStatement(new JAssignmentExpression(
+                new JFieldAccessExpression(dataaddr),
+                new JEmittedTextExpression(lastaddr + PLUS + lastsize + PLUS + FILLER)));
+        addInitStatement(expr);
+    }
+    
+    public void startNewFilter(InputSliceNode inputNode) {
+        Integer id = getIdForSlice(inputNode.getParent());
+        String fd = idToFd(id);
+        
+        JExpressionStatement newline = new JExpressionStatement(new JEmittedTextExpression(""));
+        addInitStatement(newline);
+        JExpressionStatement newFilter = new JExpressionStatement(new JEmittedTextExpression("// set up code for filter " + id));
+        addInitStatement(newFilter);
+    }
+    
+    public void addNewGroupStatement(InputSliceNode inputNode) {
+        Integer id = getIdForSlice(inputNode.getParent());
+        String fd = idToFd(id);
+        
+        JStatement init = new JExpressionStatement(new JEmittedTextExpression("int i=0"));
+        JExpression cond = new JEmittedTextExpression("i < 6");
+        JStatement incr = new JExpressionStatement(new JEmittedTextExpression("i++"));
+        JBlock body = new JBlock();
+        
+        JExpressionStatement newGroup = new JExpressionStatement(new JAssignmentExpression(
+                new JEmittedTextExpression(GROUP),
+                new JMethodCallExpression(SPU_NEW_GROUP,new JExpression[]{new JEmittedTextExpression("i"), new JIntLiteral(0)})));
+        
+        body.addStatement(newGroup);
+        
+        JExpressionStatement filterLoad = new JExpressionStatement(new JMethodCallExpression(
+                SPU_FILTER_LOAD,
+                new JExpression[]{
+                        new JFieldAccessExpression(GROUP),
+                        new JFieldAccessExpression(FCB),
+                        new JEmittedTextExpression("&" + fd),
+                        new JIntLiteral(0),
+                        new JIntLiteral(NO_DEPS)
+                }));
+        body.addStatement(filterLoad);
+        
+        int cmdId = 1;
+        for (int i=0; i<inputNode.getWidth(); i++) {
+            String buffaddr = INPUT_BUFFER_ADDR + id + "_" + i;
+            String buffsize = INPUT_BUFFER_SIZE;
+            JExpressionStatement bufferAlloc = new JExpressionStatement(new JMethodCallExpression(
+                    SPU_BUFFER_ALLOC, new JExpression[]{
+                            new JEmittedTextExpression(GROUP), new JEmittedTextExpression(buffaddr), new JFieldAccessExpression(buffsize),
+                            new JIntLiteral(BUFFER_OFFSET), new JIntLiteral(cmdId), new JIntLiteral(NO_DEPS)}));
+            body.addStatement(bufferAlloc);
+            JExpressionStatement attachBuffer = new JExpressionStatement(new JMethodCallExpression(
+                    SPU_FILTER_ATTACH_INPUT, new JExpression[]{
+                            new JEmittedTextExpression(GROUP),
+                            new JFieldAccessExpression(FCB),
+                            new JIntLiteral(i),
+                            new JEmittedTextExpression(buffaddr),
+                            new JIntLiteral(cmdId + inputNode.getWidth()),
+                            new JIntLiteral(2),
+                            new JIntLiteral(0),
+                            new JIntLiteral(cmdId)
+                    }));
+            body.addStatement(attachBuffer);
+            cmdId++;
+        }
+        
+        OutputSliceNode outputNode = inputNode.getParent().getTail();
+        cmdId = 2*inputNode.getWidth() + 1;
+        for (int i=0; i<outputNode.getWidth(); i++) {
+            String buffaddr = OUTPUT_BUFFER_ADDR + id + "_" + i;
+            String buffsize = OUTPUT_BUFFER_SIZE;
+            JExpressionStatement bufferAlloc = new JExpressionStatement(new JMethodCallExpression(
+                    SPU_BUFFER_ALLOC, new JExpression[]{
+                            new JEmittedTextExpression(GROUP), new JEmittedTextExpression(buffaddr), new JFieldAccessExpression(buffsize),
+                            new JIntLiteral(BUFFER_OFFSET), new JIntLiteral(cmdId), new JIntLiteral(NO_DEPS)}));
+            body.addStatement(bufferAlloc);
+            JExpressionStatement attachBuffer = new JExpressionStatement(new JMethodCallExpression(
+                    SPU_FILTER_ATTACH_OUTPUT, new JExpression[]{
+                            new JEmittedTextExpression(GROUP),
+                            new JFieldAccessExpression(FCB),
+                            new JIntLiteral(i),
+                            new JEmittedTextExpression(buffaddr),
+                            new JIntLiteral(cmdId + outputNode.getWidth()),
+                            new JIntLiteral(2),
+                            new JIntLiteral(0),
+                            new JIntLiteral(cmdId)
+                    }));
+            body.addStatement(attachBuffer);
+            cmdId++;
+        }   
+        
+        newGroup = new JExpressionStatement(new JAssignmentExpression(
+                new JEmittedTextExpression(GROUP),
+                new JMethodCallExpression(SPU_NEW_GROUP,new JExpression[]{new JEmittedTextExpression("i"), new JIntLiteral(1)})));
+        body.addStatement(newGroup);
+        
+        JExpressionStatement filterUnload = new JExpressionStatement(new JMethodCallExpression(
+                SPU_FILTER_UNLOAD, new JExpression[]{
+                        new JEmittedTextExpression(GROUP),
+                        new JFieldAccessExpression(FCB),
+                        new JIntLiteral(0),
+                        new JIntLiteral(NO_DEPS)
+                }));
+        body.addStatement(filterUnload);
+        
+        JForStatement forloop = new JForStatement(init, cond, incr, body);
+        
+        addInitStatement(forloop);
+    }
+    
+    public void addNewGroupAndFilterUnload(OutputSliceNode outputNode) {
+        Integer id = getIdForSlice(outputNode.getParent());
+        String group = GROUP;
+        
+        JExpressionStatement newGroup = new JExpressionStatement(new JAssignmentExpression(
+                new JEmittedTextExpression(group),
+                new JMethodCallExpression(SPU_NEW_GROUP,new JExpression[]{new JIntLiteral(id), new JIntLiteral(1)})));
+        addInitStatement(newGroup);
+        
+        JExpressionStatement filterUnload = new JExpressionStatement(new JMethodCallExpression(
+                SPU_FILTER_UNLOAD, new JExpression[]{
+                        new JEmittedTextExpression(group),
+                        new JFieldAccessExpression(FCB),
+                        new JIntLiteral(0),
+                        new JIntLiteral(NO_DEPS)
+                }));
+        addInitStatement(filterUnload);
+    }
+    
+    public void addInputBufferAllocAttach(InputSliceNode inputNode) {
+        Integer id = getIdForSlice(inputNode.getParent());
+        String group = GROUP;
+        
+        int cmdId = 1;
+        for (int i=0; i<inputNode.getWidth(); i++) {
+            String buffaddr = INPUT_BUFFER_ADDR + id + "_" + i;
+            String buffsize = INPUT_BUFFER_SIZE;
+            JExpressionStatement bufferAlloc = new JExpressionStatement(new JMethodCallExpression(
+                    SPU_BUFFER_ALLOC, new JExpression[]{
+                            new JEmittedTextExpression(group), new JEmittedTextExpression(buffaddr), new JFieldAccessExpression(buffsize),
+                            new JIntLiteral(BUFFER_OFFSET), new JIntLiteral(cmdId), new JIntLiteral(NO_DEPS)}));
+            addInitStatement(bufferAlloc);
+            JExpressionStatement attachBuffer = new JExpressionStatement(new JMethodCallExpression(
+                    SPU_FILTER_ATTACH_INPUT, new JExpression[]{
+                            new JEmittedTextExpression(group),
+                            new JFieldAccessExpression(FCB),
+                            new JIntLiteral(i),
+                            new JEmittedTextExpression(buffaddr),
+                            new JIntLiteral(cmdId + inputNode.getWidth()),
+                            new JIntLiteral(2),
+                            new JIntLiteral(0),
+                            new JIntLiteral(cmdId)
+                    }));
+            addInitStatement(attachBuffer);
+            cmdId++;
+        }   
+    }
+    
+    public void addOutputBufferAllocAttach(OutputSliceNode outputNode) {
+        Integer id = getIdForSlice(outputNode.getParent());
+        String group = GROUP;
+        
+        int cmdId = 2*outputNode.getParent().getHead().getWidth() + 1;
+        for (int i=0; i<outputNode.getWidth(); i++) {
+            String buffaddr = OUTPUT_BUFFER_ADDR + id + "_" + i;
+            String buffsize = OUTPUT_BUFFER_SIZE;
+            JExpressionStatement bufferAlloc = new JExpressionStatement(new JMethodCallExpression(
+                    SPU_BUFFER_ALLOC, new JExpression[]{
+                            new JEmittedTextExpression(group), new JEmittedTextExpression(buffaddr), new JFieldAccessExpression(buffsize),
+                            new JIntLiteral(BUFFER_OFFSET), new JIntLiteral(cmdId), new JIntLiteral(NO_DEPS)}));
+            addInitStatement(bufferAlloc);
+            JExpressionStatement attachBuffer = new JExpressionStatement(new JMethodCallExpression(
+                    SPU_FILTER_ATTACH_OUTPUT, new JExpression[]{
+                            new JEmittedTextExpression(group),
+                            new JFieldAccessExpression(FCB),
+                            new JIntLiteral(i),
+                            new JEmittedTextExpression(buffaddr),
+                            new JIntLiteral(cmdId + outputNode.getWidth()),
+                            new JIntLiteral(2),
+                            new JIntLiteral(0),
+                            new JIntLiteral(cmdId)
+                    }));
+            addInitStatement(attachBuffer);
+            cmdId++;
+        }   
+    }
+    
+    public void addIssueGroupAndWait(FilterSliceNode filterNode) {
+        Integer id = getIdForSlice(filterNode.getParent());
+        
+        JStatement init = new JExpressionStatement(new JEmittedTextExpression("int i=0"));
+        JExpression cond = new JEmittedTextExpression("i < 6");
+        JStatement incr = new JExpressionStatement(new JEmittedTextExpression("i++"));
+        JBlock body = new JBlock();
+        
+        JExpressionStatement issuegroup = new JExpressionStatement(new JMethodCallExpression(
+                SPU_ISSUE_GROUP, new JExpression[]{
+                        new JEmittedTextExpression("i"),
+                        new JIntLiteral(0),
+                        new JFieldAccessExpression(DATA_ADDR + id)}));
+        body.addStatement(issuegroup);
+        
+        JExpressionStatement wait = new JExpressionStatement(new JMethodCallExpression(
+                SPULIB_WAIT, new JExpression[]{
+                        new JEmittedTextExpression("i"),
+                        new JEmittedTextExpression(WAIT_MASK)}));
+        body.addStatement(wait);
+        
+        JForStatement forloop = new JForStatement(init, cond, incr, body);
+        addInitStatement(forloop);
+    }
+ 
     public void addFileReader(FilterSliceNode filterNode) {
         int pushrate = 1;
         
@@ -237,10 +874,13 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
         }
         // } RMR
         
-        addInitStatement(new JExpressionStatement(new JEmittedTextExpression("nd = n * 32")));
-    
+//        JExpressionStatement expr = new JExpressionStatement(new JAssignmentExpression(
+//                new JFieldAccessExpression(ND),
+//                new 
+//        addInitStatement(new JExpressionStatement(new JEmittedTextExpression("nd = n * 32")));
+//    
         JStatement forinit = new JExpressionStatement(new JEmittedTextExpression("int i = 0"));
-        JExpression forcond = new JEmittedTextExpression("i < nd");
+        JExpression forcond = new JRelationalExpression(Constants.OPE_LT, new JEmittedTextExpression("i"), new JFieldAccessExpression(ND));//new JEmittedTextExpression("i < nd");
         JStatement forinc = new JExpressionStatement(new JEmittedTextExpression("i++"));
         JBlock forbody = new JBlock();
         forbody.addStatement(new JExpressionStatement(fileio));
@@ -455,377 +1095,7 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
         //this.setTheMethods(new JMethodDeclaration[]{initMethod,workMethod,closeMethod});
     }
     
-    public void addPSPLayout(FilterSliceNode filterNode) {
-        Integer id = getIdForSlice(filterNode.getParent());
-        
-        JVariableDeclarationStatement l = new JVariableDeclarationStatement(
-                new JVariableDefinition(new CEmittedTextType("EXT_PSP_LAYOUT"), "l"));
-        JVariableDeclarationStatement r = new JVariableDeclarationStatement(
-                new JVariableDefinition(new CEmittedTextType("EXT_PSP_RATES"), "r"));
-        addInitStatement(l);
-        addInitStatement(r);
-        
-        addInitStatement(new JExpressionStatement(new JEmittedTextExpression(
-                "l.cmd_id = 4")));
-        addInitStatement(new JExpressionStatement(new JEmittedTextExpression(
-                "l.da = " + DATA_ADDR)));
-        addInitStatement(new JExpressionStatement(new JEmittedTextExpression(
-                "l.spu_in_buf_data = " + INPUT_BUFFER_ADDR + id)));
-        addInitStatement(new JExpressionStatement(new JEmittedTextExpression(
-                "l.spu_out_buf_data = " + OUTPUT_BUFFER_ADDR + id)));
-        addInitStatement(new JExpressionStatement(new JEmittedTextExpression(
-                "l.filt = " + FCB + id)));
-        
-        addInitStatement(new JExpressionStatement(new JEmittedTextExpression(
-                "r.in_bytes = 128")));
-        addInitStatement(new JExpressionStatement(new JEmittedTextExpression(
-                "r.run_iters = 32")));
-        addInitStatement(new JExpressionStatement(new JEmittedTextExpression(
-                "r.out_bytes = 128")));
-    }
-    
-    public void addDataParallel() {
-        addInitStatement(new JExpressionStatement(new JEmittedTextExpression(
-                "ext_data_parallel_shared(0, &l, " + PPU_INPUT_BUFFER_ADDR +
-                ", " + PPU_OUTPUT_BUFFER_ADDR + ", &r, n, cb, 0)")));
-        addInitStatement(new JExpressionStatement(new JEmittedTextExpression(
-                "spulib_poll_while(done != 0)")));
-    }
-    
-    public void addIssueUnload(FilterSliceNode filterNode) {
-        Integer id = getIdForSlice(filterNode.getParent());
-        
-        addInitStatement(new JExpressionStatement(new JEmittedTextExpression(
-            "spu_issue_group(" + id + ", 1, " + DATA_ADDR + id + ")")));
-        addInitStatement(new JExpressionStatement(new JEmittedTextExpression(
-            "spulib_wait(" + id + ", 1)")));
-    }
-    
-    public void addSPUInit() {
-        JExpressionStatement includespuinc = new JExpressionStatement(new JEmittedTextExpression(INCLUDE + SPUINC));
-        addInitStatement(includespuinc);
-        JExpressionStatement spudatastart = new JExpressionStatement(new JAssignmentExpression(
-                new JEmittedTextExpression(SPU_DATA_START),
-                new JMethodCallExpression(ROUND_UP, new JExpression[]{
-                        new JEmittedTextExpression(SPU_DATA_START),
-                        new JEmittedTextExpression(CACHE_SIZE)
-                })));
-        addInitStatement(spudatastart);
-        JExpressionStatement spudatasize = new JExpressionStatement(new JAssignmentExpression(
-                new JEmittedTextExpression(SPU_DATA_SIZE),
-                new JEmittedTextExpression(LS_SIZE + MINUS + SPU_RESERVE_SIZE + MINUS + SPU_DATA_START)));
-        addInitStatement(spudatasize);
-        JExpressionStatement spulibinit = new JExpressionStatement(
-                new JMethodCallExpression(
-                        SPULIB_INIT,
-                        new JExpression[]{}));
-        addInitStatement(spulibinit);
-    }
-    
-    public void addWorkFunctionAddressField(FilterSliceNode filterNode) {
-        Integer id = getIdForSlice(filterNode.getParent());
-//        JVariableDefinition wf = new JVariableDefinition(
-//                new CEmittedTextType(WFA), WFA_PREFIX+id);
-//        System.out.println(wf.toString());
-//        addField(new JFieldDeclaration(wf));
-//        
-        JFieldDeclaration file = 
-            new JFieldDeclaration(null,
-                                  new JVariableDefinition(null,
-                                                          0,
-                                                          new CEmittedTextType(WFA),
-                                                          WFA_PREFIX+id,
-                                                          null),
-                                  null, null);
-        addField(file);
-    }
-    
-    public void addSPUFilterDescriptionField(FilterSliceNode filterNode) {
-        Integer id = getIdForSlice(filterNode.getParent());
-        addField(new JFieldDeclaration(
-                new JVariableDefinition(
-                        new CEmittedTextType(SPU_FD), SPU_FD_PREFIX+id)));
-    }
-    
-    public void addFilterDescriptionSetup(FilterSliceNode filterNode) {
-        Integer id = getIdForSlice(filterNode.getParent());
-        String fd = idToFd(id);
-        //fd_id.work_func = wf_id
-        String wfid = WFA_PREFIX + id;
-        JExpressionStatement workfunc = new JExpressionStatement(new JAssignmentExpression(
-                new JFieldAccessExpression(new JEmittedTextExpression(fd),SPU_FD_WORK_FUNC),
-                new JEmittedTextExpression(wfid)));
-        //System.out.println(statement.toString());
-        addInitStatement(workfunc);
-        JExpressionStatement statesize = new JExpressionStatement(new JAssignmentExpression(
-                new JFieldAccessExpression(new JEmittedTextExpression(fd),SPU_FD_STATE_SIZE),
-                new JIntLiteral(0)));
-        addInitStatement(statesize);
-        
-    }
-    
-    public void addFilterDescriptionSetup(InputSliceNode inputNode) {
-        Integer id = getIdForSlice(inputNode.getParent());
-        String fd = idToFd(id);
-        JExpressionStatement numinputs = new JExpressionStatement(new JAssignmentExpression(
-                new JFieldAccessExpression(new JEmittedTextExpression(fd),SPU_FD_NUM_INPUTS),
-                new JIntLiteral(inputNode.getWidth())));
-        addInitStatement(numinputs);
-    }
-    
-    public void addFilterLoad(InputSliceNode inputNode) {
-        Integer id = getIdForSlice(inputNode.getParent());
-        String fd = idToFd(id);
-        String group = GROUP + id;
-        JExpressionStatement filterLoad = new JExpressionStatement(new JMethodCallExpression(
-                SPU_FILTER_LOAD,
-                new JExpression[]{
-                        new JEmittedTextExpression(group),
-                        new JEmittedTextExpression(FCB),
-                        new JEmittedTextExpression("&" + fd),
-                        new JIntLiteral(0),
-                        new JIntLiteral(NO_DEPS)
-                }));
-        addInitStatement(filterLoad);
-    }
-    
-    public void addFilterDescriptionSetup(OutputSliceNode outputNode) {
-        Integer id = getIdForSlice(outputNode.getParent());
-        String fd = idToFd(id);
-        JExpressionStatement numoutputs = new JExpressionStatement(new JAssignmentExpression(
-                new JFieldAccessExpression(new JEmittedTextExpression(fd),SPU_FD_NUM_OUTPUTS),
-                new JIntLiteral(outputNode.getWidth())));
-        addInitStatement(numoutputs);
-    }
-    
-    public void setupInputBufferAddresses(InputSliceNode inputNode) {
-        if (inputNode.getWidth() == 0) return;
-        
-        Integer id = getIdForSlice(inputNode.getParent());
-        
-        String buffaddr = INPUT_BUFFER_ADDR + id + "_" + 0;
-        JExpressionStatement expr = new JExpressionStatement(new JAssignmentExpression(
-                new JEmittedTextExpression(buffaddr),
-                new JEmittedTextExpression(FCB + PLUS + FCB_SIZE + PLUS + FILLER)));
-        addInitStatement(expr);
-        for (int i=1; i<inputNode.getWidth(); i++) {
-            String prev = new String(buffaddr);
-            String prevsize = INPUT_BUFFER_SIZE;
-            buffaddr = INPUT_BUFFER_ADDR + id + "_" + i;
-            expr = new JExpressionStatement(new JAssignmentExpression(
-                    new JEmittedTextExpression(buffaddr),
-                    new JEmittedTextExpression(prev + PLUS + prevsize + PLUS + FILLER)));
-            addInitStatement(expr);
-        }
-    }
-    
-    public void setupOutputBufferAddresses(OutputSliceNode outputNode) {
-        if (outputNode.getWidth() == 0) return;
-        
-        Integer id = getIdForSlice(outputNode.getParent());
-        int numinputs = outputNode.getParent().getHead().getWidth();
-        
-        String buffaddr;
-        JExpressionStatement expr;
-        
-        // no input buffers
-        if (numinputs == 0) {
-            buffaddr = OUTPUT_BUFFER_ADDR + id + "_" + 0;
-            expr = new JExpressionStatement(new JAssignmentExpression(
-                    new JEmittedTextExpression(buffaddr),
-                    new JEmittedTextExpression(FCB + PLUS + FCB_SIZE + PLUS + FILLER)));
-            addInitStatement(expr);
-        } else {
-            String lastinputaddr = INPUT_BUFFER_ADDR + id + "_" + (numinputs-1);
-            String lastinputsize = INPUT_BUFFER_SIZE;
-            buffaddr = OUTPUT_BUFFER_ADDR + id + "_" + 0;
-            expr = new JExpressionStatement(new JAssignmentExpression(
-                    new JEmittedTextExpression(buffaddr),
-                    new JEmittedTextExpression(lastinputaddr + PLUS + lastinputsize + PLUS + FILLER)));
-            addInitStatement(expr);
-        }
-        
-        for (int i=1; i<outputNode.getWidth(); i++) {
-            String prev = new String(buffaddr);
-            String prevsize = OUTPUT_BUFFER_SIZE;
-            buffaddr = OUTPUT_BUFFER_ADDR + id + "_" + i;
-            expr = new JExpressionStatement(new JAssignmentExpression(
-                    new JEmittedTextExpression(buffaddr),
-                    new JEmittedTextExpression(prev + PLUS + prevsize + PLUS + FILLER)));
-            addInitStatement(expr);
-        }
-    }
-    
-    public void addPPUBuffers() {
-        JExpressionStatement inputaddr = new JExpressionStatement(new JAssignmentExpression(
-                new JEmittedTextExpression(PPU_INPUT_BUFFER_ADDR),
-                new JMethodCallExpression(
-                        ALLOC_BUFFER,
-                        new JExpression[]{
-                                new JEmittedTextExpression(PPU_INPUT_BUFFER_SIZE),
-                                new JIntLiteral(0)})));
-        addInitStatement(inputaddr);
-        JExpressionStatement outputaddr = new JExpressionStatement(new JAssignmentExpression(
-                new JEmittedTextExpression(PPU_OUTPUT_BUFFER_ADDR),
-                new JMethodCallExpression(
-                        ALLOC_BUFFER,
-                        new JExpression[]{
-                                new JEmittedTextExpression(PPU_OUTPUT_BUFFER_SIZE),
-                                new JIntLiteral(0)})));
-        addInitStatement(outputaddr);
-        JExpressionStatement inputcb = new JExpressionStatement(new JAssignmentExpression(
-                new JEmittedTextExpression(PPU_INPUT_BUFFER_CB),
-                new JMethodCallExpression(
-                        BUFFER_GET_CB,
-                        new JExpression[]{
-                                new JEmittedTextExpression(PPU_INPUT_BUFFER_ADDR)})));
-        addInitStatement(inputcb);
-        JExpressionStatement outputcb = new JExpressionStatement(new JAssignmentExpression(
-                new JEmittedTextExpression(PPU_OUTPUT_BUFFER_CB),
-                new JMethodCallExpression(
-                        BUFFER_GET_CB,
-                        new JExpression[]{
-                                new JEmittedTextExpression(PPU_OUTPUT_BUFFER_ADDR)})));
-        addInitStatement(outputcb);
-    }
-    
-    public void setupDataAddress(FilterSliceNode filterNode) {
-        Integer id = getIdForSlice(filterNode.getParent());
-        
-        int numinputs = filterNode.getParent().getHead().getWidth();
-        int numoutputs = filterNode.getParent().getTail().getWidth();
-        
-        String dataaddr = DATA_ADDR + id;
-        String lastaddr = FCB;
-        String lastsize = String.valueOf(FCB_SIZE);
-        
-        if (numoutputs > 0) {
-            lastaddr = OUTPUT_BUFFER_ADDR + id + "_" + (numoutputs-1);
-            lastsize = OUTPUT_BUFFER_SIZE;
-        } else if (numinputs > 0) {
-            lastaddr = INPUT_BUFFER_ADDR + id + "_" + (numinputs-1);
-            lastsize = INPUT_BUFFER_SIZE;
-        }
-        
-        JExpressionStatement expr = new JExpressionStatement(new JAssignmentExpression(
-                new JEmittedTextExpression(dataaddr),
-                new JEmittedTextExpression(lastaddr + PLUS + lastsize + PLUS + FILLER)));
-        addInitStatement(expr);
-    }
-    
-    public void startNewFilter(InputSliceNode inputNode) {
-        Integer id = getIdForSlice(inputNode.getParent());
-        String fd = idToFd(id);
-        
-        JExpressionStatement newline = new JExpressionStatement(new JEmittedTextExpression(""));
-        addInitStatement(newline);
-        JExpressionStatement newFilter = new JExpressionStatement(new JEmittedTextExpression("// set up code for filter " + id));
-        addInitStatement(newFilter);
-    }
-    
-    public void addNewGroupStatement(InputSliceNode inputNode) {
-        Integer id = getIdForSlice(inputNode.getParent());
-        String group = GROUP + id;
-        
-        JExpressionStatement newGroup = new JExpressionStatement(new JAssignmentExpression(
-                new JEmittedTextExpression(group),
-                new JMethodCallExpression(SPU_NEW_GROUP,new JExpression[]{new JIntLiteral(id), new JIntLiteral(0)})));
-        addInitStatement(newGroup);
-    }
-    
-    public void addNewGroupAndFilterUnload(OutputSliceNode outputNode) {
-        Integer id = getIdForSlice(outputNode.getParent());
-        String group = GROUP + id;
-        
-        JExpressionStatement newGroup = new JExpressionStatement(new JAssignmentExpression(
-                new JEmittedTextExpression(group),
-                new JMethodCallExpression(SPU_NEW_GROUP,new JExpression[]{new JIntLiteral(id), new JIntLiteral(1)})));
-        addInitStatement(newGroup);
-        
-        JExpressionStatement filterUnload = new JExpressionStatement(new JMethodCallExpression(
-                SPU_FILTER_UNLOAD, new JExpression[]{
-                        new JEmittedTextExpression(group),
-                        new JEmittedTextExpression(FCB),
-                        new JIntLiteral(0),
-                        new JIntLiteral(NO_DEPS)
-                }));
-        addInitStatement(filterUnload);
-    }
-    
-    public void addInputBufferAllocAttach(InputSliceNode inputNode) {
-        Integer id = getIdForSlice(inputNode.getParent());
-        String group = GROUP + id;
-        
-        int cmdId = 1;
-        for (int i=0; i<inputNode.getWidth(); i++) {
-            String buffaddr = INPUT_BUFFER_ADDR + id + "_" + i;
-            String buffsize = INPUT_BUFFER_SIZE;
-            JExpressionStatement bufferAlloc = new JExpressionStatement(new JMethodCallExpression(
-                    SPU_BUFFER_ALLOC, new JExpression[]{
-                            new JEmittedTextExpression(group), new JEmittedTextExpression(buffaddr), new JEmittedTextExpression(buffsize),
-                            new JIntLiteral(BUFFER_OFFSET), new JIntLiteral(cmdId), new JIntLiteral(NO_DEPS)}));
-            addInitStatement(bufferAlloc);
-            JExpressionStatement attachBuffer = new JExpressionStatement(new JMethodCallExpression(
-                    SPU_FILTER_ATTACH_INPUT, new JExpression[]{
-                            new JEmittedTextExpression(group),
-                            new JEmittedTextExpression(FCB),
-                            new JIntLiteral(i),
-                            new JEmittedTextExpression(buffaddr),
-                            new JIntLiteral(cmdId + inputNode.getWidth()),
-                            new JIntLiteral(2),
-                            new JIntLiteral(0),
-                            new JIntLiteral(cmdId)
-                    }));
-            addInitStatement(attachBuffer);
-            cmdId++;
-        }   
-    }
-    
-    public void addOutputBufferAllocAttach(OutputSliceNode outputNode) {
-        Integer id = getIdForSlice(outputNode.getParent());
-        String group = GROUP + id;
-        
-        int cmdId = 2*outputNode.getParent().getHead().getWidth() + 1;
-        for (int i=0; i<outputNode.getWidth(); i++) {
-            String buffaddr = OUTPUT_BUFFER_ADDR + id + "_" + i;
-            String buffsize = OUTPUT_BUFFER_SIZE;
-            JExpressionStatement bufferAlloc = new JExpressionStatement(new JMethodCallExpression(
-                    SPU_BUFFER_ALLOC, new JExpression[]{
-                            new JEmittedTextExpression(group), new JEmittedTextExpression(buffaddr), new JEmittedTextExpression(buffsize),
-                            new JIntLiteral(BUFFER_OFFSET), new JIntLiteral(cmdId), new JIntLiteral(NO_DEPS)}));
-            addInitStatement(bufferAlloc);
-            JExpressionStatement attachBuffer = new JExpressionStatement(new JMethodCallExpression(
-                    SPU_FILTER_ATTACH_OUTPUT, new JExpression[]{
-                            new JEmittedTextExpression(group),
-                            new JEmittedTextExpression(FCB),
-                            new JIntLiteral(i),
-                            new JEmittedTextExpression(buffaddr),
-                            new JIntLiteral(cmdId + outputNode.getWidth()),
-                            new JIntLiteral(2),
-                            new JIntLiteral(0),
-                            new JIntLiteral(cmdId)
-                    }));
-            addInitStatement(attachBuffer);
-            cmdId++;
-        }   
-    }
-    
-    public void addIssueGroupAndWait(FilterSliceNode filterNode) {
-        Integer id = getIdForSlice(filterNode.getParent());
-        
-        JExpressionStatement issuegroup = new JExpressionStatement(new JMethodCallExpression(
-                SPU_ISSUE_GROUP, new JExpression[]{
-                        new JIntLiteral(id),
-                        new JIntLiteral(0),
-                        new JEmittedTextExpression(DATA_ADDR + id)}));
-        addInitStatement(issuegroup);
-        
-        JExpressionStatement wait = new JExpressionStatement(new JMethodCallExpression(
-                SPULIB_WAIT, new JExpression[]{
-                        new JIntLiteral(id),
-                        new JEmittedTextExpression(WAIT_MASK)}));
-        addInitStatement(wait);
-    }
+
     
     public static String idToFd(Integer id) {
         return SPU_FD_PREFIX + id;

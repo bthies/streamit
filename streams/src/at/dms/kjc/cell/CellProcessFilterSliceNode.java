@@ -1,5 +1,7 @@
 package at.dms.kjc.cell;
 
+import at.dms.kjc.JEmittedTextExpression;
+import at.dms.kjc.JExpressionStatement;
 import at.dms.kjc.backendSupport.BackEndFactory;
 import at.dms.kjc.backendSupport.ProcessFilterSliceNode;
 import at.dms.kjc.backendSupport.SchedulingPhase;
@@ -19,7 +21,9 @@ public class CellProcessFilterSliceNode extends ProcessFilterSliceNode {
         
         PPU ppu = ((CellBackendFactory) backEndBits).getPPU();
         CellComputeCodeStore ppuCS = ppu.getComputeCode();
-
+        
+        filterNode.getFilter().getSteadyMult();
+        
         // have an instance so we can override methods.
         CellProcessFilterSliceNode self = new CellProcessFilterSliceNode(filterNode,whichPhase,backEndBits);
         if (filterNode.isFileInput()) {
@@ -53,16 +57,19 @@ public class CellProcessFilterSliceNode extends ProcessFilterSliceNode {
         ppuCS.addFilterDescriptionSetup(inputNode);
         ppuCS.addFilterDescriptionSetup(outputNode);
         
+        //ppuCS.addInputBufferFields(inputNode);
         ppuCS.setupInputBufferAddresses(inputNode);
+        //ppuCS.addOutputBufferFields(outputNode);
         ppuCS.setupOutputBufferAddresses(outputNode);
+        ppuCS.addDataAddressField(filterNode);
         ppuCS.setupDataAddress(filterNode);
         
         ppuCS.addNewGroupStatement(inputNode);
-        ppuCS.addFilterLoad(inputNode);
-        ppuCS.addInputBufferAllocAttach(inputNode);
-        ppuCS.addOutputBufferAllocAttach(outputNode);
+        //ppuCS.addFilterLoad(inputNode);
+        //ppuCS.addInputBufferAllocAttach(inputNode);
+        //ppuCS.addOutputBufferAllocAttach(outputNode);
         
-        ppuCS.addNewGroupAndFilterUnload(outputNode);
+        //ppuCS.addNewGroupAndFilterUnload(outputNode);
         
         ppuCS.addIssueGroupAndWait(filterNode);
         
@@ -79,6 +86,7 @@ public class CellProcessFilterSliceNode extends ProcessFilterSliceNode {
     
     @Override
     protected void additionalSteadyProcessing() {
+        
     }
     
 }

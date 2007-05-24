@@ -122,10 +122,26 @@ public class CellBackend {
                 CellPU nodeN = cellBackEndBits.getComputeNode(n);
                 // write out C code
             
-                EmitCode codeEmitter = new EmitCode(cellBackEndBits);
+                EmitCellCode codeEmitter = new EmitCellCode(cellBackEndBits);
                 //codeEmitter.generateCHeader(p);
+                if (n == 0) {
+                    p.println("#include \"spulib.h\"");
+                    p.println("#include \"filters.h\"");
+                    p.println("#include \"spusymbols.h\"");
+                    p.println("#include <stdio.h>");
+                } else {
+                    p.println("#include \"filterdefs.h\"");
+                    p.println("#include \"filters.h\"");
+                    p.println();
+                    p.println("#define FILTER_NAME 0");
+                    p.println("#define ITEM_TYPE int");
+                    p.println("#include \"beginfilter.h\"");
+                }
                 codeEmitter.emitCodeForComputeNode(nodeN, p);
                 if (n == 0) { codeEmitter.generateMain(p); }
+                else {
+                   p.println("#include \"endfilter.h\"");
+                }
                 p.close();
             } catch (IOException e) {
                 throw new AssertionError("I/O error on " + outputFileName + ": " + e);

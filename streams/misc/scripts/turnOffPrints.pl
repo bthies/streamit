@@ -11,7 +11,7 @@
 #    printf statements commented out and replaced by writes to 
 #    volatile variable __print_sink__.  
 #    __print_sink__ is defined to be extern unless that file name being
-#   processed is str.c, fusion.cpp, or global.cpp
+#   processed is str.c, combined_threads.cpp, fusion.cpp, or global.cpp
 #
 # works with help of the print routine in at.dms.kjc.common.ToCCommon which
 # flags the prints for easy removal.
@@ -60,7 +60,7 @@ sub remove_prints {
 ##########
     my @cfilename = split (/\//, $pathAndName);
     my $cfilename = pop(@cfilename);
-    if ($cfilename eq "str.c" || $cfilename eq "master.cpp" || $cfilename eq "fusion.cpp") {
+    if ($cfilename eq "str.c" || $cfilename eq "master.cpp" || $cfilename eq "fusion.cpp" || $cfilename eq "combined_threads.cpp") {
 	print $fileHandle 'volatile int __print_sink__;', "\n";
     } else {
 	print $fileHandle 'extern volatile int __print_sink__;', "\n";

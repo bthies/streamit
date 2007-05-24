@@ -121,7 +121,7 @@ public class CVectorTypeLow extends CType {
                 baseTypeString = "signed int";  // not sure this is necessary, but IBM code uses explicit "signed"
             }
             return
-            "typedef vector " + baseTypeString + toString() + ";";
+            "typedef vector " + baseTypeString + " " + toString() + ";";
         }
         return 
         // gcc typedef for vector uses attribute, works for Cell with

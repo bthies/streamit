@@ -30,6 +30,11 @@ public class EmitCode {
         this.backendbits = backendbits;
         codegen = null;
     }
+    
+    public void emitCodeForComputeNode (ComputeNode n, CodegenPrintWriter p) {
+        codegen = new CodeGen(p);
+        emitCodeForComputeNode(n, p, codegen);
+    }
 
     /**
      * Given a ComputeNode and a CodegenPrintWrite, print all code for the ComputeNode.
@@ -39,8 +44,7 @@ public class EmitCode {
      * @param p The CodegenPrintWriter (left open on return).
      */
     public void emitCodeForComputeNode (ComputeNode n, 
-            CodegenPrintWriter p) {
-        codegen = new CodeGen(p);
+            CodegenPrintWriter p, CodeGen codegen) {
         
         SIRCodeUnit fieldsAndMethods = n.getComputeCode();
         
@@ -222,10 +226,10 @@ backendbits.getComputeNodes().getNthComputeNode(0).getComputeCode().getMainFunct
       
     /** set to true when declarations are local (so in methods, not in fields).  
      * Tested to determine whether to add declarations. */
-    private boolean declsAreLocal = false;
+    protected boolean declsAreLocal = false;
 
     
-    CodeGen(CodegenPrintWriter p) {
+    protected CodeGen(CodegenPrintWriter p) {
         super(p);
         // emitting C, not C++, so no "boolean"
         hasBoolType = false;

@@ -20,7 +20,7 @@ public class VectorizeEnable {
     /**
      * Set to true to list sequences of vectorizable filters before fusion and individual vectorizable filters after fusion.
      */
-    public static boolean debugging = false;
+    public static boolean debugging = true;
     /**
      * Set to true to have Vectorizable print out reasons for not vectorizing a filter.
      */
@@ -51,25 +51,11 @@ public class VectorizeEnable {
             // vector registers are at least 8 bytes.
             return str;
         }
-
-        // fancy fusing and selection routine only implemented as debug dump so far...
-        if (debugging) {
-            System.err.println("Vectorizable subgraphs before fusion");
-            vectorizeEnable2(str);
-        }
-//        if (debugging) debugSelection(str); // debugging
         
-        //str = FusePipelines.fusePipelinesOfVectorizableFilters(str);
-        str = FusePipelines.fusePipelinesOfVectorizableStreams(str);
-
-        // fancy fusing and selection routine only implemented as debug dump so far...
-        // call again after fusion to make sure we got everything.
-        if (debugging) {
-            System.err.println("Vectorizable subgraphs after fusion");
-            vectorizeEnable2(str);
-        }
-//        if (debugging) debugSelection(str); // debugging
+        // find vectorizable regions and fuse.
+        vectorizeEnable2(str);
         
+        // vectorize filters that can usefully be vectorized.
         IterFactory.createFactory().createIter(str).accept(
                 new EmptyStreamVisitor() {
                     /* visit a filter */
@@ -77,14 +63,14 @@ public class VectorizeEnable {
                                             SIRFilterIter iter) {
                         if (Vectorizable.vectorizable(self) &&
                             Vectorizable.isUseful(self)) {
-//                            // X X X: Wretched abuse of a compiler flag that should
-//                            // not occur with vectorization, for purposes of testing.
-//                            if (! KjcOptions.magic_net) {
+                            // X X X: Wretched abuse of a compiler flag that should
+                            // not occur with vectorization, for purposes of testing.
+                            if (! KjcOptions.magic_net) {
                                 if (debugging) {
                                     System.err.println("Vectorizing " + self.getName());
                                 }
                                 Vectorize.vectorize(self,false,false);
-//                            }
+                            }
                             forScheduling(self);
                         }
                     }
@@ -119,12 +105,12 @@ public class VectorizeEnable {
         f.setPeek(peekrate + (veclen - 1) * poprate);
         f.setPop(poprate * veclen);
 
-//        // X X X: Wretched abuse of a compiler flag that should
-//        // not occur with vectorization, for purposes of testing.
-//        if (KjcOptions.magic_net) {
-//            // alternative to vectorization for testing:
-//            workfn.setBody(new JBlock(new JStatement[]{at.dms.util.Utils.makeForLoop(workBody, veclen)}));
-//        } else {
+        // X X X: Wretched abuse of a compiler flag that should
+        // not occur with vectorization, for purposes of testing.
+        if (KjcOptions.magic_net) {
+            // alternative to vectorization for testing:
+            workfn.setBody(new JBlock(new JStatement[]{at.dms.util.Utils.makeForLoop(workBody, veclen)}));
+        } else {
 
 
         // fix number of pops for new rate.
@@ -149,59 +135,10 @@ public class VectorizeEnable {
                 workBody.addStatement(lastPos+1,popStatement);
             }
         }
-//        }
+        }
     }
     
     
-//    /**
-//     * Debug printout of sequences of vectorizable filters.
-//     * @param str
-//     */
-//    static private void debugSelection (SIRStream str) {
-//        // Check for vectorizable, but don't dump Vectorizable debugging info again if enabled.
-//        boolean vdebug = Vectorizable.debugging;
-//        Vectorizable.debugging = debugVectorizable;
-//        final Set<SIRFilter> vectorizable = Vectorizable.vectorizableStr(str); 
-//        Vectorizable.debugging = vdebug;
-//        
-//        // debugging code: tell all series of vectorizable filters.
-//        // easier since after lift...Sync, which removes unnecessary pipelines.
-//        final List<List<SIRFilter>> allFilterLists = new LinkedList<List<SIRFilter>>();
-//
-//        IterFactory.createFactory().createIter(str).accept(
-//            new EmptyStreamVisitor() {
-//                /* pre-visit a pipeline */
-//                public void preVisitPipeline(SIRPipeline self,
-//                                                 SIRPipelineIter iter) {
-//                    List<SIRFilter> currentList = null;
-//                    List<SIRStream> children = self.getSequentialStreams();
-//                        for (SIRStream child : children) {
-//                                if (! (child instanceof SIRFilter) || ! vectorizable.contains(child)) {
-//                                    if (currentList != null) {
-//                                        allFilterLists.add(currentList);
-//                                        currentList = null;
-//                                    }
-//                                } else {
-//                                    if (currentList == null) {
-//                                        currentList = new LinkedList<SIRFilter>();
-//                                    }
-//                                    currentList.add((SIRFilter)child);
-//                                }
-//                            }
-//                            if (currentList != null) {
-//                                allFilterLists.add(currentList);
-//                            }
-//                            super.preVisitPipeline(self, iter);
-//                    }
-//                });
-//            System.err.println("Sequences of Vectorizable filters:");
-//            for (List<SIRFilter> filterList : allFilterLists) {
-//                for (SIRFilter s : filterList) {
-//                    System.err.println(" " + s.getName() + (s.getPeekInt() <= s.getPopInt()? "" : (" peeks " + s.getPeekInt())));
-//                }
-//                System.err.println();
-//            }
-//        }
 
     
     /** Try again without relying on fusion to detect subgraphs.
@@ -222,74 +159,139 @@ public class VectorizeEnable {
             // vector registers are at least 8 bytes.
             return str;
         }
-        // find all vectorizable filters
+
+        if (debugging) {
+            // now find all vectorizable filters in fused graph
+            Set<SIRFilter> vectorizableFilters = markVectorizableFilters(str);
+            // find maximal subgraphs or pipeline segments that are not in feedback loops.
+            Map<SIRStream,List<intPair>> segments = findVectorizablesegments(vectorizableFilters,str);
+            
+            System.err.println("VectorizeEnable: before fusing vectorizable filters");
+            // diagnostic dump...
+            dumpStructure(segments);
+        }
+        
+        // Fuse together all fusable sub-graphs or pipeline segments
+        // of vectorizable filters, preserving vectorizability.
+        
+        //str = FusePipelines.fusePipelinesOfVectorizableFilters(str);  old pipeline-only version
+        str = FusePipelines.fusePipelinesOfVectorizableStreams(str);
+
+        
+        // now find all vectorizable filters in fused graph
         Set<SIRFilter> vectorizableFilters = markVectorizableFilters(str);
         // find maximal subgraphs or pipeline segments that are not in feedback loops.
         Map<SIRStream,List<intPair>> segments = findVectorizablesegments(vectorizableFilters,str);
         
-        // put cleverness here to try to determine what to fuse:
-        // Can not always fuse whole segment in case of peeking, but can determine whether
-        // vectors could be carried over tapes between SIROperators.
-        // Can also determine the utility of vectorizing a segment.
-        
-        for (SIRStream s : segments.keySet()) {
-            System.err.print("Vectorizable ");
-            if (s instanceof SIRPipeline) {
-                List<intPair> pipeSegs = segments.get(s);
-                if (pipeSegs.size() != 1 || pipeSegs.get(0).first != 0 || pipeSegs.get(0).second != ((SIRPipeline)s).size()) {
-                    for (intPair pipeSeg : pipeSegs) {
-                        System.err.print("pipeline " + s.getIdent() + "(" + s.getName() + ")" + " " + pipeSeg.first + ":" + pipeSeg.second + " {");
-                        for (int i = pipeSeg.first; i <= pipeSeg.second; i++) {
-                            dumpContents(((SIRPipeline)s).get(i));
-                        }
-                    }
-                } else {
-                    System.err.print("pipeline " + s.getIdent() + "(" + s.getName() + ")" + " {");
-                    for (int i = 0; i < ((SIRPipeline)s).size(); i++) {
-                        dumpContents(((SIRPipeline)s).get(i));
-                    }
-                }
-            } else if (s instanceof SIRSplitJoin) {
-                System.err.print("splitjoin " + s.getIdent() + "(" + s.getName() + ")"+ " {");
-                for (SIRStream subStr : ((SIRSplitJoin)s).getParallelStreams()) {
-                    dumpContents(subStr);
-                }
-            } else if (s instanceof SIRFilter) {
-                System.err.print("filter " + s.getIdent() + "(" + s.getName() + ")");
-            } else {
-                System.err.print("Unexpected type "+s.getName());
-            }
-            System.err.println("}");
+        if (debugging) {
+            System.err.println("VectorizeEnable: after fusing vectorizable filters");
+            // diagnostic dump...
+            dumpStructure(segments);
         }
+        
+        // find the filters to vectorize
+        Set<SIRFilter> tops = new HashSet<SIRFilter>();
+        Set<SIRFilter> bots = new HashSet<SIRFilter>();
+        Set<SIRFilter>  all = new HashSet<SIRFilter>();
+        topsBotsAll(segments,tops,bots,all);
+        
+        // TODO: if a splitter preceeds a top filter and 
+        // all filters after the splitter are vectorizable and
+        // a top filter peeks and the splitter is a duplicate 
+        // then introduce a vectorizable identity filter before the splitter
+        // to minimize the gathering needed to peek.  XXX: won't work.
+        // in fact: RR splitter or joiner in vectorized segment will
+        // have limiitation on when it can be fused.
         
         return str;
     }
     
+    /** find location of filters in segments: in a segment, top (first filter) of a segment, bottom (last filter) of a segment */
+    private static void topsBotsAll(Map<SIRStream,List<intPair>> segmentmap,
+            Set<SIRFilter> tops,Set<SIRFilter> bots,Set<SIRFilter> all) {
+        for (Map.Entry<SIRStream,List<intPair>> segments : segmentmap.entrySet()) {
+            SIRStream stream = segments.getKey();
+            if (segments.getValue() != null) {
+                for (intPair range : segments.getValue()) {
+                    topsOfSegment(stream, range, tops);
+                    bottomsOfSegment(stream, range, bots);
+                    allOfSegment(stream, range, all);
+                }
+            } else {
+                topsOfSegment(stream, null, tops);
+                bottomsOfSegment(stream, null, bots);
+                allOfSegment(stream, null, all);
 
-    /** Iterator to dump names of all sub-pipelines / sub-splitjoins / filters in a stream graph */
-    private static void dumpContents(final SIRStream s) {
-        IterFactory.createFactory().createIter(s).accept(
-                new EmptyStreamVisitor() {
-                    public void preVisitPipeline(SIRPipeline self,
-                            SIRPipelineIter iter) {
-                        /*if (self != s)*/ {System.err.print(self.getName() + " ");}
-                        super.preVisitPipeline(self,iter);
-                    }
-                    public void preVisitSplitJoin(SIRSplitJoin self,
-                            SIRSplitJoinIter iter) {
-                        /*if (self != s)*/ {System.err.print(self.getName() + " ");}
-                        super.preVisitSplitJoin(self, iter);
-                    }
-                    public void visitFilter(SIRFilter self,
-                            SIRFilterIter iter) {
-                        /*if (self != s)*/ {System.err.print(self.getName() + " ");}
-                        super.visitFilter(self, iter);
-                    }
-                });
+            }
+        }
     }
     
-    /** Given a set of vectorizable filters return all maximal subgraphs or segments of pipelines that are
-     * composed entirely of vectorizable filters.*/
+
+    /** add first filter(s) in segment to <b>newTops</b> */
+    private static void topsOfSegment(SIRStream substr,intPair range, Set<SIRFilter> newTops) {
+        if (substr instanceof SIRFilter) {
+            newTops.add((SIRFilter)substr);
+        } else if (substr instanceof SIRSplitJoin) {
+            SIRSplitJoin sj = (SIRSplitJoin)substr;
+            for (SIRStream subsub : sj.getParallelStreams()) {
+                topsOfSegment(subsub,null,newTops);
+            }
+        } else if (substr instanceof SIRPipeline) {
+            SIRPipeline p = (SIRPipeline)substr;
+            if (range == null) {
+                range = new intPair(0,0);
+            }
+            topsOfSegment(p.get(range.first),null,newTops);
+        } else {
+            throw new AssertionError("shouldn't get here");
+        }
+    }
+
+    /** add last filters(s) in segment to <b>newBots</b> */
+    private static void bottomsOfSegment(SIRStream substr,intPair range, Set<SIRFilter> newBots) {
+        if (substr instanceof SIRFilter) {
+            newBots.add((SIRFilter)substr);
+        } else if (substr instanceof SIRSplitJoin) {
+            SIRSplitJoin sj = (SIRSplitJoin)substr;
+            for (SIRStream subsub : sj.getParallelStreams()) {
+                bottomsOfSegment(subsub,null,newBots);
+            }
+        } else if (substr instanceof SIRPipeline) {
+            SIRPipeline p = (SIRPipeline)substr;
+            if (range == null) {
+                range = new intPair(p.size()-1,p.size()-1);
+            }
+            bottomsOfSegment(p.get(range.second),null,newBots);
+        } else {
+            throw new AssertionError("shouldn't get here");
+        }
+    }
+
+    /** add all filter(s) in a segment to <b>filters</b> */
+    private static void allOfSegment(SIRStream substr,intPair range, Set<SIRFilter> filters) {
+        if (substr instanceof SIRFilter) {
+            filters.add((SIRFilter)substr);
+        } else if (substr instanceof SIRSplitJoin) {
+            SIRSplitJoin sj = (SIRSplitJoin)substr;
+            for (SIRStream subsub : sj.getParallelStreams()) {
+                allOfSegment(subsub,null,filters);
+            }
+        } else if (substr instanceof SIRPipeline) {
+            SIRPipeline p = (SIRPipeline)substr;
+            if (range == null) {
+                range = new intPair(0,p.size()-1);
+            }
+            for (int i = range.first; i <= range.second; i++) {
+                allOfSegment(p.get(i),null,filters);
+            }
+        } else {
+            throw new AssertionError("shouldn't get here");
+        }
+        
+    }
+    
+    /** Given a set of vectorizable filters return all maximal subgraphs or segments of pipelines (herinafter called "segments")
+     *  that are composed entirely of vectorizable filters.*/
     private static Map<SIRStream,List<intPair>> findVectorizablesegments(Set<SIRFilter> vectorizableFilters,SIRStream topStr) {
         Map<SIRStream,List<intPair>> segments = new HashMap<SIRStream,List<intPair>>();
         // walk top down and bottom up recording all maximal subgraphs or segments of pipelines that are
@@ -416,7 +418,102 @@ public class VectorizeEnable {
                 });
         return vectorizableFilters;
     }
+
     
+    
+    /** dump info about segments */
+    private static void dumpStructure(Map<SIRStream,List<intPair>> segments) {
+        for (SIRStream s : segments.keySet()) {
+            System.err.print("Vectorizable ");
+            if (s instanceof SIRPipeline) {
+                List<intPair> pipeSegs = segments.get(s);
+                if (pipeSegs.size() != 1 || pipeSegs.get(0).first != 0 || pipeSegs.get(0).second != ((SIRPipeline)s).size()) {
+                    for (intPair pipeSeg : pipeSegs) {
+                        System.err.print("pipeline " + s.getIdent() + "(" + s.getName() + ")" + " " + pipeSeg.first + ":" + pipeSeg.second + " {");
+                        dumpTopsAndBottoms(s,Collections.singletonList(pipeSeg));
+                        for (int i = pipeSeg.first; i <= pipeSeg.second; i++) {
+                            dumpContents(((SIRPipeline)s).get(i));
+                        }
+                    }
+                } else {
+                    System.err.print("pipeline " + s.getIdent() + "(" + s.getName() + ")" + " {");
+                    dumpTopsAndBottoms(s,pipeSegs);
+                    for (int i = 0; i < ((SIRPipeline)s).size(); i++) {
+                        dumpContents(((SIRPipeline)s).get(i));
+                    }
+                }
+            } else if (s instanceof SIRSplitJoin) {
+                System.err.print("splitjoin " + s.getIdent() + "(" + s.getName() + ")"+ " {");
+                dumpTopsAndBottoms(s,null);
+                for (SIRStream subStr : ((SIRSplitJoin)s).getParallelStreams()) {
+                    dumpContents(subStr);
+                }
+            } else if (s instanceof SIRFilter) {
+                System.err.print("filter " + s.getIdent() + "(" + s.getName() + ")");
+            } else {
+                System.err.print("Unexpected type "+s.getName());
+            }
+            System.err.println("}");
+        }
+        
+    }
+    
+    /** Iterator to dump names of all sub-pipelines / sub-splitjoins / filters in a stream graph */
+    private static void dumpContents(final SIRStream s) {
+        IterFactory.createFactory().createIter(s).accept(
+                new EmptyStreamVisitor() {
+                    public void preVisitPipeline(SIRPipeline self,
+                            SIRPipelineIter iter) {
+                        /*if (self != s)*/ {System.err.print(self.getName() + " ");}
+                        super.preVisitPipeline(self,iter);
+                    }
+                    public void preVisitSplitJoin(SIRSplitJoin self,
+                            SIRSplitJoinIter iter) {
+                        /*if (self != s)*/ {System.err.print(self.getName() + " ");}
+                        super.preVisitSplitJoin(self, iter);
+                    }
+                    public void visitFilter(SIRFilter self,
+                            SIRFilterIter iter) {
+                        /*if (self != s)*/ {System.err.print(self.getName() + " ");}
+                        super.visitFilter(self, iter);
+                    }
+                });
+    }
+
+
+    private static void dumpTopsAndBottoms(SIRStream s,List<intPair> pipeSeg) {
+        Set<SIRFilter> tops = new HashSet<SIRFilter>();
+        if (pipeSeg == null) {
+            topsOfSegment(s,null,tops);
+        } else {
+            for (intPair p : pipeSeg) {
+                topsOfSegment(s,p,tops);
+            }
+        }
+        System.err.print("[Top ");
+        for (SIRFilter f : tops) {
+            System.err.print(f.getName() + " ");
+        }
+        System.err.print("]");
+
+        Set<SIRFilter> bottoms = tops; bottoms.clear();
+        if (pipeSeg == null) {
+            bottomsOfSegment(s,null,bottoms);
+        } else {
+            for (intPair p : pipeSeg) {
+                bottomsOfSegment(s,p,bottoms);
+            }
+        }
+        System.err.print("[Bottom ");
+        for (SIRFilter f : bottoms) {
+            System.err.print(f.getName() + " ");
+        }
+        System.err.print("]");
+
+        
+        
+    }
+
 }
 
 /** Little class for pairs of integers

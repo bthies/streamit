@@ -1,0 +1,51 @@
+void->void pipeline Simple {
+	
+	add FileReader<int>("Simple.in");
+
+	
+	add int->int splitjoin {
+		split roundrobin;
+		add Negate();
+		add Negate();
+		join roundrobin;
+	}
+	
+	add FileWriter<int>("Simple.out");
+}
+
+int->int filter Negate {
+	work pop 1 push 1 {
+		push(-1*pop());
+	}
+}
+
+int->int filter Negate2 {
+        work pop 1 push 1 {
+                push(-1*pop());
+        }
+}
+
+int->int filter Negate3 {
+        work pop 1 push 1 {
+                push(-1*pop());
+        }
+}
+
+int->int filter Negate4 {
+        work pop 1 push 1 {
+                push(-1*pop());
+        }
+}
+
+int->int filter Negate5 {
+        work pop 1 push 1 {
+                push(-1*pop());
+        }
+}
+
+int->int filter Negate6 {
+        work pop 1 push 1 {
+                push(-1*pop());
+        }
+}
+

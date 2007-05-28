@@ -1,0 +1,3 @@
+java streamit.frontend.ToJava --output Simple.java Simple.str
+java at.dms.kjc.Main --streamit --cell Simple.java
+cat str0.c

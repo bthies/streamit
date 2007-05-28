@@ -191,7 +191,7 @@ public class EmitCellCode extends EmitCode {
                 p.print("inline ");
             }
             
-            if (ident.equals("")) {
+            if (ident.equals("__MAIN__")) {
                 //print the declaration then return
                 if (isDeclOnly()) {
                     declsAreLocal = false;
@@ -235,7 +235,7 @@ public class EmitCellCode extends EmitCode {
             p.newLine();
             declsAreLocal = false;
             method = null;
-            if (ident.equals("")) p.println("END_WORK_FUNC");
+            if (ident.equals("__MAIN__")) p.println("END_WORK_FUNC");
 
         }
         

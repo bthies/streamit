@@ -126,12 +126,13 @@ public class CellBackend {
                 //codeEmitter.generateCHeader(p);
                 if (n == 0) {
                     p.println("#include \"spulib.h\"");
-                    p.println("#include \"filters.h\"");
+                    p.println("#include \"structs.h\"");
                     p.println("#include \"spusymbols.h\"");
+                    p.println("#include \"spuinit.inc\"");
                     p.println("#include <stdio.h>");
                 } else {
                     p.println("#include \"filterdefs.h\"");
-                    p.println("#include \"filters.h\"");
+                    p.println("#include \"structs.h\"");
                     p.println();
                     p.println("#define FILTER_NAME 0");
                     p.println("#define ITEM_TYPE int");

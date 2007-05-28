@@ -11,6 +11,7 @@ import at.dms.kjc.Constants;
 import at.dms.kjc.JArrayAccessExpression;
 import at.dms.kjc.JAssignmentExpression;
 import at.dms.kjc.JBlock;
+import at.dms.kjc.JDivideExpression;
 import at.dms.kjc.JEmittedTextExpression;
 import at.dms.kjc.JExpression;
 import at.dms.kjc.JExpressionStatement;
@@ -82,12 +83,11 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
     private static final String CB = "cb";
     private static final String LS_SIZE = "LS_SIZE";
     private static final String CACHE_SIZE = "CACHE_SIZE";
+    private static final String SPUINIT = "spuinit";
     private static final String SPULIB_INIT = "spulib_init";
     private static final String SPULIB_WAIT = "spulib_wait";
     private static final String ALLOC_BUFFER = "alloc_buffer";
-    private static final String BUFFER_GET_CB = "buffer_get_cb";
-    
-    private static final String SPUINC = "\"spuinit.inc\"";
+    private static final String BUF_GET_CB = "buf_get_cb";
     
     private static final String UINT32_T = "uint32_t";
     private static final String PLUS = " + ";
@@ -210,7 +210,7 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
     public void addCallBackFunction() {
         JFormalParameter tag = new JFormalParameter(new CEmittedTextType(UINT32_T), "tag");
         JBlock body = new JBlock();
-        body.addStatement(new JExpressionStatement(new JPostfixExpression(Constants.OPE_POSTDEC, new JFieldAccessExpression(tag.getValue().getIdent()))));
+        body.addStatement(new JExpressionStatement(new JPostfixExpression(Constants.OPE_POSTDEC, new JFieldAccessExpression(DONE))));
         JMethodDeclaration cb = new JMethodDeclaration(CStdType.Void, CB, new JFormalParameter[]{tag}, body);
         addMethod(cb);
     }
@@ -227,46 +227,72 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
         addField(new JFieldDeclaration(l));
         addField(new JFieldDeclaration(r));
         
-        JStatement init = new JExpressionStatement(new JEmittedTextExpression("int i=0"));
-        JExpression cond = new JEmittedTextExpression("i < 6");
-        JStatement incr = new JExpressionStatement(new JEmittedTextExpression("i++"));
+//        JStatement init = new JExpressionStatement(new JEmittedTextExpression("int i=0"));
+//        JExpression cond = new JEmittedTextExpression("i < 6");
+//        JStatement incr = new JExpressionStatement(new JEmittedTextExpression("i++"));
         JBlock body = new JBlock();
         
+        for (int i=0; i<6; i++) {
+        
         body.addStatement(new JExpressionStatement(new JAssignmentExpression(
-                new JFieldAccessExpression(new JArrayAccessExpression(new JFieldAccessExpression(l.getIdent()), new JEmittedTextExpression("i")), "cmd_id"),
-                new JIntLiteral(4))));
+                new JFieldAccessExpression(new JArrayAccessExpression(new JFieldAccessExpression(l.getIdent()), new JIntLiteral(i)), "cmd_id"),
+                new JIntLiteral(5))));
         body.addStatement(new JExpressionStatement(new JAssignmentExpression(
-                new JFieldAccessExpression(new JArrayAccessExpression(new JFieldAccessExpression(l.getIdent()), new JEmittedTextExpression("i")), "da"),
-                new JEmittedTextExpression(DATA_ADDR))));
+                new JFieldAccessExpression(new JArrayAccessExpression(new JFieldAccessExpression(l.getIdent()), new JIntLiteral(i)), "spu_id"),
+                new JIntLiteral(i))));
         body.addStatement(new JExpressionStatement(new JAssignmentExpression(
-                new JFieldAccessExpression(new JArrayAccessExpression(new JFieldAccessExpression(l.getIdent()), new JEmittedTextExpression("i")), "spu_in_buf_data"),
+                new JFieldAccessExpression(new JArrayAccessExpression(new JFieldAccessExpression(l.getIdent()), new JIntLiteral(i)), "da"),
+                new JEmittedTextExpression(DATA_ADDR + id))));
+        body.addStatement(new JExpressionStatement(new JAssignmentExpression(
+                new JFieldAccessExpression(new JArrayAccessExpression(new JFieldAccessExpression(l.getIdent()), new JIntLiteral(i)), "spu_in_buf_data"),
                 new JEmittedTextExpression(INPUT_BUFFER_ADDR + id + "_0"))));
         body.addStatement(new JExpressionStatement(new JAssignmentExpression(
-                new JFieldAccessExpression(new JArrayAccessExpression(new JFieldAccessExpression(l.getIdent()), new JEmittedTextExpression("i")), "spu_out_buf_data"),
+                new JFieldAccessExpression(new JArrayAccessExpression(new JFieldAccessExpression(l.getIdent()), new JIntLiteral(i)), "spu_out_buf_data"),
                 new JEmittedTextExpression(OUTPUT_BUFFER_ADDR + id + "_0"))));
+        
         body.addStatement(new JExpressionStatement(new JAssignmentExpression(
-                new JFieldAccessExpression(new JArrayAccessExpression(new JFieldAccessExpression(l.getIdent()), new JEmittedTextExpression("i")), "filt"),
+                new JFieldAccessExpression(new JArrayAccessExpression(new JFieldAccessExpression(l.getIdent()), new JIntLiteral(i)), "ppu_in_buf_data"),
+                new JEmittedTextExpression(PPU_INPUT_BUFFER_ADDR + i))));
+        body.addStatement(new JExpressionStatement(new JAssignmentExpression(
+                new JFieldAccessExpression(new JArrayAccessExpression(new JFieldAccessExpression(l.getIdent()), new JIntLiteral(i)), "ppu_out_buf_data"),
+                new JEmittedTextExpression(PPU_OUTPUT_BUFFER_ADDR + i))));
+        
+        body.addStatement(new JExpressionStatement(new JAssignmentExpression(
+                new JFieldAccessExpression(new JArrayAccessExpression(new JFieldAccessExpression(l.getIdent()), new JIntLiteral(i)), "filt"),
                 new JEmittedTextExpression(FCB))));
         
         body.addStatement(new JExpressionStatement(new JAssignmentExpression(
-                new JFieldAccessExpression(new JArrayAccessExpression(new JFieldAccessExpression(r.getIdent()), new JEmittedTextExpression("i")), "in_bytes"),
+                new JFieldAccessExpression(new JArrayAccessExpression(new JFieldAccessExpression(r.getIdent()), new JIntLiteral(i)), "in_bytes"),
                 new JIntLiteral(128))));
         body.addStatement(new JExpressionStatement(new JAssignmentExpression(
-                new JFieldAccessExpression(new JArrayAccessExpression(new JFieldAccessExpression(r.getIdent()), new JEmittedTextExpression("i")), "run_iters"),
+                new JFieldAccessExpression(new JArrayAccessExpression(new JFieldAccessExpression(r.getIdent()), new JIntLiteral(i)), "run_iters"),
                 new JIntLiteral(32))));
         body.addStatement(new JExpressionStatement(new JAssignmentExpression(
-                new JFieldAccessExpression(new JArrayAccessExpression(new JFieldAccessExpression(r.getIdent()), new JEmittedTextExpression("i")), "out_bytes"),
+                new JFieldAccessExpression(new JArrayAccessExpression(new JFieldAccessExpression(r.getIdent()), new JIntLiteral(i)), "out_bytes"),
                 new JIntLiteral(128))));
-        
-        JForStatement forloop = new JForStatement(init, cond, incr, body);
-        addInitStatement(forloop);
+        }
+        addInitStatement(body);
+//        JForStatement forloop = new JForStatement(init, cond, incr, body);
+//        addInitStatement(forloop);
     }
     
     public void addDataParallel() {
-        addInitStatement(new JExpressionStatement(new JEmittedTextExpression(
-                "ext_data_parallel(6, &l, &r, n, cb, 0)")));
-        addInitStatement(new JExpressionStatement(new JEmittedTextExpression(
-                "spulib_poll_while(done != 0)")));
+        JMethodCallExpression dataparallel = new JMethodCallExpression(
+                "ext_data_parallel",
+                new JExpression[]{
+                        new JIntLiteral(6),
+                        new JEmittedTextExpression("l"),
+                        new JEmittedTextExpression("r"),
+                        new JDivideExpression(null, new JFieldAccessExpression(N), new JIntLiteral(6)),
+                        new JEmittedTextExpression("cb"),
+                        new JIntLiteral(0)
+                });
+        addInitStatement(new JExpressionStatement(dataparallel));
+        addInitStatement(new JExpressionStatement(new JMethodCallExpression(
+                "spulib_poll_while",
+                new JExpression[]{
+                        new JRelationalExpression(Constants.OPE_GT, new JFieldAccessExpression(DONE), new JIntLiteral(0))
+                })));
     }
     
     public void addIssueUnload(FilterSliceNode filterNode) {
@@ -279,9 +305,12 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
     }
     
     public void addSPUInit() {
-        // #include "spu.inc"
-        JExpressionStatement includespuinc = new JExpressionStatement(new JEmittedTextExpression(INCLUDE + SPUINC));
-        addInitStatement(includespuinc);
+        // spuinit()
+        JExpressionStatement spuinit = new JExpressionStatement(
+                new JMethodCallExpression(
+                        SPUINIT,
+                        new JExpression[]{}));
+        addInitStatement(spuinit);
         
 //        // spu_data_start
 //        JExpressionStatement spudatastart = new JExpressionStatement(new JAssignmentExpression(
@@ -353,15 +382,15 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
         pobs.setInitializer(new JEmittedTextExpression("32 * 1024"));
         addField(new JFieldDeclaration(pobs));
         
-        // int n = 32;
-        JVariableDefinition n = new JVariableDefinition(new CEmittedTextType("int"), N);
-        n.setInitializer(new JIntLiteral(32));
-        addField(new JFieldDeclaration(n));
-        
         // int nd;
         JVariableDefinition nd = new JVariableDefinition(new CEmittedTextType("int"), ND);
-        nd.setInitializer(new JMultExpression(new JFieldAccessExpression(N), new JIntLiteral(32)));
+        //nd.setInitializer(new JMultExpression(new JFieldAccessExpression(N), new JIntLiteral(32)));
         addField(new JFieldDeclaration(nd));
+        
+        // int n = 96;
+        JVariableDefinition n = new JVariableDefinition(new CEmittedTextType("int"), N);
+        n.setInitializer(new JIntLiteral(96));
+        addField(new JFieldDeclaration(n));
         
         // int done = 1;
         JVariableDefinition done = new JVariableDefinition(new CEmittedTextType("int"), DONE);
@@ -484,7 +513,7 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
                     new JMethodCallExpression(
                             ALLOC_BUFFER,
                             new JExpression[]{
-                                    new JFieldAccessExpression(PPU_INPUT_BUFFER_SIZE+i),
+                                    new JFieldAccessExpression(PPU_INPUT_BUFFER_SIZE),
                                     new JIntLiteral(0)})));
             addInitStatement(inputaddr);
             JExpressionStatement outputaddr = new JExpressionStatement(new JAssignmentExpression(
@@ -492,20 +521,20 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
                     new JMethodCallExpression(
                             ALLOC_BUFFER,
                             new JExpression[]{
-                                    new JFieldAccessExpression(PPU_OUTPUT_BUFFER_SIZE+i),
+                                    new JFieldAccessExpression(PPU_OUTPUT_BUFFER_SIZE),
                                     new JIntLiteral(0)})));
             addInitStatement(outputaddr);
             JExpressionStatement inputcb = new JExpressionStatement(new JAssignmentExpression(
                     new JFieldAccessExpression(PPU_INPUT_BUFFER_CB+i),
                     new JMethodCallExpression(
-                            BUFFER_GET_CB,
+                            BUF_GET_CB,
                             new JExpression[]{
                                     new JFieldAccessExpression(PPU_INPUT_BUFFER_ADDR+i)})));
             addInitStatement(inputcb);
             JExpressionStatement outputcb = new JExpressionStatement(new JAssignmentExpression(
                     new JFieldAccessExpression(PPU_OUTPUT_BUFFER_CB+i),
                     new JMethodCallExpression(
-                            BUFFER_GET_CB,
+                            BUF_GET_CB,
                             new JExpression[]{
                                     new JFieldAccessExpression(PPU_OUTPUT_BUFFER_ADDR+i)})));
             addInitStatement(outputcb);
@@ -879,21 +908,27 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
 //                new 
 //        addInitStatement(new JExpressionStatement(new JEmittedTextExpression("nd = n * 32")));
 //    
+        JStatement nd = new JExpressionStatement(new JAssignmentExpression(
+                new JFieldAccessExpression(ND), new JEmittedTextExpression("n * 32 / 6")));
+        addInitStatement(nd);
         JStatement forinit = new JExpressionStatement(new JEmittedTextExpression("int i = 0"));
         JExpression forcond = new JRelationalExpression(Constants.OPE_LT, new JEmittedTextExpression("i"), new JFieldAccessExpression(ND));//new JEmittedTextExpression("i < nd");
         JStatement forinc = new JExpressionStatement(new JEmittedTextExpression("i++"));
         JBlock forbody = new JBlock();
-        forbody.addStatement(new JExpressionStatement(fileio));
-        JExpressionStatement set = new JExpressionStatement(new JAssignmentExpression(
-                new JEmittedTextExpression("((int *)" + PPU_INPUT_BUFFER_ADDR + ")[i]"),
-                tmp.getRef()));
-        forbody.addStatement(set);
+        for (int i=0; i<6; i++) {
+            forbody.addStatement(new JExpressionStatement(fileio));
+            JExpressionStatement set = new JExpressionStatement(new JAssignmentExpression(
+                    new JEmittedTextExpression("((int *)" + PPU_INPUT_BUFFER_ADDR + i + ")[i]"),
+                    tmp.getRef()));
+            forbody.addStatement(set);
+        }
         JForStatement readloop = new JForStatement(forinit, forcond, forinc, forbody);
         addInitStatement(readloop);
         
-        addInitStatement(new JExpressionStatement(new JEmittedTextExpression(PPU_INPUT_BUFFER_CB + "->tail = nd * 4")));
-        addInitStatement(new JExpressionStatement(new JEmittedTextExpression("IF_CHECK(" + PPU_INPUT_BUFFER_CB + "->otail = " + PPU_INPUT_BUFFER_CB + "->tail)")));
-    
+        for (int i=0; i<6; i++) {
+            addInitStatement(new JExpressionStatement(new JEmittedTextExpression(PPU_INPUT_BUFFER_CB + i + "->tail = nd * 4")));
+            addInitStatement(new JExpressionStatement(new JEmittedTextExpression("IF_CHECK(" + PPU_INPUT_BUFFER_CB + i + "->otail = " + PPU_INPUT_BUFFER_CB + i + "->tail)")));
+        }
         SIRPushExpression push = 
             new SIRPushExpression(tmp.getRef(), fic.getOutputType());
         
@@ -932,8 +967,8 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
             new JFieldDeclaration(null,fileDefn, null, null);
         addField(file);
     
-        //create init function
-        JBlock initBlock = new JBlock(null, new JStatement[0], null);
+//        //create init function
+//        JBlock initBlock = new JBlock(null, new JStatement[0], null);
         //create the file open command
         JExpression[] params = 
             {
@@ -952,11 +987,11 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
                                                                  fileDefn.getIdent()),
                                       fopen);
     
-        initBlock.addStatement(new JExpressionStatement(null, fass, null));
+        addInitStatement(new JExpressionStatement(null, fass, null));
         
         // do some standard C error checking here.
         // do we need to put this in a separate method to allow subclass to override?
-        initBlock.addStatement(new JExpressionStatement(
+        addInitStatement(new JExpressionStatement(
                 new JEmittedTextExpression(new Object[]{
                         "if (",
                         new JFieldAccessExpression(
@@ -964,23 +999,24 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
                                 file.getVariable().getIdent()),
                         " == NULL) { perror(\"error opening "+ foc.getFileName() + "\"); }"
                 })));
-        //set this as the init function...
-        JMethodDeclaration initMethod = new JMethodDeclaration(null,
-                at.dms.kjc.Constants.ACC_PUBLIC,
-                CStdType.Void,
-                "init_filewrite",
-                JFormalParameter.EMPTY,
-                CClassType.EMPTY,
-                initBlock,
-                null,
-                null);
-        addInitStatement(initBlock);
+//        //set this as the init function...
+//        JMethodDeclaration initMethod = new JMethodDeclaration(null,
+//                at.dms.kjc.Constants.ACC_PUBLIC,
+//                CStdType.Void,
+//                "init_filewrite",
+//                JFormalParameter.EMPTY,
+//                CClassType.EMPTY,
+//                initBlock,
+//                null,
+//                null);
+//        addInitStatement(initBlock);
     
-        //create work function
-        JBlock workBlock = new JBlock(null, new JStatement[0], null);
+//        //create work function
+//        JBlock workBlock = new JBlock(null, new JStatement[0], null);
     
 //        SIRPopExpression pop = new SIRPopExpression(foc.getInputType());
         ALocalVariable tmp = ALocalVariable.makeTmp(foc.getInputType());
+        addInitStatement(tmp.getDecl());
 //        workBlock.addStatement(tmp.getDecl());
 //        workBlock.addStatement(new JExpressionStatement(new JAssignmentExpression(tmp.getRef(),pop)));
     
@@ -1012,7 +1048,7 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
             // the first parameter: &(variable); treat the & operator as a function call
             JExpression[] addressofParameters = new JExpression[1];
             
-            addressofParameters[0] = new JEmittedTextExpression(PPU_OUTPUT_BUFFER_ADDR);
+            addressofParameters[0] = tmp.getRef();
             
             JMethodCallExpression addressofCall =
                 new JMethodCallExpression(null, "&", addressofParameters);
@@ -1051,24 +1087,41 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
 
             fileio = fwrite;
         }
-
-        workBlock.addStatement(new JExpressionStatement(null, fileio, null));
         
-        JMethodDeclaration workMethod = new JMethodDeclaration(null,
-                at.dms.kjc.Constants.ACC_PUBLIC,
-                CStdType.Void,
-                "work_filewrite",
-                JFormalParameter.EMPTY,
-                CClassType.EMPTY,
-                workBlock,
-                null,
-                null);
-
-        workMethod.setPop(1);
-        workMethod.setPeek(1);
-        workMethod.setPush(0);
         
-        addInitStatement(workBlock);
+//        JStatement nd = new JExpressionStatement(new JAssignmentExpression(
+//                new JFieldAccessExpression(ND), new JEmittedTextExpression("n * 32")));
+//        addInitStatement(nd);
+        JStatement forinit = new JExpressionStatement(new JEmittedTextExpression("int i = 0"));
+        JExpression forcond = new JRelationalExpression(Constants.OPE_LT, new JEmittedTextExpression("i"), new JFieldAccessExpression(ND));//new JEmittedTextExpression("i < nd");
+        JStatement forinc = new JExpressionStatement(new JEmittedTextExpression("i++"));
+        JBlock forbody = new JBlock();
+        for (int i=0; i<6; i++) {
+            JExpressionStatement set = new JExpressionStatement(new JAssignmentExpression(
+                    tmp.getRef(),
+                    new JEmittedTextExpression("((int *)" + PPU_OUTPUT_BUFFER_ADDR + i + ")[i]")
+                    ));
+            forbody.addStatement(set);
+            forbody.addStatement(new JExpressionStatement(fileio));
+        }
+        JForStatement writeloop = new JForStatement(forinit, forcond, forinc, forbody);
+        addInitStatement(writeloop);
+        
+//        JMethodDeclaration workMethod = new JMethodDeclaration(null,
+//                at.dms.kjc.Constants.ACC_PUBLIC,
+//                CStdType.Void,
+//                "work_filewrite",
+//                JFormalParameter.EMPTY,
+//                CClassType.EMPTY,
+//                workBlock,
+//                null,
+//                null);
+//
+//        workMethod.setPop(1);
+//        workMethod.setPeek(1);
+//        workMethod.setPush(0);
+//        
+//        addInitStatement(workBlock);
         
         JMethodCallExpression close = 
             new JMethodCallExpression(null, new JThisExpression(null),
@@ -1077,9 +1130,9 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
                         new JThisExpression(null),
                         fileDefn.getIdent())
             });
-        JBlock body = new JBlock();
-        body.addStatement(new JExpressionStatement(close));
-        addInitStatement(body);
+//        JBlock body = new JBlock();
+//        body.addStatement(new JExpressionStatement(close));
+        addInitStatement(new JExpressionStatement(close));
         
 //        closeMethod = new JMethodDeclaration(null,
 //                at.dms.kjc.Constants.ACC_PUBLIC,

@@ -59,6 +59,12 @@ public class CommonPasses {
     /** number of cores to process for. */
     private int numCores;
     
+    /** if vectorizing early for some reason, remember so as not to try again later. 
+     * Seems to be necessary because vectorization does not set up types correctly on some introduced expressions
+     * e.g. __tmp2__7.a[1] */
+    
+    private boolean vectorizedEarly = false;
+    
     /**
      * Top level method for executing passes common to some current and all future StreamIt compilers.
      * @param str               SIRStream from {@link at.dms.kjc.Kopi2SIR}
@@ -146,6 +152,7 @@ public class CommonPasses {
 
             SimplifyPopPeekPush.simplify(str);
             VectorizeEnable.vectorizeEnable(str,null);
+            vectorizedEarly = true;
         }
         
         //fuse entire str to one filter if possible
@@ -272,7 +279,7 @@ public class CommonPasses {
               KjcOptions.frequencyreplacement || KjcOptions.redundantreplacement)) {
             // for now, do not run in combination with linear replacements
             // because some linear expressions do not have type set
-            SimplifyPopPeekPush.simplify(str);
+            if (! vectorizedEarly) { SimplifyPopPeekPush.simplify(str); }
         } else if (KjcOptions.vectorize>0) {
             System.err.println("Linear analysis + vectorization unsupported, because 3-address\n" +
                                "code cannot infer types of some expressions created.  Can fix\n" +
@@ -283,18 +290,7 @@ public class CommonPasses {
         // If vectorization enabled, create (fused streams of) vectorized filters.
         // the top level compile script should not allow vectorization to be enabled
         // for processor types that do not support short vectors. 
-//        System.err.println("// str before vectorization");
-//        SIRGlobal[] globals;
-//        if (global != null) {
-//            globals = new SIRGlobal[1];
-//            globals[0] = global;
-//        } else {
-//            globals = new SIRGlobal[0];
-//        }
-//        SIRToStreamIt.run(str, interfaces, interfaceTables, structs,
-//                          globals);
-//        System.err.println("// END str before vectorization");
-        VectorizeEnable.vectorizeEnable(str,null);
+        if (! vectorizedEarly) { VectorizeEnable.vectorizeEnable(str,null); }
         
         setWorkEstimate(WorkEstimate.getWorkEstimate(str)); 
         

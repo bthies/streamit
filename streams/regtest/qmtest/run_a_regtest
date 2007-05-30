@@ -1,0 +1,52 @@
+#!/usr/uns/bin/tcsh
+
+#
+# Run a regression test for normal testing rather than nightly: 
+# May have multiple tests going so long as use different command line param.
+# parameter is name of a file (filename) used to specify the tests with no
+# extension specified, but the actual filename should have extension ".xml"
+#
+# Expects: $cwd/filename.xml  exists as the file specifying the tests
+# Standard variables expected: $STREAMIT_HOME, $CLASSPATH, 
+#  if needed: $C_INCLUDE_PATH / $CPATH, $LD_LIBRARY_PATH / $LPATH
+#  if running tests for RAW: $TOPDIR
+#
+# Creates:  
+#  $STREAMIT_HOME/filename/        -- the test directory
+#  $STREAMIT_HOME/filename.qmr     -- the qmtest results file
+#  $STREAMIT_HOME/filename.qmr.xml -- the expanded qmtest results file
+#
+
+set echo
+set testnamefile=${cwd}/${1}.xml
+cd $STREAMIT_HOME
+set testdir=$STREAMIT_HOME/$1
+set raw_results_file=$STREAMIT_HOME/$1.qmr
+set xml_results_file=$STREAMIT_HOME/$1.qmr.xml
+set qmdir=$testdir/QMTest
+
+# clean out previous run if any.
+rm -fr $testdir $raw_results_file $xml_results_file
+
+# build test suite in named directory
+setenv QMTEST_DB_PATH $testdir
+mkdir $testdir
+pushd $testdir
+$STREAMIT_HOME/regtest/qmtest/build-qmtest.py $testnamefile '../'
+popd
+# create QMTest (fixed name) subdirectory with control files
+mkdir $qmdir
+cp ./regtest/qmtest/{classes.qmc,configuration} $qmdir/
+#cp ./regtest/qmtest/release_test.py $qmdir/streamit.py
+cp ./regtest/qmtest/streamit.py $qmdir/
+
+
+# having 2 compiles going simultaneously will generally work on a 2Gb machine
+# with an extra 2Gb of swap.  If running 3 or more tests at once, can get
+# 3 large compiles simultaneously thrashing for physical memory.
+#qmtest create-target -a processes=2 p2 process_target.ProcessTarget p
+#nice qmtest run -o $raw_results_file
+# use thread target on command line rather than process target:
+nice qmtest run -o $raw_results_file -j 2
+nice qmtest report -o $xml_results_file $raw_results_file
+

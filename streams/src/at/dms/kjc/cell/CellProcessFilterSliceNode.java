@@ -11,31 +11,28 @@ import at.dms.kjc.slicegraph.OutputSliceNode;
 
 public class CellProcessFilterSliceNode extends ProcessFilterSliceNode {
     
-    private CellProcessFilterSliceNode(FilterSliceNode filterNode, 
+    public CellProcessFilterSliceNode(FilterSliceNode filterNode, 
             SchedulingPhase whichPhase, BackEndFactory backEndBits) {
         super(filterNode, whichPhase, backEndBits);
     }
     
-    public static void processFilterSliceNode(FilterSliceNode filterNode, 
-            SchedulingPhase whichPhase, BackEndFactory backEndBits) {
+    public void processFilterSliceNode() {
         
         PPU ppu = ((CellBackendFactory) backEndBits).getPPU();
         CellComputeCodeStore ppuCS = ppu.getComputeCode();
         
         filterNode.getFilter().getSteadyMult();
         
-        // have an instance so we can override methods.
-        CellProcessFilterSliceNode self = new CellProcessFilterSliceNode(filterNode,whichPhase,backEndBits);
         if (filterNode.isFileInput()) {
             if (whichPhase == SchedulingPhase.INIT) {
                 ppuCS.addFileReader(filterNode);
-                //self.doit();
+                //doit();
             }
         } else if (filterNode.isFileOutput()) {
             if (whichPhase == SchedulingPhase.INIT)
                 ppuCS.addFileWriter(filterNode);
         } else {
-            self.doit();
+            doit();
         }
     }
     

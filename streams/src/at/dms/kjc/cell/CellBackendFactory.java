@@ -105,26 +105,25 @@ public class CellBackendFactory
     @Override
     public void processFilterSliceNode(FilterSliceNode filter,
             SchedulingPhase whichPhase, CellChip computeNodes) {
-        CellProcessFilterSliceNode.processFilterSliceNode(filter, whichPhase, this);
+        new CellProcessFilterSliceNode(filter, whichPhase, this).processFilterSliceNode();
     }
 
     @Override
     public void processFilterSlices(Slice slice, SchedulingPhase whichPhase,
             CellChip computeNodes) {
-        // TODO Auto-generated method stub
-
+        throw new AssertionError("processFilterSlices called, back end should be calling processFilterSlice(singular)");
     }
 
     @Override
     public void processInputSliceNode(InputSliceNode input,
             SchedulingPhase whichPhase, CellChip computeNodes) {
-         CellProcessInputSliceNode.processInputSliceNode(input, whichPhase, this);
+         new CellProcessInputSliceNode(input, whichPhase, this).processInputSliceNode();
     }
 
     @Override
     public void processOutputSliceNode(OutputSliceNode output,
             SchedulingPhase whichPhase, CellChip computeNodes) {
-        CellProcessOutputSliceNode.processOutputSliceNode(output, whichPhase, this);
+        new CellProcessOutputSliceNode(output, whichPhase, this).processOutputSliceNode();
     }
 
 }

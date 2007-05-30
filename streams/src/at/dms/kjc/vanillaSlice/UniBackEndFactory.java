@@ -79,6 +79,7 @@ public class UniBackEndFactory extends BackEndFactory<
     public UniProcessor getComputeNode(Integer specifier) {
         return processors.getNthComputeNode(specifier);
     }
+    
     /**
      * Process an input slice node: find the correct ProcElement(s) and add joiner code, and buffers.
      * please delegate work to some other object.
@@ -90,7 +91,7 @@ public class UniBackEndFactory extends BackEndFactory<
     @Override
     public void processInputSliceNode(InputSliceNode input,
             SchedulingPhase whichPhase, UniProcessors computeNodes) {
-        ProcessInputSliceNode.processInputSliceNode(input,whichPhase,this);
+        new ProcessInputSliceNode(input,whichPhase,this).processInputSliceNode();
 
     }
     
@@ -118,7 +119,7 @@ public class UniBackEndFactory extends BackEndFactory<
 
     public void processFilterSliceNode(FilterSliceNode filter,
             SchedulingPhase whichPhase, UniProcessors computeNodes) {
-        ProcessFilterSliceNode.processFilterSliceNode(filter,whichPhase,this);
+        new ProcessFilterSliceNode(filter,whichPhase,this).processFilterSliceNode();
     }
 
     /**
@@ -131,7 +132,7 @@ public class UniBackEndFactory extends BackEndFactory<
     @Override
     public void processOutputSliceNode(OutputSliceNode output,
             SchedulingPhase whichPhase, UniProcessors computeNodes) {
-        ProcessOutputSliceNode.processOutputSliceNode(output,whichPhase,this);
+        new ProcessOutputSliceNode(output,whichPhase,this).processOutputSliceNode();
 
     }
 

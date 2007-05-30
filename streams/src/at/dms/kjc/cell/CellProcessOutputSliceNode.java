@@ -7,20 +7,8 @@ import at.dms.kjc.slicegraph.OutputSliceNode;
 
 public class CellProcessOutputSliceNode extends ProcessOutputSliceNode {
 
-    private CellProcessOutputSliceNode(OutputSliceNode outputNode, 
+    public CellProcessOutputSliceNode(OutputSliceNode outputNode, 
             SchedulingPhase whichPhase, BackEndFactory backEndBits) {
         super(outputNode, whichPhase, backEndBits);
-    }
-    
-    public static void processOutputSliceNode(OutputSliceNode outputNode, 
-            SchedulingPhase whichPhase, BackEndFactory backEndBits) {
-        // have an instance so we can override methods.
-        CellProcessOutputSliceNode self = new CellProcessOutputSliceNode(outputNode,whichPhase,backEndBits);
-        self.doit();
-    }
-    
-    @Override
-    protected void additionalInitProcessing() {
-        
     }
 }

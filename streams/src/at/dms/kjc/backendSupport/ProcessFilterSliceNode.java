@@ -8,6 +8,7 @@ import at.dms.kjc.sir.*;
 
 /**
  * Process a FilterSliceNode creating code in the code store and buffers for connectivity.
+ * Provides some standard processing, and has hooks for additional processing.
  * @author dimock
  *
  */
@@ -34,7 +35,12 @@ public class ProcessFilterSliceNode {
     protected BackEndFactory backEndBits;
     protected ComputeNode location;
     
-    protected ProcessFilterSliceNode(FilterSliceNode filterNode, 
+    /**
+    * @param filterNode   the filterNode that needs code generated.
+    * @param whichPhase   a scheduling phase {@link SchedulingPhase}
+    * @param backEndBits  a BackEndFactory to access layout, etc.
+    * */
+   public ProcessFilterSliceNode(FilterSliceNode filterNode, 
             SchedulingPhase whichPhase, BackEndFactory backEndBits) {
         this.filterNode = filterNode;
         this.whichPhase = whichPhase;
@@ -42,17 +48,12 @@ public class ProcessFilterSliceNode {
     }
     
     /**
-     * Create code for a FilterSliceNode (actually for the whole slice).
-     * @param filterNode   the filterNode that needs code generated.
-     * @param whichPhase   a scheduling phase {@link SchedulingPhase}
-     * @param backEndBits  a BackEndFactory to access layout, etc.
+     * Create code for a FilterSliceNode.
+     * May request creation of channels, and cause Process{Input/Filter/Output}SliceNode to be called 
+     * for other slice nodes.
      */
-    public static  void processFilterSliceNode(FilterSliceNode filterNode, 
-            SchedulingPhase whichPhase, BackEndFactory backEndBits) {
-
-        // have an instance so we can override methods.
-        ProcessFilterSliceNode self = new ProcessFilterSliceNode(filterNode,whichPhase,backEndBits);
-        self.doit();
+    public void processFilterSliceNode() {
+        doit();
     }
     
     protected void doit() {

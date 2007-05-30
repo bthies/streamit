@@ -22,7 +22,13 @@ public class ProcessOutputSliceNode {
     protected ComputeNode location;
     protected ComputeCodeStore codeStore;
     
-    protected ProcessOutputSliceNode(OutputSliceNode outputNode, 
+    /**
+     * Constructor
+     * @param outputNode    the OutputSliceNode that may need code generated.
+     * @param whichPhase   a scheduling phase {@link SchedulingPhase}
+     * @param backEndBits  a BackEndFactory to access layout, etc.
+     */
+    public ProcessOutputSliceNode(OutputSliceNode outputNode, 
             SchedulingPhase whichPhase, BackEndFactory backEndBits) {
         this.outputNode = outputNode;
         this.whichPhase = whichPhase;
@@ -31,16 +37,9 @@ public class ProcessOutputSliceNode {
     
     /**
      * Create code for a OutputSliceNode.
-     * @param outputNode    the OutputSliceNode that may need code generated.
-     * @param whichPhase   a scheduling phase {@link SchedulingPhase}
-     * @param backEndBits  a BackEndFactory to access layout, etc.
      */
-    public static  void processOutputSliceNode(OutputSliceNode outputNode, 
-            SchedulingPhase whichPhase, BackEndFactory backEndBits) {
-        
-        ProcessOutputSliceNode self = 
-            new ProcessOutputSliceNode(outputNode, whichPhase, backEndBits);
-        self.doit();
+    public void processOutputSliceNode() {
+        doit();
     }
     
     protected void doit() {

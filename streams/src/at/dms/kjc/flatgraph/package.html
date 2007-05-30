@@ -13,41 +13,67 @@
   this software for any purpose.  It is provided "as is"
   without express or implied warranty.
 -->
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" [
-<!ELEMENT code - - (#PCDATA)>
-]>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
 <html>
 <head>
 <title>Overview of at.dms.kjc.flatgraph</title>
 </head>
 <body>
+<h2>FlatNode basics</h2>
 The flatgraph package contains classes to create and represent the SIR
 graph in a flat format with no containers (thus no hierarchy or
 structure).  The flat graph is intimately tied to the SIR
-graph through the {@link at.dms.kjc.flatgraph.FlatNode#contents} and / or {@link at.dms.kjc.flatgraph.FlatNode#oldContents} fielde.
- The constructed graph of FlatNodes, the Flat graph, will havs
-one node for each SIRFilter, SIRSplitter, and SIRJoiner in the SIR graph (except when --sync is
-enabled), but there will exist no containers, FlatNodes directly
+graph through the {@link at.dms.kjc.flatgraph.FlatNode#contents} and / or {@link at.dms.kjc.flatgraph.FlatNode#oldContents} fields.
+ The constructed graph of {@link FlatNode}s, the "flat graph", will have
+one node for each SIRFilter, SIRSplitter, and SIRJoiner in the SIR graph (except when <code>--sync</code> is
+enabled), but there will exist no containers, {@link FlatNode}s directly
 connect to/from their downstream/upstream nodes.
-<p>
-We create a graph of {@link at.dms.kjc.flatgraph.FlatNode} 
+</p><p>
+We create a graph of {@link at.dms.kjc.flatgraph.FlatNode}s
 that represents the underlying SIR graph of the application using
 {@link at.dms.kjc.flatgraph.GraphFlattener}
-<p>
+</p><p>
 Each SIROperator will be converted to a FlatNode by GraphFlattener: SIRFilter into a
 FlatNode with at most one input/one output, SIRSplitter into a
 multiple output/one input, SIRJoiner into multiple input/one output.
-<p>
-If --sync is enabled, it will attempt to coalesce multiple splitters
+</p><p>
+If <code>--sync</code> is enabled, it will attempt to coalesce multiple splitters
 or joiners into a single FlatNode.
-<p>
+</p><p>
 Warning: In the presence of 0-weight edges in splitters or joiners,
 there will not be a 1-1 correspondence between offsets in the weights
-arrays of the spliiers and joiners and the nodes vector in a FlatNode.
+arrays of the splitters and joiners and the nodes vector in a FlatNode.
 Use the {@link at.dms.kjc.flatgraph.FlatWeights} to iterate if you need weight information
-from a splitter / joiner anc corrresponding edge from a FlatNode.
+from a splitter / joiner and corresponding edge from a FlatNode.
+</p>
+<h2>Static-Rate Stream Sub-Graphs</h2>
+The {@link StreamGraph Stream Graph} is a graph of {@link StaticStreamGraph static-rate stream subgraph}s, "SSG"s.
+Each SSG is a single-input, single-output graph represented internally as a graph of {@link FlatNode }s.
+The Stream Graph is a graph of SSG's.
+Any original dynamic-rate edges in the original SIR graph are removed from the SSGs: They are remembered as {@link SSGEdge}s.
+A dynamic rate edge is expected to occur only between filters, but there is as yet no graph transformation to ensure that
+this is the case.
+Filters connecting to a dynamic edge are given I/O rates of 0 for that edge, and a input / output type of Void for that edge.
+If there is more than one input (resp. output) filter with a disconnected from a dynamic edge, then the single input / single output 
+property of the SSG is maintained by introducing a splitter (resp. joiner) with 0-weight edges.
+</p><p>
+Create a StreamGraph as</p><pre>
+        StreamGraph streamGraph = new StreamGraph((new GraphFlattener(str)).top);
+        streamGraph.createStaticStreamGraphs();
+</pre>
+<p>After using SSGs, you can recreate the SIR graph, or continue to use a FlatNode representation:</p><pre>
+        str = streamGraph.recreateSIR();
+        FlatNode strTop = streamGraph.getTopLevel().getTopLevel();
+</pre>
 <p>
-@see at.dms.kjc.sir
-
+There is a visitor interface defined to visit SSGs: {@link StreamGraph}.
+There is a {@link ScheduledStaticStreamGraph} subclass of SSGs that will provide a map from FlatNode to Integer for a 
+single-appearance schedule.  (It turns out that SIROperator to Integer would have been better since the setTopLevelSIR operation 
+a SSG re-creates all the FlatNodes and thus invalidates any previous scheduling information.)
+</p><p>
+The advantage of SSGs is that scheduling and partitioning do not need to be enhanced to deal with dynamic-rate edges.
+The disadvantage is in determining the quirks, and maintaining the SSG representation: it should eventually be discontinued
+in favor of enhancing the scheduler and partitioners to deal with dynamic-rate edges.
+</p>
 </body>
 </html>

@@ -9,7 +9,7 @@ import at.dms.kjc.sir.*;
 
 /**
  * @author mgordon
- *
+ * No idea why this is in the at.dms.kjc.flatgraph except that it subclasses FlatVisitor
  */
 public class WorkSorted implements FlatVisitor {
     private LinkedList<FlatNode> sortedList; 

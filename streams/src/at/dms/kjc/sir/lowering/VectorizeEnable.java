@@ -8,7 +8,8 @@ import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.iterator.*;
 import at.dms.kjc.sir.lowering.fusion.FusePipelines;
-import at.dms.kjc.sir.lowering.fusion.Lifter;
+//import at.dms.kjc.sir.lowering.fusion.Lifter;
+import at.dms.kjc.sir.lowering.partition.WorkEstimate;
 
 import java.util.*;
 
@@ -21,16 +22,21 @@ public class VectorizeEnable {
      * Set to true to list sequences of vectorizable filters before fusion and individual vectorizable filters after fusion.
      */
     public static boolean debugging = true;
-    /**
-     * Set to true to have Vectorizable print out reasons for not vectorizing a filter.
-     */
-    public static boolean debugVectorizable = false;
 
-    /**
+
+    
+    /** 
      * Perform naive vectorization on eligible filters in a stream.
      * <br/>
-     * Causes sequences of {@link Vectorizable#vectorizable(SIRFilter) vectorizable} filters to be fused.
-     * Causes {@link Vectorizable#vectorizable(SIRFilter) vectorizable} filters to be executed a multiple of 4 times per steady state.
+     * Causes subgraphs and pipeline segments of 
+     * {@link Vectorizable#vectorizable(SIRFilter) vectorizable} filters to be fused
+     * if filters after the first do not peek.
+     * TODO: After fusion, vectorized filters should communicate with vectors to subsequent
+     * peeking vectorized filters.  (test on filterbank, channelvocoder).
+     * TODO: If a duplicating filter is followed by a peeking vectorized filter, then 
+     * vectorize data before the duplicating splitter.
+     * Causes {@link Vectorizable#vectorizable(SIRFilter) vectorizable} filters to be 
+     * executed a multiple of 4 times per steady state.
      * <br/>
      * Vectorization should be run after partitioning, but before fusion or (final) scheduling.
      * <br/>
@@ -42,7 +48,7 @@ public class VectorizeEnable {
      * </li></ul>
      * @param str  the Stream to be munged.
      * @param partitionTable  partition table so filters in different partitions are not fused.  Not currently checked!
-     * @return the munged Stream (as a convenience).
+     * @return modified str (str replaced with modified version in parent if any)
      */
     public static SIRStream vectorizeEnable(SIRStream str,
             Map<SIROperator,Integer> partitionTable) {
@@ -51,10 +57,50 @@ public class VectorizeEnable {
             // vector registers are at least 8 bytes.
             return str;
         }
+
+        if (debugging) {
+            // now find all vectorizable filters in fused graph
+            Set<SIRFilter> vectorizableFilters = markVectorizableFilters(str);
+            // find maximal subgraphs or pipeline segments that are not in feedback loops.
+            Map<SIRStream,List<intPair>> segments = findVectorizablesegments(vectorizableFilters,str);
+            
+            System.err.println("VectorizeEnable: before fusing vectorizable filters");
+            // diagnostic dump...
+            dumpStructure(segments);
+        }
         
-        // find vectorizable regions and fuse.
-        vectorizeEnable2(str);
+        // Fuse together all fusable sub-graphs or pipeline segments
+        // of vectorizable filters, preserving vectorizability.
         
+        //str = FusePipelines.fusePipelinesOfVectorizableFilters(str);  old pipeline-only version
+        str = FusePipelines.fusePipelinesOfVectorizableStreams(str);
+
+        // now find all vectorizable filters in fused graph
+        Set<SIRFilter> vectorizableFilters = markVectorizableFilters(str);
+        // find maximal subgraphs or pipeline segments that are not in feedback loops.
+        Map<SIRStream,List<intPair>> segments = findVectorizablesegments(vectorizableFilters,str);
+        
+        if (debugging) {
+            System.err.println("VectorizeEnable: after fusing vectorizable filters");
+            // diagnostic dump...
+            dumpStructure(segments);
+            WorkEstimate workEst = WorkEstimate.getWorkEstimate(str);
+            workEst.printGraph(str, "work-and-vectorization.dot");
+        }
+        
+        // find the filters to vectorize
+        Set<SIRFilter> tops = new HashSet<SIRFilter>();
+        Set<SIRFilter> bots = new HashSet<SIRFilter>();
+        Set<SIRFilter>  all = new HashSet<SIRFilter>();
+        topsBotsAll(segments,tops,bots,all);
+        
+        // TODO: if a splitter preceeds a top filter and 
+        // all filters after the splitter are vectorizable and
+        // a top filter peeks and the splitter is a duplicate 
+        // then introduce a vectorizable identity filter before the splitter
+        // to minimize the gathering needed to peek.  XXX: won't work.
+        // in fact: RR splitter or joiner in vectorized segment will
+        // have limitation on when it can be fused.
         // vectorize filters that can usefully be vectorized.
         IterFactory.createFactory().createIter(str).accept(
                 new EmptyStreamVisitor() {
@@ -140,72 +186,6 @@ public class VectorizeEnable {
     
     
 
-    
-    /** Try again without relying on fusion to detect subgraphs.
-     * (But allow fusion to fuse subgraphs).
-     * The subgraphs found here may not become fused because of peeking.
-     * However, (1) TODO: after fusion any subgraphs found here can be connected by passing
-     * vectors over channels.
-     * (2) TODO: If the top level is a splitjoin and first fiter in splitjoin peeks then
-     * may want to put conversion from scalar to vector before splitter -- saved duplication
-     * of gather operations if peek ranges of silters below splitter overlay. 
-     * XXX: this is not yet complete and is used only as a fancier debugging dump.
-     * @param str stream to process: vectorize vectorizable portions 
-     * @return modified str (str replaced with modified version in parent if any)
-     */
-    public static SIRStream vectorizeEnable2(SIRStream str) {
-        if (KjcOptions.vectorize < 8) {
-            // can not vectorize ints and floats unless
-            // vector registers are at least 8 bytes.
-            return str;
-        }
-
-        if (debugging) {
-            // now find all vectorizable filters in fused graph
-            Set<SIRFilter> vectorizableFilters = markVectorizableFilters(str);
-            // find maximal subgraphs or pipeline segments that are not in feedback loops.
-            Map<SIRStream,List<intPair>> segments = findVectorizablesegments(vectorizableFilters,str);
-            
-            System.err.println("VectorizeEnable: before fusing vectorizable filters");
-            // diagnostic dump...
-            dumpStructure(segments);
-        }
-        
-        // Fuse together all fusable sub-graphs or pipeline segments
-        // of vectorizable filters, preserving vectorizability.
-        
-        //str = FusePipelines.fusePipelinesOfVectorizableFilters(str);  old pipeline-only version
-        str = FusePipelines.fusePipelinesOfVectorizableStreams(str);
-
-        
-        // now find all vectorizable filters in fused graph
-        Set<SIRFilter> vectorizableFilters = markVectorizableFilters(str);
-        // find maximal subgraphs or pipeline segments that are not in feedback loops.
-        Map<SIRStream,List<intPair>> segments = findVectorizablesegments(vectorizableFilters,str);
-        
-        if (debugging) {
-            System.err.println("VectorizeEnable: after fusing vectorizable filters");
-            // diagnostic dump...
-            dumpStructure(segments);
-        }
-        
-        // find the filters to vectorize
-        Set<SIRFilter> tops = new HashSet<SIRFilter>();
-        Set<SIRFilter> bots = new HashSet<SIRFilter>();
-        Set<SIRFilter>  all = new HashSet<SIRFilter>();
-        topsBotsAll(segments,tops,bots,all);
-        
-        // TODO: if a splitter preceeds a top filter and 
-        // all filters after the splitter are vectorizable and
-        // a top filter peeks and the splitter is a duplicate 
-        // then introduce a vectorizable identity filter before the splitter
-        // to minimize the gathering needed to peek.  XXX: won't work.
-        // in fact: RR splitter or joiner in vectorized segment will
-        // have limiitation on when it can be fused.
-        
-        return str;
-    }
-    
     /** find location of filters in segments: in a segment, top (first filter) of a segment, bottom (last filter) of a segment */
     private static void topsBotsAll(Map<SIRStream,List<intPair>> segmentmap,
             Set<SIRFilter> tops,Set<SIRFilter> bots,Set<SIRFilter> all) {

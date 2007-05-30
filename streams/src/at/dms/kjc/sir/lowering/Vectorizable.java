@@ -28,7 +28,7 @@ public class Vectorizable {
      * Set to true to print out reasons to not vectorize a filter, and variables dependent on inputs
      * for filters that fail the data dependency check.
      */
-    static boolean debugging = true;
+    static boolean debugging = false;
     
     /**
      * reason for disqualifying a filter
@@ -494,9 +494,9 @@ public class Vectorizable {
                     
                     @Override
                     // gcc does not automatically support shifts, so disallow until 
-                    // we develop intrinsics.  (Even so the SSE has some limitations:
-                    // the value that you are shifting by must be either immediate or
-                    // at least 64 bits long (possible by splatting into a vector register)
+                    // we develop intrinsics. 
+                    // With intrinsics: PPE alows shifting by a vector,
+                    // SPE allows shifting by a scalar or a vector.
                     public void visitShiftExpression(JShiftExpression self,
                             int oper,
                             JExpression left,

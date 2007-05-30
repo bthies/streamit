@@ -17,6 +17,7 @@ public class PartitionDot extends StreamItDot {
     private boolean simple; // if true, then use simple labels for filters (no numbers)
     private boolean markStateful; // if true, then indicate which filters are stateful
     private boolean markIO; // if true, marks pop and push rates in filters
+    private boolean markVectorizable; // if true, marks vectorizable filters.
     private HashMap[] execCounts; // schedule for stream (only used if markIO is true)
     private HashMap<SIROperator, Object> partitions;
     // randomized order of color table so that like colors do not end up next to each other.
@@ -75,6 +76,7 @@ public class PartitionDot extends StreamItDot {
         this.simple = simple;
         this.markStateful = markStateful;
         this.markIO = markIO;
+        this.markVectorizable = KjcOptions.vectorize > 0;
         // initialize execution counts if we are marking I/O
         if (markIO) {
             execCounts = SIRScheduler.getExecutionCounts(str);
@@ -115,7 +117,19 @@ public class PartitionDot extends StreamItDot {
             }
         }
 
-        return origLabel + prefixLabel + partitions.get(op) + ioLabel + stateLabel +
+        String vecLabel = "";
+        if (markVectorizable && (op instanceof SIRFilter)) {
+            boolean vectorizable = at.dms.kjc.sir.lowering.Vectorizable.vectorizable((SIRFilter)op);
+            boolean useful = vectorizable && at.dms.kjc.sir.lowering.Vectorizable.isUseful((SIRFilter)op);
+            if (vectorizable) {
+                vecLabel += "\\nVectorizable";
+                if (!useful) {
+                    vecLabel += " but not useful";
+                }
+            }
+        }
+        
+        return origLabel + prefixLabel + partitions.get(op) + ioLabel + stateLabel + vecLabel + 
             "\" color=\"" + color_table[offset] + "\" style=\"filled";
     }
 

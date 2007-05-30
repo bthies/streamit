@@ -99,10 +99,10 @@ public class Vectorize {
                         1, 
                         new JExpression[]{new JIntLiteral(
                                 filter.getPushInt() * ((KjcOptions.vectorize / 4) - 1))}),
-                "__POKEBUFFER__",
+                RenameAll.newName("__POKEBUFFER"),
                 null);
         JVariableDefinition pokeBufOffsetDef = new JVariableDefinition(
-                CStdType.Integer, "__POKEBUFFERHEAD__");
+                CStdType.Integer, RenameAll.newName("__POKEBUFFERHEAD"));
         JFieldAccessExpression pokeBufRef = new JFieldAccessExpression(
                 null,
                 new JThisExpression(),
@@ -117,15 +117,20 @@ public class Vectorize {
         JMethodDeclaration[] ms = filter.getMethods();
         for (JMethodDeclaration m : ms) {
             JBlock b = m.getBody();
-            JBlock newB = mungMethodBody(b, vectorizePush[0], vectorIds, filter, pokeBufRef, pokeBufOffset);
+            JBlock newB = mungMethodBody(b, vectorizePush[0], vectorIds, filter, pokeBufRef, pokeBufOffset, vectorInputTape, vectorOutputTape);
             m.setBody(newB);
         }
         
         // pull vector constants to const (ACC_FINAL) fields or local variables.
         raiseVectorConstants(filter);
         
+        if (vectorOutputTape && ! vectorizePush[0]) {
+            System.err.println ("Vectorize required to create vector output for filter " 
+                    + filter + " but vector type does not reach push statements");
+        }
+        
         // put in poke buffer handling
-        if (filter.getPushInt() > 1 && vectorizePush[0]) {
+        if (filter.getPushInt() > 1 && vectorizePush[0] && ! vectorOutputTape) {
             putInPokeBuffer(filter,pokeBufDefn,pokeBufRef,pokeBufOffsetDef,pokeBufOffset);
         }
         
@@ -302,23 +307,24 @@ public class Vectorize {
     static JBlock mungMethodBody(JBlock methodBody, 
             boolean vectorizePush, Map<String,CType> vectorIds,
             SIRFilter filter, JExpression pokeBuf,
-            JExpression pokeBufOffset) {
+            JExpression pokeBufOffset,
+            boolean vectorInputTape, boolean vectorOutputTape) {
 //        // field initializations already moved, move initialization of locals.
 //        JStatement methodBody2 = moveLocalInitializations(methodBody,vectorIds.keySet());
+
         // expand peeks, pops, and optionally pushes, and update types of fields and locals.
-        
-        JStatement methodbody3 = fixTypesPeeksPopsPushes(methodBody/*2*/, 
+        JStatement methodbody = fixTypesPeeksPopsPushes(methodBody/*2*/, 
                 filter.getPopInt(),  // original number popped in steady state.
                 vectorizePush, 
                 filter.getPushInt(),  // original number pushed in steady state.
                 pokeBuf,
                 pokeBufOffset,
-                vectorIds);
+                vectorIds, vectorInputTape, vectorOutputTape);
          // return a block.
-        if (methodbody3 instanceof JBlock) {
-            return (JBlock)methodbody3;
+        if (methodbody instanceof JBlock) {
+            return (JBlock)methodbody;
         } else {
-            JBlock retval = new JBlock(new JStatement[]{methodbody3});
+            JBlock retval = new JBlock(new JStatement[]{methodbody});
             return retval;
         }
     }
@@ -340,10 +346,12 @@ public class Vectorize {
     /**
      * Change types on declarations and expand peeks, pops, and possibly pushes.
      * @param methodBody method being processed.
-     * @param vectorizePush do vectors flow to push or only scalars?
+     * @param vectorizePush did analysis find that vector values flow to push or only scalar values?
      * @param pokeBufRef root expression to make an array reference from to access poke buffer.
      * @param pokeBufOffset variable indicating current position in poke buffer.
      * @param vectorIds indication of what variables need vector types
+     * @param vectorInputTape influences code generated for peek, pop (if false must gather).
+     * @param vectorOutputTape influences code for push (if false must use poke buffer if stride > 1 or scatter if stride == 1).
      * @return
      */
     static JStatement fixTypesPeeksPopsPushes(JStatement methodBody,
@@ -351,7 +359,8 @@ public class Vectorize {
             final boolean vectorizePush, final int outputStride,
             final JExpression pokeBufRef,
             final JExpression pokeBufOffset,
-            final Map<String,CType> vectorIds) {
+            final Map<String,CType> vectorIds,
+            final boolean vectorInputTape, final boolean vectorOutputTape) {
             class fixTypesPeeksPopsPushesVisitor extends StatementQueueVisitor {
                 JExpression lastLhs = null;   // left hand side of assignment being processed or null if not processing rhs of assignment
 //                JExpression lastOldLhs = null; // value before converting.
@@ -387,10 +396,21 @@ public class Vectorize {
                 @Override
                 public Object visitPopExpression(SIRPopExpression self,
                         CType tapeType) {
-                    if (lastLhs == null) {
-                        // just a pop not returning a value.
-                        return self;
+
+                    // if: either pop is just for effect of removing from input tape
+                    //   of pop is from a tape that is already in vector form.
+                    // then:
+                    //   just pop from input tape.
+                    if (lastLhs == null || vectorInputTape) {
+                        if (vectorInputTape) {
+                            return new SIRPopExpression(new CVectorType((CNumericType)tapeType, KjcOptions.vectorize), 
+                                    self.getNumPop());
+                        } else {
+                            return self;
+                        }
                     }
+                    // else:
+                    //   must transform pop() to perform gather operation.
                     // e = pop();    =>
                     // (e).a[1] = peek(1 * inputStride);
                     // (e).a[2] = peek(2 * inputStride);
@@ -421,14 +441,30 @@ public class Vectorize {
                     replaceStatement = true; // throw out statement built with this return value
                     return self;
                 }
+                
+                
                 @Override
                 public Object visitPeekExpression(SIRPeekExpression self,
                         CType tapeType, JExpression arg) {
+                    // if: 
+                    //   peeking a tape that will be in vector form after transformation
+                    // then:
+                    //   just peek
+                    if (vectorInputTape) {
+                        return new SIRPeekExpression(arg, 
+                                new CVectorType((CNumericType)tapeType, KjcOptions.vectorize));
+                    }
+                    // else:
+                    //   peek becomes a gather operation.
                     // e1 = peek(e2);  =>
                     // (e1).a[0] = peek((e2) + 0 * inputStride);
                     // ...
                     // (e1).a[3] = peek((e2) + 3 * inputStride);
-
+                    // The above could be optimized for the case where the stride == 1
+                    // && the original pop rate is a multiple of 4
+                    // && the peek offset is a multiple of 4
+                    // && the initial buffer offset is 0
+                    // && the buffer size is a multiple of 4 (just in the case of a circular buffer.)
                     JExpression lhs = lastLhs;
                     // left hand side L converted to L.v, but we want just L 
                     // so as to convert to L.a[0] .. L.a[n] below
@@ -454,10 +490,28 @@ public class Vectorize {
                 public Object visitPushExpression(SIRPushExpression self,
                         CType tapeType,
                         JExpression arg) {
+                    
+                    // if:
+                    //   vector type does not reach output
+                    // then:
+                    //   just keep existing push
                     if (! vectorizePush) {
                         // vector type does not reach push expression.
                         return self;
                     }
+
+                    // else if:
+                    //   output tape will become a tape of vectors
+                    // then:
+                    //   just push the vector value.
+                    if (vectorOutputTape) {
+                        JExpression processedArg = (JExpression)arg.accept(this);
+                        return new SIRPushExpression(processedArg,
+                                new CVectorType((CNumericType)tapeType,KjcOptions.vectorize));
+                    }
+                    // else:
+                    //   need to perform a scatter operation as part of pushing.
+                    
                     // process argument but do not put on ".v" on vectors
                     suppressSelector = true;
                     arg.accept(this);

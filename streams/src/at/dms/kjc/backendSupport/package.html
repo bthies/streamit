@@ -1,0 +1,169 @@
+<!--
+  Copyright 2003 by the Massachusetts Institute of Technology.
+
+  Permission to use, copy, modify, and distribute this
+  software and its documentation for any purpose and without
+  fee is hereby granted, provided that the above copyright
+  notice appear in all copies and that both that copyright
+  notice and this permission notice appear in supporting
+  documentation, and that the name of M.I.T. not be used in
+  advertising or publicity pertaining to distribution of the
+  software without specific, written prior permission.
+  M.I.T. makes no representations about the suitability of
+  this software for any purpose.  It is provided "as is"
+  without express or implied warranty.
+-->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Package documentation for at.dms.kjc.backendSupport</title>
+<body>
+<h1>Package documentation for at.dms.kjc.backendSupport</h1>
+<p>
+For information about using the classes in this package for adding a
+new back end, please see 
+<a href="../../../../doc/implementation-notes/adding-a-backend.html">adding-a-backend</a>. 
+</p><p>
+The backendSupport package was refactored from the 
+<a href="../spacetime/package.html">spacetime</a> back end. 
+</p><p>
+Back end support has several phases:
+</p>
+<ul>
+<li>
+<p>Standard transformations and optimizations:<br/>
+{@link CommonPasses} takes the data passed to the back end from 
+{@link at.dms.kjc.StreaMITMain StreaMITMain}, performs a standard
+suite of optimizations on the {@link at.dms.kjc.sir stream graph}
+(see {@link at.dms.kjc.sir.lowering}), 
+and converts to an unstructured graph format (see 
+{@link at.dms.kjc.slicegraph}.
+</p>
+<p>
+If you have a new optimization, the place to put it is usually in
+<code>CommonPasses</code> so that it is available for all back ends. 
+</p>
+</li>
+<li>
+<p>
+Laying out code on your collection of processors:<br/>
+This package supplies several methods of performing layout:
+a greedy method {@link  BasicGreedyLayout} and a method using
+simulated annealing {@link NoSWPipeLayout}.
+Both methods assume that there is an estimate of work per filter.
+So far, we only have work estimates for the raw processor.
+Both methods assume that all processors are interchangeable.
+If this is not the case, it is not too difficult to subclass 
+{@link NoSWPipeLayout}.  ({@link  BasicGreedyLayout} needs to be
+enhanced to support limiting the placement of a filter to a particular
+subset of the processors.)
+</p>
+</li>
+<li><p>Lowering to Kopi code:<br/>
+This is where most of the code in this package is used.
+See
+<a href="../../../../doc/implementation-notes/adding-a-backend.html">adding-a-backend</a>
+for description of steps.
+</p>
+<p>
+The code for each filter has its <code>push</code>, <code>pop</code>,
+and <code>peek</code> expressions replaced with calls to communication
+code stored in {@link Channel}s.  The code for filters, and generated
+code for splitters and joiners is stored in {@link ComputeCodeStore}s.
+{@link ProcessFilterSliceNode} handles the translation of filters and
+storing code into {@link ComputeCodeStore}s;
+{@link CodeStoreHelperSimple} wraps the translated code with
+scheduling code (including some scheduling action on channels).
+Similarly, {@link ProcessInputSliceNode} and 
+{@link CodeStoreHelperJoiner} create code for, and wrap scheduling
+code for {@link at.dms.kjc.slicenode.InputSliceNode}s.
+{@link ProcessOutputliceNode} and 
+{@link CodeStoreHelperSplitter} create code for, and wrap scheduling
+code for {@link at.dms.kjc.slicenode.OutputSliceNode}s.
+These classes have some predefined extension points, and can be
+sub-classed as needed.
+</p>
+<p>
+Sub-class {@link BackEndFactory} to define your processor type
+(subclassing {@link ComputeNode}), your system as a whole
+(implementing {@link ComputeNodesI} or subclassing {@link ComputeNodes}).
+You can add extra bits of code generation to a subclass of 
+{@link ProcessFilterSliceNode} etc. for general extension, or add
+processor-specific bits of code generation to a subclass of 
+{@link ComputeCodeStore}.
+All of the subclasses can be assembled in a way in which they can
+reference each other by subclassing {@link BackEndFactory}.
+</p>
+<p>
+{@link BackEndScaffold} contains the routines to drive the generation
+of Kopi code for each SliceNode.
+It drives the {@link ProcessFilterSliceNode} code etc. based on a
+schedule {@link SpaceTimeScheduleAndPartitioner}.
+The schedule has three phases, enumerated in {@link SchedulingPhase}.
+Both the INIT and PRIMEPUMP phases generate code into the
+initialization portion of a  {@link ComputeCodeStore}.  The STEADY
+phase generates code into the steady-state portion of a 
+{@link ComputeCodeStore}.
+(There is also a cleanup portion of a {@link ComputeCodeStore} that is
+currently used only for closing {@link at.dms.kjc.sir.FileWriter}s.
+</p>
+</li>
+<li>
+<p>{@link EmitCode} creates C code from the Kopi code contained in the
+ComputeCodeStores and the Channels.
+Since each processor type seems to require a slightly different top-level
+<code>main</code> function, there is no provided top-level 
+<code>main</code>.
+</p>
+<p>
+{@link EmitTypedefs} will create some C code that is commonly stored
+in a <code>.h</code> file. You will probably want to use some
+additional code to package whatever else you need into the <code>.h</code> file
+</p>
+</li>
+</ul>
+<h2>Channels</h2>
+<p>
+{@link Channel} has many subclasses.
+</p>
+<p>
+{@link GetOrMakeChannel} should be subclassed to create channels of
+the appropriate subclass of {@link Channel}.
+It defaults to using arrays to implement channels, which should work
+for intra-processor communication.  You will probably want to override
+{@link GetOrMakeChannel#makeInterSliceChannel(InterSliceEdge) makeInterSliceChannel}
+to handle inter-processor communication.
+</p>
+<p>The following subclasses of channel are implemented for
+intra-processor communication</p>
+<ul>
+<li>
+{@link UnbufferredPopChannel} and {@link UnbufferredPushChannel} have
+no underlying data structure and are used to communicate directly
+between filter code and joiner (resp. splitter) code.</li>
+<li>{@link DelegatingChannel} has no underlying data structure and is
+used for trivial splitters and joiners to pass requests for action on
+a channel directly to the channel implementing the InterSliceEdge.</li> 
+<li>{@link ChannelAsArray} provides an array implementation of a
+buffer that is completely filled by the producer and completely
+emptied by the consumer.</li>
+<li>{@link ChannelAsCircularArray} provides an implementation as a
+circular array of size 2^n that may contain residual data between one
+execution of the consumer and the next.</li>
+<li>There is no implementation yet that is suitable for large
+structures or arrays over channels when there is residual data between one
+execution of the consumer and the next. 
+In this case, rounding up to a power of 2 may cause excessive space use.</li>
+<li>{@link BufferSize} is used to determine the minimum size for array
+implementations of channels.</li>
+</ul>
+<p>Passing arrays over channels is a nuisance when it comes to
+generating working and efficient C code, since C has inadequate
+support for array dimensions.  One idea for fixing this is to use
+{@link Channel#assignFromPeekMethod()} and {@link Channel#assignFromPopMethod()}
+to copy arrays directly into local variables.  
+
+NB: this needs support in the channel implementations and in {@link EmitCode}.
+</p>
+</body>
+</html>

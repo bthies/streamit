@@ -134,7 +134,7 @@ public class LatencyConstraints {
             // all senders and receivers.
             // We hope that the result does not cross any dynamic rate boundaries
             // since the constrained scheduler does not know what to do at dynamic rate boundaries.
-            Vector<SIRStream> sendRecieveLocations = new Vector<SIRStream>(Arrays.asList(receivers));
+            Vector<SIROperator> sendRecieveLocations = new Vector<SIROperator>(Arrays.asList(receivers));
             for (SIRPortalSender sender : senders) {
                 sendRecieveLocations.add(sender.getStream());
             }

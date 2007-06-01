@@ -119,6 +119,49 @@ public class SIRNavigationUtils {
     }
 
     /**
+     * Return set of all filters immediately following this operator or following through some sequence of splitters and joiners.
+     * @param str as per description
+     * @return as per description
+     */
+    public static Set<SIRFilter> getSuccessorFilters(SIROperator str) {
+        Set<SIRFilter> filters = new HashSet<SIRFilter>();
+        Set<SIROperator> successors = getSuccessorOpers(str);
+        for (SIROperator succ : successors) {
+            if (succ instanceof SIRFilter) {
+                filters.add((SIRFilter)succ);
+            } else if (succ instanceof SIRSplitter || succ instanceof SIRJoiner) {
+                filters.addAll(getSuccessorFilters(succ));
+            } else {
+                assert false : succ;  // should only find filters, splitters, joiners
+                // if allowed call with SIRHelper and sych like, then should remove assert
+            }
+        }
+        return filters;
+    }
+    
+
+    /**
+     * Return set of all filters immediately preceeding this operator or preceeding through some sequence of splitters and joiners.
+     * @param str as per description
+     * @return as per description
+     */
+    public static Set<SIRFilter> getPredecessorFilters(SIROperator str) {
+        Set<SIRFilter> filters = new HashSet<SIRFilter>();
+        Set<SIROperator> successors = getPredecessorOpers(str);
+        for (SIROperator succ : successors) {
+            if (succ instanceof SIRFilter) {
+                filters.add((SIRFilter)succ);
+            } else if (succ instanceof SIRSplitter || succ instanceof SIRJoiner) {
+                filters.addAll(getPredecessorFilters(succ));
+            } else {
+                assert false : succ;  // should only find filters, splitters, joiners
+                // if allowed call with SIRHelper and sych like, then should remove assert
+            }
+        }
+        return filters;
+    }
+    
+    /**
      * Find a stream's predecessor operator in its parent.
      * Should return filter, splitter, joiner, or possibly recursive stub.
      * @param str  stream that we wish to find predecessor of.
@@ -205,9 +248,9 @@ public class SIRNavigationUtils {
      * @param ss a collection of SIROperators (or of any subtype of SIROperator).
      * @return the common ancestor, may be null.
      */
-    public static <T extends SIROperator> SIROperator commonAncestor (Collection<T> ss) {
+    public static SIROperator commonAncestor (Collection<SIROperator> ss) {
         // just call pairwise version.
-        Iterator<T> iter = ss.iterator();
+        Iterator<SIROperator> iter = ss.iterator();
         SIROperator common = null;
         if (iter.hasNext()) {
             common = iter.next();

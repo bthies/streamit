@@ -91,7 +91,7 @@ public class VectorizeEnable {
         // find the filters to vectorize
         Set<SIRFilter> tops = new HashSet<SIRFilter>();
         Set<SIRFilter> bots = new HashSet<SIRFilter>();
-        Set<SIRFilter>  all = new HashSet<SIRFilter>();
+        final Set<SIRFilter>  all = new HashSet<SIRFilter>();
         topsBotsAll(segments,tops,bots,all);
         
         // TODO: if a splitter preceeds a top filter and 
@@ -109,19 +109,79 @@ public class VectorizeEnable {
                                             SIRFilterIter iter) {
                         if (Vectorizable.vectorizable(self) &&
                             Vectorizable.isUseful(self)) {
-                            // X X X: Wretched abuse of a compiler flag that should
+                            // XXX: Wretched abuse of a compiler flag that should
                             // not occur with vectorization, for purposes of testing.
                             if (! KjcOptions.magic_net) {
                                 if (debugging) {
                                     System.err.println("Vectorizing " + self.getName());
                                 }
-                                Vectorize.vectorize(self,false,false);
+                                Vectorize.vectorize(self,
+                                        matchingVectorTypesPrevious(self,all),
+                                        matchingVectorTypesNext(self,all));
                             }
                             forScheduling(self);
                         }
                     }
                 });
         return str;
+    }
+    
+    /**
+     * Should the passed filter input a vector type from previous SIROperator?
+     * Must match answer from matchingVectorTypesNext on next filter...
+     */
+    static private boolean matchingVectorTypesPrevious(SIRFilter filter,Set<SIRFilter> all) {
+        SIROperator prevop = SIRNavigationUtils.getPredecessorOper(filter);
+        if (prevop instanceof SIRFilter) {
+            return compatibleAsAPreviousFilter((SIRFilter)prevop, filter.getPopInt(), all);
+        } else if (prevop instanceof SIRJoiner) {
+            // are all immediately-preceeding filters of vector type with right rate?
+        } else {
+            assert prevop instanceof SIRSplitter;
+            // are all parallel filters of vector type with same rate?
+            // is filter before splitter of vector type with same rate (if anything else
+            // immeditely before splitter then punt)
+        }
+        return false;
+    }
+    
+    /**
+     * Should the passed filter output a vector type to the following SIROperator?
+     */
+    static boolean matchingVectorTypesNext(SIRFilter filter,Set<SIRFilter> all) {
+        // filter follows: is following a vectorizable filter with matching rate?
+        
+        // joiner follows: do all parallel filters have same rate?
+        // is operator following joiner a vectorizable filter with correct rate?
+        
+        // splitter follows: are all following filters vectorizable and with same rate?
+        return false;
+    }
+    
+    /**
+     * Determine whether <b>f</b> can preceed a filter taking vector input.
+     * @param f a filter
+     * @param requiredPushRate  The push rate that f needs to have
+     * @param all the set of vectorizable filters
+     * @return
+     */
+    static private boolean compatibleAsAPreviousFilter (SIRFilter f, int requiredPushRate, Set<SIRFilter> all) {
+        return requiredPushRate == f.getPushInt()
+        && ((all.contains(f) && Vectorizable.isUseful(f)) // f passed test for vectorizable...
+                || f.getOutputType() instanceof CVectorTypeLow); // or is vectorized already
+    }
+    
+    /**
+     * Determine whether <b>f</b> can succeed a filter producing vector output.
+     * @param f a filter
+     * @param requiredPopRate  The ppo rate that f needs to have
+     * @param all the set of vectorizable filters
+     * @return
+     */
+    static private boolean compatibleAsANextFilter (SIRFilter f, int requiredPopRate, Set<SIRFilter> all) {
+        return requiredPopRate == f.getPushInt()
+        && ((all.contains(f) && Vectorizable.isUseful(f)) // f passed test for vectorizable...
+                || f.getInputType() instanceof CVectorTypeLow); // or is vectorized already
     }
     
     /**

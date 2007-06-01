@@ -4,11 +4,7 @@ package at.dms.kjc.cluster;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.iterator.*;
 import java.util.*;
-import java.util.Iterator;
-import java.util.HashSet;
-import java.util.HashMap;
 import streamit.misc.AssertedClass;
-import at.dms.kjc.common.CommonUtils;
 
 /**
  * A class that detects and stores pairwise latency constraints 
@@ -142,7 +138,7 @@ public class LatencyConstraints {
             for (SIRPortalSender sender : senders) {
                 sendRecieveLocations.add(sender.getStream());
             }
-            SIRStream rootOfSearch = (SIRStream)CommonUtils.commonAncestor(sendRecieveLocations);
+            SIRStream rootOfSearch = (SIRStream)SIRNavigationUtils.commonAncestor(sendRecieveLocations);
             assert rootOfSearch != null;
 
             streamit.scheduler2.iriter.Iterator topStreamIter = IterFactory.createFactory().createIter(rootOfSearch);

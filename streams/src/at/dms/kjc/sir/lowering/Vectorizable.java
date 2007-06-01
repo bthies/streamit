@@ -93,6 +93,12 @@ public class Vectorizable {
             if (debugging) System.err.println("Vectorizable.vectorizable found " + f.getName() + " has wrong type.");
             return false;
         }
+        
+        if (f.getInitPhases().length != 0) {
+            if (debugging) System.err.println("Vectorizable.vectorizable found " + f.getName() + " has prework.");
+            return false;
+        }
+        
         // must have static rates
         if (f.getPeek().isDynamic() ||
             f.getPop().isDynamic() ||

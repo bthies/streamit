@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterCodeGenerator.java,v 1.66 2007-03-01 22:59:34 dimock Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterCodeGenerator.java,v 1.67 2007-06-01 17:48:25 dimock Exp $
 package at.dms.kjc.cluster;
 
 import java.util.*;
@@ -881,7 +881,7 @@ class ClusterCodeGenerator {
 
             r.add("\n  //SDEP from: "+fromID+" to: "+toID+";\n");
         
-            SIRStream commonAncestor = (SIRStream)CommonUtils.commonSIRAncestor(sender, receiver);
+            SIRStream commonAncestor = (SIRStream)SIRNavigationUtils.commonSIRAncestor(sender, receiver);
             streamit.scheduler2.iriter.Iterator commonAncestorIterator =
                 IterFactory.createFactory().createIter(commonAncestor);
             streamit.scheduler2.constrained.Scheduler cscheduler =

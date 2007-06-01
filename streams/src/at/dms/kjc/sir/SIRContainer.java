@@ -163,11 +163,14 @@ public abstract class SIRContainer extends SIRStream {
     }
 
     /**
-     * Returns the successor of <child>.  If <child> is the last child
-     * of this, then returns the next succesor of <this> in the parent
-     * of <this>.  Note that this is as fine-grained as possible -
+     * Returns the successor of <b>child</b>.  If <b>child</b> is the last child
+     * of this, then returns the next succesor of <b>this</b> in the parent
+     * of <b>this</b>.  Note that this is as fine-grained as possible -
      * e.g., the successor of a parallel stream in a SplitJoin should
      * be a joiner.
+     * Note on note: note is not true, getSuccessor of last filter in a pipeline in
+     * a splitjoin will get you the first element in the next pipeline in the splitjoin!
+     * Try {@link at.dms.kjc.sir.SIRNavigationUtils#getSuccessorOper(SIRStream)}.
      */
     public SIROperator getSuccessor(SIRStream child) {
         List myChildren = getChildren();

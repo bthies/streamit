@@ -1,8 +1,8 @@
 package at.dms.kjc.common;
  
-import at.dms.kjc.CIntType;
+//import at.dms.kjc.CIntType;
 import at.dms.kjc.CStdType;
-import at.dms.kjc.Constants;
+//import at.dms.kjc.Constants;
 import at.dms.kjc.JIntLiteral;
 import at.dms.kjc.JExpression;
 import at.dms.kjc.CType;
@@ -23,9 +23,6 @@ import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.sir.SIRFilter;
 import at.dms.kjc.sir.SIRJoiner;
 import at.dms.kjc.sir.SIRSplitter;
-//import at.dms.kjc.sir.SIRStream;
-//import at.dms.kjc.sir.SIRContainer;
-import at.dms.kjc.sir.SIROperator;
 import java.util.*;
 /**
  * Some public static utility functions pulled out of other routines.
@@ -338,54 +335,6 @@ public class CommonUtils {
 
     
     /**
-     * Get the common ancestor of <b>s1</b> and <b>s2</b>.
-     * Common ancestor of <b>s</b> and <b>s</b> is <b>s</b>.
-     * Return null if no common ancestor.
-     * @param s1 one SIROperator
-     * @param s2 the other SIROperator
-     * @return the common ancestor or null
-     */
-
-    public static SIROperator commonSIRAncestor (SIROperator s1, SIROperator s2) {
-        // brute force method: return last element of common prefix of parents.
-        if (s1 == s2) { return s1; }
-        List<SIROperator> anc1 = s1.getAncestors();
-        List<SIROperator> anc2 = s2.getAncestors();
-        SIROperator common = null;
-        for (int i = anc1.size()-1, j = anc2.size() - 1; i >= 0 && j>= 0; i--, j--) {
-            if (anc1.get(i) == anc2.get(j)) {
-                common = anc1.get(i);
-            } else {
-                break;
-            }
-        }
-        return common;
-    }
-
-    /**
-     * Get the common ancestor of all SIROperators in collection.
-     * The usual boundary cases apply:
-     * The common ancestor of an empty collection is null;
-     * The common ancestor of a singleton collection is the element;
-     * The common ancestor of a collection where two elements have no common ancestor is null.
-     * @param ss a collection of SIROperators (or of any subtype of SIROperator).
-     * @return the common ancestor, may be null.
-     */
-    public static <T extends SIROperator> SIROperator commonAncestor (Collection<T> ss) {
-        // just call pairwise version.
-        Iterator<T> iter = ss.iterator();
-        SIROperator common = null;
-        if (iter.hasNext()) {
-            common = iter.next();
-        }
-        while (iter.hasNext() && common != null) {
-            common = commonSIRAncestor(common,iter.next());
-        }
-        return common;
-    }
-
-
-    /**
      * Make a JVariableDefinition for a static array.
      * 
      * If you want an initializer, set one in the returned definition.
@@ -454,5 +403,4 @@ public class CommonUtils {
         return ret;
     
     }
-    
 }

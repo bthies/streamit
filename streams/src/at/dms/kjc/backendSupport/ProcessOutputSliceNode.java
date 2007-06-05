@@ -48,7 +48,7 @@ public class ProcessOutputSliceNode {
             return;
         }
         
-        System.out.println("DOIT");
+        //System.out.println("DOIT");
         
         splitter_code = CodeStoreHelper.findHelperForSliceNode(outputNode);
         if (splitter_code == null) {
@@ -60,7 +60,7 @@ public class ProcessOutputSliceNode {
         codeStore = location.getComputeCode();
         switch (whichPhase) {
         case INIT:
-            System.out.println("INIT");
+            //System.out.println("INIT");
             standardInitProcessing();
             additionalInitProcessing();
             break;

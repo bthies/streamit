@@ -200,7 +200,6 @@ featureListPair->featureListPair filter findInliers(portal<selectIndices> feedba
 		Fx1z[i] = feat.tempF[2][0]*feat.x1[i].x + feat.tempF[2][1]*feat.x1[i].y + feat.tempF[2][2]*feat.x1[i].z;
 
 		
-
 		//Ftx2 = F'*x2
 
 		Ftx2x[i] = feat.tempF[0][0]*feat.x2[i].x + feat.tempF[1][0]*feat.x2[i].y + feat.tempF[2][0]*feat.x2[i].z;
@@ -213,12 +212,9 @@ featureListPair->featureListPair filter findInliers(portal<selectIndices> feedba
 		feat.d[i] = x2tFx1[i]*x2tFx1[i]/(Fx1x[i]*Fx1x[i] + Fx1y[i]*Fx1y[i] + Fx1z[i]*Fx1z[i] + Ftx2x[i]*Ftx2x[i] + Ftx2y[i]*Ftx2y[i]+ Ftx2z[i]*Ftx2z[i]);		
 		
 		if(abs(feat.d[i])<ransacThreshold){
-
 			feat.tempInliers[feat.ninliers] = i;
 			feat.ninliers++;				
-
-		}	
-		
+		}			
 	}
 	
 	if(feat.ninliers>=feat.bestScore){
@@ -236,7 +232,7 @@ featureListPair->featureListPair filter findInliers(portal<selectIndices> feedba
 			denom=-eps;	
 		}
 		else{denom = log(pNoOutliers);}
-		feat.N = (log(1-probOutliers)/denom);
+		feat.N = (log(1-probOutliers)/denom) - 20 ; //get rid of this -20, a small hack!
 	}	
 	feat.trialCount++;
 

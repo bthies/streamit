@@ -4,13 +4,12 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 float[320][240]->imageAndFeatures
-		pipeline featureExtraction(int startx, int starty, 
+		pipeline feature(int startx, int starty, 
 					int imageWidth, int imageHeight, int winWidth, int winHeight, 
 					float iweight, float qweight, int patchsize)
 {
 	add generateMinorEigs(startx, starty, imageWidth, imageHeight, 
 					winWidth, winHeight, iweight, qweight, patchsize);
-
 	add chooseEigs(imageWidth, imageHeight, patchsize);
 }
 
@@ -235,228 +234,230 @@ in the main pipeline) set.  now, we have to rank them, and also make sure that t
 do not exist in overlapping patches.*/
 
 float[320][240]->imageAndFeatures
-filter chooseEigs(int imageWidth, int imageHeight, int patchsize)
+	pipeline chooseEigs(int imageWidth, int imageHeight, int patchsize)
 {
-	float[320][240] eigenMatrix;
-	int[320][240] clearMatrix;
-	int[320][240] patchMarkMatrix;
-	//v2: boolean inPatch;
-	imageAndFeatures featExtOutput;
-	/*float thisItersMaxVal;
-	int thisItersMaxX;
-	int thisItersMaxY;
-	*/
-
-	//added 
-	int[40] linkedList;
-	bestFeatures[40] best;
-	int minIndex, newMinIndex, prevIndex, nextIndex;
-	int x,y, tempPatchMarkMatrixVal;
-	bestFeatures temp;
-	
-	init{
-		//set patchMarkMatrix to -1 because 0 is a valid index
-		for(int m = 0; m < imageWidth; m++){
-			for(int n = 0; n < imageHeight; n++){
-				clearMatrix[m][n] = -1;
+	portal<reMakeIAndF>bestGuys;
+	add splitjoin{
+		split roundrobin(3,1);
+			add floatArrayID();		
+			add float[320][240]->float[320][240] pipeline {
+				add sortEigs(imageWidth, imageHeight);
+				add findBest(imageWidth, imageHeight, patchsize, bestGuys);
 			}
-		}
+		join roundrobin(3,1);
 	}
-	
-	work pop 4 push 1 peek 1
-	{
-	
-	eigenMatrix = peek(3);
-	//wipe the patchMarkMatrix clean
-	patchMarkMatrix = clearMatrix;
-	
-	//populate the list Best
-	for(int i = 0; i < iters; i++){		
-		best[i].x = (patchsize-1) + i;
-		best[i].y = (patchsize-1);
-		linkedList[i] = i+1;	//initialize the linked list for the case where the values are pre-sorted, which we do coming up
-		best[i].val = i+patchsize;//eigenMatrix[best[i].x][best[i].y];
-		//println(best[i].val);		
-	}
-	linkedList[40 - 1] = -2;
-	
-	
-	//**special note about linked lists -- values must be interpreted mod iters (%iters)
-	minIndex = 0;
+	add reMakeIAndF() to bestGuys;
+}
 
-	//	(ascending) sort the list 'best' with a good ole bubblesort -- from minimum to maximum (ascending)
-	for (int i = (iters - 1); i >= 0; i--)
-	{
-	  for (int j = 1; j <= i; j++)
-	  {
-		if (best[j-1].val > best[j].val)
-		{
-		  temp = best[j-1];
-		  best[j-1] = best[j];
-		  best[j] = temp;
-		}
-	  }
-	}
-	/*println("index\t\tx\t\ty\t\tval\t\tLL");
-	for(int i = 0; i < iters; i++){		
-		println(i+ "\t\t" + best[i].x + "\t\t" + best[i].y + "\t\t" + best[i].val + "\t\t" + linkedList[i]);
-	}*/
-	//*****mark the patches of this sorted list? necessary?
+float[320][240]->imageAndFeatures filter reMakeIAndF(){
 	
-
-	for(int m = 0; m < imageWidth*imageHeight; m++){	
-		x = m%imageWidth;
-		y = m/imageWidth;
-//		if(y == 240) println("y is 240 and m = " + m);
-		/*if(best[minIndex].val < 13858 && best[minIndex].val < 13857){
-			println("prevIndex = " + prevIndex + "nextIndex = " + nextIndex);
-
-		}*/
-		if(eigenMatrix[x][y] > best[minIndex].val && x+patchsize<=320 && x-patchsize>=0 && y+patchsize<=240 && y-patchsize>=0) // if this pixel is even worth considering
-		{	
-			
-			if(patchMarkMatrix[x][y] < 0){	//if not in an existing patch...so you end up replacing the min guy
-//				erase min in list from patchMark:
-				for(int i=(best[minIndex].x-(patchsize-1));i<=(best[minIndex].x+patchsize-1);i++){
-					for(int j=(best[minIndex].y-(patchsize-1)); j<=(best[minIndex].y+patchsize-1);j++){
-						patchMarkMatrix[i][j] = -1;
-					}
-				}
-				//println("A");
-				//println("A : eigenMatrix[x][y] = " + eigenMatrix[x][y] + " and best[minIndex].val = " + best[minIndex].val);
-					
-				//replace min value with new value.  
-				best[minIndex].val 	= eigenMatrix[x][y];
-				best[minIndex].x 	= x;
-				best[minIndex].y 	= y;
-				
-				//find out where you belong in the array
-				prevIndex = minIndex;
-				nextIndex = linkedList[minIndex];
-				
-				while(nextIndex!=-2 && eigenMatrix[x][y] > best[nextIndex].val) 
-				{	
-					prevIndex=nextIndex; 
-					nextIndex=linkedList[nextIndex];
-					//println("nextIndex = " + nextIndex + " and best[" + nextIndex +  "and eigen[x][y] = " + eigenMatrix[x][y]);
-					
-				}
-				
-				//println("1nextIndex = " + nextIndex + "prevIndex = " + prevIndex + " minIndex  = " + minIndex +  "and eigen[x][y] = " + eigenMatrix[x][y]);
-				
-				if(minIndex!=prevIndex){
-					newMinIndex = linkedList[minIndex];
-					linkedList[minIndex] = nextIndex;
-					linkedList[prevIndex] = minIndex;
-					minIndex = newMinIndex;	//the new minIndex is what the old minguy used to point to.
-				}
-				
-				//println("2nextIndex = " + nextIndex + "prevIndex = " + prevIndex + " minIndex  = " + minIndex + "and eigen[x][y] = " + eigenMatrix[x][y]);
-				
-				/*for (int i = 0; i < iters; i++)
-				{
-					println(i+ "\t" + best[i].val + "\t" + best[i].x + "\t" + best[i].y + "\t" + linkedList[i]);
-				}*/
-				//write in the new patch
-				for(int i=(best[linkedList[prevIndex]].x-(patchsize-1));i<=(best[linkedList[prevIndex]].x+patchsize-1);i++){
-					for(int j=(best[linkedList[prevIndex]].y-(patchsize-1)); j<=(best[linkedList[prevIndex]].y+patchsize-1);j++){
-						patchMarkMatrix[i][j] = linkedList[prevIndex];
-					}
-				}
-								
-			}
-			else {//if in an existing patch
-				if(eigenMatrix[x][y] > best[patchMarkMatrix[x][y]].val){	//and you're bigger than the existing guy whose patch you're in	
-//					erase oldguy in list from patchMark:
-					
-					//println("B : eigenMatrix[x][y] = " + eigenMatrix[x][y] + " and best[patchMarkMatrix[x][y]].val = " + best[patchMarkMatrix[x][y]].val);
-					//println("B");			
-					tempPatchMarkMatrixVal = patchMarkMatrix[x][y]; // since patchMarkMatrix[x][y] is soon to be written over
-					//println("tempPatchMarkMatrixVal  = " + tempPatchMarkMatrixVal );
-					for(int i=(best[tempPatchMarkMatrixVal].x-(patchsize-1));i<=(best[tempPatchMarkMatrixVal].x+patchsize-1);i++){
-						for(int j=(best[tempPatchMarkMatrixVal].y-(patchsize-1)); j<=(best[tempPatchMarkMatrixVal].y+patchsize-1);j++){
-							//println("i = " + i + " j = " + j + "best[minIndex].val for minIndex = " + minIndex + "  is " + best[minIndex].val);
-							patchMarkMatrix[i][j] = -1;
-						}
-					}
-					//replace his value with your value.  
-					best[tempPatchMarkMatrixVal].val = eigenMatrix[x][y];
-					best[tempPatchMarkMatrixVal].x 	= x;
-					best[tempPatchMarkMatrixVal].y 	= y;
-							   	
-				   	/*for(int i = 0; i < iters; i++){
-				   		if(nextIndex!=-2){
-					   		println("val = " + best[nextIndex].val + "\tprev\t" + prevIndex + "\tnext\t" + nextIndex);
-							prevIndex=nextIndex; 
-							nextIndex=linkedList[nextIndex];
-				   		}
-				   	}*/
-				   	/*here, get rid of the old pointer to the guy you are trying to now get rid of*/
-				   	prevIndex = minIndex;
-					nextIndex = linkedList[minIndex];
-					//println("1nextIndex = " + nextIndex + "prevIndex = " + prevIndex + " minIndex  = " + minIndex + "and eigen[x][y] = " + eigenMatrix[x][y]);
-					
-					while(minIndex!=tempPatchMarkMatrixVal && nextIndex!=tempPatchMarkMatrixVal)
-					{	//println("WOOHOO nextIndex = " + nextIndex);
-						prevIndex=nextIndex; 
-						nextIndex=linkedList[nextIndex];							
-					}	
-					  	
-				   
-					//println("2nextIndex = " + nextIndex + "prevIndex = " + prevIndex + " minIndex  = " + minIndex + "and eigen[x][y] = " + eigenMatrix[x][y]);
-				   
-					if(minIndex!=tempPatchMarkMatrixVal && linkedList[tempPatchMarkMatrixVal]!=-2 && best[tempPatchMarkMatrixVal].val > best[linkedList[tempPatchMarkMatrixVal]].val)	linkedList[prevIndex] = linkedList[tempPatchMarkMatrixVal];
-				   	
-					prevIndex = tempPatchMarkMatrixVal;
-					nextIndex = linkedList[tempPatchMarkMatrixVal];
-					//println("B");
-				   	while(nextIndex!=-2 && nextIndex!=tempPatchMarkMatrixVal && eigenMatrix[x][y] > best[nextIndex].val)
-				   	{	
-						//println("nextIndex = " + nextIndex + " and best[" + nextIndex + "].val there = " + best[nextIndex].val + "and eigen[x][y] = " + eigenMatrix[x][y]);
-						prevIndex=nextIndex; 
-		 			   	nextIndex=linkedList[nextIndex];
-		 			   	//println("prev = " + prevIndex + " and nextIndex = " + nextIndex);
-		 		   	}
-					//println("1nextIndex = " + nextIndex + "prevIndex = " + prevIndex + " minIndex  = " + minIndex + " and best[" + nextIndex + "].val there = " + best[nextIndex].val + "and eigen[x][y] = " + eigenMatrix[x][y]);
-					if(tempPatchMarkMatrixVal!=prevIndex){
-						linkedList[tempPatchMarkMatrixVal] = nextIndex;
-						linkedList[prevIndex] = tempPatchMarkMatrixVal;
-					}
-					//println("2nextIndex = " + nextIndex + "prevIndex = " + prevIndex + " minIndex  = " + minIndex + " and best[" + nextIndex + "].val there = " + best[nextIndex].val + "and eigen[x][y] = " + eigenMatrix[x][y]);
-				
-				/*	for (int i = 0; i < iters; i++)
-					{
-						println(i+ "\t" + best[i].val + "\t" + best[i].x + "\t" + best[i].y + "\t" + linkedList[i]);
-					}*/
-					for(int i=(best[tempPatchMarkMatrixVal].x-(patchsize-1));i<=(best[tempPatchMarkMatrixVal].x+patchsize-1);i++){
-						for(int j=(best[tempPatchMarkMatrixVal].y-(patchsize-1)); j<=(best[tempPatchMarkMatrixVal].y+patchsize-1);j++){
-							patchMarkMatrix[i][j] = tempPatchMarkMatrixVal;
-						}
-					}
+	bestFeatures[40] bestGuys;	
 		
-					
-				}
+	work pop 4 push 1{			
+		imageAndFeatures featExtOutput;
+		featExtOutput.yImage = pop();
+		featExtOutput.iImage = pop();
+		featExtOutput.qImage = pop();
+		pop(); //the eigenvalues are no longer necessary
+		featExtOutput.myBest = bestGuys; //send through a portal and message
+		featExtOutput.goodPts = iters;
+		push(featExtOutput);	
+	}
+		
+	handler setVal(bestFeatures[40] bestDudes){
+		bestGuys = bestDudes;	
+	}
+}
+
+float[320][240]->bestFeatures[320][240] filter sortEigs(int width, int height){
+	
+	float[320][240] eig2D;
+	bestFeatures[320*240] eig1DBest;//bestFeatures[320][240] eig2DBest;
+	bestFeatures[320][240] eig2DBest;
+	bestFeatures h;	
+	int i, j, temp1;
+	float x;
+	
+	
+	void q_sort(int top, int bottom)
+	{
+		 x = eig1DBest[top].val;
+		 i = top - 1;
+		 j = bottom + 1;
+		 bestFeatures temp;
+		 
+		 do
+		 {
+			do {j--;} while (x > eig1DBest[j].val);
+			do {i++;} while (x < eig1DBest[i].val);
+
+			if (i < j)
+			{ 
+				temp = eig1DBest[i];    // switch elements at positions i and j
+				eig1DBest[i] = eig1DBest[j];
+				eig1DBest[j] = temp;
 			}
-		}
+		 } while (i<j);    
+
+
+		if (top < bottom)
+		{		
+			q_sort(top, j);   		// sort top partition
+			q_sort(j+1, bottom);    // sort bottom partition
+		}		 
+		 
 	}
 	
-	for (int i = (iters - 1); i >= 0; i--)
+	void q_sort2(int lo, int hi)
 	{
-	  for (int j = 1; j <= i; j++)
-	  {
-		if (best[j-1].val < best[j].val)
+		i=lo; j=hi;
+		x=eig1DBest[(lo+hi)/2].val;
+
+		//  partition
+		do
+		{    
+			while (eig1DBest[i].val>x) i++; 
+			while (eig1DBest[j].val<x) j--;
+			if (i<=j)
+			{
+				h=eig1DBest[i]; eig1DBest[i]=eig1DBest[j]; eig1DBest[j]=h;
+				i++; j--;
+			}
+		} while (i<=j);
+
+		//  recursion
+		if (lo<j) q_sort2(lo, j);
+		if (i<hi) q_sort2(i, hi);
+	}
+	
+	void q_sort3(int left, int right)
+	{
+	  bestFeatures pivot;
+	  int l_hold, r_hold, tempInt;
+
+	  l_hold = left;
+	  r_hold = right;
+	  pivot = eig2DBest[left%imageWidth][left/imageWidth];
+	  while (left < right)
+	  {	  
+		while ((eig2DBest[right%imageWidth][right/imageWidth].val <= pivot.val) && (left < right))
+		  right--;
+		if (left != right)
 		{
-		  temp = best[j-1];
-		  best[j-1] = best[j];
-		  best[j] = temp;
+		  eig2DBest[left%imageWidth][left/imageWidth] = eig2DBest[right%imageWidth][right/imageWidth];
+		  left++;
+		}
+		while ((eig2DBest[left%imageWidth][left/imageWidth].val >= pivot.val) && (left < right))
+		  left++;
+		if (left != right)
+		{
+		  eig2DBest[right%imageWidth][right/imageWidth] = eig2DBest[left%imageWidth][left/imageWidth];
+		  right--;
 		}
 	  }
+	  eig2DBest[left%imageWidth][left/imageWidth] = pivot;
+	  tempInt = left;
+	  left = l_hold;
+	  right = r_hold;
+	  if (left < tempInt)
+		q_sort3(left, tempInt-1);
+	  if (right > tempInt)
+		q_sort3(tempInt+1, right);
+		
 	}
-	println("i\t\tbest[i].val\t\t.x\t\t.y");
-	for (int i = 1; i < iters; i++)
-	{
-		println(i+ " " + best[i].val + " " + best[i].x + " " + best[i].y);
-	}   
+	
+	work pop 1 push 1{
+	
+		eig2D = pop();
+		
+		/*for(int i = 0; i<width; i++){
+			for(int j = 0; j<height; j++){
+				eig2DBest[i][j].val = eig2D[i][j];
+				eig2DBest[i][j].x = i;
+				eig2DBest[i][j].y = j;
+			}	
+		}*/
+		for(int i = 0; i<width; i++){
+			for(int j = 0; j<height; j++){
+				temp1 = i+j*imageWidth;
+				eig1DBest[temp1].val = eig2D[i][j];
+				eig1DBest[temp1].x = i;
+				eig1DBest[temp1].y = j;
+			}
+		}
+		println("start q_sort");
+		q_sort2(0, width*height - 1);
+		println("end q_sort");
+		for(int i = 0; i<width*height; i++){
+				if(i!=width*height-1 && eig1DBest[i].val<eig1DBest[i+1].val) println("someting fishy at i = " + i);
+				eig2DBest[i%width][i/width] = eig1DBest[i];
+		}
+
+		push(eig2DBest);
+		
+	}	
+}
+
+bestFeatures[320][240]->float[320][240] filter findBest(int width, int height, int patchsize, portal<reMakeIAndF> bestGuys){
+	
+	int keptFeatures, m;
+	bestFeatures tempGuy;
+	bestFeatures[40] best, clearedBest;
+	boolean [320][240] patchMark;
+	bestFeatures[320][240] eig2DBest;
+	float[320][240] eig;
+	
+	work pop 1 push 1{
+			
+		best=clearedBest;
+		eig2DBest = pop();
+		m = 0; keptFeatures=0;
+		while(keptFeatures<iters)
+		{	
+			tempGuy = eig2DBest[m%width][m/width];
+			m++;
+			
+			if(!patchMark[tempGuy.x][tempGuy.y])
+			{
+				for(int i=(tempGuy.x-(patchsize-1));i<=(tempGuy.x+patchsize-1);i++){
+					for(int j=(tempGuy.y-(patchsize-1)); j<=(tempGuy.y+patchsize-1);j++){
+						patchMark[i][j] = true;
+					}
+				}
+				best[keptFeatures] = tempGuy;
+				keptFeatures++;									
+			}
+		}		
+
+		bestGuys.setVal(best);	
+
+		//organize the best in descending order (redundant?)
+
+		for (int i = (iters - 1); i >= 0; i--)
+		{
+		  for (int j = 1; j <= i; j++)
+		  {
+			if (best[j-1].val < best[j].val)
+			{
+			  tempGuy = best[j-1];
+			  best[j-1] = best[j];
+			  best[j] = tempGuy;
+			}
+		  }
+		}
+
+
+		for(int i = 0; i<width*height; i++)
+		{
+			eig[i%width][i/width] = eig2DBest[i%width][i/width].val;
+		}
+		
+		push(eig);	
+	}
+}
+
+	
+	
 	/* 
 	chooseEigenVals v1
 	for(int k = 0; k < iters; k++){	
@@ -491,18 +492,21 @@ filter chooseEigs(int imageWidth, int imageHeight, int patchsize)
 	}
 	
 	patchMarkMatrix = clearMatrix;
-*/
+
     
 	//	(descending) sort the list 'best' with a good ole bubblesort -- from minimum to maximum (descending)
 	
     
-	featExtOutput.yImage = pop();
-	featExtOutput.iImage = pop();
-	featExtOutput.qImage = pop();
-	pop(); //the eigenvalues are no longer necessary
-	featExtOutput.myBest = best;
-	featExtOutput.goodPts = iters;
-	push(featExtOutput);
+
 	//println("chooseEigs completed...");
+	}
+}*/
+float[320][240]->float[320][240]
+filter floatArrayID()
+{
+	work pop 1 push 1{
+	
+	push(pop());
+		
 	}
 }

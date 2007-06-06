@@ -12,7 +12,7 @@ imageAndFeatures->imageAndFeatures
 {
 	imageAndFeatures imAndFeat1;
 	imageAndFeatures imAndFeat2;
-	int r;
+	int r, rr;
 	float[320][240] y1Matrix;
 	float[320][240] i1Matrix;
 	float[320][240] q1Matrix;
@@ -41,7 +41,7 @@ imageAndFeatures->imageAndFeatures
 	work pop 1 peek 2 push 2
 	{
 		r = (w-1)/2;
-		
+		rr = 2*r;
 		imAndFeat1 = peek(0);
 		imAndFeat2 = peek(1);
 		
@@ -85,12 +85,12 @@ imageAndFeatures->imageAndFeatures
 			{	
 				stanDevW1 = 0;
 				//make w1, which is a window of width w around the feature considered in im1
-				for(int m = -r; m <= r; m++)
+				for(int m = 0; m <= rr; m++)
 				{
-					for(int n = -r; n<= r; n++)
+					for(int n = 0; n<= rr; n++)
 					{	
-						w1[m+r][n+r] = y1Matrix[feat1[i].x + m][feat1[i].y + n];
-						stanDevW1 = stanDevW1 + w1[m+r][n+r]*w1[m+r][n+r];
+						w1[m][n] = y1Matrix[feat1[i].x + m - r][feat1[i].y + n - r];
+						stanDevW1 = stanDevW1 + w1[m][n]*w1[m][n];
 					}
 				}
 				stanDevW1 = sqrt(stanDevW1);
@@ -101,23 +101,23 @@ imageAndFeatures->imageAndFeatures
 					{
 						stanDevW2 = 0;	
 						//make w2, which is a window of width w around the feature considered in im2 
-						for(int s = -r; s <= r; s++)
+						for(int s = 0; s <= rr; s++)
 						{
-							  for(int t = -r; t<= r; t++)
+							  for(int t = 0; t<= rr; t++)
 						  	  {	
 								//println("s: " + s + "\tt: " + t + "\tr: " + r +"\tfeat2[j].x: " + feat2[j].x + "\tfeat2[j].y: " + feat2[j].y); 
-								w2[s+r][t+r] = y2Matrix[feat2[j].x + s][feat2[j].y + t];
-								stanDevW2 = stanDevW2 + w2[s+r][t+r]*w2[s+r][t+r];				  	  	
+								w2[s][t] = y2Matrix[feat2[j].x + s - r][feat2[j].y + t - r];
+								stanDevW2 = stanDevW2 + w2[s][t]*w2[s][t];				  	  	
 								
 						  	  }
 						}
 						stanDevW2 = sqrt(stanDevW2);
 						elementWiseProduct = 0;
-						for(int s = -r; s <= r; s++)
+						for(int s = 0; s <= rr; s++)
 						{
-							for(int t = -r; t<= r; t++)
+							for(int t = 0; t <= rr; t++)
 							{	
-								elementWiseProduct = elementWiseProduct + w1[s+r][t+r]*w2[s+r][t+r];
+								elementWiseProduct = elementWiseProduct + w1[s][t]*w2[s][t];
 							}
 						}
 						

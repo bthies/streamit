@@ -5,6 +5,13 @@ import at.dms.kjc.backendSupport.ComputeNodesI;
 import java.util.*;
 import at.dms.kjc.backendSupport.ComputeNodes;
 
+/**
+ * Implementation of {@link at.backendSupport.ComputeNodesI} to provide a collection of {@link UniProcessor}s.
+ * Provides mapping of int -> {@link UniProcessor}.
+ * @author dimock
+ *
+ */
+
 public class UniProcessors  implements ComputeNodesI<UniComputeCodeStore>{
 
     /** our collection of nodes... */

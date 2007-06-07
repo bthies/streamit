@@ -1,0 +1,94 @@
+<!--
+  Copyright 2003 by the Massachusetts Institute of Technology.
+
+  Permission to use, copy, modify, and distribute this
+  software and its documentation for any purpose and without
+  fee is hereby granted, provided that the above copyright
+  notice appear in all copies and that both that copyright
+  notice and this permission notice appear in supporting
+  documentation, and that the name of M.I.T. not be used in
+  advertising or publicity pertaining to distribution of the
+  software without specific, written prior permission.
+  M.I.T. makes no representations about the suitability of
+  this software for any purpose.  It is provided "as is"
+  without express or implied warranty.
+-->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Package documentation for at.dms.kjc.vanillaSlice</title>
+<body>
+<p>
+This package was written to provide a test for the classes in {@link backendSupport}.
+</p>
+<p>
+This package currently supports compiling to a uniprocessor.
+But it is planed to extend this package to compile for a shared memory 
+multiprocessor.
+</p>
+<pre>strc -newSimple N XXX.str</pre>
+<p>where <code>N</code> is the number of processors to use in a shared memory 
+multiprocessor, and defaults to <code>1</code> if not specified.
+This number is actually just the number of threads to create and could
+be set to more than the number of processors if necessary for good
+load balancing.
+</p>
+<p>
+When {@link at.dms.kjc.backendSupport} supports all the compiler
+features currently supported by the <code>--cluster 1 --standalone</code>, 
+then it is proposed that the <code>strc</code> switch name be changed
+to <code>uni</code>.
+</p>
+<h3>Current shortcomings of this package: </h3>
+<p>Any unimplemented compiler features inherited from 
+{@link at.dms.kjc.backendSupport}
+</p>
+<p>We still need to complete implementation of shared memory multi-cores
+/ shared memory multiprocessors:
+If >1 processor specified then need to create a (p)thread per
+processor and add code to start the (p)threads at the beginning.
+</p>
+<p>There are a few possible schemes for distributing code between
+threads, none implemented yet:</p>
+<p>All the following can run with double (multi) buffering and blocking:
+Block producer on all buffers full, 
+block consumer on all buffers empty,
+A thread should be awake when all of the consumers of its output 
+have at least one empty buffer available and 
+all of its producers of data that it consumes have filled at least one
+buffer.  
+(The above allows bounding buffer sizes when there is a static
+schedule.</p>
+<ol>
+<li>Software pipelining: each thread takes all stateless filters at
+different steady states.  Stateful filters are somehow divided up.
+One copy of code for each filter exists and is called form each thread.
+</li>
+<li>Space multiplexing: each thread takes a subgraph (not necessarily
+a connected subgraph).  The CodeStore can inline the filter work
+functions since a filter will only appear once in a thread.
+(The existing Uniprocessor implementation does this inlining but does not
+generate threads.)
+</li>
+<li>If all filters except I/O are data parallel, then each thread can
+run in parallel with special threads assigned for I/O. (once again
+call shared filter code).
+</li>
+</ol>
+<p>A back end for a COW (cluster of workstations) is proposed.
+This will present a challenge to the idea of "one compute node - one
+code store" since each node in the cluster may be a multi-core
+assembling code for multiple threads.
+</p><p>
+If can work out issues with code stores, it is proposed that each
+machine in the cluster be responsible for some group of threads, but
+now need socket communication and some degree of asynchrony between
+the machines in the cluster.</p>
+<p>Janis' original cluster implementation, giving a separate thread to
+such filter, splitter, joiner had some problems with undiagnosable hangs.
+</p>
+<h4>Please update this document to keep pace with design and
+implementation</h4>.
+
+</body>
+</html>

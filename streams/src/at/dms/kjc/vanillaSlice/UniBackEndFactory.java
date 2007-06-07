@@ -20,7 +20,8 @@ import at.dms.kjc.slicegraph.OutputSliceNode;
 import at.dms.kjc.slicegraph.SliceNode;
 
 /**
- * Stub for uniprocessor backend.
+ * Specialization of {@link at.dms.kjc.backendSupport.BackEndFactory} for uniprocessor backend.
+ * Provides some specializations for the uniprocssor backend directly, and links to others in separate classes.
  * @author dimock
  *
  */

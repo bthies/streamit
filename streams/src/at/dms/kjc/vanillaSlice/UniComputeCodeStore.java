@@ -6,7 +6,10 @@ import at.dms.kjc.backendSupport.*;
 import at.dms.kjc.slicegraph.*;
 import at.dms.kjc.*;
 
-
+/**
+ * Modest extension to {@link at.dms.kjc.backendSupport.ComputeCodeStore}. 
+ * @author dimock
+  */
 public class UniComputeCodeStore extends ComputeCodeStore<UniProcessor> {
     
     /** Construct new ComputeCodeStore for a vanilla processor 

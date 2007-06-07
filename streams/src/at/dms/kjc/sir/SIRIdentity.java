@@ -1,10 +1,7 @@
 package at.dms.kjc.sir;
 
 import at.dms.kjc.sir.lowering.Propagator;
-import at.dms.kjc.lir.LIRStreamType;
-import at.dms.kjc.sir.lowering.LoweringConstants;
 import at.dms.kjc.*;
-import at.dms.util.*;
 import at.dms.compiler.JavaStyleComment; // for debugging
 
 /**
@@ -72,92 +69,7 @@ public class SIRIdentity extends SIRPredefinedFilter implements Cloneable, Const
      * also sets the work function and init function
      */
     public void setType(CType t) {
-        this.setInputType(t);
-        this.setOutputType(t);
-    
-        assert rate != null : "Constructing SIRIdentity with null rate";
-        
-        // work function
-        
-        JVariableDefinition tmp = new JVariableDefinition(null, 0, t, 
-                at.dms.kjc.sir.lowering.ThreeAddressCode.nextTemp(), null);
-        JVariableDeclarationStatement declarePopExpr = new JVariableDeclarationStatement(tmp);
-        JLocalVariableExpression referencePoppedValue = new JLocalVariableExpression(tmp);
-        JStatement popIt = new JExpressionStatement(
-                new JAssignmentExpression(
-                        referencePoppedValue, 
-                        new SIRPopExpression(t)));
-        
-        JStatement work1body[];
-        if (rate instanceof JIntLiteral && 
-            ((JIntLiteral)rate).intValue() == 1) {
-            work1body = new JStatement[] {
-                    declarePopExpr,
-                    popIt,
-                    new JExpressionStatement(null, 
-                            new SIRPushExpression(
-                                    referencePoppedValue, t), 
-                            null) };
-        
-
-        } else {
-            JStatement pushPop = 
-                new JBlock(new JStatement[]{
-                        declarePopExpr,
-                        popIt,
-                        new JExpressionStatement(null,
-                                new SIRPushExpression(referencePoppedValue, t),
-                                null)});
-            JVariableDefinition induction = 
-                new JVariableDefinition(null, 0,
-                                        CStdType.Integer,
-                                        "i",
-                                        new JIntLiteral(0));
-            JRelationalExpression cond = new JRelationalExpression(null,
-                                                                   OPE_LT,
-                                                                   new JLocalVariableExpression(null,
-                                                                                                induction),
-                                                                   rate);
-
-            JExpressionStatement increment = 
-                new JExpressionStatement(null,
-                                         new JCompoundAssignmentExpression(null,
-                                                                           OPE_PLUS,
-                                                                           new JLocalVariableExpression(null,
-                                                                                                        induction),
-                                                                           new JIntLiteral(1)),
-                                         null);
-            work1body= new JStatement[] { 
-                    new JForStatement(null,
-                       new JVariableDeclarationStatement(null, induction, null),
-                       cond, increment, pushPop, 
-                       new JavaStyleComment[] {
-                            new JavaStyleComment("IncreaseFilterMult", true,
-                                false, false)})};       
-        
-        }
-    
-        JBlock work1block = new JBlock(/* tokref   */ null,
-                                       /* body     */ work1body,
-                                       /* comments */ null);    
-    
-        JMethodDeclaration workfn =  new JMethodDeclaration( /* tokref     */ null,
-                                                             /* modifiers  */ at.dms.kjc.
-                                                             Constants.ACC_PUBLIC,
-                                                             /* returntype */ CStdType.Void,
-                                                             /* identifier */ "work",
-                                                             /* parameters */ JFormalParameter.EMPTY,
-                                                             /* exceptions */ CClassType.EMPTY,
-                                                             /* body       */ work1block,
-                                                             /* javadoc    */ null,
-                                                             /* comments   */ null);
-        setWork(workfn);
-
-        // init function
-        JBlock initblock = new JBlock(/* tokref   */ null,
-                                      /* body     */ new JStatement[0],
-                                      /* comments */ null);
-        setInit(SIRStream.makeEmptyInit());
+        this.makeIdentityFilter(rate, t);
     }
 
     /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

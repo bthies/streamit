@@ -1,5 +1,6 @@
 package at.dms.kjc.sir;
 
+import at.dms.compiler.JavaStyleComment;
 import at.dms.kjc.lir.LIRStreamType;
 import at.dms.util.Utils;
 import at.dms.kjc.*;
@@ -12,7 +13,7 @@ import java.util.HashMap;
  * (no prework function or phases), and only a single phase in its
  * work stage.
  *
- * @version $Id: SIRFilter.java,v 1.42 2006-08-28 21:40:14 dimock Exp $
+ * @version $Id: SIRFilter.java,v 1.43 2007-06-07 18:07:21 dimock Exp $
  */
 public class SIRFilter extends SIRPhasedFilter implements Cloneable {
     /* Internal invariant: the init phases array is null or has zero
@@ -234,6 +235,105 @@ public class SIRFilter extends SIRPhasedFilter implements Cloneable {
         return "SIRFilter name=" + getName();
     }
 
+    /**
+     * Set init and work functions to be for an identity filter with the given pop / push rate.
+     * @param rate push and pop rates
+     * @param t input and output type
+     */
+    public void makeIdentityFilter(JExpression rate, CType t) {
+        assert rate != null : "Constructing SIRIdentity with null rate";
+
+        this.setInputType(t);
+        this.setOutputType(t);
+
+        this.setPush(rate);  // set rates
+        this.setPop(rate);
+        this.setPeek(rate);  // some parts of compiler expect peek rate >= pop rate, so set it.
+        
+        
+        // work function
+        
+        JVariableDefinition tmp = new JVariableDefinition(null, 0, this.getInputType(), 
+                at.dms.kjc.sir.lowering.ThreeAddressCode.nextTemp(), null);
+        JVariableDeclarationStatement declarePopExpr = new JVariableDeclarationStatement(tmp);
+        JLocalVariableExpression referencePoppedValue = new JLocalVariableExpression(tmp);
+        JStatement popIt = new JExpressionStatement(
+                new JAssignmentExpression(
+                        referencePoppedValue, 
+                        new SIRPopExpression(this.getInputType())));
+        
+        JStatement work1body[];
+        if (rate instanceof JIntLiteral && 
+            ((JIntLiteral)rate).intValue() == 1) {
+            work1body = new JStatement[] {
+                    declarePopExpr,
+                    popIt,
+                    new JExpressionStatement(null, 
+                            new SIRPushExpression(
+                                    referencePoppedValue, this.getInputType()), 
+                            null) };
+        
+
+        } else {
+            JStatement pushPop = 
+                new JBlock(new JStatement[]{
+                        declarePopExpr,
+                        popIt,
+                        new JExpressionStatement(null,
+                                new SIRPushExpression(referencePoppedValue, this.getInputType()),
+                                null)});
+            JVariableDefinition induction = 
+                new JVariableDefinition(null, 0,
+                                        CStdType.Integer,
+                                        "i",
+                                        new JIntLiteral(0));
+            JRelationalExpression cond = new JRelationalExpression(null,
+                                                                   Constants.OPE_LT,
+                                                                   new JLocalVariableExpression(null,
+                                                                                                induction),
+                                                                   rate);
+
+            JExpressionStatement increment = 
+                new JExpressionStatement(null,
+                                         new JCompoundAssignmentExpression(null,
+                                                 Constants.OPE_PLUS,
+                                                                           new JLocalVariableExpression(null,
+                                                                                                        induction),
+                                                                           new JIntLiteral(1)),
+                                         null);
+            work1body= new JStatement[] { 
+                    new JForStatement(null,
+                       new JVariableDeclarationStatement(null, induction, null),
+                       cond, increment, pushPop, 
+                       new JavaStyleComment[] {
+                            new JavaStyleComment("IncreaseFilterMult", true,
+                                false, false)})};       
+        
+        }
+    
+        JBlock work1block = new JBlock(/* tokref   */ null,
+                                       /* body     */ work1body,
+                                       /* comments */ null);    
+    
+        JMethodDeclaration workfn =  new JMethodDeclaration( /* tokref     */ null,
+                                                             /* modifiers  */ at.dms.kjc.
+                                                             Constants.ACC_PUBLIC,
+                                                             /* returntype */ CStdType.Void,
+                                                             /* identifier */ "work",
+                                                             /* parameters */ JFormalParameter.EMPTY,
+                                                             /* exceptions */ CClassType.EMPTY,
+                                                             /* body       */ work1block,
+                                                             /* javadoc    */ null,
+                                                             /* comments   */ null);
+        setWork(workfn);
+
+        // init function
+        JBlock initblock = new JBlock(/* tokref   */ null,
+                                      /* body     */ new JStatement[0],
+                                      /* comments */ null);
+        setInit(SIRStream.makeEmptyInit());
+    }
+    
     /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
     /** Returns a deep clone of this object. */

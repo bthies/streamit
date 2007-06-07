@@ -20,13 +20,12 @@ had to be changed to hard-coded numbers like 320 (imageWidth) and
  each yiqStruct, and so we have 320*240*6 new objects.  instead, we are now
  going to have just 6 objects that we instantiate when pushing/popping*/
 
-
 /**************
 ****GLOBALS****
 **************/
 
 static {
-	int patchsize = 5; // must be odd-valued -- 
+	int patchsize = 7; // must be odd-valued -- 
 					// the size of each feature square's side
 	int imageWidth = 320; // width of the ppm image
 	int imageHeight = 240; // height of the ppm image
@@ -75,6 +74,13 @@ struct bestFeatures{
 	float val;
 
 }
+
+/*struct eigNode{
+	
+	float eig;
+	eigNode *nxt;
+		
+}*/
 
 struct normArray{
 	float x;
@@ -168,16 +174,17 @@ void->void pipeline mosaic{
     int winWidth  = imageWidth - patchsize - startx - 1; 
 	int winHeight = imageHeight - patchsize - starty - 1;
 	int corrWindowSize = 25;
+	bestFeatures nullItem;
 	//  initial work
 	
 	add fileRead();
 	
 	add RGB2YIQ();
 	add makeMatrices();
-	
+
 	//grunt work 
-	add featureExtraction(startx, starty, imageWidth, imageHeight, 
-					winWidth, winHeight, iweight, qweight, patchsize);
+	add feature(startx, starty, imageWidth, imageHeight, winWidth, winHeight, iweight, qweight, patchsize);
+
 	add splitjoin{
 		split duplicate;
 		add IAFID();			
@@ -187,6 +194,7 @@ void->void pipeline mosaic{
 		}
 		join roundrobin(1,2);
 	};
+	
 	add imageAndFeatures->imageAndFeatures filter
 	{	
 		imageAndFeatures temp0;
@@ -209,6 +217,7 @@ void->void pipeline mosaic{
 			push(temp3);
 		}
 	};
+
 	add splitjoin{
 		split duplicate;
 		add IAFIDandDynBoundary();		
@@ -219,7 +228,6 @@ void->void pipeline mosaic{
 				featureListPair fLP;
 				imageAndFeatures iAF1;			
 				imageAndFeatures iAF2;			
-				bestFeatures nullItem;
 
 				work pop 1 push 2{
 					fLP = pop();
@@ -227,23 +235,16 @@ void->void pipeline mosaic{
 					println(fLP.bestF[0][0] + "		" + fLP.bestF[0][1] + "		" + fLP.bestF[0][2]);
 					println(fLP.bestF[1][0] + "		" + fLP.bestF[1][1] + "		" + fLP.bestF[1][2]);
 					println(fLP.bestF[2][0] + "		" + fLP.bestF[2][1] + "		" + fLP.bestF[2][2]);
-					for(int i = 0; i< fLP.firstZeroIndex; i++)
+
+					for(int i = 0; i< fLP.bestScore; i++)
 					{
-						println(fLP.x1[i].x + "		" + fLP.x1[i].y + "		" + fLP.x1[i].z);
-					}
-					for(int i = 0; i< fLP.firstZeroIndex; i++)
-					{
-						println(fLP.x2[i].x + "		" + fLP.x2[i].y + "		" + fLP.x2[i].z);
-					}
-					for(int i = 0; i<fLP.bestScore; i++){
+						println(fLP.x1[fLP.bestInliers[i]].x + "		" + fLP.x1[fLP.bestInliers[i]].y + "		" + fLP.x2[fLP.bestInliers[i]].x + "		" +fLP.x2[fLP.bestInliers[i]].y + "		");
 						iAF1.myBest[i] = fLP.x1[fLP.bestInliers[i]];
 						iAF2.myBest[i] = fLP.x2[fLP.bestInliers[i]];
 					}
-					for(int i = fLP.bestScore; i<iters; i++)
-					{
-						iAF1.myBest[i] = nullItem;
-						iAF2.myBest[i] = nullItem;	
-					}
+
+					iAF1.goodPts = fLP.bestScore;
+					iAF2.goodPts = fLP.bestScore;
 					
 					push(iAF1);
 					push(iAF2);					
@@ -253,6 +254,7 @@ void->void pipeline mosaic{
 		}
 		join roundrobin(2,2);
 	};
+
 	add imageAndFeatures->imageAndFeatures filter {
 		imageAndFeatures A;
 		imageAndFeatures B;
@@ -265,22 +267,23 @@ void->void pipeline mosaic{
 			C = pop();
 			D = pop();
 			A.myBest = C.myBest;
+			A.goodPts = C.goodPts;
 			B.myBest = D.myBest;
+			B.goodPts = D.goodPts;
 			push(A);
-			push(B);
-			
-		}
-		
+			push(B);		
+		}		
 	}
-	
+
+
 	add plotFeatures(patchsize);	
+	
 		
 	//  finishing work 
 	add backToJustMatrices();
 	add unmakeMatrices();
 	add YIQ2RGB();
 	add fileWrite();
-	//add FileWriter<int>("1out.bin");
 }
 
 
@@ -311,51 +314,56 @@ featureListPair->featureListPair filter FLPID(){
 ~~~~fileRead~~~~
 ~~~~~~~~~~~~~~*/
 
-void->int splitjoin fileRead() {
-	split roundrobin(0);
-	for(int i=1; i<=numImages; i++)
-	{ 	 
-		add FileReader<int>("bin/" + i + "b.bin");
-	}
-	join roundrobin(imageWidth*imageHeight*3);
-}
-
+// The following uncommented code matches functionality of:
+// void->int splitjoin fileRead() {
+// 	split roundrobin(0);
+// 	for(int i=1; i<=numImages; i++)
+// 	{ 	 
+// 		add FileReader<int>("bin/" + i + "b.bin");
+// 	}
+// 	join roundrobin(imageWidth*imageHeight*3);
+// }
 // but for dynamic rates we need a filter as the very first
 // operator in a static-rate portion of the graph that has
-// an outgoing dynamic-rate edge:
-// void->int pipeline fileRead()
-// {	
-//     // filter to make dynamic rates happy.
-//     add void->int filter {
-// 	work push 1 {
-// 	    push(0);
-// 	}
-//     }
-//     add int->int splitjoin {
-// 	split roundrobin(1,0);
-// 	add Identity<int>;     // push dummy on through
-// 	add void->int splitjoin {
-// 	    split roundrobin(0);
-// 	    for(int i=1; i<=numImages; i++)
-// 		{ 	 
-// 		    add FileReader<int>("bin/" + i + "b.bin");
-// 		}
-// 	    join roundrobin(imageWidth*imageHeight*3);
-// 	}
-// 	join roundrobin(1,numImages*imageWidth*imageHeight*3);
-//     }
-//     // next filter will have to eliminate dummy.
-//     // but filter following use of fileRead() just pops 3.
-//     add int->int filter {
-// 	work pop numImages*imageWidth*imageHeight*3 + 1 
-// 	    push numImages*imageWidth*imageHeight*3 {
-// 	    pop();
-// 	    for (int i = 0; i < numImages*imageWidth*imageHeight*3; i++) {
-// 		push(pop());
-// 	    }
-// 	}
-//     }
-// }
+// an outgoing dynamic-rate edge.
+
+void->int pipeline fileRead()
+{	
+	int temp1,temp2;
+    // filter to make dynamic rates happy.
+    add void->int filter {
+	work push 1 {
+	    push(0);
+	}
+    }
+	temp1 = numImages*imageWidth*imageHeight*3;
+	temp2 =  imageWidth*imageHeight*3;
+    add int->int splitjoin {
+	split roundrobin(1,0);
+	add Identity<int>;     // push dummy on through
+	add void->int splitjoin {
+	    split roundrobin(0);
+	    for(int i=1; i<=numImages; i++)
+		{ 	 
+		    add FileReader<int>("bin/" + i + "b.bin");
+		}
+	    join roundrobin(temp2);
+	}
+	join roundrobin(1,temp1);
+    }
+    // next filter will have to eliminate dummy.
+    // but filter following use of fileRead() just pops 3.
+    add int->int filter {
+    	
+	work pop (temp1 + 1) push temp1 {
+	    pop();
+	    
+	    for (int i = 0; i < temp1; i++) {
+		push(pop());
+	    }
+	}
+    }
+}
 
 
 
@@ -364,8 +372,8 @@ void->int splitjoin fileRead() {
 ~~~~~~~~~~~~~~~*/
 
 int->void splitjoin fileWrite()
-{
-	split roundrobin(imageWidth*imageHeight*3);
+{	int temp = imageWidth*imageHeight*3;
+	split roundrobin(temp);
 	for(int i=1; i<=numImages; i++)
 	{  
 		add FileWriter<int>(i + "out.bin");
@@ -531,12 +539,9 @@ imageAndFeatures->imageAndFeatures filter plotFeatures(int patchsize)
 		
 		r= (patchsize-1)/2;
 		
-		for(int k=0; k <iters; k++)
+		for(int k=0; k<myImgAndFeat.goodPts; k++)
 		{
-		 if(best[k].val!=0){	// correlation algorithm
-								// effect taken into account
-								// here
-			for(int i=best[k].x-r; i<=best[k].x+r; i++)
+		 	for(int i=best[k].x-r; i<=best[k].x+r; i++)
 			{
 				yMatrix[i][best[k].y-r] = 255*0.114;
 				iMatrix[i][best[k].y-r] = 255*-0.322;
@@ -564,7 +569,6 @@ imageAndFeatures->imageAndFeatures filter plotFeatures(int patchsize)
 				iMatrix[i][best[k].y+r]= 255*-0.322;
 				qMatrix[i][best[k].y+r] = 255*0.311;
 			}
-		 }
 		}
 
 		myImgAndFeat.yImage = yMatrix;

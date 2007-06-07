@@ -7,7 +7,9 @@ import java.util.LinkedList;
 import at.dms.kjc.*;
 
 /**
- * 
+ * Each Slice is started by an InputSlice Node that is either a joiner connecting several other slices, 
+ * or a connection to a single other slice.
+ * Has an array of weights and corresponding {@link InterSliceEdge}s.
  */
 public class InputSliceNode extends SliceNode {
     private int[] weights;

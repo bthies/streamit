@@ -1,7 +1,7 @@
 package at.dms.kjc.slicegraph;
 
 /**
- * Linked list of UnflatEdge[]. Useful data representation for
+ * Linked list of UnflatEdge[] used in transforming to Slice Graph representation. Useful data representation for
  * FlattenGraph. This was written before Java1.5 generics so feel free
  * to replace.
  * @author jasperln

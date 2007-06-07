@@ -16,7 +16,7 @@ public class Util {
     /**
      * Get a traversal (linked list iterator) that includes all the slice nodes of the
      * given slice traversal.  Inserting or removing in the returned iterator will not
-     * affect the list passed to sliceNodeTraversal.  Altering the individual TreceNode's
+     * affect the list passed to sliceNodeTraversal.  Altering the individual SliceNode's
      * will alter the SliceNode's in the original list.
      * 
      * @param slices a list of Slice's.

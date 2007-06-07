@@ -8,7 +8,7 @@ import at.dms.kjc.sir.linear.*;
 import at.dms.kjc.common.*;
 
 /**
- * Predefined FilterContent for file output.
+ * Predefined FilterContent for file output, expands to implement a FileWriter.
  * @author jasperln
  */
 public class FileOutputContent extends OutputContent {

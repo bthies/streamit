@@ -7,6 +7,13 @@ import at.dms.kjc.CType;
  * Edges can be differentiated into {@link InterSliceEdge}s that connect the OutputSliceNode of a slice
  * and the InputSliceNode of a slice, and <pre>Intra-Slice Edges</pre> that connect two SliceNodes in
  * the same slice.
+ * TODO: <b>Warning</b> Edge is currently used as a key for Channel, but sophisticated graph optimizations
+ * remove SIRIdentity filters, and remove redundant adjacent edges. A RR(1) splitter connected to a 
+ * RR(1) joiner in a slice graph could represent an identity operation, but could also represent a 
+ * permutation operation (e.g. by having the first output of the splitter connect to the second input
+ * of the joiner, and the second output of the splitter connect to the first input of the joiner).
+ * Our optimizations would change this permutation to an identity.  Luckily this sort of permutation is impossible
+ * in the SIR graph, and is not introduced by any current optimization on the slice graph.
  * @author mgordon
  *
  */

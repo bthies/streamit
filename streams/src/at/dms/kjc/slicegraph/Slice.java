@@ -5,6 +5,9 @@ import java.util.ArrayList;
 
 /** 
  * Slice class models a slice (joiner, sequence of filters, splitter).
+ * Beware: slices are linked with Edges, but the back edge of an InputSliceNode and
+ * the forward edge of an OutputSliceNode should be null: they are not relates to the
+ * InterSliceEdge's of the InputSliceNode and OutputSliceNode.
  *  
  * @author mgordon
  */

@@ -8,7 +8,7 @@ import java.util.Vector;
 import at.dms.util.Utils;
 
 /**
- * This class generates a data flow schedule of the slice graph.
+ * This class generates a data flow schedule of the slice graph (but does not handle feedbackloops).
  * More specifically, in the traversal, all ancestors of a node are 
  * guaranteed to appear before the node.
  * 

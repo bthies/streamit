@@ -26,6 +26,7 @@ import at.dms.kjc.spacetime.Util;
 import java.util.*;
 
 /**
+ * Test for ASPLOS paper, no longer used.
  * @author mgordon
  * 
  */

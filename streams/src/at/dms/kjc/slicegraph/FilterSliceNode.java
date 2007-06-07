@@ -5,7 +5,7 @@ import at.dms.kjc.backendSupport.Layout;
 
 import java.util.*;
 /** 
- *
+ * A {@link SliceNode} that references a {@link FilterContent}.
  **/
 public class FilterSliceNode extends SliceNode
 {

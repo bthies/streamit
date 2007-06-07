@@ -10,8 +10,12 @@ import at.dms.kjc.spacetime.MultiLevelSplitsJoins;
 import at.dms.kjc.KjcOptions;
 
 /**
- * An abstract class that a slice parititoner will subclass from. It holds the
+ * An abstract class that a slice parititoner will subclass from: It holds the
  * partitioned stream graph.
+ * 
+ * Partitioning maps filters to slices.  This is normally not useful since most 
+ * back ends will assume one filter per slice, but is sometimes used in {@link at.dms.kjc.spacetime}.
+ * Partitioning also converts a SIR graph to a slice graph.
  * 
  * @author mgordon
  * 

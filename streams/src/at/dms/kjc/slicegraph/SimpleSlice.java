@@ -4,8 +4,7 @@
 package at.dms.kjc.slicegraph;
 
 /**
- * A SimpleSlice is a Slice with exactly one FilterSliceNode
- * FilterSliceNode
+ * A SimpleSlice is a Slice with exactly one {@link FilterSliceNode}.
  * @author dimock
  *
  */

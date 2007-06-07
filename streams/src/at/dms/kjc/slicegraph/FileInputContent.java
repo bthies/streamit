@@ -6,7 +6,7 @@ import at.dms.kjc.*;
 import at.dms.kjc.common.*;
 
 /**
- * Predefined FilterContent for file input.
+ * Predefined FilterContent for file input, expands to implement a FileReader.
  * @author jasperln
  */
 public class FileInputContent extends InputContent {

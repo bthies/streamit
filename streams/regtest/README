@@ -5,6 +5,12 @@ The streamittest, and tools subdirectories are a Junit-based version
 of regression testing with some Perl superstructure that is no longer
 being actively maintained or updated.
 
+If you want to compare files of ASCII representations of floating point numbers
+allowing small discrepancies, then tools/compare_uni.pl will still be useful.
+you will need to 
+$cd $STREAMIT_HOME/regtest/tools
+to run it, or update your PERL5LIB envieonment variable.
+
 CURRENT:
 The qmtest subdirectory has tools and Python scripts based on QMtest
 (http://www.codesourcery.com/qmtest/).  There is some further

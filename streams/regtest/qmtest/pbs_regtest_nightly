@@ -1,14 +1,15 @@
 #!/bin/sh
 #PBS -N streamit_nightly
 #PBS -S /bin/sh
-#PBS -q long@cagfarm-01
-#PBS -l cput=72:00:00
+# current nightly test may exceed max time for queue #PBS -q long@cagfarm-01
+# current nightly test may exceed this: #PBS -l cput=72:00:00
+#PBS -q unbound
 #PBS -l nodes=1:fast:rhel3:ppn=2
 #PBS -o /dev/null
 #PBS -e /dev/null
 #PBS -m ae
+#PBS -r n
 #PBS -M dimock@csail.mit.edu
-#PBS -q unbound
 #PBS -v STREAMIT_HOME="/home/bits7/dimock/streams",PERL5LIB="/usr/uns/encap/perl-5.8.0/lib/5.8.0:/u/dimock/lib/site_perl/5.8.0"
 
 # Run the "nightly" regression tests under OpenPBS.  Submit this script
@@ -21,10 +22,7 @@
 # SHELL=/usr/uns/bin/ntcsh
 # PERL5LIB="/usr/uns/encap/perl-5.8.0/lib/5.8.0:/u/dimock/lib/site_perl/5.8.0"
 # # run regression test daily at 8:00PM
-# 00 20 * * * /usr/uns/bin/qsub -q long -l cput=72:00:00 -l nodes=1:fast:rhel3:ppn=2 /home/bits7/dimock/streams/regtest/qmtest/pbs_regtest_nightly
-#
-# The above qsub command is a bit redundant with the PBS directives above
-# (had been testing different values on the qsub line)
+# 00 20 * * * /usr/uns/bin/qsub /home/bits7/dimock/streams/regtest/qmtest/pbs_regtest_nightly
 #
 umask 002
 alias gcc='gcc34'

@@ -236,6 +236,8 @@ public class WorkEstimate {
     }
 
     static class WorkVisitor extends SLIREmptyVisitor implements WorkConstants {
+        private Set<JMethodDeclaration> methodsBeingProcessed;
+        
         /**
          * An estimate of the amount of work found by this filter.
          */
@@ -249,6 +251,13 @@ public class WorkEstimate {
         private WorkVisitor(SIRFilter theFilter) {
             this.work = 0;
             this.theFilter = theFilter;
+            methodsBeingProcessed = new HashSet<JMethodDeclaration>();
+        }
+
+        private WorkVisitor(SIRFilter theFilter, Set<JMethodDeclaration> methodsBeingProcessed) {
+            this.work = 0;
+            this.theFilter = theFilter;
+            this.methodsBeingProcessed = methodsBeingProcessed;
         }
 
         /**
@@ -267,14 +276,23 @@ public class WorkEstimate {
         }
 
         /**
-         * Returns estimate of work in <pre>node</pre> of <pre>filter</pre>.
+         * Returns estimate of work in <pre>node</pre> of <pre>filter</pre>, use on first call only.
          */
         private static int getWork(SIRFilter filter, JPhylum node) {
             WorkVisitor visitor = new WorkVisitor(filter);
             node.accept(visitor);
             return visitor.work;
         }
-
+        
+        /**
+         * Returns estimate of work in <pre>node</pre> of <pre>filter</pre>, use on internal calls.
+         */
+        private static int getWork(SIRFilter filter, JPhylum node, Set<JMethodDeclaration> methodsBeingProcessed ) {
+            WorkVisitor visitor = new WorkVisitor(filter, methodsBeingProcessed);
+            node.accept(visitor);
+            return visitor.work;
+        }
+        
         private JMethodDeclaration findMethod(String name) 
         {
             JMethodDeclaration[] methods = theFilter.getMethods();
@@ -391,10 +409,10 @@ public class WorkEstimate {
 
             // get the work in the then and else clauses and average
             // them...
-            int thenWork = WorkVisitor.getWork(theFilter, thenClause);
+            int thenWork = WorkVisitor.getWork(theFilter, thenClause, methodsBeingProcessed);
             int elseWork;
             if (elseClause != null) {
-                elseWork = WorkVisitor.getWork(theFilter, elseClause);
+                elseWork = WorkVisitor.getWork(theFilter, elseClause, methodsBeingProcessed);
             } else {
                 elseWork = 0;
             }
@@ -631,9 +649,9 @@ public class WorkEstimate {
             else
                 {
                     JMethodDeclaration target = findMethod(ident);
-                    if (target != null)
+                    if (target != null) {
                         target.accept(this);
-                    else {
+                    } else {
                         System.err.println("Warning:  Work estimator couldn't find target method \"" + ident + "\"" + "\n" + 
                                            "   Will assume constant work overhead of " + WorkConstants.UNKNOWN_METHOD_CALL);
                         work += UNKNOWN_METHOD_CALL;
@@ -642,6 +660,26 @@ public class WorkEstimate {
             work += METHOD_CALL_OVERHEAD;
         }
 
+        /**
+         * only exists here to abort recursive calls.
+         */
+        @Override
+        public void visitMethodDeclaration(JMethodDeclaration self,
+                int modifiers,
+                CType returnType,
+                String ident,
+                JFormalParameter[] parameters,
+                CClassType[] exceptions,
+                JBlock body) {
+            if (methodsBeingProcessed.contains(self)) {
+                System.err.println("Work estimator may underestimate for recursive call to " + self);
+            } else {
+                methodsBeingProcessed.add(self);
+                super.visitMethodDeclaration(self, modifiers, returnType, ident, parameters, exceptions, body);
+                methodsBeingProcessed.remove(self);
+            }
+        }
+        
         /**
          * prints an equality expression
          */

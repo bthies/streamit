@@ -669,21 +669,7 @@ public class FlatIRToCluster extends InsertTimers implements
 
                             // assign to parameters
                             for (int a = 0; a < param_count; a++) {
-                                if (portal_method_params[a].isArrayType()) {
-                                    // read arrays by passing array pointer and length
-                                    CArrayType arrType = (CArrayType)portal_method_params[a];
-                                    p.print("        msg->get_" 
-                                            + CommonUtils.CTypeToString(arrType.getBaseType(), hasBoolType) 
-                                            + "_array_param((" 
-                                            + CommonUtils.CTypeToString(arrType.getBaseType(), hasBoolType)
-                                            + "*)p" + a + ", " + arrType.getTotalNumElements() + ");\n");
-                                } else {
-                                    // read primitives by calling function and assigning result 
-                                    p.print("        p" + a
-                                            + " = msg->get_" 
-                                            + CommonUtils.CTypeToString(portal_method_params[a], hasBoolType) 
-                                            + "_param();\n");
-                                }
+                                msgGet(portal_method_params[a], "p" + a);
                             }
 
                             p.print("        " + thread_method_name + "__"
@@ -878,6 +864,84 @@ public class FlatIRToCluster extends InsertTimers implements
 
         p.close();
     }
+    
+    /** 
+     * generate code for assigning message contents fo a variable.
+     * @param typ     CType of message
+     * @param varName name of variable
+     */
+    private void msgGet(CType typ, String varName) {
+        if (typ.isArrayType()) {
+            // read arrays by passing array pointer and length
+            CArrayType arrType = (CArrayType) typ;
+            CType baseType = arrType.getBaseType();
+            if (baseType instanceof CBooleanType || typ instanceof CNumericType) {
+            p.print("        msg->get_"
+                    + CommonUtils.CTypeToString(baseType,
+                            hasBoolType)
+                    + "_array_param(("
+                    + CommonUtils.CTypeToString(baseType,
+                            hasBoolType) + "*)" + varName + ", "
+                    + arrType.getTotalNumElements() + ");\n");
+            } else {
+                // arrays of other type pushed elementwise.
+                for (int i = 0; i < arrType.getTotalNumElements(); i++) {
+                    msgGet(baseType, varName+"["+i+"]");
+                }
+
+            }
+        } else if (typ instanceof CBooleanType || typ instanceof CNumericType) {
+            // read primitives by calling function and assigning result
+            p.print("        " + varName + " = msg->get_"
+                    + CommonUtils.CTypeToString(typ, hasBoolType)
+                    + "_param();\n");
+        } else {
+            assert typ instanceof CClassType;
+            System.err.println("Warning: struct message type " + typ + " not yet supported");
+            // recursive deconstruction by field here...
+        }
+    }
+    
+    /**
+     * Generate code to push the contents of a message. 
+     * @param exp
+     * @param typ
+     */
+    private void msgPush(JExpression exp, CType typ) {
+        if (typ.isArrayType()) {
+            // push arrays by passing array pointer and length
+            CArrayType arrType = (CArrayType) typ;
+            CType baseType = arrType.getBaseType();
+            if (baseType instanceof CBooleanType || typ instanceof CNumericType) {
+                // arrays of base type supported by cluster library.
+                p.print("  __msg->push_"
+                        + CommonUtils.CTypeToString(baseType, hasBoolType)
+                        + "_array(("
+                        + CommonUtils.CTypeToString(baseType, hasBoolType)
+                        + "*)");
+                exp.accept(this);
+                p.print(", " + arrType.getTotalNumElements() + ");\n");
+            } else {
+                // arrays of other type pushed elementwise.
+                for (int i = 0; i < arrType.getTotalNumElements(); i++) {
+                    msgPush(new JArrayAccessExpression(exp,
+                            new JIntLiteral(i)),
+                            baseType);
+                }
+            }
+        } else if (typ instanceof CBooleanType || typ instanceof CNumericType) {
+            // push primitives by passing only value
+            p.print("  __msg->push_"
+                    + CommonUtils.CTypeToString(typ, hasBoolType) + "(");
+            exp.accept(this);
+            p.print(");\n");
+        } else {
+            assert typ instanceof CClassType;
+            System.err.println("Warning: struct message type " + typ + " not yet supported");
+            // recursive deconstruction by field here...
+        }
+    }
+
 
     public void visitPhasedFilter(SIRPhasedFilter self, SIRPhasedFilterIter iter) {
         // This is a stub; it'll get filled in once we figure out how phased
@@ -1749,24 +1813,7 @@ public class FlatIRToCluster extends InsertTimers implements
 
                 if (params != null) {
                     for (int t = 0; t < method_params.length; t++) {
-                        if (method_params[t].isArrayType()) {
-                            // push arrays by passing array pointer and length
-                            CArrayType arrType = (CArrayType)method_params[t];
-                            p.print("  __msg->push_" 
-                                    + CommonUtils.CTypeToString(arrType.getBaseType(), hasBoolType)
-                                    + "_array((" 
-                                    + CommonUtils.CTypeToString(arrType.getBaseType(), hasBoolType)
-                                    + "*)");
-                            params[t].accept(this);
-                            p.print(", " + arrType.getTotalNumElements() + ");\n");
-                        } else {
-                            // push primitives by passing only value
-                            p.print("  __msg->push_" 
-                                    + CommonUtils.CTypeToString(method_params[t], hasBoolType) 
-                                    + "(");
-                            params[t].accept(this);
-                            p.print(");\n");
-                        }
+                        msgPush(params[t],method_params[t]);
                     }
                 }
 

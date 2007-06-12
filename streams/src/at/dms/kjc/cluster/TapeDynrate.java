@@ -5,10 +5,10 @@ package at.dms.kjc.cluster;
 
 import at.dms.kjc.CType;
 import at.dms.kjc.flatgraph.*;
-import at.dms.kjc.sir.SIRPredefinedFilter;
+import at.dms.kjc.sir.*;
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.KjcOptions;
-import at.dms.kjc.JExpression;
+//import at.dms.kjc.JExpression;
 import at.dms.kjc.CArrayType;
 
 /**
@@ -145,7 +145,9 @@ public class TapeDynrate extends TapeBase implements Tape {
 
         // splitters and joiners do not peek(offset) or pop(N);
         if (NodeEnumerator.getFlatNode(dst).isFilter()
-                && ! (NodeEnumerator.getOperator(dst) instanceof SIRPredefinedFilter)) {
+                && ! (NodeEnumerator.getOperator(dst) instanceof SIRIdentity
+                        || NodeEnumerator.getOperator(dst) instanceof SIRFileReader
+                        || NodeEnumerator.getOperator(dst) instanceof SIRFileWriter)) {
 
             //////////
             // pop(N)

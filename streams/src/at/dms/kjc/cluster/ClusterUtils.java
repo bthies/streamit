@@ -20,7 +20,7 @@ class ClusterUtils {
     // don't know exactly how they handle pre-defined filters.)
 
     public static String getWorkName(SIROperator f, int id) {
-        if (f instanceof SIRPredefinedFilter) {
+        if (f instanceof SIRFileReader || f instanceof SIRFileWriter) {
             return f.getName() + "__work__" + id;
         } else if (f instanceof SIRFilter) {
             return ((SIRFilter)f).getWork().getName() + "__" + id;

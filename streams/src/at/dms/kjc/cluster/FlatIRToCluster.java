@@ -126,7 +126,7 @@ public class FlatIRToCluster extends InsertTimers implements
         FlatIRToCluster toC = new FlatIRToCluster(filter);
         // the code below only deals with user-defined filters.
         // on a PredefinedFilter we need to go generate special code.
-        if (filter instanceof SIRPredefinedFilter) {
+        if (filter instanceof SIRFileReader || filter instanceof SIRFileWriter) {
             IterFactory.createFactory().createIter(filter)
                 .accept(toC);
             return;
@@ -544,7 +544,9 @@ public class FlatIRToCluster extends InsertTimers implements
         JExpression cond = new JRelationalExpression(null, Constants.OPE_LT,
                                                      new JIntLiteral(0), new JLocalVariableExpression(null, counter));
 
-        if (self instanceof SIRPredefinedFilter) {
+        if (/*self instanceof SIRPredefinedFilter*/ 
+                self instanceof SIRFileReader || self instanceof SIRFileWriter) {
+            // special code generated for file readers and file writers
             BuiltinsCodeGen.predefinedFilterWork((SIRPredefinedFilter) self, selfID, p);
         } else {
 
@@ -889,7 +891,7 @@ public class FlatIRToCluster extends InsertTimers implements
                                        CType returnType, String ident, JFormalParameter[] parameters,
                                        CClassType[] exceptions, JBlock body) {
         declsAreLocal = true;
-        if (filter != null && filter instanceof SIRPredefinedFilter
+        if (filter != null && (filter instanceof SIRFileReader || filter instanceof SIRFileWriter)
             && self.getName().startsWith("init") && !isDeclOnly()) {
             BuiltinsCodeGen.predefinedFilterInit((SIRPredefinedFilter) filter,
                                                  returnType, ident + "__" + selfID, selfID, cleanupCode, p);

@@ -43,6 +43,7 @@ class BuiltinsCodeGen {
             genFileWriterWork((SIRFileWriter)filter,inputTape,selfID,p);
             // SIRIdentity
         } else if (filter instanceof SIRIdentity) {
+            assert false : "should not process SIRIdentity here";
             p.println("for (; 0 < ____n; ____n--) {");
             p.indent();
             p.println("  " + outputTape.getPushName() + "("

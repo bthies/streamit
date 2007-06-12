@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/GenerateMakefile.java,v 1.12 2007-05-17 18:50:58 shall07 Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/GenerateMakefile.java,v 1.13 2007-06-12 16:59:32 dimock Exp $
 package at.dms.kjc.cluster;
 
 import java.io.FileWriter;
@@ -36,11 +36,19 @@ public class GenerateMakefile {
         String executablename = KjcOptions.output == null? "a.out": KjcOptions.output;
         
         p.newLine();
-        p.print("LIB_CLUSTER = $(STREAMIT_HOME)/library/cluster\n");
-
-        p.newLine();    
-        //p.print("CC = gcc34\n"); // gcc
-        p.print("CCFLAGS = -O3\n");
+        if (KjcOptions.vectorize > 0) {
+            // XXX: temproary for debugging.
+            // debugging vectorization on ppu:
+            // requires version of cluster library built with ppu32-g++
+            p.print("LIB_CLUSTER = $(STREAMIT_HOME)/library/cluster-ppu32\n");
+            p.newLine();
+            p.print("CXX = ppu32-g++\n"); // gcc
+            p.print("CCFLAGS = -O0 -ggdb -mabi=altivec -maltivec\n");
+        } else {
+            p.print("LIB_CLUSTER = $(STREAMIT_HOME)/library/cluster\n");
+            p.newLine();
+            p.print("CCFLAGS = -O3\n");
+        }
 
         p.newline();
         p.println("# Unsupported target machines");

@@ -8,22 +8,34 @@ import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.iterator.*;
 import at.dms.kjc.sir.lowering.fusion.FusePipelines;
-//import at.dms.kjc.sir.lowering.fusion.Lifter;
 import at.dms.kjc.sir.lowering.partition.WorkEstimate;
 
 import java.util.*;
 
 /**
  * Mung code to allow naive vectorization.
+ * Note: static methods in this class are not designed to be re-entrant.
  * @author Allyn Dimock
  */
 public class VectorizeEnable {
     /**
      * Set to true to list sequences of vectorizable filters before fusion and individual vectorizable filters after fusion.
      */
-    public static boolean debugging = true;
-
-
+    public static boolean debugging = false;
+    
+    /**
+     * Keep from producing vectors over tapes until I can debug.
+     */
+    public static boolean vectorsOverTapesDebugged = false;
+    
+    /** All vectorizable filters (after fusion) */
+    private static Set<SIRFilter> allVectorizable;
+    /** subset of allVectorizable that could produce vector output (but may not end up doing so) */
+    private static Set<SIRFilter> allHavingVectorOutput;
+    /** subset of allVectorizable that are worth vectorizing according to local criteria */
+    private static Set<SIRFilter> allIndividuallyWorthwhile;
+    /** subset of allVectorizable that are worth vectorizing (iterate over these callinfgVerctorize() */
+    private static Set<SIRFilter> allWorthwhile;
     
     /** 
      * Perform naive vectorization on eligible filters in a stream.
@@ -31,10 +43,6 @@ public class VectorizeEnable {
      * Causes subgraphs and pipeline segments of 
      * {@link Vectorizable#vectorizable(SIRFilter) vectorizable} filters to be fused
      * if filters after the first do not peek.
-     * TODO: After fusion, vectorized filters should communicate with vectors to subsequent
-     * peeking vectorized filters.  (test on filterbank, channelvocoder).
-     * TODO: If a duplicating filter is followed by a peeking vectorized filter, then 
-     * vectorize data before the duplicating splitter.
      * Causes {@link Vectorizable#vectorizable(SIRFilter) vectorizable} filters to be 
      * executed a multiple of 4 times per steady state.
      * <br/>
@@ -57,7 +65,11 @@ public class VectorizeEnable {
             // vector registers are at least 8 bytes.
             return str;
         }
-
+        allVectorizable = new HashSet<SIRFilter>();
+        allHavingVectorOutput = new HashSet<SIRFilter>();
+        allIndividuallyWorthwhile = new HashSet<SIRFilter>();
+        allWorthwhile = new HashSet<SIRFilter>();
+        
         if (debugging) {
             // now find all vectorizable filters in fused graph
             Set<SIRFilter> vectorizableFilters = markVectorizableFilters(str);
@@ -71,6 +83,7 @@ public class VectorizeEnable {
         
         // Fuse together all fusable sub-graphs or pipeline segments
         // of vectorizable filters, preserving vectorizability.
+        // (comment out to test vectorization without fusion.)
         
         //str = FusePipelines.fusePipelinesOfVectorizableFilters(str);  old pipeline-only version
         str = FusePipelines.fusePipelinesOfVectorizableStreams(str);
@@ -78,6 +91,8 @@ public class VectorizeEnable {
         // now find all vectorizable filters in fused graph
         Set<SIRFilter> vectorizableFilters = markVectorizableFilters(str);
         // find maximal subgraphs or pipeline segments that are not in feedback loops.
+        // (This maximal segment stuff is obsolete from time when thought about doing own fusion.
+        //  but not highest priority to rip out, simplify.)
         Map<SIRStream,List<intPair>> segments = findVectorizablesegments(vectorizableFilters,str);
         
         if (debugging) {
@@ -89,100 +104,321 @@ public class VectorizeEnable {
         }
         
         // find the filters to vectorize
-        Set<SIRFilter> tops = new HashSet<SIRFilter>();
-        Set<SIRFilter> bots = new HashSet<SIRFilter>();
-        final Set<SIRFilter>  all = new HashSet<SIRFilter>();
-        topsBotsAll(segments,tops,bots,all);
+        final Set<SIRFilter> all = allVectorizable;
+        findAllFiltersInSegments(segments,all);
         
-        // TODO: if a splitter preceeds a top filter and 
-        // all filters after the splitter are vectorizable and
-        // a top filter peeks and the splitter is a duplicate 
-        // then introduce a vectorizable identity filter before the splitter
-        // to minimize the gathering needed to peek.  XXX: won't work.
-        // in fact: RR splitter or joiner in vectorized segment will
-        // have limitation on when it can be fused.
-        // vectorize filters that can usefully be vectorized.
-        IterFactory.createFactory().createIter(str).accept(
-                new EmptyStreamVisitor() {
-                    /* visit a filter */
-                    public void visitFilter(SIRFilter self,
-                                            SIRFilterIter iter) {
-                        if (Vectorizable.vectorizable(self) &&
-                            Vectorizable.isUseful(self)) {
-                            // XXX: Wretched abuse of a compiler flag that should
-                            // not occur with vectorization, for purposes of testing.
-                            if (! KjcOptions.magic_net) {
-                                if (debugging) {
-                                    System.err.println("Vectorizing " + self.getName());
-                                }
-                                Vectorize.vectorize(self,
-                                        matchingVectorTypesPrevious(self,all),
-                                        matchingVectorTypesNext(self,all));
-                            }
-                            forScheduling(self);
-                        }
-                    }
-                });
+        for (SIRFilter f : allVectorizable) {
+            if (Vectorizable.isUseful(f)) {
+                allIndividuallyWorthwhile.add(f);
+            }
+            // to determine if the filter produces vector output
+            // we currnetly need to vectorize it, but vectorization
+            // transforms a filter in place, so need a clone in case
+            // we decide not to vectorize later or to vectorize with
+            // different arguments.
+            SIRFilter fclone = (SIRFilter)at.dms.kjc.AutoCloner.deepCopy(f);
+            try {
+                if (Vectorize.vectorize(fclone, true, true)) {
+                    allHavingVectorOutput.add(f);
+                }
+            } catch (Throwable t) {
+                // here if filter could not vectorize output:
+                // so don't add it to allHavingVectorOutput...
+            }
+        }
+        // add to worthwhile set those filters that are in series or parallel
+        // with filters that are worthwhile to vectorize.
+        buildAllWorthwhile();
+        
+        for (SIRFilter toVectorize : allWorthwhile) {
+            boolean usesVectorInput = useVectorInput(toVectorize);
+            boolean usesVectorOutput = useVectorOutput(toVectorize);
+            
+            // XXX: Wretched abuse of a compiler flag that should
+            // not occur with vectorization, for purposes of testing.
+            if (! KjcOptions.magic_net) {
+                if (debugging) {
+                    System.err.println("Vectorizing " + toVectorize.getName()
+                            + (usesVectorInput ? " with vector input " : "") 
+                            + (usesVectorOutput ? " with vector output " : "") );
+                }
+                // TODO: bug in values when using vector tapes
+                if (vectorsOverTapesDebugged) {
+                    Vectorize.vectorize(toVectorize, usesVectorInput, usesVectorOutput);
+                } else {
+                    Vectorize.vectorize(toVectorize, false, false);
+                }
+            }
+            // TODO: bug in values when using vector tapes
+            if (vectorsOverTapesDebugged) {            
+                forScheduling(toVectorize, usesVectorInput, usesVectorOutput);
+            } else {
+                forScheduling(toVectorize, false, false);
+            }
+        }
+        
+        if (debugging) {
+            WorkEstimate workEst = WorkEstimate.getWorkEstimate(str);
+            workEst.printGraph(str, "work-and-vectorization.dot");
+        }
+
+        // about to return, don't leak memory by keeping static data.
+        allVectorizable = null;
+        allHavingVectorOutput = null;
+        allIndividuallyWorthwhile = null;
+        allWorthwhile = null;
+
         return str;
     }
     
     /**
-     * Should the passed filter input a vector type from previous SIROperator?
-     * Must match answer from matchingVectorTypesNext on next filter...
+     * Build the allWorthwhile set: the filters that will be vectorized.
+     * Base is inclusion in allIndividuallyWorthwhile set.
+     * 
+     * This method may also call a method that alters the SIR graph structure
+     * to introduce vectorization above a duplicate splitter.
      */
-    static private boolean matchingVectorTypesPrevious(SIRFilter filter,Set<SIRFilter> all) {
-        SIROperator prevop = SIRNavigationUtils.getPredecessorOper(filter);
-        if (prevop instanceof SIRFilter) {
-            return compatibleAsAPreviousFilter((SIRFilter)prevop, filter.getPopInt(), all);
-        } else if (prevop instanceof SIRJoiner) {
-            // are all immediately-preceeding filters of vector type with right rate?
-        } else {
-            assert prevop instanceof SIRSplitter;
-            // are all parallel filters of vector type with same rate?
-            // is filter before splitter of vector type with same rate (if anything else
-            // immeditely before splitter then punt)
+    static private void buildAllWorthwhile() {
+        allWorthwhile.addAll(allIndividuallyWorthwhile);
+        Set<SIRFilter> notYetWorthwhile = new HashSet<SIRFilter>();
+        notYetWorthwhile.addAll(allVectorizable);
+        notYetWorthwhile.removeAll(allVectorizable);
+        int prevSizeNotWorthwhile = 0;
+        while (notYetWorthwhile.size() != prevSizeNotWorthwhile) {
+            prevSizeNotWorthwhile = notYetWorthwhile.size();
+
+            for (SIRFilter f : notYetWorthwhile) {
+                boolean worthwhile = false;
+                // worthwhile if all successors are vectorizable and any is
+                // worthwhile
+                if (canPassVectorTypeDown(SIRNavigationUtils
+                        .getSuccessorOper(f))) {
+                    Set<SIRFilter> successors = SIRNavigationUtils
+                            .getSuccessorFilters(f);
+                    if (allVectorizable.containsAll(successors)) {
+                        for (SIRFilter s : successors) {
+                            if (allWorthwhile.contains(s)) {
+                                worthwhile = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                // worthwhile if all predecessors return vector type and any is
+                // worthwhile
+                if (!worthwhile
+                        && canPassVectorTypeUp(SIRNavigationUtils
+                                .getPredecessorOper(f))) {
+                    Set<SIRFilter> predecessors = SIRNavigationUtils
+                            .getPredecessorFilters(f);
+                    if (allHavingVectorOutput.containsAll(predecessors)) {
+                        for (SIRFilter s : predecessors) {
+                            if (allWorthwhile.contains(s)) {
+                                worthwhile = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                // worthwhile if at top of splitjoin and any sibling worthwhile
+                // in which case may want to vectorize before splitjoin.
+                if (!worthwhile
+                        && SIRNavigationUtils.getPredecessorOper(f) instanceof SIRSplitter) {
+                    Set<SIRFilter> siblings = SIRNavigationUtils
+                            .getSuccessorFilters(SIRNavigationUtils
+                                    .getPredecessorOper(f));
+                    if (allVectorizable.containsAll(siblings)) {
+                        for (SIRFilter s : siblings) {
+                            if (allWorthwhile.contains(s)) {
+                                worthwhile = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (worthwhile) {
+                    allWorthwhile.add(f);
+                    notYetWorthwhile.remove(f);
+                }
+            }
         }
-        return false;
+
+        Set<SIRFilter> tryVectorizeAbove = new HashSet<SIRFilter>();
+        // if vectorizing all siblings below a splitter
+        // check whether can vectorize above splitter to decrease number
+        // of gathers performed by the filters.
+        //
+        // In two phases since need to add any new filter to allWorthwhile,
+        // which can not do inside iteration over allWorthwhile.
+        for (SIRFilter f : allWorthwhile) {
+            if (SIRNavigationUtils.getPredecessorOper(f) instanceof SIRSplitter
+                    && allWorthwhile.containsAll(SIRNavigationUtils
+                            .getSuccessorFilters(SIRNavigationUtils
+                                    .getPredecessorOper(f)))) {
+                tryVectorizeAbove.add(f);
+            }
+        }
+        for (SIRFilter f : tryVectorizeAbove) {
+            vectorizeAboveSplitter(f);
+        }
+
     }
     
     /**
-     * Should the passed filter output a vector type to the following SIROperator?
+     * If the predecessor of this filter in the graph is a duplicate splitter 
+     * and the input type of this splitter is not a vector type then introduce
+     * a vectorizable identity filter above the splitter, so that there is only
+     * one gather operation for all the pops or peeks from the vectorized filters
+     * after the splitter.
+     * @param f 
      */
-    static boolean matchingVectorTypesNext(SIRFilter filter,Set<SIRFilter> all) {
-        // filter follows: is following a vectorizable filter with matching rate?
-        
-        // joiner follows: do all parallel filters have same rate?
-        // is operator following joiner a vectorizable filter with correct rate?
-        
-        // splitter follows: are all following filters vectorizable and with same rate?
-        return false;
+    static void vectorizeAboveSplitter(SIRFilter f) {
+        SIROperator pred = SIRNavigationUtils.getPredecessorOper(f);
+        if (pred instanceof SIRSplitter && canPassVectorType(pred)) {
+            SIRStream parent = pred.getParent();
+            assert parent instanceof SIRSplitJoin;
+            SIROperator predpred = SIRNavigationUtils.getPredecessorOper(parent);
+            if (predpred instanceof SIRFilter && allHavingVectorOutput.contains((SIRFilter)predpred)) {
+                allWorthwhile.add((SIRFilter)predpred);
+            } else {
+                SIRPipeline wrapper = SIRContainer.makeWrapper(parent);
+                SIRFilter vecIdentity = new SIRFilter("vectorize");
+                vecIdentity.makeIdentityFilter(new JIntLiteral(1), f.getInputType());
+                allHavingVectorOutput.add(vecIdentity);
+                allWorthwhile.add(vecIdentity);
+                wrapper.add(0,vecIdentity);
+            }
+        }
     }
     
     /**
-     * Determine whether <b>f</b> can preceed a filter taking vector input.
-     * @param f a filter
-     * @param requiredPushRate  The push rate that f needs to have
-     * @param all the set of vectorizable filters
-     * @return
+     * Should a vectorizable filter take a vector type as input?
+     * (Is it the case that all immediately preceeding filters will be vectorized and that a vector type can pass over edges from them?)
+     * 
      */
-    static private boolean compatibleAsAPreviousFilter (SIRFilter f, int requiredPushRate, Set<SIRFilter> all) {
-        return requiredPushRate == f.getPushInt()
-        && ((all.contains(f) && Vectorizable.isUseful(f)) // f passed test for vectorizable...
-                || f.getOutputType() instanceof CVectorTypeLow); // or is vectorized already
+    
+    static boolean useVectorInput(SIRFilter f) {
+        if (canPassVectorTypeUp(SIRNavigationUtils.getPredecessorOper(f))) {
+            // vector type can pass from previous filter
+            Set<SIRFilter> previous = SIRNavigationUtils.getPredecessorFilters(f);
+            if (! (allWorthwhile.containsAll(previous) && allHavingVectorOutput.containsAll(previous))) {
+                return false;
+            }
+            // if just after splitter, must check that all siblings 
+            // are also vectorizable
+            if (SIRNavigationUtils.getPredecessorOper(f) instanceof SIRSplitter) {
+                Set<SIRFilter> siblings = SIRNavigationUtils.getSuccessorFilters(SIRNavigationUtils.getPredecessorOper(f));
+                return allWorthwhile.containsAll(siblings);
+            } else {
+                return true;
+            }
+        } else {
+            // vector type can not pass through splitter or joiner from previous filter.
+            return false;
+        }
     }
     
     /**
-     * Determine whether <b>f</b> can succeed a filter producing vector output.
-     * @param f a filter
-     * @param requiredPopRate  The ppo rate that f needs to have
-     * @param all the set of vectorizable filters
-     * @return
+     * Should a vectorizable filter produce a vector type as output?
+     * (Is it the case that all immediately following filters will be vectorized and that a vector type can pass over edges to them?)
+     * 
      */
-    static private boolean compatibleAsANextFilter (SIRFilter f, int requiredPopRate, Set<SIRFilter> all) {
-        return requiredPopRate == f.getPushInt()
-        && ((all.contains(f) && Vectorizable.isUseful(f)) // f passed test for vectorizable...
-                || f.getInputType() instanceof CVectorTypeLow); // or is vectorized already
+    
+    static boolean useVectorOutput(SIRFilter f) {
+        if (allHavingVectorOutput.contains(f) && canPassVectorTypeDown(SIRNavigationUtils.getSuccessorOper(f))) {
+            // vector type can pass no next filter
+            Set<SIRFilter> next = SIRNavigationUtils.getSuccessorFilters(f);
+            return allWorthwhile.containsAll(next);
+        } else {
+            // vector type can not pass through splitter or joiner from previous filter.
+            return false;
+        }
     }
+    
+    /**
+     * Determine whether a vector type can pass over graph edge connecting to SIROperator <b>op</b>.
+     * 
+     * @param op A SIROperator
+     * @return true if operator at this end of edge does not prohibit passing vector type over edge.
+     */
+    static boolean canPassVectorType(SIROperator op) {
+        if (op instanceof SIRFilter) {
+            // can always pass a vector type between filters.
+            return true;
+        }
+        if (op instanceof SIRJoiner) {
+            // can only pass a vector type through a joiner if
+            // the splitjoin can be rewritten to simulate proper
+            // ordering on scalar stream.
+            // just return false for now.
+            return false;
+        }
+        if (op instanceof SIRSplitter) {
+            SIRSplitter sp = (SIRSplitter)op;
+            if (sp.getType().isDuplicate()) {
+                for (int i : sp.getWeights()) {
+                    if (i != 1) { return false; }
+                }
+                return true;
+            } else {
+                // can only pass a vector type through a general splitter if
+                // the splitjoin can be rewritten to simulate proper
+                // ordering on scalar stream.
+                // just return false for now.
+                return false;
+            }
+        }
+        // assert only filters, splitters, joiners.
+        throw new AssertionError(op);
+    }
+    
+    /**
+     * Could a vector type be passed through this operator and predecessors until a filter is reached?
+     * @param op first operator to check
+     * @return true if vector can pass through op and predecessors to filter.
+     */
+    static boolean canPassVectorTypeUp(SIROperator op) {
+        if (op instanceof SIRFilter) { 
+            // base case 1: stop search at a filter and return true
+            return true; 
+        }
+        if (! canPassVectorType(op)) {
+            // base case 2: if can not pass through current operator, return false
+            return false;
+        }
+        Set<SIROperator> ops = SIRNavigationUtils.getPredecessorOpers(op);
+        for (SIROperator prevop : ops) {
+            if (! canPassVectorTypeUp(prevop)) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    /**
+     * Could a vector type be passed through this operator and successors until a filter is reached?
+     * @param op first operator to check
+     * @return true if vector can pass through op and successors to filter.
+     */
+    static boolean canPassVectorTypeDown(SIROperator op) {
+        if (op instanceof SIRFilter) { 
+            // base case 1: stop search at a filter and return true
+            return true; 
+        }
+        if (! canPassVectorType(op)) {
+            // base case 2: if can not pass through current operator, return false
+            return false;
+        }
+        // recursive case.
+        Set<SIROperator> ops = SIRNavigationUtils.getSuccessorOpers(op);
+        for (SIROperator nextop : ops) {
+            if (! canPassVectorTypeDown(nextop)) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
     
     /**
      * Unconditionally mung filter for naive vectorization.
@@ -191,26 +427,34 @@ public class VectorizeEnable {
      * {@link Vectorize#vectorize(SIRFilter)} fixes types and
      * {@link SimplifyPeekPopPush} must previously have been run.
      * Set rates as follows:
-     * <ul><li>  push' = push * 4
-     * </li><li> peek' = peek + 3 * pop
-     * </li><li> pop'  = pop * 4 
+     * <ul><li>  push' = push * 4           (unless using vector output)
+     * </li><li> peek' = peek + 3 * pop     (unless using vector input)
+     * </li><li> pop'  = pop * 4            (unless using vector input)
      * </li></ul>
      * @param f : filter to be munged.
+     * @param usesVectorInput if true then do not adjust pop, peek rates
+     * @param usesVectorOutput if true then do not adjust push rate
      */
-    private static void forScheduling (SIRFilter f) {
+    private static void forScheduling (SIRFilter f, boolean usesVectorInput, boolean usesVectorOutput) {
         int veclen = KjcOptions.vectorize / 4;
         
         JMethodDeclaration workfn = f.getWork();
         JBlock workBody = workfn.getBody();
 
         // adjust rates.
-        int pushrate = f.getPushInt();
-        int poprate = f.getPopInt();
-        int peekrate = f.getPeekInt();
-        f.setPush(pushrate * veclen);
-        f.setPeek(peekrate + (veclen - 1) * poprate);
-        f.setPop(poprate * veclen);
+        if (KjcOptions.magic_net || ! usesVectorOutput) {
+            int pushrate = f.getPushInt();
+            f.setPush(pushrate * veclen);
+        }
 
+        int poprate = f.getPopInt();
+
+        if (KjcOptions.magic_net || ! usesVectorInput) {
+            int peekrate = f.getPeekInt();
+            f.setPeek(peekrate + (veclen - 1) * poprate);
+            f.setPop(poprate * veclen);
+        }
+        
         // X X X: Wretched abuse of a compiler flag that should
         // not occur with vectorization, for purposes of testing.
         if (KjcOptions.magic_net) {
@@ -220,7 +464,7 @@ public class VectorizeEnable {
 
 
         // fix number of pops for new rate.
-        if (poprate > 0) {
+        if (poprate > 0 && (KjcOptions.magic_net || ! usesVectorInput)) {
             List<JStatement> stmts = workBody.getStatements();
             int lastPos = stmts.size() - 1;
             JStatement last = stmts.get(lastPos);
@@ -246,20 +490,16 @@ public class VectorizeEnable {
     
     
 
-    /** find location of filters in segments: in a segment, top (first filter) of a segment, bottom (last filter) of a segment */
-    private static void topsBotsAll(Map<SIRStream,List<intPair>> segmentmap,
-            Set<SIRFilter> tops,Set<SIRFilter> bots,Set<SIRFilter> all) {
+    /** find location of filters in segments. */
+    private static void findAllFiltersInSegments(Map<SIRStream,List<intPair>> segmentmap,
+            Set<SIRFilter> all) {
         for (Map.Entry<SIRStream,List<intPair>> segments : segmentmap.entrySet()) {
             SIRStream stream = segments.getKey();
             if (segments.getValue() != null) {
                 for (intPair range : segments.getValue()) {
-                    topsOfSegment(stream, range, tops);
-                    bottomsOfSegment(stream, range, bots);
                     allOfSegment(stream, range, all);
                 }
             } else {
-                topsOfSegment(stream, null, tops);
-                bottomsOfSegment(stream, null, bots);
                 allOfSegment(stream, null, all);
 
             }
@@ -267,45 +507,6 @@ public class VectorizeEnable {
     }
     
 
-    /** add first filter(s) in segment to <b>newTops</b> */
-    private static void topsOfSegment(SIRStream substr,intPair range, Set<SIRFilter> newTops) {
-        if (substr instanceof SIRFilter) {
-            newTops.add((SIRFilter)substr);
-        } else if (substr instanceof SIRSplitJoin) {
-            SIRSplitJoin sj = (SIRSplitJoin)substr;
-            for (SIRStream subsub : sj.getParallelStreams()) {
-                topsOfSegment(subsub,null,newTops);
-            }
-        } else if (substr instanceof SIRPipeline) {
-            SIRPipeline p = (SIRPipeline)substr;
-            if (range == null) {
-                range = new intPair(0,0);
-            }
-            topsOfSegment(p.get(range.first),null,newTops);
-        } else {
-            throw new AssertionError("shouldn't get here");
-        }
-    }
-
-    /** add last filters(s) in segment to <b>newBots</b> */
-    private static void bottomsOfSegment(SIRStream substr,intPair range, Set<SIRFilter> newBots) {
-        if (substr instanceof SIRFilter) {
-            newBots.add((SIRFilter)substr);
-        } else if (substr instanceof SIRSplitJoin) {
-            SIRSplitJoin sj = (SIRSplitJoin)substr;
-            for (SIRStream subsub : sj.getParallelStreams()) {
-                bottomsOfSegment(subsub,null,newBots);
-            }
-        } else if (substr instanceof SIRPipeline) {
-            SIRPipeline p = (SIRPipeline)substr;
-            if (range == null) {
-                range = new intPair(p.size()-1,p.size()-1);
-            }
-            bottomsOfSegment(p.get(range.second),null,newBots);
-        } else {
-            throw new AssertionError("shouldn't get here");
-        }
-    }
 
     /** add all filter(s) in a segment to <b>filters</b> */
     private static void allOfSegment(SIRStream substr,intPair range, Set<SIRFilter> filters) {
@@ -470,21 +671,21 @@ public class VectorizeEnable {
                 if (pipeSegs.size() != 1 || pipeSegs.get(0).first != 0 || pipeSegs.get(0).second != ((SIRPipeline)s).size()) {
                     for (intPair pipeSeg : pipeSegs) {
                         System.err.print("pipeline " + s.getIdent() + "(" + s.getName() + ")" + " " + pipeSeg.first + ":" + pipeSeg.second + " {");
-                        dumpTopsAndBottoms(s,Collections.singletonList(pipeSeg));
+                        //dumpTopsAndBottoms(s,Collections.singletonList(pipeSeg));
                         for (int i = pipeSeg.first; i <= pipeSeg.second; i++) {
                             dumpContents(((SIRPipeline)s).get(i));
                         }
                     }
                 } else {
                     System.err.print("pipeline " + s.getIdent() + "(" + s.getName() + ")" + " {");
-                    dumpTopsAndBottoms(s,pipeSegs);
+                    //dumpTopsAndBottoms(s,pipeSegs);
                     for (int i = 0; i < ((SIRPipeline)s).size(); i++) {
                         dumpContents(((SIRPipeline)s).get(i));
                     }
                 }
             } else if (s instanceof SIRSplitJoin) {
                 System.err.print("splitjoin " + s.getIdent() + "(" + s.getName() + ")"+ " {");
-                dumpTopsAndBottoms(s,null);
+                //dumpTopsAndBottoms(s,null);
                 for (SIRStream subStr : ((SIRSplitJoin)s).getParallelStreams()) {
                     dumpContents(subStr);
                 }
@@ -519,41 +720,6 @@ public class VectorizeEnable {
                     }
                 });
     }
-
-
-    private static void dumpTopsAndBottoms(SIRStream s,List<intPair> pipeSeg) {
-        Set<SIRFilter> tops = new HashSet<SIRFilter>();
-        if (pipeSeg == null) {
-            topsOfSegment(s,null,tops);
-        } else {
-            for (intPair p : pipeSeg) {
-                topsOfSegment(s,p,tops);
-            }
-        }
-        System.err.print("[Top ");
-        for (SIRFilter f : tops) {
-            System.err.print(f.getName() + " ");
-        }
-        System.err.print("]");
-
-        Set<SIRFilter> bottoms = tops; bottoms.clear();
-        if (pipeSeg == null) {
-            bottomsOfSegment(s,null,bottoms);
-        } else {
-            for (intPair p : pipeSeg) {
-                bottomsOfSegment(s,p,bottoms);
-            }
-        }
-        System.err.print("[Bottom ");
-        for (SIRFilter f : bottoms) {
-            System.err.print(f.getName() + " ");
-        }
-        System.err.print("]");
-
-        
-        
-    }
-
 }
 
 /** Little class for pairs of integers

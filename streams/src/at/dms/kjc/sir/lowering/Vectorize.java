@@ -59,6 +59,7 @@ public class Vectorize {
      * @param filter to convert.
      * @param vectorInputTape set to true if input tape has / will have a vector type.
      * @param vectorOutputTape is set to true if output tape should have a vector type.
+     * @return true if vector type actually reaches output tape.
      */
     static boolean vectorize (SIRFilter filter, boolean vectorInputTape, boolean vectorOutputTape) {
         final boolean[] vectorizePush = {false};  // true if vector type reaches push statements.
@@ -132,6 +133,14 @@ public class Vectorize {
         // put in poke buffer handling
         if (filter.getPushInt() > 1 && vectorizePush[0] && ! vectorOutputTape) {
             putInPokeBuffer(filter,pokeBufDefn,pokeBufRef,pokeBufOffsetDef,pokeBufOffset);
+        }
+        
+        if (vectorOutputTape) {
+            filter.setOutputType(new CVectorTypeLow((CNumericType)filter.getOutputType(),KjcOptions.vectorize));
+        }
+        
+        if (vectorInputTape) {
+            filter.setInputType(new CVectorTypeLow((CNumericType)filter.getInputType(),KjcOptions.vectorize));
         }
         
         return vectorizePush[0];
@@ -505,7 +514,10 @@ public class Vectorize {
                     // then:
                     //   just push the vector value.
                     if (vectorOutputTape) {
+                        boolean oldConstantsToVector = constantsToVector;
+                        constantsToVector = true;
                         JExpression processedArg = (JExpression)arg.accept(this);
+                        constantsToVector = oldConstantsToVector;
                         return new SIRPushExpression(processedArg,
                                 new CVectorType((CNumericType)tapeType,KjcOptions.vectorize));
                     }
@@ -1172,7 +1184,7 @@ public class Vectorize {
      * assignment statements, and reconstructing types as it goes.
      * 
      * A more elegant version might use type inference based on tainting the type of the input tape.
-     * A type ionference version would require a full bottom-up pass unifying the type from
+     * A type inference version would require a full bottom-up pass unifying the type from
      * peek or pop with the type of an expression (LackWit for StreamIt).  
      * 
      * We make no effort to unify types across complex expressions (the user can fix by 
@@ -1234,7 +1246,7 @@ public class Vectorize {
                         CType tapeType,
                         JExpression arg) {
                     super.visitPushExpression(self,tapeType,arg);
-                    if (haveType != null) {
+                    if (haveType != null && filter.getOutputType() instanceof CNumericType) {
                         vectorizePush[0] = true;  // push takes a vector type.
                     }
                 }

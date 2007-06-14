@@ -276,11 +276,10 @@ float[320][240]->bestFeatures[320][240] filter sortEigs(int width, int height){
 	bestFeatures[320][240] eig2DBest;
 	bestFeatures h;	
 	int i, j, temp1;
-	float x;
 	
 	
 	void q_sort(int top, int bottom)
-	{
+	{	 float x;
 		 x = eig1DBest[top].val;
 		 i = top - 1;
 		 j = bottom + 1;
@@ -309,7 +308,7 @@ float[320][240]->bestFeatures[320][240] filter sortEigs(int width, int height){
 	}
 	
 	void q_sort2(int lo, int hi)
-	{
+	{	float x;
 		i=lo; j=hi;
 		x=eig1DBest[(lo+hi)/2].val;
 

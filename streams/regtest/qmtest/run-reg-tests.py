@@ -2,7 +2,7 @@
 #
 # run-reg-tests.py: Yet another test to run regression tests
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: run-reg-tests.py,v 1.45 2007-04-05 13:13:36 dimock Exp $
+# $Id: run-reg-tests.py,v 1.46 2007-06-15 22:05:20 thies Exp $
 #
 # Taking history from run_reg_tests.pl: this is the third implementation
 # of a script to run StreamIt regression tests.  It is written in Python,
@@ -24,10 +24,10 @@ import re
 import sys
 
 # Some defaults:
-admins = 'streamit-regtest-log@cag.lcs.mit.edu'
-users = 'streamit-regtest@cag.lcs.mit.edu'
-#admins = 'dimock@csail.mit.edu'
-#users = 'dimock@csail.mit.edu'
+#admins = 'streamit-regtest-log@cag.lcs.mit.edu'
+#users = 'streamit-regtest@cag.lcs.mit.edu'
+admins = 'thies@mit.edu'
+users = 'thies@mit.edu'
 #
 # The following were munged to run on a system requiring a different version
 # of python than the one in /usr/uns/bin/pyton and a different version
@@ -35,7 +35,7 @@ users = 'streamit-regtest@cag.lcs.mit.edu'
 #
 # command to start up qmtest
 invoke_qmtest = 'qmtest'
-# invoke_qmtest = '/usr/bin/python /home/bits7/dimock/qm-2.3/bin/qmtest'
+# invoke_qmtest = '/usr/bin/python /home/bits7/thies/qm-2.3/bin/qmtest'
 # prefix to line to run build-qmtest.py.
 invoke_build_prefix = ''
 # invoke_build_prefix = '/usr/bin/python '
@@ -136,7 +136,7 @@ class RunRegTests:
         os.environ['CPATH'] = c_include_path
         # perl libraries needed by strc 
 #        os.environ['PERL5LIB'] = '/usr/uns/encap/perl-5.8.0/lib/5.8.0/:/usr/uns/lib/site_perl/5.8.0:/home/streamit/lib/perl5/site_perl/5.8.0:/home/streamit/lib/perl5/site_perl/5.8.0/i386-linux-thread-multi'
-        os.environ['PERL5LIB'] = '/usr/uns/encap/perl-5.8.0/lib/5.8.0:/u/dimock/lib/site_perl/5.8.0'
+        os.environ['PERL5LIB'] = '/usr/uns/encap/perl-5.8.0/lib/5.8.0:/u/thies/lib/site_perl/5.8.0'
         # Eclipse crud:
 #        eclipse_base = '/home/bits7/NO_BACKUP/streamit/eclipse/plugins'
 #        ecl = eclipse_base + '/org.eclipse.'

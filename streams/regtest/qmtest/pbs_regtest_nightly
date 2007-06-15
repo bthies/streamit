@@ -9,8 +9,8 @@
 #PBS -e /dev/null
 #PBS -m ae
 #PBS -r n
-#PBS -M dimock@csail.mit.edu
-#PBS -v STREAMIT_HOME="/home/bits7/dimock/streams",PERL5LIB="/usr/uns/encap/perl-5.8.0/lib/5.8.0:/u/dimock/lib/site_perl/5.8.0"
+#PBS -M thies@mit.edu
+#PBS -v STREAMIT_HOME="/home/bits7/thies/streams/streams",PERL5LIB="/usr/uns/encap/perl-5.8.0/lib/5.8.0:/u/thies/lib/site_perl/5.8.0"
 
 # Run the "nightly" regression tests under OpenPBS.  Submit this script
 # using 'qsub', possibly via cron.
@@ -18,15 +18,18 @@
 # The current crontab lines are (in case usual submitting cagfarm machine
 # is down, copy and paste these to another machine):
 #
-# MAILTO=dimock@csail.mit.edu
+# MAILTO=thies@mit.edu
 # SHELL=/usr/uns/bin/ntcsh
-# PERL5LIB="/usr/uns/encap/perl-5.8.0/lib/5.8.0:/u/dimock/lib/site_perl/5.8.0"
+# PERL5LIB="/usr/uns/encap/perl-5.8.0/lib/5.8.0:/u/thies/lib/site_perl/5.8.0"
 # # run regression test daily at 8:00PM
-# 00 20 * * * /usr/uns/bin/qsub /home/bits7/dimock/streams/regtest/qmtest/pbs_regtest_nightly
+# 00 20 * * * /usr/uns/bin/qsub /home/bits7/thies/streams/streams/regtest/qmtest/pbs_regtest_nightly
 #
 umask 002
 alias gcc='gcc34'
 alias g++='gcc34'
+# in case someone is pointing to a different version of python
+unset PYTHONPATH
+unset PYTHONHOME
 export CC=gcc34
 export CXX=gcc34
 $STREAMIT_HOME/regtest/qmtest/run-reg-tests.py nightly

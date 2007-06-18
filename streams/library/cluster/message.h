@@ -47,6 +47,7 @@ public:
   void push_bool_array(bool* src, int length);
   void push_float(float f);
   void push_float_array(float* src, int length);
+  void push_custom_type(void* src, int num_bytes);
 
   int get_int_param(); // advances current
   void get_int_array_param(int* dst, int length);
@@ -54,6 +55,7 @@ public:
   void get_bool_array_param(bool* dst, int length);
   float get_float_param(); // advances current
   void get_float_array_param(float* dst, int length);
+  void get_custom_param(void* dst, int num_bytes);
 
   message *push_on_stack(message *top); // returns the new stack
   message *remove_from_stack(message *top); // returns the new stack

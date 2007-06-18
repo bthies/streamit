@@ -67,6 +67,12 @@ void message::push_float_array(float* src, int length) {
   write_ptr+=length;
 }
 
+// used for user-defined structs, arrays of user-defined structs, etc.
+void message::push_custom_type(void* src, int num_bytes) {
+  memcpy(write_ptr, src, num_bytes);
+  write_ptr+=num_bytes;
+}
+
 int message::get_int_param() {
   return *((int*)(current++));
 }
@@ -93,6 +99,12 @@ float message::get_float_param() {
 void message::get_float_array_param(float* dst, int length) {
   memcpy(dst, current, length*sizeof(float));
   current+=length;
+}
+
+// used for user-defined structs, arrays of user-defined structs, etc.
+void message::get_custom_param(void* dst, int num_bytes) {
+  memcpy(dst, current, num_bytes);
+  current+=num_bytes;
 }
 
 message *message::push_on_stack(message *stack_top) {

@@ -1,5 +1,8 @@
 #!/usr/uns/bin/perl
 #
+# This is like compare_uni, but uses an absolute tolerance (default 1)
+# rather than a percent tolerance.
+#
 # script to replace cmp used to compare the values of two 
 # files, line by line. cmp is not used because we allow the
 # two values to be difference by a small (but non zero)
@@ -9,10 +12,10 @@
 # match up to the end of the shortest one. Returns with exit status 1 if the 
 # two files are not the same. 
 #
-# Usage: compare_uni.pl actual_output.txt expected_output.txt
+# Usage: compare_abs.pl actual_output.txt expected_output.txt
 #
 # AAL 7/22/2002
-# $Id: compare_uni.pl,v 1.2 2007-06-19 06:27:19 thies Exp $
+# $Id: compare_abs.pl,v 1.1 2007-06-19 06:27:19 thies Exp $
 #######
 
 use strict;
@@ -48,7 +51,7 @@ sub main {
 
 	# compare the value with the comparelib routine
 	# this will exit with an error message if the value is not within tolerance.
-	compare_values_relative($current_line, $expected_output, $actual_output);
+	compare_values_absolute($current_line, $expected_output, $actual_output);
 	
 	# update current line
 	$current_line++;
@@ -64,5 +67,5 @@ sub main {
 
 # get a usage message
 sub get_usage {
-    return "usage: compare_uni.pl actual_output.txt expected_output.txt\n";
+    return "usage: compare_abs.pl actual_output.txt expected_output.txt\n";
 }

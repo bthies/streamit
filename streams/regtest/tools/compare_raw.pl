@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl
+#!/usr/uns/bin/perl
 # Script to parse the output of "make run" from the
 # RAW btl simulator and compare it against
 # an expected output file. The first command line argument
@@ -28,10 +28,11 @@
 #
 # AAL 6/26/2002
 #     7/22/2002
-# $Id: compare_raw.pl,v 1.3 2002-07-22 19:08:10 aalamb Exp $
+# $Id: compare_raw.pl,v 1.4 2007-06-19 06:27:19 thies Exp $
 #######
 
 use strict;
+use lib ($ENV{'STREAMIT_HOME'} . '/regtest/tools');
 require "comparelib.pl";
 
 # kick it back to the old skool c style of doing things with a main()
@@ -79,7 +80,7 @@ sub main {
 
 	# compare the value with the comparelib routine
 	# this will exit with an error message if the value is not within tolerance.
-	compare_values($current_line, $expected_output, $raw_output);
+	compare_values_relative($current_line, $expected_output, $raw_output);
 	
 	# update current line
 	$current_line++;

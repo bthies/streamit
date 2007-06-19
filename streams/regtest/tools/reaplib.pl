@@ -1,7 +1,7 @@
-#!/usr/local/bin/perl
+#!/usr/uns/bin/perl
 # library routines for reaping performance data from
 # the streamit compiler.
-# $Id: reaplib.pl,v 1.9 2002-12-12 23:31:35 aalamb Exp $
+# $Id: reaplib.pl,v 1.10 2007-06-19 06:27:19 thies Exp $
 
 use strict;
 

@@ -1,1 +1,1 @@
-#!/usr/local/bin/perl
+#!/usr/uns/bin/perl

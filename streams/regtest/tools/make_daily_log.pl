@@ -1,10 +1,10 @@
-#!/usr/local/bin/perl
+#!/usr/uns/bin/perl
 #
 # Usage: make_daily_log.pl logfile log_dir
 #
 # Copies the logfile into a file in log_dir which is named after the current time;
 #
-# $Id: make_daily_log.pl,v 1.1 2002-07-03 19:31:51 aalamb Exp $
+# $Id: make_daily_log.pl,v 1.2 2007-06-19 06:27:19 thies Exp $
 use strict;
 
 my $logfile_name      = shift(@ARGV) || die ("no logfile name passed");

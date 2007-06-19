@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl -w
+#!/usr/uns/bin/perl -w
 # AAL 6/25/2002 Script that runs regression tests every evening
 # This is a modern adaptation of the venerable run_reg_tests.sh rewritten
 # in perl because I don't know how to use all of the crazy unix command
@@ -7,7 +7,7 @@
 # Usage: run_reg_test.pl -- runs all of the regtests  (eg make test-all)
 #        run_reg_test.pl nightly -- runs nightly regtests (eg make test-nightly)
 #
-# $Id: run_reg_tests.pl,v 1.24 2003-11-13 16:42:35 dmaze Exp $
+# $Id: run_reg_tests.pl,v 1.25 2007-06-19 06:27:19 thies Exp $
 
 use strict;
 use POSIX qw(strftime);

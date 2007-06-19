@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl
+#!/usr/uns/bin/perl
 
 # Script to parse the results of running the regression test framework
 # and generate a nice summary of the results that will be sent to 
@@ -14,7 +14,7 @@
 # Note: The contents of the error file are not acutally used at the present time. 
 #  error messages are parsed out of the log file instead.
 #
-# $Id: parse_results.pl,v 1.7 2002-12-20 18:39:36 aalamb Exp $
+# $Id: parse_results.pl,v 1.8 2007-06-19 06:27:19 thies Exp $
 
 use strict;
 

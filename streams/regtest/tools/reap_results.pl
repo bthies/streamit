@@ -1,10 +1,10 @@
-#!/usr/local/bin/perl
+#!/usr/uns/bin/perl
 #
 # Script to run and reap raw results for asplos paper. Eventually might
 # become more general purpose (eg integrated into regtest).
 #
 # Usage: reap_results.pl [tests file]
-# $Id: reap_results.pl,v 1.12 2002-12-12 23:31:34 aalamb Exp $
+# $Id: reap_results.pl,v 1.13 2007-06-19 06:27:19 thies Exp $
 
 # The basic idea is for each directory and file, 
 # run the streamit compiler targeting raw, run the
@@ -38,6 +38,7 @@
 
 
 use strict;
+use lib ($ENV{'STREAMIT_HOME'} . '/regtest/tools');
 
 require "reaplib.pl";
 

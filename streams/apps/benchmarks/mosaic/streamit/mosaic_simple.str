@@ -1,0 +1,630 @@
+/* This is a pruned-down version of mosaic that only does feature extraction. */
+
+/*
+
+INSERT NEW COMMENTS HERE -> CHANGE FROM JUST FEATURE EXTRACTION TO CORRELATION TOO
+take in a ppm file, extract significant
+features according to the Kanade-Lucas-Tomasi (KLT) algorithm, and
+print out a ppm where those features are highlighted.
+
+It also
+*/
+
+/*12/20/06 - note that many of the array values that were static vars
+  had to be changed to hard-coded numbers like 320 (imageWidth) and
+  240 (imageHeight) and 20 (iters)*/
+
+
+/*compared to Feature 9-26, we added more comments*/
+
+/*1/3/07 - change it from being [320][240] 6-element yiqstructs to just
+  6 matrices of [320][240]- in java, we are instantiating a new object for
+  each yiqStruct, and so we have 320*240*6 new objects.  instead, we are now
+  going to have just 6 objects that we instantiate when pushing/popping*/
+
+/**************
+ ****GLOBALS****
+ **************/
+
+static {
+    int patchsize = 7; // must be odd-valued --
+    // the size of each feature square's side
+    int imageWidth = 320; // width of the ppm image
+    int imageHeight = 240; // height of the ppm image
+    int iters = 40;
+    int numImages = 2; //this is fixed for now, but eventually we want to
+    // change the program so as to take an indeterminate number
+    float iweight = 0.0;
+    float qweight = 0.0;
+    float ransacThreshold = 0.001;
+    float probOutliers = 0.99; //desired probability of choosing at least one sample free from outliers
+    int maxTrials = 1000; //maximum number of trials before we give up
+    int maxDataTrials = 100; //max number of attempts to select a non-degenerate data set
+    int s = 8;
+    float muP = 1.0/100000;
+    float muN = -1.0/100000;
+    float eps = pow(2,-52);
+    init {}
+
+}
+
+/**************
+ ****STRUCTS****
+ **************/
+
+/*
+  struct for each pixel of an image, including the yiq values, its minor eigen
+  value (if set), and its x and y coordinates indicated by 'ex' and 'yi'*/
+
+
+/*struct yiqStruct{
+
+float y;
+float i;
+float q;
+float eigen;
+int ex;
+int yi;
+
+}*/
+
+struct bestFeatures{
+
+    int x;
+    int y;
+    int z;
+    float val;
+
+}
+
+/*struct eigNode{
+
+float eig;
+eigNode *nxt;
+
+}*/
+
+struct normArray{
+    float x;
+    float y;
+    float z;
+}
+
+struct featureListPair{
+
+    bestFeatures[40] x1;
+    bestFeatures[40] x2;
+    int firstZeroIndex;
+
+    normArray[40] n1;
+    normArray[40] n2;
+
+    normArray[8] nI1;
+    normArray[8] nI2;
+
+    normArray[40] nInliers1;
+    normArray[40] nInliers2;
+
+    float frame1scaleInd;
+    float frame1c1Ind;
+    float frame1c2Ind;
+    float frame2scaleInd;
+    float frame2c1Ind;
+    float frame2c2Ind;
+
+    float frame1scaleFeat;
+    float frame1c1Feat;
+    float frame1c2Feat;
+    float frame2scaleFeat;
+    float frame2c1Feat;
+    float frame2c2Feat;
+
+    float[3][3] bestF;
+    float[3][3] tempF;
+    int[8] ind; // s = 8
+    int[40] bestInliers;
+    int[40] tempInliers;
+    float[40] d;
+    int ninliers;
+    int bestScore;
+    int trialCount;
+    float N;
+
+
+}
+
+struct imageAndFeatures{
+
+    float[320][240] yImage;
+    float[320][240] iImage;
+    float[320][240] qImage;
+    bestFeatures[40] myBest;
+    int goodPts;
+
+}
+/*this struct is for gradient sums.  each pixel has a corresponding patch for which
+  the gradient is calculated.  this is done by taking each pixel, finding the gxx, gyy, and gxy,
+  and summing these values down a column.  then the values from each column within the patch are
+  added up, and this way a total value is arrived at for each pixel.  we generate a 2x2 matrix,
+  [gxx gxy; gxy gyy] and then find the eigenvalues to deem the original pixel's worth with respect
+  to tracking value.
+*/
+
+/*the Gstruct is a struct used for gradient calculations during the feature extraction process.*/
+
+struct Gstruct{
+
+    float gxx;
+    float gyy;
+    float gxy;
+
+}
+
+
+
+/*~~~~~~~~~~~~~~~~~~~
+  ~~~~MAIN PIPELINE~~~~
+  ~~~~~~~~~~~~~~~~~~~*/
+
+/*Here we specify parameters that are hard-coded; perhaps later we can deal with these more
+  flexibly*/
+
+void->void pipeline mosaic_simple {
+
+    int startx = patchsize + 1;
+    int starty = patchsize + 1;
+    int winWidth  = imageWidth - patchsize - startx - 1;
+    int winHeight = imageHeight - patchsize - starty - 1;
+    int corrWindowSize = 25;
+    bestFeatures nullItem;
+    //  initial work
+
+    add fileRead();
+
+    add RGB2YIQ();
+    add makeMatrices();
+
+    //grunt work
+    add feature(startx, starty, imageWidth, imageHeight, winWidth, winHeight, iweight, qweight, patchsize);
+    /*
+      add splitjoin{
+      split duplicate;
+      add IAFID();
+      add pipeline{
+      //add sharpen(corrWindowSize);
+      add correlation(corrWindowSize);
+      }
+      join roundrobin(1,2);
+      };
+
+      add imageAndFeatures->imageAndFeatures filter
+      {
+      imageAndFeatures temp0;
+      imageAndFeatures temp1;
+      imageAndFeatures temp2;
+      imageAndFeatures temp3;
+      work pop 3 peek 4 push 2
+      {
+      temp0 = peek(0);
+      temp1 = peek(1);
+      temp2 = peek(2);
+      temp3 = peek(3);
+      temp0.myBest = temp1.myBest;
+      temp0.goodPts = temp1.goodPts;
+      temp3.myBest = temp2.myBest;
+      pop();
+      pop();
+      pop();
+      push(temp0);
+      push(temp3);
+      }
+      };
+
+      add splitjoin{
+      split duplicate;
+      add IAFIDandDynBoundary();
+      add pipeline{
+      add makeFeatureListPairs();
+      add ransac();
+      add featureListPair->imageAndFeatures filter{
+      featureListPair fLP;
+      imageAndFeatures iAF1;
+      imageAndFeatures iAF2;
+
+      work pop 1 push 2{
+      fLP = pop();
+      println("Homography");
+      println(fLP.bestF[0][0] + "             " + fLP.bestF[0][1] + "         " + fLP.bestF[0][2]);
+      println(fLP.bestF[1][0] + "             " + fLP.bestF[1][1] + "         " + fLP.bestF[1][2]);
+      println(fLP.bestF[2][0] + "             " + fLP.bestF[2][1] + "         " + fLP.bestF[2][2]);
+
+      for(int i = 0; i< fLP.bestScore; i++)
+      {
+      println(fLP.x1[fLP.bestInliers[i]].x + "                " + fLP.x1[fLP.bestInliers[i]].y + "            " + fLP.x2[fLP.bestInliers[i]].x + "            " +fLP.x2[fLP.bestInliers[i]].y + "             ");
+      iAF1.myBest[i] = fLP.x1[fLP.bestInliers[i]];
+      iAF2.myBest[i] = fLP.x2[fLP.bestInliers[i]];
+      }
+
+      iAF1.goodPts = fLP.bestScore;
+      iAF2.goodPts = fLP.bestScore;
+
+      push(iAF1);
+      push(iAF2);
+      }
+
+      }
+      }
+      join roundrobin(2,2);
+      };
+
+      add imageAndFeatures->imageAndFeatures filter {
+      imageAndFeatures A;
+      imageAndFeatures B;
+      imageAndFeatures C;
+      imageAndFeatures D;
+      work pop 4 push 2 {
+
+      A = pop();
+      B = pop();
+      C = pop();
+      D = pop();
+      A.myBest = C.myBest;
+      A.goodPts = C.goodPts;
+      B.myBest = D.myBest;
+      B.goodPts = D.goodPts;
+      push(A);
+      push(B);
+      }
+      }
+    */
+
+    add plotFeatures(patchsize);
+
+
+    //  finishing work
+    add backToJustMatrices();
+    add unmakeMatrices();
+    add YIQ2RGB();
+    add fileWrite();
+}
+
+imageAndFeatures->imageAndFeatures pipeline IAFIDandDynBoundary(){
+    add IAFID();
+    // fake a dynamic rate boundary to deal with delicacy of crateStaticStreamGraphs.
+    add imageAndFeatures->imageAndFeatures filter {
+        work pop [1,*,1] push 1 {
+            push(pop());
+        }
+    }
+}
+
+imageAndFeatures->imageAndFeatures filter IAFID(){
+    work pop 1 push 1{
+        push(pop());
+    }
+}
+
+featureListPair->featureListPair filter FLPID(){
+    work pop 1 push 1{
+
+        push(pop());
+    }
+}
+
+/*~~~~~~~~~~~~~~
+  ~~~~fileRead~~~~
+  ~~~~~~~~~~~~~~*/
+
+// The following uncommented code matches functionality of:
+// void->int splitjoin fileRead() {
+//      split roundrobin(0);
+//      for(int i=1; i<=numImages; i++)
+//      {
+//              add FileReader<int>("bin/" + i + "b.bin");
+//      }
+//      join roundrobin(imageWidth*imageHeight*3);
+// }
+// but for dynamic rates we need a filter as the very first
+// operator in a static-rate portion of the graph that has
+// an outgoing dynamic-rate edge.
+
+void->int pipeline fileRead()
+{
+    /*
+    int temp1,temp2;
+    // filter to make dynamic rates happy.
+    add void->int filter {
+        work push 1 {
+            push(0);
+        }
+    }
+    temp1 = numImages*imageWidth*imageHeight*3;
+    temp2 =  imageWidth*imageHeight*3;
+    add int->int splitjoin {
+        split roundrobin(1,0);
+        add Identity<int>;     // push dummy on through
+        add void->int splitjoin {
+            split roundrobin(0);
+            for(int i=1; i<=numImages; i++)
+                {
+    */
+                    add FileReader<int>("bin/combined-inputs.bin");
+                    /*
+                }
+            join roundrobin(temp2);
+        }
+        join roundrobin(1,temp1);
+    }
+    // next filter will have to eliminate dummy.
+    // but filter following use of fileRead() just pops 3.
+    add int->int filter {
+
+        work pop (temp1 + 1) push temp1 {
+            pop();
+
+            for (int i = 0; i < temp1; i++) {
+                push(pop());
+            }
+        }
+    }
+        */
+}
+
+
+
+/*~~~~~~~~~~~~~~~
+  ~~~~fileWrite~~~~
+  ~~~~~~~~~~~~~~~*/
+
+int->void pipeline fileWrite() {
+    /*
+    add splitjoin {
+        int temp = imageWidth*imageHeight*3;
+        split roundrobin(temp); 
+        for(int i=1; i<=numImages; i++)
+            {
+    */
+                add FileWriter<int>("combined-outputs.bin");
+                /*
+            }
+        join roundrobin(0);
+    }
+                */
+}
+
+
+/*~~~~~~~~~~~~~~~~~~~~~~~~
+  ~~~~backToJustMatrices~~~~
+  ~~~~~~~~~~~~~~~~~~~~~~~~*/
+
+
+imageAndFeatures->float[320][240] filter backToJustMatrices(){
+    imageAndFeatures tempIAndF;
+    work pop 1 push 3
+        {
+            tempIAndF = pop();
+
+            push(tempIAndF.yImage);
+            push(tempIAndF.iImage);
+            push(tempIAndF.qImage);
+        }
+
+}
+
+/*~~~~~~~~~~~~~
+  ~~~~RGB2YIQ~~~~
+  ~~~~~~~~~~~~~*/
+
+/*
+  This takes in a stream of ints from, say, a .bin file, that come as R,G,and B values for each pixel.
+  This converts those values to YIQ values and pushes them, 3 at a time, into a struct that is easier
+  to deal with.
+*/
+
+int->float filter RGB2YIQ()
+{
+    work pop 3 peek 3 push 3
+        {
+            push(peek(0) * 0.299 + peek(1) * 0.587 + peek(2) * 0.114);
+            push(peek(0) * 0.596 - peek(1) * 0.275 - peek(2) * 0.321);
+            push(peek(0) * 0.212 - peek(1) * 0.523 + peek(2) * 0.311);
+            pop();pop();pop();
+        }
+}
+
+
+/*~~~~~~~~~~~~~
+  ~~~~YIQ2RGB~~~~
+  ~~~~~~~~~~~~~*/
+
+/*
+  This takes in a stream of structs, with each struct having the values y,i,and q, of a pixel
+  in the original image, and converts those to rgb values, and then pushes those values
+  individually into the stream, effectively performing the inverse process of the
+  rgb2yiq function.
+*/
+
+float->int filter YIQ2RGB()
+{
+    int temp1;
+    int temp2;
+    int temp3;
+    work pop 3 peek 3 push 3
+        {
+            temp1 = (int)(peek(0) + peek(1)*0.956 + peek(2)*0.621);
+            temp2 = (int)(peek(0) - peek(1)*0.272 - peek(2)*0.647);
+            temp3 = (int)(peek(0) - peek(1)*1.105 + peek(2)*1.702);
+            if(temp1<0) { temp1 = 0; }
+            if(temp2<0) { temp2 = 0; }
+            if(temp3<0) { temp3 = 0; }
+            push(temp1);
+            push(temp2);
+            push(temp3);
+            pop();pop();pop();
+
+        }
+}
+
+/*~~~~~~~~~~~~~~~~~~
+  ~~~~makeMatrices~~~~
+  ~~~~~~~~~~~~~~~~~~*/
+/*gets an incoming stream of floats, in the order y,i,q, and puts all
+  of them into 3 matrices corresponding to the y, i, and q values*/
+
+float->float[320][240] filter makeMatrices()
+{
+    float[320][240] yMatrix;
+    float[320][240] iMatrix;
+    float[320][240] qMatrix;
+
+    work pop imageHeight*imageWidth*3 push 3 {
+        for(int i = 0; i < imageHeight; i++){
+            for(int  j = 0; j < imageWidth; j++){
+                yMatrix[j][i] = pop();
+                iMatrix[j][i] = pop();
+                qMatrix[j][i] = pop();
+            }
+        }
+        //println("before matrix push");
+        push(yMatrix);
+        push(iMatrix);
+        push(qMatrix);
+        //println("after matrix push");
+    }
+}
+
+/*~~~~~~~~~~~~~~~~~~~~
+  ~~~~unmakeMatrices~~~~
+  ~~~~~~~~~~~~~~~~~~~~*/
+
+/*gets 3 incoming matrices of and converts them to a stream of y,i,q, floats*/
+
+/*this inverts the action of the makeMatrices filter*/
+
+float[320][240]->float filter unmakeMatrices()
+{
+    float[320][240] yMatrix;
+    float[320][240] iMatrix;
+    float[320][240] qMatrix;
+    work pop 3 push imageHeight*imageWidth*3
+        {
+            yMatrix = pop();
+            iMatrix = pop();
+            qMatrix = pop();
+            //println("before unmatrix push");
+            for(int i = 0; i < imageHeight; i++){
+                for(int  j = 0; j < imageWidth; j++){
+                    push(yMatrix[j][i]);
+                    push(iMatrix[j][i]);
+                    push(qMatrix[j][i]);
+
+                }
+            }
+            //println("after unmatrix pushes");
+        }
+}
+
+imageAndFeatures->imageAndFeatures filter plotFeatures(int patchsize)
+{
+    /* This filter takes in a image and list of coordinates
+     * and patchsize and returns the same thing but with the image
+     * highlighted at those coordinates with blue boxes of size patchsize
+     */
+    float[320][240] yMatrix;
+    float[320][240] iMatrix;
+    float[320][240] qMatrix;
+    bestFeatures[40]   best;
+    imageAndFeatures myImgAndFeat;
+    int r;
+
+    work pop 1 push 1
+        {
+
+            myImgAndFeat = pop();
+            
+            yMatrix = myImgAndFeat.yImage;
+            iMatrix = myImgAndFeat.iImage;
+            qMatrix = myImgAndFeat.qImage;
+
+            best = myImgAndFeat.myBest;
+
+            r= (patchsize-1)/2;
+
+            for(int k=0; k<myImgAndFeat.goodPts; k++)
+                {
+                    for(int i=best[k].x-r; i<=best[k].x+r; i++)
+                        {
+                            yMatrix[i][best[k].y-r] = 255*0.114;
+                            iMatrix[i][best[k].y-r] = 255*-0.322;
+                            qMatrix[i][best[k].y-r] = 255*0.311;
+                        }
+                    for(int j=best[k].y-r+1; j<=best[k].y+r; j++)
+                        {
+                            yMatrix[best[k].x-r][j] = 255*0.114;
+                            iMatrix[best[k].x-r][j] = 255*-0.322;
+                            qMatrix[best[k].x-r][j] = 255*0.311;
+                            for(int i=best[k].x-r+1; i<=best[k].x+r; i++)
+                                {
+                                    yMatrix[i][j] = yMatrix[i][j]*k/iters;
+                                    iMatrix[i][j] = iMatrix[i][j]*k/iters;
+                                    qMatrix[i][j] = qMatrix[i][j]*k/iters;
+                                }
+                            yMatrix[best[k].x+r][j] = 255*0.114;
+                            iMatrix[best[k].x+r][j] = 255*-0.322;
+                            qMatrix[best[k].x+r][j] = 255*0.311;
+                        }
+
+                    for(int i=best[k].x-r; i<=best[k].x+r; i++)
+                        {
+                            yMatrix[i][best[k].y+r] = 255*0.114;
+                            iMatrix[i][best[k].y+r]= 255*-0.322;
+                            qMatrix[i][best[k].y+r] = 255*0.311;
+                        }
+                }
+
+            myImgAndFeat.yImage = yMatrix;
+            myImgAndFeat.iImage = iMatrix;
+            myImgAndFeat.qImage = qMatrix;
+            myImgAndFeat.myBest = best;
+            push(myImgAndFeat);
+            println("plotFeatures completed...");
+
+        }
+}
+
+imageAndFeatures->featureListPair filter makeFeatureListPairs(){
+
+    imageAndFeatures temp1;
+    imageAndFeatures temp2;
+    featureListPair newGuy;
+    int j;
+    boolean zeroIndexSet;
+    work pop 2 push 1{
+
+        zeroIndexSet = false;
+
+        temp1 = pop();
+        temp2 = pop();
+
+        /*println("Correspondences post-correlation:");
+          println("X1\t\tX2");
+          for(int i = 0; i<temp1.goodPts; i++){
+
+          println(temp1.myBest[i].x + "\t\t" + temp2.myBest[i].x);
+          println(temp1.myBest[i].y + "\t\t" + temp2.myBest[i].y);
+          println(" ");
+
+          }*/
+
+        newGuy.x1 = temp1.myBest;
+        newGuy.x2 = temp2.myBest;
+        newGuy.firstZeroIndex = temp1.goodPts;
+        for(int i = 0; i<iters ; i++){
+
+            newGuy.x1[i].z = 1;
+            newGuy.x2[i].z = 1;
+        }
+        push(newGuy);
+
+    }
+}

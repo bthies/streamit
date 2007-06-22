@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.124 2007-05-17 18:50:58 shall07 Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.125 2007-06-22 07:38:27 thies Exp $
 package at.dms.kjc.cluster;
 
 import at.dms.kjc.flatgraph.FlatNode;
@@ -127,6 +127,12 @@ public class ClusterBackend {
             System.err.println("// END str on entry to Cluster backend");
        }
         structures = structs;
+
+        if (KjcOptions.dynamicRatesEverywhere) {
+            // force there to be only 1 static sub-graph by making all
+            // rates static for now.
+            SIRDynamicRateManager.pushConstantPolicy(1);
+        }
     
         // Testing. (new ThreeAddressCode()).threeAddressCode(str);
         
@@ -320,7 +326,9 @@ public class ClusterBackend {
             }
 
             // Schedule the Static-rate subgraph
-            ssg.scheduleAndCreateMults();
+            if (!KjcOptions.dynamicRatesEverywhere) {
+                ssg.scheduleAndCreateMults();
+            }
 
             if (KjcOptions.optfile != null) {
                 System.err.println("Running User-Defined Transformations...");
@@ -531,7 +539,6 @@ public class ClusterBackend {
             // Note that any use of ssg.setTopLevelSIR rewrites nodes and
             // thus invalidates mappings from nodes to execution counts!
             // so put at end.
-            
             initExecutionCounts.putAll(ssg.getExecutionCounts(true));
             steadyExecutionCounts.putAll(ssg.getExecutionCounts(false));
         }  // end of operations on individual Static Stream Graphs

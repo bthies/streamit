@@ -315,16 +315,16 @@ public class ClusterCode {
      * @param to    : tape being pushed to
      */
     private static void printCopyTapeElement(CodegenPrintWriter p, Tape from, Tape to) {
-        p.println(to.getPushName() + "(" + from.getPopName() + "());");
-
-// previous code, did not deal with arrays.        
-//        p.print(to.pushPrefix());
-//        p.print(from.popExprNoCleanup());
-//        p.print(to.pushSuffix());
-//        p.print(from.popExprCleanup());
-//        p.print(";\n");
+        if (to instanceof TapeDynrate) {
+            p.print(to.getPushName() + "(");
+            p.print("reinterpret_cast<" + ((TapeDynrate)(to)).getTypeCastName() + ">(");
+            p.println(from.getPopName() + "()));");
+        } else {
+            p.print(to.getPushName() + "(");
+            p.println(from.getPopName() + "());");
+        }
     }
-    
+
     /**
      *  Generate and emit code for a splitter.
      * @param node FlatNode for the splitter to generate code for.
@@ -441,7 +441,7 @@ public class ClusterCode {
 
             for (Tape s : out) {
                 if (s != null) {
-                p.print("  " + s.getPushName() + "(tmp);\n");
+                    p.print("  " + s.getPushName() + "(tmp);\n");
                 }
             }
         

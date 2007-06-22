@@ -6,7 +6,7 @@ lib:
 
 # compiler
 comp:
-	strc mosaic.str FFT.str fundmatrix.str ransac.str correlation.str feature.str
+	strc -dynamicRatesEverywhere mosaic.str FFT.str fundmatrix.str ransac.str correlation.str feature.str
 
 # simple version in library
 simple-lib:

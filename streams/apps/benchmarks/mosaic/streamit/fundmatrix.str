@@ -115,7 +115,8 @@ float->float filter extractVColCorrespondingToSmallSingValExit(){
 	float smallestSingVal, tempy;		
 	int smallestSingValIndex;
 	int z;
-	work pop (z*9 + 9 + 81) push 9 {
+        //	work pop (z*9 + 9 + 81) push 9 {
+        work pop * push 9 { // by bill to push through compiler
 		
 		for(int i = 0; i<z*9; i++){pop();}
 		smallestSingValIndex = 0;
@@ -275,11 +276,11 @@ featureListPair->featureListPair filter normalizeInliers()
 	float muY1, muY2;
 	float stDevFactor1, stDevFactor2;
 	
-	int z;
+	int Z;
 	
 	work pop 1 push 1{
 		feat = pop();
-		z = feat.bestScore;
+		Z = feat.bestScore;
 		runningSumX1 = 0;
 		runningSumY1 = 0;
 		runningSumX2 = 0;
@@ -287,7 +288,7 @@ featureListPair->featureListPair filter normalizeInliers()
 		runningSumDist1 = 0;
 		runningSumDist2 = 0;
 
-		for(int i = 0; i < z; i++){
+		for(int i = 0; i < Z; i++){
 			
 			feat.nInliers1[i].x = (float) feat.x1[feat.bestInliers[i]].x;
 			feat.nInliers1[i].y = (float) feat.x1[feat.bestInliers[i]].y;
@@ -303,12 +304,12 @@ featureListPair->featureListPair filter normalizeInliers()
 
 		}	
 
-		muX1 = runningSumX1/z;
-		muY1 = runningSumY1/z;
-		muX2 = runningSumX2/z;
-		muY2 = runningSumY2/z;	
+		muX1 = runningSumX1/Z;
+		muY1 = runningSumY1/Z;
+		muX2 = runningSumX2/Z;
+		muY2 = runningSumY2/Z;	
 		
-		for(int i = 0; i < z; i++){
+		for(int i = 0; i < Z; i++){
 			
 			feat.nInliers1[i].x-= muX1;
 			feat.nInliers1[i].y-= muY1;			
@@ -318,10 +319,10 @@ featureListPair->featureListPair filter normalizeInliers()
 			runningSumDist2+= sqrt(feat.nInliers2[i].x*feat.nInliers2[i].x + feat.nInliers2[i].y*feat.nInliers2[i].y);					
 		}
 		
-		stDevFactor1 = sqrt(2)/(runningSumDist1/z);
-		stDevFactor2 = sqrt(2)/(runningSumDist2/z);
+		stDevFactor1 = sqrt(2)/(runningSumDist1/Z);
+		stDevFactor2 = sqrt(2)/(runningSumDist2/Z);
 
-		for(int i = 0; i < z; i++){
+		for(int i = 0; i < Z; i++){
 			feat.nInliers1[i].x*= stDevFactor1;
 			feat.nInliers1[i].y*= stDevFactor1;	
 			feat.nInliers2[i].x*= stDevFactor2;
@@ -534,7 +535,8 @@ featureListPair->float filter makeConstraintMatrixExit(){
 	normArray[40] feat2;
 	
 	int z;
-		work pop 1 push z*9{
+        //		work pop 1 push z*9{
+		work pop 1 push *{ // by bill to push through compiler
 			temp = pop();
 			
 			feat1 = temp.nInliers1;
@@ -1181,7 +1183,8 @@ float->float filter svd3(){
 	float[10] rv1 ;//rv1=vector(1,n);
 
 	//rates depend on n -- how many inliers are we talking here?
-	work pop m*n push (m*n + n + n*n){
+        //	work pop m*n push (m*n + n + n*n){
+        work pop * push * { // by bill to push through compiler
 	
 	for(int i=1; i<=n; i++){
 		for(int j=1; j<=m ;j++){

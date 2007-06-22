@@ -249,7 +249,9 @@ featureListPair->featureListPair filter findInliers(portal<selectIndices> feedba
 		for(int i = 0; i< feat.firstZeroIndex; i++){
 			println(Fx1x[i] + " " + Fx1y[i] + " " + Fx1z[i] + ";");
 		}
-		println("\rInliers\r");
+                println("");
+		println("Inliers");
+                println("");
 		for(int i = 0; i< feat.bestScore; i++){
 					println(feat.x1[feat.bestInliers[i]].x + "\t" + feat.x2[feat.bestInliers[i]].x);
 					println(feat.x1[feat.bestInliers[i]].y + "\t" + feat.x2[feat.bestInliers[i]].y);

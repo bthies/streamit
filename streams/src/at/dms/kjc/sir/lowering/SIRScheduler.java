@@ -84,7 +84,15 @@ public class SIRScheduler implements Constants {
      *  result[1] = map for steady-state schedule
      */ 
     public static HashMap[] getExecutionCounts(SIRStream str) {
-        return getExecutionCounts(str, computeSchedule(str));
+        if (KjcOptions.dynamicRatesEverywhere &&
+            // allow scheduling during CollapseDataParallelism
+            ConstructSIRTree.INIT_STATEMENTS_RESOLVED) {
+            // if treating everything as dynamic, then pretend
+            // everything executes just once
+            return unaryExecutionCounts(str);
+        } else {
+            return getExecutionCounts(str, computeSchedule(str));
+        }
     }
     /**
      * Internal routine for getting execution counts given a scheduler.
@@ -104,6 +112,58 @@ public class SIRScheduler implements Constants {
         //printSchedulesViaLibrary(schedule);
         //printExecutionCounts(result);
 
+        return result;
+    }
+
+    /**
+     * Returns dummy execution counts that maps every SIROperator in
+     * 'str' to execute once in steady state, none in initialization.
+     */
+    private static HashMap[] unaryExecutionCounts(SIRStream str) {
+        final HashMap[] result = { new HashMap(), new HashMap() };
+        str.accept(new EmptyAttributeStreamVisitor() {
+                public Object visitFilter(SIRFilter self,
+                                          JFieldDeclaration[] fields,
+                                          JMethodDeclaration[] methods,
+                                          JMethodDeclaration init,
+                                          JMethodDeclaration work,
+                                          CType inputType, CType outputType) {
+                    register(self);
+                    return self;
+                }
+
+                public Object visitPhasedFilter(SIRPhasedFilter self,
+                                                JFieldDeclaration[] fields,
+                                                JMethodDeclaration[] methods,
+                                                JMethodDeclaration init,
+                                                JMethodDeclaration work,
+                                                JMethodDeclaration[] initPhases,
+                                                JMethodDeclaration[] phases,
+                                                CType inputType, CType outputType) {
+                    register(self);
+                    return self;
+                }
+
+                public Object visitSplitter(SIRSplitter self,
+                                            SIRSplitType type,
+                                            JExpression[] weights) {
+                    register(self);
+                    return self;
+                }
+                
+                public Object visitJoiner(SIRJoiner self,
+                                          SIRJoinType type,
+                                          JExpression[] weights) {
+                    register(self);
+                    return self;
+                }
+                
+                // do the work of recording the dummy execution counts
+                private void register(SIROperator op) {
+                    result[0].put(op, new int[] {0}); // init
+                    result[1].put(op, new int[] {1}); // steady
+                }
+            });
         return result;
     }
 

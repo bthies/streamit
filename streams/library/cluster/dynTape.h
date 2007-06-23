@@ -180,11 +180,11 @@ private:
       /* copy beginning to head if have not done so already */
       memcpy(&((newBufp)[size - tail]), bufp, head * sizeof(T));
     }
+    head = size - 1;
+    tail = 0;
     bufp = newBufp;
     size = newSize;
     mask = size - 1;
-    head = 0;
-    tail = 0;
   }
 };
 #endif

@@ -625,7 +625,13 @@ public class FlatIRToCluster extends InsertTimers implements
 
         p.print("  for (msg = __msg_stack_" + selfID
                 + "; msg != NULL; msg = msg->next) {\n");
-        p.print("    if (msg->execute_at == __counter_" + selfID + ") {\n");
+
+        if (!KjcOptions.dynamicRatesEverywhere) {
+            // if all dynamic rates, then SDEP info is bogus, so
+            // disregard execution counts and deliver messages ASAP.
+            p.print("    if (msg->execute_at == __counter_" + selfID + ") {\n");
+        }
+        p.print("   fprintf(stderr, \"Receiving message in " + self + " on iter %d\\n\", __counter_" + selfID + ");\n");
 
         SIRPortal[] portals = SIRPortal.getPortalsWithReceiver(self);
 
@@ -686,20 +692,26 @@ public class FlatIRToCluster extends InsertTimers implements
                 }
             }
 
-            p.print("      if (last != NULL) { \n");
-            p.print("        last->next = msg->next;\n");
-            p.print("      } else {\n");
+            if (!KjcOptions.dynamicRatesEverywhere) {
+                p.print("      if (last != NULL) { \n");
+                p.print("        last->next = msg->next;\n");
+                p.print("      } else {\n");
+            }
             p.print("        __msg_stack_" + selfID + " = msg->next;\n");
-            p.print("      }\n");
+            if (!KjcOptions.dynamicRatesEverywhere) {
+                p.print("      }\n");
+            }
             p.print("      delete msg;\n");
 
         }
 
-        p.print("    } else if (msg->execute_at > __counter_" + selfID + ") {\n");
-        p.print("      last = msg;\n");
-        p.print("    } else { // msg->execute_at < __counter_" + selfID + "\n");
-        p.print("      message::missed_delivery();\n");
-        p.print("    }");
+        if (!KjcOptions.dynamicRatesEverywhere) {
+            p.print("    } else if (msg->execute_at > __counter_" + selfID + ") {\n");
+            p.print("      last = msg;\n");
+            p.print("    } else { // msg->execute_at < __counter_" + selfID + "\n");
+            p.print("      message::missed_delivery();\n");
+            p.print("    }");
+        }
         p.print("  } // for \n");
 
         p.print("}\n");
@@ -720,10 +732,10 @@ public class FlatIRToCluster extends InsertTimers implements
 
         p.print("  int index = sock->read_int();\n");
         p.print("  int iteration = sock->read_int();\n");
-        p
-            .print("  //fprintf(stderr,\"Message receieved! thread: "
-                   + selfID
-                   + ", method_index: %d excute at iteration: %d\\n\", index, iteration);\n");
+        p.print("  //fprintf(stderr, \"Message received in " + self + "\");\n");
+        p.print("  //fprintf(stderr,\"Message receieved! thread: "
+                + selfID
+                + ", method_index: %d excute at iteration: %d\\n\", index, iteration);\n");
 
         p.print("  message *msg = new message(size, index, iteration);\n");
         p.print("  msg->read_params(sock);\n");

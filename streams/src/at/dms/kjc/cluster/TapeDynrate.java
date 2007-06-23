@@ -133,10 +133,30 @@ public class TapeDynrate extends TapeBase implements Tape {
         if (type instanceof CArrayType) {
             s.append ("  static " + typedefName + " res;\n  res = " + 
                     tapeName + ".pop();\n");
-            s.append("  " + "return &res;\n");
         } else {
             s.append("  " + typeString + " res=" + 
                     tapeName + ".pop();\n");
+        }
+
+        // if we have dynamic rates, need to check message receivers
+        // after every pop statement, since upstream calls could have
+        // sent messages to us
+        if (KjcOptions.dynamicRatesEverywhere) {
+            // see if the destination tape receives any messages
+            FlatNode node = NodeEnumerator.getFlatNode(dst);
+            SIROperator op = node.contents;
+            if (op instanceof SIRFilter) {
+                SIRPortal[] portals = SIRPortal.getPortalsWithReceiver((SIRFilter)op);
+                if (portals.length > 0) {
+                    // if dst receives messages, call check_messages
+                    s.append("  " + "check_messages__" + dst + "();\n");
+                }
+            }
+        }
+
+        if (type instanceof CArrayType) {
+            s.append("  " + "return &res;\n");
+        } else {
             s.append("  " + "return res;\n");
         }
         // p.outdent();

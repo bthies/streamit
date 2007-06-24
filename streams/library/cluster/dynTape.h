@@ -49,6 +49,7 @@
 template <class T>
 class dynTape {
   typedef void (*worker_type)(int); 
+  typedef void (*preworker_type)(); 
 
   T* bufp;			/* pointer to buffer */
   int size;			/* current buffer size, power of 2, > 1 */
@@ -56,15 +57,17 @@ class dynTape {
   int head;			/* position to push. */
   int tail;			/* position to pop */
   int num_workers;	        /* number of functions to call upstream */
+  preworker_type* preworkers;   /* upstream prework functions */
   worker_type* workers;         /* upstream work functions */
+  int* done_with_prework;       /* whether we have executed prework yet */
 
 public:
  
   /**
    * Constructor: pass initial size estimate, and pass the upstream
-   * work function(s).
+   * prework and work function(s).
    */
-  dynTape(int _size, int _num_workers, worker_type f, ...) {
+  dynTape(int _size, int _num_workers, preworker_type f_prework, worker_type f_work, ...) {
     size = p2ceil(_size + 1);	// power of 2 && >= _size && > 1
     mask = size - 1;		// mask: all 1 bits.
     bufp = (T*)malloc(size * sizeof(T));	
@@ -73,13 +76,30 @@ public:
 
     assert (_num_workers > 0);
     num_workers = _num_workers;
+    preworkers = (preworker_type*)malloc(num_workers * sizeof(preworker_type));
     workers = (worker_type*)malloc(num_workers * sizeof(worker_type));
+    done_with_prework = (int*)malloc(num_workers * sizeof(int));
     va_list va;
-    va_start(va,f);
+    va_start(va,f_work);
     
-    workers[0] = f;
+    preworkers[0] = f_prework;
+    workers[0] = f_work;
+    // if a prework is null, mark that we are already done with it
+    if (preworkers[0] == NULL) {
+        done_with_prework[0] = 1;
+    } else {
+        done_with_prework[0] = 0;
+    }
+
     for (int i = 1; i < _num_workers; i++) {
+      preworkers[i] = va_arg(va, void (*)());
       workers[i] = va_arg(va, void (*)(int));  
+      // if a prework is null, mark that we are already done with it
+      if (preworkers[i] == NULL) {
+          done_with_prework[i] = 1;
+      } else {
+          done_with_prework[i] = 0;
+      }
     }
     va_end(va);
   }
@@ -108,12 +128,26 @@ public:
   }
 
   /**
+   * Executes one iteration of the i'th upstream work or prework function.
+   */
+  inline void upstream_work(int i) {
+      if (done_with_prework[i]) {
+          // if done with prework, execute 1 iter of steady state
+          (*(workers[i]))(1);
+      } else {
+          // otherwise execute prework
+          (*(preworkers[i]))();
+          done_with_prework[i] = 1;
+      }
+  }
+
+  /**
    * pop an item from the tape
    */
   inline T pop() {
     while (head == tail) {	// while buffer empty
       for (int i = 0; i < num_workers; i++) {
-      (*(workers[i]))(1);	// 1 steady state of upstream work
+          upstream_work(i);
       }
     }
     T tmp = bufp[tail++];
@@ -128,7 +162,7 @@ public:
     for (int i = 0; i < n; i++) {
         while (head == tail) {	// while buffer empty
 	  for (int i = 0; i < num_workers; i++) {
-	    (*(workers[i]))(1);	// 1 steady state of upstream work
+              upstream_work(i);
 	  }
 	}
 	tail++;
@@ -141,7 +175,7 @@ public:
     while ((head >= tail && head - tail <= n)
 	   || size - tail + head <= n) {
       for (int i = 0; i < num_workers; i++) {
-      (*(workers[i]))(1);	// 1 steady state of upstream work
+          upstream_work(i);
       }
     } 
     return bufp[(tail + n) & mask];

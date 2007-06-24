@@ -612,9 +612,17 @@ class FusionCode {
                             }
                         }
                     }
-                    if (rcv_msg)
+                    // if dynamic rates everywhere, receive messages
+                    // during pop() statements rather than as part of
+                    // this schedule
+                    if (rcv_msg && !KjcOptions.dynamicRatesEverywhere)
                         p.print("    check_messages__" + id + "();\n");
-                    if (!(KjcOptions.blender && (oper instanceof SIRFileReader || oper instanceof SIRFileWriter))) {
+                    if (!(KjcOptions.blender && (oper instanceof SIRFileReader || oper instanceof SIRFileWriter)) &&
+                        // if dynamic rates everywhere, only call work for sinks
+                        !(KjcOptions.dynamicRatesEverywhere && (oper instanceof SIRJoiner ||
+                                                                oper instanceof SIRSplitter ||
+                                                                oper instanceof SIRFilter && ((SIRFilter)oper).getPushInt() > 0)))
+                    {
                         p.print("    " + get_work_function(oper) + "(" + steady_int
                                 + (mult == 1 ? "" : "*__MULT") + " );");
                     }
@@ -665,8 +673,19 @@ class FusionCode {
                         p.print(stream.topOfWorkIteration());
                     }
 
-                    if (rcv_msg) p.print("    check_messages__"+id+"();\n");
-                    p.print("    "+get_work_function(oper)+"("+steady_int+"*rem);");
+                    // if dynamic rates everywhere, receive messages
+                    // during pop() statements rather than as part of
+                    // this schedule
+                    if (rcv_msg && !KjcOptions.dynamicRatesEverywhere)
+                        p.print("    check_messages__"+id+"();\n");
+                    if (!(KjcOptions.blender && (oper instanceof SIRFileReader || oper instanceof SIRFileWriter)) &&
+                        // if dynamic rates everywhere, only call work for sinks
+                        !(KjcOptions.dynamicRatesEverywhere && (oper instanceof SIRJoiner || 
+                                                                oper instanceof SIRSplitter || 
+                                                                oper instanceof SIRFilter && ((SIRFilter)oper).getPushInt() > 0)))
+                    {
+                        p.print("    "+get_work_function(oper)+"("+steady_int+"*rem);");
+                    }
                 }
 
                 /*

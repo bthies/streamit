@@ -61,11 +61,16 @@ public class TapeDynrate extends TapeBase implements Tape {
         }
         
         StringBuffer s = new StringBuffer();
-        String workname;
-        
+        String workName;
+        String initWorkName;
+
+        // we will get an operator and an id for the source
+        SIROperator srcOperator;
+        int srcId;
+
         if (KjcOptions.dynamicRatesEverywhere) {
-            workname = ClusterUtils.getWorkName(NodeEnumerator
-                    .getOperator(src), src);
+            srcOperator = NodeEnumerator.getOperator(src);
+            srcId = src;
         } else {
             // selective dynamic tapes, only works if upstream ssg is fused down
             // to a single filter.
@@ -74,8 +79,22 @@ public class TapeDynrate extends TapeBase implements Tape {
                     .get(srcnode);
             FlatNode ssgTopNode = ssg.getTopLevel();
             int ssgTopNodeNumber = NodeEnumerator.getFlatNodeId(ssgTopNode);
-            workname = ClusterUtils.getWorkName(ssgTopNode.contents,
-                    ssgTopNodeNumber);
+
+            srcOperator = ssgTopNode.contents;
+            srcId = ssgTopNodeNumber;
+        }
+
+        // get names of work, initWork
+        workName = ClusterUtils.getWorkName(srcOperator, srcId);
+
+        boolean isTwoStage = srcOperator instanceof SIRTwoStageFilter;
+        if (isTwoStage) {
+            SIRTwoStageFilter twoStage = (SIRTwoStageFilter)srcOperator;
+            initWorkName = ClusterUtils.getFunctionName(twoStage.getInitWork(), srcId);
+        } else {
+            // pass null to dynamic tape initializer if there is no
+            // initwork function
+            initWorkName = "NULL";
         }
 
         // if array type then typedef for carrier type.
@@ -90,13 +109,17 @@ public class TapeDynrate extends TapeBase implements Tape {
         
         String declTypeString = (type instanceof CArrayType) ? typedefName : typeString;
         s.append("// dataDeclarationH " + tapeName + "\n");
-        s.append("void " + workname + "(int);\n");
+        s.append("void " + workName + "(int);\n");
+        // declare initWork if needed
+        if (isTwoStage) {
+            s.append("void " + initWorkName + "();\n");
+        }
         s.append("#include \"" + className + ".h\"\n");
         s.append(className + "<" + declTypeString
                 + "> " + tapeName);
         s.append(" = " + className + "<"
                 + declTypeString + ">(" + bufsize
-                + ", 1, " + workname + ");\n");
+                + ", 1, " + initWorkName + ", " + workName + ");\n");
         return s.toString();
     }
 

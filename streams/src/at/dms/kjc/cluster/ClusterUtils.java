@@ -3,6 +3,7 @@ package at.dms.kjc.cluster;
 
 import at.dms.kjc.sir.*;
 import at.dms.kjc.CType;
+import at.dms.kjc.JMethodDeclaration;
 import at.dms.kjc.common.CommonUtils;
 
 class ClusterUtils {
@@ -18,7 +19,6 @@ class ClusterUtils {
     // "UNINITIALIZED DUMMY METHOD" (A Kopi2Sir bug?) so give it a reasonable
     // name.  (The raw backend does not seem to have this problem, but I 
     // don't know exactly how they handle pre-defined filters.)
-
     public static String getWorkName(SIROperator f, int id) {
         if (f instanceof SIRFileReader || f instanceof SIRFileWriter) {
             return f.getName() + "__work__" + id;
@@ -31,7 +31,13 @@ class ClusterUtils {
             return "__joiner_"  + id + "_work";
         }
     }
-    
+
+    /**
+     * Returns name for method 'meth' in filter with id 'id'.
+     */
+    public static String getFunctionName(JMethodDeclaration meth, int id) {
+        return meth.getName() + "__" + id;
+    }
  
     /**
      * Print a declaration for the given type with the given

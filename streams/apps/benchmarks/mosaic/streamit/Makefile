@@ -7,6 +7,7 @@ lib:
 # compiler
 comp:
 	strc -dynamicRatesEverywhere mosaic.str FFT.str fundmatrix.str ransac.str correlation.str feature.str
+# then do: ./a.out -i 460800
 
 # simple version in library
 simple-lib:

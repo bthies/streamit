@@ -329,6 +329,7 @@ featureListPair->featureListPair filter FLPID(){
 
 void->int pipeline fileRead()
 {	
+    /*
 	int temp1,temp2;
     // filter to make dynamic rates happy.
     add void->int filter {
@@ -341,6 +342,8 @@ void->int pipeline fileRead()
     add int->int splitjoin {
 	split roundrobin(1,0);
 	add Identity<int>;     // push dummy on through
+    */
+	int temp2 =  imageWidth*imageHeight*3;
 	add void->int splitjoin {
 	    split roundrobin(0);
 	    for(int i=1; i<=numImages; i++)
@@ -349,6 +352,7 @@ void->int pipeline fileRead()
 		}
 	    join roundrobin(temp2);
 	}
+        /*
 	join roundrobin(1,temp1);
     }
     // next filter will have to eliminate dummy.
@@ -363,6 +367,7 @@ void->int pipeline fileRead()
 	    }
 	}
     }
+        */
 }
 
 

@@ -22,10 +22,10 @@ function [ransacWorks,featTime, corrTime, ransacTime, sumTime, testfuncTime] = t
 %    scanfile2 = ['D:\Research\Correlation\images\scan' int2str(kk+5) '.txt'];
  
     ransacWorks = 1;
-    cd C:\Do'cuments and Settings'\basier\desktop\images\ppmsFromVid2\;
+    %cd C:\Do'cuments and Settings'\basier\desktop\images\ppmsFromVid2\;
  
-    im1 = imread(sprintf('%d.ppm',file1));
-    im2 = imread(sprintf('%d.ppm',file2));
+    im1 = imread(sprintf('../input/%d.ppm',file1));
+    im2 = imread(sprintf('../input/%d.ppm',file2));
     cd (currentDir);
     im1 = rgb2gray(im1);
     im2 = rgb2gray(im2);

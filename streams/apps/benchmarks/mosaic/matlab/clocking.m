@@ -1,5 +1,5 @@
 function clocking()
-    iters=15;
+    iters=30;
     sniffle=zeros(1,5);
     for n = 1:iters
      works = 0;

@@ -40,7 +40,6 @@ public class StreamItRandom {
      * Return random double.
      */
     public static double randomDouble() {
-        System.out.println("seed = " + seed + " (" + (seed % 100) + ")");
         return (((long) nextBits(26) << 27) + nextBits(27)) / (double) (1L << 53);
     }
 }

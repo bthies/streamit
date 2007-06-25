@@ -234,6 +234,7 @@ class FusionCode {
         p.print("#include <ccp.h>\n");
         //p.print("#include <read_setup.h>\n");
         p.print("#include <timer.h>\n");
+        p.print("#include <streamit_random.h>\n");
         p.println("#include \"structs.h\"");
         p.print("#include \"fusion.h\"\n");
         if (KjcOptions.countops) {

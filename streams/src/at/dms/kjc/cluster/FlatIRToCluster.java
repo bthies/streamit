@@ -631,7 +631,7 @@ public class FlatIRToCluster extends InsertTimers implements
             // disregard execution counts and deliver messages ASAP.
             p.print("    if (msg->execute_at == __counter_" + selfID + ") {\n");
         }
-        p.print("   fprintf(stderr, \"Receiving message in " + self + " on iter %d\\n\", __counter_" + selfID + ");\n");
+        p.print("   //fprintf(stderr, \"Receiving message in " + self + " on iter %d\\n\", __counter_" + selfID + ");\n");
 
         SIRPortal[] portals = SIRPortal.getPortalsWithReceiver(self);
 

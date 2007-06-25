@@ -1,4 +1,5 @@
-function clocking(iters)
+function clocking()
+    iters=15;
     sniffle=zeros(1,5);
     for n = 1:iters
      works = 0;
@@ -9,3 +10,5 @@ function clocking(iters)
      sniffle=sniffle + [a,b,c,d,e];
     end    
     sniffle/iters
+    
+    pause

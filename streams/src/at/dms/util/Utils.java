@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.52 2007-05-10 21:31:02 dimock Exp $
+ * $Id: Utils.java,v 1.53 2007-06-25 02:37:54 thies Exp $
  */
 
 package at.dms.util;
@@ -301,6 +301,11 @@ public abstract class Utils implements Serializable, DeepCloneable {
                 divisor = new JCastExpression(null, randcall, CStdType.Float);
                 quotient = new JDivideExpression(null, divisor, dividend);
                 cast_quotient = quotient;
+            } else if (KjcOptions.cluster>0) {
+                // under the cluster C++ library, we have a library
+                // call that gives random numbers that are consistent
+                // with the Java library
+                return new JMethodCallExpression("streamit_random_double", new JExpression[0]);
             } else {
                 try {
                 dividend = new JAddExpression(null,

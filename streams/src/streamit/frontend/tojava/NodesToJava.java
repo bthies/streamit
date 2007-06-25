@@ -33,7 +33,7 @@ import java.util.HashSet;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.127 2006-09-25 13:54:54 dimock Exp $
+ * @version $Id: NodesToJava.java,v 1.128 2007-06-25 02:38:58 thies Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -612,6 +612,10 @@ public class NodesToJava implements FEVisitor
              }
             */
 
+        } else if (libraryFormat && name.equals("random")) {
+            // in the Java library, translate to our own random number
+            // generator that matches our C++ library
+            result = "StreamItRandom.randomDouble(";
         } else {
             // Math.sqrt will return a double, but we're only supporting
             // float's now, so add a cast to float.  Not sure if this is

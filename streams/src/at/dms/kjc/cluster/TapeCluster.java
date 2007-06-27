@@ -400,12 +400,19 @@ public class TapeCluster extends TapeBase implements Tape {
         FlatNode node = NodeEnumerator.getFlatNode(src);
         
         if (node.isFilter()) {
-            // Janis used "pop_buffer" but this seems to
-            // be upstream's initialization
-            int out_pop_buffer_size = 10240;
-            int out_pop_num_iters = 0;
             SIRFilter f = (SIRFilter)(node.contents);
             int push_n = f.getPushInt();
+            // Janis used "pop_buffer" but this seems to
+            // be upstream's initialization
+            int out_pop_buffer_size;
+            if (push_n > 0) {
+                // scale down the size of the output buffer according
+                // to the size of the C type. Aim for ~10,000 ints (?)
+                out_pop_buffer_size = Math.max(2, 40960 / f.getOutputType().getSizeInC());
+            } else {
+                out_pop_buffer_size = 0;
+            }
+            int out_pop_num_iters = 0;
             if (push_n > 0) {
                 out_pop_num_iters = out_pop_buffer_size / push_n;
             }

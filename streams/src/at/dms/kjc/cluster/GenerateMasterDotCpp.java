@@ -57,6 +57,7 @@ public class GenerateMasterDotCpp {
         p.print("#include <object_write_buffer.h>\n");
         p.print("#include <read_setup.h>\n");
         p.print("#include <ccp.h>\n");
+        p.print("#include <streamit_random.h>\n");
         p.print("#include \"global.h\"\n");
         if (KjcOptions.countops) {
             p.println("#include \"profiler.h\"");

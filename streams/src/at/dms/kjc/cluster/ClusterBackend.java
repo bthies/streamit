@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.125 2007-06-22 07:38:27 thies Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.126 2007-06-27 01:25:22 thies Exp $
 package at.dms.kjc.cluster;
 
 import at.dms.kjc.flatgraph.FlatNode;
@@ -403,6 +403,9 @@ public class ClusterBackend {
                 // do the same thing, but would take longer)
                 if (hosts==1) {
                     mapToPartitionZero(ssg.getTopLevelSIR(), ssgPartitionMap);
+                } else if (KjcOptions.partition_greedy || KjcOptions.partition_greedier) {
+                    // map the operators into partitions
+                    GreedyPartitioner.makePartitionMap(ssg.getTopLevelSIR(), ssgPartitionMap, hosts);
                 } else {
                     // Fix up a bug that might be caused by previous 
                     // pass of partitioner

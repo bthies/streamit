@@ -239,7 +239,12 @@ public class FlatIRToCluster extends InsertTimers implements
         // cluster case; in standalone mode, the schedule is fixed, so
         // waiting for credits leads to infinite loop
         boolean restrictedExecution = (LatencyConstraints.isRestricted(self) &&
-                                       !KjcOptions.standalone);
+                                       !KjcOptions.standalone &&
+                                       // if dynamic rates everywhere,
+                                       // SDEP is bogus so process
+                                       // messages as soon as they
+                                       // arrive
+                                       !KjcOptions.dynamicRatesEverywhere);
         boolean sendsCredits = ! sendsCreditsTo.isEmpty();
 
         SIRPortal outgoing[] = SIRPortal.getPortalsWithSender(self);
@@ -1877,9 +1882,9 @@ public class FlatIRToCluster extends InsertTimers implements
                             // write base pointer and length
                             CArrayType arrType = (CArrayType)method_params[t];
                             p.print("  __msg_sock_" + selfID + "_" + dst
-                                    + "out->write_" + arrType.getBaseType() + "_array((" + arrType.getBaseType() + "*)");
+                                    + "out->write_chunk((char*)");
                             params[t].accept(this);
-                            p.print(", " + ((CArrayType)method_params[t]).getTotalNumElements() + ");\n");
+                            p.print(", sizeof(" + method_params[t] + "));\n");
                         } else {
                             // write plain value of parameter
                             p.print("  __msg_sock_" + selfID + "_" + dst

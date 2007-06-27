@@ -71,6 +71,10 @@ void object_write_buffer::read(void *data, int dsize) {
 
 //================================= convenience functinos
 
+void object_write_buffer::write_boolean(int data) {
+  write(&data, sizeof(int));
+}
+
 void object_write_buffer::write_int(int data) {
   write(&data, sizeof(int));
 }

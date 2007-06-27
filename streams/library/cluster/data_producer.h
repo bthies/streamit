@@ -37,6 +37,7 @@ class data_producer : public socket_holder, public serializable {
   void write_chunk(void *buf, int size, int nitems);
   void write_item(void *buf, int size);
 
+  void write_boolean(int);
   void write_int(int);
   void write_float(float);
 

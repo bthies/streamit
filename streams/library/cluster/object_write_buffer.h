@@ -44,6 +44,7 @@ class object_write_buffer {
 
   // =========== convenience functions
 
+  void write_boolean(int data);
   void write_int(int data);
   void write_float(float data);  
   int read_int();

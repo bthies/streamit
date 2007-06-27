@@ -64,6 +64,16 @@ class netsocket : public mysocket {
     read_chunk((char*)dst, length*sizeof(int));
   }
 
+  void write_boolean(int a) {
+    write_chunk((char*)&a, sizeof(int));
+    return;
+  }
+
+  void write_boolean_array(int* src, int length) {
+    write_chunk((char*)src, length*sizeof(int));
+    return;
+  }
+
   void write_int(int a) {
     write_chunk((char*)&a, sizeof(int));
     return;

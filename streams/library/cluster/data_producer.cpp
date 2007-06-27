@@ -79,6 +79,10 @@ void data_producer::write_item(void *data, int size) {
   write_chunk(data, size, 1); 
 }
 
+void data_producer::write_boolean(int data) {
+  write_chunk(&data, sizeof(int), 1); 
+}
+
 void data_producer::write_int(int data) {
   write_chunk(&data, sizeof(int), 1); 
 }

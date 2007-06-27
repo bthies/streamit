@@ -74,7 +74,8 @@ public class ScheduledStaticStreamGraph extends StaticStreamGraph {
       */
      public void scheduleAndCreateMults() {
          // get the multiplicities from the scheduler
-         executionCounts = SIRScheduler.getExecutionCounts(topLevelSIR);
+         executionCounts = SIRScheduler.getApproxExecutionCounts(topLevelSIR);
+
          //PartitionDot.printScheduleGraph(topLevelSIR, Utils
          //                                .makeDotFileName("schedule", topLevelSIR), executionCounts);
 

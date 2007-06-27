@@ -2,6 +2,7 @@ package at.dms.kjc.sir.lowering.partition;
 
 import java.util.*;
 
+import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.sir.lowering.fusion.*;
@@ -309,5 +310,64 @@ public class GreedyPartitioner {
         return count;
     }
 
+    /**
+     * Assuming that 'str' is the product of a greedy (or greedier)
+     * partitioning, produce a mapping from SIROperator's to N hosts.
+     *
+     * The result is saved in the argument 'map'.
+     *
+     * Currently this is very primitive, should be made smarter.
+     */
+    public static void makePartitionMap(SIRStream str, Map<SIROperator,Integer> map, int N) {
+        // first get all the siroperators
+        final LinkedList operators = new LinkedList();
+        str.accept(new EmptyAttributeStreamVisitor() {
+                public Object visitFilter(SIRFilter self,
+                                          JFieldDeclaration[] fields,
+                                          JMethodDeclaration[] methods,
+                                          JMethodDeclaration init,
+                                          JMethodDeclaration work,
+                                          CType inputType, CType outputType) {
+                    operators.add(self);
+                    return self;
+                }
+
+                public Object visitSplitter(SIRSplitter self,
+                                            SIRSplitType type,
+                                            JExpression[] weights) {
+                    operators.add(self);
+                    return self;
+                }
+    
+                public Object visitJoiner(SIRJoiner self,
+                                          SIRJoinType type,
+                                          JExpression[] weights) {
+                    operators.add(self);
+                    return self;
+                }
+                
+            });
+        SIROperator[] ops = (SIROperator[])operators.toArray(new SIROperator[0]);
+
+        // then distribute operators "evenly" (and in order) across partitions
+        int curOperator = 0;
+        int curPartition = 0;
+        while (curOperator<ops.length && curPartition<N) {
+            // assign operator to the current partition until the
+            // progress in assigning operators exceeds the progress in
+            // the available partitions
+            while (true) {
+                double opsProgress = (double)(curOperator+1) / (double)ops.length;
+                double parProgress = (double)(curPartition+1) / (double)N;
+                if (opsProgress <= parProgress && curOperator < ops.length) {
+                    map.put(ops[curOperator], new Integer(curPartition));
+                    curOperator++;
+                } else {
+                    break;
+                }
+            }
+            curPartition++;
+        }
+    }
 }
 

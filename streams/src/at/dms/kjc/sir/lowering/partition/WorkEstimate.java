@@ -210,7 +210,8 @@ public class WorkEstimate {
      */
     private void doit(SIRStream str) {
         // get execution counts for filters in <pre>str</pre>
-        executionCounts = SIRScheduler.getExecutionCounts(str)[1];
+        executionCounts = SIRScheduler.getApproxExecutionCounts(str)[1];
+
         // for each filter, build a work count
         for (Iterator it = executionCounts.keySet().iterator();
              it.hasNext(); ){

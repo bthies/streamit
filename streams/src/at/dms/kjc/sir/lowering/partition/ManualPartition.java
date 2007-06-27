@@ -159,6 +159,23 @@ public class ManualPartition {
     }
 
     /**
+     * Returns set of all child streams of 'str' (including 'str',
+     * possibly) that have a name that contains 'subStr'.
+     */
+    public static SIRStream[] getStreamsContaining(SIRStream str, final String subStr) {
+        final ArrayList<SIRStream> result = new ArrayList<SIRStream>();
+        IterFactory.createFactory().createIter(str).accept(new EmptyStreamVisitor() {
+                public void preVisitStream(SIRStream self,
+                                           SIRIterator iter) {
+                    if (self.getName().indexOf(subStr)>=0) {
+                        result.add(self);
+                    }
+                }
+            });
+        return result.toArray(new SIRStream[0]);
+    }
+
+    /**
      * Returns stream by given <name> that is deep child of 'str'.
      * Returns null if no such stream exists.
      */

@@ -84,9 +84,16 @@ public class SIRScheduler implements Constants {
      *  result[1] = map for steady-state schedule
      */ 
     public static HashMap[] getExecutionCounts(SIRStream str) {
-        if (KjcOptions.dynamicRatesEverywhere &&
-            // allow scheduling during CollapseDataParallelism
-            ConstructSIRTree.INIT_STATEMENTS_RESOLVED) {
+        return getExecutionCounts(str, computeSchedule(str));
+    }
+    /**
+     * Like getExecutionCounts, but if we are treating everything as
+     * dynamic rate then returns only unary counts (everything
+     * executes once).  (In contrast, getExecutionCounts will likely
+     * throw exception in presence of dynamic rates.)
+     */ 
+    public static HashMap[] getApproxExecutionCounts(SIRStream str) {
+        if (KjcOptions.dynamicRatesEverywhere) {
             // if treating everything as dynamic, then pretend
             // everything executes just once
             return unaryExecutionCounts(str);

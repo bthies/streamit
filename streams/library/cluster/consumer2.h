@@ -29,20 +29,30 @@ class consumer2 : public socket_holder, public serializable {
   int offs;
   int item_size;
   int item_count;
+  int buffer_length;
 
  public:
 
   consumer2() {
     buf = NULL;
 
+    item_size = sizeof(T);
+    item_count = 0;
+    // set buffer_length depending on the item size
+    if (4 * CONSUMER_BUFFER_SIZE / item_size > 1) {
+        // default: allocate about CONSUMER_BUFFER_SIZE bytes
+        buffer_length = 4 * CONSUMER_BUFFER_SIZE / item_size;
+    } else {
+        // if that is too big, buffer alternate minimum
+        buffer_length = CONSUMER_MIN_BUFFER_LENGTH;
+    }
+
 #ifdef CONSUMER_BUFFER_SIZE
-    offs = CONSUMER_BUFFER_SIZE;
+    offs = buffer_length;
 #else
     offs = 0;
 #endif
 
-    item_size = sizeof(T);
-    item_count = 0;
   }
 
 
@@ -54,11 +64,11 @@ class consumer2 : public socket_holder, public serializable {
 #ifdef CONSUMER_BUFFER_SIZE
     if (is_mem_socket) {
       
-      ((memsocket*)sock)->set_buffer_size(CONSUMER_BUFFER_SIZE * sizeof(T));
+      ((memsocket*)sock)->set_buffer_size(buffer_length * sizeof(T));
       
     } else {
       
-      buf =  (T*)malloc(CONSUMER_BUFFER_SIZE * sizeof(T));
+      buf =  (T*)malloc(buffer_length * sizeof(T));
       
     }
 #endif
@@ -84,7 +94,7 @@ class consumer2 : public socket_holder, public serializable {
     } else {
 
       ((netsocket*)sock)->read_chunk((char*)buf, 
-				     CONSUMER_BUFFER_SIZE * sizeof(T));
+				     buffer_length * sizeof(T));
       offs = 0;
     }
 #endif
@@ -105,14 +115,14 @@ class consumer2 : public socket_holder, public serializable {
 
   __start:
     
-    if (num <= CONSUMER_BUFFER_SIZE - offs) {
+    if (num <= buffer_length - offs) {
       int _offs = offs;
       for (int i = 0; i < num; i++, _offs++) data[i] = buf[_offs];
       offs = _offs;
       return;
     }
     
-    int avail = CONSUMER_BUFFER_SIZE - offs;
+    int avail = buffer_length - offs;
     int _offs = offs;
     for (int i = 0; i < avail; i++, _offs++) data[i] = buf[_offs];
 
@@ -139,8 +149,8 @@ class consumer2 : public socket_holder, public serializable {
 
     //item_count++;
 
-    if (offs == CONSUMER_BUFFER_SIZE) {
-      recv_buffer();
+    if (offs == buffer_length) {
+        recv_buffer();
     }
     
     return buf[offs++];
@@ -151,7 +161,7 @@ class consumer2 : public socket_holder, public serializable {
   inline void peek(int index) {
     
 #ifdef CONSUMER_BUFFER_SIZE
-    if (offs == CONSUMER_BUFFER_SIZE) {
+    if (offs == buffer_length) {
       recv_buffer();
     }
 #endif

@@ -24,8 +24,14 @@
 #include <vector>
 #include <string>
 
-#define CONSUMER_BUFFER_SIZE 10000
-#define PRODUCER_BUFFER_SIZE 10000
+// the default number of bytes allocated to buffers
+#define CONSUMER_BUFFER_SIZE 40000
+#define PRODUCER_BUFFER_SIZE 40000
+
+// alternate minimal buffering for very large items, in which case the
+// above sizes can't hold sufficient items
+#define CONSUMER_MIN_BUFFER_LENGTH 4
+#define PRODUCER_MIN_BUFFER_LENGTH 4
 
 using namespace std;
 

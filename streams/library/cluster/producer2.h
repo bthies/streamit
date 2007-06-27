@@ -29,6 +29,7 @@ class producer2 : public socket_holder, public serializable {
   int offs;
   int item_size;
   int item_count;
+  int buffer_length; // the number of ITEMS that will fit in the buffer
 
  public:
 
@@ -37,6 +38,14 @@ class producer2 : public socket_holder, public serializable {
     offs = 0;
     item_size = sizeof(T);
     item_count = 0;
+    // set buffer_length depending on the item size
+    if (PRODUCER_BUFFER_SIZE / item_size > 1) {
+        // default: allocate about PRODUCER_BUFFER_SIZE bytes
+        buffer_length = PRODUCER_BUFFER_SIZE / item_size;
+    } else {
+        // if that is too big, buffer alternate minimum
+        buffer_length = PRODUCER_MIN_BUFFER_LENGTH;
+    }
   }
 
 
@@ -46,12 +55,12 @@ class producer2 : public socket_holder, public serializable {
     
     if (is_mem_socket) {
 
-      ((memsocket*)sock)->set_buffer_size(PRODUCER_BUFFER_SIZE*sizeof(T));
+      ((memsocket*)sock)->set_buffer_size(buffer_length*sizeof(T));
       buf = (T*)((memsocket*)sock)->get_free_buffer();
       
     } else {
       
-      buf = (T*)malloc(PRODUCER_BUFFER_SIZE*sizeof(T));
+      buf = (T*)malloc(buffer_length*sizeof(T));
       
     }
 #endif
@@ -75,7 +84,7 @@ class producer2 : public socket_holder, public serializable {
     } else {
       
       ((netsocket*)sock)->write_chunk((char*)buf, 
-				      PRODUCER_BUFFER_SIZE*sizeof(T));
+				      buffer_length*sizeof(T));
       offs = 0;
       
     }
@@ -97,14 +106,14 @@ class producer2 : public socket_holder, public serializable {
 
   __start: 
     
-    if (num < PRODUCER_BUFFER_SIZE - offs) {
+    if (num < buffer_length - offs) {
       int _offs = offs;
       for (int i = 0; i < num; i++, _offs++) buf[_offs] = data[i];
       offs = _offs;
       return;
     }
 
-    int avail = PRODUCER_BUFFER_SIZE - offs;
+    int avail = buffer_length - offs;
     int _offs = offs;
     for (int i = 0; i < avail; i++, _offs++) buf[_offs] = data[i];
 
@@ -129,7 +138,7 @@ class producer2 : public socket_holder, public serializable {
     buf[offs++] = data;
     //item_count++;
     
-    if (offs == PRODUCER_BUFFER_SIZE) send_buffer();
+    if (offs == buffer_length) send_buffer();
 
 #endif
   }

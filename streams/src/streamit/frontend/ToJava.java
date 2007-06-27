@@ -31,7 +31,7 @@ import streamit.frontend.tojava.*;
  * parameter.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ToJava.java,v 1.78 2006-09-25 13:54:52 dimock Exp $
+ * @version $Id: ToJava.java,v 1.79 2007-06-27 01:31:21 thies Exp $
  */
 public class ToJava
 {
@@ -324,6 +324,7 @@ public class ToJava
                 outWriter.write("import java.io.Serializable;\n");
                 outWriter.write("import streamit.library.*;\n");
                 outWriter.write("import streamit.library.io.*;\n");
+                outWriter.write("import streamit.misc.StreamItRandom;\n");
 
                 String javaOut =
                     (String)prog.accept(new NodesToJava(libraryFormat, countops, varGen));

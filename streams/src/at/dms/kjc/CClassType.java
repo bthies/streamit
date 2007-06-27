@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CClassType.java,v 1.13 2006-03-24 22:45:15 dimock Exp $
+ * $Id: CClassType.java,v 1.14 2007-06-27 07:36:22 thies Exp $
  */
 
 package at.dms.kjc;
@@ -141,9 +141,10 @@ public class CClassType extends CType {
      */
     public int getSizeInC() {
         // TODO: recurse into elements of this structure and add up
-        // their sizes.  For now, assume a structure has ~10 elements,
-        // each of them an integer, for a total of 40 bytes.
-        return 40;
+        // their sizes.  For now, conservatively assume a structure
+        // has ~100 elements (this includes array elements), each of
+        // them an integer, for a total of 400 bytes.
+        return 400;
     }
 
     /**

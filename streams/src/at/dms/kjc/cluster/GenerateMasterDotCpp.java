@@ -1,4 +1,4 @@
-package at.dms.kjc.cluster;
+package at.dms.kjc.cluster; 
 
 import java.io.FileWriter;
 

@@ -1,4 +1,4 @@
-package at.dms.kjc.cluster;
+package at.dms.kjc.cluster; 
 
 import at.dms.kjc.common.MacroConversion;
 import at.dms.kjc.common.CodeGenerator;

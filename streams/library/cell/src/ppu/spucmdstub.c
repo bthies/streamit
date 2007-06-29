@@ -208,6 +208,25 @@ DECLARE_SPU_COMMAND(dt_out_front, DT_OUT_FRONT,
 END_SPU_COMMAND
 
 /*-----------------------------------------------------------------------------
+ * spu_dt_out_front_spu
+ *
+ * Wrapper with same signature as spu_dt_out_front_ppu.
+ *---------------------------------------------------------------------------*/
+DECLARE_SPU_COMMAND(dt_out_front_spu, DT_OUT_FRONT,
+                    SPU_ADDRESS buf_data, void *dest_buf_data,
+                    uint32_t dest_buf_size, uint32_t num_bytes)
+{
+  UNUSED_PARAM(dest_buf_size);
+
+  cmd->buf_data = spu_lsa(g->spu_id, buf_data);
+  cmd->dest_buf_data = dest_buf_data;
+  cmd->num_bytes = num_bytes;
+
+  cmd->state = 0;
+}
+END_SPU_COMMAND
+
+/*-----------------------------------------------------------------------------
  * spu_dt_out_front_ppu
  *---------------------------------------------------------------------------*/
 DECLARE_SPU_COMMAND(dt_out_front_ppu, DT_OUT_FRONT_PPU,

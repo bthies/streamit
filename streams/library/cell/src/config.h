@@ -34,10 +34,10 @@
 // Number of SPUs to initialize. Must be <= number of free physical SPUs.
 #define NUM_SPU 6
 
-// If 1, filters in extended PPU->SPU->PPU executions may consume no input/
-// produce no output.
-#define EXT_ALLOW_PSP_NO_INPUT  1
-#define EXT_ALLOW_PSP_NO_OUTPUT 1
+// If 1, filters in extended SPU executions may consume no input/produce no
+// output.
+#define EXT_ALLOW_SPU_NO_INPUT  1
+#define EXT_ALLOW_SPU_NO_OUTPUT 1
 
 #endif
 

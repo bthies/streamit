@@ -21,7 +21,7 @@ static void ext_dp_wait_spu(uint32_t tag);
  *---------------------------------------------------------------------------*/
 
 void *
-ext_data_parallel(uint32_t num_spu, EXT_PSP_LAYOUT *l, EXT_PSP_RATES *r,
+ext_data_parallel(uint32_t num_spu, EXT_SPU_LAYOUT *l, EXT_SPU_RATES *r,
                   uint32_t iters, GENERIC_COMPLETE_CB *cb, uint32_t tag)
 {
   EXT_DP_DATA *d;
@@ -70,7 +70,7 @@ void
 ext_dp_notify_input(void *op, uint32_t index)
 {
   EXT_DP_DATA *d = (EXT_DP_DATA *)op;
-  ext_psp_notify_input(d->spu_ops[index]);
+  ext_spu_notify_input(d->spu_ops[index]);
 }
 
 /*-----------------------------------------------------------------------------
@@ -81,13 +81,13 @@ void
 ext_dp_notify_output(void *op, uint32_t index)
 {
   EXT_DP_DATA *d = (EXT_DP_DATA *)op;
-  ext_psp_notify_output(d->spu_ops[index]);
+  ext_spu_notify_output(d->spu_ops[index]);
 }
 
 typedef struct _EXT_DPS_DATA {
   GENERIC_COMPLETE_CB *cb;
   uint32_t tag;
-  EXT_PSP_DATA *spu_ops[NUM_SPU];
+  EXT_SPU_DATA *spu_ops[NUM_SPU];
   uint32_t num_spu;
   struct {
     uint32_t count;
@@ -105,13 +105,13 @@ static void ext_dps_handle_dt(void *data, uint32_t msg);
  *---------------------------------------------------------------------------*/
 
 void *
-ext_data_parallel_shared(uint32_t num_spu, EXT_PSP_LAYOUT *l,
-                         void *ppu_in_buf_data, void *ppu_out_buf_data,
-                         EXT_PSP_RATES *r, uint32_t iters,
+ext_data_parallel_shared(uint32_t num_spu, EXT_SPU_LAYOUT *l,
+                         void *remote_in_buf_data, void *remote_out_buf_data,
+                         EXT_SPU_RATES *r, uint32_t iters,
                          GENERIC_COMPLETE_CB *cb, uint32_t tag)
 {
   EXT_DPS_DATA *d;
-  EXT_PSP_INT_PARAMS ip;
+  EXT_SPU_INT_PARAMS ip;
   bool_t same_layout;
   uint32_t spu_iters[NUM_SPU];
 
@@ -125,8 +125,8 @@ ext_data_parallel_shared(uint32_t num_spu, EXT_PSP_LAYOUT *l,
   if ((same_layout = (num_spu == 0))) {
     num_spu = (iters >= NUM_SPU ? NUM_SPU : iters);
 
-    l->ppu_in_buf_data = ppu_in_buf_data;
-    l->ppu_out_buf_data = ppu_out_buf_data;
+    l->remote_in_buf_data = remote_in_buf_data;
+    l->remote_out_buf_data = remote_out_buf_data;
   } else {
     pcheck(iters >= num_spu);
   }
@@ -167,13 +167,13 @@ ext_data_parallel_shared(uint32_t num_spu, EXT_PSP_LAYOUT *l,
 
   // Start individual SPU operations.
   for (uint32_t i = 0; i < num_spu; i++) {
-    EXT_PSP_LAYOUT *sl = (same_layout ? l : &l[i]);
+    EXT_SPU_LAYOUT *sl = (same_layout ? l : &l[i]);
 
     if (same_layout) {
       sl->spu_id = i;
     } else {
-      sl->ppu_in_buf_data = ppu_in_buf_data;
-      sl->ppu_out_buf_data = ppu_out_buf_data;
+      sl->remote_in_buf_data = remote_in_buf_data;
+      sl->remote_out_buf_data = remote_out_buf_data;
     }
 
     d->spu_ops[i] = ext_ppu_spu_ppu_internal(sl, r, spu_iters[i], &ip,
@@ -181,11 +181,11 @@ ext_data_parallel_shared(uint32_t num_spu, EXT_PSP_LAYOUT *l,
   }
 
   // Start data transfers.
-  if (!EXT_ALLOW_PSP_NO_INPUT || (r->in_bytes != 0)) {
+  if (!EXT_ALLOW_SPU_NO_INPUT || (r->in_bytes != 0)) {
     ext_dps_notify_input(d);
   }
 
-  if (!EXT_ALLOW_PSP_NO_OUTPUT || (r->out_bytes != 0)) {
+  if (!EXT_ALLOW_SPU_NO_OUTPUT || (r->out_bytes != 0)) {
     ext_dps_notify_output(d);
   }
 
@@ -223,9 +223,9 @@ static void
 ext_dps_handle_dt(void *data, uint32_t msg)
 {
   EXT_DPS_DATA *d = (EXT_DPS_DATA *)data;
-  EXT_PSP_DATA *spu_op;
+  EXT_SPU_DATA *spu_op;
 
-  if (msg == EXT_PSP_DONE_DT_IN) {
+  if (msg == EXT_SPU_DONE_DT_IN) {
     if (--d->in.count != 0) {
       // Switch to next SPU.
       if (++d->in.index == d->num_spu) {
@@ -233,8 +233,8 @@ ext_dps_handle_dt(void *data, uint32_t msg)
       }
 
       // Start transfer if data is available.
-      if (ext_psp_in_buf_has_data(spu_op = d->spu_ops[d->in.index])) {
-        ext_psp_start_dt_in(spu_op);
+      if (ext_spu_in_buf_has_data(spu_op = d->spu_ops[d->in.index])) {
+        ext_spu_start_dt_in(spu_op);
       } else {
         d->in.waiting = TRUE;
       }
@@ -247,8 +247,8 @@ ext_dps_handle_dt(void *data, uint32_t msg)
       }
 
       // Start transfer if space is available.
-      if (ext_psp_out_buf_has_space(spu_op = d->spu_ops[d->out .index])) {
-        ext_psp_start_dt_out(spu_op);
+      if (ext_spu_out_buf_has_space(spu_op = d->spu_ops[d->out .index])) {
+        ext_spu_start_dt_out(spu_op);
       } else {
         d->out .waiting = TRUE;
       }
@@ -264,12 +264,12 @@ void
 ext_dps_notify_input(void *op)
 {
   EXT_DPS_DATA *d = (EXT_DPS_DATA *)op;
-  EXT_PSP_DATA *spu_op;
+  EXT_SPU_DATA *spu_op;
 
   if (d->in.waiting &&
-      ext_psp_in_buf_has_data(spu_op = d->spu_ops[d->in.index])) {
+      ext_spu_in_buf_has_data(spu_op = d->spu_ops[d->in.index])) {
     d->in.waiting = FALSE;
-    ext_psp_start_dt_in(spu_op);
+    ext_spu_start_dt_in(spu_op);
   }
 }
 
@@ -281,11 +281,11 @@ void
 ext_dps_notify_output(void *op)
 {
   EXT_DPS_DATA *d = (EXT_DPS_DATA *)op;
-  EXT_PSP_DATA *spu_op;
+  EXT_SPU_DATA *spu_op;
 
   if (d->out.waiting &&
-      ext_psp_out_buf_has_space(spu_op = d->spu_ops[d->out.index])) {
+      ext_spu_out_buf_has_space(spu_op = d->spu_ops[d->out.index])) {
     d->out.waiting = FALSE;
-    ext_psp_start_dt_out(spu_op);
+    ext_spu_start_dt_out(spu_op);
   }
 }

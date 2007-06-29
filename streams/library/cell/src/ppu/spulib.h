@@ -267,11 +267,20 @@ DECLARE_SPU_COMMAND(dt_in_back,
 DECLARE_SPU_COMMAND(dt_out_front,
                     SPU_ADDRESS buf_data, void *dest_buf_data,
                     uint32_t num_bytes);
+DECLARE_SPU_COMMAND(dt_out_front_spu,
+                    SPU_ADDRESS buf_data, void *dest_buf_data,
+                    uint32_t dest_buf_size, uint32_t num_bytes);
 DECLARE_SPU_COMMAND(dt_out_front_ppu,
                     SPU_ADDRESS buf_data, void *dest_buf_data,
                     uint32_t dest_buf_size, uint32_t num_bytes);
 
 #undef DECLARE_SPU_COMMAND
+
+// Common signature for spu_dt_out_front_spu/ppu.
+typedef SPU_CMD_HEADER *(*SPU_DT_OUT_FRONT_FUNC)
+  (SPU_CMD_GROUP *g, SPU_ADDRESS buf_data, void *dest_buf_data,
+   uint32_t dest_buf_size, uint32_t num_bytes, uint32_t cmd_id,
+   uint32_t num_deps, ...);
 
 /*-----------------------------------------------------------------------------
  * PPU commands.

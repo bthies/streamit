@@ -1,0 +1,23 @@
+Note that the Matlab version will die after two iterations due to a
+missing file.  We'd have to use the bigger input set (see
+../input/README) to have execution progress further.
+
+USING THE MATLAB COMPILER
+-------------------------
+
+NOTE: mcc doesn't work here due to the default gcc being 2.95
+rather than 3.4.  However, when I compared mcc with plain Matlab on
+radish.csail.mit.edu, mcc was ~3x slower.  So the numbers gathered for
+Basier's thesis were done under interpreted Matlab from cagfarm-45.
+
+If you want to try mcc, you can go like this:
+
+setenv LD_LIBRARY_PATH /home/linux/encap/matlab-14sp3/bin/glnx86:/usr/uns/jdk1.5.0_01/jre/lib/i386/client/:/usr/uns/jdk1.5.0_01/jre/lib/i386/:/usr/uns/encap/gcc-3.3.2/lib:/usr/uns/lib
+
+mcc -m clocking testfunc show ransacfitplane ransacfit ransac normalise2dpts harris fundmatrix correlation
+
+./clocking
+
+However, if "clocking" gives you a seg fault, it's because our gcc
+paths are messed up (we're pointing to gcc 2.95 rather than gcc3.3).
+I had to work this out with Mathworks support.

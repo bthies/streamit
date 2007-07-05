@@ -24,8 +24,8 @@ function [ransacWorks,featTime, corrTime, ransacTime, sumTime, testfuncTime] = t
     ransacWorks = 1;
     %cd C:\Do'cuments and Settings'\basier\desktop\images\ppmsFromVid2\;
  
-    im1 = imread(sprintf('../input/%d.ppm',file1));
-    im2 = imread(sprintf('../input/%d.ppm',file2));
+    im1 = imread(sprintf('../input/%d.ppm',(file1+1)));
+    im2 = imread(sprintf('../input/%d.ppm',(file2+1)));
     cd (currentDir);
     im1 = rgb2gray(im1);
     im2 = rgb2gray(im2);

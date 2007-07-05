@@ -1,0 +1,37 @@
+/** 
+ * This benchmark should print nothing but "2.0".
+ *
+ * However, it exposes a bug under the cluster backend:
+ *
+ * strc -cluster 3 -localsToFields Test.str
+ *
+ * Will seg fault when the "arr" array exceeds a certain size.
+ */
+
+struct MyStruct {
+    //float[65536] arr;  // this works
+    float[131072] arr;       // this seg faults
+}
+
+void->void pipeline Test {
+    add void->MyStruct filter {
+        work push 1 { 
+            MyStruct foo;
+            foo.arr[1] = 1;
+            push(foo);
+        }
+    }
+    add MyStruct->MyStruct filter {
+        work push 1 pop 1 {
+            MyStruct foo = pop();
+            foo.arr[1]++;
+            push(foo);
+        }
+    }
+    add MyStruct->void filter {
+        work pop 1 { 
+            MyStruct foo = pop();
+            println(foo.arr[1]);
+        }
+    }
+}

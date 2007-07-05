@@ -384,9 +384,7 @@ float[320][240]->bestFeatures[320][240] filter sortEigs(int width, int height){
 				eig1DBest[temp1].y = j;
 			}
 		}
-		println("start q_sort");
 		q_sort2(0, width*height - 1);
-		println("end q_sort");
 		for(int i = 0; i<width*height; i++){
 				if(i!=width*height-1 && eig1DBest[i].val<eig1DBest[i+1].val) println("someting fishy at i = " + i);
 				eig2DBest[i%width][i/width] = eig1DBest[i];

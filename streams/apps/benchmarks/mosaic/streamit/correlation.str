@@ -254,40 +254,8 @@ imageAndFeatures->imageAndFeatures pipeline sharpen(int w){
 			add extractMatrix();
 			add unmakeMatrix(); // now we have a stream of floats
 			
-			add splitjoin{
-				split duplicate;
-				add Identity<float>;
-				add float->float pipeline {
-					add splitjoin{
-						split roundrobin(1,0);
-						add FFT2(FFTM, FFTN, FFTWidth, FFTHeight);
-						//now generate the averager and take its fft
-						add pushAverager(w, FFTWidth, FFTHeight);
-						join roundrobin(2);
-					};
-					// multiply the fft of the yImage with that of the averager
-					add float->float filter
-					{
-						float a, b, c, d;
-						work pop 4 push 2
-						{
-								a = pop();
-								b = pop();
-								c = pop();
-								d = pop();
-								push(a*c - b*d);
-								push(a*d + b*c);
-						}
-					};
-				
-					//warning, if MZeroPad > 2r, you might have aliasing problems. come back to this
-				
-					add IFFT2(FFTM+MZeroPad, FFTN+NZeroPad, FFTWidth, FFTHeight);
-					add takeInnerMatrix(FFTM, FFTN, FFTWidth, FFTHeight,  r);
-				}
-				join roundrobin;
-			};
-			
+                        add FFTWrapper(w, FFTM, FFTN, FFTWidth, FFTHeight, MZeroPad, NZeroPad, r);
+
 			add float->float filter 
 			{ work push 1 peek 2 pop 2 
 				{	
@@ -297,8 +265,8 @@ imageAndFeatures->imageAndFeatures pipeline sharpen(int w){
 					pop();
 				}
 			};	
-
-			add makeMatrix();
+			
+                        add makeMatrix();
 			add unExtractMatrix();
 		};
 		join roundrobin;
@@ -318,6 +286,42 @@ imageAndFeatures->imageAndFeatures pipeline sharpen(int w){
 		};
 } 
     
+
+float->float splitjoin FFTWrapper(int w, int FFTM, int FFTN, int FFTWidth, int FFTHeight, int MZeroPad, int NZeroPad, int r) {
+    split duplicate;
+    add Identity<float>;
+    add float->float pipeline {
+        add splitjoin{
+            split roundrobin(1,0);
+            add FFT2(FFTM, FFTN, FFTWidth, FFTHeight);
+            //now generate the averager and take its fft
+            add pushAverager(w, FFTWidth, FFTHeight);
+            join roundrobin(2);
+        };
+        // multiply the fft of the yImage with that of the averager
+        add float->float filter
+            {
+                float a, b, c, d;
+                work pop 4 push 2
+                    {
+                        a = pop();
+                        b = pop();
+                        c = pop();
+                        d = pop();
+                        push(a*c - b*d);
+                        push(a*d + b*c);
+                    }
+            };
+				
+        //warning, if MZeroPad > 2r, you might have aliasing problems. come back to this
+				
+        add IFFT2(FFTM+MZeroPad, FFTN+NZeroPad, FFTWidth, FFTHeight);
+        add takeInnerMatrix(FFTM, FFTN, FFTWidth, FFTHeight,  r);
+    }
+    join roundrobin;
+}
+
+
 float->float filter takeInnerMatrix(int FFTM, int FFTN, int FFTWidth, int FFTHeight, int r) {
 
 	work pop (FFTWidth)*(FFTHeight) push FFTM*FFTN {

@@ -1,0 +1,163 @@
+The mosaic program was developed by Basier Aziz for his M.Eng thesis.
+See his thesis writeup for a good description of the application.
+
+HOW TO RUN
+----------
+
+The version of mosaic checked in with this README compiles under the
+library and compiler (with matching outputs), but does not parallelize
+under -cluster.
+
+To run in library:
+make lib
+
+To run in compiler:
+make comp
+a.out -i 230400
+
+That will run a single "iteration" of the program, in which the output
+files represent the comparison of two input frames.  However, note
+that the StreamIt code is really doing MORE than one iteration,
+because there are partial results in the stream that are not written
+to the file.
+
+Thus, if you're comparing to the MATLAB version, it is more accurate
+to write two iterations to the file:
+a.out -i 460800
+
+This will perform the same number of feature extraction passes as the
+Matlab code for the first two iterations.
+
+TESTING CORRECTNESS
+-------------------
+
+Note that due to rounding errors, the outputs of the library and
+compiler may differ by an absolute value of "1" in some positions.  To
+check the output, we replaced the fileWrite() splitjoin by a Printer()
+and ran $STREAMIT_HOME/regtest/tools/compare_abs.pl on the two outputs
+(to tolerate differences of 1).
+
+This lossy differencing will need to be automated, or adapted to .bin
+files, for this to be included in the regtest, etc.
+
+ABOUT INPUT FILES
+-----------------
+
+The program is designed so that to run for n input files (i.e., n-1
+iterations), you should have an n-way splitjoin at the top.
+
+However, we can run two iterations with only two input files by making
+those files bigger.  The checked-in version doubles the size of each
+input file to allow this to work.
+
+Thus, if you run for two iterations, here's what the represent:
+- first iteration:  compares first half of 1b.bin and first half of 2b.bin
+- second iteration: compares first half of 2b.bin and second half 1b.bin
+- third iteration (though it doesn't make it to the file output, due
+  to peeking):  compares second half of 1b.bin and second half of 2b.bin
+
+Though only two input files are checked into CVS (under ../input), you
+can find more (if you're on CAG) under:
+
+/projects/streamit/compiler-static/mosaic
+
+CHANGING THE FRAME SIZE
+-----------------------
+
+If you want to run with inputs of a different size, you need to change
+the following:
+
+- replace "320" and "240" by your frame size in all files
+- change FFTWidth and FFTHeight in sharpen (correlation.str) to be the
+  next biggest power of 2 above your frame sizes
+- adjust the patchsize in mosaic.str.  For example, Basier recommended
+  the following change in reducing the frame size from 320x240 to 64x64:
+
+     Also, change the patchsize to 3 (mosaic.str) because if the
+     patchsize is 7 (as i believe it should be in your version),
+     that's 49 pixels for every feature, 40 features per frame, and
+     that's 1920 pixels out of 4096 (64x64), and may make the image
+     way too cluttered with features for it to make meaningful
+     putative matches, and if there are less than 8 putative matches,
+     you can't run RANSAC, and if there are only 8 or 9 there may be
+     no combination that passes the threshold.
+
+DIFFERENCES BETWEEN THIS AND THE MATLAB VERSION
+-----------------------------------------------
+
+The StreamIt version and Matlab version do slightly different
+computations.  For this reason, don't expect their outputs to match
+exactly, and don't expect a perfect side-by-side performance
+comparison.
+
+One performance difference between the two versions is that StreamIt
+only runs feature detection once per input image, whereas Matlab will
+run it twice (for image i, once when comparing image_i-1 -> image_i,
+once when comparing image_i -> image_i+1).  As feature detection is a
+significant computational cost, this 2x difference will play out for
+large iteration counts (it is the same when running 2 iterations due
+to StreamIt's extra computation of peeked items).
+
+Additional diffs from Basier:
+
+"In the MATLAB version, feature extraction took about 35% of the
+runtime (much more than RANSAC as a matter of fact).  But remember,
+the MATLAB version does a thresholding operation over the matrix,
+whereas I perform a quicksort and pick the top nonoverlapping
+features.  So in the StreamIt version, feature extraction might take
+up even more of the runtime."
+
+"I'm hoping that the feature part is as apples-to-oranges as it should
+get.  The rest of it was done quite a bit similarly, except their FFT
+might have been slightly more optimized (mine runs with the nearest
+power of 2, i.e. we do a zero-padded 32-length fft on a17-length
+array)."
+
+Also, the MATLAB version does not have the equivalent of the stream
+makeFundMatrixExit().  This stream could possibly (?) be removed
+without changing correctness, though it is not too
+computationally-intensive anyway.
+
+OPTIMIZATION
+------------
+
+In gathering numbers for Basier's thesis, the following compile flags
+were used in addition to those emitted by "make comp": -u 2 -optfile
+FuseAll, where FuseAll is a manual workaround to the current broken
+state of -fusion (see the bottom of this file for the contents of
+FuseAll.java).
+
+PARALLELIZATION
+---------------
+
+3-4 days were spent trying to push this through the cluster backend.
+
+Before you can start to push through cluster backend, you need to
+convert all arrays-over-tapes to structures-over-tapes by wrapping the
+array in a structure.  (Bill has this version but is not checking into
+CVS to avoid confusion.)  Alternately, fix the cluster backend to do
+arrays-over-tapes.
+
+The current problem is a bug illustrated by Test.str in the current
+directory, which shows that passing large structures over tapes
+between parallel partitions leads to a mysterious segmentation fault.
+
+This is also mirrored as RT #329.
+
+FUSE-ALL
+--------
+
+The manual optimization used for Basier's thesis (compile this into
+FuseAll.class and than pass with -optfile parameter):
+
+import at.dms.kjc.sir.*;
+
+/**
+ * Fuse as much as possible.
+ */
+public class FuseAll {
+
+    public static SIRStream manualPartition(SIRStream str) {
+        return at.dms.kjc.sir.lowering.fusion.FuseAll.fuse(str, false);
+    }
+}

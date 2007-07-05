@@ -189,7 +189,7 @@ void->void pipeline mosaic{
 		split duplicate;
 		add IAFID();			
 		add pipeline{
-			//add sharpen(corrWindowSize);
+			add sharpen(corrWindowSize);
 			add correlation(corrWindowSize);
 		}
 		join roundrobin(1,2);
@@ -319,7 +319,7 @@ featureListPair->featureListPair filter FLPID(){
 // 	split roundrobin(0);
 // 	for(int i=1; i<=numImages; i++)
 // 	{ 	 
-// 		add FileReader<int>("bin/" + i + "b.bin");
+// 		add FileReader<int>(i + "b.bin");
 // 	}
 // 	join roundrobin(imageWidth*imageHeight*3);
 // }
@@ -348,7 +348,7 @@ void->int pipeline fileRead()
 	    split roundrobin(0);
 	    for(int i=1; i<=numImages; i++)
 		{ 	 
-		    add FileReader<int>("bin/" + i + "b.bin");
+		    add FileReader<int>(i + "b.bin");
 		}
 	    join roundrobin(temp2);
 	}

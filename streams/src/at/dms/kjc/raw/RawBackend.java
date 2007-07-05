@@ -206,6 +206,10 @@ public class RawBackend {
             //constant prop propagates the peek buffer index
             new VarDeclRaiser().raiseVars(str);
 
+            if (KjcOptions.localstoglobals) {
+                ConvertLocalsToFields.doit(str);
+            }
+
             // optionally print a version of the source code that we're
             // sending to the scheduler
             if (KjcOptions.print_partitioned_source) {

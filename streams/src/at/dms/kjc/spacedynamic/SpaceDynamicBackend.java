@@ -334,6 +334,11 @@ public class SpaceDynamicBackend {
         //Generate the tile code
         RawExecutionCode.doit(streamGraph);
 
+        if (KjcOptions.localstoglobals) {
+            for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++)
+                ConvertLocalsToFields.doit(streamGraph.getStaticSubGraphs()[i].getTopLevelSIR());
+        }
+
         //remove globals over all the SSGs if enabled
         if (KjcOptions.removeglobals) {
             for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++)

@@ -38,6 +38,7 @@ import at.dms.kjc.spacetime.CalculateParams;
 import at.dms.kjc.spacetime.StreamlinedDuplicate;
 import at.dms.kjc.slicegraph.*;
 import at.dms.kjc.common.CommonUtils;
+import at.dms.kjc.common.ConvertLocalsToFields;
 /**
  * Common passes, useful in new back ends.
  * @author dimock
@@ -296,6 +297,11 @@ public class CommonPasses {
         
         StreamItDot.printGraph(str, "after-partition.dot");
         
+        // convert locals to fields if desired (can avoid stack overflow for huge programs)
+        if (KjcOptions.localstoglobals) {
+            ConvertLocalsToFields.doit(str);
+        }
+
         // get the execution counts from the scheduler
         HashMap[] executionCounts = SIRScheduler.getExecutionCounts(str);
         if (numCores > 1) {

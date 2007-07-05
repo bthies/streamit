@@ -11,6 +11,7 @@ import at.dms.util.IRPrinter;
 import at.dms.util.SIRPrinter;
 import at.dms.util.Utils;
 import at.dms.kjc.*;
+import at.dms.kjc.common.*;
 import at.dms.kjc.iterator.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.lir.*;
@@ -162,6 +163,10 @@ public class Flattener {
                                                            interfaceTables,
                                                            structs);
         System.err.println("done.");
+
+        if (KjcOptions.localstoglobals) {
+            ConvertLocalsToFields.doit(str);
+        }
 
         // optionally print a version of the source code that we're
         // sending to the scheduler

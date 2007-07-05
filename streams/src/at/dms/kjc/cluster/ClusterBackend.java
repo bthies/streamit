@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.127 2007-06-27 01:30:25 thies Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.128 2007-07-05 04:19:14 thies Exp $
 package at.dms.kjc.cluster; 
 
 import at.dms.kjc.flatgraph.FlatNode;
@@ -8,6 +8,7 @@ import at.dms.kjc.flatgraph.GraphFlattener;
 //import at.dms.util.SIRPrinter;
 import at.dms.util.Utils;
 import at.dms.kjc.*;
+import at.dms.kjc.common.*;
 import at.dms.kjc.iterator.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.stats.StatisticsGathering;
@@ -200,6 +201,7 @@ public class ClusterBackend {
         EnqueueToInitPath.doInitPath(str);
 
         // construct stream hierarchy from SIRInitStatements
+
         ConstructSIRTree.doit(str);
 
         //this must be run now, Further passes expect unique names!!!
@@ -558,6 +560,10 @@ public class ClusterBackend {
         FlatNode strTop = streamGraph.getTopLevel().getTopLevel();
        
         StreamItDot.printGraph(str, "after-subgraphs.dot");
+
+        if (KjcOptions.localstoglobals) {
+            ConvertLocalsToFields.doit(str);
+        }
 
         // optionally print a version of the source code that we're
         // sending to the scheduler

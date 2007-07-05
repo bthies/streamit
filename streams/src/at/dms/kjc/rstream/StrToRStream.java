@@ -1,6 +1,6 @@
 package at.dms.kjc.rstream;
 
-//import at.dms.kjc.common.*;
+import at.dms.kjc.common.*;
 import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.flatgraph.GraphFlattener;
 //import at.dms.util.IRPrinter;
@@ -187,6 +187,10 @@ public class StrToRStream {
             RemoveMultiPops.doit(str);
         }
         
+        if (KjcOptions.localstoglobals) {
+            ConvertLocalsToFields.doit(str);
+        }
+
         // optionally print a version of the source code that we're
         // sending to the scheduler
         if (KjcOptions.print_partitioned_source) {

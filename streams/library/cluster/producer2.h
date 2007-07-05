@@ -61,6 +61,10 @@ class producer2 : public socket_holder, public serializable {
     } else {
       
       buf = (T*)malloc(buffer_length*sizeof(T));
+      if (buf==0) {
+          fprintf(stderr, "error: failed to malloc communication buffers");
+          exit(0);
+      }
       
     }
 #endif

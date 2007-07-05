@@ -39,9 +39,9 @@ class consumer2 : public socket_holder, public serializable {
     item_size = sizeof(T);
     item_count = 0;
     // set buffer_length depending on the item size
-    if (4 * CONSUMER_BUFFER_SIZE / item_size > 1) {
+    if (CONSUMER_BUFFER_SIZE / item_size > 1) {
         // default: allocate about CONSUMER_BUFFER_SIZE bytes
-        buffer_length = 4 * CONSUMER_BUFFER_SIZE / item_size;
+        buffer_length = CONSUMER_BUFFER_SIZE / item_size;
     } else {
         // if that is too big, buffer alternate minimum
         buffer_length = CONSUMER_MIN_BUFFER_LENGTH;
@@ -63,12 +63,15 @@ class consumer2 : public socket_holder, public serializable {
 
 #ifdef CONSUMER_BUFFER_SIZE
     if (is_mem_socket) {
-      
       ((memsocket*)sock)->set_buffer_size(buffer_length * sizeof(T));
       
     } else {
       
       buf =  (T*)malloc(buffer_length * sizeof(T));
+      if (buf==0) {
+          fprintf(stderr, "error: failed to malloc communication buffers");
+          exit(0);
+      }
       
     }
 #endif

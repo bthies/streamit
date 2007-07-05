@@ -58,7 +58,12 @@ class memsocket : public mysocket {
 
       pthread_mutex_lock(&free_buffer_lock);
       for (int y = 0; y < NUMBER_OF_BLOCKS; y++) {
-	free_buffers.push(malloc(size));
+          void* ptr = malloc(size);
+          if (ptr == 0) {
+              fprintf(stderr, "error: failed to malloc communication buffers");
+              exit(0);
+          }
+          free_buffers.push(ptr);
       }
       pthread_cond_signal(&free_buffer_release_cond);
       pthread_mutex_unlock(&free_buffer_lock);

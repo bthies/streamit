@@ -222,13 +222,38 @@ public class ReplacingVisitor extends EmptyAttributeVisitor {
      */
     public Object visitVariableDeclarationStatement(JVariableDeclarationStatement self,
                                                     JVariableDefinition[] vars) {
+
+        // how many defs were replaced with JEmptyStatements
+        int removedDefs = 0;
+
         for (int i = 0; i < vars.length; i++) {
-            JVariableDefinition result = 
-                (JVariableDefinition)vars[i].accept(this);
-            if (result != null && result!=vars[i]) {
-                vars[i] = result;
+            Object result = vars[i].accept(this);
+            // allow children to convert to JEmptyStatements
+            if (result instanceof JEmptyStatement) {
+                removedDefs++;
+                vars[i] = null;
+            } else if (result != null && result!=vars[i]) {
+                vars[i] = (JVariableDefinition)result;
             }
         }
+
+        // if any defs removed, contract array
+        if (removedDefs > 0) {
+            // if we removed everything, we're empty
+            if (removedDefs == vars.length) {
+                return new JEmptyStatement();
+            } else {
+                // otherwise, we need to shrink, copy over remaining defs
+                JVariableDefinition[] newVars = new JVariableDefinition[vars.length-removedDefs];
+                for (int i=0, j=0; i<vars.length; i++) {
+                    if (vars[i] != null) {
+                        newVars[j++] = vars[i];
+                    }
+                }
+                self.setVars(newVars);
+            }
+        }
+
         return self;
     }
 

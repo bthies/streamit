@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.100 2007-05-17 18:49:16 shall07 Exp $
+ * $Id: KjcOptions.opt,v 1.101 2007-07-05 04:19:07 thies Exp $
  */
 
 prefix Kjc
@@ -706,6 +706,11 @@ longname		"rawicachesize"
 	default		"32768"
 	requireArgument
 	help		"For Raw, set the dcache size for each tile (use a power of 2)."
+
+longname		"localstoglobals"
+	type		boolean
+	default		"false"
+	help		"Convert local variables to global variables (can avoid stack overflow)."
 
 
 /* remove: now default */

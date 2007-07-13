@@ -22,7 +22,7 @@ public class CellNoSWPipeLayout extends NoSWPipeLayout<CellPU,CellChip> {
             return;
         }
         // place on a random SPU
-        assignment.put(filter1, chip.getNthComputeNode(rand.nextInt(chip.size()-1) + 1));
+        //assignment.put(filter1, chip.getNthComputeNode(rand.nextInt(chip.size()-1) + 1));
     }
 
     @Override

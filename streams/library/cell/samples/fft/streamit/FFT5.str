@@ -1,0 +1,158 @@
+
+void->void pipeline FFT5() {
+    int N = 256;
+    
+
+    //add FFTTestSource(N);
+    add FileReader<float>("../input/FFT5.in");
+    add FFTReorder(N);
+    for(int j=2; j<=N; j*=2)
+	add CombineDFT(j);
+    add FileWriter<float>("FFT5.out");
+    //add FloatPrinter();
+}
+
+
+float->float filter CombineDFT(int n) {
+
+  float wn_r, wn_i;
+
+  init {
+    wn_r = (float)cos(2 * 3.141592654 / n);
+    wn_i = (float)sin(2 * 3.141592654 / n);
+  }
+
+  work push 2*n pop 2*n {
+        int i;
+        float w_r = 1;
+        float w_i = 0;
+	float[2*n] results;
+
+        for (i = 0; i < n; i += 2)
+        {
+	    // this is a temporary work-around since there seems to be
+	    // a bug in field prop that does not propagate nWay into the
+	    // array references.  --BFT 9/10/02
+	    
+	    //int tempN = nWay;
+	    //Fixed --jasperln
+            
+            // removed nWay, just using n  --sitij 9/26/03
+
+	    float y0_r = peek(i);
+            float y0_i = peek(i+1);
+            
+	    float y1_r = peek(n + i);
+            float y1_i = peek(n + i + 1);
+
+            float y1w_r = y1_r * w_r - y1_i * w_i;
+            float y1w_i = y1_r * w_i + y1_i * w_r;
+
+            results[i] = y0_r + y1w_r;
+            results[i + 1] = y0_i + y1w_i;
+
+	    results[n + i] = y0_r - y1w_r;
+            results[n + i + 1] = y0_i - y1w_i;
+
+            float w_r_next = w_r * wn_r - w_i * wn_i;
+            float w_i_next = w_r * wn_i + w_i * wn_r;
+            w_r = w_r_next;
+            w_i = w_i_next;
+        }
+
+        for (i = 0; i < 2 * n; i++)
+        {
+            pop();
+            push(results[i]);
+        }
+    }
+
+}
+
+
+float->float filter FFTReorderSimple(int n) {
+
+  int totalData;
+
+  init {
+    totalData = 2*n; 
+  }
+
+  work push 2*n pop 2*n {
+        int i;
+        
+        for (i = 0; i < totalData; i+=4)
+        {
+            push(peek(i));
+            push(peek(i+1));
+        }
+        
+        for (i = 2; i < totalData; i+=4)
+        {
+            push(peek(i));
+            push(peek(i+1));
+        }
+        
+        for (i=0;i<n;i++)
+        {
+            pop();
+            pop();
+        }
+    }
+}
+
+
+float->float pipeline FFTReorder(int n) {
+
+  for(int i=1; i<(n/2); i*= 2)
+    add FFTReorderSimple(n/i);
+
+}
+
+
+
+float->float filter Nothing 
+{
+    work pop 1 push 1
+	{
+	    push(pop());
+	}
+}
+
+
+
+void->float filter FFTTestSource(int N) {
+	
+  float max = 1000.0;	
+  float current = 0.0;
+
+  work push 2*N pop 0 {
+      int i;
+      
+      if (current > max)
+	  current = 0.0;
+      
+      for(i=0; i<2*(N); i++)
+	  push(current++);
+  }
+}
+
+
+float->void filter FloatPrinter
+{
+    work push 0 pop 1 {
+    
+        println(pop());
+    }
+}
+
+
+
+
+
+
+
+
+
+
+

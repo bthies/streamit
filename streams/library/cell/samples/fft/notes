@@ -1,0 +1,4 @@
+The FFT code is taken from asplos06/fft and hand-coded for the library.
+
+The input and output directories contain data for 10,000 iterations, in
+big-endian (Cell) format.

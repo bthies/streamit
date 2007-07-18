@@ -87,7 +87,9 @@ public class CellBackend {
         CellComputeCodeStore ppuCS = cellBackEndBits.getPPU().getComputeCode();        
         ppuCS.addSPUInit();
         ppuCS.addCallBackFunction();
+        ppuCS.addSPUIters();
         ppuCS.addPPUBuffers();
+//        System.out.println("first slice: " + schedule.getInitSchedule()[0].getFilterNodes().get(0));
         //ppuCS.addFileReader();
         //ppuCS.addFileWriter();
         
@@ -134,8 +136,8 @@ public class CellBackend {
                     p.println("#include \"filterdefs.h\"");
                     p.println("#include \"structs.h\"");
                     p.println();
-                    p.println("#define FILTER_NAME 0");
-                    p.println("#define ITEM_TYPE int");
+                    p.println("#define FILTER_NAME " + (n-1));
+                    p.println("#define ITEM_TYPE float");
                     p.println("#include \"beginfilter.h\"");
                 }
                 codeEmitter.emitCodeForComputeNode(nodeN, p);

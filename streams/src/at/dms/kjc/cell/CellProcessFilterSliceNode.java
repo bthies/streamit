@@ -1,8 +1,5 @@
 package at.dms.kjc.cell;
 
-import at.dms.kjc.JEmittedTextExpression;
-import at.dms.kjc.JExpressionStatement;
-import at.dms.kjc.backendSupport.BackEndFactory;
 import at.dms.kjc.backendSupport.ProcessFilterSliceNode;
 import at.dms.kjc.backendSupport.SchedulingPhase;
 import at.dms.kjc.slicegraph.FilterSliceNode;
@@ -11,9 +8,12 @@ import at.dms.kjc.slicegraph.OutputSliceNode;
 
 public class CellProcessFilterSliceNode extends ProcessFilterSliceNode {
     
+    private int cpunum;
+    
     public CellProcessFilterSliceNode(FilterSliceNode filterNode, 
-            SchedulingPhase whichPhase, BackEndFactory backEndBits) {
+            SchedulingPhase whichPhase, CellBackendFactory backEndBits) {
         super(filterNode, whichPhase, backEndBits);
+        cpunum = backEndBits.getCellPUNumForFilter(filterNode);
     }
     
     public void processFilterSliceNode() {
@@ -21,12 +21,24 @@ public class CellProcessFilterSliceNode extends ProcessFilterSliceNode {
         PPU ppu = ((CellBackendFactory) backEndBits).getPPU();
         CellComputeCodeStore ppuCS = ppu.getComputeCode();
         
-        filterNode.getFilter().getSteadyMult();
+        System.out.println("steady mult: " + filterNode.getFilter().getSteadyMult());
         
         if (filterNode.isFileInput()) {
             if (whichPhase == SchedulingPhase.INIT) {
                 ppuCS.addFileReader(filterNode);
                 //doit();
+                ppuCS.addWorkFunctionAddressField();
+                ppuCS.addSPUFilterDescriptionField();
+                ppuCS.addDataAddressField();
+                ppuCS.setupInputBufferAddress();
+                ppuCS.setupOutputBufferAddress();
+                ppuCS.setupDataAddress();
+                ppuCS.addFilterDescriptionSetup();
+                ppuCS.addNewGroupStatement();
+                ppuCS.addIssueGroupAndWait();
+                ppuCS.addPSPLayout();
+                ppuCS.addSpulibPollWhile();
+                ppuCS.addIssueUnload();
             }
         } else if (filterNode.isFileOutput()) {
             if (whichPhase == SchedulingPhase.INIT)
@@ -38,6 +50,12 @@ public class CellProcessFilterSliceNode extends ProcessFilterSliceNode {
     
     @Override
     protected void additionalInitProcessing() {
+        
+        // buffer size choice array
+        // spuiters array for each spu
+        // read in to buffer from file
+        // fd.param
+        
         //Thread.dumpStack();
         InputSliceNode inputNode = filterNode.getParent().getHead();
         OutputSliceNode outputNode = filterNode.getParent().getTail();
@@ -45,35 +63,8 @@ public class CellProcessFilterSliceNode extends ProcessFilterSliceNode {
         PPU ppu = ((CellBackendFactory) backEndBits).getPPU();
         CellComputeCodeStore ppuCS = ppu.getComputeCode();
         
-        ppuCS.startNewFilter(inputNode);
+        //ppuCS.startNewFilter(inputNode);
         
-        ppuCS.addWorkFunctionAddressField(filterNode);
-        ppuCS.addSPUFilterDescriptionField(filterNode);
-        
-        ppuCS.addFilterDescriptionSetup(filterNode);
-        ppuCS.addFilterDescriptionSetup(inputNode);
-        ppuCS.addFilterDescriptionSetup(outputNode);
-        
-        //ppuCS.addInputBufferFields(inputNode);
-        ppuCS.setupInputBufferAddresses(inputNode);
-        //ppuCS.addOutputBufferFields(outputNode);
-        ppuCS.setupOutputBufferAddresses(outputNode);
-        ppuCS.addDataAddressField(filterNode);
-        ppuCS.setupDataAddress(filterNode);
-        
-        ppuCS.addNewGroupStatement(inputNode);
-        //ppuCS.addFilterLoad(inputNode);
-        //ppuCS.addInputBufferAllocAttach(inputNode);
-        //ppuCS.addOutputBufferAllocAttach(outputNode);
-        
-        //ppuCS.addNewGroupAndFilterUnload(outputNode);
-        
-        ppuCS.addIssueGroupAndWait(filterNode);
-        
-        ppuCS.addPSPLayout(filterNode);
-        ppuCS.addDataParallel();
-        
-        ppuCS.addIssueUnload(filterNode);
     }
     
     @Override

@@ -101,6 +101,18 @@ public class CellBackendFactory
     public LinkedList<SPU> getSPUs() {
         return cellChip.getSPUs();
     }
+    
+    public int getCellPUNumForFilter(FilterSliceNode filterNode) {
+        return getCellPUNum(getLayout().getComputeNode(filterNode));
+    }
+    
+    public int getCellPUNum(CellPU cpu) {
+        for (int i=0; i<cellChip.size(); i++) {
+            if (cellChip.getNthComputeNode(i) == cpu)
+                return i;
+        }
+        return -1;
+    }
 
     @Override
     public void processFilterSliceNode(FilterSliceNode filter,

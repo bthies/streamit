@@ -8,8 +8,10 @@
 
 use strict;
 use warnings;
-my %includes = ("message.h", 1);
-my @top_includes = ("#include <message.h>");
+# used to declare new .h files at top of combined_threads.  currently
+# not in use at all, since declarations needed were moved to fusion.cpp.
+my %includes; # = ("message.h", 1);
+my @top_includes; # = ("#include <message.h>");
 my %move_to_top;
 
 unless (@ARGV > 0 && ($ARGV[0] =~ "fusion.cpp" || $ARGV[0] =~ "master.cpp")) {

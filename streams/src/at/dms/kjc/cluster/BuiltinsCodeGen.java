@@ -37,10 +37,14 @@ class BuiltinsCodeGen {
 
         // SIRFileReader
         if (filter instanceof SIRFileReader) {
-            genFileReaderWork((SIRFileReader)filter,outputTape,selfID,p);
+            if (!(KjcOptions.mencoder || KjcOptions.blender)) {
+                genFileReaderWork((SIRFileReader)filter,outputTape,selfID,p);
+            }
             // SIRFileWriter
         } else if (filter instanceof SIRFileWriter) {
-            genFileWriterWork((SIRFileWriter)filter,inputTape,selfID,p);
+            if (!(KjcOptions.mencoder || KjcOptions.blender)) {
+                genFileWriterWork((SIRFileWriter)filter,inputTape,selfID,p);
+            }
             // SIRIdentity
         } else if (filter instanceof SIRIdentity) {
             assert false : "should not process SIRIdentity here";
@@ -138,11 +142,15 @@ class BuiltinsCodeGen {
         //      + filter.getOutputType().toString());
 
         if (filter instanceof SIRFileReader) {
-            genFileReaderInit((SIRFileReader)filter, return_type, 
-                              function_name, selfID, cleanupCode, p);
+            if (!(KjcOptions.mencoder || KjcOptions.blender)) {
+                genFileReaderInit((SIRFileReader)filter, return_type, 
+                                  function_name, selfID, cleanupCode, p);
+            }
         } else if (filter instanceof SIRFileWriter) {
-            genFileWriterInit((SIRFileWriter)filter, return_type, 
-                              function_name, selfID, cleanupCode, p);
+            if (!(KjcOptions.mencoder || KjcOptions.blender)) {
+                genFileWriterInit((SIRFileWriter)filter, return_type, 
+                                  function_name, selfID, cleanupCode, p);
+            }
         } else if (filter instanceof SIRIdentity 
                    || filter instanceof SIRDummySink
                    || filter instanceof SIRDummySource) {

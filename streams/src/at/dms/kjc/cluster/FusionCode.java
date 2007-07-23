@@ -208,6 +208,8 @@ class FusionCode {
             e.printStackTrace();
             System.exit(1);
         }
+        
+        boolean externalTool = KjcOptions.blender || KjcOptions.mencoder;
     
         // math.h is not needed in fusion.cpp, but 
         // when concatenating threads, having math.h included later 
@@ -222,58 +224,61 @@ class FusionCode {
         p.print("#include <stdlib.h>\n");
         p.print("#include <stdio.h>\n");
         p.newLine();
-        p.print("#include <netsocket.h>\n");
-        p.print("#include <node_server.h>\n");
-        p.print("#include <init_instance.h>\n");
-        p.print("#include <master_server.h>\n");
-        p.print("#include <save_state.h>\n");
-        p.print("#include <save_manager.h>\n");
-        p.print("#include <delete_chkpts.h>\n");
-        p.print("#include <object_write_buffer.h>\n");
-        p.print("#include <read_setup.h>\n");
-        p.print("#include <ccp.h>\n");
-        //p.print("#include <read_setup.h>\n");
-        p.print("#include <timer.h>\n");
-        p.print("#include <streamit_random.h>\n");
-        p.println("#include \"structs.h\"");
-        p.print("#include \"fusion.h\"\n");
-        if (KjcOptions.countops) {
-            p.println("#include \"profiler.h\"");
-        }
-        p.newLine();
-    
-        p.print("int __max_iteration;\n");
-        p.print("int __timer_enabled = 0;\n");
-        p.print("int __frequency_of_chkpts;\n");
-        p.print("volatile int __vol;\n");
-        p.print("proc_timer tt(\"total runtime\");\n");
-        p.newLine();
-
-        // declare profiling timers
-        if (KjcOptions.profile) {
-            String ident = InsertTimers.getIdentifier();
-            p.println("proc_timer " + ident + "[" + InsertTimers.getNumTimers() + "] = {");
-            p.indent();
-            for (int i=0; i<InsertTimers.getNumTimers(); i++) { 
-                String name = InsertTimers.getTimerName(i);
-                p.print("proc_timer(\"" + name + "\")");
-                if (i!=InsertTimers.getNumTimers()-1) { 
-                    p.print(", ");
-                }
-                p.println("// " + ident + "[" + i + "]");
+        if (!externalTool) {
+            p.print("#include <message.h>\n");
+            p.print("#include <netsocket.h>\n");
+            p.print("#include <node_server.h>\n");
+            p.print("#include <init_instance.h>\n");
+            p.print("#include <master_server.h>\n");
+            p.print("#include <save_state.h>\n");
+            p.print("#include <save_manager.h>\n");
+            p.print("#include <delete_chkpts.h>\n");
+            p.print("#include <object_write_buffer.h>\n");
+            p.print("#include <read_setup.h>\n");
+            p.print("#include <ccp.h>\n");
+            //p.print("#include <read_setup.h>\n");
+            p.print("#include <timer.h>\n");
+            p.print("#include <streamit_random.h>\n");
+            p.println("#include \"structs.h\"");
+            p.print("#include \"fusion.h\"\n");
+            if (KjcOptions.countops) {
+                p.println("#include \"profiler.h\"");
             }
-            p.outdent();
-            p.println("};");
-        }
-        p.newLine();
+            p.newLine();
+    
+            p.print("int __max_iteration;\n");
+            p.print("int __timer_enabled = 0;\n");
+            p.print("int __frequency_of_chkpts;\n");
+            p.print("volatile int __vol;\n");
+            p.print("proc_timer tt(\"total runtime\");\n");
+            p.newLine();
 
+            // declare profiling timers
+            if (KjcOptions.profile) {
+                String ident = InsertTimers.getIdentifier();
+                p.println("proc_timer " + ident + "[" + InsertTimers.getNumTimers() + "] = {");
+                p.indent();
+                for (int i=0; i<InsertTimers.getNumTimers(); i++) { 
+                    String name = InsertTimers.getTimerName(i);
+                    p.print("proc_timer(\"" + name + "\")");
+                    if (i!=InsertTimers.getNumTimers()-1) { 
+                        p.print(", ");
+                    }
+                }
+                p.outdent();
+                p.println("};");
+            }
+            p.newLine();
+        }
+        
+        
         for (int i = 0; i < threadNumber; i++) {
             FlatNode node = NodeEnumerator.getFlatNode(i);
             SIROperator oper = (SIROperator)node.contents;
 
             for (Tape stream : RegisterStreams.getNodeOutStreams(oper)) {
                 if (stream != null) {
-                    if (!KjcOptions.blender) {  
+                    if (!externalTool) {  
                         p.print(stream.dataDeclaration());
                     } else {
                         int src = stream.getSource();
@@ -295,7 +300,7 @@ class FusionCode {
         for (int i = 0; i < threadNumber; i++) {
             FlatNode node = NodeEnumerator.getFlatNode(i);
             int id = NodeEnumerator.getSIROperatorId(node.contents);
-
+            
             //if (!ClusterFusion.isEliminated(tmp)) {       
             //p.print("extern void __declare_sockets_"+i+"();\n");
             //p.print("extern void __init_sockets_"+i+"(void (*)());\n");
@@ -319,7 +324,7 @@ class FusionCode {
             }
             p.print("extern void "+get_work_function(node.contents)+"(int);\n");
 
-	    if ((node.contents instanceof SIRFileReader)
+	    if (!KjcOptions.mencoder && (node.contents instanceof SIRFileReader)
 	            || (node.contents instanceof SIRFileWriter)) {
 		p.print("extern void "+get_work_function(node.contents)+"__close();\n");
 	    }
@@ -349,8 +354,9 @@ class FusionCode {
         p.newLine();
 
         if (KjcOptions.blender) {
-            p.println("/**/ extern \"C\" {");
-            p.println("void blender_hook(unsigned char* in0, unsigned char* in1, unsigned char* out) {");
+            p.println("inline void blender_hook(unsigned char* in0, unsigned char* in1, unsigned char* out) {");
+        } else if (KjcOptions.mencoder) {
+            p.println("inline void do_pixel_transform(unsigned char* src, unsigned char* dst) {");
         } else {
             p.println("int main(int argc, char **argv) {");
         }
@@ -362,7 +368,7 @@ class FusionCode {
             p.outdent();
         }
         
-        if (!KjcOptions.blender) {
+        if (!externalTool) {
             p.indent();
             p.println("read_setup::read_setup_file();");
             p.println("__max_iteration = read_setup::max_iteration;");
@@ -490,7 +496,7 @@ class FusionCode {
                 int steady_int = 0;
                 if (steady != null) steady_int = (steady).intValue();
 
-                if (KjcOptions.blender && (oper instanceof SIRFileReader || oper instanceof SIRFileWriter)) {
+                if (externalTool && (oper instanceof SIRFileReader || oper instanceof SIRFileWriter)) {
                     
                 } else if (steady_int > 0) {
 
@@ -548,10 +554,12 @@ class FusionCode {
         p.newLine();
         p.print("  // ============= Steady State =============\n");
         p.newLine();
-        p.println("  if (__timer_enabled) {");
-        p.println("    tt.start();");
-        p.println("  }");
-        if (!KjcOptions.blender) {
+        if (!externalTool) {
+            p.println("  if (__timer_enabled) {");
+            p.println("    tt.start();");
+            p.println("  }");
+        }
+        if (!externalTool) {
             p.print("  for (int n = 0; n < (__max_iteration " + (mult == 1? "" : " / __MULT") +  " ); n++) {\n");
         }
 
@@ -596,19 +604,29 @@ class FusionCode {
                             // e.g. copying down read-ahead in a non-circular
                             // buffer.
                             
-                            if (!KjcOptions.blender) {  
+                            if (!externalTool) {  
                                 p.print(stream.topOfWorkIteration());
                             } else {
                                 int src = stream.getSource();
                                 int dst = stream.getDest();
                                 if (FixedBufferTape.isFixedBuffer(src, dst)) {
-                                    if (oper instanceof SIRFileReader) {
-                                        p.println("BUFFER_" + src + "_" + dst + " = in" + blenderCount++ + ";");
+                                    if (KjcOptions.blender) {
+                                        if (oper instanceof SIRFileReader) {
+                                            p.println("BUFFER_" + src + "_" + dst + " = in" + blenderCount++ + ";");
+                                        } else {
+                                            p.println("BUFFER_" + src + "_" + dst + " = out;");
+                                        }
                                     } else {
-                                        p.println("BUFFER_" + src + "_" + dst + " = out;");
+                                        if (oper instanceof SIRFileReader) {
+                                            p.println("BUFFER_" + src + "_" + dst + " = src;");
+                                        } else {
+                                            p.println("BUFFER_" + src + "_" + dst + " = dst;");
+                                        }
                                     }
-                                    p.println("HEAD_" + src + "_" + dst + " = 0;");
-                                    p.println("TAIL_" + src + "_" + dst + " = 0;");
+                                    if (!KjcOptions.mencoder) {
+                                        p.println("HEAD_" + src + "_" + dst + " = 0;");
+                                        p.println("TAIL_" + src + "_" + dst + " = 0;");
+                                    }
                                 }
                             }
                         }
@@ -618,7 +636,7 @@ class FusionCode {
                     // this schedule
                     if (rcv_msg && !KjcOptions.dynamicRatesEverywhere)
                         p.print("    check_messages__" + id + "();\n");
-                    if (!(KjcOptions.blender && (oper instanceof SIRFileReader || oper instanceof SIRFileWriter)) &&
+                    if (!(externalTool && (oper instanceof SIRFileReader || oper instanceof SIRFileWriter)) &&
                         // if dynamic rates everywhere, only call work for sinks
                         !(KjcOptions.dynamicRatesEverywhere && (oper instanceof SIRJoiner ||
                                                                 oper instanceof SIRSplitter ||
@@ -634,7 +652,7 @@ class FusionCode {
             }
         }
         
-        if (!KjcOptions.blender) {
+        if (!externalTool) {
             p.print("  }\n");
         }
         
@@ -716,7 +734,7 @@ class FusionCode {
         }
 
         // close filereaders and filewriters
-        if (!KjcOptions.blender) {
+        if (!externalTool) {
         for (int ph = 0; ph < n_phases; ph++) {
             for (SIROperator oper : d_sched.getAllOperatorsInPhase(ph)) {
                 int id = NodeEnumerator.getSIROperatorId(oper);
@@ -743,10 +761,12 @@ class FusionCode {
         p.indent();
 
         // print -t timer summary.
-        p.println("if (__timer_enabled) {");
-        p.println("  tt.stop();");
-        p.println("  tt.output(stderr);");
-        p.println("}");
+        if (!externalTool) {
+            p.println("if (__timer_enabled) {");
+            p.println("  tt.stop();");
+            p.println("  tt.output(stderr);");
+            p.println("}");
+        }
         
         // print profiling timer summary
         p.println();
@@ -766,16 +786,12 @@ class FusionCode {
             p.println("  profiler::summarize();");
         }
 
-        if (!KjcOptions.blender) {
+        if (!externalTool) {
             p.println("return 0;");            
         }
         p.outdent();
 
         p.println("}");
-        
-        if (KjcOptions.blender) {
-            p.println("}");            
-        }
 
         try {
             p.close();

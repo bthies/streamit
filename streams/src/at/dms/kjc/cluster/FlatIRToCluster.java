@@ -75,6 +75,10 @@ public class FlatIRToCluster extends InsertTimers implements
 
     /** &gt; 0 if in a for loop header during visit * */
     private int forLoopHeader = 0;
+    
+    private int directArrayAccess = 0;
+    private int pushCount = 0;
+    private int popCount = 0;
 
     // private static int filterID = 0;
 
@@ -109,7 +113,52 @@ public class FlatIRToCluster extends InsertTimers implements
     public static void generateCode(FlatNode node) {
         generateCode((SIRFilter) node.contents);
     }
+    
+    public static void generateDirectArrayCode(SIRFilter filter) {
+        FlatIRToCluster toC = new FlatIRToCluster(filter, 2);
 
+        if (filter instanceof SIRPredefinedFilter) {
+            IterFactory.createFactory().createIter(filter)
+                .accept(toC);
+            return;
+        }
+        
+        if (ClusterBackend.debugging)
+            System.out.println("Optimizing "
+                               + filter.getName() + "...");
+        
+        (new FinalUnitOptimize(){
+            protected boolean optimizeThisMethod(SIRCodeUnit unit, JMethodDeclaration method) {
+                return !(unit instanceof SIRTwoStageFilter 
+                        && method == ((SIRTwoStageFilter)unit).getInitWork());
+            }
+        }).optimize(filter);
+        
+        IterFactory.createFactory().createIter(filter).accept(toC);        
+    }
+    
+    public static void generateArrayCode(SIRFilter filter) {
+        FlatIRToCluster toC = new FlatIRToCluster(filter, 1);
+
+        if (filter instanceof SIRPredefinedFilter) {
+            IterFactory.createFactory().createIter(filter)
+                .accept(toC);
+            return;
+        }
+        
+        if (ClusterBackend.debugging)
+            System.out.println("Optimizing "
+                               + filter.getName() + "...");
+        
+        (new FinalUnitOptimize(){
+            protected boolean optimizeThisMethod(SIRCodeUnit unit, JMethodDeclaration method) {
+                return !(unit instanceof SIRTwoStageFilter 
+                        && method == ((SIRTwoStageFilter)unit).getInitWork());
+            }
+        }).optimize(filter);
+        
+        IterFactory.createFactory().createIter(filter).accept(toC);        
+    }
 
     /**
      * Code generation for a SIRFilter.
@@ -177,6 +226,10 @@ public class FlatIRToCluster extends InsertTimers implements
     }
 
     public FlatIRToCluster(SIRFilter f) {
+        this(f, 0);
+    }
+    
+    private FlatIRToCluster(SIRFilter f, int directArrayAccess) {
         super();
         this.filter = f;
         // RMR { in the case that a statement is visited and not a filter,
@@ -187,6 +240,10 @@ public class FlatIRToCluster extends InsertTimers implements
         // circular = false;
         // tell ToC that we generate 'bool' for 'boolean', not 'int'
         hasBoolType = true;
+        
+        this.directArrayAccess = directArrayAccess;
+        this.pushCount = 0;
+        this.popCount = 0;
     }
 
     //    
@@ -218,12 +275,17 @@ public class FlatIRToCluster extends InsertTimers implements
         // RMR { now this is redundant since it is set in the constructor
         // selfID = NodeEnumerator.getSIROperatorId(self); // needed by the class
         // } RMR
-
+        
         try {
             p = new CodegenPrintWriter(new FileWriter("thread" + selfID + ".cpp"));
         } catch (IOException e) {
             e.printStackTrace();
             System.exit(1);
+        }
+        
+        if ((KjcOptions.mencoder || KjcOptions.blender) && ((self instanceof SIRFileReader) ||
+                (self instanceof SIRFileWriter))) {
+            return;    
         }
 
         method_names = new HashSet<String>();
@@ -345,14 +407,15 @@ public class FlatIRToCluster extends InsertTimers implements
 
         CType input_type = self.getInputType();
         CType output_type = self.getOutputType();
-
+        
         Tape in = RegisterStreams.getFilterInStream(self);
         Tape out = RegisterStreams.getFilterOutStream(self);
 
         // function prototype for work function
         p.print("void " + ClusterUtils.getWorkName(self, selfID)
                 + "(int);\n\n");
-
+        
+        if (!(KjcOptions.mencoder || KjcOptions.blender)) {
         // declarations for input tape, pop, peek.
         if (in != null) {
             p.print(in.downstreamDeclarationExtern());
@@ -363,6 +426,7 @@ public class FlatIRToCluster extends InsertTimers implements
         if (out != null) {
             p.print(out.upstreamDeclarationExtern());
             p.print(out.upstreamDeclaration());
+        }
         }
         
 //        else {
@@ -422,11 +486,14 @@ public class FlatIRToCluster extends InsertTimers implements
 
         setDeclOnly(false);
         for (int i = 0; i < methods.length; i++) {
-            if (!methods[i].equals(work))
+            if (!methods[i].equals(work)) {
+                if (KjcOptions.mencoder || KjcOptions.blender) {
+                    p.print("inline ");
+                }
                 methods[i].accept(this);
+            }
             // methods[i].accept(this);
         }
-
 
         if ((self instanceof SIRFileReader) ||
             (self instanceof SIRFileWriter)) {
@@ -450,7 +517,7 @@ public class FlatIRToCluster extends InsertTimers implements
                 p.println("{ FileWriter_setpos(__file_descr__"+selfID+", buf->read_int()); }\n");
             }
             
-        } else {
+        } else if (!(KjcOptions.mencoder || KjcOptions.blender)) {
             
             p.println("void save_file_pointer__"+selfID+"(object_write_buffer *buf) {}");
             p.println("void load_file_pointer__"+selfID+"(object_write_buffer *buf) {}");
@@ -581,9 +648,13 @@ public class FlatIRToCluster extends InsertTimers implements
             params[0] = param;
             JMethodDeclaration work_n = new JMethodDeclaration(null,
                                                                at.dms.kjc.Constants.ACC_PUBLIC, CStdType.Void, work
-                                                               .getName(), params, CClassType.EMPTY, block, null,
-                                                               null);
+                                                               .getName(), params, CClassType.EMPTY, 
+                                                               (KjcOptions.mencoder && steady_counts == 1) ? work.getBody() : block, 
+                                                               null, null);
 
+            if (KjcOptions.mencoder || KjcOptions.blender) {
+                p.print("inline ");
+            }
             work_n.accept(this);
         }
 
@@ -1516,7 +1587,27 @@ public class FlatIRToCluster extends InsertTimers implements
             p = oldWriter;
             // note following line does not work with mod_push_pop
             // but mod_push_pop does not work with arrays over tapes.
-            p.print(RegisterStreams.getFilterInStream(filter).assignPopToVar(leftString));
+            if (directArrayAccess > 0) {
+                Tape in = RegisterStreams.getFilterInStream(filter);
+                p.print(leftString);
+                p.print(" = BUFFER_");
+                p.print(in.getSource());
+                p.print("_");
+                p.print(in.getDest());
+                if (directArrayAccess == 1) {
+                    p.print("[");
+                    p.print(popCount++);
+                    p.print("]");
+                } else {
+                    p.print("[TAIL_");
+                    p.print(in.getSource());
+                    p.print("_");
+                    p.print(in.getDest());
+                    p.print("++]");
+                }
+            } else {
+                p.print(RegisterStreams.getFilterInStream(filter).assignPopToVar(leftString));
+            }
             return;
         }
 
@@ -1939,8 +2030,27 @@ public class FlatIRToCluster extends InsertTimers implements
 //                p.print("(*____in++)");
 //                return;
 //            }
-            p.print(RegisterStreams.getFilterInStream(filter).getPopName());
-            p.print("()");
+            if (directArrayAccess > 0) {
+                Tape in = RegisterStreams.getFilterInStream(filter);
+                p.print("BUFFER_");
+                p.print(in.getSource());
+                p.print("_");
+                p.print(in.getDest());
+                if (directArrayAccess == 1) {
+                    p.print("[");
+                    p.print(popCount++);
+                    p.print("]");
+                } else {
+                    p.print("[TAIL_");
+                    p.print(in.getSource());
+                    p.print("_");
+                    p.print(in.getDest());
+                    p.print("++]");
+                }
+            } else {
+                p.print(RegisterStreams.getFilterInStream(filter).getPopName());
+                p.print("()");
+            }
         } else {
 //            if (mod_push_pop) {
 //                p.print("in += " + self.getNumPop() + ";\n");
@@ -1948,6 +2058,10 @@ public class FlatIRToCluster extends InsertTimers implements
 //            }
             p.print(RegisterStreams.getFilterInStream(filter).getPopName());
             p.print("(" + self.getNumPop() + ")");
+            
+            if (directArrayAccess > 0) {
+                popCount += self.getNumPop();
+            }
         }
     }
 
@@ -1961,8 +2075,27 @@ public class FlatIRToCluster extends InsertTimers implements
 //            p.print(")");
 //            return;
 //        }
-
-        p.print(RegisterStreams.getFilterOutStream(filter).getPushName());
+        if (directArrayAccess > 0) {
+            Tape out = RegisterStreams.getFilterOutStream(filter);
+            p.print("BUFFER_");
+            p.print(out.getSource());
+            p.print("_");
+            p.print(out.getDest());
+            if (directArrayAccess == 1) {
+                p.print("[");
+                p.print(pushCount++);
+                p.print("] = ");
+            } else {
+                p.print("[HEAD_");
+                p.print(out.getSource());
+                p.print("_");
+                p.print(out.getDest());
+                p.print("++] = ");
+            }
+        } else {
+            p.print(RegisterStreams.getFilterOutStream(filter).getPushName());
+        }
+        
         p.print("(");
         val.accept(this);
         p.print(")");
@@ -2037,9 +2170,9 @@ public class FlatIRToCluster extends InsertTimers implements
     public void visitFormalParameters(JFormalParameter self, boolean isFinal,
                                       CType type, String ident) {
         String type_string = type.toString();
-        if (type_string.equals("java.lang.String"))
+        if (type_string.equals("java.lang.String")) {
             p.print("char*");
-        else if (ident.indexOf("$") == -1) {
+        } else if (ident.indexOf("$") == -1) {
             printDecl(type, ident);
         } else {
             // does this case actually happen?  just preseving

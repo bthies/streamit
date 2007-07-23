@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/GenerateMakefile.java,v 1.13 2007-06-12 16:59:32 dimock Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/GenerateMakefile.java,v 1.14 2007-07-23 19:20:55 thies Exp $
 package at.dms.kjc.cluster;
 
 import java.io.FileWriter;
@@ -36,19 +36,11 @@ public class GenerateMakefile {
         String executablename = KjcOptions.output == null? "a.out": KjcOptions.output;
         
         p.newLine();
-        if (KjcOptions.vectorize > 0) {
-            // XXX: temproary for debugging.
-            // debugging vectorization on ppu:
-            // requires version of cluster library built with ppu32-g++
-            p.print("LIB_CLUSTER = $(STREAMIT_HOME)/library/cluster-ppu32\n");
-            p.newLine();
-            p.print("CXX = ppu32-g++\n"); // gcc
-            p.print("CCFLAGS = -O0 -ggdb -mabi=altivec -maltivec\n");
-        } else {
-            p.print("LIB_CLUSTER = $(STREAMIT_HOME)/library/cluster\n");
-            p.newLine();
-            p.print("CCFLAGS = -O3\n");
-        }
+        p.print("LIB_CLUSTER = $(STREAMIT_HOME)/library/cluster\n");
+
+        p.newLine();    
+        //p.print("CC = gcc34\n"); // gcc
+        p.print("CCFLAGS = -O3\n");
 
         p.newline();
         p.println("# Unsupported target machines");
@@ -87,17 +79,18 @@ public class GenerateMakefile {
 
         p.newLine();
 
+        boolean externalTool = KjcOptions.blender || KjcOptions.mencoder;
         
-        if (!KjcOptions.blender) {
+        if (!externalTool) {
             p.println("all: " + executablename);
         } else {
-            p.println("all: libstreamit.a");
+            p.println("all: combined_threads.cpp");
         }
         p.newLine();
 
 
         p.print("clean:\n");
-        if (!KjcOptions.blender) {
+        if (!externalTool) {
             p.println("\trm -f master*.o fusion*.o global*.o thread*.o combined_threads.o " + executablename);
         } else {
             p.println("\trm -f master*.o fusion*.o global*.o thread*.o combined_threads.o libstreamit.a");
@@ -119,7 +112,7 @@ public class GenerateMakefile {
 //        } else {
 //            p.print(executablename + ": master.o global.o ");
 //        }
-        if (!KjcOptions.blender) {
+        if (!externalTool) {
             p.print(executablename + " : combined_threads.o ");
         } else {
             p.print("libstreamit.a : combined_threads.o ");
@@ -142,7 +135,7 @@ public class GenerateMakefile {
                                "Without FFTW, you can still use --linearreplacement.\n");
             System.exit(1);
         }
-        if (!KjcOptions.blender) {
+        if (!externalTool) {
             p.print("\t$(CXX) $(CCFLAGS) -o $@ $^ -L$(LIB_CLUSTER) -lpthread -lcluster -lstdc++" + fftLib + "\n");
         } else {
             p.print("\tar r $@ $^\n");

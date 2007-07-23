@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterCodeGenerator.java,v 1.67 2007-06-01 17:48:25 dimock Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterCodeGenerator.java,v 1.68 2007-07-23 19:20:55 thies Exp $
 package at.dms.kjc.cluster;
 
 import java.util.*;
@@ -160,6 +160,7 @@ class ClusterCodeGenerator {
         p.println("#include <unistd.h>");
         p.println("#include <math.h>"); 
         p.println("");
+        if (!(KjcOptions.mencoder || KjcOptions.blender)) {
         p.println("#include <init_instance.h>");
         p.println("#include <mysocket.h>");
         p.println("#include <object_write_buffer.h>");
@@ -285,6 +286,7 @@ class ClusterCodeGenerator {
         }
     
         p.println("");
+        }
 
         //  +=============================+
         //  | Fields                      |
@@ -312,6 +314,7 @@ class ClusterCodeGenerator {
         //  | Read / Write Thread         |
         //  +=============================+
 
+        if (!(KjcOptions.mencoder || KjcOptions.blender)) {
         if (node.isFilter()) {
             if (node.inputs > 0 && node.incoming[0] != null && CommonUtils.getOutputType(node.incoming[0]) != CStdType.Void) {
                 p.println("void save_peek_buffer__" + id
@@ -436,6 +439,7 @@ class ClusterCodeGenerator {
         p.println("}");
 
         p.println("");  
+        }
 
         //  +=============================+
         //  | Check Thread Status         |

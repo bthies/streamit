@@ -47,6 +47,7 @@ public class GenerateMasterDotCpp {
         p.print("#include <stdlib.h>\n");
         p.print("#include <stdio.h>\n");
         p.newLine();
+        p.print("#include <message.h>\n");
         p.print("#include <netsocket.h>\n");
         p.print("#include <node_server.h>\n");
         p.print("#include <init_instance.h>\n");

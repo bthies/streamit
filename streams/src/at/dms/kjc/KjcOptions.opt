@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.101 2007-07-05 04:19:07 thies Exp $
+ * $Id: KjcOptions.opt,v 1.102 2007-07-23 19:19:22 thies Exp $
  */
 
 prefix Kjc
@@ -171,6 +171,11 @@ longname		"blender"
 	type		boolean
 	default		"false"
 	help		"Hook into Blender"
+	
+longname		"mencoder"
+	type		boolean
+	default		"false"
+	help		"Hook into MEncoder"
 
 longname		"compressed"
 	type		boolean

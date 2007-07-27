@@ -92,6 +92,16 @@ DECLARE_SPU_COMMAND(load_data, LOAD_DATA,
 END_SPU_COMMAND
 
 /*-----------------------------------------------------------------------------
+ * spu_call_func
+ *---------------------------------------------------------------------------*/
+DECLARE_SPU_COMMAND(call_func, CALL_FUNC,
+                    LS_ADDRESS func)
+{
+  cmd->func = func;
+}
+END_SPU_COMMAND
+
+/*-----------------------------------------------------------------------------
  * spu_filter_load
  *---------------------------------------------------------------------------*/
 DECLARE_SPU_COMMAND(filter_load, FILTER_LOAD,

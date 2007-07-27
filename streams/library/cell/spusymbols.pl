@@ -18,19 +18,28 @@ for my $progname (@ARGV) {
     my @symbols = `nm ${progname}_program`;
 
     for my $line (@symbols) {
+        my $symbol;
+
         if ($line =~ m/^(.+) A _end$/) {
             my $data_start = hex($1);
 
             $data_start = ($data_start + 127) & ~127;
 
             printf $ldsymf ("${progname}_data_start = 0x%x;\n", $data_start);
-        } elsif ($line =~ m/^(.+) T filter_(.+)_wf$/) {
-            my $symbol = "wf_" . $2;
-            my $lsa = hex($1);
 
-            print $csymf ("extern void *${symbol};\n");
-            printf $ldsymf ("${symbol} = 0x%x;\n", $lsa);
+            next;
+        } elsif ($line =~ m/^(.+) T filter_(.+)_wf$/) {
+            $symbol = "wf_" . $2;
+        } elsif ($line =~ m/^(.+) T filter_(.+)_init$/) {
+            $symbol = "init_" . $2;
+        } else {
+            next;
         }
+
+        my $lsa = hex($1);
+
+        print $csymf ("extern void *${symbol};\n");
+        printf $ldsymf ("${symbol} = 0x%x;\n", $lsa);
     }
 }
 

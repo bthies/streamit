@@ -374,6 +374,7 @@ dep_init()
 }
 
 void run_load_data(LOAD_DATA_CMD *cmd);
+void run_call_func(CALL_FUNC_CMD *cmd);
 void run_filter_load(FILTER_LOAD_CMD *cmd);
 void run_filter_unload(FILTER_UNLOAD_CMD *cmd);
 void run_filter_attach_input(FILTER_ATTACH_INPUT_CMD *cmd);
@@ -420,6 +421,10 @@ dep_execute()
 
     case CMD_LOAD_DATA:
       run_load_data((LOAD_DATA_CMD *)cmd);
+      break;
+
+    case CMD_CALL_FUNC:
+      run_call_func((CALL_FUNC_CMD *)cmd);
       break;
 
     case CMD_FILTER_LOAD:

@@ -229,6 +229,28 @@
   }
 
 /*-----------------------------------------------------------------------------
+ * Init function.
+ *---------------------------------------------------------------------------*/
+
+// Hacked up so functions that are declared with state/tape access can still be
+// called - state/tapes CANNOT actually be accessed.
+#define BEGIN_INIT_FUNC \
+  void                                                                        \
+  DECORATE_FUNC_NAME(init)()                                                  \
+  {                                                                           \
+    PARAM_ARG(void *param);                                                   \
+    STATE_ARG(void *const _state);                                            \
+    INPUT_ARG(void *const _input, void *const *const _inputs);                \
+    OUTPUT_ARG(void *const _output, void *const *const _outputs);             \
+    PARAM_ARG(UNUSED_PARAM(param));                                           \
+    STATE_ARG(UNUSED_PARAM(_state));                                          \
+    INPUT_ARG(UNUSED_PARAM(_input), UNUSED_PARAM(_inputs));                   \
+    OUTPUT_ARG(UNUSED_PARAM(_output), UNUSED_PARAM(_outputs));
+
+#define END_INIT_FUNC \
+  }
+
+/*-----------------------------------------------------------------------------
  * State/tape access.
  *---------------------------------------------------------------------------*/
 

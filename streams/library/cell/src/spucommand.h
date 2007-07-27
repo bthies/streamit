@@ -20,25 +20,27 @@
 #define SPU_MAX_COMMANDS 32
 
 // Command types.
-// Filter commands.
+// Generic commands.
 #define SPU_CMD_LOAD_DATA             0
-#define SPU_CMD_FILTER_LOAD           1
-#define SPU_CMD_FILTER_UNLOAD         2
-#define SPU_CMD_FILTER_ATTACH_INPUT   3
-#define SPU_CMD_FILTER_ATTACH_OUTPUT  4
-#define SPU_CMD_FILTER_RUN            5
+#define SPU_CMD_CALL_FUNC             1
+// Filter commands.
+#define SPU_CMD_FILTER_LOAD           2
+#define SPU_CMD_FILTER_UNLOAD         3
+#define SPU_CMD_FILTER_ATTACH_INPUT   4
+#define SPU_CMD_FILTER_ATTACH_OUTPUT  5
+#define SPU_CMD_FILTER_RUN            6
 // Buffer commands.
-#define SPU_CMD_BUFFER_ALLOC          6
-#define SPU_CMD_BUFFER_ALIGN          7
+#define SPU_CMD_BUFFER_ALLOC          7
+#define SPU_CMD_BUFFER_ALIGN          8
 // Data transfer commands.
-#define SPU_CMD_DT_IN_FRONT           8
-#define SPU_CMD_DT_IN_BACK            9
-#define SPU_CMD_DT_OUT_FRONT         10
-#define SPU_CMD_DT_OUT_BACK          11
-#define SPU_CMD_DT_OUT_FRONT_PPU     12
-#define SPU_CMD_DT_OUT_BACK_PPU      13
+#define SPU_CMD_DT_IN_FRONT           9
+#define SPU_CMD_DT_IN_BACK           10
+#define SPU_CMD_DT_OUT_FRONT         11
+#define SPU_CMD_DT_OUT_BACK          12
+#define SPU_CMD_DT_OUT_FRONT_PPU     13
+#define SPU_CMD_DT_OUT_BACK_PPU      14
 // Number of command types.
-#define SPU_NUM_CMD_TYPES            14
+#define SPU_NUM_CMD_TYPES            15
 
 /*
  * All command structures (except the SPU's internal worker commands) are
@@ -71,7 +73,7 @@ C_ASSERT(sizeof(SPU_CMD_HEADER) == 12);
 #define SPU_CMD_MAX_DEPS arraysize(((SPU_CMD_HEADER *)0)->deps)
 
 /*-----------------------------------------------------------------------------
- * Filter commands.
+ * Generic commands.
  *---------------------------------------------------------------------------*/
 
 // load_data command
@@ -92,6 +94,20 @@ typedef struct _SPU_LOAD_DATA_CMD {
 } QWORD_ALIGNED SPU_LOAD_DATA_CMD;
 
 C_ASSERT(sizeof(SPU_LOAD_DATA_CMD) == 32);
+
+// call_func command
+//
+// Calls a void (void) function.
+typedef struct _SPU_CALL_FUNC_CMD {
+  SPU_CMD_HEADER header;
+  LS_ADDRESS func;        // LS address of function
+} QWORD_ALIGNED SPU_CALL_FUNC_CMD;
+
+C_ASSERT(sizeof(SPU_CALL_FUNC_CMD) == 16);
+
+/*-----------------------------------------------------------------------------
+ * Filter commands.
+ *---------------------------------------------------------------------------*/
 
 // Info about SPU filters needed by SPU library code.
 //
@@ -472,8 +488,10 @@ spu_cmd_compose_req(LS_ADDRESS lsa, uint32_t entry, uint32_t size)
 #define MAX_COMMANDS              SPU_MAX_COMMANDS
 
 // Command types.
-// Filter commands.
+// Generic commands.
 #define CMD_LOAD_DATA             SPU_CMD_LOAD_DATA
+#define CMD_CALL_FUNC             SPU_CMD_CALL_FUNC
+// Filter commands.
 #define CMD_FILTER_LOAD           SPU_CMD_FILTER_LOAD
 #define CMD_FILTER_UNLOAD         SPU_CMD_FILTER_UNLOAD
 #define CMD_FILTER_ATTACH_INPUT   SPU_CMD_FILTER_ATTACH_INPUT
@@ -496,8 +514,10 @@ spu_cmd_compose_req(LS_ADDRESS lsa, uint32_t entry, uint32_t size)
 // Command header.
 #define CMD_HEADER                SPU_CMD_HEADER
 #define CMD_MAX_DEPS              SPU_CMD_MAX_DEPS
-// Filter commands.
+// Generic commands.
 #define LOAD_DATA_CMD             SPU_LOAD_DATA_CMD
+#define CALL_FUNC_CMD             SPU_CALL_FUNC_CMD
+// Filter commands.
 #define FILTER_DESC               SPU_INT_FILTER_DESC
 #define FILTER_LOAD_CMD           SPU_FILTER_LOAD_CMD
 #define FILTER_UNLOAD_CMD         SPU_FILTER_UNLOAD_CMD

@@ -247,6 +247,8 @@ spu_next_command(SPU_CMD_GROUP *g, SPU_CMD_HEADER *cmd)
 
 DECLARE_SPU_COMMAND(load_data,
                     SPU_ADDRESS dest_da, void *src_addr, uint32_t num_bytes);
+DECLARE_SPU_COMMAND(call_func,
+                    LS_ADDRESS func);
 DECLARE_SPU_COMMAND(filter_load,
                     SPU_ADDRESS filt, SPU_FILTER_DESC *desc);
 DECLARE_SPU_COMMAND(filter_unload,

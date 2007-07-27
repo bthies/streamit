@@ -81,6 +81,19 @@ run_load_data(LOAD_DATA_CMD *cmd)
 }
 
 /*-----------------------------------------------------------------------------
+ * run_call_func
+ *
+ * Command handler.
+ *---------------------------------------------------------------------------*/
+void
+run_call_func(CALL_FUNC_CMD *cmd)
+{
+  ((void (*)(void))cmd->func)();
+
+  dep_complete_command();
+}
+
+/*-----------------------------------------------------------------------------
  * run_filter_load
  *
  * Command handler.

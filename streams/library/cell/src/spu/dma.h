@@ -20,6 +20,10 @@
 // Maximum number of bytes in a DMA transfer.
 #define MAX_DMA_SIZE  (16 * 1024)
 
+// If 1, dma_reserve_tag returns INVALID_TAG if all tags are already reserved.
+// Otherwise, caller must ensure a tag is available.
+#define DMA_ALLOW_RESERVE_FAIL 0
+
 // Bitmap of tags that are unused.
 extern uint32_t dma_free_tags;
 // Bitmap of tags that have pending DMA transfers.

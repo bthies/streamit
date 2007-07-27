@@ -8,6 +8,7 @@
 #include <spu_mfcio.h>
 #include "depend.h"
 #include "dma.h"
+#include "stats.h"
 
 // File definition for C_ASSERT.
 #undef C_FILE
@@ -55,15 +56,15 @@ uint8_t *dep_next_ptr;
 bool_t dep_dequeued;
 #endif
 
+// General parameters to SPU.
+SPU_PARAMS dep_params;
+
 // Bitmap of IDs of commands that have completed.
 static uint32_t dep_completed_mask;
 // Data for worker command.
 static WORKER_CMD dep_worker;
 // Data for request handler command.
 static REQ_HANDLER_CMD dep_req;
-
-// General parameters to SPU.
-static SPU_PARAMS dep_params;
 
 static void run_worker();
 static void run_req_handler();
@@ -108,6 +109,12 @@ dep_complete_command()
     if (dep->num_back_deps == 0) {
       dep->next = next_id;
       next_id = dep_id;
+
+#if STATS_ENABLE
+      if (UNLIKELY(dep->type == CMD_FILTER_RUN)) {
+        stats_start_filter_run();
+      }
+#endif
     }
   }
 
@@ -173,6 +180,12 @@ dep_add_command(CMD_HEADER *cmd)
     cmd->next = *dep_next_ptr;
     *dep_next_ptr = cmd_id;
     dep_next_ptr = &cmd->next;
+
+#if STATS_ENABLE
+    if (UNLIKELY(cmd->type == CMD_FILTER_RUN)) {
+      stats_start_filter_run();
+    }
+#endif
   }
 }
 
@@ -259,6 +272,7 @@ run_req_handler()
       return;
     }
 
+    stats_receive_command();
     dep_req.state = 1;
 
   case 1: {

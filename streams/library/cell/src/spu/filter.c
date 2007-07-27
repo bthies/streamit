@@ -9,6 +9,7 @@
 #include "filter.h"
 #include "buffer.h"
 #include "dma.h"
+#include "stats.h"
 
 /*-----------------------------------------------------------------------------
  * run_load_data
@@ -100,6 +101,8 @@ run_filter_load(FILTER_LOAD_CMD *cmd)
            ((cmd->desc.state_size == 0) ||
             (((cmd->desc.state_size & QWORD_MASK) == 0) &&
              ((cmd->desc.state_addr & QWORD_MASK) == 0))));
+
+    stats_start_filter_load();
 
     // Copy filter description.
     filt->desc = cmd->desc;
@@ -213,6 +216,8 @@ run_filter_unload(FILTER_UNLOAD_CMD *cmd)
     // (busy flag is never unset).
     check(!filt->busy);
     IF_CHECK(filt->busy = TRUE);
+
+    stats_start_filter_unload();
 
 #if CHECK
     // Detach input tapes.
@@ -413,6 +418,9 @@ void
 run_filter_run(FILTER_RUN_CMD *cmd)
 {
   FILTER_CB *filt = (FILTER_CB *)cmd->filt;
+#if STATS_ENABLE
+  uint32_t work_start;
+#endif
 
 #if CHECK
   if (cmd->state == 0) {
@@ -446,8 +454,14 @@ run_filter_run(FILTER_RUN_CMD *cmd)
    */
 
   // Run work function for 1 iteration.
+#if STATS_ENABLE
+  work_start = spu_read_decrementer();
+#endif
   (*(FILTER_WORK_FUNC *)filt->desc.work_func)(filt->desc.param, filt->state,
                                               filt->inputs, filt->outputs);
+#if STATS_ENABLE
+  stats_work_ticks += work_start - spu_read_decrementer();
+#endif
 
 #if CHECK
   for (uint8_t i = 0; i < filt->desc.num_inputs; i++) {
@@ -476,5 +490,6 @@ run_filter_run(FILTER_RUN_CMD *cmd)
 #endif
 
     dep_complete_command();
+    stats_done_filter_run();
   }
 }

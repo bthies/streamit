@@ -33,6 +33,8 @@ extern uint8_t *dep_next_ptr;
 extern bool_t dep_dequeued;
 #endif
 
+extern SPU_PARAMS dep_params;
+
 // Indicates that all processing for the current command has completed. Command
 // handler must return afterwards.
 void dep_complete_command();

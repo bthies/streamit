@@ -125,24 +125,24 @@
  *---------------------------------------------------------------------------*/
 
 #ifdef USE_PARAM
-#define PARAM_ARG(exp) exp,
+#define PARAM_ARG(exp) exp
 #else
 #define PARAM_ARG(exp)
 #endif
 
-#ifdef USE_PARAM
+#if (defined(HAS_STATE) && defined(USE_PARAM))
 #define STATE_ARG_SEP ,
 #else
 #define STATE_ARG_SEP
 #endif
 
 #ifdef HAS_STATE
-#define STATE_ARG(exp) STATE_ARG_SEP exp
+#define STATE_ARG(exp) exp
 #else
 #define STATE_ARG(exp)
 #endif
 
-#if (defined(USE_PARAM) || defined(HAS_STATE))
+#if ((NUM_INPUT_TAPES != 0) && (defined(USE_PARAM) || defined(HAS_STATE)))
 #define INPUT_ARG_SEP ,
 #else
 #define INPUT_ARG_SEP
@@ -152,14 +152,15 @@
 #define INPUT_ARG(single_exp, multiple_exp)
 #define IF_SINGLE_INPUT(exp)
 #elif (NUM_INPUT_TAPES == 1)
-#define INPUT_ARG(single_exp, multiple_exp) INPUT_ARG_SEP single_exp
+#define INPUT_ARG(single_exp, multiple_exp) single_exp
 #define IF_SINGLE_INPUT(exp)                exp
 #else
-#define INPUT_ARG(single_exp, multiple_exp) INPUT_ARG_SEP multiple_exp
+#define INPUT_ARG(single_exp, multiple_exp) multiple_exp
 #define IF_SINGLE_INPUT(exp)
 #endif
 
-#if (defined(USE_PARAM) || defined(HAS_STATE) || (NUM_INPUT_TAPES != 0))
+#if ((NUM_OUTPUT_TAPES != 0) &&                                               \
+     (defined(USE_PARAM) || defined(HAS_STATE) || (NUM_INPUT_TAPES != 0)))
 #define OUTPUT_ARG_SEP ,
 #else
 #define OUTPUT_ARG_SEP
@@ -169,23 +170,23 @@
 #define OUTPUT_ARG(single_exp, multiple_exp)
 #define IF_SINGLE_OUTPUT(exp)
 #elif (NUM_OUTPUT_TAPES == 1)
-#define OUTPUT_ARG(single_exp, multiple_exp) OUTPUT_ARG_SEP single_exp
+#define OUTPUT_ARG(single_exp, multiple_exp) single_exp
 #define IF_SINGLE_OUTPUT(exp)                exp
 #else
-#define OUTPUT_ARG(single_exp, multiple_exp) OUTPUT_ARG_SEP multiple_exp
+#define OUTPUT_ARG(single_exp, multiple_exp) multiple_exp
 #define IF_SINGLE_OUTPUT(exp)
 #endif
 
 // Common argument list for function declarations.
 #define COMMON_DECLARATION_ARGS \
-  PARAM_ARG(void *param) STATE_ARG(void *const _state)                        \
-  INPUT_ARG(void *const _input, void *const *const _inputs)                   \
-  OUTPUT_ARG(void *const _output, void *const *const _outputs)
+  PARAM_ARG(void *param) STATE_ARG_SEP STATE_ARG(void *const _state)          \
+  INPUT_ARG_SEP INPUT_ARG(void *const _input, void *const *const _inputs)     \
+  OUTPUT_ARG_SEP OUTPUT_ARG(void *const _output, void *const *const _outputs)
 
 // Common argument list for function calls.
 #define COMMON_CALL_ARGS \
-  PARAM_ARG(param) STATE_ARG(_state) INPUT_ARG(_input, _inputs)               \
-  OUTPUT_ARG(_output, _outputs)
+  PARAM_ARG(param) STATE_ARG_SEP STATE_ARG(_state) INPUT_ARG_SEP              \
+  INPUT_ARG(_input, _inputs) OUTPUT_ARG_SEP OUTPUT_ARG(_output, _outputs)
 
 #define DECLARE_FUNC(name, return_type, ...) \
   static return_type DECORATE_FUNC_NAME(name)(COMMON_DECLARATION_ARGS,        \
@@ -193,7 +194,11 @@
 
 #define BEGIN_FUNC(name, return_type, ...) \
   DECLARE_FUNC(name, return_type, ##__VA_ARGS__)                              \
-  {
+  {                                                                           \
+    PARAM_ARG(UNUSED_PARAM(param));                                           \
+    STATE_ARG(UNUSED_PARAM(_state));                                          \
+    INPUT_ARG(UNUSED_PARAM(_input), UNUSED_PARAM(_inputs));                   \
+    OUTPUT_ARG(UNUSED_PARAM(_output), UNUSED_PARAM(_outputs));
 
 #define END_FUNC \
   }

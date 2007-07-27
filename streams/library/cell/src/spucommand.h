@@ -369,6 +369,7 @@ SPU_PREFIX(cmd_get_size)(SPU_CMD_HEADER *cmd)
 //
 // 16-byte aligned and padded
 typedef struct _SPU_PARAMS {
+  uint8_t id;
   // Address of PPU's command group table for this SPU.
   MEM_ADDRESS cmd_group_table;
 } QWORD_ALIGNED SPU_PARAMS;

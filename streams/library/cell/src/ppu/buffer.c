@@ -36,6 +36,9 @@ alloc_buffer(uint32_t size, uint32_t data_offset)
   void *mem;
   void **mem_ptr;
   BUFFER_CB *buf;
+  uintptr_t buf_data;
+  uintptr_t page;
+  uintptr_t end_page;
 
   mem = malloc(CACHE_SIZE + sizeof(BUFFER_CB) + size);
 
@@ -63,7 +66,17 @@ alloc_buffer(uint32_t size, uint32_t data_offset)
 
   IF_CHECK(buf->cflags = 0);
 
-  return (void *)(buf + 1);
+  // Touch every page (avoids page faults when writing to output buffers).
+  buf_data = (uintptr_t)(buf + 1);
+  page = ROUND_UP(buf_data, PAGE_SIZE);
+  end_page = ROUND_UP(buf_data + size, PAGE_SIZE);
+
+  while (page != end_page) {
+    *(uint32_t *)page = 0;
+    page += PAGE_SIZE;
+  }
+
+  return (void *)buf_data;
 }
 
 /*-----------------------------------------------------------------------------

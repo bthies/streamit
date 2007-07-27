@@ -82,6 +82,8 @@ typedef uint8_t SPU_DMA_TAG;
 #define CACHE_MASK  127
 #define LS_SIZE     (256 * 1024)
 
+#define PAGE_SIZE   4096
+
 // Alignment macros.
 #define ALIGNED(n)    __attribute__((aligned((n))))
 #define QWORD_ALIGNED ALIGNED(QWORD_SIZE)
@@ -113,7 +115,20 @@ count_ls_zeros(uint32_t a)
 #endif
 }
 
-#ifndef __SPU__ // PPU
+#ifdef __SPU__  // SPU
+
+/*-----------------------------------------------------------------------------
+ * float_re
+ *
+ * Scalar version of spu_re (vector float reciprocal estimate).
+ *---------------------------------------------------------------------------*/
+static INLINE float
+float_re(float a)
+{
+  return spu_extract(spu_re(spu_promote(a, 0)), 0);
+}
+
+#else           // PPU
 
 /*-----------------------------------------------------------------------------
  * write64

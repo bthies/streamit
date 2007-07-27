@@ -362,6 +362,7 @@ spulib_init()
       spe_get_ps_area(spu->speid, SPE_CONTROL_AREA);
 
     // Set up SPU parameters and send address to SPU.
+    spu_params[i].id = i;
     spu_params[i].cmd_group_table = spu->cmd_group_data;
     _spe_in_mbox_write(spu->control, (uintptr_t)&spu_params[i]);
   }

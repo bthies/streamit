@@ -98,6 +98,7 @@ public class CommonPasses {
         if (global != null) theStatics.add(global);
         
         associatedGlobals = StaticsProp.propagate(str, theStatics);
+        ConstantProp.propagateAndUnroll(str);
         ConstantProp.propagateAndUnroll(str, true);
         System.out.println("Done Constant Prop and Unroll...");
 
@@ -227,7 +228,6 @@ public class CommonPasses {
             System.err.println("Done User-Defined Transformations...");
         }
         
-    
         /*StaticsProp.propagateIntoFilters(str,theStatics);*/
 
         // If requiested, convert splitjoins (below top level)

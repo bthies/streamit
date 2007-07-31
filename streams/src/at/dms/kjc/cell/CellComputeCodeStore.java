@@ -37,6 +37,7 @@ import at.dms.kjc.JVariableDeclarationStatement;
 import at.dms.kjc.JVariableDefinition;
 import at.dms.kjc.KjcOptions;
 import at.dms.kjc.backendSupport.ComputeCodeStore;
+import at.dms.kjc.backendSupport.SpaceTimeScheduleAndPartitioner;
 import at.dms.kjc.common.ALocalVariable;
 import at.dms.kjc.slicegraph.FileInputContent;
 import at.dms.kjc.slicegraph.FileOutputContent;
@@ -58,6 +59,8 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
     private static final String LS_ADDRESS = "LS_ADDRESS";
     private static final String WFA = "wf";
     private static final String WFA_PREFIX = "wf_";
+    private static final String INIT_FUNC = "initfunc";
+    private static final String INIT_FUNC_PREFIX = "init_";
     private static final String SPU_DATA_START = "spu_data_start";
     private static final String SPU_DATA_SIZE = "spu_data_size";
     private static final String SPU_FILTER_DESC = "SPU_FILTER_DESC";
@@ -75,6 +78,7 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
     private static final String SPU_FILTER_ATTACH_INPUT = "spu_filter_attach_input";
     private static final String SPU_FILTER_ATTACH_OUTPUT = "spu_filter_attach_output";
     private static final String SPU_BUFFER_ALLOC = "spu_buffer_alloc";
+    private static final String SPU_CALL_FUNC = "spu_call_func";
     private static final String INPUT_BUFFER_ADDR = "iba";
     private static final String INPUT_BUFFER_SIZE = "ibs";
     private static final String OUTPUT_BUFFER_ADDR = "oba";
@@ -102,12 +106,20 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
     private static final String SPUITEMS = "spuitems";
     private static final String FILE_READER = "file_reader";
     private static final String FILE_WRITER = "file_writer";
+    private static final String CALL_FUNC = "CALL_FUNC";
+    private static final String BEGIN_FUNC = "BEGIN_FUNC";
+    private static final String END_FUNC = "END_FUNC";
     
     private static final String UINT32_T = "uint32_t";
     private static final String PLUS = " + ";
     private static final String MINUS = " - ";
     private static final String INCLUDE = "#include";
     private static final String ROUND_UP = "ROUND_UP";
+    private static final String INIT_TICKS = "init_ticks";
+    private static final String TICKS = "ticks";
+    private static final String START = "start";
+    private static final String STARTSPU = "startspu";
+    private static final String PRINTF = "printf";
     
     private static final String N = "n", ND = "nd", DONE = "done";
     
@@ -120,8 +132,15 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
     
     private ArrayList<JFieldDeclaration> workfuncs = new ArrayList<JFieldDeclaration>();
     private ArrayList<JFieldDeclaration> fds = new ArrayList<JFieldDeclaration>();
+    private ArrayList<JMethodDeclaration> initfuncs = new ArrayList<JMethodDeclaration>();
     
     private int id = 0;
+    
+    private SpaceTimeScheduleAndPartitioner schedule;
+    private int poprate;
+    private int pushrate;
+    private String outputType;
+    private String inputType;
     
     private JVariableDefinition l, r;
     
@@ -132,6 +151,32 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
     @Override
     protected void addSteadyLoop() {
         mainMethod.addStatement(steadyLoop);
+    }
+    
+    @Override
+    public void addInitFunctionCall(JMethodDeclaration init) {
+        //JMethodDeclaration init = filterInfo.filter.getInit();
+        if (init != null)
+            initfuncs.add(init);
+//            mainMethod.addStatementFirst
+//            (new JExpressionStatement(null,
+//                    new JMethodCallExpression(null, new JThisExpression(null),
+//                            init.getName(), new JExpression[0]),
+//                            null));
+        else
+            System.err.println(" ** Warning: Init function is null");
+
+    }
+    
+    public void addInitFunctions() {
+        JBlock initcalls = new JBlock();
+        for (JMethodDeclaration initfunc : initfuncs) {
+            initcalls.addStatement(new JExpressionStatement(null,
+                  new JMethodCallExpression(null, new JThisExpression(null),
+                      initfunc.getName(), new JExpression[0]),
+                      null));
+        }
+        addMethod(new JMethodDeclaration(CStdType.Void, "__INIT_FUNC__", new JFormalParameter[0], initcalls));
     }
     
     /**
@@ -152,6 +197,21 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
             addInitStatement(new JExpressionStatement(new JAssignmentExpression(
                     new JArrayAccessExpression(new JFieldAccessExpression(WFA),new JIntLiteral(i)),
                     new JMethodCallExpression("&",new JExpression[]{new JEmittedTextExpression(WFA_PREFIX+i)}))));
+        }
+    }
+    
+    /**
+     * Add init function address field: LS_ADDRESS init_[i];
+     */
+    public void addInitFunctionAddressField() {
+        JVariableDefinition initfunc = new JVariableDefinition(
+                new CArrayType(new CEmittedTextType(LS_ADDRESS),1,new JExpression[]{new JIntLiteral(numspus)}), INIT_FUNC);
+        JFieldDeclaration field = new JFieldDeclaration(initfunc);
+        addField(field);
+        for (int i=0; i<numspus; i++) {
+            addInitStatement(new JExpressionStatement(new JAssignmentExpression(
+                    new JArrayAccessExpression(new JFieldAccessExpression(INIT_FUNC),new JIntLiteral(i)),
+                    new JMethodCallExpression("&",new JExpression[]{new JEmittedTextExpression(INIT_FUNC_PREFIX+i)}))));
         }
     }
     
@@ -261,7 +321,7 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
         
         body.addStatement(new JExpressionStatement(new JAssignmentExpression(
                 new JFieldAccessExpression(new JArrayAccessExpression(new JFieldAccessExpression(l.getIdent()), new JLocalVariableExpression(var)), "cmd_id"),
-                new JIntLiteral(5))));
+                new JIntLiteral(6))));
         body.addStatement(new JExpressionStatement(new JAssignmentExpression(
                 new JFieldAccessExpression(new JArrayAccessExpression(new JFieldAccessExpression(l.getIdent()), new JLocalVariableExpression(var)), "spu_id"),
                 new JLocalVariableExpression(var))));
@@ -351,7 +411,7 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
         addInitStatement(new JForStatement(init, cond, incr, body));
     }
     
-    public void addSPUInit() {
+    public void addSPUInit(SpaceTimeScheduleAndPartitioner schedule) {
         // spuinit()
         JExpressionStatement spuinit = new JExpressionStatement(
                 new JMethodCallExpression(
@@ -373,13 +433,7 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
 //                new JEmittedTextExpression(SPU_DATA_SIZE),
 //                new JEmittedTextExpression(LS_SIZE + MINUS + SPU_RESERVE_SIZE + MINUS + SPU_DATA_START)));
 //        addInitStatement(spudatasize);
-        
-        // spulib_init()
-        JExpressionStatement spulibinit = new JExpressionStatement(
-                new JMethodCallExpression(
-                        SPULIB_INIT,
-                        new JExpression[]{}));
-        addInitStatement(spulibinit);
+
         
         // SPU_CMD_GROUP * g_;
         JVariableDefinition group = new JVariableDefinition(new CEmittedTextType(SPU_CMD_GROUP), GROUP);
@@ -426,14 +480,14 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
         addField(new JFieldDeclaration(pocb));
 //        }
         
-        // uint32_t pibs = 64 * 1024 * 1024;
+        // uint32_t pibs = 4 * 1024 * 1024;
         JVariableDefinition pibs = new JVariableDefinition(new CEmittedTextType(UINT32_T), PPU_INPUT_BUFFER_SIZE);
-        pibs.setInitializer(new JMultExpression(new JIntLiteral(64),new JMultExpression(new JIntLiteral(1024), new JIntLiteral(1024))));
+        pibs.setInitializer(new JMultExpression(new JIntLiteral(4),new JMultExpression(new JIntLiteral(1024), new JIntLiteral(1024))));
         addField(new JFieldDeclaration(pibs));
         
-        // uint32_t pobs = 64 * 1024 * 1024;
+        // uint32_t pobs = 4 * 1024 * 1024;
         JVariableDefinition pobs = new JVariableDefinition(new CEmittedTextType(UINT32_T), PPU_OUTPUT_BUFFER_SIZE);
-        pobs.setInitializer(new JMultExpression(new JIntLiteral(64),new JMultExpression(new JIntLiteral(1024), new JIntLiteral(1024))));
+        pobs.setInitializer(new JMultExpression(new JIntLiteral(4),new JMultExpression(new JIntLiteral(1024), new JIntLiteral(1024))));
         addField(new JFieldDeclaration(pobs));
         
         // int nd;
@@ -441,7 +495,7 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
         //nd.setInitializer(new JMultExpression(new JFieldAccessExpression(N), new JIntLiteral(32)));
         addField(new JFieldDeclaration(nd));
         
-        // int n = 10000;
+        // int n = 1000;
         JVariableDefinition n = new JVariableDefinition(new CEmittedTextType("int"), N);
         addField(new JFieldDeclaration(n));
         
@@ -482,12 +536,63 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
 //        spuiters.setInitializer(new JIntLiteral(210));
         addField(new JFieldDeclaration(spuiters));
         
-        addInitStatement(new JExpressionStatement(new JAssignmentExpression(new JFieldAccessExpression(N), new JIntLiteral(10000))));
-        addInitStatement(new JExpressionStatement(new JAssignmentExpression(new JFieldAccessExpression(DTSZPERITER), new JMultExpression(new JIntLiteral(16), new JIntLiteral(1024)))));
-        addInitStatement(new JExpressionStatement(new JAssignmentExpression(new JFieldAccessExpression(RUNSPERITER), new JDivideExpression(null, new JFieldAccessExpression(DTSZPERITER), new JIntLiteral(2048)))));
-        addInitStatement(new JExpressionStatement(new JAssignmentExpression(new JFieldAccessExpression(ITERS), new JDivideExpression(null, new JFieldAccessExpression(N), new JFieldAccessExpression(RUNSPERITER)))));
+        this.schedule = schedule;
+        poprate = schedule.getSchedule()[1].getFilterNodes().get(0).getFilter().getPopInt();
+        if (schedule.getSchedule()[0].getFilterNodes().get(0).getFilter().getOutputType().isFloatingPoint())
+            inputType = "float";
+        else inputType = "int";
+        
+        addInitStatement(new JExpressionStatement(new JAssignmentExpression(new JFieldAccessExpression(N), new JIntLiteral(1000))));
+        addInitStatement(new JExpressionStatement(new JAssignmentExpression(new JFieldAccessExpression(RUNSPERITER), new JIntLiteral(4))));
+        addInitStatement(new JExpressionStatement(new JAssignmentExpression(new JFieldAccessExpression(DTSZPERITER), 
+                new JMultExpression(null, new JFieldAccessExpression(RUNSPERITER), 
+                        new JMultExpression(new JMethodCallExpression("sizeof",new JExpression[]{new JEmittedTextExpression(inputType)}),
+                                new JIntLiteral(poprate))))));
+        addInitStatement(new JExpressionStatement(new JAssignmentExpression(new JFieldAccessExpression(ITERS), 
+                new JDivideExpression(null, new JFieldAccessExpression(N), new JFieldAccessExpression(RUNSPERITER)))));
+        
+//        JMethodDeclaration init_ticks = new JMethodDeclaration(CStdType.Void, INIT_TICKS, new JFormalParameter[0], new JBlock());
+//        addMethod(init_ticks);
+//        JVariableDefinition init_ticks = new JVariableDefinition(CStdType.Void, INIT_TICKS);
+//        init_ticks.setInitializer(null);
+//        addField(new JFieldDeclaration(init_ticks));
+//        
+//        JVariableDefinition ticks = new JVariableDefinition(CStdType.Void, TICKS);
+//        ticks.setInitializer(null);
+//        addField(new JFieldDeclaration(ticks));
+        
+        JVariableDefinition start = new JVariableDefinition(CStdType.Integer, START);
+        addField(new JFieldDeclaration(start));
+        
+        JVariableDefinition startspu = new JVariableDefinition(CStdType.Integer, STARTSPU);
+        addField(new JFieldDeclaration(startspu));
     }
     
+    public void initSpulibClock() {
+        addInitStatement(new JExpressionStatement(new JMethodCallExpression(INIT_TICKS, new JExpression[0])));
+        addInitStatement(new JExpressionStatement(new JAssignmentExpression(new JFieldAccessExpression(START), new JMethodCallExpression(TICKS, new JExpression[0]))));
+        
+        // spulib_init()
+        JExpressionStatement spulibinit = new JExpressionStatement(
+                new JMethodCallExpression(
+                        SPULIB_INIT,
+                        new JExpression[]{}));
+        addInitStatement(spulibinit);
+    }
+    
+    public void addStartSpuTicks() {
+        addInitStatement(new JExpressionStatement(new JAssignmentExpression(new JFieldAccessExpression(STARTSPU), new JMethodCallExpression(TICKS, new JExpression[0]))));
+    }
+    
+    public void addPrintTicks() {
+        addInitStatement(new JExpressionStatement(new JMethodCallExpression(PRINTF,
+                new JExpression[]{new JStringLiteral("spu time: %d ms\\n"),
+                new JMinusExpression(null, new JMethodCallExpression(TICKS, new JExpression[0]), new JFieldAccessExpression(STARTSPU))})));
+        addInitStatement(new JExpressionStatement(new JMethodCallExpression(PRINTF,
+                new JExpression[]{new JStringLiteral("time: %d ms\\n"),
+                new JMinusExpression(null, new JMethodCallExpression(TICKS, new JExpression[0]), new JFieldAccessExpression(START))})));
+        
+    }
     
     public void addFilterLoad(InputSliceNode inputNode) {
         Integer id = getIdForSlice(inputNode.getParent());
@@ -615,7 +720,7 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
         body.addStatement(new JExpressionStatement(new JAssignmentExpression(
                 new JArrayAccessExpression(new JFieldAccessExpression(SPUITEMS), new JLocalVariableExpression(var)),
                 new JMultExpression(new JMultExpression(new JArrayAccessExpression(new JFieldAccessExpression(SPUITERS), new JLocalVariableExpression(var)),
-                        new JFieldAccessExpression(RUNSPERITER)), new JIntLiteral(512)))));
+                        new JFieldAccessExpression(RUNSPERITER)), new JIntLiteral(poprate)))));
         
         body.addStatement(new JExpressionStatement(new JAssignmentExpression(
                 new JArrayAccessExpression(new JFieldAccessExpression(PPU_INPUT_BUFFER_ADDR), new JLocalVariableExpression(var)),
@@ -751,6 +856,17 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
                         new JIntLiteral(cmdId)
                 }));
         body.addStatement(attachBuffer);
+        
+        cmdId = 5;
+        body.addStatement(new JExpressionStatement(new JMethodCallExpression(
+                SPU_CALL_FUNC, new JExpression[]{
+                        new JFieldAccessExpression(GROUP),
+                        new JArrayAccessExpression(new JFieldAccessExpression(INIT_FUNC),new JLocalVariableExpression(var)),
+                        new JIntLiteral(cmdId),
+                        new JIntLiteral(2),
+                        new JIntLiteral(cmdId - 1),
+                        new JIntLiteral(cmdId - 3)
+                })));
         
         newGroup = new JExpressionStatement(new JAssignmentExpression(
                 new JFieldAccessExpression(GROUP),
@@ -1330,6 +1446,17 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
         return writeBlock;
     }
     
+//    @Override
+//    public void addInitFunctionCall(JMethodDeclaration init) {
+//        //JMethodDeclaration init = filterInfo.filter.getInit();
+//        if (init != null)
+//            mainMethod.addStatementFirst
+//            (new JExpressionStatement(
+//                    new JMethodCallExpression(CALL_FUNC,
+//                            new JExpression[]{new JEmittedTextExpression(init.getName())})));
+//        else
+//            System.err.println(" ** Warning: Init function is null");
+//    }
 
     
     public static String idToFd(Integer id) {

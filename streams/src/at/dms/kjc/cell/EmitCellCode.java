@@ -7,9 +7,12 @@ import at.dms.kjc.CVectorType;
 import at.dms.kjc.CVectorTypeLow;
 import at.dms.kjc.JArrayInitializer;
 import at.dms.kjc.JBlock;
+import at.dms.kjc.JEmittedTextExpression;
 import at.dms.kjc.JExpression;
+import at.dms.kjc.JExpressionStatement;
 import at.dms.kjc.JFieldDeclaration;
 import at.dms.kjc.JFormalParameter;
+import at.dms.kjc.JMethodCallExpression;
 import at.dms.kjc.JMethodDeclaration;
 import at.dms.kjc.JNewArrayExpression;
 import at.dms.kjc.JStatement;
@@ -167,6 +170,25 @@ public class EmitCellCode extends EmitCode {
             super(p);
         }
         
+        /**
+         * Prints a method call expression.
+         */
+        @Override
+        public void visitMethodCallExpression(JMethodCallExpression self,
+                                              JExpression prefix,
+                                              String ident,
+                                              JExpression[] args) {
+            if (ident.equals("push") || ident.equals("pop") || ident.equals("peek")
+                    || at.dms.util.Utils.isMathMethod(prefix, ident)) {
+                super.visitMethodCallExpression(self, prefix, ident, args);
+                return;
+            }
+            p.print("CALL_FUNC(");
+            p.print(ident);
+            if (args.length > 0) p.print(",");
+            visitArgs(args, 0);
+            p.print(")");
+        }
         
         @Override
         public void visitMethodDeclaration(JMethodDeclaration self,
@@ -198,14 +220,22 @@ public class EmitCellCode extends EmitCode {
                     return;
                 }
                 p.println("BEGIN_WORK_FUNC");
+            } else if (ident.equals("__INIT_FUNC__")) {
+                if (isDeclOnly()) {
+                    declsAreLocal = false;
+                    return;
+                }
+                p.println("BEGIN_INIT_FUNC");
             } else {
-                printType(returnType);
-                p.print(" ");
+                if (isDeclOnly()) {
+                    p.print("DECLARE_FUNC(");
+                } else {
+                    p.print("BEGIN_FUNC(");
+                }
                 p.print(ident);
-            
-                p.print("(");
+                p.print(",");
+                printType(returnType);
                 int count = 0;
-            
                 for (int i = 0; i < parameters.length; i++) {
                     if (count != 0) {
                         p.print(", ");
@@ -214,8 +244,25 @@ public class EmitCellCode extends EmitCode {
                     count++;
                 }
                 p.print(")");
-    
             }
+//            } else {
+//                printType(returnType);
+//                p.print(" ");
+//                p.print(ident);
+//            
+//                p.print("(");
+//                int count = 0;
+//            
+//                for (int i = 0; i < parameters.length; i++) {
+//                    if (count != 0) {
+//                        p.print(", ");
+//                    }
+//                    parameters[i].accept(this);
+//                    count++;
+//                }
+//                p.print(")");
+//    
+//            }
 
             //print the declaration then return
             if (isDeclOnly()) {
@@ -236,6 +283,8 @@ public class EmitCellCode extends EmitCode {
             declsAreLocal = false;
             method = null;
             if (ident.equals("__MAIN__")) p.println("END_WORK_FUNC");
+            else if (ident.equals("__INIT_FUNC__")) p.println("END_INIT_FUNC");
+            else p.println("END_FUNC");
 
         }
         

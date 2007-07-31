@@ -1,5 +1,11 @@
 package at.dms.kjc.cell;
 
+import at.dms.kjc.JEmittedTextExpression;
+import at.dms.kjc.JExpression;
+import at.dms.kjc.JExpressionStatement;
+import at.dms.kjc.JMethodCallExpression;
+import at.dms.kjc.JMethodDeclaration;
+import at.dms.kjc.JThisExpression;
 import at.dms.kjc.backendSupport.ProcessFilterSliceNode;
 import at.dms.kjc.backendSupport.SchedulingPhase;
 import at.dms.kjc.slicegraph.FilterSliceNode;
@@ -26,8 +32,9 @@ public class CellProcessFilterSliceNode extends ProcessFilterSliceNode {
         if (filterNode.isFileInput()) {
             if (whichPhase == SchedulingPhase.INIT) {
                 ppuCS.addFileReader(filterNode);
-                //doit();
+                ppuCS.initSpulibClock();
                 ppuCS.addWorkFunctionAddressField();
+                ppuCS.addInitFunctionAddressField();
                 ppuCS.addSPUFilterDescriptionField();
                 ppuCS.addDataAddressField();
                 ppuCS.setupInputBufferAddress();
@@ -36,8 +43,10 @@ public class CellProcessFilterSliceNode extends ProcessFilterSliceNode {
                 ppuCS.addFilterDescriptionSetup();
                 ppuCS.addNewGroupStatement();
                 ppuCS.addIssueGroupAndWait();
+                ppuCS.addStartSpuTicks();
                 ppuCS.addPSPLayout();
                 ppuCS.addSpulibPollWhile();
+                ppuCS.addPrintTicks();
                 ppuCS.addIssueUnload();
             }
         } else if (filterNode.isFileOutput()) {
@@ -49,22 +58,21 @@ public class CellProcessFilterSliceNode extends ProcessFilterSliceNode {
     }
     
     @Override
-    protected void additionalInitProcessing() {
-        
-        // buffer size choice array
-        // spuiters array for each spu
-        // read in to buffer from file
-        // fd.param
-        
-        //Thread.dumpStack();
-        InputSliceNode inputNode = filterNode.getParent().getHead();
-        OutputSliceNode outputNode = filterNode.getParent().getTail();
-        
-        PPU ppu = ((CellBackendFactory) backEndBits).getPPU();
-        CellComputeCodeStore ppuCS = ppu.getComputeCode();
-        
-        //ppuCS.startNewFilter(inputNode);
-        
+    protected void standardInitProcessing() {
+        // Have the main function for the CodeStore call out init.
+        codeStore.addInitFunctionCall(filter_code.getInitMethod());
+        JMethodDeclaration workAtInit = filter_code.getInitStageMethod();
+        if (workAtInit != null) {
+            // if there are calls to work needed at init time then add
+            // method to general pool of methods
+            codeStore.addMethod(workAtInit);
+            // and add call to list of calls made at init time.
+            // Note: these calls must execute in the order of the
+            // initialization schedule -- so caller of this routine 
+            // must follow order of init schedule.
+            codeStore.addInitFunctionCall(workAtInit);
+        }
+
     }
     
     @Override

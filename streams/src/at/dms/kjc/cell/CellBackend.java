@@ -9,8 +9,6 @@ import at.dms.kjc.backendSupport.BackEndFactory;
 import at.dms.kjc.backendSupport.BackEndScaffold;
 import at.dms.kjc.backendSupport.CommonPasses;
 import at.dms.kjc.backendSupport.DumpSlicesAndChannels;
-import at.dms.kjc.backendSupport.EmitCode;
-import at.dms.kjc.backendSupport.FilterInfo;
 import at.dms.kjc.backendSupport.Layout;
 import at.dms.kjc.backendSupport.SpaceTimeScheduleAndPartitioner;
 import at.dms.kjc.common.CodegenPrintWriter;
@@ -19,10 +17,8 @@ import at.dms.kjc.sir.SIRHelper;
 import at.dms.kjc.sir.SIRInterfaceTable;
 import at.dms.kjc.sir.SIRStream;
 import at.dms.kjc.sir.SIRStructure;
-import at.dms.kjc.slicegraph.DataFlowOrder;
 import at.dms.kjc.slicegraph.Partitioner;
-import at.dms.kjc.spacetime.AddBuffering;
-import at.dms.kjc.spacetime.BasicGenerateSteadyStateSchedule;
+import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.vanillaSlice.EmitStandaloneCode;
 
 public class CellBackend {
@@ -85,7 +81,7 @@ public class CellBackend {
         backEndBits.setLayout(layout);
 
         CellComputeCodeStore ppuCS = cellBackEndBits.getPPU().getComputeCode();        
-        ppuCS.addSPUInit();
+        ppuCS.addSPUInit(schedule);
         ppuCS.addCallBackFunction();
         ppuCS.addSPUIters();
         ppuCS.addPPUBuffers();
@@ -96,6 +92,10 @@ public class CellBackend {
         // now convert to Kopi code plus channels.  (Javac gives error if folowing two lines are combined)
         BackEndScaffold top_call = backEndBits.getBackEndMain();
         top_call.run(schedule, backEndBits);
+        
+        for (SPU spu : cellBackEndBits.getSPUs()) {
+            spu.getComputeCode().addInitFunctions();
+        }
         
         // Dump graphical representation
         DumpSlicesAndChannels.dumpGraph("slicesAndChannels.dot", partitioner, backEndBits);
@@ -113,6 +113,9 @@ public class CellBackend {
             throw new AssertionError("I/O error on " + outputFileName + ": " + e);
         }
     
+
+        Slice s = schedule.getSchedule()[0];
+        assert s.getFilterNodes().get(0).isFileInput();
         
         /*
          * Emit code to strN.c
@@ -135,9 +138,14 @@ public class CellBackend {
                 } else {
                     p.println("#include \"filterdefs.h\"");
                     p.println("#include \"structs.h\"");
+                    p.println("#include <math.h>");
                     p.println();
                     p.println("#define FILTER_NAME " + (n-1));
-                    p.println("#define ITEM_TYPE float");
+                    String type;
+                    if (s.getFilterNodes().get(0).getFilter().getOutputType().isFloatingPoint())
+                        type = "float";
+                    else type = "int";
+                    p.println("#define ITEM_TYPE " + type);
                     p.println("#include \"beginfilter.h\"");
                 }
                 codeEmitter.emitCodeForComputeNode(nodeN, p);

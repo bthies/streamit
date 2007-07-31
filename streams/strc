@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.125 2007-07-23 19:18:17 thies Exp $
+# $Id: strc,v 1.126 2007-07-31 07:40:21 qjli Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -172,7 +172,7 @@ exit(0);
 sub non_streamit_backend_defined {
     return $opts{library} || 
     $opts{cluster} || 
-    $opts{raw} || $opts{spacedynamic} || $opts{spacetime} || 
+    $opts{raw} || $opts{spacedynamic} || $opts{spacetime} || $opts{cell} || 
     $opts{rstream} || $opts{simpleC} ||
     defined($opts{newSimple}) || 
 	$opts{uni} 
@@ -208,6 +208,7 @@ Usage: strc [options] file.str ...
   --more-help         Include extra options
 * --much-more-help    Include internal-only options
 
+  --cell              Compile for Cell processor
   --cluster n         Compile for a cluster or multicore with n nodes
   --library           Run in the Java library instead of compiling
 * --newSimple         (in development)
@@ -381,6 +382,7 @@ sub get_options
 			    "verbose|v",
 			    "optimize|O=i",
 			    "atlas!",
+			    "cell",
 			    "blender",
 			    "mencoder",
 			    "cell-vector-library|cell_vector_library",
@@ -912,6 +914,7 @@ sub get_compiler_opts
     $opts{devassignfile} && ($copts .= " --devassignfile ". $opts{devassignfile});
     $opts{backendvalues} && ($copts .= " --backendvalues \"". $opts{backendvalues}. "\"");
     $opts{havefftw} && ($copts .= " --havefftw");
+    $opts{cell} && ($copts .= " --cell");
     return $copts;
 }
 

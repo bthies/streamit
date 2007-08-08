@@ -5,6 +5,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 import at.dms.kjc.JInterfaceDeclaration;
+import at.dms.kjc.KjcOptions;
 import at.dms.kjc.backendSupport.BackEndFactory;
 import at.dms.kjc.backendSupport.BackEndScaffold;
 import at.dms.kjc.backendSupport.CommonPasses;
@@ -40,9 +41,10 @@ public class CellBackend {
             SIRStructure[]structs,
             SIRHelper[] helpers,
             SIRGlobal global) {
-        System.out.println("Hi, I'm the new back end.");
         
-        int numCores = 6;
+        int numCores = KjcOptions.cell;
+        
+        System.out.println("Entering Cell backend. Compiling to " + numCores + " SPUs.");
         
         // The usual optimizations and transformation to slice graph
         CommonPasses commonPasses = new CommonPasses();

@@ -43,10 +43,10 @@ public class CellProcessFilterSliceNode extends ProcessFilterSliceNode {
                 ppuCS.addFilterDescriptionSetup();
                 ppuCS.addNewGroupStatement();
                 ppuCS.addIssueGroupAndWait();
-                ppuCS.addStartSpuTicks();
+                //ppuCS.addStartSpuTicks();
                 ppuCS.addPSPLayout();
                 ppuCS.addSpulibPollWhile();
-                ppuCS.addPrintTicks();
+                //ppuCS.addPrintTicks();
                 ppuCS.addIssueUnload();
             }
         } else if (filterNode.isFileOutput()) {

@@ -206,12 +206,12 @@ public class EmitCellCode extends EmitCode {
             declsAreLocal = true;
             if (! this.isDeclOnly()) { p.newLine(); } // some extra space if not just declaration.
             p.newLine();
-            if ((modifiers & at.dms.kjc.Constants.ACC_PUBLIC) == 0) {
-                p.print("static ");
-            }
-            if ((modifiers & at.dms.kjc.Constants.ACC_INLINE) != 0) {
-                p.print("inline ");
-            }
+//            if ((modifiers & at.dms.kjc.Constants.ACC_PUBLIC) == 0) {
+//                p.print("static ");
+//            }
+//            if ((modifiers & at.dms.kjc.Constants.ACC_INLINE) != 0) {
+//                p.print("inline ");
+//            }
             
             if (ident.equals("__MAIN__")) {
                 //print the declaration then return
@@ -233,15 +233,11 @@ public class EmitCellCode extends EmitCode {
                     p.print("BEGIN_FUNC(");
                 }
                 p.print(ident);
-                p.print(",");
+                p.print(", ");
                 printType(returnType);
-                int count = 0;
                 for (int i = 0; i < parameters.length; i++) {
-                    if (count != 0) {
-                        p.print(", ");
-                    }
+                    p.print(", ");
                     parameters[i].accept(this);
-                    count++;
                 }
                 p.print(")");
             }

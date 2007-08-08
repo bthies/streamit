@@ -95,7 +95,7 @@ public class StreaMITMain {
             } else {
                 backendClass = "at.dms.kjc.spacedynamic.SpaceDynamicBackend";
             }
-        } else if (KjcOptions.cell) {
+        } else if (KjcOptions.cell != -1) {
             backendClass = "at.dms.kjc.cell.CellBackend";
         } else if (KjcOptions.cluster != -1) {
             backendClass = "at.dms.kjc.cluster.ClusterBackend";

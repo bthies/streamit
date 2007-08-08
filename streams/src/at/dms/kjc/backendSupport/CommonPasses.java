@@ -12,6 +12,7 @@ import at.dms.kjc.sir.lowering.ConstructSIRTree;
 import at.dms.kjc.sir.lowering.EnqueueToInitPath;
 import at.dms.kjc.sir.lowering.FieldProp;
 import at.dms.kjc.sir.lowering.Flattener;
+import at.dms.kjc.sir.lowering.IntroduceMultiPops;
 import at.dms.kjc.sir.lowering.RenameAll;
 import at.dms.kjc.sir.lowering.RoundToFloor;
 import at.dms.kjc.sir.lowering.SIRScheduler;
@@ -101,6 +102,8 @@ public class CommonPasses {
         ConstantProp.propagateAndUnroll(str);
         ConstantProp.propagateAndUnroll(str, true);
         System.out.println("Done Constant Prop and Unroll...");
+        
+        IntroduceMultiPops.doit(str);
 
         // convert round(x) to floor(0.5+x) to avoid obscure errors
         RoundToFloor.doit(str);
@@ -145,16 +148,17 @@ public class CommonPasses {
         // pipelines, so do it here.
         Lifter.liftAggressiveSync(str);
         
- 
         if (KjcOptions.fusion || KjcOptions.dup >= 1 || KjcOptions.noswpipe) {
             // if we are about to fuse filters, we should perform
             // any vectorization now, since vectorization can not work inside
             // fused sections, and vectorization should map pipelines of 
             // stateless filters to pipelines of stateless filters.
 
+            StreamItDot.printGraph(str, "before-vectorize.dot");
             SimplifyPopPeekPush.simplify(str);
             VectorizeEnable.vectorizeEnable(str,null);
             vectorizedEarly = true;
+            StreamItDot.printGraph(str, "after-vectorize.dot");
         }
         
         //fuse entire str to one filter if possible

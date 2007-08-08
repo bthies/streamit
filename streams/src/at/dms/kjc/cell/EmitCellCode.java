@@ -179,6 +179,7 @@ public class EmitCellCode extends EmitCode {
                                               String ident,
                                               JExpression[] args) {
             if (ident.equals("push") || ident.equals("pop") || ident.equals("peek")
+                    || ident.equals("popn")
                     || at.dms.util.Utils.isMathMethod(prefix, ident)) {
                 super.visitMethodCallExpression(self, prefix, ident, args);
                 return;

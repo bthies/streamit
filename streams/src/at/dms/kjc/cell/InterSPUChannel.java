@@ -18,15 +18,15 @@ public class InterSPUChannel extends Channel {
         super(e);
     }
     
-//    @Override
-//    public String popManyMethodName() {
-//        return "popn";
-//    }
-//    
-//    @Override
-//    public JMethodDeclaration popManyMethod() {
-//        return null;
-//    }
+    @Override
+    public String popManyMethodName() {
+        return "popn";
+    }
+    
+    @Override
+    public JMethodDeclaration popManyMethod() {
+        return null;
+    }
     
     @Override
     public String popMethodName() {

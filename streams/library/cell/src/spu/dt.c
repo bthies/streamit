@@ -119,6 +119,7 @@ void
 run_dt_in_back(DT_IN_BACK_CMD *cmd)
 {
   BUFFER_CB *buf = buf_get_cb(cmd->buf_data);
+  uint32_t buf_tail;
 
   switch (cmd->state) {
   case 0:
@@ -138,18 +139,17 @@ run_dt_in_back(DT_IN_BACK_CMD *cmd)
 
     // Debug tail pointer should be synchronized.
     assert(buf->otail == buf->tail);
-
     // Make sure back of buffer is free. *-in is allowed.
     check(buf->back_action == BUFFER_ACTION_NONE);
-    buf->back_action = BUFFER_ACTION_IN;
-
-    // Make sure enough space is available. head and tail must be off by at
-    // least 1 and cannot be non-zero offsets in the same qword.
-    check(((buf->head - (buf->head & QWORD_MASK ? : 1) - buf->tail) &
-             buf->mask) >= cmd->num_bytes);
-    // Reserve space for data to be transferred.
-    buf->otail = (buf->tail + cmd->num_bytes) & buf->mask;
 #endif
+
+    if (buf->in_back_buffered_bytes >= cmd->num_bytes) {
+      buf->in_back_buffered_bytes -= cmd->num_bytes;
+      dep_complete_command();
+      return;
+    }
+
+    IF_CHECK(buf->back_action = BUFFER_ACTION_IN);
 
     cmd->tag = dma_reserve_tag();
     check(cmd->tag != INVALID_TAG);
@@ -160,12 +160,14 @@ run_dt_in_back(DT_IN_BACK_CMD *cmd)
     // Wait for source processor to write control block.
 
     IN_DTCB in_dtcb;
+    uint32_t dt_bytes;
+    uint32_t src_bytes;
 #if DT_AUTO_ADJUST_POINTERS
     uint32_t data_offset;
 #endif
 
     // Wait for MFC slot in advance.
-    if (!dma_query_avail(1)) {
+    if (!dma_query_avail(IF_DT_ALLOW_UNALIGNED(2, 1))) {
       dma_wait_avail();
       return;
     }
@@ -175,13 +177,22 @@ run_dt_in_back(DT_IN_BACK_CMD *cmd)
       return;
     }
 
-    // Make sure number of bytes in dt_in/out commands match.
-    check(((in_dtcb.tail - in_dtcb.head) & cmd->src_buf_mask) ==
-            cmd->num_bytes);
 #if !DT_ALLOW_UNALIGNED
     // Make sure data in source buffer is aligned on qword boundary.
     check((in_dtcb.head & QWORD_MASK) == 0);
 #endif
+
+    cmd->num_bytes -= buf->in_back_buffered_bytes;
+    dt_bytes = cmd->num_bytes;
+    src_bytes = (in_dtcb.tail - in_dtcb.head) & cmd->src_buf_mask;
+
+    // Make sure number of bytes transferring out from source buffer is at
+    // least number of bytes transferring in.
+    check(src_bytes >= dt_bytes);
+
+    if (dt_bytes < CACHE_SIZE) {
+      dt_bytes = CACHE_SIZE;
+    }
 
 #if DT_AUTO_ADJUST_POINTERS
     // Automatically adjust head/tail pointers to match data offset in source
@@ -201,32 +212,73 @@ run_dt_in_back(DT_IN_BACK_CMD *cmd)
       buf->head = (buf->head + offset_diff) & buf->mask;
       buf->tail = data_offset;
 #if CHECK
-      buf->ihead = (buf->ihead + offset_diff) & buf->mask;
-      buf->otail = (buf->otail + offset_diff) & buf->mask;
+      buf->ihead = data_offset;
+      buf->otail = data_offset;
 #endif
     }
 #else
     check((buf->tail & CACHE_MASK) == (in_dtcb.head & CACHE_MASK));
 #endif
 
-    IF_CHECK(buf->dt_active++);
+#if DT_ALLOW_UNALIGNED
+    dt_bytes += (QWORD_SIZE - (buf->tail + dt_bytes)) & QWORD_MASK;
+#endif
+
+    if (dt_bytes > src_bytes) {
+      dt_bytes = src_bytes;
+    }
+
+    buf->in_back_buffered_bytes = dt_bytes - cmd->num_bytes;
+    cmd->num_bytes = dt_bytes;
+
+#if CHECK
+    // Make sure enough space is available. head and tail must be off by at
+    // least 1 and cannot be non-zero offsets in the same qword.
+    check(((buf->head - (buf->head & QWORD_MASK ? : 1) - buf->tail) &
+             buf->mask) >= dt_bytes);
+    // Reserve space for data to be transferred.
+    buf->otail = (buf->tail + dt_bytes) & buf->mask;
+    buf->dt_active++;
+#endif
+
     cmd->src_head = in_dtcb.head;
 
 #if DT_ALLOW_UNALIGNED
     if ((buf->tail & QWORD_MASK) != 0) {
       // Start DMA for unaligned qword of data.
+      uint32_t ua_bytes;
+
       dma_get(cmd->tag,
               &cmd->ua_data,
               cmd->src_buf_data + ROUND_DOWN(cmd->src_head, QWORD_SIZE),
               QWORD_SIZE);
-      dma_wait_complete(cmd->tag);
       cmd->state = 4;
-      return;
+
+      // Advance to first aligned piece of data.
+      ua_bytes = QWORD_SIZE - (cmd->src_head & QWORD_MASK);
+
+      if (ua_bytes > cmd->num_bytes) {
+        ua_bytes = cmd->num_bytes;
+      }
+
+      cmd->src_head = (cmd->src_head + ua_bytes) & cmd->src_buf_mask;
+      cmd->num_bytes -= ua_bytes;
+      cmd->ua_bytes = ua_bytes;
+
+      if (cmd->num_bytes == 0) {
+        cmd->copy_bytes = 0;
+        dma_wait_complete(cmd->tag);
+        return;
+      } else {
+        buf_tail = (buf->tail + ua_bytes) & buf->mask;
+        goto state_copy_next;
+      }
     }
 #endif
 
     // Start copying aligned data.
     cmd->state = 2;
+    buf_tail = buf->tail;
     goto state_copy_next;
   }
 
@@ -240,23 +292,26 @@ run_dt_in_back(DT_IN_BACK_CMD *cmd)
       return;
     }
 
-    buf->tail = (buf->tail + cmd->copy_bytes) & buf->mask;
+    buf->tail = buf_tail = (buf->tail + cmd->copy_bytes) & buf->mask;
 
     if (cmd->num_bytes == 0) {
-      // Finished copying data. Write acknowledgement (new value of head
-      // pointer for source buffer).
+      // Finished copying data.
 
-      // Make sure source's head pointer was updated correctly.
-      assert(cmd->src_head == buf->back_in_dtcb.tail);
-      // Reset back_in_dtcb in preparation for next dt_in_back.
-      buf->back_in_dtcb.data = VEC_SPLAT_U32(0);
+      // Update back_in_dtcb in preparation for next dt_in_back.
+      buf->back_in_dtcb.head = cmd->src_head;
+      assert((cmd->src_head != buf->back_in_dtcb.tail) ||
+             (buf->in_back_buffered_bytes == 0));
 
-      dma_put(cmd->tag,
-              buf_get_dt_field_addr(cmd->src_buf_data, front_in_ack),
-              &cmd->out_ack,
-              sizeof(cmd->out_ack));
-
-      cmd->state = 3;
+      if ((cmd->src_buf != 0) && (cmd->src_head == buf->back_in_dtcb.tail)) {
+        // Write acknowledgement (new value of head pointer for source buffer).
+        dma_put(cmd->tag,
+                buf_cb_get_dt_field_addr(cmd->src_buf, front_in_ack),
+                &cmd->out_ack,
+                sizeof(cmd->out_ack));
+        cmd->state = 3;
+      } else {
+        goto state_done;
+      }
     } else {
       // Start DMA for next piece of data.
 
@@ -274,7 +329,7 @@ run_dt_in_back(DT_IN_BACK_CMD *cmd)
       }
 
       // Bytes to end of destination buffer.
-      dest_bytes = (buf->mask + 1) - buf->tail;
+      dest_bytes = (buf->mask + 1) - buf_tail;
 
       if (copy_bytes > dest_bytes) {
         copy_bytes = dest_bytes;
@@ -286,7 +341,7 @@ run_dt_in_back(DT_IN_BACK_CMD *cmd)
       }
 
       dma_get(cmd->tag,
-              cmd->buf_data + buf->tail,
+              cmd->buf_data + buf_tail,
               cmd->src_buf_data + cmd->src_head,
 #if DT_ALLOW_UNALIGNED
               ROUND_UP(copy_bytes, QWORD_SIZE)
@@ -304,6 +359,7 @@ run_dt_in_back(DT_IN_BACK_CMD *cmd)
     dma_wait_complete(cmd->tag);
     return;
 
+  state_done:
   case 3:
     // Finished copying data.
 
@@ -334,13 +390,7 @@ run_dt_in_back(DT_IN_BACK_CMD *cmd)
     *ua_data = spu_sel(*ua_data, cmd->ua_data, spu_maskb((1 << ua_bytes) - 1));
 
     // Advance to first aligned piece of data.
-    if (ua_bytes > cmd->num_bytes) {
-      ua_bytes = cmd->num_bytes;
-    }
-
-    cmd->src_head = (cmd->src_head + ua_bytes) & cmd->src_buf_mask;
-    cmd->num_bytes -= ua_bytes;
-    cmd->copy_bytes = ua_bytes;
+    buf->tail = (buf->tail + cmd->ua_bytes) & buf->mask;
 
     cmd->state = 2;
     goto state_dma_complete;
@@ -361,12 +411,15 @@ void
 run_dt_out_front_ppu(DT_OUT_FRONT_PPU_CMD *cmd)
 {
   BUFFER_CB *buf = buf_get_cb(cmd->buf_data);
+  uint32_t buf_head;
+  uint32_t dest_tail;
+#if DT_ALLOW_UNALIGNED
+  uint32_t ua_bytes = 0;
+#endif
 
   switch (cmd->state) {
-  case 0:
-    // Initialization.
-
 #if CHECK
+  case 255:
     // Validate buffer alignment.
     pcheck((((uintptr_t)cmd->buf_data & CACHE_MASK) == 0) &&
            ((cmd->dest_buf_data & CACHE_MASK) == 0) &&
@@ -379,25 +432,18 @@ run_dt_out_front_ppu(DT_OUT_FRONT_PPU_CMD *cmd)
           (buf->back_action != BUFFER_ACTION_OUT));
     buf->front_action = BUFFER_ACTION_OUT;
 
-    // Make sure enough data is available and mark off data to be transferred.
-    check(((buf->tail - buf->head) & buf->mask) >= cmd->num_bytes);
-    buf->ihead = (buf->head + cmd->num_bytes) & buf->mask;
-    buf->dt_active++;
+    cmd->state = 0;
 #endif
 
-    // Reserve tag for copying data.
-    cmd->tag = dma_reserve_tag();
-    check(cmd->tag != INVALID_TAG);
-
-    cmd->state = 1;
-
-  case 1: {
+  case 0: {
     // Wait for PPU to write location of free space in destination buffer.
 
     IN_DTCB in_dtcb;
+    uint32_t dt_bytes;
+    uint32_t dest_bytes;
 
     // Wait for MFC slot in advance.
-    if (!dma_query_avail(1)) {
+    if (!dma_query_avail(IF_DT_ALLOW_UNALIGNED(3, 1))) {
       dma_wait_avail();
       return;
     }
@@ -407,25 +453,74 @@ run_dt_out_front_ppu(DT_OUT_FRONT_PPU_CMD *cmd)
       return;
     }
 
-    // Make sure number of bytes in dt_in/out commands match.
-    check(((in_dtcb.tail - in_dtcb.head) & cmd->dest_buf_mask) ==
-            cmd->num_bytes);
     // Make sure data in source/destination buffers have same offset within
     // cache line (128 bytes).
     check((buf->head & CACHE_MASK) == (in_dtcb.head & CACHE_MASK));
 
+    cmd->num_bytes += buf->out_front_buffered_bytes;
+    dt_bytes = cmd->num_bytes;
+    dest_bytes = (in_dtcb.tail - in_dtcb.head) & cmd->dest_buf_mask;
+
+    // Make sure number of bytes transferring into destination buffer is at
+    // least number of bytes transferring out.
+    check(dest_bytes >= dt_bytes);
+
+    if (dt_bytes != dest_bytes) {
+      uint32_t ua_bytes = (buf->head + dt_bytes) & QWORD_MASK;
+
+      if ((dt_bytes <= ua_bytes) || ((dt_bytes -= ua_bytes) < CACHE_SIZE)) {
+        IF_CHECK(buf->front_action = BUFFER_ACTION_NONE);
+        dep_complete_command();
+        return;
+      }
+    }
+
+    buf->out_front_buffered_bytes = cmd->num_bytes - dt_bytes;
+    cmd->num_bytes = dt_bytes;
+
+#if CHECK
+    // Make sure enough data is available and mark off data to be transferred.
+    check(((buf->tail - buf->head) & buf->mask) >= dt_bytes);
+    buf->ihead = (buf->head + dt_bytes) & buf->mask;
+    buf->dt_active++;
+#endif
+
+    // Reserve tag for copying data.
+    cmd->tag = dma_reserve_tag();
+    check(cmd->tag != INVALID_TAG);
+
     cmd->dest_tail = in_dtcb.head;
 
-    cmd->state = 2;
+    cmd->state = 1;
 
 #if DT_ALLOW_UNALIGNED
+    if ((dt_bytes == dest_bytes) && cmd->tail_overlaps) {
+      uint32_t tail_ua_bytes = in_dtcb.tail & QWORD_MASK;
+
+      if (dt_bytes >= tail_ua_bytes) {
+        dma_put(cmd->tag,
+                buf_cb_get_dt_field_addr(cmd->dest_buf, back_in_dtcb_2),
+                cmd->buf_data +
+                  ((buf->head + dt_bytes - tail_ua_bytes) & buf->mask),
+                QWORD_SIZE);
+
+        if (tail_ua_bytes == dt_bytes) {
+          cmd->copy_bytes = tail_ua_bytes;
+          dma_wait_complete(cmd->tag);
+          cmd->state = 2;
+          return;
+        } else {
+          cmd->tail_ua_bytes = tail_ua_bytes;
+          cmd->num_bytes -= tail_ua_bytes;
+        }
+      }
+    }
+
     if ((buf->head & QWORD_MASK) != 0) {
       // Write unaligned qword of data to destination buffer's control block.
 
-      uint32_t ua_bytes;
-
       dma_put(cmd->tag,
-              buf_get_dt_field_addr(cmd->dest_buf_data, back_in_dtcb),
+              buf_cb_get_dt_field_addr(cmd->dest_buf, back_in_dtcb),
               cmd->buf_data + ROUND_DOWN(buf->head, QWORD_MASK),
               QWORD_SIZE);
 
@@ -433,22 +528,27 @@ run_dt_out_front_ppu(DT_OUT_FRONT_PPU_CMD *cmd)
 
       if (ua_bytes >= cmd->num_bytes) {
         // No more data left.
-        ua_bytes = cmd->num_bytes;
-        cmd->state = 3;
+        cmd->copy_bytes = cmd->num_bytes;
+
+        dma_wait_complete(cmd->tag);
+        cmd->state = 2;
+        return;
+      } else {
+        buf_head = (buf->head + ua_bytes) & buf->mask;
+        dest_tail = (cmd->dest_tail + ua_bytes) & cmd->dest_buf_mask;
+
+        goto state_copy_next;
       }
-
-      cmd->copy_bytes = ua_bytes;
-
-      dma_wait_complete(cmd->tag);
-      return;
     }
 #endif
 
     // Start copying aligned data.
+    buf_head = buf->head;
+    dest_tail = cmd->dest_tail;
     goto state_copy_next;
   }
 
-  case 2: {
+  case 1: {
     // Finished copying piece of data, with more left to copy. Start DMA for
     // next piece.
 
@@ -462,17 +562,18 @@ run_dt_out_front_ppu(DT_OUT_FRONT_PPU_CMD *cmd)
     }
 
     // Advance pointers to next piece.
-    buf->head = (buf->head + cmd->copy_bytes) & buf->mask;
-    cmd->dest_tail = (cmd->dest_tail + cmd->copy_bytes) & cmd->dest_buf_mask;
+    buf->head = buf_head = (buf->head + cmd->copy_bytes) & buf->mask;
+    cmd->dest_tail = dest_tail =
+      (cmd->dest_tail + cmd->copy_bytes) & cmd->dest_buf_mask;
     cmd->num_bytes -= cmd->copy_bytes;
 
   state_copy_next:
 
     // Bytes to end of source buffer.
-    copy_bytes = (buf->mask + 1) - buf->head;
+    copy_bytes = (buf->mask + 1) - buf_head;
 
     // Bytes to end of destination buffer.
-    dest_bytes = (cmd->dest_buf_mask + 1) - cmd->dest_tail;
+    dest_bytes = (cmd->dest_buf_mask + 1) - dest_tail;
 
     if (copy_bytes > dest_bytes) {
       copy_bytes = dest_bytes;
@@ -487,12 +588,12 @@ run_dt_out_front_ppu(DT_OUT_FRONT_PPU_CMD *cmd)
     if (copy_bytes >= cmd->num_bytes) {
       // No more data left.
       copy_bytes = cmd->num_bytes;
-      cmd->state = 3;
+      cmd->state = 2;
     }
 
     dma_put(cmd->tag,
-            cmd->dest_buf_data + cmd->dest_tail,
-            cmd->buf_data + buf->head,
+            cmd->dest_buf_data + dest_tail,
+            cmd->buf_data + buf_head,
 #if DT_ALLOW_UNALIGNED
             ROUND_UP(copy_bytes, QWORD_SIZE)
 #else
@@ -500,22 +601,25 @@ run_dt_out_front_ppu(DT_OUT_FRONT_PPU_CMD *cmd)
 #endif
             );
 
-    cmd->copy_bytes = copy_bytes;
+    cmd->copy_bytes = copy_bytes + IF_DT_ALLOW_UNALIGNED(ua_bytes, 0);
 
     dma_wait_complete(cmd->tag);
     return;
   }
 
-  case 3:
+  case 2: {
     // Finished copying last piece of data.
 
-    buf->head = (buf->head + cmd->copy_bytes) & buf->mask;
+    uint32_t copy_bytes;
 
-    // Make sure destination's tail pointer was updated correctly.
-    assert(((cmd->dest_tail + cmd->copy_bytes) & cmd->dest_buf_mask) ==
-             buf->front_in_dtcb.tail);
-    // Reset front_in_dtcb before corresponding PPU-side command completes.
-    buf->front_in_dtcb.data = VEC_SPLAT_U32(0);
+    copy_bytes = cmd->copy_bytes + cmd->tail_ua_bytes;
+    buf->head = (buf->head + copy_bytes) & buf->mask;
+
+    // Update front_in_dtcb before corresponding PPU-side command completes.
+    buf->front_in_dtcb.head =
+      (cmd->dest_tail + copy_bytes) & cmd->dest_buf_mask;
+    assert((buf->front_in_dtcb.head != buf->front_in_dtcb.tail) ||
+           (buf->out_front_buffered_bytes == 0));
 
     dma_release_tag(cmd->tag);
 
@@ -528,6 +632,7 @@ run_dt_out_front_ppu(DT_OUT_FRONT_PPU_CMD *cmd)
 
     dep_complete_command();
     return;
+  }
 
   default:
     unreached();

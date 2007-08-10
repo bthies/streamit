@@ -60,7 +60,26 @@ typedef struct _BUFFER_CB {
   uint32_t mask;
   uint32_t head;
   uint32_t tail;
-  uint32_t _padding;
+#ifndef __SPU__ // PPU
+  void *data;
+#else
+  uint32_t _padding0;
+#endif
+// +16
+  union {
+    struct {
+      uint32_t in_back_buffered_bytes;
+      uint32_t out_front_buffered_bytes;
+      uint32_t _padding1[2];
+    };
+    vec4_uint32_t buffered_bytes;
+  };
+  // These are only used in PPU buffers but SPU dt_out_*_ppu commands write to
+  // them.
+// -64
+  // IN_DTCB front_in_dtcb_2;
+// -48
+  IN_DTCB back_in_dtcb_2;
 // -32
   union {
     struct {
@@ -100,6 +119,8 @@ buf_get_cb(void *buf_data)
   return (BUFFER_CB *)buf_data - 1;
 }
 
+#ifdef __SPU__
+
 /*-----------------------------------------------------------------------------
  * buf_get_data
  *
@@ -111,14 +132,21 @@ buf_get_data(BUFFER_CB *buf)
   return (void *)(buf + 1);
 }
 
+#endif
+
 /*-----------------------------------------------------------------------------
- * buf_get_dt_field_addr
+ * buf_get_dt_field_addr/buf_cb_get_dt_field_addr
  *
- * Returns the address of a data transfer field for the buffer with data at the
- * specified address. field is one of front/back_in_dtcb, front/back_in_ack.
+ * Returns the address of a data transfer field for a buffer. field is one of
+ * front/back_in_dtcb, front/back_in_ack.
  *---------------------------------------------------------------------------*/
 #define buf_get_dt_field_addr(buf_data, field) \
   ((buf_data) - (sizeof(BUFFER_CB) - offsetof(BUFFER_CB, field)))
+
+#ifdef __SPU__
+#define buf_cb_get_dt_field_addr(buf, field) \
+  ((buf) + offsetof(BUFFER_CB, field))
+#endif
 
 /*-----------------------------------------------------------------------------
  * buf_bytes_used

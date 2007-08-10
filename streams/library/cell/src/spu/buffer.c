@@ -36,6 +36,7 @@ run_buffer_alloc(BUFFER_ALLOC_CMD *cmd)
 
   IF_CHECK(buf->cflags = 0);
 
+  buf->buffered_bytes = VEC_SPLAT_U32(0);
   buf->front_in_dtcb.data = VEC_SPLAT_U32(0);
   buf->back_in_dtcb.data = VEC_SPLAT_U32(0);
 

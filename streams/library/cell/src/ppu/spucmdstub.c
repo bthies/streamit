@@ -195,7 +195,26 @@ DECLARE_SPU_COMMAND(dt_in_back, DT_IN_BACK,
 {
   cmd->buf_data = spu_lsa(g->spu_id, buf_data);
   cmd->src_buf_data = src_buf_data;
+  cmd->src_buf = buf_get_cb(src_buf_data);
   cmd->src_buf_mask = src_buf_size - 1;
+  cmd->num_bytes = num_bytes;
+
+  cmd->state = 0;
+}
+END_SPU_COMMAND
+
+
+/*-----------------------------------------------------------------------------
+ * spu_dt_in_back_ex
+ *---------------------------------------------------------------------------*/
+DECLARE_SPU_COMMAND(dt_in_back_ex, DT_IN_BACK,
+                    SPU_ADDRESS buf_data, BUFFER_CB *src_buf,
+                    uint32_t num_bytes)
+{
+  cmd->buf_data = spu_lsa(g->spu_id, buf_data);
+  cmd->src_buf_data = src_buf->data;
+  cmd->src_buf = NULL;
+  cmd->src_buf_mask = src_buf->mask;
   cmd->num_bytes = num_bytes;
 
   cmd->state = 0;
@@ -245,9 +264,31 @@ DECLARE_SPU_COMMAND(dt_out_front_ppu, DT_OUT_FRONT_PPU,
 {
   cmd->buf_data = spu_lsa(g->spu_id, buf_data);
   cmd->dest_buf_data = dest_buf_data;
+  cmd->dest_buf = buf_get_cb(dest_buf_data);
   cmd->dest_buf_mask = dest_buf_size - 1;
   cmd->num_bytes = num_bytes;
+  cmd->tail_overlaps = FALSE;
+  cmd->tail_ua_bytes = 0;
 
-  cmd->state = 0;
+  cmd->state = (CHECK ? 255 : 0);
+}
+END_SPU_COMMAND
+
+/*-----------------------------------------------------------------------------
+ * spu_dt_out_front_ppu_ex
+ *---------------------------------------------------------------------------*/
+DECLARE_SPU_COMMAND(dt_out_front_ppu_ex, DT_OUT_FRONT_PPU,
+                    SPU_ADDRESS buf_data, BUFFER_CB *dest_buf,
+                    uint32_t num_bytes, bool_t tail_overlaps)
+{
+  cmd->buf_data = spu_lsa(g->spu_id, buf_data);
+  cmd->dest_buf_data = dest_buf->data;
+  cmd->dest_buf = dest_buf;
+  cmd->dest_buf_mask = dest_buf->mask;
+  cmd->num_bytes = num_bytes;
+  cmd->tail_overlaps = tail_overlaps;
+  cmd->tail_ua_bytes = 0;
+
+  cmd->state = (CHECK ? 255 : 0);
 }
 END_SPU_COMMAND

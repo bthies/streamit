@@ -91,6 +91,8 @@ typedef uint8_t SPU_DMA_TAG;
 
 #define PACKED        __attribute__((packed))
 
+#define UNUSED        __attribute__((unused))
+
 // Branch hint macros.
 #define LIKELY(exp)   __builtin_expect(exp, TRUE)
 #define UNLIKELY(exp) __builtin_expect(exp, FALSE)
@@ -155,6 +157,12 @@ write64(volatile uint64_t *addr, uint64_t data)
     );
 }
 
+#endif
+
+#if DT_ALLOW_UNALIGNED
+#define IF_DT_ALLOW_UNALIGNED(allow_exp, disallow_exp) (allow_exp)
+#else
+#define IF_DT_ALLOW_UNALIGNED(allow_exp, disallow_exp) (disallow_exp)
 #endif
 
 #include "debug.h"

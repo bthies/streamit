@@ -59,16 +59,19 @@ stats_accumulate()
   work_time = stats_work_ticks * TICK_PERIOD;
   total_work_time = stats_total_work_ticks * TICK_PERIOD;
   
-  printf("SPU %d:            L:%8.0f      R:%8.0f(%3d) W:%8.0f(%3d)\n"
-         "       T:%8.0f   %8.0f(%3d)   %8.0f(%3d)   %8.0f(%3d)\n",
+  printf("SPU %d:            L:%8d      R:%8d(%3d) W:%8d(%3d)\n"
+         "       T:%8d   %8d(%3d)   %8d(%3d)   %8d(%3d)\n",
          dep_params.id,
-         loaded_time,
-         running_time, stats_percentage(running_time, loaded_time),
-         work_time, stats_percentage(work_time, loaded_time),
-         total_time,
-         total_loaded_time, stats_percentage(total_loaded_time, total_time),
-         total_running_time, stats_percentage(total_running_time, total_time),
-         total_work_time, stats_percentage(total_work_time, total_time));
+         (uint32_t)loaded_time,
+         (uint32_t)running_time, stats_percentage(running_time, loaded_time),
+         (uint32_t)work_time, stats_percentage(work_time, loaded_time),
+         (uint32_t)total_time,
+         (uint32_t)total_loaded_time,
+         stats_percentage(total_loaded_time, total_time),
+         (uint32_t)total_running_time,
+         stats_percentage(total_running_time, total_time),
+         (uint32_t)total_work_time,
+         stats_percentage(total_work_time, total_time));
 
   if (UNLIKELY(stats_loaded_count != 0)) {
     cur = spu_read_decrementer();

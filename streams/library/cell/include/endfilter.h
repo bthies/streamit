@@ -18,6 +18,9 @@
 #undef ITEM_TYPE
 #undef INPUT_ITEM_TYPE
 #undef OUTPUT_ITEM_TYPE
+#undef PEEK_NO_MOD
+#undef POP_NO_MOD
+#undef PUSH_NO_MOD
 
 #undef INPUT_ITEM_SIZE
 #undef OUTPUT_ITEM_SIZE
@@ -51,6 +54,7 @@
 #undef state
 #undef peek
 #undef pop
+#undef popn
 #undef push
 #undef get_input
 #undef get_output

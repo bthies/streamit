@@ -17,6 +17,7 @@ uint32_t
 #endif
 spu_cmd_size[SPU_NUM_CMD_TYPES] = {
   define_command(LOAD_DATA),
+  define_command(CALL_FUNC),
   define_command(FILTER_LOAD),
   define_command(FILTER_UNLOAD),
   define_command(FILTER_ATTACH_INPUT),

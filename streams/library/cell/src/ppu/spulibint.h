@@ -18,7 +18,7 @@
 #define PPU_CMD_DT_OUT_BACK   3
 
 PPU_DT_PARAMS *ppu_dt_wait_spu(uint32_t spu_id, uint32_t spu_cmd_id,
-                               uint32_t tag);
+                               bool_t run_cb, uint32_t tag);
 void ppu_finish_dt(PPU_DT_PARAMS *cmd);
 
 /*-----------------------------------------------------------------------------

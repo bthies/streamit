@@ -216,14 +216,12 @@
                          void *const *const _inputs,                          \
                          void *const *const _outputs)                         \
   {                                                                           \
-    IF_SINGLE_INPUT(void *const _input = _inputs[0]);                         \
-    IF_SINGLE_OUTPUT(void *const _output = _outputs[0]);                      \
+    IF_SINGLE_INPUT(void *const _input UNUSED = _inputs[0]);                  \
+    IF_SINGLE_OUTPUT(void *const _output UNUSED = _outputs[0]);               \
     UNUSED_PARAM(param);                                                      \
     UNUSED_PARAM(_state);                                                     \
     UNUSED_PARAM(_inputs);                                                    \
-    UNUSED_PARAM(_outputs);                                                   \
-    IF_SINGLE_INPUT(UNUSED_PARAM(_input));                                    \
-    IF_SINGLE_OUTPUT(UNUSED_PARAM(_output));
+    UNUSED_PARAM(_outputs);
 
 #define END_WORK_FUNC \
   }
@@ -238,14 +236,11 @@
   void                                                                        \
   DECORATE_FUNC_NAME(init)()                                                  \
   {                                                                           \
-    PARAM_ARG(void *param);                                                   \
-    STATE_ARG(void *const _state);                                            \
-    INPUT_ARG(void *const _input, void *const *const _inputs);                \
-    OUTPUT_ARG(void *const _output, void *const *const _outputs);             \
-    PARAM_ARG(UNUSED_PARAM(param));                                           \
-    STATE_ARG(UNUSED_PARAM(_state));                                          \
-    INPUT_ARG(UNUSED_PARAM(_input), UNUSED_PARAM(_inputs));                   \
-    OUTPUT_ARG(UNUSED_PARAM(_output), UNUSED_PARAM(_outputs));
+    PARAM_ARG(void *param UNUSED);                                            \
+    STATE_ARG(void *const _state UNUSED);                                     \
+    INPUT_ARG(void *const _input UNUSED, void *const *const _inputs UNUSED);  \
+    OUTPUT_ARG(void *const _output UNUSED,                                    \
+               void *const *const _outputs UNUSED);
 
 #define END_INIT_FUNC \
   }
@@ -268,7 +263,11 @@ DECORATE_FUNC_NAME(peek)(void *buf_data, uint32_t n)
   BUFFER_CB *buf = buf_get_cb(buf_data);
   check(((buf->tail - buf->head) & buf->mask) >= (n + 1) * INPUT_ITEM_SIZE);
   return *(INPUT_ITEM_TYPE *)
-    (buf_data + ((buf->head + n * INPUT_ITEM_SIZE) & buf->mask));
+    (buf_data + ((buf->head + n * INPUT_ITEM_SIZE)
+#ifndef PEEK_NO_MOD
+                 & buf->mask
+#endif
+                 ));
 }
 
 static INLINE INPUT_ITEM_TYPE
@@ -278,19 +277,44 @@ DECORATE_FUNC_NAME(pop)(void *buf_data)
   INPUT_ITEM_TYPE item;
   check(((buf->tail - buf->head) & buf->mask) >= INPUT_ITEM_SIZE);
   item = *(INPUT_ITEM_TYPE *)(buf_data + buf->head);
-  buf->head = (buf->head + INPUT_ITEM_SIZE) & buf->mask;
+  buf->head = (buf->head + INPUT_ITEM_SIZE)
+#ifndef POP_NO_MOD
+    & buf->mask
+#endif
+    ;
+  return item;
+}
+
+// popn pops n items and returns the last one - this has different semantics
+// from peek
+static INLINE INPUT_ITEM_TYPE
+DECORATE_FUNC_NAME(popn)(void *buf_data, uint32_t n)
+{
+  BUFFER_CB *buf = buf_get_cb(buf_data);
+  INPUT_ITEM_TYPE item;
+  check((n != 0) &&
+        (((buf->tail - buf->head) & buf->mask) >= n * INPUT_ITEM_SIZE));
+  item = *(INPUT_ITEM_TYPE *)
+    (buf_data + ((buf->head + (n - 1) * INPUT_ITEM_SIZE) & buf->mask));
+  buf->head = (buf->head + n * INPUT_ITEM_SIZE)
+#ifndef POP_NO_MOD
+    & buf->mask
+#endif
+    ;
   return item;
 }
 
 #if (NUM_INPUT_TAPES == 1)
 #define peek(n)             DECORATE_FUNC_NAME(peek)(_input, n)
 #define pop()               DECORATE_FUNC_NAME(pop)(_input)
+#define popn(n)             DECORATE_FUNC_NAME(popn)(_input, n)
 #define get_input()         \
   ((INPUT_ITEM_TYPE *)(_input + buf_get_cb(_input)->head))
 #define advance_input(n)    buf_advance_head(_input, (n) * INPUT_ITEM_SIZE)
 #else
 #define peek(t, n)          DECORATE_FUNC_NAME(peek)(_inputs[t], n)
 #define pop(t)              DECORATE_FUNC_NAME(pop)(_inputs[t])
+#define popn(t, n)          DECORATE_FUNC_NAME(popn)(_inputs[t], n)
 #define get_input(t)        \
   ((INPUT_ITEM_TYPE *)(_inputs[t] + buf_get_cb(_inputs[t])->head))
 #define advance_input(t, n) \
@@ -308,7 +332,11 @@ DECORATE_FUNC_NAME(push)(void *buf_data, OUTPUT_ITEM_TYPE item)
   BUFFER_CB *buf = buf_get_cb(buf_data);
   check(((buf->head - buf->tail - 1) & buf->mask) >= OUTPUT_ITEM_SIZE);
   *(OUTPUT_ITEM_TYPE *)(buf_data + buf->tail) = item;
-  buf->tail = (buf->tail + OUTPUT_ITEM_SIZE) & buf->mask;
+  buf->tail = (buf->tail + OUTPUT_ITEM_SIZE)
+#ifndef PUSH_NO_MOD
+    & buf->mask
+#endif
+    ;
 }
 
 #if (NUM_OUTPUT_TAPES == 1)

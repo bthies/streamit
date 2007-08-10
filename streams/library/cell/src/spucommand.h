@@ -310,14 +310,15 @@ typedef struct _SPU_DT_IN_CMD {
   LS_ADDRESS buf_data;            // LS address of buffer data (destination)
 // 16
   MEM_ADDRESS src_buf_data;       // Address of source buffer data
+  MEM_ADDRESS src_buf;            // Address of source buffer control block
   uint32_t src_buf_mask;          // Mask for source buffer (size - 1)
   uint32_t num_bytes;             // Number of bytes to transfer
-// 28
+// 32
   uint8_t state;                  // (**)
   SPU_DMA_TAG tag;                // (*) Tag for copying data and writing ack
-  uint8_t _padding0[2];
-// 32
-  uint32_t _padding1[2];
+  uint8_t _padding[2];
+// 36
+  uint32_t copy_bytes;            // (*)
 // 40
   union {
     uint32_t out_ack;             // (*) Acknowledgement to source buffer
@@ -325,7 +326,7 @@ typedef struct _SPU_DT_IN_CMD {
     uint32_t src_tail;            // (* dt_in_front only)
   };
 // 44
-  uint32_t copy_bytes;            // (*)
+  uint32_t ua_bytes;              // (*)
 // 48
   vec16_uint8_t ua_data;          // (*)
 } QWORD_ALIGNED SPU_DT_IN_CMD;
@@ -339,16 +340,18 @@ typedef struct _SPU_DT_OUT_PPU_CMD {
   LS_ADDRESS buf_data;        // LS address of buffer data (source)
 // 16
   MEM_ADDRESS dest_buf_data;  // Address of destination buffer data
+  MEM_ADDRESS dest_buf;       // Address of destination buffer control block
   uint32_t dest_buf_mask;     // Mask for destination buffer (size - 1)
   uint32_t num_bytes;         // Number of bytes to transfer
-// 28
+// 32
+  bool_t tail_overlaps;       // Never write unaligned data directly
   uint8_t state;              // (**)
   SPU_DMA_TAG tag;            // (*) Tag for copying data
-  uint8_t _padding0[2];
-// 32
+  uint8_t _padding0;
+// 36
   uint32_t dest_tail;         // (*)
   uint32_t copy_bytes;        // (*)
-  uint32_t _padding1[2];
+  uint32_t tail_ua_bytes;     // (**) Initialize to 0
 } QWORD_ALIGNED SPU_DT_OUT_PPU_CMD;
 
 C_ASSERT(sizeof(SPU_DT_OUT_PPU_CMD) == 48);

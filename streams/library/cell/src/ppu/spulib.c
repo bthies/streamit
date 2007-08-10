@@ -91,17 +91,21 @@ spu_issue_group(uint32_t spu_id, uint32_t gid, SPU_ADDRESS da)
  * pointer to memory for data transfer parameters.
  *---------------------------------------------------------------------------*/
 PPU_DT_PARAMS *
-ppu_dt_wait_spu(uint32_t spu_id, uint32_t spu_cmd_id, uint32_t tag)
+ppu_dt_wait_spu(uint32_t spu_id, uint32_t spu_cmd_id, bool_t run_cb,
+                uint32_t tag)
 {
   SPU_INFO *spu = &spu_info[spu_id];
+  PPU_DT_CMD *dt_cmd;
 
   // Make sure nothing is already waiting on the SPU command ID.
   pcheck(spu_cmd_id < SPU_MAX_COMMANDS);
   check((spu->dt_mask & (1 << spu_cmd_id)) == 0);
 
   spu->dt_mask |= (1 << spu_cmd_id);
-  spu->dt_waiting[spu_cmd_id].tag = tag;
-  return &spu->dt_waiting[spu_cmd_id].params;
+  dt_cmd = &spu->dt_waiting[spu_cmd_id];
+  dt_cmd->run_cb = run_cb;
+  dt_cmd->tag = tag;
+  return &dt_cmd->params;
 }
 
 /*-----------------------------------------------------------------------------
@@ -129,13 +133,14 @@ spu_handle_complete(uint32_t spu_id, uint32_t mask)
     while (dt_mask != 0) {
       uint32_t spu_cmd_id = count_ls_zeros(dt_mask);
       uint32_t spu_cmd_bit = (1 << spu_cmd_id);
+      PPU_DT_CMD *dt_cmd = &spu->dt_waiting[spu_cmd_id];
 
-      ppu_finish_dt(&spu->dt_waiting[spu_cmd_id].params);
+      ppu_finish_dt(&dt_cmd->params);
 
       // Run PPU callback if command is not internal.
-      if (((internal_mask & spu_cmd_bit) != 0) &&
+      if (dt_cmd->run_cb && ((internal_mask & spu_cmd_bit) != 0) &&
           (spu->ppu_dt_complete_cb != NULL)) {
-        (*spu->ppu_dt_complete_cb)(spu->dt_waiting[spu_cmd_id].tag);
+        (*spu->ppu_dt_complete_cb)(dt_cmd->tag);
       }
 
       dt_mask &= ~spu_cmd_bit;

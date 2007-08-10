@@ -37,10 +37,12 @@ typedef struct _PPU_DT_PARAMS {
   uint32_t type;
   BUFFER_CB *buf;
   uint32_t num_bytes;
+  bool_t tail_overlaps;
 } PPU_DT_PARAMS;
 
 // Bookkeeping info for waiting PPU data transfer commands.
 typedef struct _PPU_DT_CMD {
+  bool_t run_cb;
   uint32_t tag;           // Callback tag
   PPU_DT_PARAMS params;
 } PPU_DT_CMD;
@@ -266,6 +268,9 @@ DECLARE_SPU_COMMAND(buffer_align,
 DECLARE_SPU_COMMAND(dt_in_back,
                     SPU_ADDRESS buf_data, void *src_buf_data,
                     uint32_t src_buf_size, uint32_t num_bytes);
+DECLARE_SPU_COMMAND(dt_in_back_ppu_ex,
+                    SPU_ADDRESS buf_data, BUFFER_CB *src_buf,
+                    uint32_t num_bytes);
 DECLARE_SPU_COMMAND(dt_out_front,
                     SPU_ADDRESS buf_data, void *dest_buf_data,
                     uint32_t num_bytes);
@@ -275,6 +280,9 @@ DECLARE_SPU_COMMAND(dt_out_front_spu,
 DECLARE_SPU_COMMAND(dt_out_front_ppu,
                     SPU_ADDRESS buf_data, void *dest_buf_data,
                     uint32_t dest_buf_size, uint32_t num_bytes);
+DECLARE_SPU_COMMAND(dt_out_front_ppu_ex,
+                    SPU_ADDRESS buf_data, BUFFER_CB *dest_buf,
+                    uint32_t num_bytes, bool_t tail_overlaps);
 
 #undef DECLARE_SPU_COMMAND
 
@@ -300,6 +308,14 @@ void *alloc_buffer(uint32_t size, uint32_t data_offset);
 void align_buffer(void *buf_data, uint32_t data_offset);
 void dealloc_buffer(void *buf_data);
 
+void init_buffer(BUFFER_CB *buf, void *buf_data, uint32_t size,
+                 uint32_t data_offset);
+void duplicate_buffer(BUFFER_CB *dest, BUFFER_CB *src);
+
+void *malloc_aligned(uint32_t size);
+void free_aligned(void *data);
+void touch_pages(void *data, uint32_t size);
+
 // Data transfer commands.
 //
 // The currently (or next, if the ID is not yet issued) issued command with ID
@@ -312,6 +328,20 @@ void dt_in_back(void *buf_data, uint32_t src_spu, SPU_ADDRESS src_buf_data,
                 uint32_t num_bytes, uint32_t spu_cmd_id, uint32_t tag);
 void dt_out_front(void *buf_data, uint32_t dest_spu, SPU_ADDRESS dest_buf_data,
                   uint32_t num_bytes, uint32_t spu_cmd_id, uint32_t tag);
+
+// For dt_in_back_ex, all except the last corresponding SPU dt_out_front_ppu
+// command must transfer to a qword boundary.
+void dt_in_back_ex(BUFFER_CB *buf, uint32_t src_spu, SPU_ADDRESS src_buf_data,
+                   uint32_t num_bytes, bool_t tail_overlaps,
+                   uint32_t first_spu_cmd_id);
+void dt_out_front_ex(BUFFER_CB *buf, uint32_t dest_spu,
+                     SPU_ADDRESS dest_buf_data, uint32_t num_bytes);
+
+#if DT_ALLOW_UNALIGNED
+void finish_dt_in_back_ex(BUFFER_CB *buf, uint32_t num_bytes);
+#else
+#define finish_dt_in_back_ex(buf, num_bytes)
+#endif
 
 /*-----------------------------------------------------------------------------
  * Library-handled operations.

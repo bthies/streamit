@@ -228,6 +228,8 @@ run_dt_in_back(DT_IN_BACK_CMD *cmd)
       dt_bytes = src_bytes;
     }
 
+    assert((dt_bytes == src_bytes) ||
+           (((buf->tail + dt_bytes) & QWORD_MASK) == 0));
     buf->in_back_buffered_bytes = dt_bytes - cmd->num_bytes;
     cmd->num_bytes = dt_bytes;
 
@@ -475,6 +477,8 @@ run_dt_out_front_ppu(DT_OUT_FRONT_PPU_CMD *cmd)
       }
     }
 
+    assert((dt_bytes == dest_bytes) ||
+           (((buf->head + dt_bytes) & QWORD_MASK) == 0));
     buf->out_front_buffered_bytes = cmd->num_bytes - dt_bytes;
     cmd->num_bytes = dt_bytes;
 

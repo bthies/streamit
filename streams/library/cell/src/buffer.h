@@ -160,4 +160,44 @@ buf_bytes_used(BUFFER_CB *buf)
   return (buf->tail - buf->head) & buf->mask;
 }
 
+/*-----------------------------------------------------------------------------
+ * buf_set_head
+ *---------------------------------------------------------------------------*/
+static INLINE void
+buf_set_head(BUFFER_CB *buf, uint32_t new_head)
+{
+  buf->head = new_head;
+  IF_CHECK(buf->ihead = new_head);
+}
+
+/*-----------------------------------------------------------------------------
+ * buf_set_tail
+ *---------------------------------------------------------------------------*/
+static INLINE void
+buf_set_tail(BUFFER_CB *buf, uint32_t new_tail)
+{
+  buf->tail = new_tail;
+  IF_CHECK(buf->otail = new_tail);
+}
+
+/*-----------------------------------------------------------------------------
+ * buf_inc_head
+ *---------------------------------------------------------------------------*/
+static INLINE void
+buf_inc_head(BUFFER_CB *buf, uint32_t num_bytes)
+{
+  buf->head = (buf->head + num_bytes) & buf->mask;
+  IF_CHECK(buf->ihead = buf->head);
+}
+
+/*-----------------------------------------------------------------------------
+ * buf_inc_tail
+ *---------------------------------------------------------------------------*/
+static INLINE void
+buf_inc_tail(BUFFER_CB *buf, uint32_t num_bytes)
+{
+  buf->tail = (buf->tail + num_bytes) & buf->mask;
+  IF_CHECK(buf->otail = buf->tail);
+}
+
 #endif

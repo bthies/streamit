@@ -78,6 +78,14 @@ spu_done_command(SPU_CMD_GROUP *g, SPU_CMD_HEADER *cmd)
  *---------------------------------------------------------------------------*/
 
 /*-----------------------------------------------------------------------------
+ * spu_null
+ *---------------------------------------------------------------------------*/
+DECLARE_SPU_COMMAND(null, NULL)
+{
+}
+END_SPU_COMMAND
+
+/*-----------------------------------------------------------------------------
  * spu_load_data
  *---------------------------------------------------------------------------*/
 DECLARE_SPU_COMMAND(load_data, LOAD_DATA,
@@ -205,9 +213,9 @@ END_SPU_COMMAND
 
 
 /*-----------------------------------------------------------------------------
- * spu_dt_in_back_ex
+ * spu_dt_in_back_ppu_ex
  *---------------------------------------------------------------------------*/
-DECLARE_SPU_COMMAND(dt_in_back_ex, DT_IN_BACK,
+DECLARE_SPU_COMMAND(dt_in_back_ppu_ex, DT_IN_BACK,
                     SPU_ADDRESS buf_data, BUFFER_CB *src_buf,
                     uint32_t num_bytes)
 {

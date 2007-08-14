@@ -11,13 +11,22 @@
  *
  * Allocates memory for and initializes a new buffer.
  *
- * size is in bytes, must be multiple of 128 bytes.
+ * size is in bytes, must be power of 2 and at least 128 bytes.
  * data_offset is initial value of head/tail pointers.
  *
  * Returns pointer to buffer data, NULL on failure.
  *---------------------------------------------------------------------------*/
 void *
 alloc_buffer(uint32_t size, uint32_t data_offset)
+{
+  return alloc_buffer_ex(size, TRUE, data_offset);
+}
+
+/*-----------------------------------------------------------------------------
+ * alloc_buffer_ex
+ *---------------------------------------------------------------------------*/
+void *
+alloc_buffer_ex(uint32_t size, bool_t circular, uint32_t data_offset)
 {
   /*
    * Additional memory is allocated to align buffer data on cache line (128
@@ -38,7 +47,9 @@ alloc_buffer(uint32_t size, uint32_t data_offset)
   BUFFER_CB *buf;
   void *buf_data;
 
-  pcheck((size >= CACHE_SIZE) && (data_offset < size));
+  pcheck((!circular ||
+          ((size >= CACHE_SIZE) && (size == (1U << count_ls_zeros(size))))) &&
+         (data_offset < size));
 
   mem = malloc(CACHE_SIZE + sizeof(BUFFER_CB) + size);
 
@@ -54,7 +65,7 @@ alloc_buffer(uint32_t size, uint32_t data_offset)
   buf = (BUFFER_CB *)(mem_ptr + 1);
   buf_data = buf + 1;
   touch_pages(buf_data, size);
-  init_buffer(buf, buf_data, size, data_offset);
+  init_buffer(buf, buf_data, size, circular, data_offset);
 
   return buf_data;
 }
@@ -111,10 +122,12 @@ dealloc_buffer(void *buf_data)
  * init_buffer
  *---------------------------------------------------------------------------*/
 void
-init_buffer(BUFFER_CB *buf, void *buf_data, uint32_t size,
+init_buffer(BUFFER_CB *buf, void *buf_data, uint32_t size, bool_t circular,
             uint32_t data_offset)
 {
-  pcheck((size >= CACHE_SIZE) && (data_offset < size));
+  pcheck((!circular ||
+          ((size >= CACHE_SIZE) && (size == (1U << count_ls_zeros(size))))) &&
+         (data_offset < size));
 
   if (buf_data == NULL) {
     buf_data = malloc_aligned(size);
@@ -124,7 +137,7 @@ init_buffer(BUFFER_CB *buf, void *buf_data, uint32_t size,
   }
 
   buf->data = buf_data;
-  buf->mask = (size == (1U << count_ls_zeros(size)) ? size - 1 : 0x7fffffff);
+  buf->mask = (circular ? size - 1 : 0x7fffffff);
   buf->head = data_offset;
   buf->tail = data_offset;
 

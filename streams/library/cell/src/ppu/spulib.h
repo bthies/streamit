@@ -247,6 +247,7 @@ spu_next_command(SPU_CMD_GROUP *g, SPU_CMD_HEADER *cmd)
   SPU_CMD_HEADER *spu_##name(SPU_CMD_GROUP *g, ##__VA_ARGS__,                 \
                              uint32_t cmd_id, uint32_t num_deps, ...)
 
+DECLARE_SPU_COMMAND(null);
 DECLARE_SPU_COMMAND(load_data,
                     SPU_ADDRESS dest_da, void *src_addr, uint32_t num_bytes);
 DECLARE_SPU_COMMAND(call_func,
@@ -305,11 +306,12 @@ typedef SPU_CMD_HEADER *(*SPU_DT_OUT_FRONT_FUNC)
 // and specified point to the start of buffer data. The control block is
 // immediately before that (obtain with buf_get_cb).
 void *alloc_buffer(uint32_t size, uint32_t data_offset);
+void *alloc_buffer_ex(uint32_t size, bool_t circular, uint32_t data_offset);
 void align_buffer(void *buf_data, uint32_t data_offset);
 void dealloc_buffer(void *buf_data);
 
 void init_buffer(BUFFER_CB *buf, void *buf_data, uint32_t size,
-                 uint32_t data_offset);
+                 bool_t circular, uint32_t data_offset);
 void duplicate_buffer(BUFFER_CB *dest, BUFFER_CB *src);
 
 void *malloc_aligned(uint32_t size);

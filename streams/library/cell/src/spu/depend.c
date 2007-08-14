@@ -419,6 +419,10 @@ dep_execute()
       run_req_handler();
       break;
 
+    case CMD_NULL:
+      dep_complete_command();
+      break;
+
     case CMD_LOAD_DATA:
       run_load_data((LOAD_DATA_CMD *)cmd);
       break;

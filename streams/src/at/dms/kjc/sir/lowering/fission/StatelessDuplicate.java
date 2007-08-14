@@ -132,10 +132,20 @@ public class StatelessDuplicate {
      * outside of the init function.
      */
     public static boolean hasMutableState(final SIRFilter filter) {
+        return sizeOfMutableState(filter) > 0;
+    }
+
+    /**
+     * Returns the number of bytes of mutable state (using C types)
+     * for filter <filter>.  Conservatively assumes that if a single
+     * location in an array is mutable state, then the entire array is
+     * mutable state.
+     */
+    public static int sizeOfMutableState(final SIRFilter filter) {
         // whether or not we are on the LHS of an assignment
         final boolean[] inAssignment = { false };
-        // whether or not we have found any mutable state
-        final boolean[] foundMutable = { false };
+        // names of fields that are mutatable state
+        final HashSet mutatedFields = new HashSet();
 
         // visit all methods except <init>
         List<JMethodDeclaration> methods = GetSteadyMethods.getSteadyMethods(filter);
@@ -188,7 +198,7 @@ public class StatelessDuplicate {
                                                      String ident) {
                         // if we are in assignment, mark that there is mutable state
                         if (inAssignment[0]) {
-                            foundMutable[0] = true;
+                            mutatedFields.add(self.getIdent());
                         }
 
                         super.visitFieldExpression(self, left, ident);
@@ -196,7 +206,26 @@ public class StatelessDuplicate {
                         
                 });
 
-        return foundMutable[0];
+        // tally up the size of all the fields found
+        int mutableSizeInC = 0;
+        JFieldDeclaration fields[] = filter.getFields();
+        for (int i=0; i<fields.length; i++) {
+            JVariableDefinition var = fields[i].getVariable();
+            if (mutatedFields.contains(var.getIdent())) {
+                if (var.getType() == null) {
+                    // this should never happen
+                    System.err.println("Warning: found null type of variable in JFieldDeclaration.");
+                    mutableSizeInC++;  // increment size just in case
+                } else {
+                    int size = var.getType().getSizeInC();
+                    // fields should always have non-zero size
+                    assert size > 0;
+                    mutableSizeInC += size;
+                }
+            }
+        }
+
+        return mutableSizeInC;
     }
 
 

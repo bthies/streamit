@@ -1,18 +1,10 @@
-#ifndef SPULIB_CONFIG_FILE
-#define NO_SPULIB
-#endif
-#ifndef NO_SPULIB
 #include "filterdefs.h"
-#endif
 #include "workstate.h"
 
-#ifndef NO_SPULIB
 #define FILTER_NAME fft
-#define USE_PARAM
 #define HAS_STATE
 #define ITEM_TYPE float
 #include "beginfilter.h"
-#endif
 
 // m iters, pop/push 2n floats per iter
 static void
@@ -69,22 +61,11 @@ CombineDFT(int m, int n, float wn_r, float wn_i, float *in, float *out)
 }
 
 // one iteration does pop 512/push 512
-#ifndef NO_SPULIB
 BEGIN_WORK_FUNC
-{
-  uint32_t *bufpos = (uint32_t *)param;
-  float *in = (float *)(_input + *bufpos);
-  float *out = in;
-  *bufpos = (*bufpos + 2048) & buf_get_cb(_input)->mask;
-#else
-void
-work(FILTER_fft_STATE *s, float *in, float *out)
-#define state (*s)
-#endif
 {
   float b0[512];
   float b1[512];
-  FFTReorderSimple(  1, 256, in, b0);
+  FFTReorderSimple(  1, 256, get_input(), b0);
   FFTReorderSimple(  2, 128, b0, b1);
   FFTReorderSimple(  4,  64, b1, b0);
   FFTReorderSimple(  8,  32, b0, b1);
@@ -98,9 +79,8 @@ work(FILTER_fft_STATE *s, float *in, float *out)
   CombineDFT(  8,  32, state.c[4].wn_r, state.c[4].wn_i, b0, b1);
   CombineDFT(  4,  64, state.c[5].wn_r, state.c[5].wn_i, b1, b0);
   CombineDFT(  2, 128, state.c[6].wn_r, state.c[6].wn_i, b0, b1);
-  CombineDFT(  1, 256, state.c[7].wn_r, state.c[7].wn_i, b1, out);
-}
-#ifndef NO_SPULIB
+  CombineDFT(  1, 256, state.c[7].wn_r, state.c[7].wn_i, b1, get_output());
+  advance_input(512);
+  advance_output(512);
 }
 END_WORK_FUNC
-#endif

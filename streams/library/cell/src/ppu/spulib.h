@@ -256,12 +256,18 @@ DECLARE_SPU_COMMAND(filter_load,
                     SPU_ADDRESS filt, SPU_FILTER_DESC *desc);
 DECLARE_SPU_COMMAND(filter_unload,
                     SPU_ADDRESS filt);
+#if CHECK
+DECLARE_SPU_COMMAND(filter_detach_all,
+                    SPU_ADDRESS filt);
+#endif
 DECLARE_SPU_COMMAND(filter_attach_input,
                     SPU_ADDRESS filt, uint32_t tape_id, SPU_ADDRESS buf_data);
 DECLARE_SPU_COMMAND(filter_attach_output,
                     SPU_ADDRESS filt, uint32_t tape_id, SPU_ADDRESS buf_data);
 DECLARE_SPU_COMMAND(filter_run,
                     SPU_ADDRESS filt, uint32_t iters);
+DECLARE_SPU_COMMAND(filter_run_ex,
+                    SPU_ADDRESS filt, uint32_t iters, uint32_t loop_iters);
 DECLARE_SPU_COMMAND(buffer_alloc,
                     SPU_ADDRESS buf_data, uint32_t size, uint32_t data_offset);
 DECLARE_SPU_COMMAND(buffer_align,
@@ -284,6 +290,9 @@ DECLARE_SPU_COMMAND(dt_out_front_ppu,
 DECLARE_SPU_COMMAND(dt_out_front_ppu_ex,
                     SPU_ADDRESS buf_data, BUFFER_CB *dest_buf,
                     uint32_t num_bytes, bool_t tail_overlaps);
+#if SPU_STATS_ENABLE
+DECLARE_SPU_COMMAND(stats_print);
+#endif
 
 #undef DECLARE_SPU_COMMAND
 

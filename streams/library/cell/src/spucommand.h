@@ -40,8 +40,10 @@
 #define SPU_CMD_DT_OUT_BACK          13
 #define SPU_CMD_DT_OUT_FRONT_PPU     14
 #define SPU_CMD_DT_OUT_BACK_PPU      15
+// Stats commands.
+#define SPU_CMD_STATS_PRINT          16
 // Number of command types.
-#define SPU_NUM_CMD_TYPES            16
+#define SPU_NUM_CMD_TYPES            17
 
 /*
  * All command structures (except the SPU's internal worker commands) are
@@ -52,26 +54,39 @@
  * initialized by PPU code.
  */
 
-// Common header for all commands. Each command can have up to 7 backward
-// dependencies. Once added to the dependency graph, each command must not
-// accumulate more than 7 forward dependencies.
+// Common header for all commands.
 //
-// 12 bytes in size (not padded), 16-byte aligned
+// 5 bytes in size (not padded), 16-byte aligned
 typedef struct _SPU_CMD_HEADER {
   uint8_t type;               // Type of command
   uint8_t id;                 // ID of command
   uint8_t num_back_deps;      // Number of backward deps
   uint8_t num_forward_deps;   // (**) Number of forward deps - initialize to 0
+  uint8_t next;               // (*) ID of next command in run queue/wait list
   // IDs of dependencies. These are backward deps when command is issued,
   // become filled in with forward deps once added to dependency graph.
-  uint8_t deps[7];
-  uint8_t next;               // (*) ID of next command in run queue/wait list
+  uint8_t deps[];
 } SPU_CMD_HEADER QWORD_ALIGNED;
 
-C_ASSERT(sizeof(SPU_CMD_HEADER) == 12);
+C_ASSERT(sizeof(SPU_CMD_HEADER) == 5);
 
 // Maximum number of backward/forward deps a command can have.
-#define SPU_CMD_MAX_DEPS arraysize(((SPU_CMD_HEADER *)0)->deps)
+//
+// null, filter_load, filter_run have more.
+#define SPU_CMD_MAX_DEPS        7   // Header is 12 bytes
+#define SPU_CMD_MAX_DEPS_LARGE  15  // Header is 20 bytes
+
+#define SPU_CMD_LARGE_HEADER_TYPES \
+  ((1 << SPU_CMD_NULL) | (1 << SPU_CMD_FILTER_LOAD) |                         \
+   (1 << SPU_CMD_FILTER_RUN))
+
+#define SPU_DECLARE_CMD_HEADER \
+  SPU_CMD_HEADER header;                                                      \
+  uint8_t header_deps[SPU_CMD_MAX_DEPS];
+
+#define SPU_DECLARE_CMD_HEADER_LARGE \
+  SPU_CMD_HEADER header;                                                      \
+  uint8_t header_deps[SPU_CMD_MAX_DEPS_LARGE];
 
 /*-----------------------------------------------------------------------------
  * Generic commands.
@@ -81,19 +96,19 @@ C_ASSERT(sizeof(SPU_CMD_HEADER) == 12);
 //
 // Does nothing - used to reduce dependency fan-in/out.
 typedef struct _SPU_NULL_CMD {
-  SPU_CMD_HEADER header;
-// 12
-  uint32_t _padding;
+  SPU_DECLARE_CMD_HEADER_LARGE
+// 20
+  uint32_t _padding[3];
 } QWORD_ALIGNED SPU_NULL_CMD;
 
-C_ASSERT(sizeof(SPU_NULL_CMD) == 16);
+C_ASSERT(sizeof(SPU_NULL_CMD) == 32);
 
 // load_data command
 //
 // Copies data into local store. Addresses must be 16-byte aligned and size
 // must be 16-byte padded.
 typedef struct _SPU_LOAD_DATA_CMD {
-  SPU_CMD_HEADER header;
+  SPU_DECLARE_CMD_HEADER
 // 12
   LS_ADDRESS dest_lsa;    // LS address to copy data to
 // 16
@@ -111,7 +126,7 @@ C_ASSERT(sizeof(SPU_LOAD_DATA_CMD) == 32);
 //
 // Calls a void (void) function.
 typedef struct _SPU_CALL_FUNC_CMD {
-  SPU_CMD_HEADER header;
+  SPU_DECLARE_CMD_HEADER
 // 12
   LS_ADDRESS func;        // LS address of function
 } QWORD_ALIGNED SPU_CALL_FUNC_CMD;
@@ -141,14 +156,17 @@ C_ASSERT(sizeof(SPU_INT_FILTER_DESC) == 20);
 // Properly padded version of SPU_INT_FILTER_DESC for use by scheduler code.
 //
 // 16-byte aligned and padded
-typedef struct _SPU_FILTER_DESC {
-  LS_ADDRESS work_func;     // Entry point of work function
-  LS_ADDRESS param;         // Pointer parameter passed to work function
-  uint32_t state_size;      // Size of filter state (must be 16-byte padded)
-  MEM_ADDRESS state_addr;   // Address to copy state from
+typedef union _SPU_FILTER_DESC {
+  struct {
+    LS_ADDRESS work_func;     // Entry point of work function
+    LS_ADDRESS param;         // Pointer parameter passed to work function
+    uint32_t state_size;      // Size of filter state (must be 16-byte padded)
+    MEM_ADDRESS state_addr;   // Address to copy state from
 // 16
-  uint8_t num_inputs;       // Number of input tapes
-  uint8_t num_outputs;      // Number of output tapes
+    uint8_t num_inputs;       // Number of input tapes
+    uint8_t num_outputs;      // Number of output tapes
+  };
+  SPU_INT_FILTER_DESC cmd_desc;
 } QWORD_ALIGNED SPU_FILTER_DESC;
 
 #if CHECK
@@ -178,33 +196,39 @@ SPU_PREFIX(cmd_get_filt_cb_size)(uint8_t num_inputs, uint8_t num_outputs,
 //
 // Loads a filter.
 typedef struct _SPU_FILTER_LOAD_CMD {
-  SPU_CMD_HEADER header;
-// 12
+  SPU_DECLARE_CMD_HEADER_LARGE
+// 20
   LS_ADDRESS filt;           // LS address of filter CB
-// 16
-  SPU_INT_FILTER_DESC desc;  // Filter description
-// 36
+// 24
   uint8_t state;             // (**)
   SPU_DMA_TAG tag;           // (*) Tag used for copying filter state
   uint8_t _padding0[2];
-// 40
+// 28
   LS_ADDRESS state_lsa;      // (*)
-  uint32_t _padding1;
+// 32
+  SPU_INT_FILTER_DESC desc;  // Filter description
+// 52
+  uint32_t _padding1[3];
 } QWORD_ALIGNED SPU_FILTER_LOAD_CMD;
 
-C_ASSERT(sizeof(SPU_FILTER_LOAD_CMD) == 48);
+C_ASSERT(sizeof(SPU_FILTER_LOAD_CMD) == 64);
 
 // filter_unload command
 //
 // Unloads a filter.
 typedef struct _SPU_FILTER_UNLOAD_CMD {
-  SPU_CMD_HEADER header;
+  SPU_DECLARE_CMD_HEADER
 // 12
   LS_ADDRESS filt;        // LS address of filter CB
 // 16
   uint8_t state;          // (**)
   SPU_DMA_TAG tag;        // (*) Tag used for writing back filter state
+#if CHECK
+  bool_t detach_only;
+  uint8_t _padding[13];
+#else
   uint8_t _padding[14];
+#endif
 } QWORD_ALIGNED SPU_FILTER_UNLOAD_CMD;
 
 C_ASSERT(sizeof(SPU_FILTER_UNLOAD_CMD) == 32);
@@ -213,7 +237,7 @@ C_ASSERT(sizeof(SPU_FILTER_UNLOAD_CMD) == 32);
 //
 // Attaches an input/output tape of a filter to a buffer.
 typedef struct _SPU_FILTER_ATTACH_CMD {
-  SPU_CMD_HEADER header;
+  SPU_DECLARE_CMD_HEADER
 // 12
   LS_ADDRESS filt;        // LS address of filter CB
 // 16
@@ -233,20 +257,19 @@ typedef SPU_FILTER_ATTACH_CMD SPU_FILTER_ATTACH_OUTPUT_CMD;
 //
 // Runs a filter for a specified number of iterations.
 typedef struct _SPU_FILTER_RUN_CMD {
-  SPU_CMD_HEADER header;
-// 12
+  SPU_DECLARE_CMD_HEADER_LARGE
+// 20
   LS_ADDRESS filt;        // LS address of filter CB
-// 16
   uint32_t iters;         // Number of iterations to run for
+  uint32_t loop_iters;    // Iterations to run each time through event loop
+// 32
 #if CHECK
   uint8_t state;          // (**)
-  uint8_t _padding[11];
-#else
-  uint8_t _padding[12];
+  uint8_t _padding[15];
 #endif
 } QWORD_ALIGNED SPU_FILTER_RUN_CMD;
 
-C_ASSERT(sizeof(SPU_FILTER_RUN_CMD) == 32);
+C_ASSERT(sizeof(SPU_FILTER_RUN_CMD) == (CHECK ? 48 : 32));
 
 /*-----------------------------------------------------------------------------
  * Buffer commands.
@@ -257,7 +280,7 @@ C_ASSERT(sizeof(SPU_FILTER_RUN_CMD) == 32);
 // Allocates a buffer. Data address must be 128-byte aligned and size must be
 // power of 2 and at least 128 bytes.
 typedef struct _SPU_BUFFER_ALLOC_CMD {
-  SPU_CMD_HEADER header;
+  SPU_DECLARE_CMD_HEADER
 // 12
   LS_ADDRESS buf_data;    // LS address of buffer data
 // 16
@@ -273,7 +296,7 @@ C_ASSERT(sizeof(SPU_BUFFER_ALLOC_CMD) == 32);
 //
 // Adjusts head and tail pointers of an empty buffer.
 typedef struct _SPU_BUFFER_ALIGN_CMD {
-  SPU_CMD_HEADER header;
+  SPU_DECLARE_CMD_HEADER
 // 12
   LS_ADDRESS buf_data;    // LS address of buffer data
 // 16
@@ -298,7 +321,7 @@ typedef union _OUT_DTCB {
 
 // dt_out_front/dt_out_back commands
 typedef struct _SPU_DT_OUT_CMD {
-  SPU_CMD_HEADER header;
+  SPU_DECLARE_CMD_HEADER
 // 12
   LS_ADDRESS buf_data;        // LS address of buffer data (source)
 // 16
@@ -318,7 +341,7 @@ C_ASSERT(sizeof(SPU_DT_OUT_CMD) == 48);
 
 // dt_in_front/dt_in_back commands
 typedef struct _SPU_DT_IN_CMD {
-  SPU_CMD_HEADER header;
+  SPU_DECLARE_CMD_HEADER
 // 12
   LS_ADDRESS buf_data;            // LS address of buffer data (destination)
 // 16
@@ -348,7 +371,7 @@ C_ASSERT(sizeof(SPU_DT_IN_CMD) == 64);
 
 // dt_out_front_ppu/dt_out_back_ppu commands
 typedef struct _SPU_DT_OUT_PPU_CMD {
-  SPU_CMD_HEADER header;
+  SPU_DECLARE_CMD_HEADER
 // 12
   LS_ADDRESS buf_data;        // LS address of buffer data (source)
 // 16
@@ -375,6 +398,19 @@ typedef SPU_DT_OUT_CMD      SPU_DT_OUT_FRONT_CMD;
 typedef SPU_DT_OUT_CMD      SPU_DT_OUT_BACK_CMD;
 typedef SPU_DT_OUT_PPU_CMD  SPU_DT_OUT_FRONT_PPU_CMD;
 typedef SPU_DT_OUT_PPU_CMD  SPU_DT_OUT_BACK_PPU_CMD;
+
+/*-----------------------------------------------------------------------------
+ * Stats commands.
+ *---------------------------------------------------------------------------*/
+
+// stats_print
+typedef struct _SPU_STATS_PRINT_CMD {
+  SPU_DECLARE_CMD_HEADER
+// 12
+  uint32_t _padding;
+} QWORD_ALIGNED SPU_STATS_PRINT_CMD;
+
+C_ASSERT(sizeof(SPU_STATS_PRINT_CMD) == 16);
 
 // Size of each command structure.
 extern
@@ -425,7 +461,7 @@ typedef struct _SPU_PARAMS {
 // ID of first internal command group.
 #define SPU_INT_CMD_GROUP       SPU_MAX_CMD_GROUPS
 // Maximum number of command groups (including internal).
-#define SPU_INT_MAX_CMD_GROUPS  64
+#define SPU_INT_MAX_CMD_GROUPS  40
 // Maximum size of a command group. This is the size of each PPU command group
 // table entry.
 #define SPU_CMD_GROUP_MAX_SIZE  2048
@@ -524,13 +560,20 @@ spu_cmd_compose_req(LS_ADDRESS lsa, uint32_t entry, uint32_t size)
 #define CMD_DT_OUT_BACK           SPU_CMD_DT_OUT_BACK
 #define CMD_DT_OUT_FRONT_PPU      SPU_CMD_DT_OUT_FRONT_PPU
 #define CMD_DT_OUT_BACK_PPU       SPU_CMD_DT_OUT_BACK_PPU
+// Stats commands.
+#define CMD_STATS_PRINT           SPU_CMD_STATS_PRINT
 // Number of command types.
 #define NUM_CMD_TYPES             SPU_NUM_CMD_TYPES
 
-// Command structures.
 // Command header.
 #define CMD_HEADER                SPU_CMD_HEADER
 #define CMD_MAX_DEPS              SPU_CMD_MAX_DEPS
+#define CMD_MAX_DEPS_LARGE        SPU_CMD_MAX_DEPS_LARGE
+#define CMD_LARGE_HEADER_TYPES    SPU_CMD_LARGE_HEADER_TYPES
+#define DECLARE_CMD_HEADER        SPU_DECLARE_CMD_HEADER
+#define DECLARE_CMD_HEADER_LARGE  SPU_DECLARE_CMD_HEADER_LARGE
+
+// Command structures.
 // Generic commands.
 #define NULL_CMD                  SPU_NULL_CMD
 #define LOAD_DATA_CMD             SPU_LOAD_DATA_CMD
@@ -552,6 +595,8 @@ spu_cmd_compose_req(LS_ADDRESS lsa, uint32_t entry, uint32_t size)
 #define DT_OUT_BACK_CMD           SPU_DT_OUT_BACK_CMD
 #define DT_OUT_FRONT_PPU_CMD      SPU_DT_OUT_FRONT_PPU_CMD
 #define DT_OUT_BACK_PPU_CMD       SPU_DT_OUT_BACK_PPU_CMD
+// Stats commands.
+#define STATS_PRINT_CMD           SPU_STATS_PRINT_CMD
 
 #endif
 

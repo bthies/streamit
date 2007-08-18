@@ -11,13 +11,13 @@ ifdef SPULIB_CONFIG_FILE
   CFLAGS		:= -D 'SPULIB_CONFIG_FILE="$(SPULIB_CONFIG_FILE)"'
 endif
 
-CFLAGS_gcc		:= -std=gnu99
+CFLAGS_gcc		:= -std=gnu99 -Wall
 CFLAGS_xlc		:= -qkeyword=typeof
 
 ifdef SPULIB_OPT_LEVEL
   CC_OPT_LEVEL	:= $(SPULIB_OPT_LEVEL)
 else
-  CC_OPT_LEVEL	:= -g
+  CC_OPT_LEVEL	:= -g -O3
 endif
 
 # Use SDK build environment

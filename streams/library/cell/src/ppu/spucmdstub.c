@@ -36,7 +36,10 @@ static INLINE void
 spu_init_header(SPU_CMD_HEADER *cmd, uint32_t type, uint32_t id,
                 uint32_t num_deps, va_list deps)
 {
-  pcheck((id < SPU_MAX_COMMANDS) && (num_deps <= SPU_CMD_MAX_DEPS));
+  pcheck((id < SPU_MAX_COMMANDS) &&
+         ((num_deps <= SPU_CMD_MAX_DEPS) ||
+          ((num_deps <= SPU_CMD_MAX_DEPS_LARGE) &&
+           ((SPU_CMD_LARGE_HEADER_TYPES & (1 << type)) != 0))));
 
   cmd->type = type;
   cmd->id = id;
@@ -116,7 +119,7 @@ DECLARE_SPU_COMMAND(filter_load, FILTER_LOAD,
                     SPU_ADDRESS filt, SPU_FILTER_DESC *desc)
 {
   cmd->filt = spu_lsa(g->spu_id, filt);
-  cmd->desc = *(SPU_INT_FILTER_DESC *)desc;
+  cmd->desc = desc->cmd_desc;
 
   cmd->state = 0;
 }
@@ -129,10 +132,28 @@ DECLARE_SPU_COMMAND(filter_unload, FILTER_UNLOAD,
                     SPU_ADDRESS filt)
 {
   cmd->filt = spu_lsa(g->spu_id, filt);
+  IF_CHECK(cmd->detach_only = FALSE);
 
   cmd->state = 0;
 }
 END_SPU_COMMAND
+
+#if CHECK
+
+/*-----------------------------------------------------------------------------
+ * spu_filter_detach_all
+ *---------------------------------------------------------------------------*/
+DECLARE_SPU_COMMAND(filter_detach_all, FILTER_UNLOAD,
+                    SPU_ADDRESS filt)
+{
+  cmd->filt = spu_lsa(g->spu_id, filt);
+  cmd->detach_only = TRUE;
+
+  cmd->state = 0;
+}
+END_SPU_COMMAND
+
+#endif
 
 /*-----------------------------------------------------------------------------
  * spu_filter_attach_input
@@ -166,6 +187,21 @@ DECLARE_SPU_COMMAND(filter_run, FILTER_RUN,
 {
   cmd->filt = spu_lsa(g->spu_id, filt);
   cmd->iters = iters;
+  cmd->loop_iters = 1;
+
+  IF_CHECK(cmd->state = 0);
+}
+END_SPU_COMMAND
+
+/*-----------------------------------------------------------------------------
+ * spu_filter_run_ex
+ *---------------------------------------------------------------------------*/
+DECLARE_SPU_COMMAND(filter_run_ex, FILTER_RUN,
+                    SPU_ADDRESS filt, uint32_t iters, uint32_t loop_iters)
+{
+  cmd->filt = spu_lsa(g->spu_id, filt);
+  cmd->iters = iters;
+  cmd->loop_iters = loop_iters;
 
   IF_CHECK(cmd->state = 0);
 }
@@ -300,3 +336,15 @@ DECLARE_SPU_COMMAND(dt_out_front_ppu_ex, DT_OUT_FRONT_PPU,
   cmd->state = (CHECK ? 255 : 0);
 }
 END_SPU_COMMAND
+
+#if SPU_STATS_ENABLE
+
+/*-----------------------------------------------------------------------------
+ * spu_stats_print
+ *---------------------------------------------------------------------------*/
+DECLARE_SPU_COMMAND(stats_print, STATS_PRINT)
+{
+}
+END_SPU_COMMAND
+
+#endif

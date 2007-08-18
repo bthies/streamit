@@ -1,6 +1,6 @@
 /*
  * Hand-coded data parallel version of FFT. FFT pipeline is fused into a single
- * filter (the filter operates on data in-place).
+ * filter.
  *
  * First argument (optional) specifies number of SPUs
  */
@@ -52,46 +52,29 @@ main(int argc, char **argv)
   }
 
   // Read input
-  int n = 10000;      // Total filter runs
-  int numspu;
-  int bufsz[7] = {0,  // PPU buffer size
-                  64 * 1024 * 1024,
-                  32 * 1024 * 1024,
-                  16 * 1024 * 1024,
-                  16 * 1024 * 1024,
-                  8 * 1024 * 1024,
-                  8 * 1024 * 1024};
-  if (argc != 2) {
-    numspu = 6;
-  } else {
+  int n = 10000;         // Total filter runs
+  int numspu = 6;
+  switch (argc) {
+  default:
+  case 3:
+    n = atoi(argv[2]);
+  case 2:
     numspu = atoi(argv[1]);
+    break;
+  case 1:
+  case 0:
+    break;
   }
-  busy = numspu;
+  int bufsz = 2048 * n;  // PPU buffer size
 
-  int sdtsz = 16 * 1024;   // Data transfer bytes per iteration
-  int sfi = sdtsz / 2048;  // Filter runs per iteration
-  int iters = n / sfi;     // Iterations to run
-  int spuiters[numspu];    // Iterations split among SPUs
-  spuiters[0] = iters / numspu;
-  for (int i = 1; i < numspu; i++) spuiters[i] = spuiters[0];
-  spuiters[numspu - 1] = iters - spuiters[0] * (numspu - 1);
+  // Read input and allocate output
+  float *inbuf = alloc_buffer_ex(bufsz, FALSE, 0);
+  BUFFER_CB *bicb = buf_get_cb(inbuf);
+  fread(inbuf, sizeof(float), n * 512, inf);
+  buf_inc_tail(bicb, n * 2048);
 
-  // Read input
-  float *buf[numspu];
-  BUFFER_CB *bcb[numspu];
-  for (int i = 0; i < numspu; i++) {
-    int spuitems = spuiters[i] * sfi * 512;
-    buf[i] = alloc_buffer(bufsz[numspu], 0);
-    bcb[i] = buf_get_cb(buf[i]);
-    fread(buf[i], sizeof(float), spuitems, inf);
-    bcb[i]->tail = spuitems * 4;
-    IF_CHECK(bcb[i]->otail = bcb[i]->tail);
-    // *** This touches all pages that are used - there is a significant
-    // slowdown if SPUs need to access invalid pages
-    for (int j = 0; j < spuitems / 1024; j++) {
-      buf[i][spuitems + j * 1024] = 0;
-    }
-  }
+  float *outbuf = alloc_buffer_ex(bufsz, FALSE, 0);
+  BUFFER_CB *bocb = buf_get_cb(outbuf);
 
   init_ticks();
   int start = ticks();
@@ -99,64 +82,80 @@ main(int argc, char **argv)
   spulib_init();
 
   // Setup info
-  int sbsz = 64 * 1024;       // SPU buffer size
-  int fcb = 0;                // Location of SPU filter control block
-  int sba = fcb + 128 + 128;  // Location of SPU buffer
-  int sfree = sba + sbsz;     // Start of free space on SPU
+  int spuiters[numspu];           // Iterations split among SPUs
+  spuiters[0] = n / numspu;
+  for (int i = 1; i < numspu; i++) spuiters[i] = spuiters[0];
+  spuiters[0] = n - spuiters[0] * (numspu - 1);
+  int sbsz = 64 * 1024;           // SPU buffer size
+  int sdtsz = 16 * 1024;          // Data transfer bytes per iteration
+  int sfi = sdtsz / 2048;         // Filter runs per iteration
+  int fcb = 0;                    // Location of SPU filter control block
+  int siba = fcb + 128;           // Location of SPU input buffer
+  int soba = siba + 128 + sbsz;   // Location of SPU output buffer
+  int sfree = soba + 128 + sbsz;  // Start of free space on SPU
   SPU_FILTER_DESC fd;
   fd.work_func = (LS_ADDRESS)&wf_fft;
-  fd.param = spu_lsa(0, fcb + 124);
   fd.state_size = sizeof(fftc);
   fd.state_addr = &fftc;
   fd.num_inputs = 1;
   fd.num_outputs = 1;
 
-  // Initialize filter and buffer
+  // Initialize filter
   for (int i = 0; i < numspu; i++) {
-    *(int *)spu_addr(0, fcb + 124) = 0;
     SPU_CMD_GROUP *g = spu_new_group(i, 0);
     spu_filter_load(g, fcb, &fd, 0, 0);
-    spu_buffer_alloc(g, sba, sbsz, 0, 1, 0);
-    spu_filter_attach_input(g, fcb, 0, sba, 2, 2, 0, 1);
-    spu_filter_attach_output(g, fcb, 0, sba, 3, 2, 0, 1);
     spu_issue_group(i, 0, sfree);
   }
 
   // Setup execution info
-  EXT_SPU_LAYOUT l;
-  EXT_SPU_RATES r;
-  l.cmd_id = 0;
-  l.da = sfree;
-  l.spu_in_buf_data = sba;
-  l.filt = fcb;
-  l.spu_out_buf_data = sba;
-  r.in_bytes = sdtsz;
-  r.run_iters = sfi;
-  r.out_bytes = sdtsz;
+  EXT_PSP_EX_PARAMS f;
+  EXT_PSP_EX_LAYOUT l;
+  f.num_inputs = 1;
+  f.num_outputs = 1;
+  f.inputs[0].pop_bytes = 2048;
+  f.inputs[0].peek_extra_bytes = 0;
+  f.inputs[0].spu_buf_size = sbsz;
+  f.outputs[0].push_bytes = 2048;
+  f.outputs[0].spu_buf_size = sbsz;
+  f.data_parallel = TRUE;
+  f.group_iters = sfi;
+  l.desc = &fd;
+  l.filt_cb = fcb;
+  l.in_buf_start = siba;
+  l.out_buf_start = soba;
+  l.cmd_data_start = sfree;
+  l.cmd_id_start = 0;
+  l.load_filter = FALSE;
 
   for (int i = 0; i < numspu; i++) {
-    spulib_wait(i, 0xf);
+    spulib_wait(i, 1);
   }
 
   int startspu = ticks();
 
   // Run data parallel
+  busy = numspu;
   for (int i = 0; i < numspu; i++) {
     l.spu_id = i;
-    l.ppu_in_buf_data = buf[i];
-    l.ppu_out_buf_data = buf[i];
-    ext_ppu_spu_ppu(&l, &r, spuiters[i], cb, 0);
+    ext_ppu_spu_ppu_ex(&l, &f, bicb, bocb, spuiters[i], cb, 0);
+  }
+  spulib_poll_while(busy);
+
+  // Unload filters
+  for (int i = 0; i < numspu; i++) {
+    SPU_CMD_GROUP *g = spu_new_group(i, 0);
+    spu_filter_unload(g, fcb, 0, 0);
+    spu_issue_group(i, 0, sfree);
   }
 
-  spulib_poll_while(busy);
+  for (int i = 0; i < numspu; i++) {
+    spulib_wait(i, 1);
+  }
 
   printf("spu time: %d ms\n", ticks() - startspu);
   printf("time: %d ms\n", ticks() - start);
 
-  for (int i = 0; i < numspu; i++) {
-    int spuitems = spuiters[i] * sfi * 512;
-    fwrite(buf[i] + spuitems, sizeof(float), spuitems, outf);
-  }
+  fwrite(outbuf, sizeof(float), n * 512, outf);
   fclose(inf);
   fclose(outf);
 }

@@ -102,10 +102,9 @@ typedef uint8_t SPU_DMA_TAG;
 #define UNUSED_PARAM(a) ((void)a)
 
 /*-----------------------------------------------------------------------------
- * count_ls_zeros
+ * count_ls_zeros/count_ms_zeros
  *
- * Returns the number of 0s that occur before the first 1 in a number, starting
- * from the LSB. Undefined if called with 0.
+ * Returns the number of trailing/leading 0s in a number.
  *---------------------------------------------------------------------------*/
 static INLINE uint32_t
 count_ls_zeros(uint32_t a)
@@ -114,6 +113,16 @@ count_ls_zeros(uint32_t a)
   return __cnttz4(a);
 #else           // GCC
   return __builtin_ctz(a);
+#endif
+}
+
+static INLINE uint32_t
+count_ms_zeros(uint32_t a)
+{
+#ifdef __IBMC__ // XLC
+  return __cntlz4(a);
+#else           // GCC
+  return __builtin_clz(a);
 #endif
 }
 

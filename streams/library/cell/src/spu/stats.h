@@ -15,6 +15,8 @@
 #ifndef _STATS_H_
 #define _STATS_H_
 
+#define STATS_ENABLE SPU_STATS_ENABLE
+
 #if STATS_ENABLE
 #include <spu_mfcio.h>
 

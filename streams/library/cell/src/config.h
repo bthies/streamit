@@ -18,12 +18,15 @@
 // If 0, data transfers must be aligned on qword boundaries.
 #define DT_ALLOW_UNALIGNED 1
 
-#ifdef __SPU__  // SPU
-
-// If 1, will record and print basic utilization stats.
-#define STATS_ENABLE 1
+// If 1, SPUs will record basic utilization stats.
+#define SPU_STATS_ENABLE 1
 // Microseconds per decrementer tick (for decrementer frequency of 79.8 MHz).
 #define TICK_PERIOD 0.0125313f
+
+#ifdef __SPU__  // SPU
+
+// If 1, will print stats whenever a filter is unloaded.
+#define STATS_PRINT_ON_UNLOAD 1
 
 // If 1, dt_in_* commands on SPU will automatically adjust head/tail pointers
 // of empty buffers to match the data offset in the source buffer, if

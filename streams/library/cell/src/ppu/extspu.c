@@ -47,7 +47,7 @@ ext_spu_internal(EXT_SPU_LAYOUT *l, EXT_SPU_RATES *r, uint32_t iters,
   EXT_SPU_DATA *d;
   SPU_INFO *spu = &spu_info[l->spu_id];
 
-  pcheck((l->cmd_id < SPU_MAX_COMMANDS - 6) && ((l->da & CACHE_MASK) == 0) &&
+  pcheck((l->cmd_id <= SPU_MAX_COMMANDS - 6) && ((l->da & CACHE_MASK) == 0) &&
          (iters != 0));
 #if !EXT_ALLOW_SPU_NO_INPUT
   pcheck(r->in_bytes != 0);

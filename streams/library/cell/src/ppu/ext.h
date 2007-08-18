@@ -69,7 +69,7 @@ void ext_spu_notify_input(void *d);
 void ext_spu_notify_output(void *d);
 
 typedef EXT_SPU_LAYOUT EXT_PSP_LAYOUT;
-typedef EXT_SPU_RATES EXT_PSP_RATES;
+typedef EXT_SPU_RATES  EXT_PSP_RATES;
 
 // Starts a ppu_spu_ppu operation.
 //
@@ -81,6 +81,43 @@ void *ext_ppu_spu_ppu(EXT_SPU_LAYOUT *l, EXT_SPU_RATES *r, uint32_t iters,
                       GENERIC_COMPLETE_CB *cb, uint32_t tag);
 #define ext_psp_notify_input  ext_spu_notify_input
 #define ext_psp_notify_output ext_spu_notify_output
+
+#define EXT_PSP_MAX_TAPES 15
+
+typedef struct _EXT_PSP_EX_LAYOUT {
+  uint32_t spu_id;
+  SPU_FILTER_DESC *desc;
+  SPU_ADDRESS filt_cb;
+  SPU_ADDRESS in_buf_start;
+  SPU_ADDRESS out_buf_start;
+  SPU_ADDRESS cmd_data_start;  // Needs 128 bytes + 128 per tape
+  uint32_t cmd_id_start;       // Needs 2 + 2 per tape
+  bool_t load_filter;
+} EXT_PSP_EX_LAYOUT;
+
+typedef struct _EXT_PSP_INPUT_TAPE {
+  uint32_t pop_bytes;
+  uint32_t peek_extra_bytes;
+  uint32_t spu_buf_size;
+} EXT_PSP_INPUT_TAPE;
+
+typedef struct _EXT_PSP_OUTPUT_TAPE {
+  uint32_t push_bytes;
+  uint32_t spu_buf_size;
+} EXT_PSP_OUTPUT_TAPE;
+
+typedef struct _EXT_PSP_EX_PARAMS {
+  EXT_PSP_INPUT_TAPE inputs[EXT_PSP_MAX_TAPES - 1];
+  EXT_PSP_OUTPUT_TAPE outputs[EXT_PSP_MAX_TAPES - 1];
+  uint32_t num_inputs;
+  uint32_t num_outputs;
+  bool_t data_parallel;
+  uint32_t group_iters;
+} EXT_PSP_EX_PARAMS;
+
+void ext_ppu_spu_ppu_ex(EXT_PSP_EX_LAYOUT *l, EXT_PSP_EX_PARAMS *f,
+                        BUFFER_CB *ppu_in_buf, BUFFER_CB *ppu_out_buf,
+                        uint32_t iters, GENERIC_COMPLETE_CB *cb, uint32_t tag);
 
 // Starts a data_parallel operation.
 //

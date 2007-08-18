@@ -31,5 +31,6 @@ spu_cmd_size[SPU_NUM_CMD_TYPES] = {
   define_command(DT_OUT_FRONT),
   define_command(DT_OUT_BACK),
   define_command(DT_OUT_FRONT_PPU),
-  define_command(DT_OUT_BACK_PPU)
+  define_command(DT_OUT_BACK_PPU),
+  define_command(STATS_PRINT)
 };

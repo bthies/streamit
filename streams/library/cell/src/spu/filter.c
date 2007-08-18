@@ -225,12 +225,8 @@ run_filter_unload(FILTER_UNLOAD_CMD *cmd)
     // Initialization.
 
     pcheck(((uintptr_t)cmd->filt & QWORD_MASK) == 0);
-    // Make sure filter is not already unloaded or running and mark as unloaded
-    // (busy flag is never unset).
+    // Make sure filter is not running.
     check(!filt->busy);
-    IF_CHECK(filt->busy = TRUE);
-
-    stats_start_filter_unload();
 
 #if CHECK
     // Detach input tapes.
@@ -250,7 +246,17 @@ run_filter_unload(FILTER_UNLOAD_CMD *cmd)
         }
       }
     }
+
+    if (cmd->detach_only) {
+      dep_complete_command();
+      return;
+    }
+
+    // Mark as unloaded (busy flag is never unset).
+    filt->busy = TRUE;
 #endif
+
+    stats_start_filter_unload();
 
     // Nothing to do for stateless filters.
     if (filt->desc.state_size == 0) {
@@ -431,6 +437,12 @@ void
 run_filter_run(FILTER_RUN_CMD *cmd)
 {
   FILTER_CB *filt = (FILTER_CB *)cmd->filt;
+  FILTER_WORK_FUNC *work_func = filt->desc.work_func;
+  void *param = filt->desc.param;
+  void *filt_state = filt->state;
+  void **inputs = filt->inputs;
+  void **outputs = filt->outputs;
+  uint32_t loop_iters;
 #if STATS_ENABLE
   uint32_t work_start;
 #endif
@@ -466,12 +478,23 @@ run_filter_run(FILTER_RUN_CMD *cmd)
    * TODO: Figure out convention for ihead/otail
    */
 
-  // Run work function for 1 iteration.
+  // Run work function.
+  loop_iters = cmd->loop_iters;
+
+  if (UNLIKELY(loop_iters > cmd->iters)) {
+    loop_iters = cmd->iters;
+  }
+
+  cmd->iters -= loop_iters;
+
 #if STATS_ENABLE
   work_start = spu_read_decrementer();
 #endif
-  (*(FILTER_WORK_FUNC *)filt->desc.work_func)(filt->desc.param, filt->state,
-                                              filt->inputs, filt->outputs);
+
+  do {
+    (*work_func)(param, filt_state, inputs, outputs);
+  } while (--loop_iters != 0);
+
 #if STATS_ENABLE
   stats_work_ticks += work_start - spu_read_decrementer();
 #endif
@@ -488,7 +511,7 @@ run_filter_run(FILTER_RUN_CMD *cmd)
   }
 #endif
 
-  if (--cmd->iters == 0) {
+  if (cmd->iters == 0) {
     // Done running.
 #if CHECK
     filt->busy = FALSE;

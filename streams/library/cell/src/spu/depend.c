@@ -25,7 +25,7 @@
 //
 // 16-byte aligned, not padded
 typedef struct _WORKER_CMD {
-  CMD_HEADER header;
+  DECLARE_CMD_HEADER
 } PACKED WORKER_CMD QWORD_ALIGNED;
 
 C_ASSERT(sizeof(WORKER_CMD) == 12);
@@ -34,7 +34,7 @@ C_ASSERT(sizeof(WORKER_CMD) == 12);
 //
 // 16-byte aligned, not padded
 typedef struct _REQ_HANDLER_CMD {
-  CMD_HEADER header;
+  DECLARE_CMD_HEADER
 // 12
   uint8_t state;
   DMA_TAG tag;          // Tag used for transferring request data
@@ -148,7 +148,10 @@ dep_add_command(CMD_HEADER *cmd)
 
   // Validate command header.
   assert((cmd->type < NUM_CMD_TYPES) && (cmd_id < MAX_COMMANDS) &&
-         (cmd->num_back_deps <= CMD_MAX_DEPS) && (cmd->num_forward_deps == 0));
+         ((cmd->num_back_deps <= CMD_MAX_DEPS) ||
+          ((cmd->num_back_deps <= CMD_MAX_DEPS_LARGE) &&
+           ((CMD_LARGE_HEADER_TYPES & (1 << cmd->type)) != 0))) &&
+         (cmd->num_forward_deps == 0));
   // New command must not have same ID as a pending command or a completed
   // command not yet reported to PPU.
   assert((commands[cmd_id] == NULL) &&
@@ -170,7 +173,9 @@ dep_add_command(CMD_HEADER *cmd)
       // Command IDs that don't exist are considered to have completed.
       cmd->num_back_deps--;
     } else {
-      check(dep->num_forward_deps < CMD_MAX_DEPS);
+      check((dep->num_forward_deps < CMD_MAX_DEPS) ||
+            ((dep->num_forward_deps < CMD_MAX_DEPS_LARGE) &&
+             ((CMD_LARGE_HEADER_TYPES & (1 << dep->type)) != 0)));
       dep->deps[dep->num_forward_deps++] = cmd_id;
     }
   }
@@ -388,6 +393,9 @@ void run_dt_out_front(DT_OUT_FRONT_CMD *cmd);
 // void run_dt_out_back(DT_OUT_BACK_CMD *cmd);
 void run_dt_out_front_ppu(DT_OUT_FRONT_PPU_CMD *cmd);
 // void run_dt_out_back_ppu(DT_OUT_BACK_PPU_CMD *cmd);
+#if STATS_ENABLE
+void run_stats_print(STATS_PRINT_CMD *cmd);
+#endif
 
 /*-----------------------------------------------------------------------------
  * dep_execute
@@ -459,10 +467,9 @@ dep_execute()
       run_buffer_align((BUFFER_ALIGN_CMD *)cmd);
       break;
 
-    case CMD_DT_IN_FRONT:
+      // case CMD_DT_IN_FRONT:
       // run_dt_in_front((DT_IN_FRONT_CMD *)cmd);
       // break;
-      unreached();
 
     case CMD_DT_IN_BACK:
       run_dt_in_back((DT_IN_BACK_CMD *)cmd);
@@ -472,19 +479,23 @@ dep_execute()
       run_dt_out_front((DT_OUT_FRONT_CMD *)cmd);
       break;
 
-    case CMD_DT_OUT_BACK:
+      // case CMD_DT_OUT_BACK:
       // run_dt_out_back((DT_OUT_BACK_CMD *)cmd);
       // break;
-      unreached();
 
     case CMD_DT_OUT_FRONT_PPU:
       run_dt_out_front_ppu((DT_OUT_FRONT_PPU_CMD *)cmd);
       break;
 
-    case CMD_DT_OUT_BACK_PPU:
+      // case CMD_DT_OUT_BACK_PPU:
       // run_dt_out_back_ppu((DT_OUT_BACK_PPU_CMD *)cmd);
       // break;
-      unreached();
+
+#if STATS_ENABLE
+    case CMD_STATS_PRINT:
+      run_stats_print((STATS_PRINT_CMD *)cmd);
+      break;
+#endif
 
     default:
       unreached();

@@ -288,8 +288,7 @@ void
 ppu_finish_dt(PPU_DT_PARAMS *cmd)
 {
   switch (cmd->type) {
-  case PPU_CMD_DT_IN_FRONT:
-    unreached();
+    // case PPU_CMD_DT_IN_FRONT:
 
   case PPU_CMD_DT_IN_BACK:
     ppu_finish_dt_in_back(cmd);
@@ -299,8 +298,7 @@ ppu_finish_dt(PPU_DT_PARAMS *cmd)
     ppu_finish_dt_out_front(cmd);
     break;
 
-  case PPU_CMD_DT_OUT_BACK:
-    unreached();
+    // case PPU_CMD_DT_OUT_BACK:
 
   default:
     unreached();

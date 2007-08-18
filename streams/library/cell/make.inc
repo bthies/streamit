@@ -25,7 +25,7 @@
 #   all SPUs, otherwise SPU_PROGRAMS must specify 6 SPU programs and is used as
 #   the order.
 #
-# *OPT_LEVEL := optimization level (defaults to -g)
+# *OPT_LEVEL := optimization level (defaults to -g -O3)
 #
 # Include this file afterwards.
 
@@ -46,7 +46,7 @@ ifdef OPT_LEVEL
   CC_OPT_LEVEL		:= $(OPT_LEVEL)
   SPULIB_OPT_LEVEL	:= $(OPT_LEVEL)
 else
-  CC_OPT_LEVEL		:= -g
+  CC_OPT_LEVEL		:= -g -O3
 endif
 
 export CC_OPT_LEVEL

@@ -37,12 +37,10 @@ typedef struct _PPU_DT_PARAMS {
   uint32_t type;
   BUFFER_CB *buf;
   uint32_t num_bytes;
-  bool_t tail_overlaps;
 } PPU_DT_PARAMS;
 
 // Bookkeeping info for waiting PPU data transfer commands.
 typedef struct _PPU_DT_CMD {
-  bool_t run_cb;
   uint32_t tag;           // Callback tag
   PPU_DT_PARAMS params;
 } PPU_DT_CMD;
@@ -323,7 +321,8 @@ void init_buffer(BUFFER_CB *buf, void *buf_data, uint32_t size,
                  bool_t circular, uint32_t data_offset);
 void duplicate_buffer(BUFFER_CB *dest, BUFFER_CB *src);
 
-void *malloc_aligned(uint32_t size);
+void *malloc_buffer_data(uint32_t size);
+void *malloc_aligned(uint32_t size, uint32_t alignment);
 void free_aligned(void *data);
 void touch_pages(void *data, uint32_t size);
 
@@ -343,15 +342,16 @@ void dt_out_front(void *buf_data, uint32_t dest_spu, SPU_ADDRESS dest_buf_data,
 // For dt_in_back_ex, all except the last corresponding SPU dt_out_front_ppu
 // command must transfer to a qword boundary.
 void dt_in_back_ex(BUFFER_CB *buf, uint32_t src_spu, SPU_ADDRESS src_buf_data,
-                   uint32_t num_bytes, bool_t tail_overlaps,
-                   uint32_t first_spu_cmd_id);
+                   uint32_t num_bytes);
 void dt_out_front_ex(BUFFER_CB *buf, uint32_t dest_spu,
                      SPU_ADDRESS dest_buf_data, uint32_t num_bytes);
 
 #if DT_ALLOW_UNALIGNED
-void finish_dt_in_back_ex(BUFFER_CB *buf, uint32_t num_bytes);
+void finish_dt_in_back_ex_head(BUFFER_CB *buf, bool_t tail_overlaps);
+void finish_dt_in_back_ex_tail(BUFFER_CB *buf);
 #else
-#define finish_dt_in_back_ex(buf, num_bytes)
+#define finish_dt_in_back_ex_head(buf, tail_overlaps)
+#define finish_dt_in_back_ex_tail(buf)
 #endif
 
 /*-----------------------------------------------------------------------------

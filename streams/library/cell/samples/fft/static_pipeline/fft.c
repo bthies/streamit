@@ -2,13 +2,13 @@
  * Pipelined version of FFT with 6 filters in pipeline.
  */
 
+#include "filterdefs.h"
 #include "workstate.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include "spulib.h"
 #include "spusymbols.h"
-#include "filterdefs.h"
 #include <math.h>
 
 void init_ticks();

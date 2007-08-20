@@ -116,7 +116,7 @@ typedef struct _EXT_PSP_EX_PARAMS {
 } EXT_PSP_EX_PARAMS;
 
 void ext_ppu_spu_ppu_ex(EXT_PSP_EX_LAYOUT *l, EXT_PSP_EX_PARAMS *f,
-                        BUFFER_CB *ppu_in_buf, BUFFER_CB *ppu_out_buf,
+                        BUFFER_CB **ppu_in_buf, BUFFER_CB **ppu_out_buf,
                         uint32_t iters, GENERIC_COMPLETE_CB *cb, uint32_t tag);
 
 // Starts a data_parallel operation.

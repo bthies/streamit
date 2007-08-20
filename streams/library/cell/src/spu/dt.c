@@ -301,8 +301,6 @@ run_dt_in_back(DT_IN_BACK_CMD *cmd)
 
       // Update back_in_dtcb in preparation for next dt_in_back.
       buf->back_in_dtcb.head = cmd->src_head;
-      assert((cmd->src_head != buf->back_in_dtcb.tail) ||
-             (buf->in_back_buffered_bytes == 0));
 
       if ((cmd->src_buf != 0) && (cmd->src_head == buf->back_in_dtcb.tail)) {
         // Write acknowledgement (new value of head pointer for source buffer).
@@ -471,6 +469,7 @@ run_dt_out_front_ppu(DT_OUT_FRONT_PPU_CMD *cmd)
       uint32_t ua_bytes = (buf->head + dt_bytes) & QWORD_MASK;
 
       if ((dt_bytes <= ua_bytes) || ((dt_bytes -= ua_bytes) < CACHE_SIZE)) {
+        buf->out_front_buffered_bytes = cmd->num_bytes;
         IF_CHECK(buf->front_action = BUFFER_ACTION_NONE);
         dep_complete_command();
         return;
@@ -501,7 +500,7 @@ run_dt_out_front_ppu(DT_OUT_FRONT_PPU_CMD *cmd)
     if ((dt_bytes == dest_bytes) && cmd->tail_overlaps) {
       uint32_t tail_ua_bytes = in_dtcb.tail & QWORD_MASK;
 
-      if (dt_bytes >= tail_ua_bytes) {
+      if ((tail_ua_bytes != 0) && (dt_bytes >= tail_ua_bytes)) {
         dma_put(cmd->tag,
                 buf_cb_get_dt_field_addr(cmd->dest_buf, back_in_dtcb_2),
                 cmd->buf_data +
@@ -525,7 +524,7 @@ run_dt_out_front_ppu(DT_OUT_FRONT_PPU_CMD *cmd)
 
       dma_put(cmd->tag,
               buf_cb_get_dt_field_addr(cmd->dest_buf, back_in_dtcb),
-              cmd->buf_data + ROUND_DOWN(buf->head, QWORD_MASK),
+              cmd->buf_data + ROUND_DOWN(buf->head, QWORD_SIZE),
               QWORD_SIZE);
 
       ua_bytes = QWORD_SIZE - (buf->head & QWORD_MASK);
@@ -540,6 +539,7 @@ run_dt_out_front_ppu(DT_OUT_FRONT_PPU_CMD *cmd)
       } else {
         buf_head = (buf->head + ua_bytes) & buf->mask;
         dest_tail = (cmd->dest_tail + ua_bytes) & cmd->dest_buf_mask;
+        cmd->num_bytes -= ua_bytes;
 
         goto state_copy_next;
       }

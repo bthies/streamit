@@ -18,7 +18,7 @@
 #define PPU_CMD_DT_OUT_BACK   3
 
 PPU_DT_PARAMS *ppu_dt_wait_spu(uint32_t spu_id, uint32_t spu_cmd_id,
-                               bool_t run_cb, uint32_t tag);
+                               uint32_t tag);
 void ppu_finish_dt(PPU_DT_PARAMS *cmd);
 
 /*-----------------------------------------------------------------------------
@@ -57,10 +57,13 @@ struct _EXTENDED_OP {
   EXTENDED_OP_HANDLER *handler;
   GENERIC_COMPLETE_CB *cb;        // Scheduler callback to run when done
   uint32_t tag;                   // Callback tag
+// 16
   struct _EXTENDED_OP *next;      // Next operation in list
+  uint32_t _padding[3];
+// 32
   // Operation-specific data (dynamically allocated with structure).
   uint8_t data[];
-};
+} QWORD_ALIGNED;
 
 void *spu_new_ext_op(SPU_INFO *spu, uint32_t spu_cmd_mask,
                      EXTENDED_OP_HANDLER *handler, GENERIC_COMPLETE_CB *cb,

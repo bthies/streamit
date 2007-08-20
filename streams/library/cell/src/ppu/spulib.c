@@ -91,21 +91,17 @@ spu_issue_group(uint32_t spu_id, uint32_t gid, SPU_ADDRESS da)
  * pointer to memory for data transfer parameters.
  *---------------------------------------------------------------------------*/
 PPU_DT_PARAMS *
-ppu_dt_wait_spu(uint32_t spu_id, uint32_t spu_cmd_id, bool_t run_cb,
-                uint32_t tag)
+ppu_dt_wait_spu(uint32_t spu_id, uint32_t spu_cmd_id, uint32_t tag)
 {
   SPU_INFO *spu = &spu_info[spu_id];
-  PPU_DT_CMD *dt_cmd;
 
   // Make sure nothing is already waiting on the SPU command ID.
   pcheck(spu_cmd_id < SPU_MAX_COMMANDS);
   check((spu->dt_mask & (1 << spu_cmd_id)) == 0);
 
   spu->dt_mask |= (1 << spu_cmd_id);
-  dt_cmd = &spu->dt_waiting[spu_cmd_id];
-  dt_cmd->run_cb = run_cb;
-  dt_cmd->tag = tag;
-  return &dt_cmd->params;
+  spu->dt_waiting[spu_cmd_id].tag = tag;
+  return &spu->dt_waiting[spu_cmd_id].params;
 }
 
 /*-----------------------------------------------------------------------------
@@ -138,7 +134,7 @@ spu_handle_complete(uint32_t spu_id, uint32_t mask)
       ppu_finish_dt(&dt_cmd->params);
 
       // Run PPU callback if command is not internal.
-      if (dt_cmd->run_cb && ((internal_mask & spu_cmd_bit) != 0) &&
+      if (((internal_mask & spu_cmd_bit) != 0) &&
           (spu->ppu_dt_complete_cb != NULL)) {
         (*spu->ppu_dt_complete_cb)(dt_cmd->tag);
       }
@@ -201,7 +197,7 @@ spu_handle_internal_complete(SPU_INFO *spu, uint32_t mask)
         // scheduler.
         *op_ptr = op->next;
         spu->internal_mask &= ~op->spu_cmd_mask;
-        free(op);
+        free_aligned(op);
 
         // Run callback.
         cb(tag);
@@ -271,7 +267,7 @@ spu_new_ext_op(SPU_INFO *spu, uint32_t spu_cmd_mask,
   spu->internal_mask |= spu_cmd_mask;
 
   // Allocate and initialize entry for operation.
-  op = (EXTENDED_OP *)malloc(sizeof(*op) + data_size);
+  op = (EXTENDED_OP *)malloc_aligned(sizeof(*op) + data_size, QWORD_SIZE);
   check(op != NULL);
   op->spu_cmd_mask = spu_cmd_mask;
   op->handler = (EXTENDED_OP_HANDLER *)handler;

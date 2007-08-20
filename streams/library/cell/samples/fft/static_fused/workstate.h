@@ -5,6 +5,6 @@ typedef struct _FILTER_fft_STATE {
   struct {
     float wn_r, wn_i;
   } c[8];
-} __attribute__((aligned(16))) FILTER_fft_STATE;
+} QWORD_ALIGNED FILTER_fft_STATE;
 
 #endif

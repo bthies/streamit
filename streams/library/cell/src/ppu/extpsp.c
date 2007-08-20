@@ -16,7 +16,6 @@ typedef struct _ACTIVE_INPUT_TAPE {
 typedef struct _ACTIVE_OUTPUT_TAPE {
   SPU_ADDRESS spu_buf_data;
   BUFFER_CB *channel_buf;
-  uint32_t ppu_dt_bytes;
   BUFFER_CB channel_buf_instance;
 } ACTIVE_OUTPUT_TAPE;
 
@@ -194,7 +193,7 @@ setup_output(SPU_CMD_GROUP *g, ACTIVE_FILTER *af, uint32_t iters,
 
 void
 ext_ppu_spu_ppu_ex(EXT_PSP_EX_LAYOUT *l, EXT_PSP_EX_PARAMS *f,
-                   BUFFER_CB *ppu_in_buf, BUFFER_CB *ppu_out_buf,
+                   BUFFER_CB **ppu_in_buf, BUFFER_CB **ppu_out_buf,
                    uint32_t iters, GENERIC_COMPLETE_CB *cb, uint32_t tag)
 {
   SPU_INFO *spu = &spu_info[l->spu_id];
@@ -242,12 +241,12 @@ ext_ppu_spu_ppu_ex(EXT_PSP_EX_LAYOUT *l, EXT_PSP_EX_PARAMS *f,
     input_buf_start += f->inputs[i].spu_buf_size + CACHE_SIZE;
 
     if (f->data_parallel) {
-      duplicate_buffer(&ait->channel_buf_instance, &ppu_in_buf[i]);
+      duplicate_buffer(&ait->channel_buf_instance, ppu_in_buf[i]);
       ait->channel_buf = &ait->channel_buf_instance;
 
-      buf_inc_head(&ppu_in_buf[i], iters * f->inputs[i].pop_bytes);
+      buf_inc_head(ppu_in_buf[i], iters * f->inputs[i].pop_bytes);
     } else {
-      ait->channel_buf = &ppu_in_buf[i];
+      ait->channel_buf = ppu_in_buf[i];
     }
   }
 
@@ -259,12 +258,12 @@ ext_ppu_spu_ppu_ex(EXT_PSP_EX_LAYOUT *l, EXT_PSP_EX_PARAMS *f,
     output_buf_start += f->outputs[i].spu_buf_size + CACHE_SIZE;
 
     if (f->data_parallel) {
-      duplicate_buffer(&aot->channel_buf_instance, &ppu_out_buf[i]);
+      duplicate_buffer(&aot->channel_buf_instance, ppu_out_buf[i]);
       aot->channel_buf = &aot->channel_buf_instance;
 
-      buf_inc_tail(&ppu_out_buf[i], iters * f->outputs[i].push_bytes);
+      buf_inc_tail(ppu_out_buf[i], iters * f->outputs[i].push_bytes);
     } else {
-      aot->channel_buf = &ppu_out_buf[i];
+      aot->channel_buf = ppu_out_buf[i];
     }
   }
 
@@ -305,7 +304,7 @@ setup_load(ACTIVE_FILTER *af, EXT_PSP_EX_LAYOUT *l)
   for (uint32_t i = 0; i < f->num_inputs; i++) {
     spu_buffer_alloc(g,
                      af->inputs[i].spu_buf_data, f->inputs[i].spu_buf_size,
-                     af->inputs[i].channel_buf->head & QWORD_MASK,
+                     af->inputs[i].channel_buf->head & CACHE_MASK,
                      in_alloc_id_start + i,
                      0);
     spu_filter_attach_input(g,
@@ -319,7 +318,7 @@ setup_load(ACTIVE_FILTER *af, EXT_PSP_EX_LAYOUT *l)
   for (uint32_t i = 0; i < f->num_outputs; i++) {
     spu_buffer_alloc(g,
                      af->outputs[i].spu_buf_data, f->outputs[i].spu_buf_size,
-                     af->outputs[i].channel_buf->tail & QWORD_MASK,
+                     af->outputs[i].channel_buf->tail & CACHE_MASK,
                      out_alloc_id_start + i,
                      0);
     spu_filter_attach_output(g,
@@ -474,9 +473,12 @@ ext_psp_ex_handler(void *data, uint32_t mask)
 
     switch (af->phase) {
     case PHASE_ALLOC:
-      start_input(af);
+      if (f->num_inputs != 0) {
+        start_input(af);
 
-      issue_group(af, 1); // init_a
+        issue_group(af, 1); // init_a
+      }
+
       setup_init_b(af);
 
       af->phase = PHASE_LOAD;
@@ -585,26 +587,29 @@ start_output(ACTIVE_FILTER *af)
 {
   EXT_PSP_EX_PARAMS *f = af->f;
   uint32_t iters;
-  uint32_t output_id_start;
 
   iters = (af->groups_left - 1) * f->group_iters + af->last_group_iters;
-  output_id_start = af->cmd_id_start + af->group_num_cmd + (1 + f->num_inputs);
 
   for (uint32_t i = 0; i < f->num_outputs; i++) {
-    uint32_t dt_bytes = iters * f->outputs[i].push_bytes;
     dt_in_back_ex(af->outputs[i].channel_buf, af->spu_id,
-                  af->outputs[i].spu_buf_data, dt_bytes, f->data_parallel,
-                  output_id_start + i);
-    af->outputs[i].ppu_dt_bytes = dt_bytes;
+                  af->outputs[i].spu_buf_data,
+                  iters * f->outputs[i].push_bytes);
   }
 }
 
 static void
 finish_output(ACTIVE_FILTER *af)
 {
-  if (af->f->data_parallel) {
-    finish_dt_in_back_ex(af->outputs[0].channel_buf,
-                         af->outputs[0].ppu_dt_bytes);
+  EXT_PSP_EX_PARAMS *f = af->f;
+
+  for (uint32_t i = 0; i < f->num_outputs; i++) {
+    finish_dt_in_back_ex_head(af->outputs[i].channel_buf, f->data_parallel);
+  }
+
+  if (f->data_parallel) {
+    for (uint32_t i = 0; i < f->num_outputs; i++) {
+      finish_dt_in_back_ex_tail(af->outputs[i].channel_buf);
+    }
   }
 }
 

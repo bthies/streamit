@@ -130,7 +130,7 @@ init_buffer(BUFFER_CB *buf, void *buf_data, uint32_t size, bool_t circular,
          (data_offset < size));
 
   if (buf_data == NULL) {
-    buf_data = malloc_aligned(size);
+    buf_data = malloc_buffer_data(size);
     check(buf_data != NULL);
   } else {
     pcheck(((uintptr_t)buf_data & CACHE_MASK) == 0);
@@ -167,12 +167,30 @@ duplicate_buffer(BUFFER_CB *dest, BUFFER_CB *src)
 }
 
 /*-----------------------------------------------------------------------------
- * malloc_aligned
+ * malloc_buffer_data
  *
- * Allocates memory aligned on a cache line (128 bytes).
+ * Allocates and touches memory aligned on a cache line (128 bytes).
  *---------------------------------------------------------------------------*/
 void *
-malloc_aligned(uint32_t size)
+malloc_buffer_data(uint32_t size)
+{
+  void *data = malloc_aligned(size, CACHE_SIZE);
+
+  if (data == NULL) {
+    return NULL;
+  }
+
+  touch_pages(data, size);
+  return data;
+}
+
+/*-----------------------------------------------------------------------------
+ * malloc_aligned
+ *
+ * Allocates aligned memory.
+ *---------------------------------------------------------------------------*/
+void *
+malloc_aligned(uint32_t size, uint32_t alignment)
 {
   /*
    * Additional memory is allocated to align data.
@@ -180,24 +198,25 @@ malloc_aligned(uint32_t size)
    * Memory layout is:
    * - Padding as needed.
    * - Pointer to start of allocated memory.
-   * - Data (128-byte aligned).
+   * - Data (aligned).
    *
-   * Assumptions: malloc, CACHE_SIZE are all multiples of pointer size.
+   * Assumptions: malloc, alignment are all multiples of pointer size.
    */
 
   void *mem;
   void *data;
 
-  mem = malloc(CACHE_SIZE + size);
+  pcheck((alignment >= sizeof(void *)) &&
+         (alignment == 1U << count_ls_zeros(alignment)));
+
+  mem = malloc(alignment + size);
 
   if (mem == NULL) {
     return NULL;
   }
 
-  data = mem + (CACHE_SIZE - ((uintptr_t)mem & CACHE_MASK));
+  data = mem + (alignment - ((uintptr_t)mem & (alignment - 1)));
   *((void **)data - 1) = mem;
-  touch_pages(data, size);
-
   return data;
 }
 

@@ -5,12 +5,12 @@
  * First argument (optional) specifies number of SPUs
  */
 
+#include "filterdefs.h"
 #include "workstate.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include "spulib.h"
 #include "spusymbols.h"
-#include "filterdefs.h"
 #include <math.h>
 
 void init_ticks();
@@ -137,7 +137,7 @@ main(int argc, char **argv)
   busy = numspu;
   for (int i = 0; i < numspu; i++) {
     l.spu_id = i;
-    ext_ppu_spu_ppu_ex(&l, &f, bicb, bocb, spuiters[i], cb, 0);
+    ext_ppu_spu_ppu_ex(&l, &f, &bicb, &bocb, spuiters[i], cb, 0);
   }
   spulib_poll_while(busy);
 

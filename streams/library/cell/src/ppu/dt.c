@@ -45,7 +45,7 @@ dt_out_front(void *buf_data, uint32_t dest_spu, SPU_ADDRESS dest_buf_data,
 
   // Set data transfer to wait on the SPU command ID. This must be done before
   // writing transfer info to SPU.
-  cmd = ppu_dt_wait_spu(dest_spu, spu_cmd_id, TRUE, tag);
+  cmd = ppu_dt_wait_spu(dest_spu, spu_cmd_id, tag);
   cmd->type = PPU_CMD_DT_OUT_FRONT;
   cmd->buf = buf;
   cmd->num_bytes = num_bytes;
@@ -150,11 +150,10 @@ dt_in_back(void *buf_data, uint32_t src_spu, SPU_ADDRESS src_buf_data,
 
   // Set data transfer to wait on the SPU command ID. This must be done before
   // writing transfer info to SPU.
-  cmd = ppu_dt_wait_spu(src_spu, spu_cmd_id, TRUE, tag);
+  cmd = ppu_dt_wait_spu(src_spu, spu_cmd_id, tag);
   cmd->type = PPU_CMD_DT_IN_BACK;
   cmd->buf = buf;
   cmd->num_bytes = num_bytes;
-  cmd->tail_overlaps = FALSE;
 
   // Write transfer info to source SPU.
   write64((uint64_t *)buf_get_dt_field_addr(spu_addr(src_spu, src_buf_data),
@@ -163,12 +162,32 @@ dt_in_back(void *buf_data, uint32_t src_spu, SPU_ADDRESS src_buf_data,
 }
 
 /*-----------------------------------------------------------------------------
+ * ppu_finish_dt_in_back
+ *---------------------------------------------------------------------------*/
+static INLINE void
+ppu_finish_dt_in_back(PPU_DT_PARAMS *cmd)
+{
+  BUFFER_CB *buf = cmd->buf;
+#if DT_ALLOW_UNALIGNED
+  uint32_t tail_offset = buf->tail & QWORD_MASK;
+
+  // Write unaligned data to buffer.
+  if (tail_offset != 0) {
+    vec_stvlx(vec_lvlx(tail_offset, &buf->back_in_dtcb.ua_data),
+              buf->tail, (uint8_t *)buf->data);
+  }
+#endif
+
+  buf->tail = (buf->tail + cmd->num_bytes) & buf->mask;
+  IF_CHECK(buf->back_action = BUFFER_ACTION_NONE);
+}
+
+/*-----------------------------------------------------------------------------
  * dt_in_back_ex
  *---------------------------------------------------------------------------*/
 void
 dt_in_back_ex(BUFFER_CB *buf, uint32_t src_spu, SPU_ADDRESS src_buf_data,
-              uint32_t num_bytes, bool_t tail_overlaps,
-              uint32_t first_spu_cmd_id)
+              uint32_t num_bytes)
 {
   OUT_DTCB out_dtcb;
 
@@ -203,21 +222,12 @@ dt_in_back_ex(BUFFER_CB *buf, uint32_t src_spu, SPU_ADDRESS src_buf_data,
   IF_CHECK(buf->otail = out_dtcb.tail);
 
 #if DT_ALLOW_UNALIGNED
-  if ((buf->tail & QWORD_MASK) != 0) {
-    // Wait on first corresponding SPU command to write in unaligned data at
-    // head.
-    PPU_DT_PARAMS *cmd;
+  IF_CHECK(buf->back_action = BUFFER_ACTION_IN);
 
-    IF_CHECK(buf->back_action = BUFFER_ACTION_IN);
-
-    cmd = ppu_dt_wait_spu(src_spu, first_spu_cmd_id, FALSE, 0);
-    cmd->type = PPU_CMD_DT_IN_BACK;
-    cmd->buf = buf;
-    cmd->num_bytes = num_bytes;
-    cmd->tail_overlaps = tail_overlaps;
-  } else {
-    buf->tail = out_dtcb.tail;
-  }
+  // Save transfer size.
+  buf->in_back_buffered_bytes = num_bytes;
+#else
+  buf->tail = out_dtcb.tail;
 #endif
 
   // Write transfer info to source SPU.
@@ -226,54 +236,60 @@ dt_in_back_ex(BUFFER_CB *buf, uint32_t src_spu, SPU_ADDRESS src_buf_data,
           out_dtcb.data);
 }
 
-/*-----------------------------------------------------------------------------
- * ppu_finish_dt_in_back
- *---------------------------------------------------------------------------*/
-static INLINE void
-ppu_finish_dt_in_back(PPU_DT_PARAMS *cmd)
-{
-  BUFFER_CB *buf = cmd->buf;
 #if DT_ALLOW_UNALIGNED
+
+/*-----------------------------------------------------------------------------
+ * finish_dt_in_back_ex_head
+ *---------------------------------------------------------------------------*/
+void
+finish_dt_in_back_ex_head(BUFFER_CB *buf, bool_t tail_overlaps)
+{
+  uint32_t num_bytes = buf->in_back_buffered_bytes;
   uint32_t tail_offset = buf->tail & QWORD_MASK;
 
-  // Write unaligned data to buffer.
   if (tail_offset != 0) {
     uint8_t *buf_data = (uint8_t *)buf->data;
 
-    if (cmd->tail_overlaps && (QWORD_SIZE - tail_offset > cmd->num_bytes)) {
-      uint32_t new_tail = buf->tail + cmd->num_bytes;
+    if (tail_overlaps && (QWORD_SIZE - tail_offset > num_bytes)) {
+      uint32_t new_tail = buf->tail + num_bytes;
       vec_stvlx(vec_perm(vec_lvrx(new_tail & QWORD_MASK,
                                   &buf->back_in_dtcb.ua_data),
                          vec_lvlx(new_tail, buf_data),
-                         vec_lvsr(cmd->num_bytes, (uint8_t *)NULL)),
+                         vec_lvsr(num_bytes, (uint8_t *)NULL)),
                 buf->tail, buf_data);
     } else {
       vec_stvlx(vec_lvlx(tail_offset, &buf->back_in_dtcb.ua_data),
                 buf->tail, buf_data);
     }
   }
-#endif
 
-  buf->tail = (buf->tail + cmd->num_bytes) & buf->mask;
-  IF_CHECK(buf->back_action = BUFFER_ACTION_NONE);
+  buf->tail = (buf->tail + num_bytes) & buf->mask;
+  assert(buf->otail == buf->tail);
+
+#if CHECK
+  if (!tail_overlaps) {
+    buf->back_action = BUFFER_ACTION_NONE;
+  }
+#endif
 }
 
-#if DT_ALLOW_UNALIGNED
-
 /*-----------------------------------------------------------------------------
- * finish_dt_in_back_ex
+ * finish_dt_in_back_ex_tail
  *---------------------------------------------------------------------------*/
 void
-finish_dt_in_back_ex(BUFFER_CB *buf, uint32_t num_bytes)
+finish_dt_in_back_ex_tail(BUFFER_CB *buf)
 {
   uint32_t ua_bytes;
 
+  check(buf->back_action == BUFFER_ACTION_IN);
   ua_bytes = buf->tail & QWORD_MASK;
 
-  if ((ua_bytes != 0) && (num_bytes >= ua_bytes)) {
+  if ((ua_bytes != 0) && (buf->in_back_buffered_bytes >= ua_bytes)) {
     vec_stvrx(vec_lvrx(ua_bytes, &buf->back_in_dtcb_2.ua_data),
               buf->tail, (uint8_t *)buf->data);
   }
+
+  IF_CHECK(buf->back_action = BUFFER_ACTION_NONE);
 }
 
 #endif

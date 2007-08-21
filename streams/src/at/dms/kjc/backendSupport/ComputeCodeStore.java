@@ -194,6 +194,10 @@ public class ComputeCodeStore<ComputeNodeType extends ComputeNode<?>> implements
      public void addInitStatement(JStatement stmt) {
          if (stmt != null) initBlock.addStatement(stmt);
      }
+     
+     public void addInitStatementFirst(JStatement stmt) {
+         if (stmt != null) initBlock.addStatementFirst(stmt);
+     }
 
      /**
       * Add a statement to the end of the cleanup code.

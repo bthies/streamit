@@ -45,6 +45,7 @@ public class ProcessFilterSliceNode {
         this.filterNode = filterNode;
         this.whichPhase = whichPhase;
         this.backEndBits = backEndBits;
+        setLocationAndCodeStore();
     }
     
     /**
@@ -84,13 +85,14 @@ public class ProcessFilterSliceNode {
             }
 
             filter_code = getFilterCode(filterNode,inputChannel,outputChannel,backEndBits);
-        } 
+        }
+        
 
-        location = backEndBits.getLayout().getComputeNode(filterNode);
-       assert location != null;
-       codeStore = location.getComputeCode();
-
-       switch (whichPhase) {
+        switch (whichPhase) {
+        case PREINIT:
+            standardPreInitProcessing();
+            additionalPreInitProcessing();
+            break;
         case INIT:
             standardInitProcessing();
             additionalInitProcessing();
@@ -104,6 +106,20 @@ public class ProcessFilterSliceNode {
             additionalSteadyProcessing();
             break;
         }
+    }
+    
+    protected void setLocationAndCodeStore() {
+        location = backEndBits.getLayout().getComputeNode(filterNode);
+        assert location != null;
+        codeStore = location.getComputeCode();
+    }
+    
+    protected void standardPreInitProcessing() {
+        
+    }
+    
+    protected void additionalPreInitProcessing() {
+        
     }
     
     protected void standardInitProcessing() {

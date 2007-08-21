@@ -1,4 +1,4 @@
-// $Id: BackEndScaffold.java,v 1.8 2007-04-20 22:00:57 dimock Exp $
+// $Id: BackEndScaffold.java,v 1.9 2007-08-21 08:33:10 qjli Exp $
 package at.dms.kjc.backendSupport;
 
 import java.util.*;
@@ -28,6 +28,11 @@ public class BackEndScaffold  {
      * @param resources the BackEndFactory used to redirect to correct code generation routines.
      */
     protected void beforeScheduling(BasicSpaceTimeSchedule schedule,
+            BackEndFactory resources) {
+        // nothing to do in default case.
+    }
+    
+    protected void betweenScheduling(BasicSpaceTimeSchedule schedule,
             BackEndFactory resources) {
         // nothing to do in default case.
     }
@@ -86,6 +91,7 @@ public class BackEndScaffold  {
         // schedule the steady-state phase.
         slices = schedule.getSchedule();
         
+        betweenScheduling(schedule, resources);
 
         if (KjcOptions.noswpipe && KjcOptions.spacetime) {
             iterateNoSWPipe(schedule.getScheduleList(), SchedulingPhase.STEADY, computeNodes);
@@ -111,7 +117,7 @@ public class BackEndScaffold  {
      * @param whichPhase True if the init stage.
      * @param computeNodes The collection of compute nodes.
      */
-    private void iterateInorder(Slice slices[], SchedulingPhase whichPhase,
+    protected void iterateInorder(Slice slices[], SchedulingPhase whichPhase,
                                        ComputeNodesI computeNodes) {
         Slice slice;
 

@@ -4,6 +4,8 @@ package at.dms.kjc.backendSupport;
  * This enum should tell: initialization, pump priming for software pipelining, or steady state. 
  */
 public enum SchedulingPhase {
+    /** Indicates scheduling for pre-initialization phase */
+    PREINIT,
     /** Indicates scheduling for initialization phase */
     INIT,
     /** indicates scheduling for "prime pump" phase in a software pipelined schedule */

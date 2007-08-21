@@ -47,6 +47,11 @@ public class EmitCode {
             CodegenPrintWriter p, CodeGen codegen) {
         
         SIRCodeUnit fieldsAndMethods = n.getComputeCode();
+        emitCodeForComputeStore(fieldsAndMethods, n, p, codegen);
+    }
+    
+    public void emitCodeForComputeStore (SIRCodeUnit fieldsAndMethods,
+            ComputeNode n, CodegenPrintWriter p, CodeGen codegen) {
         
         // Standard final optimization of a code unit before code emission:
         // unrolling and constant prop as allowed, DCE, array destruction into scalars.

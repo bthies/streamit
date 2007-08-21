@@ -33,6 +33,7 @@ public class ProcessInputSliceNode {
         this.inputNode = inputNode;
         this.whichPhase = whichPhase;
         this.backEndBits = backEndBits;
+        setLocationAndCodeStore();
     }
 
     /**
@@ -53,10 +54,12 @@ public class ProcessInputSliceNode {
             joiner_code = getJoinerCode(inputNode,backEndBits);
         }
         
-        location = backEndBits.getLayout().getComputeNode(inputNode);
-        assert location != null;
-        codeStore = location.getComputeCode();
+        
         switch (whichPhase) {
+        case PREINIT:
+            standardPreInitProcessing();
+            additionalPreInitProcessing();
+            break;
         case INIT:
             standardInitProcessing();
             additionalInitProcessing();
@@ -70,6 +73,20 @@ public class ProcessInputSliceNode {
             additionalSteadyProcessing();
             break;
         }
+    }
+    
+    protected void setLocationAndCodeStore() {
+        location = backEndBits.getLayout().getComputeNode(inputNode);
+        assert location != null;
+        codeStore = location.getComputeCode();
+    }
+    
+    protected void standardPreInitProcessing() {
+        
+    }
+    
+    protected void additionalPreInitProcessing() {
+        
     }
     
     protected void standardInitProcessing() {

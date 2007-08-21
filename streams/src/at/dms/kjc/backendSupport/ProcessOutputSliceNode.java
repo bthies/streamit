@@ -51,7 +51,7 @@ public class ProcessOutputSliceNode {
     
     protected void doit() {
         // No code generated for outputNode if there is not needed.
-        if (! backEndBits.sliceNeedsSplitterCode(outputNode.getParent())) {
+        if (! backEndBits.sliceHasDownstreamChannel(outputNode.getParent())) {
             return;
         }
         
@@ -61,6 +61,10 @@ public class ProcessOutputSliceNode {
         }
 
         switch (whichPhase) {
+        case PREINIT:
+            standardPreInitProcessing();
+            additionalPreInitProcessing();
+            break;
         case INIT:
             standardInitProcessing();
             additionalInitProcessing();
@@ -74,6 +78,14 @@ public class ProcessOutputSliceNode {
             additionalSteadyProcessing();
             break;
         }
+    }
+    
+    protected void standardPreInitProcessing() {
+        
+    }
+    
+    protected void additionalPreInitProcessing() {
+        
     }
     
     protected void standardInitProcessing() {
@@ -193,7 +205,7 @@ public class ProcessOutputSliceNode {
                 if (w != 0) {size++;}
             }
             
-            assert size > 0 : "asking for code generation for null splitter";
+            assert size > 0 : "asking for code generation for null splitter: " + splitter_method_name;
             
             String edge_name = splitter_name + "_edge";
             String weight_name = splitter_name + "_weight";

@@ -84,9 +84,6 @@ public class CellBackend {
         backEndBits = cellBackEndBits;
         backEndBits.setLayout(layout);
         
-        Slice s = schedule.getSchedule()[0];
-        Slice t = schedule.getScheduleList().getLast();
-        
         CellComputeCodeStore ppuCS = cellBackEndBits.getPPU().getComputeCode();
         if (KjcOptions.celldyn) {
 
@@ -174,9 +171,16 @@ public class CellBackend {
 
     public static int numfilters = 0;
     public static int numchannels = 0;
+    
+    /**
+     * InputSliceNode -> List of input channel IDs
+     */
     public static final HashMap<InputSliceNode,LinkedList<Integer>> inputChannelMap = 
         new HashMap<InputSliceNode,LinkedList<Integer>>();
     
+    /**
+     * OutputSliceNode -> List of output channel IDs
+     */
     public static final HashMap<OutputSliceNode,LinkedList<Integer>> outputChannelMap =
         new HashMap<OutputSliceNode,LinkedList<Integer>>();
     
@@ -200,6 +204,20 @@ public class CellBackend {
         new HashMap<SliceNode,Integer>();
     
     public static final HashMap<OutputSliceNode,Integer> duplicateSplitters = 
+        new HashMap<OutputSliceNode,Integer>();
+    
+    /**
+     * InputSliceNode -> ID of the artificial channel connecting it to the 
+     * FilterSliceNode
+     */
+    public static final HashMap<InputSliceNode,Integer> artificialJoinerChannels =
+        new HashMap<InputSliceNode,Integer>();
+    
+    /**
+     * OutputSliceNode -> ID of the artificial channel connecting the FilterSliceNode
+     * to it
+     */
+    public static final HashMap<OutputSliceNode,Integer> artificialRRSplitterChannels = 
         new HashMap<OutputSliceNode,Integer>();
     
     public static InterSliceEdge getEdgeBetween(OutputSliceNode src, InputSliceNode dest) {

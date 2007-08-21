@@ -605,25 +605,31 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
         }
     }
     
-    public void duplicateChannel(OutputSliceNode outputNode, int duplicateId) {
-        int channelId = CellBackend.duplicateSplitters.get(outputNode).intValue();
-        addInitStatement(new JExpressionStatement(new JMethodCallExpression(
-                "duplicate_buffer",
-                new JExpression[]{
-                    new JMethodCallExpression(
-                            "&",
-                            new JExpression[]{
-                                new JArrayAccessExpression(
-                                    new JFieldAccessExpression("channels"),
-                                    new JIntLiteral(duplicateId))}),
-                    new JMethodCallExpression(
-                            "&",
-                            new JExpression[]{
-                                new JArrayAccessExpression(
-                                    new JFieldAccessExpression("channels"),
-                                    new JIntLiteral(channelId))}),
-                }
-        )));
+    /**
+     * Duplicate channelId to all the channels in duplicateIds.
+     * @param channelId
+     * @param duplicateIds
+     */
+    public void duplicateChannel(int channelId, LinkedList<Integer> duplicateIds) {
+        for (int i : duplicateIds) {
+            addInitStatement(new JExpressionStatement(new JMethodCallExpression(
+                    "duplicate_buffer",
+                    new JExpression[]{
+                        new JMethodCallExpression(
+                                "&",
+                                new JExpression[]{
+                                    new JArrayAccessExpression(
+                                        new JFieldAccessExpression("channels"),
+                                        new JIntLiteral(i))}),
+                        new JMethodCallExpression(
+                                "&",
+                                new JExpression[]{
+                                    new JArrayAccessExpression(
+                                        new JFieldAccessExpression("channels"),
+                                        new JIntLiteral(channelId))}),
+                    }
+            )));
+        }
     }
     
     public void addIssueUnload() {
@@ -882,17 +888,17 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
     /**
      * Initialize an array of input buffers for this slice and attaches each
      * input buffer to the appropriate upstream channel.
-     * @param inputNode
-     * @param inputIds
      * @param filterId
+     * @param inputIds
      */
-    public void attachInputChannelArray(InputSliceNode inputNode,
-            LinkedList<Integer> inputIds, int filterId) {
-        
+    public void attachInputChannelArray(int filterId,
+            LinkedList<Integer> inputIds) {
+        if (inputIds == null)
+            return;
         addField(new JFieldDeclaration(new JVariableDefinition(
                 new CArrayType(new CEmittedTextType("BUFFER_CB *"),
                         1,
-                        new JExpression[]{new JIntLiteral(inputNode.getWidth())}),
+                        new JExpression[]{new JIntLiteral(inputIds.size())}),
                         "input_" + filterId)));
         for (int i=0; i<inputIds.size(); i++) {
             addInitStatement(new JExpressionStatement(new JAssignmentExpression(
@@ -909,14 +915,22 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
         }
     }
     
-    public void initOutputChannelArray(OutputSliceNode outputNode,
-            LinkedList<Integer> outputnums, int filterId) {
+    /**
+     * Initialize an array of output buffers for this slice and attaches each
+     * output buffer to the appropriate downstream channel.
+     * @param filterId
+     * @param outputIds
+     */
+    public void attachOutputChannelArray(int filterId,
+            LinkedList<Integer> outputIds) {
+        if (outputIds == null)
+            return;
         addField(new JFieldDeclaration(new JVariableDefinition(
                 new CArrayType(new CEmittedTextType("BUFFER_CB *"),
                         1,
-                        new JExpression[]{new JIntLiteral(outputNode.getWidth())}),
+                        new JExpression[]{new JIntLiteral(outputIds.size())}),
                         "output_" + filterId)));
-        for (int i=0; i<outputnums.size(); i++) {
+        for (int i=0; i<outputIds.size(); i++) {
             addInitStatement(new JExpressionStatement(new JAssignmentExpression(
                     new JArrayAccessExpression(
                             new JFieldAccessExpression("output_" + filterId),
@@ -926,7 +940,7 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
                                     new JExpression[]{
                                             new JArrayAccessExpression(
                                                     new JFieldAccessExpression("channels"),
-                                                    new JIntLiteral(outputnums.get(i)))
+                                                    new JIntLiteral(outputIds.get(i)))
                                     }))));            
         }
 

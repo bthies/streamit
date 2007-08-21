@@ -69,31 +69,43 @@ public class CellProcessInputSliceNode extends ProcessInputSliceNode {
             ppuCS.setupFilterDescription(inputNode);
             // setup EXT_PSP_EX_PARAMS/LAYOUT
             ppuCS.setupPSP(inputNode);
-            
-            // Ids of channels that are inputs to this filter
-            LinkedList<Integer> inputIds = new LinkedList<Integer>();
-            // Populate Channel-ID mapping, and increase number of channels.
-            for (InterSliceEdge e : inputNode.getSourceList()) {
-                // Always use src->dest direction for edges
-                InterSliceEdge f = CellBackend.getEdgeBetween(e.getSrc(),inputNode);
-                if(!CellBackend.channelIdMap.containsKey(f)) {
-                    CellBackend.channels.add(f);
-                    CellBackend.channelIdMap.put(f,CellBackend.numchannels);
-                    inputIds.add(CellBackend.numchannels);
-                    ppuCS.initChannel(CellBackend.numchannels);
-                    CellBackend.numchannels++;
-                } else {
-                    inputIds.add(CellBackend.channelIdMap.get(f));
-                }
+        }
+        
+        // Ids of channels that are inputs to this filter
+        LinkedList<Integer> inputIds = new LinkedList<Integer>();
+        // Populate Channel-ID mapping, and increase number of channels.
+        for (InterSliceEdge e : inputNode.getSourceList()) {
+            // Always use output->input direction for edges
+            InterSliceEdge f = CellBackend.getEdgeBetween(e.getSrc(),inputNode);
+            if(!CellBackend.channelIdMap.containsKey(f)) {
+                int channelId = CellBackend.numchannels;
+                CellBackend.channels.add(f);
+                CellBackend.channelIdMap.put(f,channelId);
+                inputIds.add(channelId);
+                ppuCS.initChannel(channelId);
+                CellBackend.numchannels++;
+            } else {
+                inputIds.add(CellBackend.channelIdMap.get(f));
             }
-            CellBackend.inputChannelMap.put(inputNode, inputIds);
+        }
+        CellBackend.inputChannelMap.put(inputNode, inputIds);
 
-            ppuCS.attachInputChannelArray(
-                    inputNode,
-                    inputIds,
-                    CellBackend.filterIdMap.get(inputNode).intValue());
-        } else {
-            
+        if (inputNode.isJoiner()) {
+            int filterId = CellBackend.filterIdMap.get(inputNode);
+            // attach all input channels as inputs to the joiner
+            ppuCS.attachInputChannelArray(filterId, inputIds);
+            //make artificial channel between inputslicenode and filterslicenode
+            int channelId = CellBackend.numchannels;
+            InterSliceEdge a = new InterSliceEdge(inputNode);
+            CellBackend.channels.add(a);
+            CellBackend.channelIdMap.put(a, channelId);
+            CellBackend.artificialJoinerChannels.put(inputNode, channelId);
+            ppuCS.initChannel(channelId);
+            CellBackend.numchannels++;
+            // attach artificial channel as output of the joiner
+            LinkedList<Integer> outputIds = new LinkedList<Integer>();
+            outputIds.add(channelId);
+            ppuCS.attachOutputChannelArray(filterId, outputIds);
         }
     }
     

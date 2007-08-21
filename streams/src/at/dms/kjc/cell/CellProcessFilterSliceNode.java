@@ -67,11 +67,71 @@ public class CellProcessFilterSliceNode extends ProcessFilterSliceNode {
         ppuCS.setupFilterDescription(filterNode);
         ppuCS.setupPSP(filterNode);
         
-        LinkedList<Integer> inputIds =
-            CellBackend.inputChannelMap.get(inputNode);
+        LinkedList<Integer> inputIds = CellBackend.inputChannelMap.get(inputNode);
         
+        // Finish handling inputs
         if (!inputNode.isJoiner())
-            ppuCS.attachInputChannelArray(inputNode, inputIds, filterId);
+            // if not a joiner, attach all inputs to the filter (should only
+            // be one input)
+            ppuCS.attachInputChannelArray(filterId, inputIds);
+        else {
+            // attach artificial channel created earlier as input
+            int channelId = CellBackend.artificialJoinerChannels.get(inputNode);
+            inputIds = new LinkedList<Integer>();
+            inputIds.add(channelId);
+            ppuCS.attachInputChannelArray(filterId, inputIds);
+        }
+        
+        LinkedList<Integer> outputIds = new LinkedList<Integer>();
+        
+        if (outputNode.isRRSplitter()) {
+            // make artificial channel between filterslicenode and outputslicenode
+            int channelId = CellBackend.numchannels;
+            // dummy edge
+            InterSliceEdge a = new InterSliceEdge(outputNode);
+            CellBackend.channels.add(a);
+            CellBackend.channelIdMap.put(a, channelId);
+            CellBackend.artificialRRSplitterChannels.put(outputNode, channelId);
+            ppuCS.initChannel(channelId);
+            CellBackend.numchannels++;
+            // attach artificial channel as output of filterslicenode 
+            LinkedList<Integer> RROutputIds = new LinkedList<Integer>();
+            RROutputIds.add(channelId);
+            ppuCS.attachOutputChannelArray(filterId, RROutputIds);
+        }
+
+        // Populate Channel-ID mapping, and increase number of channels.
+        for (InterSliceEdge e : outputNode.getDestSequence()) {
+            if(!CellBackend.channelIdMap.containsKey(e)) {
+                int channelId = CellBackend.numchannels;
+                CellBackend.channels.add(e);
+                CellBackend.channelIdMap.put(e,channelId);
+                outputIds.add(channelId);
+                // init and allocate buffer if not duplicate splitter
+                if (!outputNode.isDuplicateSplitter())
+                    ppuCS.initChannel(channelId);
+                CellBackend.numchannels++;
+            } else {
+                outputIds.add(CellBackend.channelIdMap.get(e));
+            }
+        }
+        CellBackend.outputChannelMap.put(outputNode, outputIds);
+
+        if (outputNode.isDuplicateSplitter()) {
+            // for duplicate splitters, initialize only the first channel
+            // the rest will be duplicated later
+            int channelId = outputIds.getFirst();
+            ppuCS.initChannel(channelId);
+            // remove the already initialized first channel, duplicate the rest
+            LinkedList<Integer> dupOutputIds = new LinkedList<Integer>(outputIds);
+            dupOutputIds.removeFirst();
+            ppuCS.duplicateChannel(channelId, dupOutputIds);
+            // attach outputs
+            ppuCS.attachOutputChannelArray(filterId, outputIds);
+        } else if (!outputNode.isRRSplitter()) {
+            ppuCS.attachOutputChannelArray(filterId, outputIds);
+        }
+        
         
         if (KjcOptions.celldyn) {
             PPU ppu = ((CellBackendFactory) backEndBits).getPPU();

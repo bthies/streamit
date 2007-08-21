@@ -3,10 +3,12 @@ package at.dms.kjc.cell;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
 
 import at.dms.kjc.JInterfaceDeclaration;
 import at.dms.kjc.KjcOptions;
-import at.dms.kjc.backendSupport.BackEndFactory;
 import at.dms.kjc.backendSupport.BackEndScaffold;
 import at.dms.kjc.backendSupport.CommonPasses;
 import at.dms.kjc.backendSupport.DumpSlicesAndChannels;
@@ -18,13 +20,17 @@ import at.dms.kjc.sir.SIRHelper;
 import at.dms.kjc.sir.SIRInterfaceTable;
 import at.dms.kjc.sir.SIRStream;
 import at.dms.kjc.sir.SIRStructure;
+import at.dms.kjc.slicegraph.InputSliceNode;
+import at.dms.kjc.slicegraph.InterSliceEdge;
+import at.dms.kjc.slicegraph.OutputSliceNode;
 import at.dms.kjc.slicegraph.Partitioner;
 import at.dms.kjc.slicegraph.Slice;
+import at.dms.kjc.slicegraph.SliceNode;
 import at.dms.kjc.vanillaSlice.EmitStandaloneCode;
 
 public class CellBackend {
     /** holds pointer to BackEndFactory instance during back end portion of this compiler. */
-    public static BackEndFactory<CellChip, CellPU, CellComputeCodeStore, Integer> backEndBits = null;
+    public static CellBackendFactory backEndBits = null;
 
     /**
      * Top level method for Cell backend, called via reflection from {@link at.dms.kjc.StreaMITMain}.
@@ -70,33 +76,41 @@ public class CellBackend {
 
         // assign SliceNodes to processors
         Layout<CellPU> layout;
-//        if (KjcOptions.spacetime && !KjcOptions.noswpipe) {
-//            layout = new BasicGreedyLayout<CellPU>(schedule, cellChip.toArray());
-//        } else {
-            layout = new CellNoSWPipeLayout(schedule, cellChip);
-//        }
+        layout = new CellNoSWPipeLayout(schedule, cellChip);
         layout.run();
  
         // create other info needed to convert Slice graphs to Kopi code + Channels
         CellBackendFactory cellBackEndBits  = new CellBackendFactory(cellChip);
         backEndBits = cellBackEndBits;
         backEndBits.setLayout(layout);
-
-        CellComputeCodeStore ppuCS = cellBackEndBits.getPPU().getComputeCode();        
-        ppuCS.addSPUInit(schedule);
-        ppuCS.addCallBackFunction();
-        ppuCS.addSPUIters();
-        ppuCS.addPPUBuffers();
-//        System.out.println("first slice: " + schedule.getInitSchedule()[0].getFilterNodes().get(0));
-        //ppuCS.addFileReader();
-        //ppuCS.addFileWriter();
         
+        Slice s = schedule.getSchedule()[0];
+        Slice t = schedule.getScheduleList().getLast();
+        
+        CellComputeCodeStore ppuCS = cellBackEndBits.getPPU().getComputeCode();
+        if (KjcOptions.celldyn) {
+
+        }
+        else {
+            ppuCS.addSPUInit(schedule);
+            ppuCS.addCallBackFunction();
+            ppuCS.initSpulibClock();
+            ppuCS.addDataAddressField();
+            ppuCS.setupInputBufferAddress();
+            ppuCS.setupOutputBufferAddress();
+            ppuCS.setupDataAddress();
+        }        
         // now convert to Kopi code plus channels.  (Javac gives error if folowing two lines are combined)
-        BackEndScaffold top_call = backEndBits.getBackEndMain();
+        CellBackendScaffold top_call = backEndBits.getBackEndMain();
         top_call.run(schedule, backEndBits);
         
         for (SPU spu : cellBackEndBits.getSPUs()) {
-            spu.getComputeCode().addInitFunctions();
+            for (CellComputeCodeStore cs : spu.getComputeCodeStores())
+                cs.addInitFunctions();
+        }
+        
+        if (KjcOptions.celldyn) {
+            ppuCS.dynamic();
         }
         
         // Dump graphical representation
@@ -114,53 +128,85 @@ public class CellBackend {
         } catch (IOException e) {
             throw new AssertionError("I/O error on " + outputFileName + ": " + e);
         }
+        
+        CellPU ppu = cellBackEndBits.getComputeNode(0);
+        outputFileName = "str0.c";
+        try {
+            CodegenPrintWriter p = new CodegenPrintWriter(new BufferedWriter(new FileWriter(outputFileName, false)));
+            // write out C code
     
-
-        Slice s = schedule.getSchedule()[0];
-        assert s.getFilterNodes().get(0).isFileInput();
+            EmitCellCode codeEmitter = new EmitCellCode(cellBackEndBits);
+            codeEmitter.generatePPUCHeader(p);
+            codeEmitter.emitCodeForComputeNode(ppu, p);
+            codeEmitter.generateMain(p);
+            p.close();
+        } catch (IOException e) {
+            throw new AssertionError("I/O error on " + outputFileName + ": " + e);
+        }
         
         /*
          * Emit code to strN.c
          */
-        for (int n = 0; n < cellBackEndBits.getComputeNodes().size(); n++) {
-            outputFileName = "str" + n + ".c";
-            try {
-                CodegenPrintWriter p = new CodegenPrintWriter(new BufferedWriter(new FileWriter(outputFileName, false)));
-                CellPU nodeN = cellBackEndBits.getComputeNode(n);
-                // write out C code
-            
-                EmitCellCode codeEmitter = new EmitCellCode(cellBackEndBits);
-                //codeEmitter.generateCHeader(p);
-                if (n == 0) {
-                    p.println("#include \"spulib.h\"");
-                    p.println("#include \"structs.h\"");
-                    p.println("#include \"spusymbols.h\"");
-                    p.println("#include \"spuinit.inc\"");
-                    p.println("#include <stdio.h>");
-                } else {
-                    p.println("#include \"filterdefs.h\"");
-                    p.println("#include \"structs.h\"");
-                    p.println("#include <math.h>");
-                    p.println();
-                    p.println("#define FILTER_NAME " + (n-1));
-                    String type;
-                    if (s.getFilterNodes().get(0).getFilter().getOutputType().isFloatingPoint())
-                        type = "float";
-                    else type = "int";
-                    p.println("#define ITEM_TYPE " + type);
-                    p.println("#include \"beginfilter.h\"");
+        for (int n = 1; n < cellBackEndBits.getComputeNodes().size(); n++) {
+            CellPU nodeN = cellBackEndBits.getComputeNode(n);
+            ArrayList<CellComputeCodeStore> codestores = nodeN.getComputeCodeStores();
+            for (int c = 0; c < nodeN.getNumComputeCodeStores(); c++) {
+                outputFileName = "str" + n + c + ".c";
+                CellComputeCodeStore cs = codestores.get(c);
+                try {
+                    CodegenPrintWriter p = new CodegenPrintWriter(new BufferedWriter(new FileWriter(outputFileName, false)));
+                    // write out C code
+
+                    EmitCellCode codeEmitter = new EmitCellCode(cellBackEndBits);
+                    codeEmitter.generateSPUCHeader(p, cs.getSliceNode());
+
+                    codeEmitter.emitCodeForComputeStore(cs, nodeN, p);
+                    p.println("#include \"endfilter.h\"");
+                    p.close();
+                } catch (IOException e) {
+                    throw new AssertionError("I/O error on " + outputFileName + ": " + e);
                 }
-                codeEmitter.emitCodeForComputeNode(nodeN, p);
-                if (n == 0) { codeEmitter.generateMain(p); }
-                else {
-                   p.println("#include \"endfilter.h\"");
-                }
-                p.close();
-            } catch (IOException e) {
-                throw new AssertionError("I/O error on " + outputFileName + ": " + e);
             }
         }
         
         System.exit(0);
+    }
+
+    public static int numfilters = 0;
+    public static int numchannels = 0;
+    public static final HashMap<InputSliceNode,LinkedList<Integer>> inputChannelMap = 
+        new HashMap<InputSliceNode,LinkedList<Integer>>();
+    
+    public static final HashMap<OutputSliceNode,LinkedList<Integer>> outputChannelMap =
+        new HashMap<OutputSliceNode,LinkedList<Integer>>();
+    
+    public static final HashMap<Integer,SliceNode> SPUassignment = 
+        new HashMap<Integer,SliceNode>();
+    
+    public static final HashMap<InterSliceEdge,Integer> channelIdMap = 
+        new HashMap<InterSliceEdge,Integer>();
+    
+    public static final ArrayList<InterSliceEdge> channels = 
+        new ArrayList<InterSliceEdge>();
+    
+    /**
+     * List of all the filters in the graph (including RR splitters and joiners 
+     * as separate filters)
+     */
+    public static final ArrayList<SliceNode> filters = 
+        new ArrayList<SliceNode>();
+    
+    public static final HashMap<SliceNode,Integer> filterIdMap = 
+        new HashMap<SliceNode,Integer>();
+    
+    public static final HashMap<OutputSliceNode,Integer> duplicateSplitters = 
+        new HashMap<OutputSliceNode,Integer>();
+    
+    public static InterSliceEdge getEdgeBetween(OutputSliceNode src, InputSliceNode dest) {
+        for (InterSliceEdge e : src.getDestSequence()) {
+            if (e.getDest() == dest)
+                return e;
+        }
+        return null;
     }
 }

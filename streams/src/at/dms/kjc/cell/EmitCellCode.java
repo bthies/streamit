@@ -7,27 +7,110 @@ import at.dms.kjc.CVectorType;
 import at.dms.kjc.CVectorTypeLow;
 import at.dms.kjc.JArrayInitializer;
 import at.dms.kjc.JBlock;
-import at.dms.kjc.JEmittedTextExpression;
 import at.dms.kjc.JExpression;
-import at.dms.kjc.JExpressionStatement;
 import at.dms.kjc.JFieldDeclaration;
 import at.dms.kjc.JFormalParameter;
 import at.dms.kjc.JMethodCallExpression;
 import at.dms.kjc.JMethodDeclaration;
 import at.dms.kjc.JNewArrayExpression;
-import at.dms.kjc.JStatement;
 import at.dms.kjc.JVariableDefinition;
-import at.dms.kjc.JWhileStatement;
+import at.dms.kjc.KjcOptions;
 import at.dms.kjc.backendSupport.ComputeNode;
 import at.dms.kjc.backendSupport.EmitCode;
 import at.dms.kjc.common.CodegenPrintWriter;
 import at.dms.kjc.common.MacroConversion;
+import at.dms.kjc.slicegraph.FilterSliceNode;
+import at.dms.kjc.slicegraph.InputSliceNode;
+import at.dms.kjc.slicegraph.OutputSliceNode;
+import at.dms.kjc.slicegraph.SliceNode;
 import at.dms.util.Utils;
 
 public class EmitCellCode extends EmitCode {
 
     public EmitCellCode(CellBackendFactory backendBits) {
         super(backendBits);
+    }
+    
+    @Override
+    public void generateCHeader(CodegenPrintWriter p) {
+        
+    }
+    
+    private void handleFilterSlice(CodegenPrintWriter p, FilterSliceNode s) {
+        p.println("#define FILTER_NAME " + s.getFilter().getName());
+        p.println("#include \"beginfilter.h\"");
+    }
+    
+    private void handleInputSlice(CodegenPrintWriter p, InputSliceNode s) {
+        p.println("#define FILTER_NAME " + "joiner_" + s.getNext().getAsFilter().getFilter().getName());
+        if (s.isJoiner()) {
+            p.println("#define NUM_INPUT_TAPES " + s.getWidth());
+            p.print("#define JOINER_RATES {");
+            p.print(s.getWeights()[0]);
+            for (int i=1; i<s.getWidth(); i++) {
+                p.print(", " + s.getWeights()[i]);
+            }
+            p.println("}");
+        }
+        
+        p.println("#include \"beginfilter.h\"");
+        if (s.isJoiner()) 
+            p.println("#include \"rrjoiner.h\"");
+    }
+    
+    private void handleOutputSlice(CodegenPrintWriter p, OutputSliceNode s) {
+        p.println("#define FILTER_NAME " + "splitter_" + s.getPrevious().getAsFilter().getFilter().getName());
+        if (s.isRRSplitter()) {
+            p.println("#define NUM_OUTPUT_TAPES " + s.getWidth());
+            p.print("#define SPLITTER_RATES {");
+            p.print(s.getWeights()[0]);
+            for (int i=1; i<s.getWidth(); i++) {
+                p.print(", " + s.getWeights()[i]);
+            }
+            p.println("}");
+        }
+        p.println("#include \"beginfilter.h\"");
+        if (s.isRRSplitter())
+            p.println("#include \"rrsplitter.h\"");
+    }
+    
+    public void generateSPUCHeader(CodegenPrintWriter p, SliceNode s) {
+        p.println("#include \"filterdefs.h\"");
+        p.println("#include \"structs.h\"");
+        p.println("#include <math.h>");
+        p.println();
+        String type;
+        if (s.getParent().getHead().getNextFilter().getFilter().getOutputType().isFloatingPoint())
+            type = "float";
+        else type = "int";
+        p.println("#define ITEM_TYPE " + type);
+        
+        if (s.isFilterSlice())
+            handleFilterSlice(p, s.getAsFilter());
+        else if (s.isInputSlice())
+            handleInputSlice(p, s.getAsInput());
+        else handleOutputSlice(p, s.getAsOutput());
+
+    }
+    
+    public void generatePPUCHeader(CodegenPrintWriter p) {
+        if (KjcOptions.celldyn) {
+            p.println("#include \"ds.h\"");
+            p.println("#include \"spusymbols.h\"");
+            p.println("#include <math.h>");
+            p.println("#include <strings.h>");
+            p.println("#include \"spuinit.inc\"");
+            p.println("#include <stdio.h>");
+            p.println();
+            p.println("#define NUM_FILTERS " + CellBackend.numfilters);
+            p.println("#define NUM_CHANNELS " + CellBackend.numchannels);
+        } else {
+            p.println("#include \"spulib.h\"");
+            p.println("#include \"structs.h\"");
+            p.println("#include \"spusymbols.h\"");
+            p.println("#include \"spuinit.inc\"");
+            p.println("#include <stdio.h>");
+        }
     }
     
     @Override
@@ -42,6 +125,18 @@ public class EmitCellCode extends EmitCode {
             emitCodeForComputeNode(n, p, codegen);
         }
 
+    }
+    
+    public void emitCodeForComputeStore (CellComputeCodeStore cs,
+            ComputeNode n, CodegenPrintWriter p) {
+        if (n instanceof SPU) {
+            codegen = new CellSPUCodeGen(p, cs);
+            emitCodeForComputeStore(cs, n, p, codegen);
+        }
+        else {
+            codegen = new CellPPUCodeGen(p);
+            emitCodeForComputeStore(cs, n, p, codegen);
+        }
     }
     
     protected class CellPPUCodeGen extends CodeGen {
@@ -166,8 +261,15 @@ public class EmitCellCode extends EmitCode {
     
     protected class CellSPUCodeGen extends CodeGen {
         
+        CellComputeCodeStore cs;
+        
         CellSPUCodeGen(CodegenPrintWriter p) {
+            this(p, null);
+        }
+        
+        CellSPUCodeGen(CodegenPrintWriter p, CellComputeCodeStore cs) {
             super(p);
+            this.cs = cs;
         }
         
         /**
@@ -204,6 +306,10 @@ public class EmitCellCode extends EmitCode {
                 MacroConversion.doConvert(self, isDeclOnly(), this);
                 return;
             }
+            if (cs.getSliceNode().isInputSlice() && cs.getSliceNode().getAsInput().isJoiner())
+                return;
+            if (cs.getSliceNode().isOutputSlice() && cs.getSliceNode().getAsOutput().isRRSplitter())
+                return;
             declsAreLocal = true;
             if (! this.isDeclOnly()) { p.newLine(); } // some extra space if not just declaration.
             p.newLine();

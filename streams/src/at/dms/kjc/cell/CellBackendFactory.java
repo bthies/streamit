@@ -9,6 +9,7 @@ import at.dms.kjc.backendSupport.CodeStoreHelper;
 import at.dms.kjc.backendSupport.CodeStoreHelperJoiner;
 import at.dms.kjc.backendSupport.CodeStoreHelperSimple;
 import at.dms.kjc.backendSupport.CodeStoreHelperSplitter;
+import at.dms.kjc.backendSupport.Layout;
 import at.dms.kjc.backendSupport.SchedulingPhase;
 import at.dms.kjc.slicegraph.Edge;
 import at.dms.kjc.slicegraph.FilterSliceNode;
@@ -20,6 +21,7 @@ import at.dms.kjc.slicegraph.SliceNode;
 public class CellBackendFactory 
     extends BackEndFactory<CellChip, CellPU, CellComputeCodeStore, Integer> {
 
+    private Layout<CellPU> layout;
     private CellChip cellChip;
     private GetOrMakeCellChannel channelMaker = new GetOrMakeCellChannel(this);
     
@@ -44,14 +46,22 @@ public class CellBackendFactory
         this.cellChip = processors;
     }
     
-    private BackEndScaffold scaffolding = null;
+    private CellBackendScaffold scaffolding = null;
     
     @Override
-    public BackEndScaffold getBackEndMain() {
+    public CellBackendScaffold getBackEndMain() {
         if (scaffolding == null) {
-            scaffolding = new BackEndScaffold();
+            scaffolding = new CellBackendScaffold();
         }
         return scaffolding;
+    }
+    
+    public void setLayout(Layout<CellPU> layout) {
+        this.layout = layout;
+    }
+    
+    public Layout<CellPU> getLayout() {
+        return this.layout;
     }
 
     @Override

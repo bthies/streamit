@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.103 2007-08-08 07:35:48 qjli Exp $
+ * $Id: KjcOptions.opt,v 1.104 2007-08-21 08:22:39 qjli Exp $
  */
 
 prefix Kjc
@@ -505,6 +505,11 @@ longname		"cell"
 	default		"1"
 	requireArgument
 	help		"Compile for Cell with <n> SPUs."
+	
+longname		"celldyn"
+	type		boolean
+	default		"false"
+	help		"Compile to Cell for use with dynamic scheduler."
 
 longname		"fission"
 	type		int

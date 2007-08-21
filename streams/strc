@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.127 2007-08-08 07:35:38 qjli Exp $
+# $Id: strc,v 1.128 2007-08-21 08:21:44 qjli Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -209,6 +209,7 @@ Usage: strc [options] file.str ...
 * --much-more-help    Include internal-only options
 
   --cell n            Compile for Cell processor with n SPUs
+  --celldyn           Compile for Cell using dynamic scheduler
   --cluster n         Compile for a cluster or multicore with n nodes
   --library           Run in the Java library instead of compiling
 * --newSimple         (in development)
@@ -383,6 +384,7 @@ sub get_options
 			    "optimize|O=i",
 			    "atlas!",
 			    "cell:i",
+			    "celldyn",
 			    "blender",
 			    "mencoder",
 			    "cell-vector-library|cell_vector_library",
@@ -896,6 +898,7 @@ sub get_compiler_opts
     $opts{'cell-vector-library'} && ($copts .= " --cell_vector_library");
     $opts{wbs} && ($copts .= " --wbs");
     $opts{noswpipe} && ($copts .= " --noswpipe");
+    $opts{celldyn} && ($copts .= " --celldyn");
     $opts{hwic} && ($copts .= " --hwic");
     $opts{greedysched} && ($copts .= " --greedysched");
     $opts{workestunroll} && ($copts .= " --workestunroll");

@@ -3,7 +3,11 @@ package at.dms.kjc.cell;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
+import at.dms.kjc.JExpression;
+import at.dms.kjc.JExpressionStatement;
+import at.dms.kjc.JMethodCallExpression;
 import at.dms.kjc.JMethodDeclaration;
+import at.dms.kjc.JThisExpression;
 import at.dms.kjc.KjcOptions;
 import at.dms.kjc.backendSupport.ProcessFilterSliceNode;
 import at.dms.kjc.backendSupport.SchedulingPhase;
@@ -16,7 +20,8 @@ public class CellProcessFilterSliceNode extends ProcessFilterSliceNode {
     
     private int cpunum;
     
-    CellComputeCodeStore ppuCS;
+    private CellComputeCodeStore ppuCS;
+    private CellComputeCodeStore initCodeStore;
     
     public CellProcessFilterSliceNode(FilterSliceNode filterNode, 
             SchedulingPhase whichPhase, CellBackendFactory backEndBits) {
@@ -28,15 +33,21 @@ public class CellProcessFilterSliceNode extends ProcessFilterSliceNode {
     public void processFilterSliceNode() {
         
         if (filterNode.isFileInput()) {
-            if (whichPhase == SchedulingPhase.INIT) {
+            if (whichPhase == SchedulingPhase.PREINIT) {
+                setupFileReaderChannel();
                 ppuCS.initFileReader(filterNode);
+            }
+            else if (whichPhase == SchedulingPhase.INIT) {
             }
             else if (whichPhase == SchedulingPhase.STEADY) {
                 ppuCS.addFileReader(filterNode);
             }
         } else if (filterNode.isFileOutput()) {
-            if (whichPhase == SchedulingPhase.INIT) {
-                ppuCS.initFileWriter(filterNode);
+            if (whichPhase == SchedulingPhase.PREINIT) {
+                ppuCS.initFileWriter(filterNode);                
+            }
+            else if (whichPhase == SchedulingPhase.INIT) {
+
             }
             else if (whichPhase == SchedulingPhase.STEADY) {
                 ppuCS.addFileWriter(filterNode);
@@ -51,6 +62,7 @@ public class CellProcessFilterSliceNode extends ProcessFilterSliceNode {
         location = backEndBits.getLayout().getComputeNode(filterNode);
         assert location != null;
         codeStore = ((CellPU)location).getComputeCodeStore(filterNode);
+        initCodeStore = ((CellPU)location).getInitComputeCodeStore(filterNode);
     }
     
     @Override
@@ -132,6 +144,8 @@ public class CellProcessFilterSliceNode extends ProcessFilterSliceNode {
             ppuCS.attachOutputChannelArray(filterId, outputIds);
         }
         
+        addToScheduleLayout();
+        
         
         if (KjcOptions.celldyn) {
             PPU ppu = ((CellBackendFactory) backEndBits).getPPU();
@@ -141,21 +155,43 @@ public class CellProcessFilterSliceNode extends ProcessFilterSliceNode {
         }
     }
     
+//    @Override
+//    protected void standardInitProcessing() {
+//        // Have the main function for the CodeStore call out init.
+//        codeStore.addInitFunctionCall(filter_code.getInitMethod());
+//        JMethodDeclaration workAtInit = filter_code.getInitStageMethod();
+//        if (workAtInit != null) {
+//            // if there are calls to work needed at init time then add
+//            // method to general pool of methods
+//            codeStore.addMethod(workAtInit);
+//            // and add call to list of calls made at init time.
+//            // Note: these calls must execute in the order of the
+//            // initialization schedule -- so caller of this routine 
+//            // must follow order of init schedule.
+//            codeStore.addInitFunctionCall(workAtInit);
+//        }
+//    }
+    
     @Override
     protected void standardInitProcessing() {
         // Have the main function for the CodeStore call out init.
-        codeStore.addInitFunctionCall(filter_code.getInitMethod());
+        initCodeStore.addInitFunctionCall(filter_code.getInitMethod());
         JMethodDeclaration workAtInit = filter_code.getInitStageMethod();
         if (workAtInit != null) {
             // if there are calls to work needed at init time then add
             // method to general pool of methods
-            codeStore.addMethod(workAtInit);
+            initCodeStore.addMethod(workAtInit);
             // and add call to list of calls made at init time.
             // Note: these calls must execute in the order of the
             // initialization schedule -- so caller of this routine 
             // must follow order of init schedule.
-            codeStore.addInitFunctionCall(workAtInit);
+            initCodeStore.addInitStatement(new JExpressionStatement(null,
+                    new JMethodCallExpression(null, new JThisExpression(null),
+                            workAtInit.getName(), new JExpression[0]), null));
         }
+        initCodeStore.addFields(filter_code.getUsefulFields());
+        initCodeStore.addMethods(filter_code.getUsefulMethods());
+
     }
     
     @Override
@@ -170,19 +206,101 @@ public class CellProcessFilterSliceNode extends ProcessFilterSliceNode {
     
     @Override
     protected void additionalSteadyProcessing() {
-        System.out.println("processing filter: " + filterNode.getFilter().getName());
-        int spu = getFreeSPU();
-        assert spu >= 0;
-        CellBackend.SPUassignment.put(spu,filterNode);
-        //if (StatelessDuplicate.sizeOfMutableState(filterNode.getFilter().))
-        System.out.println(spu + " is working on " + filterNode.getFilter().getName());
-        //ppuCS.addNewGroupStatement();
-        //ppuCS.addIssueGroupAndWait();
-        //ppuCS.addPSPLayout();
-//        ppuCS.addSpulibPollWhile(filterNode);
-//        SPUassignment.remove(spu);
-        //ppuCS.addIssueUnload();
-        ppuCS.newline();
+//        System.out.println("processing filter: " + filterNode.getFilter().getName());
+//        int spu = getFreeSPU();
+//        assert spu >= 0;
+//        CellBackend.SPUassignment.put(spu,filterNode);
+//        //if (StatelessDuplicate.sizeOfMutableState(filterNode.getFilter().))
+//        System.out.println(spu + " is working on " + filterNode.getFilter().getName());
+//        //ppuCS.addNewGroupStatement();
+//        //ppuCS.addIssueGroupAndWait();
+//        //ppuCS.addPSPLayout();
+////        ppuCS.addSpulibPollWhile(filterNode);
+////        SPUassignment.remove(spu);
+//        //ppuCS.addIssueUnload();
+//        ppuCS.newline();
+    }
+    
+    private void setupFileReaderChannel() {
+        OutputSliceNode outputNode = filterNode.getParent().getTail();
+        LinkedList<Integer> outputIds = new LinkedList<Integer>();
+        // Populate Channel-ID mapping, and increase number of channels.
+        for (InterSliceEdge e : outputNode.getDestSequence()) {
+            if(!CellBackend.channelIdMap.containsKey(e)) {
+                int channelId = CellBackend.numchannels;
+                CellBackend.channels.add(e);
+                CellBackend.channelIdMap.put(e,channelId);
+                outputIds.add(channelId);
+                // init and allocate buffer if not duplicate splitter
+                if (!outputNode.isDuplicateSplitter())
+                    ppuCS.initChannel(channelId);
+                CellBackend.numchannels++;
+            } else {
+                outputIds.add(CellBackend.channelIdMap.get(e));
+            }
+        }
+        CellBackend.outputChannelMap.put(outputNode, outputIds);
+    }
+    
+    private void addToScheduleLayout() {
+        int filterId = CellBackend.filterIdMap.get(filterNode);
+        InputSliceNode inputNode = filterNode.getPrevious().getAsInput();
+        OutputSliceNode outputNode = filterNode.getNext().getAsOutput();
+        LinkedList<Integer> inputIds = CellBackend.inputChannelMap.get(inputNode);
+        LinkedList<Integer> currentGroup = CellBackend.getLastScheduleGroup();
+        if (inputNode.isJoiner()) {
+            int artificialId = CellBackend.artificialJoinerChannels.get(inputNode);
+            if (CellBackend.readyInputs.contains(artificialId)) {
+                // If there is an available SPU, assign it
+                if (currentGroup.size() < CellBackend.numspus) {
+                    currentGroup.add(filterId);
+                } 
+                // Otherwise, make a new group
+                else {
+                    LinkedList<Integer> newGroup = new LinkedList<Integer>();
+                    newGroup.add(filterId);
+                    CellBackend.scheduleLayout.add(newGroup);
+                    // Mark the outputs of the previous group as ready
+                    CellBackend.addReadyInputsForCompleted(currentGroup);
+                }
+            }
+            // If not all of the input channels are ready, must wait for
+            // current group to complete. Afterwards, make a new group with this
+            // joiner
+            else {
+                LinkedList<Integer> newGroup = new LinkedList<Integer>();
+                newGroup.add(filterId);
+                CellBackend.scheduleLayout.add(newGroup);
+                // Mark the outputs of the previous group as ready
+                CellBackend.addReadyInputsForCompleted(currentGroup);
+            }
+        } else {
+            // If there are no inputs or if all of the input channels are ready
+            if (inputIds == null || CellBackend.readyInputs.containsAll(inputIds)) {
+                // If there is an available SPU, assign it
+                if (currentGroup.size() < CellBackend.numspus) {
+                    currentGroup.add(filterId);
+                } 
+                // Otherwise, make a new group
+                else {
+                    LinkedList<Integer> newGroup = new LinkedList<Integer>();
+                    newGroup.add(filterId);
+                    CellBackend.scheduleLayout.add(newGroup);
+                    // Mark the outputs of the previous group as ready
+                    CellBackend.addReadyInputsForCompleted(currentGroup);
+                }
+            }
+            // If not all of the input channels are ready, must wait for
+            // current group to complete. Afterwards, make a new group with this
+            // joiner
+            else {
+                LinkedList<Integer> newGroup = new LinkedList<Integer>();
+                newGroup.add(filterId);
+                CellBackend.scheduleLayout.add(newGroup);
+                // Mark the outputs of the previous group as ready
+                CellBackend.addReadyInputsForCompleted(currentGroup);
+            }
+        }
     }
     
     private static int getFreeSPU() {

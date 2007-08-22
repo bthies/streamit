@@ -36,13 +36,13 @@ public class EmitCellCode extends EmitCode {
         
     }
     
-    private void handleFilterSlice(CodegenPrintWriter p, FilterSliceNode s) {
-        p.println("#define FILTER_NAME " + s.getFilter().getName());
+    private void handleFilterSlice(CodegenPrintWriter p, FilterSliceNode s, boolean init) {
+        p.println("#define FILTER_NAME " + "init_" + s.getFilter().getName());
         p.println("#include \"beginfilter.h\"");
     }
     
-    private void handleInputSlice(CodegenPrintWriter p, InputSliceNode s) {
-        p.println("#define FILTER_NAME " + "joiner_" + s.getNext().getAsFilter().getFilter().getName());
+    private void handleInputSlice(CodegenPrintWriter p, InputSliceNode s, boolean init) {
+        p.println("#define FILTER_NAME " + "init_joiner_" + s.getNext().getAsFilter().getFilter().getName());
         if (s.isJoiner()) {
             p.println("#define NUM_INPUT_TAPES " + s.getWidth());
             p.print("#define JOINER_RATES {");
@@ -58,8 +58,8 @@ public class EmitCellCode extends EmitCode {
             p.println("#include \"rrjoiner.h\"");
     }
     
-    private void handleOutputSlice(CodegenPrintWriter p, OutputSliceNode s) {
-        p.println("#define FILTER_NAME " + "splitter_" + s.getPrevious().getAsFilter().getFilter().getName());
+    private void handleOutputSlice(CodegenPrintWriter p, OutputSliceNode s, boolean init) {
+        p.println("#define FILTER_NAME " + "init_splitter_" + s.getPrevious().getAsFilter().getFilter().getName());
         if (s.isRRSplitter()) {
             p.println("#define NUM_OUTPUT_TAPES " + s.getWidth());
             p.print("#define SPLITTER_RATES {");
@@ -74,7 +74,7 @@ public class EmitCellCode extends EmitCode {
             p.println("#include \"rrsplitter.h\"");
     }
     
-    public void generateSPUCHeader(CodegenPrintWriter p, SliceNode s) {
+    public void generateSPUCHeader(CodegenPrintWriter p, SliceNode s, boolean init) {
         p.println("#include \"filterdefs.h\"");
         p.println("#include \"structs.h\"");
         p.println("#include <math.h>");
@@ -86,10 +86,10 @@ public class EmitCellCode extends EmitCode {
         p.println("#define ITEM_TYPE " + type);
         
         if (s.isFilterSlice())
-            handleFilterSlice(p, s.getAsFilter());
+            handleFilterSlice(p, s.getAsFilter(), init);
         else if (s.isInputSlice())
-            handleInputSlice(p, s.getAsInput());
-        else handleOutputSlice(p, s.getAsOutput());
+            handleInputSlice(p, s.getAsInput(), init);
+        else handleOutputSlice(p, s.getAsOutput(), init);
 
     }
     

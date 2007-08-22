@@ -5,11 +5,11 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 
 import at.dms.kjc.JInterfaceDeclaration;
 import at.dms.kjc.KjcOptions;
-import at.dms.kjc.backendSupport.BackEndScaffold;
 import at.dms.kjc.backendSupport.CommonPasses;
 import at.dms.kjc.backendSupport.DumpSlicesAndChannels;
 import at.dms.kjc.backendSupport.Layout;
@@ -20,11 +20,11 @@ import at.dms.kjc.sir.SIRHelper;
 import at.dms.kjc.sir.SIRInterfaceTable;
 import at.dms.kjc.sir.SIRStream;
 import at.dms.kjc.sir.SIRStructure;
+import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.InterSliceEdge;
 import at.dms.kjc.slicegraph.OutputSliceNode;
 import at.dms.kjc.slicegraph.Partitioner;
-import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.slicegraph.SliceNode;
 import at.dms.kjc.vanillaSlice.EmitStandaloneCode;
 
@@ -102,8 +102,18 @@ public class CellBackend {
         top_call.run(schedule, backEndBits);
         
         for (SPU spu : cellBackEndBits.getSPUs()) {
-            for (CellComputeCodeStore cs : spu.getComputeCodeStores())
+            for (CellComputeCodeStore cs : spu.getInitComputeCodeStores())
                 cs.addInitFunctions();
+        }
+        
+        int k=0;
+        for (LinkedList<Integer> group : scheduleLayout) {
+            System.out.print("group " + k + ": ");
+            for (int i : group) {
+                System.out.print(i + " ");
+            }
+            System.out.println();
+            k++;
         }
         
         if (KjcOptions.celldyn) {
@@ -147,19 +157,27 @@ public class CellBackend {
         for (int n = 1; n < cellBackEndBits.getComputeNodes().size(); n++) {
             CellPU nodeN = cellBackEndBits.getComputeNode(n);
             ArrayList<CellComputeCodeStore> codestores = nodeN.getComputeCodeStores();
+            ArrayList<CellComputeCodeStore> initCodeStores = nodeN.getInitComputeCodeStores();
             for (int c = 0; c < nodeN.getNumComputeCodeStores(); c++) {
                 outputFileName = "str" + n + c + ".c";
+                String initOutputFileName = "str" + n + c + "init.c";
                 CellComputeCodeStore cs = codestores.get(c);
+                CellComputeCodeStore initcs = initCodeStores.get(c);
                 try {
                     CodegenPrintWriter p = new CodegenPrintWriter(new BufferedWriter(new FileWriter(outputFileName, false)));
+                    CodegenPrintWriter initp = new CodegenPrintWriter(new BufferedWriter(new FileWriter(initOutputFileName, false)));
                     // write out C code
 
                     EmitCellCode codeEmitter = new EmitCellCode(cellBackEndBits);
-                    codeEmitter.generateSPUCHeader(p, cs.getSliceNode());
-
+                    codeEmitter.generateSPUCHeader(p, cs.getSliceNode(), false);
+                    codeEmitter.generateSPUCHeader(initp, initcs.getSliceNode(), true);
+                    
                     codeEmitter.emitCodeForComputeStore(cs, nodeN, p);
+                    codeEmitter.emitCodeForComputeStore(initcs, nodeN, initp);
                     p.println("#include \"endfilter.h\"");
+                    initp.println("#include \"endfilter.h\"");
                     p.close();
+                    initp.close();
                 } catch (IOException e) {
                     throw new AssertionError("I/O error on " + outputFileName + ": " + e);
                 }
@@ -171,6 +189,8 @@ public class CellBackend {
 
     public static int numfilters = 0;
     public static int numchannels = 0;
+    
+    public static final int numspus = KjcOptions.cell;
     
     /**
      * InputSliceNode -> List of input channel IDs
@@ -186,6 +206,15 @@ public class CellBackend {
     
     public static final HashMap<Integer,SliceNode> SPUassignment = 
         new HashMap<Integer,SliceNode>();
+    
+    /**
+     * Encapsulates the schedule and layout of the program. The first dimension
+     * specifies the order of firings. The second dimension specifies the group
+     * of filters that are fired in parallel. The integer specifies the ID of
+     * the filter to be fired.
+     */
+    public static final LinkedList<LinkedList<Integer>> scheduleLayout =
+        new LinkedList<LinkedList<Integer>>();
     
     public static final HashMap<InterSliceEdge,Integer> channelIdMap = 
         new HashMap<InterSliceEdge,Integer>();
@@ -219,6 +248,53 @@ public class CellBackend {
      */
     public static final HashMap<OutputSliceNode,Integer> artificialRRSplitterChannels = 
         new HashMap<OutputSliceNode,Integer>();
+
+    /**
+     * Set of IDs of channels that already have input data ready
+     */
+    public static final HashSet<Integer> readyInputs = new HashSet<Integer>();
+    
+    public static LinkedList<Integer> getLastScheduleGroup() {
+        if (scheduleLayout.size() == 0) {
+            LinkedList<Integer> newGroup = new LinkedList<Integer>();
+            scheduleLayout.add(newGroup);
+            return newGroup;
+        }
+        else return scheduleLayout.getLast();
+    }
+    
+    public static void addReadyInputsForCompleted(LinkedList<Integer> completedIds) {
+        for (int i : completedIds) {
+            SliceNode sliceNode = filters.get(i);
+            if (sliceNode.isInputSlice()) {
+                InputSliceNode inputNode = sliceNode.getAsInput();
+                if (inputNode.isJoiner()) {
+                    // mark artificial channel to filterslicenode as ready
+                    int artificialId = artificialJoinerChannels.get(inputNode);
+                    readyInputs.add(artificialId);
+                }
+            } else if (sliceNode.isFilterSlice()) {
+                FilterSliceNode filterNode = sliceNode.getAsFilter();
+                OutputSliceNode outputNode = filterNode.getNext().getAsOutput();
+                if (outputNode.isRRSplitter()) {
+                    // mark artificial channel to outputslicenode as ready 
+                    int artificialId = artificialRRSplitterChannels.get(outputNode);
+                    readyInputs.add(artificialId);
+                } else {
+                    // Mark all outputs as ready
+                    LinkedList<Integer> outputIds = outputChannelMap.get(outputNode);
+                    readyInputs.addAll(outputIds);
+                }
+            } else {
+                OutputSliceNode outputNode = sliceNode.getAsOutput();
+                if (outputNode.isRRSplitter()) {
+                    // Mark all outputs as ready
+                    LinkedList<Integer> outputIds = outputChannelMap.get(outputNode);
+                    readyInputs.addAll(outputIds);
+                }
+            }
+        }
+    }
     
     public static InterSliceEdge getEdgeBetween(OutputSliceNode src, InputSliceNode dest) {
         for (InterSliceEdge e : src.getDestSequence()) {

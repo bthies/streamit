@@ -58,10 +58,6 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
     
     private HashMap<Slice,Integer> sliceIdMap = new HashMap<Slice,Integer>();
     
-    public static final HashMap<InterSliceEdge,Buffer> readyInputs = 
-        new HashMap<InterSliceEdge,Buffer>();
-    
-    
     private ArrayList<JFieldDeclaration> workfuncs = new ArrayList<JFieldDeclaration>();
     private ArrayList<JFieldDeclaration> fds = new ArrayList<JFieldDeclaration>();
     private ArrayList<JMethodDeclaration> initfuncs = new ArrayList<JMethodDeclaration>();
@@ -118,7 +114,8 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
                       initfunc.getName(), new JExpression[0]),
                       null));
         }
-        addMethod(new JMethodDeclaration(CStdType.Void, "__INIT_FUNC__", new JFormalParameter[0], initcalls));
+        addInitStatementFirst(initcalls);
+        //addMethod(new JMethodDeclaration(CStdType.Void, "__INIT_FUNC__", new JFormalParameter[0], initcalls));
     }
     
     /**-------------------------------------------------------------------------
@@ -224,7 +221,7 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
     public void addChannelFields() {
         JVariableDefinition c = new JVariableDefinition(
                 new CArrayType(
-                        new CEmittedTextType("BUFFER_CB"),
+                        new CEmittedTextType("BUFFER_CB *"),
                         1,
                         new JExpression[]{
                             new JIntLiteral(CellBackend.numchannels)
@@ -272,10 +269,23 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
         int filterId = CellBackend.filterIdMap.get(sliceNode);
         JBlock body = new JBlock();
         
-        int outputs;
-        if (sliceNode.isFilterSlice() && sliceNode.getAsFilter().getParent().getTail().isDuplicateSplitter())
+        int inputs, outputs;
+        if (sliceNode.isInputSlice()) {
+            inputs = sliceNode.getAsInput().getWidth();
             outputs = 1;
-        else outputs = sliceNode.getParent().getTail().getWidth();
+        }
+        else if (sliceNode.isFilterSlice()){
+            inputs = 1;
+            if (sliceNode.getParent().getTail().isSplitter())
+                outputs = 1;
+            else outputs = sliceNode.getParent().getTail().getWidth();
+        } 
+        else {
+            inputs = 1;
+            if (sliceNode.getAsOutput().isDuplicateSplitter())
+                outputs = 1;
+            else outputs = sliceNode.getAsOutput().getWidth();
+        }
         
         JExpressionStatement statesize = new JExpressionStatement(new JAssignmentExpression(
                 new JFieldAccessExpression(
@@ -291,7 +301,7 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
                                 new JFieldAccessExpression(SPU_FD),
                                 new JIntLiteral(filterId)),
                         SPU_FD_NUM_INPUTS),
-                new JIntLiteral(sliceNode.getParent().getHead().getWidth())));
+                new JIntLiteral(inputs)));
         body.addStatement(numinputs);
         JExpressionStatement numoutputs = new JExpressionStatement(new JAssignmentExpression(
                 new JFieldAccessExpression(
@@ -310,8 +320,9 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
      * depending on the phase (init or steady)
      * @param sliceNode
      * @param whichPhase
+     * @return TODO
      */
-    public void setupFilterDescriptionWorkFunc(SliceNode sliceNode, SchedulingPhase whichPhase) {
+    public JBlock setupFilterDescriptionWorkFunc(SliceNode sliceNode, SchedulingPhase whichPhase) {
         int filterId = CellBackend.filterIdMap.get(sliceNode);
         
         String workfuncname;
@@ -319,8 +330,9 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
             workfuncname = INIT_WFA;
         else if (whichPhase == SchedulingPhase.STEADY)
             workfuncname = WFA;
-        else return;
+        else return null;
         
+        JBlock body = new JBlock();
         JExpressionStatement workfunc = new JExpressionStatement(new JAssignmentExpression(
                 new JFieldAccessExpression(
                         new JArrayAccessExpression(
@@ -329,7 +341,8 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
                         SPU_FD_WORK_FUNC),
                 new JArrayAccessExpression(new JFieldAccessExpression(workfuncname), 
                                            new JIntLiteral(filterId))));
-        addInitStatement(workfunc);
+        body.addStatement(workfunc);
+        return body;
     }
     
     
@@ -397,10 +410,23 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
      * @param sliceNode
      */
     public void setupPSP(SliceNode sliceNode) {
-        int inputs = sliceNode.getParent().getHead().getWidth();
-        int outputs = sliceNode.getParent().getTail().getWidth();
-        if (sliceNode.isFilterSlice() && sliceNode.getAsFilter().getParent().getTail().isDuplicateSplitter())
+        int inputs, outputs;
+        if (sliceNode.isInputSlice()) {
+            inputs = sliceNode.getAsInput().getWidth();
             outputs = 1;
+        }
+        else if (sliceNode.isFilterSlice()){
+            inputs = 1;
+            if (sliceNode.getParent().getTail().isSplitter())
+                outputs = 1;
+            else outputs = sliceNode.getParent().getTail().getWidth();
+        } 
+        else {
+            inputs = 1;
+            if (sliceNode.getAsOutput().isDuplicateSplitter())
+                outputs = 1;
+            else outputs = sliceNode.getAsOutput().getWidth();
+        }
         int filterId = CellBackend.filterIdMap.get(sliceNode);
         JBlock body = new JBlock();
         
@@ -493,8 +519,9 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
      * may differ between the init and steady states due to different multiplicities.
      * @param sliceNode
      * @param whichPhase
+     * @return TODO
      */
-    public void setupPSPIOBytes(SliceNode sliceNode, SchedulingPhase whichPhase) {
+    public JBlock setupPSPIOBytes(SliceNode sliceNode, SchedulingPhase whichPhase) {
         int inputs = sliceNode.getParent().getHead().getWidth();
         int outputs = sliceNode.getParent().getTail().getWidth();
         if (sliceNode.isFilterSlice() && sliceNode.getAsFilter().getParent().getTail().isDuplicateSplitter())
@@ -508,7 +535,7 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
             mult = sliceNode.getParent().getFilterNodes().get(0).getFilter().getInitMult();
         else if (whichPhase == SchedulingPhase.STEADY)
             mult = sliceNode.getParent().getFilterNodes().get(0).getFilter().getSteadyMult();
-        else return;
+        else return null;
         
         JBlock body = new JBlock();
         for (int i=0; i<inputs; i++) {
@@ -539,35 +566,35 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
                             "push_bytes"),
                     new JIntLiteral(4 * pushrate * mult))));
         }
+        return body;
     }
 
     /**
      * Get the ID of the SPU that the filter has been assigned to, and set
      * the spu_id parameter in ext_psp_layout.
      * @param sliceNode
+     * @param spuId
+     * @return TODO
      */
-    public void setupPSPSpuId(SliceNode sliceNode) {
+    public JBlock setupPSPSpuId(SliceNode sliceNode, int spuId) {
         int filterId = CellBackend.filterIdMap.get(sliceNode);
-        //TODO
-        int spu = 0;
-        for (Integer i : CellBackend.SPUassignment.keySet()) {
-            if (CellBackend.SPUassignment.get(i) == sliceNode)
-                spu = i.intValue();
-        }
-        addInitStatement(new JExpressionStatement(new JAssignmentExpression(
+        JBlock body = new JBlock();
+        body.addStatement(new JExpressionStatement(new JAssignmentExpression(
                 new JFieldAccessExpression(new JArrayAccessExpression(
                         new JFieldAccessExpression("l"), new JIntLiteral(filterId)), "spu_id"),
-                new JIntLiteral(spu))));
-        
+                new JIntLiteral(spuId))));
+        return body;        
     }
     
     /**
      * Call ext_ppu_spu_ppu_ex to run the filter asynchronously.
      * @param sliceNode
+     * @return TODO
      */
-    public void callExtPSP(SliceNode sliceNode) {
+    public JBlock callExtPSP(SliceNode sliceNode) {
         int filterId = CellBackend.filterIdMap.get(sliceNode);
-        addInitStatement(new JExpressionStatement(new JMethodCallExpression("ext_ppu_spu_ppu_ex",
+        JBlock body = new JBlock();
+        body.addStatement(new JExpressionStatement(new JMethodCallExpression("ext_ppu_spu_ppu_ex",
                 new JExpression[]{
                 new JMethodCallExpression("&", new JExpression[]{new JArrayAccessExpression(
                         new JFieldAccessExpression("l"), new JIntLiteral(filterId))}),
@@ -579,30 +606,25 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
                                 new JEmittedTextExpression("cb"),
                                 new JIntLiteral(0)
         })));
+        return body;
     }
     
-    public void addSpulibPollWhile() {
-        String filtername;
-        addInitStatement(new JExpressionStatement(new JAssignmentExpression(
+    public JBlock setDone(int done) {
+        JBlock body = new JBlock();
+        body.addStatement(new JExpressionStatement(new JAssignmentExpression(
                 new JFieldAccessExpression(DONE),
-                new JIntLiteral(CellBackend.SPUassignment.size()))));
-        addInitStatement(new JExpressionStatement(new JMethodCallExpression(
+                new JIntLiteral(done))));
+        return body;
+    }
+    
+    public JBlock addSpulibPollWhile() {
+        JBlock body = new JBlock();
+        body.addStatement(new JExpressionStatement(new JMethodCallExpression(
                 "spulib_poll_while",
                 new JExpression[]{
                         new JRelationalExpression(Constants.OPE_GT, new JFieldAccessExpression(DONE), new JIntLiteral(0))
                 })));
-        for (SliceNode s : CellBackend.SPUassignment.values()) {
-            filtername = s.getParent().getFilterNodes().get(0).getFilter().getName();
-            addInitStatement(new JExpressionStatement(new JMethodCallExpression(
-                    "dealloc_buffer",
-                    new JExpression[]{
-                            new JMethodCallExpression(
-                                    "&",
-                                    new JExpression[]{
-                                            new JEmittedTextExpression("input_"+filtername)
-                                    })})));
-            addReadyBuffers(s.getParent().getTail());
-        }
+        return body;
     }
     
     /**
@@ -708,14 +730,14 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
             new JVariableDefinition(new CEmittedTextType("BUFFER_CB"), PPU_OUTPUT_BUFFER_CB);
         addField(new JFieldDeclaration(pocb));
         
-        // int pibs = 20 * 1024 * 1024;          PPU input buffer size     
+        // int pibs = 1024;          PPU input buffer size     
         JVariableDefinition pibs = new JVariableDefinition(CStdType.Integer, PPU_INPUT_BUFFER_SIZE);
-        pibs.setInitializer(new JMultExpression(new JIntLiteral(20),new JMultExpression(new JIntLiteral(1024), new JIntLiteral(1024))));
+        pibs.setInitializer(new JIntLiteral(20));
         addField(new JFieldDeclaration(pibs));
         
-        // int pobs = 20 * 1024 * 1024;          PPU output buffer size
+        // int pobs = 1024;          PPU output buffer size
         JVariableDefinition pobs = new JVariableDefinition(CStdType.Integer, PPU_OUTPUT_BUFFER_SIZE);
-        pobs.setInitializer(new JMultExpression(new JIntLiteral(20),new JMultExpression(new JIntLiteral(1024), new JIntLiteral(1024))));
+        pobs.setInitializer(new JIntLiteral(1024));
         addField(new JFieldDeclaration(pobs));
         
         // int n;                               total number of iterations
@@ -1004,59 +1026,66 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
                                 new JIntLiteral(0)})));
     }
     
-    public boolean lookupInputBuffers(InputSliceNode inputNode) {
-        String filtername = inputNode.getNextFilter().getFilter().getName();
-//        addField(new JFieldDeclaration(new JVariableDefinition(
-//                new CArrayType(new CEmittedTextType("BUFFER_CB"),
-//                               1,
-//                               new JExpression[]{new JIntLiteral(inputNode.getWidth())}),
-//                               "input_" + filtername)));
-        int i=0;
-        for (InterSliceEdge e : inputNode.getSourceSequence()) {
-            InterSliceEdge f = getEdgeBetween(e.getSrc(), inputNode);
-            if (!readyInputs.containsKey(f)) {
-                System.out.println("no input ready for " + filtername + f);
-                return false;
-            }
-            Buffer b = readyInputs.get(f);
-            int index;
-            if (f.getSrc().isDuplicateSplitter()) {
-                index = 0;
-            } else {
-                index = b.index;
-            }
-            addInitStatement(new JExpressionStatement(new JMethodCallExpression(
-                    "duplicate_buffer",
-                    new JExpression[]{
-                        new JMethodCallExpression(
-                                "&",
-                                new JExpression[]{
-                                    new JArrayAccessExpression(
-                                        new JFieldAccessExpression("input_"+filtername),
-                                        new JIntLiteral(i))}),
-                        new JMethodCallExpression(
-                                "&",
-                                new JExpression[]{
-                                    new JArrayAccessExpression(
-                                        new JFieldAccessExpression(b.name),
-                                        new JIntLiteral(index))})})));
-            addInitStatement(new JExpressionStatement(new JMethodCallExpression(
-                    "buf_set_head",
-                    new JExpression[]{
-                            new JMethodCallExpression(
-                                "&",
-                                new JExpression[]{
-                                    new JArrayAccessExpression(
-                                        new JFieldAccessExpression("input_"+filtername),
-                                        new JIntLiteral(i))}),
-                            new JIntLiteral(0)})));
-            i++;
-        }
-        if (inputNode.getSources().length > 0) {
-            addPPUInputBuffers("input_" + filtername);
-        }
-        return true;
-    }
+//    public boolean inputBuffersSet(InputSliceNode inputNode) {
+//        for (InterSliceEdge e : inputNode.getSourceList()) {
+//            InterSliceEdge f = CellBackend.getEdgeBetween(e.getSrc(), inputNode);
+//            if (!readyInputs.contains(o))
+//        }
+//    }
+    
+//    public boolean lookupInputBuffers(InputSliceNode inputNode) {
+//        String filtername = inputNode.getNextFilter().getFilter().getName();
+////        addField(new JFieldDeclaration(new JVariableDefinition(
+////                new CArrayType(new CEmittedTextType("BUFFER_CB"),
+////                               1,
+////                               new JExpression[]{new JIntLiteral(inputNode.getWidth())}),
+////                               "input_" + filtername)));
+//        int i=0;
+//        for (InterSliceEdge e : inputNode.getSourceSequence()) {
+//            InterSliceEdge f = CellBackend.getEdgeBetween(e.getSrc(), inputNode);
+//            if (!CellBackend.readyInputs.containsKey(f)) {
+//                System.out.println("no input ready for " + filtername + f);
+//                return false;
+//            }
+//            Buffer b = CellBackend.readyInputs.get(f);
+//            int index;
+//            if (f.getSrc().isDuplicateSplitter()) {
+//                index = 0;
+//            } else {
+//                index = b.index;
+//            }
+//            addInitStatement(new JExpressionStatement(new JMethodCallExpression(
+//                    "duplicate_buffer",
+//                    new JExpression[]{
+//                        new JMethodCallExpression(
+//                                "&",
+//                                new JExpression[]{
+//                                    new JArrayAccessExpression(
+//                                        new JFieldAccessExpression("input_"+filtername),
+//                                        new JIntLiteral(i))}),
+//                        new JMethodCallExpression(
+//                                "&",
+//                                new JExpression[]{
+//                                    new JArrayAccessExpression(
+//                                        new JFieldAccessExpression(b.name),
+//                                        new JIntLiteral(index))})})));
+//            addInitStatement(new JExpressionStatement(new JMethodCallExpression(
+//                    "buf_set_head",
+//                    new JExpression[]{
+//                            new JMethodCallExpression(
+//                                "&",
+//                                new JExpression[]{
+//                                    new JArrayAccessExpression(
+//                                        new JFieldAccessExpression("input_"+filtername),
+//                                        new JIntLiteral(i))}),
+//                            new JIntLiteral(0)})));
+//            i++;
+//        }
+//        if (inputNode.getSources().length > 0) {
+//            addPPUInputBuffers("input_" + filtername);
+//        }
+//        return true;
+//    }
     
     public void initOutputBufferFields(InputSliceNode inputNode) {
         OutputSliceNode outputNode = inputNode.getParent().getTail();
@@ -1074,17 +1103,16 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
             addPPUOutputBuffers("output_" + filtername);
     }
     
-    public void addReadyBuffers(OutputSliceNode outputNode) {
-        String filtername = outputNode.getPrevFilter().getFilter().getName();
-        int i=0;
-        System.out.println("addreadybuffers" + filtername);
-        for (InterSliceEdge e : outputNode.getDestSequence()) {
-            Buffer b = new Buffer("output_" + filtername, i);
-            readyInputs.put(e, b);
-            System.out.println("adding buffer: " + e + "\n" + b + "\n" + e.getDest().getNextFilter().getFilter().getName());
-            i++;
-        }
-    }
+//    public void addReadyBuffers(OutputSliceNode outputNode) {
+//        String filtername = outputNode.getPrevFilter().getFilter().getName();
+//        int i=0;
+//        for (InterSliceEdge e : outputNode.getDestSequence()) {
+//            Buffer b = new Buffer("output_" + filtername, i);
+//            CellBackend.readyInputs.put(e, b);
+//            System.out.println("adding buffer: " + e + "\n" + b + "\n" + e.getDest().getNextFilter().getFilter().getName());
+//            i++;
+//        }
+//    }
     
     public void setupDataAddress() {
         // da = oba + obs + 128;
@@ -1347,7 +1375,7 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
     }
     
     public void initFileReader(FilterSliceNode filterNode) {
-                
+        
         FileInputContent fic = (FileInputContent) filterNode.getFilter();
         
         //create fields
@@ -1391,6 +1419,8 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
     }
     
     private JBlock makeReadBlock(FilterSliceNode filterNode) {
+        int channelId =
+            CellBackend.outputChannelMap.get(filterNode.getParent().getTail()).getFirst();
         
         FileInputContent fic = (FileInputContent) filterNode.getFilter();
         
@@ -1425,7 +1455,11 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
             
             // the first parameter: picb.data
             JExpression addressofParameters = 
-                new JFieldAccessExpression(new JFieldAccessExpression(PPU_INPUT_BUFFER_CB), "data");
+                new JFieldAccessExpression(
+                        new JArrayAccessExpression(
+                                new JFieldAccessExpression("channels"),
+                                new JIntLiteral(channelId)),
+                        "data");
               
             freadParams[0] = addressofParameters;
             
@@ -1480,13 +1514,13 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
         
         //initFileWriter(filterNode);
         JBlock body = makeWriteBlock(filterNode);
-        addInitStatement(body);
+        addCleanupStatement(body);
 
-        addInitStatement(new JExpressionStatement(
+        addCleanupStatement(new JExpressionStatement(
             new JMethodCallExpression("fclose", new JExpression[]{
                 new JFieldAccessExpression(FILE_READER)})));
 
-        addInitStatement(new JExpressionStatement(
+        addCleanupStatement(new JExpressionStatement(
             new JMethodCallExpression("fclose", new JExpression[]{
                 new JFieldAccessExpression(FILE_WRITER)})));
     }
@@ -1538,6 +1572,8 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
     }
     
     private JBlock makeWriteBlock(FilterSliceNode filterNode) {
+        int channelId =
+            CellBackend.channelIdMap.get(filterNode.getParent().getHead().getSingleEdge());
 
         FileOutputContent foc = (FileOutputContent) filterNode.getFilter();
 
@@ -1572,7 +1608,11 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
             JExpression[] addressofParameters = new JExpression[1];
             
             JFieldAccessExpression addressofCall =
-                new JFieldAccessExpression(new JFieldAccessExpression(PPU_OUTPUT_BUFFER_CB),"data");
+                new JFieldAccessExpression(
+                        new JArrayAccessExpression(
+                            new JFieldAccessExpression("channels"),
+                            new JIntLiteral(channelId)),
+                        "data");
 
             fwriteParams[0] = addressofCall;
             
@@ -1857,14 +1897,6 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
             id++;
         }
         return newId;
-    }
-    
-    private static InterSliceEdge getEdgeBetween(OutputSliceNode src, InputSliceNode dest) {
-        for (InterSliceEdge e : src.getDestSequence()) {
-            if (e.getDest() == dest)
-                return e;
-        }
-        return null;
     }
     
     public class Buffer {

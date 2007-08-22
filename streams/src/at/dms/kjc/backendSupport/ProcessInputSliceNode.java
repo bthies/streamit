@@ -13,7 +13,7 @@ public class ProcessInputSliceNode {
     
     /** set of filters for which we have written basic code. */
     // uses WeakHashMap to be self-cleaning, but now have to insert some value.
-    private static Map<SliceNode,Boolean>  basicCodeWritten = new WeakHashMap<SliceNode,Boolean>();
+    protected static Map<SliceNode,Boolean>  basicCodeWritten = new WeakHashMap<SliceNode,Boolean>();
     
     protected InputSliceNode inputNode;
     protected SchedulingPhase whichPhase;

@@ -1,4 +1,4 @@
-// $Id: BackEndScaffold.java,v 1.9 2007-08-21 08:33:10 qjli Exp $
+// $Id: BackEndScaffold.java,v 1.10 2007-08-22 10:52:22 qjli Exp $
 package at.dms.kjc.backendSupport;
 
 import java.util.*;
@@ -90,9 +90,9 @@ public class BackEndScaffold  {
         iterateInorder(slices, SchedulingPhase.PRIMEPUMP, computeNodes);
         // schedule the steady-state phase.
         slices = schedule.getSchedule();
-        
-        betweenScheduling(schedule, resources);
 
+        betweenScheduling(schedule, resources);
+        
         if (KjcOptions.noswpipe && KjcOptions.spacetime) {
             iterateNoSWPipe(schedule.getScheduleList(), SchedulingPhase.STEADY, computeNodes);
         } else if (KjcOptions.spacetime) {

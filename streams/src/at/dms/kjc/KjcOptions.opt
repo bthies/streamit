@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.104 2007-08-21 08:22:39 qjli Exp $
+ * $Id: KjcOptions.opt,v 1.105 2007-08-31 18:09:15 thies Exp $
  */
 
 prefix Kjc
@@ -502,7 +502,7 @@ longname		"spacetime"
 
 longname		"cell"
 	type		int
-	default		"1"
+	default		"-1"
 	requireArgument
 	help		"Compile for Cell with <n> SPUs."
 	

@@ -39,6 +39,34 @@ public class CellBackendScaffold extends BackEndScaffold {
         //ppuCS.addInitFunctionAddressField();
     }
     
+    private static int getIters(SliceNode sliceNode, SchedulingPhase whichPhase) {
+        int iters = 1;
+
+        if (sliceNode.isInputSlice()) {
+            int mult;
+            if (whichPhase == SchedulingPhase.INIT) 
+                mult = sliceNode.getNext().getAsFilter().getFilter().getInitMult();
+            else mult = sliceNode.getNext().getAsFilter().getFilter().getSteadyMult() * CellBackend.ITERS_PER_BATCH;
+            int peeks = sliceNode.getNext().getAsFilter().getFilter().getPeekInt();
+            int pops = sliceNode.getNext().getAsFilter().getFilter().getPopInt();
+            int items = Math.max(peeks, pops) + (mult-1)*pops;
+            iters = items / sliceNode.getAsInput().totalWeights();
+        } else if (sliceNode.isOutputSlice()) {
+            int mult;
+            if (whichPhase == SchedulingPhase.INIT)
+                mult = sliceNode.getPrevious().getAsFilter().getFilter().getInitMult();
+            else mult = sliceNode.getPrevious().getAsFilter().getFilter().getSteadyMult() * CellBackend.ITERS_PER_BATCH;
+            int pushes = sliceNode.getPrevious().getAsFilter().getFilter().getPushInt();
+            int items = mult * pushes;
+            iters = items/ sliceNode.getAsOutput().totalWeights();
+        } else {
+            if (whichPhase == SchedulingPhase.STEADY)
+                return CellBackend.ITERS_PER_BATCH;
+        }
+        
+        return iters;
+    }
+    
     @Override
     protected void betweenScheduling(BasicSpaceTimeSchedule schedule,
             BackEndFactory resources) {
@@ -53,7 +81,8 @@ public class CellBackendScaffold extends BackEndScaffold {
                 body.addStatement(ppuCS.setupFilterDescriptionWorkFunc(sliceNode, SchedulingPhase.INIT));
                 body.addStatement(ppuCS.setupPSPIOBytes(sliceNode, SchedulingPhase.INIT));
                 body.addStatement(ppuCS.setupPSPSpuId(sliceNode, spuId));
-                body.addStatement(ppuCS.callExtPSP(sliceNode));
+                int iters = getIters(sliceNode, SchedulingPhase.INIT);
+                body.addStatement(ppuCS.callExtPSP(sliceNode, iters));
                 spuId++;
             }
             body.addStatement(ppuCS.setDone(spuId));
@@ -70,7 +99,8 @@ public class CellBackendScaffold extends BackEndScaffold {
                 body.addStatement(ppuCS.setupFilterDescriptionWorkFunc(sliceNode, SchedulingPhase.STEADY));
                 body.addStatement(ppuCS.setupPSPIOBytes(sliceNode, SchedulingPhase.STEADY));
                 body.addStatement(ppuCS.setupPSPSpuId(sliceNode, spuId));
-                body.addStatement(ppuCS.callExtPSP(sliceNode));
+                int iters = getIters(sliceNode, SchedulingPhase.STEADY);
+                body.addStatement(ppuCS.callExtPSP(sliceNode, iters));
                 spuId++;
             }
             body.addStatement(ppuCS.setDone(spuId));

@@ -13,7 +13,7 @@ import at.dms.kjc.slicegraph.*;
 public class ProcessOutputSliceNode {
     /** set of filters for which we have written basic code. */
     // uses WeakHashMap to be self-cleaning, but now have to insert some value.
-    private static Map<SliceNode,Boolean>  basicCodeWritten = new WeakHashMap<SliceNode,Boolean>();
+    protected static Map<SliceNode,Boolean>  basicCodeWritten = new WeakHashMap<SliceNode,Boolean>();
 
     protected OutputSliceNode outputNode;
     protected SchedulingPhase whichPhase;
@@ -55,10 +55,7 @@ public class ProcessOutputSliceNode {
             return;
         }
         
-        splitter_code = CodeStoreHelper.findHelperForSliceNode(outputNode);
-        if (splitter_code == null) {
-            splitter_code = getSplitterCode(outputNode,backEndBits);
-        }
+        setSplitterCode();
 
         switch (whichPhase) {
         case PREINIT:
@@ -77,6 +74,13 @@ public class ProcessOutputSliceNode {
             standardSteadyProcessing();
             additionalSteadyProcessing();
             break;
+        }
+    }
+    
+    protected void setSplitterCode() {
+        splitter_code = CodeStoreHelper.findHelperForSliceNode(outputNode);
+        if (splitter_code == null) {
+            splitter_code = getSplitterCode(outputNode,backEndBits);
         }
     }
     

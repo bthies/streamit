@@ -1,5 +1,8 @@
 package at.dms.kjc.cell;
 
+import java.util.ArrayList;
+import java.util.LinkedList;
+
 import at.dms.kjc.CArrayType;
 import at.dms.kjc.CClassType;
 import at.dms.kjc.CType;
@@ -19,6 +22,7 @@ import at.dms.kjc.backendSupport.ComputeNode;
 import at.dms.kjc.backendSupport.EmitCode;
 import at.dms.kjc.common.CodegenPrintWriter;
 import at.dms.kjc.common.MacroConversion;
+import at.dms.kjc.sir.SIRCodeUnit;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.OutputSliceNode;
@@ -36,13 +40,59 @@ public class EmitCellCode extends EmitCode {
         
     }
     
+    public static ArrayList<ArrayList<Integer>> getSPUSources() {
+        ArrayList<ArrayList<Integer>> spuSources = 
+            new ArrayList<ArrayList<Integer>>();
+        for (int i=0; i<CellBackend.numspus; i++) {
+            spuSources.add(new ArrayList<Integer>());
+        }
+        for (LinkedList<Integer> l : CellBackend.scheduleLayout) {
+            int i=0;
+            for (int m : l) {
+                spuSources.get(i).add(m);
+                i++;
+            }
+        }
+        return spuSources;
+    }
+    
+    public void generateMakefile(CodegenPrintWriter p) {
+        ArrayList<ArrayList<Integer>> spuSources = getSPUSources();
+        p.println("PROGRAM := strppu");
+        p.println("PPU_SOURCES := strppu.c misc.c");
+        p.print("SPU_PROGRAMS := ");
+        for (int i=0; i<CellBackend.numspus; i++) {
+            if (spuSources.get(i).size() > 0) {
+                p.print("str" + (i+1) + " ");
+            }
+        }
+        p.println();
+        for (int i=0; i<CellBackend.numspus; i++) {
+            if (spuSources.get(i).size() > 0) {
+                ArrayList<Integer> sources = spuSources.get(i);
+                p.print("str" + (i+1) + "_SOURCES := ");
+                for (int j : sources) {
+                    p.print("str" + j +".c ");
+                }
+                p.println();
+            }
+        }
+        p.println("PPU_IMPORTS := -lm");
+        p.println("SPU_COMMON_IMPORTS := -lm");
+        p.println("include $(SPULIB_TOP)/make.inc");
+    }
+    
     private void handleFilterSlice(CodegenPrintWriter p, FilterSliceNode s, boolean init) {
-        p.println("#define FILTER_NAME " + "init_" + s.getFilter().getName());
+        String str = "";
+        if (init) str = "init_"; 
+        p.println("#define FILTER_NAME " + str + s.getFilter().getName());
         p.println("#include \"beginfilter.h\"");
     }
     
     private void handleInputSlice(CodegenPrintWriter p, InputSliceNode s, boolean init) {
-        p.println("#define FILTER_NAME " + "init_joiner_" + s.getNext().getAsFilter().getFilter().getName());
+        String str = "";
+        if (init) str = "init_"; 
+        p.println("#define FILTER_NAME " + str + "joiner_" + s.getNext().getAsFilter().getFilter().getName());
         if (s.isJoiner()) {
             p.println("#define NUM_INPUT_TAPES " + s.getWidth());
             p.print("#define JOINER_RATES {");
@@ -59,7 +109,9 @@ public class EmitCellCode extends EmitCode {
     }
     
     private void handleOutputSlice(CodegenPrintWriter p, OutputSliceNode s, boolean init) {
-        p.println("#define FILTER_NAME " + "init_splitter_" + s.getPrevious().getAsFilter().getFilter().getName());
+        String str = "";
+        if (init) str = "init_";
+        p.println("#define FILTER_NAME " + str + "splitter_" + s.getPrevious().getAsFilter().getFilter().getName());
         if (s.isRRSplitter()) {
             p.println("#define NUM_OUTPUT_TAPES " + s.getWidth());
             p.print("#define SPLITTER_RATES {");
@@ -136,6 +188,38 @@ public class EmitCellCode extends EmitCode {
         else {
             codegen = new CellPPUCodeGen(p);
             emitCodeForComputeStore(cs, n, p, codegen);
+        }
+    }
+    
+    @Override
+    public void emitCodeForComputeStore (SIRCodeUnit fieldsAndMethods,
+            ComputeNode n, CodegenPrintWriter p, CodeGen codegen) {
+        
+        // Standard final optimization of a code unit before code emission:
+        // unrolling and constant prop as allowed, DCE, array destruction into scalars.
+        (new at.dms.kjc.sir.lowering.FinalUnitOptimize()).optimize(fieldsAndMethods);
+        
+        p.println("// code for processor " + n.getUniqueId());
+        
+        // generate function prototypes for methods so that they can call each other
+        // in C.
+        codegen.setDeclOnly(true);
+        for (JMethodDeclaration method : fieldsAndMethods.getMethods()) {
+            method.accept(codegen);
+        }
+        p.println("");
+        codegen.setDeclOnly(false);
+        
+        // generate declarations for fields
+        for (JFieldDeclaration field : fieldsAndMethods.getFields()) {
+            field.accept(codegen);
+        }
+        p.println("");
+        
+        // generate functions for methods
+        codegen.setDeclOnly(false);
+        for (JMethodDeclaration method : fieldsAndMethods.getMethods()) {
+            method.accept(codegen);
         }
     }
     
@@ -270,6 +354,47 @@ public class EmitCellCode extends EmitCode {
         CellSPUCodeGen(CodegenPrintWriter p, CellComputeCodeStore cs) {
             super(p);
             this.cs = cs;
+        }
+
+        @Override
+        public void visitFieldDeclaration(JFieldDeclaration self,
+                int modifiers,
+                CType type,
+                String ident,
+                JExpression expr) {
+            p.newLine();
+//          only stack allocate singe dimension arrays
+            if (expr instanceof JNewArrayExpression) {
+                /* Do not expect to have any JNewArrayExpressions any more */
+                Utils.fail("Unexpected new array expression in codegen, for field: " + self);
+            } else if (expr instanceof JArrayInitializer) {
+                declareInitializedArray(type, ident, expr);
+                return;
+            }
+
+            printDecl (type, ident);
+            p.print(";");
+        }
+        
+        @Override
+        public void visitVariableDefinition(JVariableDefinition self,
+                                            int modifiers,
+                                            CType type,
+                                            String ident,
+                                            JExpression expr) {
+            if ((modifiers & ACC_STATIC) != 0) {
+                p.print ("static ");
+                if ((modifiers & ACC_FINAL) != 0) {
+                    p.print ("const ");
+                }
+            }
+
+            if (expr instanceof JArrayInitializer) {
+                declareInitializedArray(type, ident, expr);
+            } else {
+                printDecl (type, ident);
+            }
+            p.print(";");
         }
         
         /**

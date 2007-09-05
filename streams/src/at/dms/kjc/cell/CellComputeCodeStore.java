@@ -522,8 +522,23 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
      * @return TODO
      */
     public JBlock setupPSPIOBytes(SliceNode sliceNode, SchedulingPhase whichPhase) {
-        int inputs = sliceNode.getParent().getHead().getWidth();
-        int outputs = sliceNode.getParent().getTail().getWidth();
+        int inputs, outputs;
+        if (sliceNode.isInputSlice()) {
+            inputs = sliceNode.getAsInput().getWidth();
+            outputs = 1;
+        }
+        else if (sliceNode.isFilterSlice()){
+            inputs = 1;
+            if (sliceNode.getParent().getTail().isSplitter())
+                outputs = 1;
+            else outputs = sliceNode.getParent().getTail().getWidth();
+        } 
+        else {
+            inputs = 1;
+            if (sliceNode.getAsOutput().isDuplicateSplitter())
+                outputs = 1;
+            else outputs = sliceNode.getAsOutput().getWidth();
+        }
         if (sliceNode.isFilterSlice() && sliceNode.getAsFilter().getParent().getTail().isDuplicateSplitter())
             outputs = 1;
         int filterId = CellBackend.filterIdMap.get(sliceNode);
@@ -532,9 +547,9 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
         int peekrate = sliceNode.getParent().getFilterNodes().get(0).getFilter().getPeekInt();
         int mult;
         if (whichPhase == SchedulingPhase.INIT)
-            mult = sliceNode.getParent().getFilterNodes().get(0).getFilter().getInitMult();
+            mult = 1; //sliceNode.getParent().getFilterNodes().get(0).getFilter().getInitMult();
         else if (whichPhase == SchedulingPhase.STEADY)
-            mult = sliceNode.getParent().getFilterNodes().get(0).getFilter().getSteadyMult();
+            mult = 1; //sliceNode.getParent().getFilterNodes().get(0).getFilter().getSteadyMult();
         else return null;
         
         JBlock body = new JBlock();
@@ -592,6 +607,10 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
      * @return TODO
      */
     public JBlock callExtPSP(SliceNode sliceNode) {
+        return callExtPSP(sliceNode, 1);
+    }
+    
+    public JBlock callExtPSP(SliceNode sliceNode, int iters) {
         int filterId = CellBackend.filterIdMap.get(sliceNode);
         JBlock body = new JBlock();
         body.addStatement(new JExpressionStatement(new JMethodCallExpression("ext_ppu_spu_ppu_ex",
@@ -602,7 +621,7 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
                                 new JFieldAccessExpression("f"), new JIntLiteral(filterId))}),
                                 new JMethodCallExpression("&", new JExpression[]{new JFieldAccessExpression("input_"+filterId)}),
                                 new JMethodCallExpression("&", new JExpression[]{new JFieldAccessExpression("output_"+filterId)}),
-                                new JFieldAccessExpression(N),
+                                new JIntLiteral(iters),
                                 new JEmittedTextExpression("cb"),
                                 new JIntLiteral(0)
         })));
@@ -710,14 +729,14 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
         field = new JFieldDeclaration(fcb);
         addField(field);
         
-        // uint32_t ibs = 64 * 1024             SPU input buffer size
+        // uint32_t ibs = 4 * 1024             SPU input buffer size
         JVariableDefinition ibs = new JVariableDefinition(new CEmittedTextType(UINT32_T), INPUT_BUFFER_SIZE);
-        ibs.setInitializer(new JMultExpression(new JIntLiteral(64), new JIntLiteral(1024)));
+        ibs.setInitializer(new JMultExpression(new JIntLiteral(4), new JIntLiteral(1024)));
         addField(new JFieldDeclaration(ibs));
 
-        // uint32_t obs = 64 * 1024;            SPU output buffer size
+        // uint32_t obs = 4 * 1024;            SPU output buffer size
         JVariableDefinition obs = new JVariableDefinition(new CEmittedTextType(UINT32_T), OUTPUT_BUFFER_SIZE);
-        obs.setInitializer(new JMultExpression(new JIntLiteral(64), new JIntLiteral(1024)));
+        obs.setInitializer(new JMultExpression(new JIntLiteral(4), new JIntLiteral(1024)));
         addField(new JFieldDeclaration(obs));
 
         // BUFFER_CB picb;                    PPU input buffer control block
@@ -997,7 +1016,7 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
                                         new JFieldAccessExpression("channels"),new JIntLiteral(channelId))}),
                                 new JEmittedTextExpression("NULL"),
                                 new JFieldAccessExpression(PPU_INPUT_BUFFER_SIZE),
-                                new JEmittedTextExpression("FALSE"),
+                                new JEmittedTextExpression("TRUE"),
                                 new JIntLiteral(0)})));
     }
     

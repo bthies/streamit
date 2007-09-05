@@ -1,20 +1,23 @@
 package at.dms.kjc.cell;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 
 import at.dms.kjc.JExpression;
 import at.dms.kjc.JExpressionStatement;
 import at.dms.kjc.JMethodCallExpression;
 import at.dms.kjc.JMethodDeclaration;
+import at.dms.kjc.JStatement;
 import at.dms.kjc.JThisExpression;
 import at.dms.kjc.KjcOptions;
+import at.dms.kjc.backendSupport.FilterInfo;
 import at.dms.kjc.backendSupport.ProcessFilterSliceNode;
 import at.dms.kjc.backendSupport.SchedulingPhase;
+import at.dms.kjc.slicegraph.FileOutputContent;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.InterSliceEdge;
 import at.dms.kjc.slicegraph.OutputSliceNode;
+import at.dms.kjc.slicegraph.SliceNode;
 
 public class CellProcessFilterSliceNode extends ProcessFilterSliceNode {
     
@@ -57,8 +60,20 @@ public class CellProcessFilterSliceNode extends ProcessFilterSliceNode {
         }
     }
     
+    private CellPU getLocationFromScheduleLayout(SliceNode sliceNode) {
+        int cpu = -1;
+        int filterId = CellBackend.filterIdMap.get(sliceNode);
+        for (LinkedList<Integer> l : CellBackend.scheduleLayout) {
+            if (l.indexOf(filterId) > -1)
+                cpu = l.indexOf(filterId);
+        }
+        if (cpu == -1) return null;
+        return (CellPU)backEndBits.getComputeNode(cpu + 1);
+    }
+    
     @Override
     protected void setLocationAndCodeStore() {
+        //if (whichPhase == SchedulingPhase.PREINIT) return;
         location = backEndBits.getLayout().getComputeNode(filterNode);
         assert location != null;
         codeStore = ((CellPU)location).getComputeCodeStore(filterNode);
@@ -203,6 +218,52 @@ public class CellProcessFilterSliceNode extends ProcessFilterSliceNode {
     protected void additionalPrimePumpProcessing() {
         
     }
+    
+    @Override
+    protected void standardSteadyProcessing() {
+        JStatement steadyBlock = filter_code.getSteadyBlock();
+        // helper has now been used for the last time, so we can write the basic code.
+        // write code deemed useful by the helper into the corrrect ComputeCodeStore.
+        // write only once if multiple calls for steady state.
+        if (!basicCodeWritten.containsKey(filterNode)) {
+            //codeStore.addFields(filter_code.getUsefulFields());
+            codeStore.addMethods(filter_code.getUsefulMethods());
+            basicCodeWritten.put(filterNode,true);
+        }
+        codeStore.addSteadyLoopStatement(steadyBlock);
+        
+        if (debug) {
+            // debug info only: expected splitter and joiner firings.
+            System.err.print("(Filter" + filterNode.getFilter().getName());
+            System.err.print(" "
+                    + FilterInfo.getFilterInfo(filterNode).getMult(
+                            SchedulingPhase.INIT));
+            System.err.print(" "
+                    + FilterInfo.getFilterInfo(filterNode).getMult(
+                            SchedulingPhase.STEADY));
+            System.err.println(")");
+            System.err.print("(Joiner joiner_"
+                    + filterNode.getFilter().getName());
+            System.err.print(" "
+                    + FilterInfo.getFilterInfo(filterNode)
+                            .totalItemsReceived(SchedulingPhase.INIT));
+            System.err.print(" "
+                    + FilterInfo.getFilterInfo(filterNode)
+                            .totalItemsReceived(SchedulingPhase.STEADY));
+            System.err.println(")");
+            System.err.print("(Splitter splitter_"
+                    + filterNode.getFilter().getName());
+            System.err.print(" "
+                    + FilterInfo.getFilterInfo(filterNode).totalItemsSent(
+                            SchedulingPhase.INIT));
+            System.err.print(" "
+                    + FilterInfo.getFilterInfo(filterNode).totalItemsSent(
+                            SchedulingPhase.STEADY));
+            System.err.println(")");
+        }
+        
+    }
+
     
     @Override
     protected void additionalSteadyProcessing() {

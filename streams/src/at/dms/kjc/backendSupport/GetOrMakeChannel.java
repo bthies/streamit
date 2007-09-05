@@ -108,7 +108,7 @@ public class GetOrMakeChannel  {
         SliceNode dst = e.getDest();
 
         Channel c;
-        
+                
         if (src instanceof InputSliceNode) {
             assert dst instanceof FilterSliceNode;
             // input -> filter

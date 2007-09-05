@@ -48,12 +48,7 @@ public class ProcessInputSliceNode {
         // No code generated for inputNode if there is no input.
         if (!backEndBits.sliceHasUpstreamChannel(inputNode.getParent())) { return; }
         
-        joiner_code = CodeStoreHelper.findHelperForSliceNode(inputNode);
-        
-        if (joiner_code == null) {
-            joiner_code = getJoinerCode(inputNode,backEndBits);
-        }
-        
+        setJoinerCode();
         
         switch (whichPhase) {
         case PREINIT:
@@ -72,6 +67,14 @@ public class ProcessInputSliceNode {
             standardSteadyProcessing();
             additionalSteadyProcessing();
             break;
+        }
+    }
+    
+    protected void setJoinerCode() {
+        joiner_code = CodeStoreHelper.findHelperForSliceNode(inputNode);
+        
+        if (joiner_code == null) {
+            joiner_code = getJoinerCode(inputNode,backEndBits);
         }
     }
     

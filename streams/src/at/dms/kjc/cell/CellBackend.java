@@ -136,8 +136,23 @@ public class CellBackend {
             throw new AssertionError("I/O error on " + outputFileName + ": " + e);
         }
         
+        /*
+         * Emit Makefile
+         */
+        outputFileName = "Makefile";
+        try {
+            CodegenPrintWriter p = new CodegenPrintWriter(new BufferedWriter(new FileWriter(outputFileName, false)));
+            // write out C code
+    
+            EmitCellCode codeEmitter = new EmitCellCode(cellBackEndBits);
+            codeEmitter.generateMakefile(p);
+            p.close();
+        } catch (IOException e) {
+            throw new AssertionError("I/O error on " + outputFileName + ": " + e);
+        }
+        
         CellPU ppu = cellBackEndBits.getComputeNode(0);
-        outputFileName = "str0.c";
+        outputFileName = "strppu.c";
         try {
             CodegenPrintWriter p = new CodegenPrintWriter(new BufferedWriter(new FileWriter(outputFileName, false)));
             // write out C code
@@ -159,25 +174,25 @@ public class CellBackend {
             ArrayList<CellComputeCodeStore> codestores = nodeN.getComputeCodeStores();
             ArrayList<CellComputeCodeStore> initCodeStores = nodeN.getInitComputeCodeStores();
             for (int c = 0; c < nodeN.getNumComputeCodeStores(); c++) {
-                outputFileName = "str" + n + c + ".c";
-                String initOutputFileName = "str" + n + c + "init.c";
                 CellComputeCodeStore cs = codestores.get(c);
                 CellComputeCodeStore initcs = initCodeStores.get(c);
+                outputFileName = "str" + filterIdMap.get(cs.getSliceNode()) + ".c";
                 try {
                     CodegenPrintWriter p = new CodegenPrintWriter(new BufferedWriter(new FileWriter(outputFileName, false)));
-                    CodegenPrintWriter initp = new CodegenPrintWriter(new BufferedWriter(new FileWriter(initOutputFileName, false)));
+                    //CodegenPrintWriter initp = new CodegenPrintWriter(new BufferedWriter(new FileWriter(initOutputFileName, false)));
                     // write out C code
 
                     EmitCellCode codeEmitter = new EmitCellCode(cellBackEndBits);
-                    codeEmitter.generateSPUCHeader(p, cs.getSliceNode(), false);
-                    codeEmitter.generateSPUCHeader(initp, initcs.getSliceNode(), true);
-                    
-                    codeEmitter.emitCodeForComputeStore(cs, nodeN, p);
-                    codeEmitter.emitCodeForComputeStore(initcs, nodeN, initp);
+                    codeEmitter.generateSPUCHeader(p, initcs.getSliceNode(), true);
+                    codeEmitter.emitCodeForComputeStore(initcs, nodeN, p);
                     p.println("#include \"endfilter.h\"");
-                    initp.println("#include \"endfilter.h\"");
+                    p.println();
+                    p.println();
+                    p.println();
+                    codeEmitter.generateSPUCHeader(p, cs.getSliceNode(), false);
+                    codeEmitter.emitCodeForComputeStore(cs, nodeN, p);
+                    p.println("#include \"endfilter.h\"");
                     p.close();
-                    initp.close();
                 } catch (IOException e) {
                     throw new AssertionError("I/O error on " + outputFileName + ": " + e);
                 }
@@ -191,6 +206,8 @@ public class CellBackend {
     public static int numchannels = 0;
     
     public static final int numspus = KjcOptions.cell;
+    
+    public static final int ITERS_PER_BATCH = 100;
     
     /**
      * InputSliceNode -> List of input channel IDs

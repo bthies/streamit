@@ -20,13 +20,13 @@ public class ProcessFilterSliceNode {
     
     
     private static int uid = 0;
-    static int getUid() {
+    public static int getUid() {
         return uid++;
     }
 
     /** set of filters for which we have written basic code. */
     // uses WeakHashMap to be self-cleaning, but now have to insert some value.
-    private static Map<SliceNode,Boolean>  basicCodeWritten = new WeakHashMap<SliceNode,Boolean>();
+    protected static Map<SliceNode,Boolean>  basicCodeWritten = new WeakHashMap<SliceNode,Boolean>();
     
     protected CodeStoreHelper filter_code;
     protected ComputeCodeStore codeStore;

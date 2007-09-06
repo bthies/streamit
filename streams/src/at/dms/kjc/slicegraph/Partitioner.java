@@ -1,13 +1,20 @@
 package at.dms.kjc.slicegraph;
 
-import java.util.*;
 import java.io.FileWriter;
-import at.dms.kjc.common.CommonUtils;
-import at.dms.kjc.sir.*;
-import at.dms.kjc.sir.linear.LinearAnalyzer;
-import at.dms.kjc.sir.lowering.partition.*;
-import at.dms.kjc.spacetime.MultiLevelSplitsJoins;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
 import at.dms.kjc.KjcOptions;
+import at.dms.kjc.backendSupport.MultiLevelSplitsJoins;
+import at.dms.kjc.common.CommonUtils;
+import at.dms.kjc.sir.SIRFileReader;
+import at.dms.kjc.sir.SIRFileWriter;
+import at.dms.kjc.sir.SIRFilter;
+import at.dms.kjc.sir.linear.LinearAnalyzer;
+import at.dms.kjc.sir.lowering.partition.WorkEstimate;
 
 /**
  * An abstract class that a slice parititoner will subclass from: It holds the

@@ -5,6 +5,7 @@ import at.dms.kjc.*;
 import at.dms.kjc.backendSupport.ComputeNode;
 import at.dms.kjc.backendSupport.FilterInfo;
 import at.dms.kjc.backendSupport.Layout;
+import at.dms.kjc.backendSupport.MultiLevelSplitsJoins;
 import at.dms.kjc.backendSupport.NoSWPipeLayout;
 import at.dms.kjc.common.ConvertLonelyPops;
 import at.dms.kjc.slicegraph.*;
@@ -113,7 +114,7 @@ public class SpaceTimeBackend {
 
         //We have to create multilevel splits and/or joins if their width
         //is greater than the number of memories of the chip...
-        new MultiLevelSplitsJoins(partitioner, rawChip).doit();
+        new MultiLevelSplitsJoins(partitioner, rawChip.getNumDev()).doit();
         partitioner.dumpGraph("traces-after-multi.dot");
         
         /*

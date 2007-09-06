@@ -96,11 +96,15 @@ public class CellProcessFilterSliceNode extends ProcessFilterSliceNode {
         
         LinkedList<Integer> inputIds = CellBackend.inputChannelMap.get(inputNode);
         
+
+        System.out.println("new filter " + filterId + " " + filterNode.getFilter().getName());
+        
         // Finish handling inputs
-        if (!inputNode.isJoiner())
+        if (!inputNode.isJoiner()) {
             // if not a joiner, attach all inputs to the filter (should only
             // be one input)
             ppuCS.attachInputChannelArray(filterId, inputIds);
+        }
         else {
             // attach artificial channel created earlier as input
             int channelId = CellBackend.artificialJoinerChannels.get(inputNode);

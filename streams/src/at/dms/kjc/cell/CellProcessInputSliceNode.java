@@ -71,6 +71,7 @@ public class CellProcessInputSliceNode extends ProcessInputSliceNode {
             ppuCS.setupFilterDescription(inputNode);
             // setup EXT_PSP_EX_PARAMS/LAYOUT
             ppuCS.setupPSP(inputNode);
+            System.out.println("new joiner " + filterId + " " + inputNode.getIdent() + " " + inputNode.getWidth() + " " + inputNode.getNextFilter().getFilter().getName());
         }
         
         // Ids of channels that are inputs to this filter
@@ -205,7 +206,7 @@ public class CellProcessInputSliceNode extends ProcessInputSliceNode {
     
     @Override
     protected void setJoinerCode() {
-        System.out.println(whichPhase);
+        //System.out.println(whichPhase);
         if (whichPhase == SchedulingPhase.PREINIT) return;
         joiner_code = CodeStoreHelper.findHelperForSliceNode(inputNode);
         
@@ -215,7 +216,7 @@ public class CellProcessInputSliceNode extends ProcessInputSliceNode {
     }
     
     public static CodeStoreHelper getJoinerCode(InputSliceNode joiner, BackEndFactory backEndBits) {
-        System.out.println("getjoinercode " + joiner);
+        //System.out.println("getjoinercode " + joiner);
         CodeStoreHelper joiner_code = CodeStoreHelper.findHelperForSliceNode(joiner);
         if (joiner_code == null) {
             joiner_code = backEndBits.getCodeStoreHelper(joiner);
@@ -241,7 +242,7 @@ public class CellProcessInputSliceNode extends ProcessInputSliceNode {
             if (w != 0) {size++;}
         }
         
-        System.out.println(CellBackend.filterIdMap.get(joiner.getNextFilter()) + " making joiner code " + joiner_method_name);
+        //System.out.println(CellBackend.filterIdMap.get(joiner.getNextFilter()) + " making joiner code " + joiner_method_name);
         
         assert size > 0 : "asking for code generation for null joiner";
         

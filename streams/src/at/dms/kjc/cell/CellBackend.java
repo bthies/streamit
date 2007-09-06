@@ -13,6 +13,7 @@ import at.dms.kjc.KjcOptions;
 import at.dms.kjc.backendSupport.CommonPasses;
 import at.dms.kjc.backendSupport.DumpSlicesAndChannels;
 import at.dms.kjc.backendSupport.Layout;
+import at.dms.kjc.backendSupport.MultiLevelSplitsJoins;
 import at.dms.kjc.backendSupport.SpaceTimeScheduleAndPartitioner;
 import at.dms.kjc.common.CodegenPrintWriter;
 import at.dms.kjc.sir.SIRGlobal;
@@ -57,6 +58,12 @@ public class CellBackend {
         // perform standard optimizations.
         commonPasses.run(str, interfaces, interfaceTables, structs, helpers, global, numCores);
         
+        // partitioner contains information about the Slice graph used by dumpGraph
+        Partitioner partitioner = commonPasses.getPartitioner();
+        
+        new MultiLevelSplitsJoins(partitioner, MAX_TAPES/2).doit();
+        partitioner.dumpGraph("traces-after-multi.dot");
+        
         // perform some standard cleanup on the slice graph.
         commonPasses.simplifySlices();
 //        // guarantee that we are not going to hack properties of filters in the future
@@ -68,8 +75,7 @@ public class CellBackend {
         
         // Set schedules for initialization, prime-pump (if KjcOptions.spacetime), and steady state.
         SpaceTimeScheduleAndPartitioner schedule = commonPasses.scheduleSlices();
-        // partitioner contains information about the Slice graph used by dumpGraph
-        Partitioner partitioner = commonPasses.getPartitioner();
+
 
         // create a collection of (very uninformative) processor descriptions.
         CellChip cellChip = new CellChip(numCores);
@@ -206,7 +212,7 @@ public class CellBackend {
     public static int numchannels = 0;
     
     public static final int numspus = KjcOptions.cell;
-    
+    public static final int MAX_TAPES = 15;
     public static final int ITERS_PER_BATCH = 100;
     
     /**

@@ -72,6 +72,8 @@ public class CellProcessOutputSliceNode extends ProcessOutputSliceNode {
             // attach outputs
             LinkedList<Integer> outputIds = CellBackend.outputChannelMap.get(outputNode);
             ppuCS.attachOutputChannelArray(filterId, outputIds);
+
+            System.out.println("new splitter " + filterId + " " + outputNode.getIdent() + " " + outputNode.getWidth() + " " + outputNode.getPrevFilter().getFilter().getName());
         }
         
         addToScheduleLayout();
@@ -184,7 +186,7 @@ public class CellProcessOutputSliceNode extends ProcessOutputSliceNode {
         
         assert size > 0 : "asking for code generation for null splitter: ";// + splitter_method_name;
         
-        System.out.println(CellBackend.filterIdMap.get(splitter.getPrevFilter()) + " making splitter " + splitter_method_name);
+        //System.out.println(CellBackend.filterIdMap.get(splitter.getPrevFilter()) + " making splitter " + splitter_method_name);
         
 //        String edge_name = splitter_name + "_edge";
 //        String weight_name = splitter_name + "_weight";

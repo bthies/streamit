@@ -3,9 +3,30 @@
  */
 package at.dms.kjc.backendSupport;
 
-import java.util.*;
-import at.dms.kjc.*;
-import at.dms.kjc.sir.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+import at.dms.kjc.JInterfaceDeclaration;
+import at.dms.kjc.KjcOptions;
+import at.dms.kjc.ObjectDeepCloner;
+import at.dms.kjc.StreamItDot;
+import at.dms.kjc.cell.CellBackend;
+import at.dms.kjc.common.CommonUtils;
+import at.dms.kjc.common.ConvertLocalsToFields;
+import at.dms.kjc.sir.SIRContainer;
+import at.dms.kjc.sir.SIRFilter;
+import at.dms.kjc.sir.SIRGlobal;
+import at.dms.kjc.sir.SIRHelper;
+import at.dms.kjc.sir.SIRInterfaceTable;
+import at.dms.kjc.sir.SIRPortal;
+import at.dms.kjc.sir.SIRStream;
+import at.dms.kjc.sir.SIRStructure;
+import at.dms.kjc.sir.linear.LinearAnalyzer;
+import at.dms.kjc.sir.linear.LinearDirectReplacer;
+import at.dms.kjc.sir.linear.LinearDot;
+import at.dms.kjc.sir.linear.LinearDotSimple;
 import at.dms.kjc.sir.lowering.ArrayInitExpander;
 import at.dms.kjc.sir.lowering.ConstantProp;
 import at.dms.kjc.sir.lowering.ConstructSIRTree;
@@ -21,25 +42,32 @@ import at.dms.kjc.sir.lowering.SimplifyPopPeekPush;
 import at.dms.kjc.sir.lowering.StaticsProp;
 import at.dms.kjc.sir.lowering.VarDeclRaiser;
 import at.dms.kjc.sir.lowering.VectorizeEnable;
-import at.dms.kjc.sir.lowering.fission.StatelessDuplicate;
-import at.dms.kjc.sir.lowering.fusion.*;
-import at.dms.kjc.sir.linear.*;
 import at.dms.kjc.sir.lowering.fission.FissionReplacer;
+import at.dms.kjc.sir.lowering.fission.StatelessDuplicate;
+import at.dms.kjc.sir.lowering.fusion.FuseAll;
+import at.dms.kjc.sir.lowering.fusion.FusePipelines;
+import at.dms.kjc.sir.lowering.fusion.Lifter;
 import at.dms.kjc.sir.lowering.partition.ManualPartition;
+import at.dms.kjc.sir.lowering.partition.SJAddHierarchy;
 import at.dms.kjc.sir.lowering.partition.SJToPipe;
 import at.dms.kjc.sir.lowering.partition.WorkEstimate;
 import at.dms.kjc.sir.lowering.partition.WorkList;
+import at.dms.kjc.slicegraph.AdaptivePartitioner;
+import at.dms.kjc.slicegraph.DataFlowOrder;
+import at.dms.kjc.slicegraph.FlattenAndPartition;
+import at.dms.kjc.slicegraph.FlattenGraph;
+import at.dms.kjc.slicegraph.Partitioner;
+import at.dms.kjc.slicegraph.SimplePartitioner;
+import at.dms.kjc.slicegraph.Slice;
+import at.dms.kjc.slicegraph.UnflatFilter;
 import at.dms.kjc.spacetime.AddBuffering;
 import at.dms.kjc.spacetime.BasicGenerateSteadyStateSchedule;
+import at.dms.kjc.spacetime.CalculateParams;
+import at.dms.kjc.spacetime.CompCommRatio;
 import at.dms.kjc.spacetime.DuplicateBottleneck;
 import at.dms.kjc.spacetime.GranularityAdjust;
 import at.dms.kjc.spacetime.GreedyBinPacking;
-import at.dms.kjc.spacetime.CompCommRatio;
-import at.dms.kjc.spacetime.CalculateParams;
 import at.dms.kjc.spacetime.StreamlinedDuplicate;
-import at.dms.kjc.slicegraph.*;
-import at.dms.kjc.common.CommonUtils;
-import at.dms.kjc.common.ConvertLocalsToFields;
 /**
  * Common passes, useful in new back ends.
  * @author dimock
@@ -239,6 +267,10 @@ public class CommonPasses {
         if (KjcOptions.sjtopipe) {
             SJToPipe.doit(str);
         }
+        
+//        if (KjcOptions.cell > -1) {
+//            SJAddHierarchy.doit(str, CellBackend.MAX_TAPES);
+//        }
 
         StreamItDot.printGraph(str, "before-partition.dot");
 

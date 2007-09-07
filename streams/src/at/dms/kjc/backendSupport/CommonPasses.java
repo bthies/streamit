@@ -12,7 +12,6 @@ import at.dms.kjc.JInterfaceDeclaration;
 import at.dms.kjc.KjcOptions;
 import at.dms.kjc.ObjectDeepCloner;
 import at.dms.kjc.StreamItDot;
-import at.dms.kjc.cell.CellBackend;
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.common.ConvertLocalsToFields;
 import at.dms.kjc.sir.SIRContainer;
@@ -48,7 +47,6 @@ import at.dms.kjc.sir.lowering.fusion.FuseAll;
 import at.dms.kjc.sir.lowering.fusion.FusePipelines;
 import at.dms.kjc.sir.lowering.fusion.Lifter;
 import at.dms.kjc.sir.lowering.partition.ManualPartition;
-import at.dms.kjc.sir.lowering.partition.SJAddHierarchy;
 import at.dms.kjc.sir.lowering.partition.SJToPipe;
 import at.dms.kjc.sir.lowering.partition.WorkEstimate;
 import at.dms.kjc.sir.lowering.partition.WorkList;
@@ -268,10 +266,6 @@ public class CommonPasses {
             SJToPipe.doit(str);
         }
         
-//        if (KjcOptions.cell > -1) {
-//            SJAddHierarchy.doit(str, CellBackend.MAX_TAPES);
-//        }
-
         StreamItDot.printGraph(str, "before-partition.dot");
 
         // VarDecl Raise to move array assignments up

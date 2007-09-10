@@ -16,21 +16,26 @@ uint16_t
 uint32_t
 #endif
 spu_cmd_size[SPU_NUM_CMD_TYPES] = {
-  define_command(NULL),
+  // Filter commands.
   define_command(LOAD_DATA),
-  define_command(CALL_FUNC),
   define_command(FILTER_LOAD),
   define_command(FILTER_UNLOAD),
   define_command(FILTER_ATTACH_INPUT),
   define_command(FILTER_ATTACH_OUTPUT),
   define_command(FILTER_RUN),
+  // Buffer commands.
   define_command(BUFFER_ALLOC),
   define_command(BUFFER_ALIGN),
-  define_command(DT_IN_FRONT),
-  define_command(DT_IN_BACK),
+  // Data transfer commands.
   define_command(DT_OUT_FRONT),
-  define_command(DT_OUT_BACK),
   define_command(DT_OUT_FRONT_PPU),
+  define_command(DT_IN_BACK),
+  define_command(DT_OUT_BACK),
   define_command(DT_OUT_BACK_PPU),
+  define_command(DT_IN_FRONT),
+  // Misc commands.
+  define_command(NULL),
+  define_command(CALL_FUNC),
+  // Stats commands.
   define_command(STATS_PRINT)
 };

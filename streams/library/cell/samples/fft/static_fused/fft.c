@@ -68,13 +68,11 @@ main(int argc, char **argv)
   int bufsz = 2048 * n;  // PPU buffer size
 
   // Read input and allocate output
-  float *inbuf = alloc_buffer_ex(bufsz, FALSE, 0);
-  BUFFER_CB *bicb = buf_get_cb(inbuf);
-  fread(inbuf, sizeof(float), n * 512, inf);
-  buf_inc_tail(bicb, n * 2048);
+  BUFFER_CB *inbuf = alloc_buffer(bufsz, FALSE, 0);
+  fread(inbuf->data, sizeof(float), n * 512, inf);
+  buf_inc_tail(inbuf, n * 2048);
 
-  float *outbuf = alloc_buffer_ex(bufsz, FALSE, 0);
-  BUFFER_CB *bocb = buf_get_cb(outbuf);
+  BUFFER_CB *outbuf = alloc_buffer(bufsz, FALSE, 0);
 
   init_ticks();
   int start = ticks();
@@ -137,7 +135,7 @@ main(int argc, char **argv)
   busy = numspu;
   for (int i = 0; i < numspu; i++) {
     l.spu_id = i;
-    ext_ppu_spu_ppu_ex(&l, &f, &bicb, &bocb, spuiters[i], cb, 0);
+    ext_ppu_spu_ppu_ex(&l, &f, &inbuf, &outbuf, spuiters[i], cb, 0);
   }
   spulib_poll_while(busy);
 
@@ -155,7 +153,7 @@ main(int argc, char **argv)
   printf("spu time: %d ms\n", ticks() - startspu);
   printf("time: %d ms\n", ticks() - start);
 
-  fwrite(outbuf, sizeof(float), n * 512, outf);
+  fwrite(outbuf->data, sizeof(float), n * 512, outf);
   fclose(inf);
   fclose(outf);
 }

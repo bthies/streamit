@@ -2,7 +2,7 @@
 #define JOINER_SCALE 1
 #endif
 
-#ifndef _BEGINFILTER_H_
+#ifndef _SPULIB_BEGINFILTER_H_
 #define BEGINFILTER_INCLUDED
 #include "beginfilter.h"
 #endif

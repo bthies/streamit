@@ -11,26 +11,17 @@
  *
  * Allocates memory for and initializes a new buffer.
  *
- * size is in bytes, must be power of 2 and at least 128 bytes.
+ * size is in bytes, if circular must be power of 2 and at least 128 bytes.
  * data_offset is initial value of head/tail pointers.
  *
- * Returns pointer to buffer data, NULL on failure.
+ * Returns pointer to buffer control block, NULL on failure.
  *---------------------------------------------------------------------------*/
-void *
-alloc_buffer(uint32_t size, uint32_t data_offset)
-{
-  return alloc_buffer_ex(size, TRUE, data_offset);
-}
-
-/*-----------------------------------------------------------------------------
- * alloc_buffer_ex
- *---------------------------------------------------------------------------*/
-void *
-alloc_buffer_ex(uint32_t size, bool_t circular, uint32_t data_offset)
+BUFFER_CB *
+alloc_buffer(uint32_t size, bool_t circular, uint32_t data_offset)
 {
   /*
-   * Additional memory is allocated to align buffer data on cache line (128
-   * bytes).
+   * Buffer data is placed immediately after control block. Additional memory
+   * is allocated to align buffer data on cache line (128 bytes).
    *
    * Memory layout is:
    * - Padding as needed.
@@ -67,7 +58,19 @@ alloc_buffer_ex(uint32_t size, bool_t circular, uint32_t data_offset)
   touch_pages(buf_data, size);
   init_buffer(buf, buf_data, size, circular, data_offset);
 
-  return buf_data;
+  return buf;
+}
+
+/*-----------------------------------------------------------------------------
+ * alloc_buffer_ex
+ *
+ * Wrapper that returns pointer to buffer data instead.
+ *---------------------------------------------------------------------------*/
+void *
+alloc_buffer_ex(uint32_t size, bool_t circular, uint32_t data_offset)
+{
+  BUFFER_CB *buf = alloc_buffer(size, circular, data_offset);
+  return (buf == NULL ? NULL : buf->data);
 }
 
 /*-----------------------------------------------------------------------------
@@ -76,13 +79,9 @@ alloc_buffer_ex(uint32_t size, bool_t circular, uint32_t data_offset)
  * Adjusts head and tail pointers of an empty buffer.
  *---------------------------------------------------------------------------*/
 void
-align_buffer(void *buf_data, uint32_t data_offset)
+align_buffer(BUFFER_CB *buf, uint32_t data_offset)
 {
-  BUFFER_CB *buf = buf_get_cb(buf_data);
-
-  // Validate buffer address and new pointer offset.
-  pcheck((((uintptr_t)buf_data & CACHE_MASK) == 0) &&
-         (data_offset <= buf->mask));
+  pcheck(data_offset <= buf->mask);
   // Make sure buffer is empty and not being used.
   check((buf->head == buf->tail) &&
         (buf->front_action == BUFFER_ACTION_NONE) &&
@@ -101,20 +100,14 @@ align_buffer(void *buf_data, uint32_t data_offset)
 /*-----------------------------------------------------------------------------
  * dealloc_buffer
  *
- * Frees memory used by an empty buffer.
+ * Frees memory used by a buffer.
  *---------------------------------------------------------------------------*/
 void
-dealloc_buffer(void *buf_data)
+dealloc_buffer(BUFFER_CB *buf)
 {
-  BUFFER_CB *buf = buf_get_cb(buf_data);
-
-  // Validate buffer address.
-  pcheck(((uintptr_t)buf_data & CACHE_MASK) == 0);
-  // Make sure buffer is empty and not being used.
-  check((buf->head == buf->tail) &&
-        (buf->front_action == BUFFER_ACTION_NONE) &&
+  // Make sure buffer is not being used.
+  check((buf->front_action == BUFFER_ACTION_NONE) &&
         (buf->back_action == BUFFER_ACTION_NONE));
-
   free(*((void **)buf - 1));
 }
 

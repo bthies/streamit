@@ -20,26 +20,26 @@
 #define SPU_MAX_COMMANDS 32
 
 // Command types.
-// Generic commands.
-#define SPU_CMD_NULL                  0
-#define SPU_CMD_LOAD_DATA             1
-#define SPU_CMD_CALL_FUNC             2
 // Filter commands.
-#define SPU_CMD_FILTER_LOAD           3
-#define SPU_CMD_FILTER_UNLOAD         4
-#define SPU_CMD_FILTER_ATTACH_INPUT   5
-#define SPU_CMD_FILTER_ATTACH_OUTPUT  6
-#define SPU_CMD_FILTER_RUN            7
+#define SPU_CMD_LOAD_DATA             0
+#define SPU_CMD_FILTER_LOAD           1
+#define SPU_CMD_FILTER_UNLOAD         2
+#define SPU_CMD_FILTER_ATTACH_INPUT   3
+#define SPU_CMD_FILTER_ATTACH_OUTPUT  4
+#define SPU_CMD_FILTER_RUN            5
 // Buffer commands.
-#define SPU_CMD_BUFFER_ALLOC          8
-#define SPU_CMD_BUFFER_ALIGN          9
+#define SPU_CMD_BUFFER_ALLOC          6
+#define SPU_CMD_BUFFER_ALIGN          7
 // Data transfer commands.
-#define SPU_CMD_DT_IN_FRONT          10
-#define SPU_CMD_DT_IN_BACK           11
-#define SPU_CMD_DT_OUT_FRONT         12
-#define SPU_CMD_DT_OUT_BACK          13
-#define SPU_CMD_DT_OUT_FRONT_PPU     14
-#define SPU_CMD_DT_OUT_BACK_PPU      15
+#define SPU_CMD_DT_OUT_FRONT          8
+#define SPU_CMD_DT_OUT_FRONT_PPU      9
+#define SPU_CMD_DT_IN_BACK           10
+#define SPU_CMD_DT_OUT_BACK          11
+#define SPU_CMD_DT_OUT_BACK_PPU      12
+#define SPU_CMD_DT_IN_FRONT          13
+// Misc commands.
+#define SPU_CMD_NULL                 14
+#define SPU_CMD_CALL_FUNC            15
 // Stats commands.
 #define SPU_CMD_STATS_PRINT          16
 // Number of command types.
@@ -89,19 +89,8 @@ C_ASSERT(sizeof(SPU_CMD_HEADER) == 5);
   uint8_t header_deps[SPU_CMD_MAX_DEPS_LARGE];
 
 /*-----------------------------------------------------------------------------
- * Generic commands.
+ * Filter commands.
  *---------------------------------------------------------------------------*/
-
-// null command
-//
-// Does nothing - used to reduce dependency fan-in/out.
-typedef struct _SPU_NULL_CMD {
-  SPU_DECLARE_CMD_HEADER_LARGE
-// 20
-  uint32_t _padding[3];
-} QWORD_ALIGNED SPU_NULL_CMD;
-
-C_ASSERT(sizeof(SPU_NULL_CMD) == 32);
 
 // load_data command
 //
@@ -121,21 +110,6 @@ typedef struct _SPU_LOAD_DATA_CMD {
 } QWORD_ALIGNED SPU_LOAD_DATA_CMD;
 
 C_ASSERT(sizeof(SPU_LOAD_DATA_CMD) == 32);
-
-// call_func command
-//
-// Calls a void (void) function.
-typedef struct _SPU_CALL_FUNC_CMD {
-  SPU_DECLARE_CMD_HEADER
-// 12
-  LS_ADDRESS func;        // LS address of function
-} QWORD_ALIGNED SPU_CALL_FUNC_CMD;
-
-C_ASSERT(sizeof(SPU_CALL_FUNC_CMD) == 16);
-
-/*-----------------------------------------------------------------------------
- * Filter commands.
- *---------------------------------------------------------------------------*/
 
 // Info about SPU filters needed by SPU library code.
 //
@@ -392,12 +366,38 @@ typedef struct _SPU_DT_OUT_PPU_CMD {
 
 C_ASSERT(sizeof(SPU_DT_OUT_PPU_CMD) == 48);
 
-typedef SPU_DT_IN_CMD       SPU_DT_IN_FRONT_CMD;
-typedef SPU_DT_IN_CMD       SPU_DT_IN_BACK_CMD;
 typedef SPU_DT_OUT_CMD      SPU_DT_OUT_FRONT_CMD;
-typedef SPU_DT_OUT_CMD      SPU_DT_OUT_BACK_CMD;
 typedef SPU_DT_OUT_PPU_CMD  SPU_DT_OUT_FRONT_PPU_CMD;
+typedef SPU_DT_IN_CMD       SPU_DT_IN_BACK_CMD;
+typedef SPU_DT_OUT_CMD      SPU_DT_OUT_BACK_CMD;
 typedef SPU_DT_OUT_PPU_CMD  SPU_DT_OUT_BACK_PPU_CMD;
+typedef SPU_DT_IN_CMD       SPU_DT_IN_FRONT_CMD;
+
+/*-----------------------------------------------------------------------------
+ * Misc commands.
+ *---------------------------------------------------------------------------*/
+
+// null command
+//
+// Does nothing - used to reduce dependency fan-in/out.
+typedef struct _SPU_NULL_CMD {
+  SPU_DECLARE_CMD_HEADER_LARGE
+// 20
+  uint32_t _padding[3];
+} QWORD_ALIGNED SPU_NULL_CMD;
+
+C_ASSERT(sizeof(SPU_NULL_CMD) == 32);
+
+// call_func command
+//
+// Calls a void (void) function.
+typedef struct _SPU_CALL_FUNC_CMD {
+  SPU_DECLARE_CMD_HEADER
+// 12
+  LS_ADDRESS func;        // LS address of function
+} QWORD_ALIGNED SPU_CALL_FUNC_CMD;
+
+C_ASSERT(sizeof(SPU_CALL_FUNC_CMD) == 16);
 
 /*-----------------------------------------------------------------------------
  * Stats commands.
@@ -540,11 +540,8 @@ spu_cmd_compose_req(LS_ADDRESS lsa, uint32_t entry, uint32_t size)
 #define MAX_COMMANDS              SPU_MAX_COMMANDS
 
 // Command types.
-// Generic commands.
-#define CMD_NULL                  SPU_CMD_NULL
-#define CMD_LOAD_DATA             SPU_CMD_LOAD_DATA
-#define CMD_CALL_FUNC             SPU_CMD_CALL_FUNC
 // Filter commands.
+#define CMD_LOAD_DATA             SPU_CMD_LOAD_DATA
 #define CMD_FILTER_LOAD           SPU_CMD_FILTER_LOAD
 #define CMD_FILTER_UNLOAD         SPU_CMD_FILTER_UNLOAD
 #define CMD_FILTER_ATTACH_INPUT   SPU_CMD_FILTER_ATTACH_INPUT
@@ -554,12 +551,15 @@ spu_cmd_compose_req(LS_ADDRESS lsa, uint32_t entry, uint32_t size)
 #define CMD_BUFFER_ALLOC          SPU_CMD_BUFFER_ALLOC
 #define CMD_BUFFER_ALIGN          SPU_CMD_BUFFER_ALIGN
 // Data transfer commands.
-#define CMD_DT_IN_FRONT           SPU_CMD_DT_IN_FRONT
-#define CMD_DT_IN_BACK            SPU_CMD_DT_IN_BACK
 #define CMD_DT_OUT_FRONT          SPU_CMD_DT_OUT_FRONT
-#define CMD_DT_OUT_BACK           SPU_CMD_DT_OUT_BACK
 #define CMD_DT_OUT_FRONT_PPU      SPU_CMD_DT_OUT_FRONT_PPU
+#define CMD_DT_IN_BACK            SPU_CMD_DT_IN_BACK
+#define CMD_DT_OUT_BACK           SPU_CMD_DT_OUT_BACK
 #define CMD_DT_OUT_BACK_PPU       SPU_CMD_DT_OUT_BACK_PPU
+#define CMD_DT_IN_FRONT           SPU_CMD_DT_IN_FRONT
+// Misc commands.
+#define CMD_NULL                  SPU_CMD_NULL
+#define CMD_CALL_FUNC             SPU_CMD_CALL_FUNC
 // Stats commands.
 #define CMD_STATS_PRINT           SPU_CMD_STATS_PRINT
 // Number of command types.
@@ -574,11 +574,8 @@ spu_cmd_compose_req(LS_ADDRESS lsa, uint32_t entry, uint32_t size)
 #define DECLARE_CMD_HEADER_LARGE  SPU_DECLARE_CMD_HEADER_LARGE
 
 // Command structures.
-// Generic commands.
-#define NULL_CMD                  SPU_NULL_CMD
-#define LOAD_DATA_CMD             SPU_LOAD_DATA_CMD
-#define CALL_FUNC_CMD             SPU_CALL_FUNC_CMD
 // Filter commands.
+#define LOAD_DATA_CMD             SPU_LOAD_DATA_CMD
 #define FILTER_DESC               SPU_INT_FILTER_DESC
 #define FILTER_LOAD_CMD           SPU_FILTER_LOAD_CMD
 #define FILTER_UNLOAD_CMD         SPU_FILTER_UNLOAD_CMD
@@ -589,12 +586,15 @@ spu_cmd_compose_req(LS_ADDRESS lsa, uint32_t entry, uint32_t size)
 #define BUFFER_ALLOC_CMD          SPU_BUFFER_ALLOC_CMD
 #define BUFFER_ALIGN_CMD          SPU_BUFFER_ALIGN_CMD
 // Data transfer commands.
-#define DT_IN_FRONT_CMD           SPU_DT_IN_FRONT_CMD
-#define DT_IN_BACK_CMD            SPU_DT_IN_BACK_CMD
 #define DT_OUT_FRONT_CMD          SPU_DT_OUT_FRONT_CMD
-#define DT_OUT_BACK_CMD           SPU_DT_OUT_BACK_CMD
 #define DT_OUT_FRONT_PPU_CMD      SPU_DT_OUT_FRONT_PPU_CMD
+#define DT_IN_BACK_CMD            SPU_DT_IN_BACK_CMD
+#define DT_OUT_BACK_CMD           SPU_DT_OUT_BACK_CMD
 #define DT_OUT_BACK_PPU_CMD       SPU_DT_OUT_BACK_PPU_CMD
+#define DT_IN_FRONT_CMD           SPU_DT_IN_FRONT_CMD
+// Misc commands.
+#define NULL_CMD                  SPU_NULL_CMD
+#define CALL_FUNC_CMD             SPU_CALL_FUNC_CMD
 // Stats commands.
 #define STATS_PRINT_CMD           SPU_STATS_PRINT_CMD
 

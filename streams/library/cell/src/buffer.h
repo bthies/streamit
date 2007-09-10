@@ -43,18 +43,15 @@ typedef struct _BUFFER_CB {
 // +8
   union {
     struct {
-      struct {
-        uint8_t front_attached  : 1;
-        uint8_t back_attached   : 1;
-      };
       uint8_t front_action;
       uint8_t back_action;
       uint8_t dt_active;
+      uint8_t _c_padding0;
     };
     uint32_t cflags;
   };
 // +12
-  uint32_t _c_padding;
+  uint32_t _c_padding1;
 #endif
 // +0
   uint32_t mask;

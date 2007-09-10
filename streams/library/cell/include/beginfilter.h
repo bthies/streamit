@@ -214,16 +214,18 @@
   void                                                                        \
   DECORATE_FUNC_NAME(wf)(void *param, void *const _state,                     \
                          void *const *const _inputs,                          \
-                         void *const *const _outputs)                         \
+                         void *const *const _outputs, uint32_t _iters)        \
   {                                                                           \
     IF_SINGLE_INPUT(void *const _input UNUSED = _inputs[0]);                  \
     IF_SINGLE_OUTPUT(void *const _output UNUSED = _outputs[0]);               \
     UNUSED_PARAM(param);                                                      \
     UNUSED_PARAM(_state);                                                     \
     UNUSED_PARAM(_inputs);                                                    \
-    UNUSED_PARAM(_outputs);
+    UNUSED_PARAM(_outputs);                                                   \
+    do {
 
 #define END_WORK_FUNC \
+    } while (--_iters != 0);                                                  \
   }
 
 /*-----------------------------------------------------------------------------

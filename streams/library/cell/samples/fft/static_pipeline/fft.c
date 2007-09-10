@@ -67,12 +67,11 @@ main(int argc, char **argv)
   int bufsz = 2048 * n;          // PPU buffer size
 
   // Read input and allocate output
-  float *inbuf = alloc_buffer_ex(bufsz, FALSE, 0);
-  BUFFER_CB *bicb = buf_get_cb(inbuf);
-  fread(inbuf, sizeof(float), n * 512, inf);
-  buf_set_tail(bicb, n * 2048);
+  BUFFER_CB *inbuf = alloc_buffer(bufsz, FALSE, 0);
+  fread(inbuf->data, sizeof(float), n * 512, inf);
+  buf_set_tail(inbuf, n * 2048);
 
-  float *outbuf = alloc_buffer_ex(bufsz, FALSE, 0);
+  BUFFER_CB *outbuf = alloc_buffer(bufsz, FALSE, 0);
 
   init_ticks();
   int start = ticks();
@@ -119,25 +118,26 @@ main(int argc, char **argv)
   l[0].local_out_buf_data = soba;
   r.in_bytes = sdtsz;
   r.run_iters = sfi;
+  r.loop_iters = 1;
   r.out_bytes = sdtsz;
   for (int i = 0; i < numspu; i++) {
     l[i] = l[0];
     l[i].spu_id = i;
     if (i == 0) {
-      l[i].remote_in_buf_data = inbuf;
       l[i].remote_in_buf_ppu = TRUE;
+      l[i].ppu_in_buf = inbuf;
     } else {
-      l[i].remote_in_buf_data = spu_addr(i - 1, soba);
-      l[i].remote_in_buf_size = sbsz;
       l[i].remote_in_buf_ppu = FALSE;
+      l[i].remote_spu_in_buf_data = spu_addr(i - 1, soba);
+      l[i].remote_spu_in_buf_size = sbsz;
     }
     if (i == numspu - 1) {
-      l[i].remote_out_buf_data = outbuf;
       l[i].remote_out_buf_ppu = TRUE;
+      l[i].ppu_out_buf = outbuf;
     } else {
-      l[i].remote_out_buf_data = spu_addr(i + 1, siba);
-      l[i].remote_out_buf_size = sbsz;
       l[i].remote_out_buf_ppu = FALSE;
+      l[i].remote_spu_out_buf_data = spu_addr(i + 1, siba);
+      l[i].remote_spu_out_buf_size = sbsz;
     }
   }
 
@@ -168,7 +168,7 @@ main(int argc, char **argv)
   printf("spu time: %d ms\n", ticks() - startspu);
   printf("time: %d ms\n", ticks() - start);
 
-  fwrite(outbuf, sizeof(float), n * 512, outf);
+  fwrite(outbuf->data, sizeof(float), n * 512, outf);
   fclose(inf);
   fclose(outf);
 }

@@ -81,12 +81,8 @@ spu_done_command(SPU_CMD_GROUP *g, SPU_CMD_HEADER *cmd)
  *---------------------------------------------------------------------------*/
 
 /*-----------------------------------------------------------------------------
- * spu_null
+ * Filter commands.
  *---------------------------------------------------------------------------*/
-DECLARE_SPU_COMMAND(null, NULL)
-{
-}
-END_SPU_COMMAND
 
 /*-----------------------------------------------------------------------------
  * spu_load_data
@@ -99,16 +95,6 @@ DECLARE_SPU_COMMAND(load_data, LOAD_DATA,
   cmd->num_bytes = num_bytes;
 
   cmd->state = 0;
-}
-END_SPU_COMMAND
-
-/*-----------------------------------------------------------------------------
- * spu_call_func
- *---------------------------------------------------------------------------*/
-DECLARE_SPU_COMMAND(call_func, CALL_FUNC,
-                    LS_ADDRESS func)
-{
-  cmd->func = func;
 }
 END_SPU_COMMAND
 
@@ -183,20 +169,6 @@ END_SPU_COMMAND
  * spu_filter_run
  *---------------------------------------------------------------------------*/
 DECLARE_SPU_COMMAND(filter_run, FILTER_RUN,
-                    SPU_ADDRESS filt, uint32_t iters)
-{
-  cmd->filt = spu_lsa(g->spu_id, filt);
-  cmd->iters = iters;
-  cmd->loop_iters = 1;
-
-  IF_CHECK(cmd->state = 0);
-}
-END_SPU_COMMAND
-
-/*-----------------------------------------------------------------------------
- * spu_filter_run_ex
- *---------------------------------------------------------------------------*/
-DECLARE_SPU_COMMAND(filter_run_ex, FILTER_RUN,
                     SPU_ADDRESS filt, uint32_t iters, uint32_t loop_iters)
 {
   cmd->filt = spu_lsa(g->spu_id, filt);
@@ -206,6 +178,10 @@ DECLARE_SPU_COMMAND(filter_run_ex, FILTER_RUN,
   IF_CHECK(cmd->state = 0);
 }
 END_SPU_COMMAND
+
+/*-----------------------------------------------------------------------------
+ * Buffer commands.
+ *---------------------------------------------------------------------------*/
 
 /*-----------------------------------------------------------------------------
  * spu_buffer_alloc
@@ -231,39 +207,8 @@ DECLARE_SPU_COMMAND(buffer_align, BUFFER_ALIGN,
 END_SPU_COMMAND
 
 /*-----------------------------------------------------------------------------
- * spu_dt_in_back
+ * Data transfer commands.
  *---------------------------------------------------------------------------*/
-DECLARE_SPU_COMMAND(dt_in_back, DT_IN_BACK,
-                    SPU_ADDRESS buf_data, void *src_buf_data,
-                    uint32_t src_buf_size, uint32_t num_bytes)
-{
-  cmd->buf_data = spu_lsa(g->spu_id, buf_data);
-  cmd->src_buf_data = src_buf_data;
-  cmd->src_buf = buf_get_cb(src_buf_data);
-  cmd->src_buf_mask = src_buf_size - 1;
-  cmd->num_bytes = num_bytes;
-
-  cmd->state = 0;
-}
-END_SPU_COMMAND
-
-
-/*-----------------------------------------------------------------------------
- * spu_dt_in_back_ppu_ex
- *---------------------------------------------------------------------------*/
-DECLARE_SPU_COMMAND(dt_in_back_ppu_ex, DT_IN_BACK,
-                    SPU_ADDRESS buf_data, BUFFER_CB *src_buf,
-                    uint32_t num_bytes)
-{
-  cmd->buf_data = spu_lsa(g->spu_id, buf_data);
-  cmd->src_buf_data = src_buf->data;
-  cmd->src_buf = NULL;
-  cmd->src_buf_mask = src_buf->mask;
-  cmd->num_bytes = num_bytes;
-
-  cmd->state = 0;
-}
-END_SPU_COMMAND
 
 /*-----------------------------------------------------------------------------
  * spu_dt_out_front
@@ -281,44 +226,6 @@ DECLARE_SPU_COMMAND(dt_out_front, DT_OUT_FRONT,
 END_SPU_COMMAND
 
 /*-----------------------------------------------------------------------------
- * spu_dt_out_front_spu
- *
- * Wrapper with same signature as spu_dt_out_front_ppu.
- *---------------------------------------------------------------------------*/
-DECLARE_SPU_COMMAND(dt_out_front_spu, DT_OUT_FRONT,
-                    SPU_ADDRESS buf_data, void *dest_buf_data,
-                    uint32_t dest_buf_size, uint32_t num_bytes)
-{
-  UNUSED_PARAM(dest_buf_size);
-
-  cmd->buf_data = spu_lsa(g->spu_id, buf_data);
-  cmd->dest_buf_data = dest_buf_data;
-  cmd->num_bytes = num_bytes;
-
-  cmd->state = 0;
-}
-END_SPU_COMMAND
-
-/*-----------------------------------------------------------------------------
- * spu_dt_out_front_ppu
- *---------------------------------------------------------------------------*/
-DECLARE_SPU_COMMAND(dt_out_front_ppu, DT_OUT_FRONT_PPU,
-                    SPU_ADDRESS buf_data, void *dest_buf_data,
-                    uint32_t dest_buf_size, uint32_t num_bytes)
-{
-  cmd->buf_data = spu_lsa(g->spu_id, buf_data);
-  cmd->dest_buf_data = dest_buf_data;
-  cmd->dest_buf = buf_get_cb(dest_buf_data);
-  cmd->dest_buf_mask = dest_buf_size - 1;
-  cmd->num_bytes = num_bytes;
-  cmd->tail_overlaps = FALSE;
-  cmd->tail_ua_bytes = 0;
-
-  cmd->state = (CHECK ? 255 : 0);
-}
-END_SPU_COMMAND
-
-/*-----------------------------------------------------------------------------
  * spu_dt_out_front_ppu_ex
  *---------------------------------------------------------------------------*/
 DECLARE_SPU_COMMAND(dt_out_front_ppu_ex, DT_OUT_FRONT_PPU,
@@ -331,13 +238,73 @@ DECLARE_SPU_COMMAND(dt_out_front_ppu_ex, DT_OUT_FRONT_PPU,
   cmd->dest_buf_mask = dest_buf->mask;
   cmd->num_bytes = num_bytes;
   cmd->tail_overlaps = tail_overlaps;
-  cmd->tail_ua_bytes = 0;
 
+  cmd->tail_ua_bytes = 0;
   cmd->state = (CHECK ? 255 : 0);
 }
 END_SPU_COMMAND
 
+/*-----------------------------------------------------------------------------
+ * spu_dt_in_back
+ *---------------------------------------------------------------------------*/
+DECLARE_SPU_COMMAND(dt_in_back, DT_IN_BACK,
+                    SPU_ADDRESS buf_data, void *src_buf_data,
+                    uint32_t src_buf_size, uint32_t num_bytes)
+{
+  cmd->buf_data = spu_lsa(g->spu_id, buf_data);
+  cmd->src_buf_data = src_buf_data;
+  cmd->src_buf = buf_get_cb(src_buf_data);
+  cmd->src_buf_mask = src_buf_size - 1;
+  cmd->num_bytes = num_bytes;
+
+  cmd->state = 0;
+}
+END_SPU_COMMAND
+
+/*-----------------------------------------------------------------------------
+ * spu_dt_in_back_ppu
+ *---------------------------------------------------------------------------*/
+DECLARE_SPU_COMMAND(dt_in_back_ppu, DT_IN_BACK,
+                    SPU_ADDRESS buf_data, BUFFER_CB *src_buf,
+                    uint32_t num_bytes)
+{
+  cmd->buf_data = spu_lsa(g->spu_id, buf_data);
+  cmd->src_buf_data = src_buf->data;
+  cmd->src_buf = NULL;
+  cmd->src_buf_mask = src_buf->mask;
+  cmd->num_bytes = num_bytes;
+
+  cmd->state = 0;
+}
+END_SPU_COMMAND
+
+/*-----------------------------------------------------------------------------
+ * Misc commands.
+ *---------------------------------------------------------------------------*/
+
+/*-----------------------------------------------------------------------------
+ * spu_null
+ *---------------------------------------------------------------------------*/
+DECLARE_SPU_COMMAND(null, NULL)
+{
+}
+END_SPU_COMMAND
+
+/*-----------------------------------------------------------------------------
+ * spu_call_func
+ *---------------------------------------------------------------------------*/
+DECLARE_SPU_COMMAND(call_func, CALL_FUNC,
+                    LS_ADDRESS func)
+{
+  cmd->func = func;
+}
+END_SPU_COMMAND
+
 #if SPU_STATS_ENABLE
+
+/*-----------------------------------------------------------------------------
+ * Stats commands.
+ *---------------------------------------------------------------------------*/
 
 /*-----------------------------------------------------------------------------
  * spu_stats_print

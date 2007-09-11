@@ -77,8 +77,6 @@ ext_spu_internal(EXT_SPU_LAYOUT *l, EXT_SPU_RATES *r, uint32_t iters,
 
   // Initialize PPU data transfer state.
   if (l->remote_in_buf_ppu) {
-    d->l.remote_in_buf_size = buf_get_cb(l->remote_in_buf_data)->mask + 1;
-
     d->in.count = iters;
     d->in.waiting = TRUE;
     d->in.slot = 0;
@@ -89,17 +87,12 @@ ext_spu_internal(EXT_SPU_LAYOUT *l, EXT_SPU_RATES *r, uint32_t iters,
   }
 
   if (l->remote_out_buf_ppu) {
-    d->l.remote_out_buf_size = buf_get_cb(l->remote_out_buf_data)->mask + 1;
-    d->setup_dt_out_front = &spu_dt_out_front_ppu;
-
     d->out.count = iters;
     d->out.waiting = TRUE;
     d->out.slot = 0;
     d->out.cmd_bit = (4 << l->cmd_id);          // 2
     d->out.flip_cmd_bit = (0x24 << l->cmd_id);  // 2 and 5
   } else {
-    d->setup_dt_out_front = &spu_dt_out_front_spu;
-
     d->out.cmd_bit = 0;
   }
 
@@ -370,22 +363,24 @@ ext_spu_setup_init(EXT_SPU_DATA *d)
   spu_clear_group(g);
 
   if (!EXT_ALLOW_SPU_NO_INPUT || (d->r.in_bytes != 0)) {
-    spu_dt_in_back(g,
-                   d->l.local_in_buf_data, d->l.remote_in_buf_data,
-                   d->l.remote_in_buf_size, d->r.in_bytes,
-                   cmd_id + 0,
-                   0);
+    spu_dt_in_back_proc(g,
+                        d->l.local_in_buf_data, d->l.remote_in_buf_ppu,
+                        d->l.remote_in_buf_ptr, d->l.remote_spu_in_buf_size,
+                        d->r.in_bytes,
+                        cmd_id + 0,
+                        0);
 
-    spu_dt_in_back(g,
-                   d->l.local_in_buf_data, d->l.remote_in_buf_data,
-                   d->l.remote_in_buf_size, d->r.in_bytes,
-                   cmd_id + 3,
-                   1,
-                   cmd_id + 0);
+    spu_dt_in_back_proc(g,
+                        d->l.local_in_buf_data, d->l.remote_in_buf_ppu,
+                        d->l.remote_in_buf_ptr, d->l.remote_spu_in_buf_size,
+                        d->r.in_bytes,
+                        cmd_id + 3,
+                        1,
+                        cmd_id + 0);
   }
 
   spu_filter_run(g,
-                 d->l.filt, d->r.run_iters,
+                 d->l.filt, d->r.run_iters, d->r.loop_iters,
                  cmd_id + 4,
                  1,
                  cmd_id + 0);
@@ -407,17 +402,17 @@ ext_spu_setup_steady(EXT_SPU_DATA *d, uint32_t slot)
   spu_clear_group(g);
 
   if (!EXT_ALLOW_SPU_NO_INPUT || (d->r.in_bytes != 0)) {
-    spu_dt_in_back(g,
-                   d->l.local_in_buf_data, d->l.remote_in_buf_data,
-                   d->l.remote_in_buf_size, d->r.in_bytes,
-                   cmd_id + 0,
-                   2,
-                   dep_id + 0,
-                   dep_id + 1);
+    spu_dt_in_back_proc(g, d->l.local_in_buf_data, d->l.remote_in_buf_ppu,
+                        d->l.remote_in_buf_ptr, d->l.remote_spu_in_buf_size,
+                        d->r.in_bytes,
+                        cmd_id + 0,
+                        2,
+                        dep_id + 0,
+                        dep_id + 1);
   }
 
   spu_filter_run(g,
-                 d->l.filt, d->r.run_iters,
+                 d->l.filt, d->r.run_iters, d->r.loop_iters,
                  cmd_id + 1,
                  3,
                  dep_id + 0,
@@ -425,9 +420,9 @@ ext_spu_setup_steady(EXT_SPU_DATA *d, uint32_t slot)
                  dep_id + 2);
 
   if (!EXT_ALLOW_SPU_NO_OUTPUT || (d->r.out_bytes != 0)) {
-    d->setup_dt_out_front(g,
-                          d->l.local_out_buf_data, d->l.remote_out_buf_data,
-                          d->l.remote_out_buf_size, d->r.out_bytes,
+    spu_dt_out_front_proc(g,
+                          d->l.local_out_buf_data, d->l.remote_out_buf_ppu,
+                          d->l.remote_out_buf_ptr, d->r.out_bytes,
                           cmd_id + 2,
                           2,
                           dep_id + 1,
@@ -451,7 +446,7 @@ ext_spu_setup_cleanup_0(EXT_SPU_DATA *d)
 
   spu_clear_group(g);
   spu_filter_run(g,
-                 d->l.filt, d->r.run_iters,
+                 d->l.filt, d->r.run_iters, d->r.loop_iters,
                  cmd_id + 1,
                  3,
                  dep_id + 0,
@@ -459,9 +454,9 @@ ext_spu_setup_cleanup_0(EXT_SPU_DATA *d)
                  dep_id + 2);
 
   if (!EXT_ALLOW_SPU_NO_OUTPUT || (d->r.out_bytes != 0)) {
-    d->setup_dt_out_front(g,
-                          d->l.local_out_buf_data, d->l.remote_out_buf_data,
-                          d->l.remote_out_buf_size, d->r.out_bytes,
+    spu_dt_out_front_proc(g,
+                          d->l.local_out_buf_data, d->l.remote_out_buf_ppu,
+                          d->l.remote_out_buf_ptr, d->r.out_bytes,
                           cmd_id + 2,
                           2,
                           dep_id + 1,
@@ -488,9 +483,9 @@ ext_spu_setup_cleanup_1(EXT_SPU_DATA *d)
 
   assert(d->r.out_bytes != 0);
   spu_clear_group(g);
-  d->setup_dt_out_front(g,
-                        d->l.local_out_buf_data, d->l.remote_out_buf_data,
-                        d->l.remote_out_buf_size, d->r.out_bytes,
+  spu_dt_out_front_proc(g,
+                        d->l.local_out_buf_data, d->l.remote_out_buf_ppu,
+                        d->l.remote_out_buf_ptr, d->r.out_bytes,
                         cmd_id + 2,
                         2,
                         dep_id + 1,
@@ -517,24 +512,25 @@ ext_spu_setup_full(EXT_SPU_DATA *d, uint32_t iters)
   spu_clear_group(g);
 
   if (!EXT_ALLOW_SPU_NO_INPUT || (d->r.in_bytes != 0)) {
-    spu_dt_in_back(g,
-                   d->l.local_in_buf_data, d->l.remote_in_buf_data,
-                   d->l.remote_in_buf_size, d->r.in_bytes,
-                   cmd_id + 0,
-                   0);
+    spu_dt_in_back_proc(g,
+                        d->l.local_in_buf_data, d->l.remote_in_buf_ppu,
+                        d->l.remote_in_buf_ptr, d->l.remote_spu_in_buf_size,
+                        d->r.in_bytes,
+                        cmd_id + 0,
+                        0);
     mask |= 0x11;     // 0,4
   }
 
   spu_filter_run(g,
-                 d->l.filt, d->r.run_iters,
+                 d->l.filt, d->r.run_iters, d->r.loop_iters,
                  cmd_id + 4,
                  1,
                  cmd_id + 0);
 
   if (!EXT_ALLOW_SPU_NO_OUTPUT || (d->r.out_bytes != 0)) {
-    d->setup_dt_out_front(g,
-                          d->l.local_out_buf_data, d->l.remote_out_buf_data,
-                          d->l.remote_out_buf_size, d->r.out_bytes,
+    spu_dt_out_front_proc(g,
+                          d->l.local_out_buf_data, d->l.remote_out_buf_ppu,
+                          d->l.remote_out_buf_ptr, d->r.out_bytes,
                           cmd_id + 2,
                           1,
                           cmd_id + 4);
@@ -543,9 +539,10 @@ ext_spu_setup_full(EXT_SPU_DATA *d, uint32_t iters)
 
   if (iters == 2) {
     if (!EXT_ALLOW_SPU_NO_INPUT || (d->r.in_bytes != 0)) {
-      spu_dt_in_back(g,
-                     d->l.local_in_buf_data, d->l.remote_in_buf_data,
-                     d->l.remote_in_buf_size, d->r.in_bytes,
+      spu_dt_in_back_proc(g,
+                          d->l.local_in_buf_data, d->l.remote_in_buf_ppu,
+                          d->l.remote_in_buf_ptr, d->l.remote_spu_in_buf_size,
+                          d->r.in_bytes,
                      cmd_id + 3,
                      1,
                      cmd_id + 0);
@@ -553,16 +550,16 @@ ext_spu_setup_full(EXT_SPU_DATA *d, uint32_t iters)
     }
 
     spu_filter_run(g,
-                   d->l.filt, d->r.run_iters,
+                   d->l.filt, d->r.run_iters, d->r.loop_iters,
                    cmd_id + 1,
                    2,
                    cmd_id + 3,
                    cmd_id + 4);
 
     if (!EXT_ALLOW_SPU_NO_OUTPUT || (d->r.out_bytes != 0)) {
-      d->setup_dt_out_front(g,
-                            d->l.local_out_buf_data, d->l.remote_out_buf_data,
-                            d->l.remote_out_buf_size, d->r.out_bytes,
+      spu_dt_out_front_proc(g,
+                            d->l.local_out_buf_data, d->l.remote_out_buf_ppu,
+                            d->l.remote_out_buf_ptr, d->r.out_bytes,
                             cmd_id + 5,
                             2,
                             cmd_id + 1,
@@ -572,15 +569,4 @@ ext_spu_setup_full(EXT_SPU_DATA *d, uint32_t iters)
   }
 
   return (mask << cmd_id);
-}
-
-/*-----------------------------------------------------------------------------
- * ext_ppu_spu_ppu
- *---------------------------------------------------------------------------*/
-
-void *
-ext_ppu_spu_ppu(EXT_SPU_LAYOUT *l, EXT_SPU_RATES *r, uint32_t iters,
-                GENERIC_COMPLETE_CB *cb, uint32_t tag)
-{
-  return ext_ppu_spu_ppu_internal(l, r, iters, NULL, cb, tag);
 }

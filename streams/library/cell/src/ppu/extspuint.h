@@ -29,7 +29,6 @@ typedef struct _EXT_SPU_DATA {
   EXT_SPU_LAYOUT l;
   EXT_SPU_RATES r;
   EXT_SPU_INT_PARAMS ip;
-  SPU_DT_OUT_FRONT_FUNC setup_dt_out_front;
   struct {
     SPU_CMD_GROUP *g;
     SPU_ADDRESS da;
@@ -54,23 +53,6 @@ EXT_SPU_DATA *ext_spu_internal(EXT_SPU_LAYOUT *l, EXT_SPU_RATES *r,
                                GENERIC_COMPLETE_CB *cb, uint32_t tag);
 
 /*-----------------------------------------------------------------------------
- * ext_ppu_spu_ppu_internal
- *
- * Internal implementation has extra parameters (used to implement
- * data_parallel_shared).
- *---------------------------------------------------------------------------*/
-
-static INLINE EXT_SPU_DATA *
-ext_ppu_spu_ppu_internal(EXT_SPU_LAYOUT *l, EXT_SPU_RATES *r, uint32_t iters,
-                         EXT_SPU_INT_PARAMS *ip, GENERIC_COMPLETE_CB *cb,
-                         uint32_t tag)
-{
-  l->remote_in_buf_ppu = TRUE;
-  l->remote_out_buf_ppu = TRUE;
-  return ext_spu_internal(l, r, iters, ip, cb, tag);
-}
-
-/*-----------------------------------------------------------------------------
  * ext_spu_in_buf_has_data
  *
  * Returns whether the PPU input buffer contains enough data to start another
@@ -80,7 +62,7 @@ ext_ppu_spu_ppu_internal(EXT_SPU_LAYOUT *l, EXT_SPU_RATES *r, uint32_t iters,
 static INLINE bool_t
 ext_spu_in_buf_has_data(EXT_SPU_DATA *d)
 {
-  return buf_bytes_used(buf_get_cb(d->l.remote_in_buf_data)) >= d->r.in_bytes;
+  return buf_bytes_used(d->l.ppu_in_buf) >= d->r.in_bytes;
 }
 
 /*-----------------------------------------------------------------------------
@@ -93,7 +75,7 @@ ext_spu_in_buf_has_data(EXT_SPU_DATA *d)
 static INLINE bool_t
 ext_spu_out_buf_has_space(EXT_SPU_DATA *d)
 {
-  BUFFER_CB *buf = buf_get_cb(d->l.remote_out_buf_data);
+  BUFFER_CB *buf = d->l.ppu_out_buf;
   return ((buf->head - (buf->head & QWORD_MASK ? : 1) - buf->tail) &
           buf->mask) >= d->r.out_bytes;
 }
@@ -108,7 +90,7 @@ ext_spu_out_buf_has_space(EXT_SPU_DATA *d)
 static INLINE void
 ext_spu_start_dt_in(EXT_SPU_DATA *d)
 {
-  dt_out_front(d->l.remote_in_buf_data, d->l.spu_id, d->l.local_in_buf_data,
+  dt_out_front(d->l.ppu_in_buf, d->l.spu_id, d->l.local_in_buf_data,
                d->r.in_bytes, d->l.cmd_id + d->in.slot * 3 + 0, 0);
 }
 
@@ -122,7 +104,7 @@ ext_spu_start_dt_in(EXT_SPU_DATA *d)
 static INLINE void
 ext_spu_start_dt_out(EXT_SPU_DATA *d)
 {
-  dt_in_back(d->l.remote_out_buf_data, d->l.spu_id, d->l.local_out_buf_data,
+  dt_in_back(d->l.ppu_out_buf, d->l.spu_id, d->l.local_out_buf_data,
              d->r.out_bytes, d->l.cmd_id + d->out.slot * 3 + 2, 0);
 }
 

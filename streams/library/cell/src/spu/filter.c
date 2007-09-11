@@ -12,6 +12,19 @@
 #include "stats.h"
 
 /*-----------------------------------------------------------------------------
+ * run_call_func
+ *
+ * Command handler.
+ *---------------------------------------------------------------------------*/
+void
+run_call_func(CALL_FUNC_CMD *cmd)
+{
+  ((void (*)(void))cmd->func)();
+
+  dep_complete_command();
+}
+
+/*-----------------------------------------------------------------------------
  * run_load_data
  *
  * Command handler.
@@ -81,19 +94,6 @@ run_load_data(LOAD_DATA_CMD *cmd)
 }
 
 /*-----------------------------------------------------------------------------
- * run_call_func
- *
- * Command handler.
- *---------------------------------------------------------------------------*/
-void
-run_call_func(CALL_FUNC_CMD *cmd)
-{
-  ((void (*)(void))cmd->func)();
-
-  dep_complete_command();
-}
-
-/*-----------------------------------------------------------------------------
  * run_filter_load
  *
  * Command handler.
@@ -108,7 +108,9 @@ run_filter_load(FILTER_LOAD_CMD *cmd)
     // Initialize filter CB.
 
     uint32_t tape_data_size;
+#if CHECK
     vec4_uint32_t *tape_data;
+#endif
 
     pcheck((((uintptr_t)cmd->filt & QWORD_MASK) == 0) &&
            ((cmd->desc.state_size == 0) ||
@@ -132,12 +134,14 @@ run_filter_load(FILTER_LOAD_CMD *cmd)
     // Initialize pointer to filter state.
     filt->state = filt->data + tape_data_size;
 
+#if CHECK
     // Clear input/output tape pointers.
     tape_data = (vec4_uint32_t *)filt->data;
     while (tape_data_size != 0) {
       *tape_data++ = VEC_SPLAT_U32(0);
       tape_data_size -= QWORD_SIZE;
     }
+#endif
 
 #if CHECK
     // Initialize debug flags.
@@ -229,25 +233,23 @@ run_filter_unload(FILTER_UNLOAD_CMD *cmd)
     check(!filt->busy);
 
 #if CHECK
-    // Detach input tapes.
-    if (filt->attached_inputs != 0) {
-      for (uint8_t i = 0; i < filt->desc.num_inputs; i++) {
-        if (filt->inputs[i] != NULL) {
-          buf_get_cb(filt->inputs[i])->front_attached = FALSE;
-        }
-      }
-    }
-
-    // Detach output tapes.
-    if (filt->attached_outputs != 0) {
-      for (uint8_t i = 0; i < filt->desc.num_outputs; i++) {
-        if (filt->outputs[i] != NULL) {
-          buf_get_cb(filt->outputs[i])->back_attached = FALSE;
-        }
-      }
-    }
-
     if (cmd->detach_only) {
+      uint32_t tape_data_count;
+      vec4_uint32_t *tape_data;
+
+      filt->attached_inputs = 0;
+      filt->attached_outputs = 0;
+
+      tape_data_count =
+        (filt->desc.num_inputs + filt->desc.num_outputs + QWORD_MASK) >>
+        QWORD_SHIFT;
+      tape_data = (vec4_uint32_t *)filt->data;
+
+      while (tape_data_count != 0) {
+        *tape_data++ = VEC_SPLAT_U32(0);
+        tape_data_count--;
+      }
+
       dep_complete_command();
       return;
     }
@@ -336,40 +338,17 @@ run_filter_attach_input(FILTER_ATTACH_INPUT_CMD *cmd)
          (((uintptr_t)cmd->buf_data & QWORD_MASK) == 0));
   check(!filt->busy);
 
-  if (cmd->buf_data == NULL) {
-    // Detatch tape.
-
 #if CHECK
-    if (filt->inputs[cmd->tape_id] != NULL) {
-      // Mark current buffer as detached and decrement count of attached input
-      // tapes.
-      buf_get_cb(filt->inputs[cmd->tape_id])->front_attached = FALSE;
-      filt->attached_inputs--;
-    }
-#endif
-
-    filt->inputs[cmd->tape_id] = NULL;
-  } else {
-    // Attach tape.
-
-#if CHECK
-    if (filt->inputs[cmd->tape_id] == NULL) {
-      // No buffer currently attached - increment count of attached input
-      // tapes.
-      filt->attached_inputs++;
-    } else {
-      // Mark current buffer as detached, no change in attached count.
-      buf_get_cb(filt->inputs[cmd->tape_id])->front_attached = FALSE;
-    }
-
-    // Mark new buffer as attached.
-    buf_get_cb(cmd->buf_data)->front_attached = TRUE;
-#endif
-
-    filt->inputs[cmd->tape_id] = cmd->buf_data;
+  if (filt->inputs[cmd->tape_id] == NULL) {
+    filt->attached_inputs++;
   }
 
-  // Done.
+  if (cmd->buf_data == NULL) {
+    filt->attached_inputs--;
+  }
+#endif
+
+  filt->inputs[cmd->tape_id] = cmd->buf_data;
   dep_complete_command();
 }
 
@@ -391,40 +370,17 @@ run_filter_attach_output(FILTER_ATTACH_OUTPUT_CMD *cmd)
          (((uintptr_t)cmd->buf_data & QWORD_MASK) == 0));
   check(!filt->busy);
 
-  if (cmd->buf_data == NULL) {
-    // Detatch tape.
-
 #if CHECK
-    if (filt->outputs[cmd->tape_id] != NULL) {
-      // Mark current buffer as detached and decrement count of attached output
-      // tapes.
-      buf_get_cb(filt->outputs[cmd->tape_id])->back_attached = FALSE;
-      filt->attached_outputs--;
-    }
-#endif
-
-    filt->outputs[cmd->tape_id] = NULL;
-  } else {
-    // Attach tape.
-
-#if CHECK
-    if (filt->outputs[cmd->tape_id] == NULL) {
-      // No buffer currently attached - increment count of attached output
-      // tapes.
-      filt->attached_outputs++;
-    } else {
-      // Mark current buffer as detached, no change in attached count.
-      buf_get_cb(filt->outputs[cmd->tape_id])->back_attached = FALSE;
-    }
-
-    // Mark new buffer as attached.
-    buf_get_cb(cmd->buf_data)->back_attached = TRUE;
-#endif
-
-    filt->outputs[cmd->tape_id] = cmd->buf_data;
+  if (filt->outputs[cmd->tape_id] == NULL) {
+    filt->attached_outputs++;
   }
 
-  // Done.
+  if (cmd->buf_data == NULL) {
+    filt->attached_outputs--;
+  }
+#endif
+
+  filt->outputs[cmd->tape_id] = cmd->buf_data;
   dep_complete_command();
 }
 
@@ -437,11 +393,6 @@ void
 run_filter_run(FILTER_RUN_CMD *cmd)
 {
   FILTER_CB *filt = (FILTER_CB *)cmd->filt;
-  FILTER_WORK_FUNC *work_func = filt->desc.work_func;
-  void *param = filt->desc.param;
-  void *filt_state = filt->state;
-  void **inputs = filt->inputs;
-  void **outputs = filt->outputs;
   uint32_t loop_iters;
 #if STATS_ENABLE
   uint32_t work_start;
@@ -449,7 +400,8 @@ run_filter_run(FILTER_RUN_CMD *cmd)
 
 #if CHECK
   if (cmd->state == 0) {
-    pcheck(((uintptr_t)cmd->filt & QWORD_MASK) == 0);
+    pcheck((((uintptr_t)cmd->filt & QWORD_MASK) == 0) &&
+           (cmd->loop_iters != 0));
     // Make sure filter isn't unloaded or already running and mark as running.
     check(!filt->busy);
     filt->busy = TRUE;
@@ -479,22 +431,15 @@ run_filter_run(FILTER_RUN_CMD *cmd)
    */
 
   // Run work function.
-  loop_iters = cmd->loop_iters;
-
-  if (UNLIKELY(loop_iters > cmd->iters)) {
-    loop_iters = cmd->iters;
-  }
-
+  loop_iters = (LIKELY(cmd->iters >= cmd->loop_iters) ?
+                cmd->loop_iters : cmd->iters);
   cmd->iters -= loop_iters;
 
 #if STATS_ENABLE
   work_start = spu_read_decrementer();
 #endif
-
-  do {
-    (*work_func)(param, filt_state, inputs, outputs);
-  } while (--loop_iters != 0);
-
+  (*(FILTER_WORK_FUNC *)filt->desc.work_func)
+    (filt->desc.param, filt->state, filt->inputs, filt->outputs, loop_iters);
 #if STATS_ENABLE
   stats_work_ticks += work_start - spu_read_decrementer();
 #endif

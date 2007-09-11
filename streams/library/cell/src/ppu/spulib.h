@@ -245,11 +245,9 @@ spu_next_command(SPU_CMD_GROUP *g, SPU_CMD_HEADER *cmd)
   SPU_CMD_HEADER *spu_##name(SPU_CMD_GROUP *g, ##__VA_ARGS__,                 \
                              uint32_t cmd_id, uint32_t num_deps, ...)
 
-DECLARE_SPU_COMMAND(null);
+// Filter commands.
 DECLARE_SPU_COMMAND(load_data,
                     SPU_ADDRESS dest_da, void *src_addr, uint32_t num_bytes);
-DECLARE_SPU_COMMAND(call_func,
-                    LS_ADDRESS func);
 DECLARE_SPU_COMMAND(filter_load,
                     SPU_ADDRESS filt, SPU_FILTER_DESC *desc);
 DECLARE_SPU_COMMAND(filter_unload,
@@ -263,32 +261,50 @@ DECLARE_SPU_COMMAND(filter_attach_input,
 DECLARE_SPU_COMMAND(filter_attach_output,
                     SPU_ADDRESS filt, uint32_t tape_id, SPU_ADDRESS buf_data);
 DECLARE_SPU_COMMAND(filter_run,
-                    SPU_ADDRESS filt, uint32_t iters);
-DECLARE_SPU_COMMAND(filter_run_ex,
                     SPU_ADDRESS filt, uint32_t iters, uint32_t loop_iters);
+// Buffer commands.
 DECLARE_SPU_COMMAND(buffer_alloc,
                     SPU_ADDRESS buf_data, uint32_t size, uint32_t data_offset);
 DECLARE_SPU_COMMAND(buffer_align,
                     SPU_ADDRESS buf_data, uint32_t data_offset);
-DECLARE_SPU_COMMAND(dt_in_back,
-                    SPU_ADDRESS buf_data, void *src_buf_data,
-                    uint32_t src_buf_size, uint32_t num_bytes);
-DECLARE_SPU_COMMAND(dt_in_back_ppu_ex,
-                    SPU_ADDRESS buf_data, BUFFER_CB *src_buf,
-                    uint32_t num_bytes);
+// Data transfer commands.
 DECLARE_SPU_COMMAND(dt_out_front,
                     SPU_ADDRESS buf_data, void *dest_buf_data,
                     uint32_t num_bytes);
-DECLARE_SPU_COMMAND(dt_out_front_spu,
-                    SPU_ADDRESS buf_data, void *dest_buf_data,
-                    uint32_t dest_buf_size, uint32_t num_bytes);
-DECLARE_SPU_COMMAND(dt_out_front_ppu,
-                    SPU_ADDRESS buf_data, void *dest_buf_data,
-                    uint32_t dest_buf_size, uint32_t num_bytes);
+#define spu_dt_out_front_ppu(g, buf_data, dest_buf, num_bytes, cmd_id,        \
+                             num_deps, ...)                                   \
+  spu_dt_out_front_ppu_ex(g, buf_data, dest_buf, num_bytes, FALSE, cmd_id,    \
+                          num_deps, ##__VA_ARGS__)
+#define spu_dt_out_front_proc(g, buf_data, dest_ppu, dest_buf_ptr, num_bytes, \
+                              cmd_id, num_deps, ...)                          \
+  ((dest_ppu) ?                                                               \
+   spu_dt_out_front_ppu(g, buf_data, (BUFFER_CB *)(dest_buf_ptr), num_bytes,  \
+                        cmd_id, num_deps, ##__VA_ARGS__) :                    \
+   spu_dt_out_front(g, buf_data, dest_buf_ptr, num_bytes, cmd_id,             \
+                    num_deps, ##__VA_ARGS__))
 DECLARE_SPU_COMMAND(dt_out_front_ppu_ex,
                     SPU_ADDRESS buf_data, BUFFER_CB *dest_buf,
                     uint32_t num_bytes, bool_t tail_overlaps);
+DECLARE_SPU_COMMAND(dt_in_back,
+                    SPU_ADDRESS buf_data, void *src_buf_data,
+                    uint32_t src_buf_size, uint32_t num_bytes);
+DECLARE_SPU_COMMAND(dt_in_back_ppu,
+                    SPU_ADDRESS buf_data, BUFFER_CB *src_buf,
+                    uint32_t num_bytes);
+#define spu_dt_in_back_proc(g, buf_data, src_ppu, src_buf_ptr,                \
+                            src_spu_buf_size, num_bytes, cmd_id, num_deps,    \
+                            ...)                                              \
+  ((src_ppu) ?                                                                \
+   spu_dt_in_back_ppu(g, buf_data, (BUFFER_CB *)(src_buf_ptr), num_bytes,     \
+                      cmd_id, num_deps, ##__VA_ARGS__) :                      \
+   spu_dt_in_back(g, buf_data, src_buf_ptr, src_spu_buf_size, num_bytes,      \
+                  cmd_id, num_deps, ##__VA_ARGS__))
+// Misc commands.
+DECLARE_SPU_COMMAND(null);
+DECLARE_SPU_COMMAND(call_func,
+                    LS_ADDRESS func);
 #if SPU_STATS_ENABLE
+// Stats commands.
 DECLARE_SPU_COMMAND(stats_print);
 #endif
 
@@ -309,13 +325,11 @@ typedef SPU_CMD_HEADER *(*SPU_DT_OUT_FRONT_FUNC)
 
 // Buffer commands.
 //
-// alloc and dealloc actually allocate/free memory. Buffer addresses returned
-// and specified point to the start of buffer data. The control block is
-// immediately before that (obtain with buf_get_cb).
-void *alloc_buffer(uint32_t size, uint32_t data_offset);
+// alloc and dealloc actually allocate/free memory.
+BUFFER_CB *alloc_buffer(uint32_t size, bool_t circular, uint32_t data_offset);
 void *alloc_buffer_ex(uint32_t size, bool_t circular, uint32_t data_offset);
-void align_buffer(void *buf_data, uint32_t data_offset);
-void dealloc_buffer(void *buf_data);
+void align_buffer(BUFFER_CB *buf, uint32_t data_offset);
+void dealloc_buffer(BUFFER_CB *buf);
 
 void init_buffer(BUFFER_CB *buf, void *buf_data, uint32_t size,
                  bool_t circular, uint32_t data_offset);
@@ -334,9 +348,9 @@ void touch_pages(void *data, uint32_t size);
 //
 // tag is an arbitrary tag that is passed to the callback when the data
 // transfer completes.
-void dt_in_back(void *buf_data, uint32_t src_spu, SPU_ADDRESS src_buf_data,
+void dt_in_back(BUFFER_CB *buf, uint32_t src_spu, SPU_ADDRESS src_buf_data,
                 uint32_t num_bytes, uint32_t spu_cmd_id, uint32_t tag);
-void dt_out_front(void *buf_data, uint32_t dest_spu, SPU_ADDRESS dest_buf_data,
+void dt_out_front(BUFFER_CB *buf, uint32_t dest_spu, SPU_ADDRESS dest_buf_data,
                   uint32_t num_bytes, uint32_t spu_cmd_id, uint32_t tag);
 
 // For dt_in_back_ex, all except the last corresponding SPU dt_out_front_ppu
@@ -350,8 +364,8 @@ void dt_out_front_ex(BUFFER_CB *buf, uint32_t dest_spu,
 void finish_dt_in_back_ex_head(BUFFER_CB *buf, bool_t tail_overlaps);
 void finish_dt_in_back_ex_tail(BUFFER_CB *buf);
 #else
-#define finish_dt_in_back_ex_head(buf, tail_overlaps)
-#define finish_dt_in_back_ex_tail(buf)
+#define finish_dt_in_back_ex_head(buf, tail_overlaps) ((void)0)
+#define finish_dt_in_back_ex_tail(buf)                ((void)0)
 #endif
 
 /*-----------------------------------------------------------------------------

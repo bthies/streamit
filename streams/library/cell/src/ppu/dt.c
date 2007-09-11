@@ -14,18 +14,15 @@
  * dt_out_front
  *---------------------------------------------------------------------------*/
 void
-dt_out_front(void *buf_data, uint32_t dest_spu, SPU_ADDRESS dest_buf_data,
+dt_out_front(BUFFER_CB *buf, uint32_t dest_spu, SPU_ADDRESS dest_buf_data,
              uint32_t num_bytes, uint32_t spu_cmd_id, uint32_t tag)
 {
-  BUFFER_CB *buf = buf_get_cb(buf_data);
   OUT_DTCB out_dtcb;
   PPU_DT_PARAMS *cmd;
 
 #if CHECK
   // Validate alignment.
-  pcheck((((uintptr_t)buf_data & CACHE_MASK) == 0) &&
-         ((dest_buf_data & CACHE_MASK) == 0) &&
-         (num_bytes != 0));
+  pcheck(((dest_buf_data & CACHE_MASK) == 0) && (num_bytes != 0));
 
   // Debug head pointer should be synchronized.
   assert(buf->ihead == buf->head);
@@ -40,7 +37,6 @@ dt_out_front(void *buf_data, uint32_t dest_spu, SPU_ADDRESS dest_buf_data,
   // Set up source buffer's head/tail pointers for region to be transferred.
   out_dtcb.head = buf->head;
   out_dtcb.tail = (buf->head + num_bytes) & buf->mask;
-  IF_DEBUG(buf->front_in_ack = buf->head);
   IF_CHECK(buf->ihead = out_dtcb.tail);
 
   // Set data transfer to wait on the SPU command ID. This must be done before
@@ -65,7 +61,6 @@ ppu_finish_dt_out_front(PPU_DT_PARAMS *cmd)
   BUFFER_CB *buf = cmd->buf;
 
   buf->head = (buf->head + cmd->num_bytes) & buf->mask;
-  assert(buf->front_in_ack == buf->head);
   IF_CHECK(buf->front_action = BUFFER_ACTION_NONE);
 }
 
@@ -107,18 +102,15 @@ dt_out_front_ex(BUFFER_CB *buf, uint32_t dest_spu, SPU_ADDRESS dest_buf_data,
  * dt_in_back
  *---------------------------------------------------------------------------*/
 void
-dt_in_back(void *buf_data, uint32_t src_spu, SPU_ADDRESS src_buf_data,
+dt_in_back(BUFFER_CB *buf, uint32_t src_spu, SPU_ADDRESS src_buf_data,
            uint32_t num_bytes, uint32_t spu_cmd_id, uint32_t tag)
 {
-  BUFFER_CB *buf = buf_get_cb(buf_data);
   OUT_DTCB out_dtcb;
   PPU_DT_PARAMS *cmd;
 
 #if CHECK
   // Validate buffer alignment.
-  pcheck((((uintptr_t)buf_data & CACHE_MASK) == 0) &&
-         ((src_buf_data & CACHE_MASK) == 0) &&
-         (num_bytes != 0));
+  pcheck(((src_buf_data & CACHE_MASK) == 0) && (num_bytes != 0));
 
   // Debug tail pointer should be synchronized.
   assert(buf->otail == buf->tail);

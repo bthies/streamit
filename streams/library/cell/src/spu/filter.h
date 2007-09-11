@@ -40,6 +40,6 @@ typedef struct _FILTER_CB {
 C_ASSERT(sizeof(FILTER_CB) == SPU_FILTER_CB_SIZE);
 
 typedef void FILTER_WORK_FUNC(void *params, void *state, void *const *inputs,
-                              void *const *outputs);
+                              void *const *outputs, uint32_t iters);
 
 #endif

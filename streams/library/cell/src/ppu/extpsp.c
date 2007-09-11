@@ -21,7 +21,7 @@ typedef struct _ACTIVE_OUTPUT_TAPE {
 
 typedef struct _ACTIVE_FILTER {
   uint32_t spu_id;
-  EXT_PSP_EX_PARAMS *f;
+  EXT_PSP_PARAMS *f;
   ACTIVE_INPUT_TAPE inputs[EXT_PSP_MAX_TAPES - 1];
   ACTIVE_OUTPUT_TAPE outputs[EXT_PSP_MAX_TAPES - 1];
   SPU_ADDRESS filt_cb;
@@ -42,7 +42,7 @@ typedef struct _ACTIVE_FILTER {
   uint32_t completed_mask;
 } ACTIVE_FILTER;
 
-static void setup_load(ACTIVE_FILTER *af, EXT_PSP_EX_LAYOUT *l);
+static void setup_load(ACTIVE_FILTER *af, EXT_PSP_LAYOUT *l);
 static void setup_init_a(ACTIVE_FILTER *af);
 static void setup_init_b(ACTIVE_FILTER *af);
 static void setup_steady(ACTIVE_FILTER *af, uint32_t group);
@@ -51,7 +51,7 @@ static void setup_cleanup_b(ACTIVE_FILTER *af, uint32_t group);
 
 static void adjust_input(ACTIVE_FILTER *af, uint32_t group);
 
-static bool_t ext_psp_ex_handler(void *data, uint32_t mask);
+static bool_t ext_psp_handler(void *data, uint32_t mask);
 static void start_input(ACTIVE_FILTER *af);
 static void start_output(ACTIVE_FILTER *af);
 static void finish_output(ACTIVE_FILTER *af);
@@ -60,7 +60,9 @@ static void done_filter(ACTIVE_FILTER *af);
 static INLINE void
 issue_group(ACTIVE_FILTER *af, uint32_t group)
 {
-  spu_issue_int_group(af->groups[group].g, af->groups[group].cmd_data);
+  if (af->groups[group].g->size != 0) {
+    spu_issue_int_group(af->groups[group].g, af->groups[group].cmd_data);
+  }
 }
 
 static INLINE uint32_t
@@ -114,7 +116,7 @@ get_cleanup_a_mask(ACTIVE_FILTER *af, uint32_t group)
 static INLINE uint32_t
 get_cleanup_b_mask(ACTIVE_FILTER *af, uint32_t group)
 {
-  EXT_PSP_EX_PARAMS *f = af->f;
+  EXT_PSP_PARAMS *f = af->f;
   uint32_t mask = get_mask(f->num_outputs) << (1 + f->num_inputs);
 
   if (af->unload_filter || (CHECK && af->load_filter)) {
@@ -143,7 +145,7 @@ setup_run(SPU_CMD_GROUP *g, ACTIVE_FILTER *af, uint32_t iters, uint32_t cmd_id,
   SPU_CMD_HEADER *run_cmd;
 
   run_cmd = spu_filter_run(g,
-                           af->filt_cb, iters,
+                           af->filt_cb, iters, af->f->loop_iters,
                            cmd_id,
                            0);
   run_cmd->num_back_deps = af->group_num_cmd;
@@ -157,17 +159,16 @@ static INLINE void
 setup_input(SPU_CMD_GROUP *g, ACTIVE_FILTER *af, uint32_t iters,
             uint32_t cmd_id_start, uint32_t input_dep_start, uint32_t run_dep)
 {
-  EXT_PSP_EX_PARAMS *f = af->f;
+  EXT_PSP_PARAMS *f = af->f;
 
   for (uint32_t i = 0; i < f->num_inputs; i++) {
-    spu_dt_in_back_ppu_ex(g,
-                          af->inputs[i].spu_buf_data,
-                          af->inputs[i].channel_buf,
-                          iters * f->inputs[i].pop_bytes,
-                          cmd_id_start + i,
-                          2,
-                          input_dep_start + i,
-                          run_dep);
+    spu_dt_in_back_ppu(g,
+                       af->inputs[i].spu_buf_data, af->inputs[i].channel_buf,
+                       iters * f->inputs[i].pop_bytes,
+                       cmd_id_start + i,
+                       2,
+                       input_dep_start + i,
+                       run_dep);
   }
 }
 
@@ -176,7 +177,7 @@ setup_output(SPU_CMD_GROUP *g, ACTIVE_FILTER *af, uint32_t iters,
              uint32_t cmd_id_start, uint32_t output_dep_start,
              uint32_t run_dep)
 {
-  EXT_PSP_EX_PARAMS *f = af->f;
+  EXT_PSP_PARAMS *f = af->f;
 
   for (uint32_t i = 0; i < f->num_outputs; i++) {
     spu_dt_out_front_ppu_ex(g,
@@ -192,9 +193,9 @@ setup_output(SPU_CMD_GROUP *g, ACTIVE_FILTER *af, uint32_t iters,
 }
 
 void
-ext_ppu_spu_ppu_ex(EXT_PSP_EX_LAYOUT *l, EXT_PSP_EX_PARAMS *f,
-                   BUFFER_CB **ppu_in_buf, BUFFER_CB **ppu_out_buf,
-                   uint32_t iters, GENERIC_COMPLETE_CB *cb, uint32_t tag)
+ext_ppu_spu_ppu(EXT_PSP_LAYOUT *l, EXT_PSP_PARAMS *f, BUFFER_CB **ppu_in_buf,
+                BUFFER_CB **ppu_out_buf, uint32_t iters,
+                GENERIC_COMPLETE_CB *cb, uint32_t tag)
 {
   SPU_INFO *spu = &spu_info[l->spu_id];
   ACTIVE_FILTER *af;
@@ -214,8 +215,7 @@ ext_ppu_spu_ppu_ex(EXT_PSP_EX_LAYOUT *l, EXT_PSP_EX_PARAMS *f,
          ((l->cmd_data_start & CACHE_MASK) == 0));
 
   cmd_mask = get_mask(group_num_cmd * 2) << l->cmd_id_start;
-  af = spu_new_ext_op(spu, cmd_mask, &ext_psp_ex_handler, cb, tag,
-                      sizeof(*af));
+  af = spu_new_ext_op(spu, cmd_mask, &ext_psp_handler, cb, tag, sizeof(*af));
 
   af->spu_id = l->spu_id;
   af->f = f;
@@ -282,9 +282,9 @@ ext_ppu_spu_ppu_ex(EXT_PSP_EX_LAYOUT *l, EXT_PSP_EX_PARAMS *f,
 }
 
 static void
-setup_load(ACTIVE_FILTER *af, EXT_PSP_EX_LAYOUT *l)
+setup_load(ACTIVE_FILTER *af, EXT_PSP_LAYOUT *l)
 {
-  EXT_PSP_EX_PARAMS *f = af->f;
+  EXT_PSP_PARAMS *f = af->f;
   SPU_CMD_GROUP *g = af->groups[0].g;
   uint32_t load_id = af->cmd_id_start + 0 + 0;
   uint32_t in_attach_id_start = load_id + 1;
@@ -333,7 +333,7 @@ setup_load(ACTIVE_FILTER *af, EXT_PSP_EX_LAYOUT *l)
 static void
 setup_init_a(ACTIVE_FILTER *af)
 {
-  EXT_PSP_EX_PARAMS *f = af->f;
+  EXT_PSP_PARAMS *f = af->f;
   SPU_CMD_GROUP *g = af->groups[1].g;
   uint32_t input_iters =
     (af->groups_left == 1 ? af->last_group_iters : f->group_iters);
@@ -342,20 +342,19 @@ setup_init_a(ACTIVE_FILTER *af)
   spu_clear_group(g);
 
   for (uint32_t i = 0; i < f->num_inputs; i++) {
-    spu_dt_in_back_ppu_ex(g,
-                          af->inputs[i].spu_buf_data,
-                          af->inputs[i].channel_buf,
-                          f->inputs[i].peek_extra_bytes +
-                            input_iters * f->inputs[i].pop_bytes,
-                          input_id_start + i,
-                          0);
+    spu_dt_in_back_ppu(g,
+                       af->inputs[i].spu_buf_data, af->inputs[i].channel_buf,
+                       f->inputs[i].peek_extra_bytes +
+                         input_iters * f->inputs[i].pop_bytes,
+                       input_id_start + i,
+                       0);
   }
 }
 
 static void
 setup_init_b(ACTIVE_FILTER *af)
 {
-  EXT_PSP_EX_PARAMS *f = af->f;
+  EXT_PSP_PARAMS *f = af->f;
   SPU_CMD_GROUP *g = af->groups[0].g;
   uint32_t id_start = af->cmd_id_start + 0;
   uint32_t dep_start = af->cmd_id_start + af->group_num_cmd;
@@ -377,7 +376,7 @@ setup_init_b(ACTIVE_FILTER *af)
 static void
 setup_steady(ACTIVE_FILTER *af, uint32_t group)
 {
-  EXT_PSP_EX_PARAMS *f = af->f;
+  EXT_PSP_PARAMS *f = af->f;
   SPU_CMD_GROUP *g = af->groups[group].g;
   uint32_t group_offset = group * af->group_num_cmd;
   uint32_t id_start = af->cmd_id_start + group_offset;
@@ -400,7 +399,7 @@ setup_steady(ACTIVE_FILTER *af, uint32_t group)
 static void
 setup_cleanup_a(ACTIVE_FILTER *af, uint32_t group)
 {
-  EXT_PSP_EX_PARAMS *f = af->f;
+  EXT_PSP_PARAMS *f = af->f;
   SPU_CMD_GROUP *g = af->groups[group].g;
   uint32_t group_offset = group * af->group_num_cmd;
   uint32_t id_start = af->cmd_id_start + group_offset;
@@ -415,7 +414,7 @@ setup_cleanup_a(ACTIVE_FILTER *af, uint32_t group)
 static void
 setup_cleanup_b(ACTIVE_FILTER *af, uint32_t group)
 {
-  EXT_PSP_EX_PARAMS *f = af->f;
+  EXT_PSP_PARAMS *f = af->f;
   SPU_CMD_GROUP *g = af->groups[group].g;
   uint32_t group_offset = group * af->group_num_cmd;
   uint32_t id_start = af->cmd_id_start + group_offset;
@@ -448,7 +447,7 @@ setup_cleanup_b(ACTIVE_FILTER *af, uint32_t group)
 static void
 adjust_input(ACTIVE_FILTER *af, uint32_t group)
 {
-  EXT_PSP_EX_PARAMS *f = af->f;
+  EXT_PSP_PARAMS *f = af->f;
   SPU_DT_IN_BACK_CMD *cmd;
 
   cmd = (SPU_DT_IN_BACK_CMD *)((void *)spu_first_command(af->groups[group].g) +
@@ -461,10 +460,10 @@ adjust_input(ACTIVE_FILTER *af, uint32_t group)
 }
 
 static bool_t
-ext_psp_ex_handler(void *data, uint32_t mask)
+ext_psp_handler(void *data, uint32_t mask)
 {
   ACTIVE_FILTER *af = (ACTIVE_FILTER *)data;
-  EXT_PSP_EX_PARAMS *f = af->f;
+  EXT_PSP_PARAMS *f = af->f;
 
   af->completed_mask |= mask;
 
@@ -473,12 +472,9 @@ ext_psp_ex_handler(void *data, uint32_t mask)
 
     switch (af->phase) {
     case PHASE_ALLOC:
-      if (f->num_inputs != 0) {
-        start_input(af);
+      start_input(af);
 
-        issue_group(af, 1); // init_a
-      }
-
+      issue_group(af, 1); // init_a
       setup_init_b(af);
 
       af->phase = PHASE_LOAD;
@@ -569,7 +565,7 @@ ext_psp_ex_handler(void *data, uint32_t mask)
 static void
 start_input(ACTIVE_FILTER *af)
 {
-  EXT_PSP_EX_PARAMS *f = af->f;
+  EXT_PSP_PARAMS *f = af->f;
   uint32_t iters;
 
   iters = (af->groups_left - 1) * f->group_iters + af->last_group_iters;
@@ -585,7 +581,7 @@ start_input(ACTIVE_FILTER *af)
 static void
 start_output(ACTIVE_FILTER *af)
 {
-  EXT_PSP_EX_PARAMS *f = af->f;
+  EXT_PSP_PARAMS *f = af->f;
   uint32_t iters;
 
   iters = (af->groups_left - 1) * f->group_iters + af->last_group_iters;
@@ -600,7 +596,7 @@ start_output(ACTIVE_FILTER *af)
 static void
 finish_output(ACTIVE_FILTER *af)
 {
-  EXT_PSP_EX_PARAMS *f = af->f;
+  EXT_PSP_PARAMS *f = af->f;
 
   for (uint32_t i = 0; i < f->num_outputs; i++) {
     finish_dt_in_back_ex_head(af->outputs[i].channel_buf, f->data_parallel);
@@ -616,7 +612,7 @@ finish_output(ACTIVE_FILTER *af)
 static void
 done_filter(ACTIVE_FILTER *af)
 {
-  EXT_PSP_EX_PARAMS *f = af->f;
+  EXT_PSP_PARAMS *f = af->f;
 
   if (!f->data_parallel) {
     for (uint32_t i = 0; i < f->num_inputs; i++) {
@@ -626,4 +622,13 @@ done_filter(ACTIVE_FILTER *af)
 
   spu_free_int_group(af->groups[0].g);
   spu_free_int_group(af->groups[1].g);
+}
+
+void
+ext_ppu_spu_ppu_ex(EXT_PSP_EX_LAYOUT *l, EXT_PSP_EX_PARAMS *f,
+                   BUFFER_CB **ppu_in_buf, BUFFER_CB **ppu_out_buf,
+                   uint32_t iters, GENERIC_COMPLETE_CB *cb, uint32_t tag)
+{
+  f->loop_iters = 1;
+  ext_ppu_spu_ppu(l, f, ppu_in_buf, ppu_out_buf, iters, cb, tag);
 }

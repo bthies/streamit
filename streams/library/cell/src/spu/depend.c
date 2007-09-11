@@ -379,7 +379,6 @@ dep_init()
 }
 
 void run_load_data(LOAD_DATA_CMD *cmd);
-void run_call_func(CALL_FUNC_CMD *cmd);
 void run_filter_load(FILTER_LOAD_CMD *cmd);
 void run_filter_unload(FILTER_UNLOAD_CMD *cmd);
 void run_filter_attach_input(FILTER_ATTACH_INPUT_CMD *cmd);
@@ -387,12 +386,13 @@ void run_filter_attach_output(FILTER_ATTACH_OUTPUT_CMD *cmd);
 void run_filter_run(FILTER_RUN_CMD *cmd);
 void run_buffer_alloc(BUFFER_ALLOC_CMD *cmd);
 void run_buffer_align(BUFFER_ALIGN_CMD *cmd);
-// void run_dt_in_front(DT_IN_FRONT_CMD *cmd);
-void run_dt_in_back(DT_IN_BACK_CMD *cmd);
 void run_dt_out_front(DT_OUT_FRONT_CMD *cmd);
-// void run_dt_out_back(DT_OUT_BACK_CMD *cmd);
 void run_dt_out_front_ppu(DT_OUT_FRONT_PPU_CMD *cmd);
+void run_dt_in_back(DT_IN_BACK_CMD *cmd);
+// void run_dt_out_back(DT_OUT_BACK_CMD *cmd);
 // void run_dt_out_back_ppu(DT_OUT_BACK_PPU_CMD *cmd);
+// void run_dt_in_front(DT_IN_FRONT_CMD *cmd);
+void run_call_func(CALL_FUNC_CMD *cmd);
 #if STATS_ENABLE
 void run_stats_print(STATS_PRINT_CMD *cmd);
 #endif
@@ -427,16 +427,8 @@ dep_execute()
       run_req_handler();
       break;
 
-    case CMD_NULL:
-      dep_complete_command();
-      break;
-
     case CMD_LOAD_DATA:
       run_load_data((LOAD_DATA_CMD *)cmd);
-      break;
-
-    case CMD_CALL_FUNC:
-      run_call_func((CALL_FUNC_CMD *)cmd);
       break;
 
     case CMD_FILTER_LOAD:
@@ -467,29 +459,39 @@ dep_execute()
       run_buffer_align((BUFFER_ALIGN_CMD *)cmd);
       break;
 
-      // case CMD_DT_IN_FRONT:
-      // run_dt_in_front((DT_IN_FRONT_CMD *)cmd);
-      // break;
-
-    case CMD_DT_IN_BACK:
-      run_dt_in_back((DT_IN_BACK_CMD *)cmd);
-      break;
-
     case CMD_DT_OUT_FRONT:
       run_dt_out_front((DT_OUT_FRONT_CMD *)cmd);
       break;
-
-      // case CMD_DT_OUT_BACK:
-      // run_dt_out_back((DT_OUT_BACK_CMD *)cmd);
-      // break;
 
     case CMD_DT_OUT_FRONT_PPU:
       run_dt_out_front_ppu((DT_OUT_FRONT_PPU_CMD *)cmd);
       break;
 
-      // case CMD_DT_OUT_BACK_PPU:
-      // run_dt_out_back_ppu((DT_OUT_BACK_PPU_CMD *)cmd);
-      // break;
+    case CMD_DT_IN_BACK:
+      run_dt_in_back((DT_IN_BACK_CMD *)cmd);
+      break;
+
+    /*
+    case CMD_DT_OUT_BACK:
+      run_dt_out_back((DT_OUT_BACK_CMD *)cmd);
+      break;
+
+    case CMD_DT_OUT_BACK_PPU:
+      run_dt_out_back_ppu((DT_OUT_BACK_PPU_CMD *)cmd);
+      break;
+
+    case CMD_DT_IN_FRONT:
+      run_dt_in_front((DT_IN_FRONT_CMD *)cmd);
+      break;
+    */
+
+    case CMD_NULL:
+      dep_complete_command();
+      break;
+
+    case CMD_CALL_FUNC:
+      run_call_func((CALL_FUNC_CMD *)cmd);
+      break;
 
 #if STATS_ENABLE
     case CMD_STATS_PRINT:

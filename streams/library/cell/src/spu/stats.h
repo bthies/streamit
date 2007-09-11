@@ -77,11 +77,11 @@ stats_done_filter_run()
 
 #else // !STATS_ENABLE
 
-#define stats_receive_command()
-#define stats_start_filter_load()
-#define stats_start_filter_unload()
-#define stats_start_filter_run()
-#define stats_done_filter_run()
+#define stats_receive_command()     ((void)0)
+#define stats_start_filter_load()   ((void)0)
+#define stats_start_filter_unload() ((void)0)
+#define stats_start_filter_run()    ((void)0)
+#define stats_done_filter_run()     ((void)0)
 
 #endif
 

@@ -205,7 +205,7 @@ public class CellProcessFilterSliceNode extends ProcessFilterSliceNode {
                     new JMethodCallExpression(null, new JThisExpression(null),
                             workAtInit.getName(), new JExpression[0]), null));
         }
-        initCodeStore.addFields(filter_code.getUsefulFields());
+        //initCodeStore.addFields(filter_code.getUsefulFields());
         initCodeStore.addMethods(filter_code.getUsefulMethods());
 
     }
@@ -227,7 +227,7 @@ public class CellProcessFilterSliceNode extends ProcessFilterSliceNode {
         // write code deemed useful by the helper into the corrrect ComputeCodeStore.
         // write only once if multiple calls for steady state.
         if (!basicCodeWritten.containsKey(filterNode)) {
-            //codeStore.addFields(filter_code.getUsefulFields());
+            codeStore.addFields(filter_code.getUsefulFields());
             codeStore.addMethods(filter_code.getUsefulMethods());
             basicCodeWritten.put(filterNode,true);
         }

@@ -79,6 +79,7 @@ public class CellBackendScaffold extends BackEndScaffold {
             for (int filterId : group) {
                 SliceNode sliceNode = CellBackend.filters.get(filterId);
                 body.addStatement(ppuCS.setupFilterDescriptionWorkFunc(sliceNode, SchedulingPhase.INIT));
+                body.addStatement(ppuCS.setupPSPNumIOputs(sliceNode, SchedulingPhase.INIT));
                 body.addStatement(ppuCS.setupPSPIOBytes(sliceNode, SchedulingPhase.INIT));
                 body.addStatement(ppuCS.setupPSPSpuId(sliceNode, spuId));
                 int iters = getIters(sliceNode, SchedulingPhase.INIT);
@@ -97,6 +98,7 @@ public class CellBackendScaffold extends BackEndScaffold {
             for (int filterId : group) {
                 SliceNode sliceNode = CellBackend.filters.get(filterId);
                 body.addStatement(ppuCS.setupFilterDescriptionWorkFunc(sliceNode, SchedulingPhase.STEADY));
+                body.addStatement(ppuCS.setupPSPNumIOputs(sliceNode, SchedulingPhase.STEADY));
                 body.addStatement(ppuCS.setupPSPIOBytes(sliceNode, SchedulingPhase.STEADY));
                 body.addStatement(ppuCS.setupPSPSpuId(sliceNode, spuId));
                 int iters = getIters(sliceNode, SchedulingPhase.STEADY);
@@ -116,7 +118,7 @@ public class CellBackendScaffold extends BackEndScaffold {
                 null);
 
         JStatement loop = 
-            Utils.makeForLoopLocalIndex(steadyLoop, loopCounter, new JIntLiteral(100));
+            Utils.makeForLoopLocalIndex(steadyLoop, loopCounter, new JIntLiteral(10));
         block.addStatement(new JVariableDeclarationStatement(null,
                 loopCounter,
                 null));

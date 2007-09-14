@@ -59,7 +59,7 @@ public class EmitCellCode extends EmitCode {
     public void generateMakefile(CodegenPrintWriter p) {
         ArrayList<ArrayList<Integer>> spuSources = getSPUSources();
         p.println("PROGRAM := strppu");
-        p.println("PPU_SOURCES := strppu.c misc.c");
+        p.println("PPU_SOURCES := strppu.c");
         p.print("SPU_PROGRAMS := ");
         for (int i=0; i<CellBackend.numspus; i++) {
             if (spuSources.get(i).size() > 0) {

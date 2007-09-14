@@ -27,6 +27,8 @@ import at.dms.kjc.slicegraph.InterSliceEdge;
 import at.dms.kjc.slicegraph.OutputSliceNode;
 import at.dms.kjc.slicegraph.Partitioner;
 import at.dms.kjc.slicegraph.SliceNode;
+import at.dms.kjc.spacetime.SliceDotGraph;
+import at.dms.kjc.spacetime.SpaceTimeSchedule;
 import at.dms.kjc.vanillaSlice.EmitStandaloneCode;
 
 public class CellBackend {
@@ -66,16 +68,9 @@ public class CellBackend {
         
         // perform some standard cleanup on the slice graph.
         commonPasses.simplifySlices();
-//        // guarantee that we are not going to hack properties of filters in the future
-//        FilterInfo.canUse();
-//        // fix any rate skew introduced in conversion to Slice graph.
-//        AddBuffering.doit(commonPasses.getPartitioner(),false,numCores);
-//        // decompose any pipelines of filters in the Slice graph.
-//        commonPasses.getPartitioner().ensureSimpleSlices();
         
         // Set schedules for initialization, prime-pump (if KjcOptions.spacetime), and steady state.
         SpaceTimeScheduleAndPartitioner schedule = commonPasses.scheduleSlices();
-
 
         // create a collection of (very uninformative) processor descriptions.
         CellChip cellChip = new CellChip(numCores);
@@ -84,6 +79,11 @@ public class CellBackend {
         Layout<CellPU> layout;
         layout = new CellNoSWPipeLayout(schedule, cellChip);
         layout.run();
+        
+//        SliceDotGraph.dumpGraph(new SpaceTimeSchedule(partitioner,null), schedule.getInitSchedule(), 
+//                "initTraces.dot", layout, true);
+//        SliceDotGraph.dumpGraph(new SpaceTimeSchedule(partitioner,null), schedule.getSchedule(), 
+//                "steadyTraces.dot", layout, true);
  
         // create other info needed to convert Slice graphs to Kopi code + Channels
         CellBackendFactory cellBackEndBits  = new CellBackendFactory(cellChip);
@@ -102,7 +102,7 @@ public class CellBackend {
             ppuCS.setupInputBufferAddress();
             ppuCS.setupOutputBufferAddress();
             ppuCS.setupDataAddress();
-        }        
+        }
         // now convert to Kopi code plus channels.  (Javac gives error if folowing two lines are combined)
         CellBackendScaffold top_call = backEndBits.getBackEndMain();
         top_call.run(schedule, backEndBits);
@@ -111,6 +111,8 @@ public class CellBackend {
             for (CellComputeCodeStore cs : spu.getInitComputeCodeStores())
                 cs.addInitFunctions();
         }
+        
+        ppuCS.printStats();
         
         int k=0;
         for (LinkedList<Integer> group : scheduleLayout) {

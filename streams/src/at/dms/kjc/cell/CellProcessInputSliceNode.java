@@ -58,6 +58,8 @@ public class CellProcessInputSliceNode extends ProcessInputSliceNode {
     }
     
     public void additionalPreInitProcessing() {
+        if (inputNode.getNextFilter().isFileOutput())
+            return;
         // If InputSliceNode is a joiner (i.e. has at least 2 inputs), add it
         // as a filter.
         if (inputNode.isJoiner()) {

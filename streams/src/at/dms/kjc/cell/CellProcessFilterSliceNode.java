@@ -21,15 +21,12 @@ import at.dms.kjc.slicegraph.SliceNode;
 
 public class CellProcessFilterSliceNode extends ProcessFilterSliceNode {
     
-    private int cpunum;
-    
     private CellComputeCodeStore ppuCS;
     private CellComputeCodeStore initCodeStore;
     
     public CellProcessFilterSliceNode(FilterSliceNode filterNode, 
             SchedulingPhase whichPhase, CellBackendFactory backEndBits) {
         super(filterNode, whichPhase, backEndBits);
-        cpunum = backEndBits.getCellPUNumForFilter(filterNode);
         ppuCS = backEndBits.getPPU().getComputeCode();
     }
     
@@ -41,9 +38,9 @@ public class CellProcessFilterSliceNode extends ProcessFilterSliceNode {
                 ppuCS.initFileReader(filterNode);
             }
             else if (whichPhase == SchedulingPhase.INIT) {
+                ppuCS.addFileReader(filterNode);
             }
             else if (whichPhase == SchedulingPhase.STEADY) {
-                ppuCS.addFileReader(filterNode);
             }
         } else if (filterNode.isFileOutput()) {
             if (whichPhase == SchedulingPhase.PREINIT) {
@@ -286,23 +283,44 @@ public class CellProcessFilterSliceNode extends ProcessFilterSliceNode {
 //        ppuCS.newline();
     }
     
+    /**
+     * Set up a file reader. A file reader is not considered a filter and is
+     * therefore not scheduled. File readers are always run on the PPU.
+     * All output channels are set up (could be multiple if the next filter
+     * was a splitter and was fused to become the file reader's outputslicenode)
+     *
+     */
     private void setupFileReaderChannel() {
         OutputSliceNode outputNode = filterNode.getParent().getTail();
+        // List of channel IDs for all output channels of the file reader
         LinkedList<Integer> outputIds = new LinkedList<Integer>();
+        
+        boolean firstbuffer = true;
+        int firstChannelId = CellBackend.numchannels;
+        
         // Populate Channel-ID mapping, and increase number of channels.
         for (InterSliceEdge e : outputNode.getDestSequence()) {
-            if(!CellBackend.channelIdMap.containsKey(e)) {
-                int channelId = CellBackend.numchannels;
-                CellBackend.channels.add(e);
-                CellBackend.channelIdMap.put(e,channelId);
-                outputIds.add(channelId);
-                // init and allocate buffer if not duplicate splitter
-                if (!outputNode.isDuplicateSplitter())
-                    ppuCS.initChannel(channelId);
-                CellBackend.numchannels++;
+            int channelId;
+            // get next available channel ID
+            channelId = CellBackend.numchannels;
+            // add to list of channels (edges) and map of edges->channels
+            CellBackend.channels.add(e);
+            CellBackend.channelIdMap.put(e,channelId);
+            // set the channel as ready for scheduling purposes
+            CellBackend.readyInputs.add(channelId);
+            outputIds.add(channelId);
+            // always init and allocate the first buffer
+            // init any other buffers if not duplicate splitter
+            if (!outputNode.isDuplicateSplitter() || firstbuffer) {
+                ppuCS.initChannel(channelId);
+                firstbuffer = false;
             } else {
-                outputIds.add(CellBackend.channelIdMap.get(e));
+                // if it's a duplicate splitter and it's not the first buffer,
+                // duplicate the new buffer from the first one;
+                ppuCS.duplicateChannel(firstChannelId, channelId);
             }
+            // increment the channel ID counter
+            CellBackend.numchannels++;
         }
         CellBackend.outputChannelMap.put(outputNode, outputIds);
     }

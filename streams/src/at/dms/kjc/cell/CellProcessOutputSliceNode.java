@@ -55,6 +55,8 @@ public class CellProcessOutputSliceNode extends ProcessOutputSliceNode {
     
     @Override
     public void additionalPreInitProcessing() {
+        if (outputNode.getPrevFilter().isFileInput())
+            return;
         // Create new filter for RR splitter
         if (outputNode.isRRSplitter()) {
             int filterId = CellBackend.numfilters;

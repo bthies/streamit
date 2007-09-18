@@ -1,4 +1,20 @@
 The FFT code is taken from asplos06/fft and hand-coded for the library.
 
+static_fused has the FFT stream graph fused into a single data-parallel
+filter which is run on all SPEs.
+
+static_pipeline fuses the FFT stream graph into a pipeline of 6 filters
+which are statically placed on different SPEs. Communication is done
+directly between SPE local stores.
+
+dynamic_pipeline runs the FFT stream graph unchanged using the dynamic
+scheduler.
+
+dynamic_fused runs the fused filter (same as static_fused) using the
+dynamic scheduler.
+
+To compile the dynamic versions, the dynamic scheduler sources first
+need to be copied or linked into the directory.
+
 The input and output directories contain data for 10,000 iterations, in
-big-endian (Cell) format.
+big-endian format for Cell.

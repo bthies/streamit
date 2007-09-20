@@ -106,8 +106,8 @@ main(int argc, char **argv)
   }
 
   // Setup execution info
-  EXT_PSP_EX_PARAMS f;
-  EXT_PSP_EX_LAYOUT l;
+  EXT_PSP_PARAMS f;
+  EXT_PSP_LAYOUT l;
   f.num_inputs = 1;
   f.num_outputs = 1;
   f.inputs[0].pop_bytes = 2048;
@@ -117,6 +117,7 @@ main(int argc, char **argv)
   f.outputs[0].spu_buf_size = sbsz;
   f.data_parallel = TRUE;
   f.group_iters = sfi;
+  f.loop_iters = 1;
   l.desc = &fd;
   l.filt_cb = fcb;
   l.in_buf_start = siba;
@@ -135,7 +136,7 @@ main(int argc, char **argv)
   busy = numspu;
   for (int i = 0; i < numspu; i++) {
     l.spu_id = i;
-    ext_ppu_spu_ppu_ex(&l, &f, &inbuf, &outbuf, spuiters[i], cb, 0);
+    ext_ppu_spu_ppu(&l, &f, &inbuf, &outbuf, spuiters[i], cb, 0);
   }
   spulib_poll_while(busy);
 

@@ -294,7 +294,7 @@ run_dt_in_back(DT_IN_BACK_CMD *cmd)
       return;
     }
 
-    buf->tail = buf_tail = (buf->tail + cmd->copy_bytes) & buf->mask;
+    buf_tail = buf->tail = (buf->tail + cmd->copy_bytes) & buf->mask;
 
     if (cmd->num_bytes == 0) {
       // Finished copying data.
@@ -413,6 +413,7 @@ run_dt_out_front_ppu(DT_OUT_FRONT_PPU_CMD *cmd)
   BUFFER_CB *buf = buf_get_cb(cmd->buf_data);
   uint32_t buf_head;
   uint32_t dest_tail;
+  uint32_t num_bytes;
 #if DT_ALLOW_UNALIGNED
   uint32_t ua_bytes = 0;
 #endif
@@ -539,7 +540,7 @@ run_dt_out_front_ppu(DT_OUT_FRONT_PPU_CMD *cmd)
       } else {
         buf_head = (buf->head + ua_bytes) & buf->mask;
         dest_tail = (cmd->dest_tail + ua_bytes) & cmd->dest_buf_mask;
-        cmd->num_bytes -= ua_bytes;
+        num_bytes = cmd->num_bytes - ua_bytes;
 
         goto state_copy_next;
       }
@@ -549,6 +550,7 @@ run_dt_out_front_ppu(DT_OUT_FRONT_PPU_CMD *cmd)
     // Start copying aligned data.
     buf_head = buf->head;
     dest_tail = cmd->dest_tail;
+    num_bytes = cmd->num_bytes;
     goto state_copy_next;
   }
 
@@ -566,10 +568,10 @@ run_dt_out_front_ppu(DT_OUT_FRONT_PPU_CMD *cmd)
     }
 
     // Advance pointers to next piece.
-    buf->head = buf_head = (buf->head + cmd->copy_bytes) & buf->mask;
-    cmd->dest_tail = dest_tail =
+    buf_head = buf->head = (buf->head + cmd->copy_bytes) & buf->mask;
+    dest_tail = cmd->dest_tail =
       (cmd->dest_tail + cmd->copy_bytes) & cmd->dest_buf_mask;
-    cmd->num_bytes -= cmd->copy_bytes;
+    num_bytes = cmd->num_bytes -= cmd->copy_bytes;
 
   state_copy_next:
 
@@ -589,9 +591,9 @@ run_dt_out_front_ppu(DT_OUT_FRONT_PPU_CMD *cmd)
     }
 
     // Bytes left to copy.
-    if (copy_bytes >= cmd->num_bytes) {
+    if (copy_bytes >= num_bytes) {
       // No more data left.
-      copy_bytes = cmd->num_bytes;
+      copy_bytes = num_bytes;
       cmd->state = 2;
     }
 

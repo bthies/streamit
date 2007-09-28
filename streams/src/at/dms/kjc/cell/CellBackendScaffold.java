@@ -34,10 +34,10 @@ public class CellBackendScaffold extends BackEndScaffold {
         
         // add wf[] and init_wf[] fields
         ppuCS.addWorkFunctionAddressField();
-        if (!KjcOptions.celldyn) {
-            ppuCS.addSPUFilterDescriptionField();
-            ppuCS.addPSPFields();
-            ppuCS.addStaticChannelFields();
+        if (KjcOptions.celldyn) {
+            ppuCS.addDynamicFields();
+        } else {
+            ppuCS.addStaticFields();
         }
         //ppuCS.addInitFunctionAddressField();
     }

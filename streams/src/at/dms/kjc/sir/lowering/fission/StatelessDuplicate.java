@@ -1,11 +1,39 @@
 package at.dms.kjc.sir.lowering.fission;
 
-import at.dms.kjc.*;
-import at.dms.util.*;
-import at.dms.kjc.sir.*;
-import at.dms.kjc.sir.lowering.*;
-import at.dms.kjc.sir.lowering.fusion.*;
-import java.util.*;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.ListIterator;
+
+import at.dms.kjc.JAssignmentExpression;
+import at.dms.kjc.JBlock;
+import at.dms.kjc.JCompoundAssignmentExpression;
+import at.dms.kjc.JExpression;
+import at.dms.kjc.JExpressionStatement;
+import at.dms.kjc.JFieldAccessExpression;
+import at.dms.kjc.JFieldDeclaration;
+import at.dms.kjc.JIntLiteral;
+import at.dms.kjc.JMethodDeclaration;
+import at.dms.kjc.JPostfixExpression;
+import at.dms.kjc.JPrefixExpression;
+import at.dms.kjc.JStatement;
+import at.dms.kjc.JVariableDefinition;
+import at.dms.kjc.ObjectDeepCloner;
+import at.dms.kjc.SLIREmptyVisitor;
+import at.dms.kjc.sir.SIRContainer;
+import at.dms.kjc.sir.SIRFeedbackLoop;
+import at.dms.kjc.sir.SIRFilter;
+import at.dms.kjc.sir.SIRIdentity;
+import at.dms.kjc.sir.SIRJoinType;
+import at.dms.kjc.sir.SIRJoiner;
+import at.dms.kjc.sir.SIRPopExpression;
+import at.dms.kjc.sir.SIRSplitJoin;
+import at.dms.kjc.sir.SIRSplitType;
+import at.dms.kjc.sir.SIRSplitter;
+import at.dms.kjc.sir.SIRTwoStageFilter;
+import at.dms.kjc.slicegraph.FilterContent;
+import at.dms.util.GetSteadyMethods;
+import at.dms.util.Utils;
 
 /**
  * This class splits a stateless filter with arbitrary push/pop/peek
@@ -134,21 +162,33 @@ public class StatelessDuplicate {
     public static boolean hasMutableState(final SIRFilter filter) {
         return sizeOfMutableState(filter) > 0;
     }
-
-    /**
-     * Returns the number of bytes of mutable state (using C types)
-     * for filter <filter>.  Conservatively assumes that if a single
-     * location in an array is mutable state, then the entire array is
-     * mutable state.
-     */
-    public static int sizeOfMutableState(final SIRFilter filter) {
+    
+    public static boolean hasMutableState(final FilterContent filter) {
+        return sizeOfMutableState(filter) > 0;
+    }
+    
+    public static HashSet<String> getMutableState(final SIRFilter filter) {
+        
+        // visit all methods except <init>
+        List<JMethodDeclaration> methods = GetSteadyMethods.getSteadyMethods(filter);
+        
+        return doGetMutableState(methods);
+    }
+    
+    public static HashSet<String> getMutableState(final FilterContent filter) {
+        // visit all methods except <init>
+        List<JMethodDeclaration> methods = GetSteadyMethods.getSteadyMethods(filter);
+        
+        return doGetMutableState(methods);
+    }
+    
+    private static HashSet<String> doGetMutableState(List<JMethodDeclaration> methods) {
+        
         // whether or not we are on the LHS of an assignment
         final boolean[] inAssignment = { false };
         // names of fields that are mutatable state
-        final HashSet mutatedFields = new HashSet();
-
-        // visit all methods except <init>
-        List<JMethodDeclaration> methods = GetSteadyMethods.getSteadyMethods(filter);
+        final HashSet<String> mutatedFields = new HashSet<String>();
+        
         for (JMethodDeclaration method : methods)
             method.accept(new SLIREmptyVisitor() {
                     // wrap visit to <left> with some book-keeping
@@ -205,7 +245,42 @@ public class StatelessDuplicate {
                     }
                         
                 });
+        return mutatedFields;
 
+    }
+
+    /**
+     * Returns the number of bytes of mutable state (using C types)
+     * for filter <filter>.  Conservatively assumes that if a single
+     * location in an array is mutable state, then the entire array is
+     * mutable state.
+     */
+    public static int sizeOfMutableState(final SIRFilter filter) {
+        HashSet<String> mutatedFields = getMutableState(filter);
+        // tally up the size of all the fields found
+        int mutableSizeInC = 0;
+        JFieldDeclaration fields[] = filter.getFields();
+        for (int i=0; i<fields.length; i++) {
+            JVariableDefinition var = fields[i].getVariable();
+            if (mutatedFields.contains(var.getIdent())) {
+                if (var.getType() == null) {
+                    // this should never happen
+                    System.err.println("Warning: found null type of variable in JFieldDeclaration.");
+                    mutableSizeInC++;  // increment size just in case
+                } else {
+                    int size = var.getType().getSizeInC();
+                    // fields should always have non-zero size
+                    assert size > 0;
+                    mutableSizeInC += size;
+                }
+            }
+        }
+
+        return mutableSizeInC;
+    }
+    
+    public static int sizeOfMutableState(final FilterContent filter) {
+        HashSet<String> mutatedFields = getMutableState(filter);
         // tally up the size of all the fields found
         int mutableSizeInC = 0;
         JFieldDeclaration fields[] = filter.getFields();

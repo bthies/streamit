@@ -1,6 +1,9 @@
 package at.dms.util;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import at.dms.kjc.JExpression;
 import at.dms.kjc.JMethodCallExpression;
@@ -8,7 +11,7 @@ import at.dms.kjc.JMethodDeclaration;
 import at.dms.kjc.SLIREmptyVisitor;
 import at.dms.kjc.sir.SIRFilter;
 import at.dms.kjc.sir.SIRTwoStageFilter;
-import java.util.*;
+import at.dms.kjc.slicegraph.FilterContent;
 
 /**
  * Pulled out of lowering.fission.StatelessMethodDublicate for general use:
@@ -38,6 +41,41 @@ public class GetSteadyMethods {
         List<String> preReachable = new ArrayList<String>();
         if (filter instanceof SIRTwoStageFilter) {
             preReachable = getMethodsReachableFrom(methods, ((SIRTwoStageFilter)filter).getInitWork());
+        }
+
+        // count a method as 'steady' if it is reachable from work or
+        // prework, or if it is NOT reachable from init
+        Set<String> inits = new HashSet<String>();
+        Set<String> works = new HashSet<String>();
+        for (String s : initReachable) { inits.add(s); }
+        for (String s : workReachable) { works.add(s); }
+        for (String s : preReachable)  { works.add(s); }
+
+        Set<JMethodDeclaration> result = new HashSet<JMethodDeclaration>();
+        for (int i=0; i<methods.length; i++) {
+            String name = methods[i].getName();
+            if (works.contains(name) || !inits.contains(name)) {
+                result.add(methods[i]);
+            }
+        }
+
+        List<JMethodDeclaration> retval = new ArrayList<JMethodDeclaration>();
+        retval.addAll(result);
+        return retval;
+    }
+    
+    public static List<JMethodDeclaration> getSteadyMethods(FilterContent filter) {
+        // I'm not sure how to find who is a message handler.  So,
+        // count as "steady" any method that is reachable from work or
+        // NOT reachable from init (idea being that init functions
+        // should not call their own method handlers).
+        JMethodDeclaration[] methods = filter.getMethods();
+
+        List<String> initReachable = getMethodsReachableFrom(methods, filter.getInit());
+        List<String> workReachable = getMethodsReachableFrom(methods, filter.getWork());
+        List<String> preReachable = new ArrayList<String>();
+        if (filter.isTwoStage()) {
+            preReachable = getMethodsReachableFrom(methods, filter.getInitWork());
         }
 
         // count a method as 'steady' if it is reachable from work or

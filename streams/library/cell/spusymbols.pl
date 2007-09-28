@@ -30,6 +30,8 @@ for my $progname (@ARGV) {
             next;
         } elsif ($line =~ m/^(.+) T filter_(.+)_wf$/) {
             $symbol = "wf_" . $2;
+        } elsif ($line =~ m/^(.+) T filter_(.+)_pwf$/) {
+            $symbol = "pwf_" . $2;
         } elsif ($line =~ m/^(.+) T filter_(.+)_init$/) {
             $symbol = "init_" . $2;
         } else {

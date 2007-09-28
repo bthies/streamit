@@ -38,7 +38,8 @@ public class CellProcessFilterSliceNode extends ProcessFilterSliceNode {
                 ppuCS.initFileReader(filterNode);
             }
             else if (whichPhase == SchedulingPhase.INIT) {
-                ppuCS.addFileReader(filterNode);
+                if (!KjcOptions.celldyn)
+                    ppuCS.addFileReader(filterNode);
             }
             else if (whichPhase == SchedulingPhase.STEADY) {
             }
@@ -50,7 +51,8 @@ public class CellProcessFilterSliceNode extends ProcessFilterSliceNode {
 
             }
             else if (whichPhase == SchedulingPhase.STEADY) {
-                ppuCS.addFileWriter(filterNode);
+                if (!KjcOptions.celldyn)
+                    ppuCS.addFileWriter(filterNode);
             }
         } else {
             doit();
@@ -88,26 +90,25 @@ public class CellProcessFilterSliceNode extends ProcessFilterSliceNode {
         CellBackend.numfilters++;
         
         ppuCS.setupWorkFunctionAddress(filterNode);
-        ppuCS.setupFilterDescription(filterNode);
-        ppuCS.setupPSP(filterNode);
+        ppuCS.setupFilter(filterNode);
+        if (!KjcOptions.celldyn) ppuCS.setupPSP(filterNode);
         
         LinkedList<Integer> inputIds = CellBackend.inputChannelMap.get(inputNode);
         
-
         System.out.println("new filter " + filterId + " " + filterNode.getFilter().getName());
         
         // Finish handling inputs
         if (!inputNode.isJoiner()) {
             // if not a joiner, attach all inputs to the filter (should only
             // be one input)
-            ppuCS.attachInputChannelArray(filterId, inputIds);
+            ppuCS.attachInputChannelArray(filterId, inputIds, whichPhase);
         }
         else {
             // attach artificial channel created earlier as input
             int channelId = CellBackend.artificialJoinerChannels.get(inputNode);
             inputIds = new LinkedList<Integer>();
             inputIds.add(channelId);
-            ppuCS.attachInputChannelArray(filterId, inputIds);
+            ppuCS.attachInputChannelArray(filterId, inputIds, whichPhase);
         }
         
         LinkedList<Integer> outputIds = new LinkedList<Integer>();
@@ -120,7 +121,7 @@ public class CellProcessFilterSliceNode extends ProcessFilterSliceNode {
             CellBackend.channels.add(a);
             CellBackend.channelIdMap.put(a, channelId);
             CellBackend.artificialRRSplitterChannels.put(outputNode, channelId);
-            ppuCS.initChannel(channelId);
+            if (!KjcOptions.celldyn) ppuCS.initChannel(channelId);
             CellBackend.numchannels++;
             // attach artificial channel as output of filterslicenode 
             LinkedList<Integer> RROutputIds = new LinkedList<Integer>();
@@ -160,7 +161,7 @@ public class CellProcessFilterSliceNode extends ProcessFilterSliceNode {
             ppuCS.attachOutputChannelArray(filterId, outputIds);
         }
         
-        addToScheduleLayout();
+        if (!KjcOptions.celldyn) addToScheduleLayout();
         
         
         if (KjcOptions.celldyn) {
@@ -309,15 +310,17 @@ public class CellProcessFilterSliceNode extends ProcessFilterSliceNode {
             // set the channel as ready for scheduling purposes
             CellBackend.readyInputs.add(channelId);
             outputIds.add(channelId);
-            // always init and allocate the first buffer
-            // init any other buffers if not duplicate splitter
-            if (!outputNode.isDuplicateSplitter() || firstbuffer) {
-                ppuCS.initChannel(channelId);
-                firstbuffer = false;
-            } else {
-                // if it's a duplicate splitter and it's not the first buffer,
-                // duplicate the new buffer from the first one;
-                ppuCS.duplicateChannel(firstChannelId, channelId);
+            if (!KjcOptions.celldyn) {
+                // always init and allocate the first buffer
+                // init any other buffers if not duplicate splitter
+                if (!outputNode.isDuplicateSplitter() || firstbuffer) {
+                    ppuCS.initChannel(channelId);
+                    firstbuffer = false;
+                } else {
+                    // if it's a duplicate splitter and it's not the first buffer,
+                    // duplicate the new buffer from the first one;
+                    ppuCS.duplicateChannel(firstChannelId, channelId);
+                }
             }
             // increment the channel ID counter
             CellBackend.numchannels++;

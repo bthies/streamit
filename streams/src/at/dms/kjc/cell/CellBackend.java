@@ -80,11 +80,6 @@ public class CellBackend {
         layout = new CellNoSWPipeLayout(schedule, cellChip);
         layout.run();
         
-//        SliceDotGraph.dumpGraph(new SpaceTimeSchedule(partitioner,null), schedule.getInitSchedule(), 
-//                "initTraces.dot", layout, true);
-//        SliceDotGraph.dumpGraph(new SpaceTimeSchedule(partitioner,null), schedule.getSchedule(), 
-//                "steadyTraces.dot", layout, true);
- 
         // create other info needed to convert Slice graphs to Kopi code + Channels
         CellBackendFactory cellBackEndBits  = new CellBackendFactory(cellChip);
         backEndBits = cellBackEndBits;
@@ -97,7 +92,7 @@ public class CellBackend {
         else {
             ppuCS.addSPUInit(schedule);
             ppuCS.addCallBackFunction();
-            ppuCS.initSpulibClock();
+            ppuCS.initSpulib();
             ppuCS.addDataAddressField();
             ppuCS.setupInputBufferAddress();
             ppuCS.setupOutputBufferAddress();

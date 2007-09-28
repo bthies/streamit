@@ -2,45 +2,22 @@ package at.dms.kjc.cell;
 
 import java.util.LinkedList;
 
-import at.dms.kjc.CArrayType;
 import at.dms.kjc.CClassType;
 import at.dms.kjc.CStdType;
-import at.dms.kjc.JAddExpression;
-import at.dms.kjc.JArrayAccessExpression;
-import at.dms.kjc.JArrayInitializer;
-import at.dms.kjc.JAssignmentExpression;
 import at.dms.kjc.JBlock;
-import at.dms.kjc.JBreakStatement;
-import at.dms.kjc.JEmptyStatement;
 import at.dms.kjc.JExpression;
 import at.dms.kjc.JExpressionStatement;
-import at.dms.kjc.JFieldAccessExpression;
-import at.dms.kjc.JFieldDeclaration;
 import at.dms.kjc.JFormalParameter;
-import at.dms.kjc.JIfStatement;
-import at.dms.kjc.JIntLiteral;
 import at.dms.kjc.JLocalVariableExpression;
 import at.dms.kjc.JMethodCallExpression;
 import at.dms.kjc.JMethodDeclaration;
-import at.dms.kjc.JModuloExpression;
-import at.dms.kjc.JPrefixExpression;
-import at.dms.kjc.JRelationalExpression;
-import at.dms.kjc.JStatement;
-import at.dms.kjc.JSwitchGroup;
-import at.dms.kjc.JSwitchLabel;
-import at.dms.kjc.JSwitchStatement;
-import at.dms.kjc.JVariableDeclarationStatement;
-import at.dms.kjc.JVariableDefinition;
+import at.dms.kjc.KjcOptions;
 import at.dms.kjc.backendSupport.BackEndFactory;
 import at.dms.kjc.backendSupport.CodeStoreHelper;
 import at.dms.kjc.backendSupport.ProcessFilterSliceNode;
 import at.dms.kjc.backendSupport.ProcessOutputSliceNode;
 import at.dms.kjc.backendSupport.SchedulingPhase;
-import at.dms.kjc.slicegraph.Edge;
-import at.dms.kjc.slicegraph.InputSliceNode;
-import at.dms.kjc.slicegraph.InterSliceEdge;
 import at.dms.kjc.slicegraph.OutputSliceNode;
-import at.dms.kjc.slicegraph.SliceNode;
 
 public class CellProcessOutputSliceNode extends ProcessOutputSliceNode {
 
@@ -64,13 +41,13 @@ public class CellProcessOutputSliceNode extends ProcessOutputSliceNode {
             CellBackend.filterIdMap.put(outputNode, filterId);
             CellBackend.numfilters++;
             ppuCS.setupWorkFunctionAddress(outputNode);
-            ppuCS.setupFilterDescription(outputNode);
+            ppuCS.setupFilter(outputNode);
             ppuCS.setupPSP(outputNode);
             // attach artificial channel created earlier as input
             int channelId = CellBackend.artificialRRSplitterChannels.get(outputNode);
             LinkedList<Integer> inputIds = new LinkedList<Integer>();
             inputIds.add(channelId);
-            ppuCS.attachInputChannelArray(filterId, inputIds);
+            ppuCS.attachInputChannelArray(filterId, inputIds, whichPhase);
             // attach outputs
             LinkedList<Integer> outputIds = CellBackend.outputChannelMap.get(outputNode);
             ppuCS.attachOutputChannelArray(filterId, outputIds);
@@ -78,7 +55,7 @@ public class CellProcessOutputSliceNode extends ProcessOutputSliceNode {
             System.out.println("new splitter " + filterId + " " + outputNode.getIdent() + " " + outputNode.getWidth() + " " + outputNode.getPrevFilter().getFilter().getName());
         }
         
-        addToScheduleLayout();
+        if (!KjcOptions.celldyn) addToScheduleLayout();
     }
     
     @Override

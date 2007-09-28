@@ -8,6 +8,7 @@ import at.dms.kjc.JIntLiteral;
 import at.dms.kjc.JStatement;
 import at.dms.kjc.JVariableDeclarationStatement;
 import at.dms.kjc.JVariableDefinition;
+import at.dms.kjc.KjcOptions;
 import at.dms.kjc.backendSupport.BackEndFactory;
 import at.dms.kjc.backendSupport.BackEndScaffold;
 import at.dms.kjc.backendSupport.CodeStoreHelper;
@@ -33,43 +34,24 @@ public class CellBackendScaffold extends BackEndScaffold {
         
         // add wf[] and init_wf[] fields
         ppuCS.addWorkFunctionAddressField();
-        ppuCS.addPSPFields();
-        ppuCS.addSPUFilterDescriptionField();
-        ppuCS.addChannelFields();
+        if (!KjcOptions.celldyn) {
+            ppuCS.addSPUFilterDescriptionField();
+            ppuCS.addPSPFields();
+            ppuCS.addStaticChannelFields();
+        }
         //ppuCS.addInitFunctionAddressField();
     }
     
-    private static int getIters(SliceNode sliceNode, SchedulingPhase whichPhase) {
-        int iters = 1;
-
-        if (sliceNode.isInputSlice()) {
-            int mult;
-            if (whichPhase == SchedulingPhase.INIT) 
-                mult = sliceNode.getNext().getAsFilter().getFilter().getInitMult();
-            else mult = sliceNode.getNext().getAsFilter().getFilter().getSteadyMult() * CellBackend.ITERS_PER_BATCH;
-            int peeks = sliceNode.getNext().getAsFilter().getFilter().getPeekInt();
-            int pops = sliceNode.getNext().getAsFilter().getFilter().getPopInt();
-            int items = Math.max(peeks, pops) + (mult-1)*pops;
-            iters = items / sliceNode.getAsInput().totalWeights();
-        } else if (sliceNode.isOutputSlice()) {
-            int mult;
-            if (whichPhase == SchedulingPhase.INIT)
-                mult = sliceNode.getPrevious().getAsFilter().getFilter().getInitMult();
-            else mult = sliceNode.getPrevious().getAsFilter().getFilter().getSteadyMult() * CellBackend.ITERS_PER_BATCH;
-            int pushes = sliceNode.getPrevious().getAsFilter().getFilter().getPushInt();
-            int items = mult * pushes;
-            iters = items/ sliceNode.getAsOutput().totalWeights();
-        } else {
-            if (whichPhase == SchedulingPhase.STEADY)
-                return CellBackend.ITERS_PER_BATCH;
-        }
-        
-        return iters;
-    }
-    
+    /**
+     * Creates the code to set up the static schedule.
+     */
     @Override
     protected void betweenScheduling(BasicSpaceTimeSchedule schedule,
             BackEndFactory resources) {
+        
+        // not used for dynamic scheduler
+        if (KjcOptions.celldyn) return;
+        
         CellComputeCodeStore ppuCS = 
             ((CellBackendFactory)resources).getPPU().getComputeCode();
         
@@ -126,5 +108,32 @@ public class CellBackendScaffold extends BackEndScaffold {
         block.addStatement(loop);
         ppuCS.addSteadyLoopStatement(block);
     }
+    
+    private static int getIters(SliceNode sliceNode, SchedulingPhase whichPhase) {
+        int iters = 1;
 
+        if (sliceNode.isInputSlice()) {
+            int mult;
+            if (whichPhase == SchedulingPhase.INIT) 
+                mult = sliceNode.getNext().getAsFilter().getFilter().getInitMult();
+            else mult = sliceNode.getNext().getAsFilter().getFilter().getSteadyMult() * CellBackend.ITERS_PER_BATCH;
+            int peeks = sliceNode.getNext().getAsFilter().getFilter().getPeekInt();
+            int pops = sliceNode.getNext().getAsFilter().getFilter().getPopInt();
+            int items = Math.max(peeks, pops) + (mult-1)*pops;
+            iters = items / sliceNode.getAsInput().totalWeights();
+        } else if (sliceNode.isOutputSlice()) {
+            int mult;
+            if (whichPhase == SchedulingPhase.INIT)
+                mult = sliceNode.getPrevious().getAsFilter().getFilter().getInitMult();
+            else mult = sliceNode.getPrevious().getAsFilter().getFilter().getSteadyMult() * CellBackend.ITERS_PER_BATCH;
+            int pushes = sliceNode.getPrevious().getAsFilter().getFilter().getPushInt();
+            int items = mult * pushes;
+            iters = items/ sliceNode.getAsOutput().totalWeights();
+        } else {
+            if (whichPhase == SchedulingPhase.STEADY)
+                return CellBackend.ITERS_PER_BATCH;
+        }
+        
+        return iters;
+    }
 }

@@ -41,10 +41,12 @@ import at.dms.kjc.backendSupport.ComputeCodeStore;
 import at.dms.kjc.backendSupport.SchedulingPhase;
 import at.dms.kjc.backendSupport.SpaceTimeScheduleAndPartitioner;
 import at.dms.kjc.common.ALocalVariable;
+import at.dms.kjc.sir.lowering.fission.StatelessDuplicate;
 import at.dms.kjc.slicegraph.FileInputContent;
 import at.dms.kjc.slicegraph.FileOutputContent;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
+import at.dms.kjc.slicegraph.InterSliceEdge;
 import at.dms.kjc.slicegraph.OutputSliceNode;
 import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.slicegraph.SliceNode;
@@ -57,21 +59,18 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
     
     private HashMap<Slice,Integer> sliceIdMap = new HashMap<Slice,Integer>();
     
-    private ArrayList<JFieldDeclaration> workfuncs = new ArrayList<JFieldDeclaration>();
-    private ArrayList<JFieldDeclaration> fds = new ArrayList<JFieldDeclaration>();
-    private ArrayList<JMethodDeclaration> initfuncs = new ArrayList<JMethodDeclaration>();
+    private ArrayList<JMethodDeclaration> initfuncs = 
+        new ArrayList<JMethodDeclaration>();
     
     private int id = 0;
     
-    private SpaceTimeScheduleAndPartitioner schedule;
-    private int poprate;
-    private int pushrate;
-    private String outputType;
-    private String inputType;
+    // The slicenode whose code is stored here
     private SliceNode slicenode;
     
-    private JVariableDefinition l, r;
-    
+    /***************************************************************************
+     *                              Constructors
+     ***************************************************************************
+     */
     public CellComputeCodeStore(CellPU parent) {
         super(parent);
     }
@@ -79,42 +78,6 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
     public CellComputeCodeStore(CellPU parent, SliceNode s) {
         super(parent);
         slicenode = s;
-    }
-    
-    public SliceNode getSliceNode() {
-        return slicenode;
-    }
-    
-    @Override
-    protected void addSteadyLoop() {
-        mainMethod.addStatement(steadyLoop);
-    }
-    
-    @Override
-    public void addInitFunctionCall(JMethodDeclaration init) {
-        //JMethodDeclaration init = filterInfo.filter.getInit();
-        if (init != null)
-            initfuncs.add(init);
-//            mainMethod.addStatementFirst
-//            (new JExpressionStatement(null,
-//                    new JMethodCallExpression(null, new JThisExpression(null),
-//                            init.getName(), new JExpression[0]),
-//                            null));
-        else
-            System.err.println(" ** Warning: Init function is null");
-
-    }
-    
-    public void addInitFunctions() {
-        JBlock initcalls = new JBlock();
-        for (JMethodDeclaration initfunc : initfuncs) {
-            initcalls.addStatement(new JExpressionStatement(null,
-                  new JMethodCallExpression(null, new JThisExpression(null),
-                      initfunc.getName(), new JExpression[0]),
-                      null));
-        }
-        addInitStatementFirst(initcalls);
-        //addMethod(new JMethodDeclaration(CStdType.Void, "__INIT_FUNC__", new JFormalParameter[0], initcalls));
     }
     
     /**-------------------------------------------------------------------------
@@ -151,12 +114,22 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
         addField(field);
     }
     
+    /***************************************************************************
+     *                  Static scheduling specific fields
+     ***************************************************************************
+     */
+    
     /**
      * Initialize PSP param and layout fields as arrays, one for each filter.
      * These will be filled and reused later.
+     * 
+     * EXT_PSP_EX_PARAMS f[numfilters];
+     * EXT_PSP_EX_LAYOUT l[numfilters];
      *
      */
     public void addPSPFields() {
+        if (KjcOptions.celldyn) return;
+        
         JVariableDefinition params = new JVariableDefinition(
                 new CArrayType(
                         new CEmittedTextType("EXT_PSP_EX_PARAMS"),
@@ -175,26 +148,13 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
     }
     
     /**
-     * Add init function address field: LS_ADDRESS init_[i];
-     */
-    public void addInitFunctionAddressField() {
-        JVariableDefinition initfunc = new JVariableDefinition(
-                new CArrayType(new CEmittedTextType(LS_ADDRESS),1,new JExpression[]{new JIntLiteral(CellBackend.numfilters)}), INIT_FUNC);
-        JFieldDeclaration field = new JFieldDeclaration(initfunc);
-        addField(field);
-    }
-
-    public void addInitFunctionAddresses(FilterSliceNode filterNode) {
-        int filterId = CellBackend.filterIdMap.get(filterNode);
-        addInitStatement(new JExpressionStatement(new JAssignmentExpression(
-                new JArrayAccessExpression(new JFieldAccessExpression(INIT_FUNC),new JIntLiteral(filterId)),
-                new JMethodCallExpression("&",new JExpression[]{new JEmittedTextExpression(INIT_FUNC_PREFIX+filterNode.getFilter().getName())}))));
-    }
-    
-    /**
-     * Add SPU filter description field: SPU_FILTER_DESC fd;
+     * Add SPU filter description field 
+     * 
+     * SPU_FILTER_DESC fd[numfilters];
      */
     public void addSPUFilterDescriptionField() {
+        if (KjcOptions.celldyn) return;
+        
         JVariableDefinition fd = new JVariableDefinition(
                 new CArrayType(
                         new CEmittedTextType(SPU_FILTER_DESC),
@@ -205,19 +165,16 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
                 SPU_FD);
         JFieldDeclaration field = new JFieldDeclaration(fd);
         addField(field);
-        JVariableDefinition initfd = new JVariableDefinition(
-                new CArrayType(
-                        new CEmittedTextType(SPU_FILTER_DESC),
-                        1,
-                        new JExpression[]{
-                            new JIntLiteral(CellBackend.numfilters)
-                        }),
-                INIT_SPU_FD);
-        field = new JFieldDeclaration(initfd);
-        addField(field);
     }
     
-    public void addChannelFields() {
+    /**
+     * Adds channel array field for static scheduling case
+     * 
+     * BUFFER_CB channels[numchannels];
+     */
+    public void addStaticChannelFields() {
+        if (KjcOptions.celldyn) return;
+        
         JVariableDefinition c = new JVariableDefinition(
                 new CArrayType(
                         new CEmittedTextType("BUFFER_CB"),
@@ -230,54 +187,343 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
         addField(field);
     }
     
+    /**
+     * Adds data address field for static scheduling case.
+     * 
+     * SPU_ADDRESS da;
+     */
     public void addDataAddressField() {
+        if (KjcOptions.celldyn) return;
+        
         JVariableDefinition da = new JVariableDefinition(
                 new CEmittedTextType(SPU_ADDRESS), DATA_ADDR);
         JFieldDeclaration field = new JFieldDeclaration(da);
         addField(field);
     }
     
-
-    /**
-     * Add callback function
-     *
+    /***************************************************************************
+     *              Dynamic scheduler specific fields
+     ***************************************************************************
      */
-    public void addCallBackFunction() {
-        JFormalParameter tag = new JFormalParameter(new CEmittedTextType(UINT32_T), "tag");
-        JBlock body = new JBlock();
-        body.addStatement(new JExpressionStatement(new JPostfixExpression(Constants.OPE_POSTDEC, new JFieldAccessExpression(DONE))));
-        JMethodDeclaration cb = new JMethodDeclaration(CStdType.Void, CB, new JFormalParameter[]{tag}, body);
-        addMethod(cb);
-        newline();
+    
+    public void addDynamicFields() {
+        int numfilters = CellBackend.numfilters;
+        int numchannels = CellBackend.numchannels;
+
+        // FILTER filters[<numfilters>];
+        JVariableDefinition filters = new JVariableDefinition(
+                new CArrayType(new CEmittedTextType("FILTER"),
+                        1,
+                        new JExpression[]{new JIntLiteral(numfilters)}),
+                "filters");
+        JFieldDeclaration field = new JFieldDeclaration(filters);
+        addField(field);
+        
+        // CHANNEL channels[<numchannels>]
+        JVariableDefinition channels = new JVariableDefinition(
+                new CArrayType(new CEmittedTextType("CHANNEL"),
+                        1,
+                        new JExpression[]{new JIntLiteral(numchannels)}),
+                "channels");
+        field = new JFieldDeclaration(channels);
+        addField(field);
+        
+        // num_filters = <numfilters>;
+        JExpressionStatement num_filters = new JExpressionStatement(
+                new JAssignmentExpression(new JFieldAccessExpression("num_filters"),
+                        new JIntLiteral(numfilters)));
+        addInitStatement(num_filters);
+        
+        // num_channels = <numchannels>;
+        JExpressionStatement num_channels = new JExpressionStatement(
+                new JAssignmentExpression(new JFieldAccessExpression("num_channels"),
+                        new JIntLiteral(numchannels)));
+        addInitStatement(num_channels);
+        
     }
     
+    public void initDynamic() {
+        JBlock block = new JBlock();
+        
+        JExpressionStatement spuinit = new JExpressionStatement(
+                new JMethodCallExpression(
+                        SPUINIT,
+                        new JExpression[]{}));
+        block.addStatement(spuinit);        
+
+        
+//        JExpressionStatement num_spu = new JExpressionStatement(
+//                new JAssignmentExpression(new JFieldAccessExpression("num_spu"),
+//                        new JIntLiteral(numspus)));
+//        block.addStatement(num_spu);
+        
+        JVariableDefinition n = new JVariableDefinition(CStdType.Integer, N);
+        n.setInitializer(null);
+        addField(new JFieldDeclaration(n));
+        block.addStatement(new JExpressionStatement(new JAssignmentExpression(new JFieldAccessExpression(N), new JIntLiteral(10000))));
+        
+    }
+    
+    public void dynamic() {
+        int numfilters = CellBackend.numfilters;
+        int numchannels = CellBackend.numchannels;
+
+        JBlock block = new JBlock();
+        
+        JForStatement channelbufsize;
+        // make init statement - assign zero to <var>.  We need to use
+        // an expression list statement to follow the convention of
+        // other for loops and to get the codegen right.
+        JVariableDefinition var = new JVariableDefinition(CStdType.Integer, "i");
+        block.addStatement(new JVariableDeclarationStatement(var));
+        
+        JExpression initExpr[] = {
+            new JAssignmentExpression(new JLocalVariableExpression(var),
+                                      new JIntLiteral(0)) };
+        JStatement init = new JExpressionListStatement(initExpr);
+        // make conditional - test if <var> less than <count>
+        JExpression cond = 
+            new JRelationalExpression(Constants.OPE_LT,
+                                      new JLocalVariableExpression(var),
+                                      new JIntLiteral(numchannels));
+        JExpression incrExpr = 
+            new JPostfixExpression(Constants.OPE_POSTINC, 
+                                   new JLocalVariableExpression(var));
+        JStatement incr = new JExpressionStatement(incrExpr);
+        
+        JBlock body = new JBlock();
+        body.addStatement(new JExpressionStatement(new JAssignmentExpression(
+                new JFieldAccessExpression(
+                        new JArrayAccessExpression(new JFieldAccessExpression("channels"), new JLocalVariableExpression(var)),
+                        "buf_size"),
+                new JIntLiteral(1024*1024)
+                )));
+        channelbufsize = new JForStatement(init, cond, incr, body);
+        block.addStatement(channelbufsize);
+        
+        for (int i = 0; i < CellBackend.channels.size(); i++) {
+            InterSliceEdge e = CellBackend.channels.get(i);
+            if (e.getSrc().getPrevFilter().isFileInput()) {
+                int pushRate = e.getSrc().getPrevFilter().getFilter().getPushInt();
+                int steadyMult = e.getSrc().getPrevFilter().getFilter().getSteadyMult();
+                block.addStatement(new JExpressionStatement(new JAssignmentExpression(
+                        new JFieldAccessExpression(
+                                new JArrayAccessExpression(new JFieldAccessExpression("channels"), new JIntLiteral(i)),
+                                "buf_size"),
+                        new JMultExpression(new JFieldAccessExpression(N), new JIntLiteral(pushRate*steadyMult*4))
+                        )));
+                block.addStatement(new JExpressionStatement(new JAssignmentExpression(
+                        new JFieldAccessExpression(
+                                new JArrayAccessExpression(new JFieldAccessExpression("channels"), new JIntLiteral(i)),
+                                "non_circular"),
+                        new JEmittedTextExpression("TRUE")
+                        )));
+            }
+            if (e.getDest().getNextFilter().isFileOutput()) {
+                int popRate = e.getDest().getNextFilter().getFilter().getPopInt();
+                int steadyMult = e.getDest().getNextFilter().getFilter().getSteadyMult();
+                block.addStatement(new JExpressionStatement(new JAssignmentExpression(
+                        new JFieldAccessExpression(
+                                new JArrayAccessExpression(new JFieldAccessExpression("channels"), new JIntLiteral(i)),
+                                "buf_size"),
+                        new JMultExpression(new JFieldAccessExpression(N), new JIntLiteral(popRate*steadyMult*4))
+                        )));
+                block.addStatement(new JExpressionStatement(new JAssignmentExpression(
+                        new JFieldAccessExpression(
+                                new JArrayAccessExpression(new JFieldAccessExpression("channels"), new JIntLiteral(i)),
+                                "non_circular"),
+                        new JEmittedTextExpression("TRUE")
+                        )));
+            }
+        }
+        
+//        block.addStatement(new JExpressionStatement(new JAssignmentExpression(
+//                new JFieldAccessExpression(
+//                        new JArrayAccessExpression(new JFieldAccessExpression("channels"), new JIntLiteral(0)),
+//                        "buf_size"),
+//                new JMultExpression(new JIntLiteral(2048), new JFieldAccessExpression(N))
+//                )));
+//        block.addStatement(new JExpressionStatement(new JAssignmentExpression(
+//                new JFieldAccessExpression(
+//                        new JArrayAccessExpression(new JFieldAccessExpression("channels"), new JIntLiteral(numchannels - 1)),
+//                        "buf_size"),
+//                new JMultExpression(new JIntLiteral(2048), new JFieldAccessExpression(N))
+//                )));
+//        block.addStatement(new JExpressionStatement(new JAssignmentExpression(
+//                new JFieldAccessExpression(
+//                        new JArrayAccessExpression(new JFieldAccessExpression("channels"), new JIntLiteral(0)),
+//                        "non_circular"),
+//                new JEmittedTextExpression("TRUE")
+//                )));
+//        block.addStatement(new JExpressionStatement(new JAssignmentExpression(
+//                new JFieldAccessExpression(
+//                        new JArrayAccessExpression(new JFieldAccessExpression("channels"), new JIntLiteral(numchannels - 1)),
+//                        "non_circular"),
+//                new JEmittedTextExpression("TRUE")
+//                )));
+        addInitStatementFirst(block);
+        
+        addInitStatement(new JExpressionStatement(new JMethodCallExpression("ds_init", new JExpression[0])));
+        
+        addField(new JFieldDeclaration(new JVariableDefinition(new CEmittedTextType("FILE *"),"inf")));
+        addField(new JFieldDeclaration(new JVariableDefinition(new CEmittedTextType("FILE *"),"outf")));
+        addInitStatement(new JExpressionStatement(new JAssignmentExpression(
+                new JFieldAccessExpression("inf"),
+                new JMethodCallExpression("fopen", new JExpression[]{
+                        new JStringLiteral("ref/FFT5.in"),
+                        new JStringLiteral("r")
+                }))));
+        addInitStatement(new JExpressionStatement(new JAssignmentExpression(
+                new JFieldAccessExpression("outf"),
+                new JMethodCallExpression("fopen", new JExpression[]{
+                        new JStringLiteral("fft.out"),
+                        new JStringLiteral("w")
+                }))));
+        
+        addInitStatement(new JExpressionStatement(new JMethodCallExpression(
+                "safe_dec",
+                new JExpression[]{new JFieldAccessExpression(new JArrayAccessExpression(new JFieldAccessExpression("channels"),new JIntLiteral(0)),"free_bytes"),
+                        new JMultExpression(new JIntLiteral(2048), new JFieldAccessExpression(N))
+                })));
+        addInitStatement(new JExpressionStatement(new JMethodCallExpression(
+                "fread",
+                new JExpression[]{new JFieldAccessExpression(new JFieldAccessExpression(new JArrayAccessExpression(new JFieldAccessExpression("channels"),new JIntLiteral(0)),"buf"),"data"),
+                        new JMethodCallExpression("sizeof",new JExpression[]{new JEmittedTextExpression("float")}),
+                        new JMultExpression(new JIntLiteral(512), new JFieldAccessExpression(N)),
+                        new JFieldAccessExpression("inf")
+                })));
+        addInitStatement(new JExpressionStatement(new JMethodCallExpression(
+                "buf_inc_tail",
+                new JExpression[]{new JMethodCallExpression("&",new JExpression[]{new JFieldAccessExpression(new JArrayAccessExpression(new JFieldAccessExpression("channels"),new JIntLiteral(0)),"buf")}),
+                        new JMultExpression(new JIntLiteral(2048), new JFieldAccessExpression(N))
+                })));
+        addInitStatement(new JExpressionStatement(new JCompoundAssignmentExpression(
+                null, Constants.OPE_PLUS,
+                new JFieldAccessExpression(new JArrayAccessExpression(new JFieldAccessExpression("channels"),new JIntLiteral(0)),"used_bytes"),
+                new JMultExpression(new JIntLiteral(2048), new JFieldAccessExpression(N)))));
+        addInitStatement(new JExpressionStatement(new JPostfixExpression(
+                Constants.OPE_POSTDEC,
+                new JNameExpression(null, new JFieldAccessExpression(new JFieldAccessExpression(new JArrayAccessExpression(new JFieldAccessExpression("channels"),new JIntLiteral(0)),"input"),"f"), "incomplete_inputs")
+                )));
+        
+        addInitStatement(new JExpressionStatement(new JMethodCallExpression("ds_run", new JExpression[0])));
+        addInitStatement(new JExpressionStatement(new JMethodCallExpression(
+                "fwrite",
+                new JExpression[]{new JFieldAccessExpression(new JFieldAccessExpression(new JArrayAccessExpression(new JFieldAccessExpression("channels"),new JIntLiteral(15)),"buf"),"data"),
+                        new JMethodCallExpression("sizeof",new JExpression[]{new JEmittedTextExpression("float")}),
+                        new JMultExpression(new JIntLiteral(512), new JFieldAccessExpression(N)),
+                        new JFieldAccessExpression("outf")
+                })));
+        
+        addInitStatement(new JExpressionStatement(new JMethodCallExpression("fclose", new JExpression[]{new JFieldAccessExpression("inf")})));
+        addInitStatement(new JExpressionStatement(new JMethodCallExpression("fclose", new JExpression[]{new JFieldAccessExpression("outf")})));
+    }
+
     
     /** ------------------------------------------------------------------------
      *                          SETUP
      -------------------------------------------------------------------------*/
     
     /**
-     * Sets up filter description's fields:
+     * Sets up filter's fields:
      * state_size, num_inputs, num_outputs
      * 
      * work_func will be either the init work func or the actual work func,
      * depending on which is being run. Thus, work_func will be set later.
      * @param sliceNode
      */
-    public void setupFilterDescription(SliceNode sliceNode) {
+    public void setupFilter(SliceNode sliceNode) {
         int filterId = CellBackend.filterIdMap.get(sliceNode);
-        JBlock body = new JBlock();
-           
-        JExpressionStatement statesize = new JExpressionStatement(new JAssignmentExpression(
-                new JFieldAccessExpression(
-                        new JArrayAccessExpression(
-                                new JFieldAccessExpression(SPU_FD),
-                                new JIntLiteral(filterId)),
-                        SPU_FD_STATE_SIZE),
-                new JIntLiteral(0)));
-        body.addStatement(statesize);
+        int inputs, outputs;
+        inputs = getNumInputs(sliceNode);
+        outputs = getNumOutputs(sliceNode);
+        String filtername = getFilterName(sliceNode);
         
-        addInitStatement(body);
+        if (KjcOptions.celldyn) {
+            int statesize = StatelessDuplicate.sizeOfMutableState(sliceNode.getAsFilter().getFilter());
+            
+            addInitStatement(new JExpressionStatement(new JAssignmentExpression(
+                            new JFieldAccessExpression(
+                                new JArrayAccessExpression(
+                                        new JFieldAccessExpression("filters"),
+                                        new JIntLiteral(filterId)),
+                                "name"),
+                                new JStringLiteral(filtername))));
+            addInitStatement(new JExpressionStatement(new JAssignmentExpression(
+                    new JFieldAccessExpression(
+                    new JFieldAccessExpression(
+                        new JArrayAccessExpression(
+                                new JFieldAccessExpression("filters"),
+                                new JIntLiteral(filterId)),
+                        "desc"),
+                        "work_func"),
+                        new JArrayAccessExpression(
+                                new JFieldAccessExpression(WFA),
+                                new JIntLiteral(filterId)))));
+            addInitStatement(new JExpressionStatement(new JAssignmentExpression(
+                    new JFieldAccessExpression(
+                    new JFieldAccessExpression(
+                        new JArrayAccessExpression(
+                                new JFieldAccessExpression("filters"),
+                                new JIntLiteral(filterId)),
+                        "desc"),
+                        "state_size"),
+                        new JIntLiteral(0))));
+            addInitStatement(new JExpressionStatement(new JAssignmentExpression(
+                    new JFieldAccessExpression(
+                    new JFieldAccessExpression(
+                        new JArrayAccessExpression(
+                                new JFieldAccessExpression("filters"),
+                                new JIntLiteral(filterId)),
+                        "desc"),
+                        "num_inputs"),
+                        new JIntLiteral(inputs))));
+            addInitStatement(new JExpressionStatement(new JAssignmentExpression(
+                    new JFieldAccessExpression(
+                    new JFieldAccessExpression(
+                        new JArrayAccessExpression(
+                                new JFieldAccessExpression("filters"),
+                                new JIntLiteral(filterId)),
+                        "desc"),
+                        "num_outputs"),
+                        new JIntLiteral(outputs))));
+            addInitStatement(new JExpressionStatement(new JAssignmentExpression(
+                    new JFieldAccessExpression(
+                        new JArrayAccessExpression(
+                                new JFieldAccessExpression("filters"),
+                                new JIntLiteral(filterId)),
+                        "spu_init_func"),
+                        new JMethodCallExpression(
+                                "&",
+                                new JExpression[]{
+                                        new JArrayAccessExpression(
+                                                new JFieldAccessExpression("init_wf"),
+                                                new JIntLiteral(filterId))
+                                }))));
+            if (statesize == 0) {
+                addInitStatement(new JExpressionStatement(new JAssignmentExpression(
+                        new JFieldAccessExpression(
+                            new JArrayAccessExpression(
+                                    new JFieldAccessExpression("filters"),
+                                    new JIntLiteral(filterId)),
+                            "data_parallel"),
+                            new JEmittedTextExpression("TRUE"))));
+            }
+        } else {
+            JBlock body = new JBlock();
+            
+            JExpressionStatement statesize = new JExpressionStatement(new JAssignmentExpression(
+                    new JFieldAccessExpression(
+                            new JArrayAccessExpression(
+                                    new JFieldAccessExpression(SPU_FD),
+                                    new JIntLiteral(filterId)),
+                            SPU_FD_STATE_SIZE),
+                    new JIntLiteral(0)));
+            body.addStatement(statesize);
+          
+            addInitStatement(body);
+          
+        }
     }
     
     /**
@@ -314,22 +560,8 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
         int filterId = CellBackend.filterIdMap.get(sliceNode);
         
         int inputs, outputs;
-        if (sliceNode.isInputSlice()) {
-            inputs = sliceNode.getAsInput().getWidth();
-            outputs = 1;
-        }
-        else if (sliceNode.isFilterSlice()){
-            inputs = 1;
-            if (sliceNode.getParent().getTail().isSplitter())
-                outputs = 1;
-            else outputs = sliceNode.getParent().getTail().getWidth();
-        } 
-        else {
-            inputs = 1;
-            if (sliceNode.getAsOutput().isDuplicateSplitter())
-                outputs = 1;
-            else outputs = sliceNode.getAsOutput().getWidth();
-        }
+        inputs = getNumInputs(sliceNode);
+        outputs = getNumOutputs(sliceNode);
 
         if (whichPhase == SchedulingPhase.INIT) {
             inputs= 0;
@@ -374,6 +606,9 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
     /**
      * Assigns work function address for the given slicenode.
      * Also assigns work function address for init function of the given slicenode.
+     * RR splitters and joiners are made into separate filters with their own
+     * work functions, and thus need to be initialized here.
+     * 
      * wf = &wf_[init_][slicename]
      * wf = &wf_[init_]joiner_[joinername]
      * wf = &wf_[init_]splitter_[splittername]
@@ -435,23 +670,13 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
      * @param sliceNode
      */
     public void setupPSP(SliceNode sliceNode) {
+        // This is only done for static scheduling
+        if (KjcOptions.celldyn) return;
+        
         int inputs, outputs;
-        if (sliceNode.isInputSlice()) {
-            inputs = sliceNode.getAsInput().getWidth();
-            outputs = 1;
-        }
-        else if (sliceNode.isFilterSlice()){
-            inputs = 1;
-            if (sliceNode.getParent().getTail().isSplitter())
-                outputs = 1;
-            else outputs = sliceNode.getParent().getTail().getWidth();
-        } 
-        else {
-            inputs = 1;
-            if (sliceNode.getAsOutput().isDuplicateSplitter())
-                outputs = 1;
-            else outputs = sliceNode.getAsOutput().getWidth();
-        }
+        inputs = getNumInputs(sliceNode);
+        outputs = getNumOutputs(sliceNode);
+
         int filterId = CellBackend.filterIdMap.get(sliceNode);
         JBlock body = new JBlock();
         
@@ -534,22 +759,9 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
      */
     public JBlock setupPSPIOBytes(SliceNode sliceNode, SchedulingPhase whichPhase) {
         int inputs, outputs;
-        if (sliceNode.isInputSlice()) {
-            inputs = sliceNode.getAsInput().getWidth();
-            outputs = 1;
-        }
-        else if (sliceNode.isFilterSlice()){
-            inputs = 1;
-            if (sliceNode.getParent().getTail().isSplitter())
-                outputs = 1;
-            else outputs = sliceNode.getParent().getTail().getWidth();
-        } 
-        else {
-            inputs = 1;
-            if (sliceNode.getAsOutput().isDuplicateSplitter())
-                outputs = 1;
-            else outputs = sliceNode.getAsOutput().getWidth();
-        }
+        inputs = getNumInputs(sliceNode);
+        outputs = getNumOutputs(sliceNode);
+        
         if (sliceNode.isFilterSlice() && sliceNode.getAsFilter().getParent().getTail().isDuplicateSplitter())
             outputs = 1;
         int filterId = CellBackend.filterIdMap.get(sliceNode);
@@ -663,6 +875,7 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
      * @param duplicateIds
      */
     public void duplicateChannel(int channelId, LinkedList<Integer> duplicateIds) {
+        if (KjcOptions.celldyn) return;
         for (int i : duplicateIds) {
             duplicateChannel(channelId, i);
         }
@@ -691,43 +904,6 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
                                     new JIntLiteral(channelId))}),
                 }
         )));
-    }
-    
-    public void addIssueUnload() {
-        
-        JForStatement unload;
-        // make init statement - assign zero to <var>.  We need to use
-        // an expression list statement to follow the convention of
-        // other for loops and to get the codegen right.
-        JVariableDefinition var = new JVariableDefinition(CStdType.Integer, "i");
-        
-        JExpression initExpr[] = {
-            new JAssignmentExpression(new JLocalVariableExpression(var),
-                                      new JIntLiteral(0)) };
-        JStatement init = new JExpressionListStatement(initExpr);
-        // make conditional - test if <var> less than <count>
-        JExpression cond = 
-            new JRelationalExpression(Constants.OPE_LT,
-                                      new JLocalVariableExpression(var),
-                                      new JIntLiteral(numspus));
-        JExpression incrExpr = 
-            new JPostfixExpression(Constants.OPE_POSTINC, 
-                                   new JLocalVariableExpression(var));
-        JStatement incr = new JExpressionStatement(incrExpr);
-        
-        JBlock body = new JBlock();
-        
-        body.addStatement(new JExpressionStatement(
-                new JMethodCallExpression("spu_issue_group",
-                        new JExpression[]{new JLocalVariableExpression(var), new JIntLiteral(1), new JFieldAccessExpression(DATA_ADDR)})));
-
-        addInitStatement(new JForStatement(init, cond, incr, body));
-        
-        body = new JBlock();
-        body.addStatement(new JExpressionStatement(
-                new JMethodCallExpression("spulib_wait",
-                        new JExpression[]{new JLocalVariableExpression(var), new JIntLiteral(1)})));
-        addInitStatement(new JForStatement(init, cond, incr, body));
     }
     
     public void addSPUInit(SpaceTimeScheduleAndPartitioner schedule) {
@@ -797,28 +973,16 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
         JVariableDefinition runsperiter = new JVariableDefinition(CStdType.Integer, RUNSPERITER);
         addField(new JFieldDeclaration(runsperiter));
         
-        this.schedule = schedule;
-        poprate = schedule.getSchedule()[1].getFilterNodes().get(0).getFilter().getPopInt();
-        pushrate = schedule.getSchedule()[1].getFilterNodes().get(0).getFilter().getPushInt();
-        if (schedule.getSchedule()[0].getFilterNodes().get(0).getFilter().getOutputType().isFloatingPoint())
-            inputType = "float";
-        else inputType = "int";
-        outputType = inputType;
+//        int poprate = schedule.getSchedule()[1].getFilterNodes().get(0).getFilter().getPopInt();
+//        int pushrate = schedule.getSchedule()[1].getFilterNodes().get(0).getFilter().getPushInt();
+//        if (schedule.getSchedule()[0].getFilterNodes().get(0).getFilter().getOutputType().isFloatingPoint())
+//            inputType = "float";
+//        else inputType = "int";
         
         addInitStatement(new JExpressionStatement(new JAssignmentExpression(new JFieldAccessExpression(N), new JIntLiteral(1000))));
         addInitStatement(new JExpressionStatement(new JAssignmentExpression(new JFieldAccessExpression(RUNSPERITER), new JIntLiteral(8))));
         addInitStatement(new JExpressionStatement(new JAssignmentExpression(new JFieldAccessExpression(ITERS), 
                 new JDivideExpression(null, new JFieldAccessExpression(N), new JFieldAccessExpression(RUNSPERITER)))));
-        
-//        JMethodDeclaration init_ticks = new JMethodDeclaration(CStdType.Void, INIT_TICKS, new JFormalParameter[0], new JBlock());
-//        addMethod(init_ticks);
-//        JVariableDefinition init_ticks = new JVariableDefinition(CStdType.Void, INIT_TICKS);
-//        init_ticks.setInitializer(null);
-//        addField(new JFieldDeclaration(init_ticks));
-//        
-//        JVariableDefinition ticks = new JVariableDefinition(CStdType.Void, TICKS);
-//        ticks.setInitializer(null);
-//        addField(new JFieldDeclaration(ticks));
         
         JVariableDefinition start = new JVariableDefinition(CStdType.Integer, START);
         addField(new JFieldDeclaration(start));
@@ -833,10 +997,7 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
         newline();
     }
     
-    public void initSpulibClock() {
-        //addInitStatement(new JExpressionStatement(new JMethodCallExpression(INIT_TICKS, new JExpression[0])));
-        //addInitStatement(new JExpressionStatement(new JAssignmentExpression(new JFieldAccessExpression(START), new JMethodCallExpression(TICKS, new JExpression[0]))));
-        
+    public void initSpulib() {
         // spulib_init()
         JExpressionStatement spulibinit = new JExpressionStatement(
                 new JMethodCallExpression(
@@ -844,37 +1005,7 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
                         new JExpression[]{}));
         addInitStatement(spulibinit);
     }
-    
-    public void addStartSpuTicks() {
-        addInitStatement(new JExpressionStatement(new JAssignmentExpression(new JFieldAccessExpression(STARTSPU), new JMethodCallExpression(TICKS, new JExpression[0]))));
-    }
-    
-    public void addPrintTicks() {
-        addInitStatement(new JExpressionStatement(new JMethodCallExpression(PRINTF,
-                new JExpression[]{new JStringLiteral("spu time: %d ms\\n"),
-                new JMinusExpression(null, new JMethodCallExpression(TICKS, new JExpression[0]), new JFieldAccessExpression(STARTSPU))})));
-        addInitStatement(new JExpressionStatement(new JMethodCallExpression(PRINTF,
-                new JExpression[]{new JStringLiteral("time: %d ms\\n"),
-                new JMinusExpression(null, new JMethodCallExpression(TICKS, new JExpression[0]), new JFieldAccessExpression(START))})));
         
-    }
-    
-    public void addFilterLoad(InputSliceNode inputNode) {
-        Integer id = getIdForSlice(inputNode.getParent());
-        String fd = idToFd(id);
-        String group = GROUP + id;
-        JExpressionStatement filterLoad = new JExpressionStatement(new JMethodCallExpression(
-                SPU_FILTER_LOAD,
-                new JExpression[]{
-                        new JFieldAccessExpression(group),
-                        new JFieldAccessExpression(FCB),
-                        new JEmittedTextExpression("&" + fd),
-                        new JIntLiteral(0),
-                        new JIntLiteral(NO_DEPS)
-                }));
-        addInitStatement(filterLoad);
-    }
-    
     /**
      * Add fields for SPU input buffers, and set up their addresses.
      * @param inputNode
@@ -911,6 +1042,7 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
         
     }
     
+    @Deprecated
     public void addSPUIters() {
         JForStatement spuiters;
         // make init statement - assign zero to <var>.  We need to use
@@ -953,26 +1085,112 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
      * @param inputIds
      */
     public void attachInputChannelArray(int filterId,
-            LinkedList<Integer> inputIds) {
+            LinkedList<Integer> inputIds, SchedulingPhase whichPhase) {
         if (inputIds == null)
             return;
-        addField(new JFieldDeclaration(new JVariableDefinition(
-                new CArrayType(new CEmittedTextType("BUFFER_CB *"),
-                        1,
-                        new JExpression[]{new JIntLiteral(inputIds.size())}),
-                        "input_" + filterId)));
-        for (int i=0; i<inputIds.size(); i++) {
-            addInitStatement(new JExpressionStatement(new JAssignmentExpression(
-                    new JArrayAccessExpression(
-                            new JFieldAccessExpression("input_" + filterId),
-                            new JIntLiteral(i)),
-                    new JMethodCallExpression(
-                            "&",
-                            new JExpression[]{
+        
+        SliceNode sliceNode = CellBackend.filters.get(filterId);
+        
+        if (KjcOptions.celldyn) {
+            for (int i=0; i<inputIds.size(); i++) {
+                // filters[id].inputs[i] = &channels[j];
+                addInitStatement(new JExpressionStatement(new JAssignmentExpression(
+                        new JArrayAccessExpression(
+                                new JFieldAccessExpression(
                                     new JArrayAccessExpression(
-                                            new JFieldAccessExpression("channels"),
-                                            new JIntLiteral(inputIds.get(i)))
-                            }))));
+                                            new JFieldAccessExpression("filters"),
+                                            new JIntLiteral(filterId)),
+                                    "inputs"),
+                                new JIntLiteral(i)),
+                        new JMethodCallExpression(
+                                "&",
+                                new JExpression[]{
+                                new JArrayAccessExpression(
+                                        new JFieldAccessExpression("channels"),
+                                        new JIntLiteral(inputIds.get(i)))}))));
+                
+                // filters[id].inputs[i]->input.f = &filters[id];
+                addInitStatement(new JExpressionStatement(new JAssignmentExpression(
+                        new JFieldAccessExpression(
+                                new JNameExpression(
+                                        null,
+                        new JArrayAccessExpression(
+                                new JFieldAccessExpression(
+                                    new JArrayAccessExpression(
+                                            new JFieldAccessExpression("filters"),
+                                            new JIntLiteral(filterId)),
+                                    "inputs"),
+                                new JIntLiteral(i)),
+                                "input"),
+                                "f"),
+                        new JMethodCallExpression(
+                                "&",
+                                new JExpression[]{
+                                new JArrayAccessExpression(
+                                        new JFieldAccessExpression("filters"),
+                                        new JIntLiteral(filterId))}))));
+                
+                InterSliceEdge e = CellBackend.channels.get(inputIds.get(i));
+
+                int poprate = sliceNode.getParent().getFilterNodes().get(0).getFilter().getPopInt();
+                int peekrate = sliceNode.getParent().getFilterNodes().get(0).getFilter().getPeekInt();
+                int mult = 1;
+//                if (whichPhase == SchedulingPhase.INIT)
+//                    mult = 0; //sliceNode.getParent().getFilterNodes().get(0).getFilter().getInitMult();
+//                else if (whichPhase == SchedulingPhase.STEADY)
+//                    mult = 1; //sliceNode.getParent().getFilterNodes().get(0).getFilter().getSteadyMult();
+//                else return;
+                
+                JBlock body = new JBlock();
+                    body.addStatement(new JExpressionStatement(new JAssignmentExpression(
+                            new JFieldAccessExpression(
+                                    new JNameExpression(
+                                            null,
+                            new JArrayAccessExpression(
+                                    new JFieldAccessExpression(
+                                        new JArrayAccessExpression(
+                                                new JFieldAccessExpression("filters"),
+                                                new JIntLiteral(filterId)),
+                                        "inputs"),
+                                    new JIntLiteral(i)),
+                                    "input"),
+                                    "pop_bytes"),
+                            new JIntLiteral(4 * poprate * mult))));
+                    body.addStatement(new JExpressionStatement(new JAssignmentExpression(
+                            new JFieldAccessExpression(
+                                    new JNameExpression(
+                                            null,
+                            new JArrayAccessExpression(
+                                    new JFieldAccessExpression(
+                                        new JArrayAccessExpression(
+                                                new JFieldAccessExpression("filters"),
+                                                new JIntLiteral(filterId)),
+                                        "inputs"),
+                                    new JIntLiteral(i)),
+                                    "input"),
+                                    "peek_extra_bytes"),
+                            new JIntLiteral(4 * Math.max(0, peekrate-poprate) * mult))));
+                    addInitStatement(body);
+            }
+        } else {
+            addField(new JFieldDeclaration(new JVariableDefinition(
+                    new CArrayType(new CEmittedTextType("BUFFER_CB *"),
+                            1,
+                            new JExpression[]{new JIntLiteral(inputIds.size())}),
+                            "input_" + filterId)));
+            for (int i=0; i<inputIds.size(); i++) {
+                addInitStatement(new JExpressionStatement(new JAssignmentExpression(
+                        new JArrayAccessExpression(
+                                new JFieldAccessExpression("input_" + filterId),
+                                new JIntLiteral(i)),
+                        new JMethodCallExpression(
+                                "&",
+                                new JExpression[]{
+                                        new JArrayAccessExpression(
+                                                new JFieldAccessExpression("channels"),
+                                                new JIntLiteral(inputIds.get(i)))
+                                }))));
+            }
         }
     }
     
@@ -986,48 +1204,98 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
             LinkedList<Integer> outputIds) {
         if (outputIds == null)
             return;
-        addField(new JFieldDeclaration(new JVariableDefinition(
-                new CArrayType(new CEmittedTextType("BUFFER_CB *"),
-                        1,
-                        new JExpression[]{new JIntLiteral(outputIds.size())}),
-                        "output_" + filterId)));
-        for (int i=0; i<outputIds.size(); i++) {
-            addInitStatement(new JExpressionStatement(new JAssignmentExpression(
-                    new JArrayAccessExpression(
-                            new JFieldAccessExpression("output_" + filterId),
-                            new JIntLiteral(i)),
-                            new JMethodCallExpression(
-                                    "&",
-                                    new JExpression[]{
-                                            new JArrayAccessExpression(
-                                                    new JFieldAccessExpression("channels"),
-                                                    new JIntLiteral(outputIds.get(i)))
-                                    }))));            
+        
+        SliceNode sliceNode = CellBackend.filters.get(filterId);
+        
+        if (KjcOptions.celldyn) {
+            for (int i=0; i<outputIds.size(); i++) {
+                // filters[id].outputs[i] = &channels[j];
+                addInitStatement(new JExpressionStatement(new JAssignmentExpression(
+                        new JArrayAccessExpression(
+                                new JFieldAccessExpression(
+                                    new JArrayAccessExpression(
+                                            new JFieldAccessExpression("filters"),
+                                            new JIntLiteral(filterId)),
+                                    "outputs"),
+                                new JIntLiteral(i)),
+                        new JMethodCallExpression(
+                                "&",
+                                new JExpression[]{
+                                new JArrayAccessExpression(
+                                        new JFieldAccessExpression("channels"),
+                                        new JIntLiteral(outputIds.get(i)))}))));
+                
+                // filters[id].outputs[i]->output.f = &filters[id];
+                addInitStatement(new JExpressionStatement(new JAssignmentExpression(
+                        new JFieldAccessExpression(
+                                new JNameExpression(
+                                        null,
+                        new JArrayAccessExpression(
+                                new JFieldAccessExpression(
+                                    new JArrayAccessExpression(
+                                            new JFieldAccessExpression("filters"),
+                                            new JIntLiteral(filterId)),
+                                    "outputs"),
+                                new JIntLiteral(i)),
+                                "output"),
+                                "f"),
+                        new JMethodCallExpression(
+                                "&",
+                                new JExpression[]{
+                                new JArrayAccessExpression(
+                                        new JFieldAccessExpression("filters"),
+                                        new JIntLiteral(filterId))}))));
+                
+                int pushrate = sliceNode.getParent().getFilterNodes().get(0).getFilter().getPushInt();
+//                if (sliceNode.isFilterSlice() && sliceNode.getAsFilter().getParent().getTail().isDuplicateSplitter())
+//                    outputs = 1;
+//                for (int i=0; i<outputs; i++) {
+                int mult = 1;
+                    addInitStatement(new JExpressionStatement(new JAssignmentExpression(
+                            new JFieldAccessExpression(
+                                    new JNameExpression(
+                                            null,
+                            new JArrayAccessExpression(
+                                    new JFieldAccessExpression(
+                                        new JArrayAccessExpression(
+                                                new JFieldAccessExpression("filters"),
+                                                new JIntLiteral(filterId)),
+                                        "inputs"),
+                                    new JIntLiteral(i)),
+                                    "input"),
+                                    "push_bytes"),
+                                    new JIntLiteral(4 * pushrate * mult))));
+//                }
+            }
+        } else {
+            addField(new JFieldDeclaration(new JVariableDefinition(
+                    new CArrayType(new CEmittedTextType("BUFFER_CB *"),
+                            1,
+                            new JExpression[]{new JIntLiteral(outputIds.size())}),
+                            "output_" + filterId)));
+            for (int i=0; i<outputIds.size(); i++) {
+                addInitStatement(new JExpressionStatement(new JAssignmentExpression(
+                        new JArrayAccessExpression(
+                                new JFieldAccessExpression("output_" + filterId),
+                                new JIntLiteral(i)),
+                                new JMethodCallExpression(
+                                        "&",
+                                        new JExpression[]{
+                                                new JArrayAccessExpression(
+                                                        new JFieldAccessExpression("channels"),
+                                                        new JIntLiteral(outputIds.get(i)))
+                                        }))));            
+            }
         }
-
     }
     
-    public void initDuplicateOutputChannelArray(int filterId) {
-        addField(new JFieldDeclaration(new JVariableDefinition(
-                new CArrayType(new CEmittedTextType("BUFFER_CB *"),
-                        1,
-                        new JExpression[]{new JIntLiteral(1)}),
-                        "output_" + filterId)));
-    }
-    
-    public void initChannelArrays(FilterSliceNode filterNode,
-            LinkedList<Integer> inputnums, LinkedList<Integer> outputnums) {
-        InputSliceNode input = filterNode.getParent().getHead();
-        OutputSliceNode output = filterNode.getParent().getTail();
-        //initInputChannelArray(input, inputnums);
-        //initOutputChannelArray(output, outputnums);
-    }
     
     /**
      * Initialize the channel with this ID and allocate the buffer
      * @param channelId
      */
     public void initChannel(int channelId) {
+        if (KjcOptions.celldyn) return;
         addInitStatement(new JExpressionStatement(
                 new JMethodCallExpression(
                         "init_buffer",
@@ -1040,118 +1308,7 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
                                 new JIntLiteral(0)})));
     }
     
-    public void addPPUInputBuffers(String inputName) {
-        addInitStatement(new JExpressionStatement(
-                new JMethodCallExpression(
-                        "init_buffer",
-                        new JExpression[]{
-                                new JMethodCallExpression("&",new JExpression[]{new JFieldAccessExpression(inputName)}),
-                                new JEmittedTextExpression("NULL"),
-                                new JFieldAccessExpression(PPU_INPUT_BUFFER_SIZE),
-                                new JEmittedTextExpression("FALSE"),
-                                new JIntLiteral(0)})));
-        newline();
-    }
     
-    public void addPPUOutputBuffers(String outputName) {
-        addInitStatement(new JExpressionStatement(
-                new JMethodCallExpression(
-                        "init_buffer",
-                        new JExpression[]{
-                                new JMethodCallExpression("&",new JExpression[]{new JFieldAccessExpression(outputName)}),
-                                new JEmittedTextExpression("NULL"),
-                                new JFieldAccessExpression(PPU_OUTPUT_BUFFER_SIZE),
-                                new JEmittedTextExpression("FALSE"),
-                                new JIntLiteral(0)})));
-    }
-    
-//    public boolean inputBuffersSet(InputSliceNode inputNode) {
-//        for (InterSliceEdge e : inputNode.getSourceList()) {
-//            InterSliceEdge f = CellBackend.getEdgeBetween(e.getSrc(), inputNode);
-//            if (!readyInputs.contains(o))
-//        }
-//    }
-    
-//    public boolean lookupInputBuffers(InputSliceNode inputNode) {
-//        String filtername = inputNode.getNextFilter().getFilter().getName();
-////        addField(new JFieldDeclaration(new JVariableDefinition(
-////                new CArrayType(new CEmittedTextType("BUFFER_CB"),
-////                               1,
-////                               new JExpression[]{new JIntLiteral(inputNode.getWidth())}),
-////                               "input_" + filtername)));
-//        int i=0;
-//        for (InterSliceEdge e : inputNode.getSourceSequence()) {
-//            InterSliceEdge f = CellBackend.getEdgeBetween(e.getSrc(), inputNode);
-//            if (!CellBackend.readyInputs.containsKey(f)) {
-//                System.out.println("no input ready for " + filtername + f);
-//                return false;
-//            }
-//            Buffer b = CellBackend.readyInputs.get(f);
-//            int index;
-//            if (f.getSrc().isDuplicateSplitter()) {
-//                index = 0;
-//            } else {
-//                index = b.index;
-//            }
-//            addInitStatement(new JExpressionStatement(new JMethodCallExpression(
-//                    "duplicate_buffer",
-//                    new JExpression[]{
-//                        new JMethodCallExpression(
-//                                "&",
-//                                new JExpression[]{
-//                                    new JArrayAccessExpression(
-//                                        new JFieldAccessExpression("input_"+filtername),
-//                                        new JIntLiteral(i))}),
-//                        new JMethodCallExpression(
-//                                "&",
-//                                new JExpression[]{
-//                                    new JArrayAccessExpression(
-//                                        new JFieldAccessExpression(b.name),
-//                                        new JIntLiteral(index))})})));
-//            addInitStatement(new JExpressionStatement(new JMethodCallExpression(
-//                    "buf_set_head",
-//                    new JExpression[]{
-//                            new JMethodCallExpression(
-//                                "&",
-//                                new JExpression[]{
-//                                    new JArrayAccessExpression(
-//                                        new JFieldAccessExpression("input_"+filtername),
-//                                        new JIntLiteral(i))}),
-//                            new JIntLiteral(0)})));
-//            i++;
-//        }
-//        if (inputNode.getSources().length > 0) {
-//            addPPUInputBuffers("input_" + filtername);
-//        }
-//        return true;
-//    }
-    
-    public void initOutputBufferFields(InputSliceNode inputNode) {
-        OutputSliceNode outputNode = inputNode.getParent().getTail();
-        String filtername = inputNode.getNextFilter().getFilter().getName();
-        int outputs;
-        if (outputNode.isDuplicateSplitter())
-            outputs = 1;
-        else outputs = outputNode.getWidth();
-        addField(new JFieldDeclaration(new JVariableDefinition(
-                new CArrayType(new CEmittedTextType("BUFFER_CB"),
-                               1,
-                               new JExpression[]{new JIntLiteral(outputs)}),
-                               "output_" + filtername)));
-        if(outputNode.getWidth() > 0)
-            addPPUOutputBuffers("output_" + filtername);
-    }
-    
-//    public void addReadyBuffers(OutputSliceNode outputNode) {
-//        String filtername = outputNode.getPrevFilter().getFilter().getName();
-//        int i=0;
-//        for (InterSliceEdge e : outputNode.getDestSequence()) {
-//            Buffer b = new Buffer("output_" + filtername, i);
-//            CellBackend.readyInputs.put(e, b);
-//            System.out.println("adding buffer: " + e + "\n" + b + "\n" + e.getDest().getNextFilter().getFilter().getName());
-//            i++;
-//        }
-//    }
     
     public void setupDataAddress() {
         // da = oba + obs + 128;
@@ -1165,248 +1322,11 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
         newline();
     }
     
-    public void startNewFilter(InputSliceNode inputNode) {
-        Integer id = getIdForSlice(inputNode.getParent());
-        String fd = idToFd(id);
-        
-        JExpressionStatement newline = new JExpressionStatement(new JEmittedTextExpression(""));
-        addInitStatement(newline);
-        JExpressionStatement newFilter = new JExpressionStatement(new JEmittedTextExpression("// set up code for filter " + id));
-        addInitStatement(newFilter);
-    }
+    /***************************************************************************
+     *                      File I/O functions
+     ***************************************************************************
+     */
     
-    public void addNewGroupStatement() {
-
-        JForStatement newgroup;
-        // make init statement - assign zero to <var>.  We need to use
-        // an expression list statement to follow the convention of
-        // other for loops and to get the codegen right.
-        JVariableDefinition var = new JVariableDefinition(CStdType.Integer, "i");
-        
-        JExpression initExpr[] = {
-            new JAssignmentExpression(new JLocalVariableExpression(var),
-                                      new JIntLiteral(0)) };
-        JStatement init = new JExpressionListStatement(initExpr);
-        // make conditional - test if <var> less than <count>
-        JExpression cond = 
-            new JRelationalExpression(Constants.OPE_LT,
-                                      new JLocalVariableExpression(var),
-                                      new JIntLiteral(numspus));
-        JExpression incrExpr = 
-            new JPostfixExpression(Constants.OPE_POSTINC, 
-                                   new JLocalVariableExpression(var));
-        JStatement incr = new JExpressionStatement(incrExpr);
-        
-        JBlock body = new JBlock();
-        
-        JExpressionStatement newGroup = new JExpressionStatement(new JAssignmentExpression(
-                new JEmittedTextExpression(GROUP),
-                new JMethodCallExpression(SPU_NEW_GROUP,new JExpression[]{new JLocalVariableExpression(var), new JIntLiteral(0)})));
-        
-        body.addStatement(newGroup);
-        
-        JExpressionStatement filterLoad = new JExpressionStatement(new JMethodCallExpression(
-                SPU_FILTER_LOAD,
-                new JExpression[]{
-                        new JFieldAccessExpression(GROUP),
-                        new JFieldAccessExpression(FCB),
-                        new JMethodCallExpression("&",new JExpression[]{new JArrayAccessExpression(new JFieldAccessExpression(SPU_FD),new JLocalVariableExpression(var))}),
-                        new JIntLiteral(0),
-                        new JIntLiteral(NO_DEPS)
-                }));
-        body.addStatement(filterLoad);
-        
-        int cmdId = 1;
-        String buffaddr = INPUT_BUFFER_ADDR;
-        String buffsize = INPUT_BUFFER_SIZE;
-        JExpressionStatement bufferAlloc = new JExpressionStatement(new JMethodCallExpression(
-                SPU_BUFFER_ALLOC, new JExpression[]{
-                        new JFieldAccessExpression(GROUP), new JFieldAccessExpression(buffaddr), new JFieldAccessExpression(buffsize),
-                        new JIntLiteral(BUFFER_OFFSET), new JIntLiteral(cmdId), new JIntLiteral(NO_DEPS)}));
-        body.addStatement(bufferAlloc);
-        JExpressionStatement attachBuffer = new JExpressionStatement(new JMethodCallExpression(
-                SPU_FILTER_ATTACH_INPUT, new JExpression[]{
-                        new JFieldAccessExpression(GROUP),
-                        new JFieldAccessExpression(FCB),
-                        new JIntLiteral(0),
-                        new JFieldAccessExpression(buffaddr),
-                        new JIntLiteral(cmdId + 1),
-                        new JIntLiteral(2),
-                        new JIntLiteral(0),
-                        new JIntLiteral(cmdId)
-                }));
-        body.addStatement(attachBuffer);
-        
-        cmdId = 3;
-        buffaddr = OUTPUT_BUFFER_ADDR;
-        buffsize = OUTPUT_BUFFER_SIZE;
-        bufferAlloc = new JExpressionStatement(new JMethodCallExpression(
-                SPU_BUFFER_ALLOC, new JExpression[]{
-                        new JFieldAccessExpression(GROUP), new JFieldAccessExpression(buffaddr), new JFieldAccessExpression(buffsize),
-                        new JIntLiteral(BUFFER_OFFSET), new JIntLiteral(cmdId), new JIntLiteral(NO_DEPS)}));
-        body.addStatement(bufferAlloc);
-        attachBuffer = new JExpressionStatement(new JMethodCallExpression(
-                SPU_FILTER_ATTACH_OUTPUT, new JExpression[]{
-                        new JFieldAccessExpression(GROUP),
-                        new JFieldAccessExpression(FCB),
-                        new JIntLiteral(0),
-                        new JEmittedTextExpression(buffaddr),
-                        new JIntLiteral(cmdId + 1),
-                        new JIntLiteral(2),
-                        new JIntLiteral(0),
-                        new JIntLiteral(cmdId)
-                }));
-        body.addStatement(attachBuffer);
-        
-        cmdId = 5;
-        body.addStatement(new JExpressionStatement(new JMethodCallExpression(
-                SPU_CALL_FUNC, new JExpression[]{
-                        new JFieldAccessExpression(GROUP),
-                        new JArrayAccessExpression(new JFieldAccessExpression(INIT_FUNC),new JLocalVariableExpression(var)),
-                        new JIntLiteral(cmdId),
-                        new JIntLiteral(2),
-                        new JIntLiteral(cmdId - 1),
-                        new JIntLiteral(cmdId - 3)
-                })));
-        
-        newGroup = new JExpressionStatement(new JAssignmentExpression(
-                new JFieldAccessExpression(GROUP),
-                new JMethodCallExpression(SPU_NEW_GROUP,new JExpression[]{new JLocalVariableExpression(var), new JIntLiteral(1)})));
-        body.addStatement(newGroup);
-        
-        JExpressionStatement filterUnload = new JExpressionStatement(new JMethodCallExpression(
-                SPU_FILTER_UNLOAD, new JExpression[]{
-                        new JFieldAccessExpression(GROUP),
-                        new JFieldAccessExpression(FCB),
-                        new JIntLiteral(0),
-                        new JIntLiteral(NO_DEPS)
-                }));
-        body.addStatement(filterUnload);
-        
-        JForStatement forloop = new JForStatement(init, cond, incr, body);
-        
-        addInitStatement(forloop);
-    }
-    
-    public void addNewGroupAndFilterUnload(OutputSliceNode outputNode) {
-        Integer id = getIdForSlice(outputNode.getParent());
-        String group = GROUP;
-        
-        JExpressionStatement newGroup = new JExpressionStatement(new JAssignmentExpression(
-                new JEmittedTextExpression(group),
-                new JMethodCallExpression(SPU_NEW_GROUP,new JExpression[]{new JIntLiteral(id), new JIntLiteral(1)})));
-        addInitStatement(newGroup);
-        
-        JExpressionStatement filterUnload = new JExpressionStatement(new JMethodCallExpression(
-                SPU_FILTER_UNLOAD, new JExpression[]{
-                        new JEmittedTextExpression(group),
-                        new JFieldAccessExpression(FCB),
-                        new JIntLiteral(0),
-                        new JIntLiteral(NO_DEPS)
-                }));
-        addInitStatement(filterUnload);
-    }
-    
-    public void addInputBufferAllocAttach(InputSliceNode inputNode) {
-        Integer id = getIdForSlice(inputNode.getParent());
-        String group = GROUP;
-        
-        int cmdId = 1;
-        for (int i=0; i<inputNode.getWidth(); i++) {
-            String buffaddr = INPUT_BUFFER_ADDR + id + "_" + i;
-            String buffsize = INPUT_BUFFER_SIZE;
-            JExpressionStatement bufferAlloc = new JExpressionStatement(new JMethodCallExpression(
-                    SPU_BUFFER_ALLOC, new JExpression[]{
-                            new JEmittedTextExpression(group), new JEmittedTextExpression(buffaddr), new JFieldAccessExpression(buffsize),
-                            new JIntLiteral(BUFFER_OFFSET), new JIntLiteral(cmdId), new JIntLiteral(NO_DEPS)}));
-            addInitStatement(bufferAlloc);
-            JExpressionStatement attachBuffer = new JExpressionStatement(new JMethodCallExpression(
-                    SPU_FILTER_ATTACH_INPUT, new JExpression[]{
-                            new JEmittedTextExpression(group),
-                            new JFieldAccessExpression(FCB),
-                            new JIntLiteral(i),
-                            new JEmittedTextExpression(buffaddr),
-                            new JIntLiteral(cmdId + inputNode.getWidth()),
-                            new JIntLiteral(2),
-                            new JIntLiteral(0),
-                            new JIntLiteral(cmdId)
-                    }));
-            addInitStatement(attachBuffer);
-            cmdId++;
-        }   
-    }
-    
-    public void addOutputBufferAllocAttach(OutputSliceNode outputNode) {
-        Integer id = getIdForSlice(outputNode.getParent());
-        String group = GROUP;
-        
-        int cmdId = 2*outputNode.getParent().getHead().getWidth() + 1;
-        for (int i=0; i<outputNode.getWidth(); i++) {
-            String buffaddr = OUTPUT_BUFFER_ADDR + id + "_" + i;
-            String buffsize = OUTPUT_BUFFER_SIZE;
-            JExpressionStatement bufferAlloc = new JExpressionStatement(new JMethodCallExpression(
-                    SPU_BUFFER_ALLOC, new JExpression[]{
-                            new JEmittedTextExpression(group), new JEmittedTextExpression(buffaddr), new JFieldAccessExpression(buffsize),
-                            new JIntLiteral(BUFFER_OFFSET), new JIntLiteral(cmdId), new JIntLiteral(NO_DEPS)}));
-            addInitStatement(bufferAlloc);
-            JExpressionStatement attachBuffer = new JExpressionStatement(new JMethodCallExpression(
-                    SPU_FILTER_ATTACH_OUTPUT, new JExpression[]{
-                            new JEmittedTextExpression(group),
-                            new JFieldAccessExpression(FCB),
-                            new JIntLiteral(i),
-                            new JEmittedTextExpression(buffaddr),
-                            new JIntLiteral(cmdId + outputNode.getWidth()),
-                            new JIntLiteral(2),
-                            new JIntLiteral(0),
-                            new JIntLiteral(cmdId)
-                    }));
-            addInitStatement(attachBuffer);
-            cmdId++;
-        }   
-    }
-    
-    public void addIssueGroupAndWait() {
-        // make init statement - assign zero to <var>.  We need to use
-        // an expression list statement to follow the convention of
-        // other for loops and to get the codegen right.
-        JVariableDefinition var = new JVariableDefinition(CStdType.Integer, "i");
-        
-        JExpression initExpr[] = {
-            new JAssignmentExpression(new JLocalVariableExpression(var),
-                                      new JIntLiteral(0)) };
-        JStatement init = new JExpressionListStatement(initExpr);
-        // make conditional - test if <var> less than <count>
-        JExpression cond = 
-            new JRelationalExpression(Constants.OPE_LT,
-                                      new JLocalVariableExpression(var),
-                                      new JIntLiteral(numspus));
-        JExpression incrExpr = 
-            new JPostfixExpression(Constants.OPE_POSTINC, 
-                                   new JLocalVariableExpression(var));
-        JStatement incr = new JExpressionStatement(incrExpr);
-        
-        JBlock body = new JBlock();
-        
-        JExpressionStatement expr = new JExpressionStatement(new JMethodCallExpression(
-                SPU_ISSUE_GROUP, new JExpression[]{
-                        new JLocalVariableExpression(var),
-                        new JIntLiteral(0),
-                        new JFieldAccessExpression(DATA_ADDR)}));
-        body.addStatement(expr);
-        
-        JForStatement forloop = new JForStatement(init, cond, incr, body);
-        addInitStatement(forloop);
-        
-        body = new JBlock();
-        JExpressionStatement wait = new JExpressionStatement(new JMethodCallExpression(
-                SPULIB_WAIT, new JExpression[]{
-                        new JLocalVariableExpression(var),
-                        new JEmittedTextExpression(WAIT_MASK)}));
-        body.addStatement(wait);
-        
-        addInitStatement(new JForStatement(init, cond, incr, body));
-    }
- 
     /**
      * Adds the appropriate fopen(...) call for the file reader
      * @param filterNode
@@ -1715,159 +1635,750 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
         return writeBlock;
     }
     
-    public void dynamic() {
-        JBlock block = new JBlock();
-        int numfilters = CellBackend.numfilters;
-        int numchannels = CellBackend.numchannels;
-        addField(new JFieldDeclaration(new JVariableDefinition(new CEmittedTextType("FILTER *"),"f")));
-        JVariableDefinition filters = new JVariableDefinition(
-                new CArrayType(new CEmittedTextType("FILTER"),1,new JExpression[]{new JIntLiteral(numfilters)}), "filters");
-        JFieldDeclaration field = new JFieldDeclaration(filters);
-        addField(field);
-        
-        JVariableDefinition channels = new JVariableDefinition(
-                new CArrayType(new CEmittedTextType("CHANNEL"),1,new JExpression[]{new JIntLiteral(numchannels)}), "channels");
-        field = new JFieldDeclaration(channels);
-        addField(field);
-        
-        JExpressionStatement spuinit = new JExpressionStatement(
-                new JMethodCallExpression(
-                        SPUINIT,
-                        new JExpression[]{}));
-        block.addStatement(spuinit);
-        
-        JExpressionStatement num_filters = new JExpressionStatement(
-                new JAssignmentExpression(new JFieldAccessExpression("num_filters"),
-                        new JIntLiteral(numfilters)));
-        block.addStatement(num_filters);
-        
-        JExpressionStatement num_channels = new JExpressionStatement(
-                new JAssignmentExpression(new JFieldAccessExpression("num_channels"),
-                        new JIntLiteral(numchannels)));
-        block.addStatement(num_channels);
-        
-        JExpressionStatement num_spu = new JExpressionStatement(
-                new JAssignmentExpression(new JFieldAccessExpression("num_spu"),
-                        new JIntLiteral(numspus)));
-        block.addStatement(num_spu);
-        
-        JVariableDefinition n = new JVariableDefinition(CStdType.Integer, N);
-        addField(new JFieldDeclaration(n));
-        block.addStatement(new JExpressionStatement(new JAssignmentExpression(new JFieldAccessExpression(N), new JIntLiteral(10000))));
-        
-        JForStatement channelbufsize;
+    /***************************************************************************
+     *                      Miscellaneous functions
+     ***************************************************************************
+     */
+    
+    public SliceNode getSliceNode() {
+        return slicenode;
+    }
+    
+    @Override
+    protected void addSteadyLoop() {
+        mainMethod.addStatement(steadyLoop);
+    }
+    
+    @Override
+    public void addInitFunctionCall(JMethodDeclaration init) {
+        //JMethodDeclaration init = filterInfo.filter.getInit();
+        if (init != null)
+            initfuncs.add(init);
+//            mainMethod.addStatementFirst
+//            (new JExpressionStatement(null,
+//                    new JMethodCallExpression(null, new JThisExpression(null),
+//                            init.getName(), new JExpression[0]),
+//                            null));
+        else
+            System.err.println(" ** Warning: Init function is null");
+
+    }
+    
+    public void addInitFunctions() {
+        JBlock initcalls = new JBlock();
+        for (JMethodDeclaration initfunc : initfuncs) {
+            initcalls.addStatement(new JExpressionStatement(null,
+                  new JMethodCallExpression(null, new JThisExpression(null),
+                      initfunc.getName(), new JExpression[0]),
+                      null));
+        }
+        addInitStatementFirst(initcalls);
+        //addMethod(new JMethodDeclaration(CStdType.Void, "__INIT_FUNC__", new JFormalParameter[0], initcalls));
+    }
+    
+    /**
+     * Add a group to print timing statistics after running is completed.
+     *
+     */
+    public void printStats() {
         // make init statement - assign zero to <var>.  We need to use
         // an expression list statement to follow the convention of
         // other for loops and to get the codegen right.
         JVariableDefinition var = new JVariableDefinition(CStdType.Integer, "i");
-        block.addStatement(new JVariableDeclarationStatement(var));
+        addCleanupStatement(new JVariableDeclarationStatement(var));
         
         JExpression initExpr[] = {
             new JAssignmentExpression(new JLocalVariableExpression(var),
-                                      new JIntLiteral(1)) };
+                                      new JIntLiteral(0)) };
         JStatement init = new JExpressionListStatement(initExpr);
         // make conditional - test if <var> less than <count>
         JExpression cond = 
             new JRelationalExpression(Constants.OPE_LT,
                                       new JLocalVariableExpression(var),
-                                      new JIntLiteral(numchannels - 1));
+                                      new JIntLiteral(numspus));
         JExpression incrExpr = 
             new JPostfixExpression(Constants.OPE_POSTINC, 
                                    new JLocalVariableExpression(var));
         JStatement incr = new JExpressionStatement(incrExpr);
         
         JBlock body = new JBlock();
-        body.addStatement(new JExpressionStatement(new JAssignmentExpression(
-                new JFieldAccessExpression(
-                        new JArrayAccessExpression(new JFieldAccessExpression("channels"), new JLocalVariableExpression(var)),
-                        "buf_size"),
-                new JIntLiteral(1024*1024)
-                )));
-        channelbufsize = new JForStatement(init, cond, incr, body);
-        block.addStatement(channelbufsize);
         
-        block.addStatement(new JExpressionStatement(new JAssignmentExpression(
-                new JFieldAccessExpression(
-                        new JArrayAccessExpression(new JFieldAccessExpression("channels"), new JIntLiteral(0)),
-                        "buf_size"),
-                new JMultExpression(new JIntLiteral(2048), new JFieldAccessExpression(N))
-                )));
-        block.addStatement(new JExpressionStatement(new JAssignmentExpression(
-                new JFieldAccessExpression(
-                        new JArrayAccessExpression(new JFieldAccessExpression("channels"), new JIntLiteral(numchannels - 1)),
-                        "buf_size"),
-                new JMultExpression(new JIntLiteral(2048), new JFieldAccessExpression(N))
-                )));
-        block.addStatement(new JExpressionStatement(new JAssignmentExpression(
-                new JFieldAccessExpression(
-                        new JArrayAccessExpression(new JFieldAccessExpression("channels"), new JIntLiteral(0)),
-                        "non_circular"),
-                new JEmittedTextExpression("TRUE")
-                )));
-        block.addStatement(new JExpressionStatement(new JAssignmentExpression(
-                new JFieldAccessExpression(
-                        new JArrayAccessExpression(new JFieldAccessExpression("channels"), new JIntLiteral(numchannels - 1)),
-                        "non_circular"),
-                new JEmittedTextExpression("TRUE")
-                )));
-        addInitStatementFirst(block);
+        body.addStatement(new JExpressionStatement(
+                new JAssignmentExpression(
+                        new JFieldAccessExpression(GROUP),
+                        new JMethodCallExpression(
+                                SPU_NEW_GROUP,
+                                new JExpression[]{new JLocalVariableExpression(var), new JIntLiteral(0)}))));
+        body.addStatement(new JExpressionStatement(
+                new JMethodCallExpression(
+                        "spu_stats_print",
+                        new JExpression[]{new JFieldAccessExpression(GROUP), new JIntLiteral(0), new JIntLiteral(0)})));
+        body.addStatement(new JExpressionStatement(
+                new JMethodCallExpression(
+                        SPU_ISSUE_GROUP,
+                        new JExpression[]{new JLocalVariableExpression(var), new JIntLiteral(0), new JIntLiteral(0)})));
         
-        addInitStatement(new JExpressionStatement(new JMethodCallExpression("ds_init", new JExpression[0])));
+        addCleanupStatement(new JForStatement(init, cond, incr, body));
         
-        addField(new JFieldDeclaration(new JVariableDefinition(new CEmittedTextType("FILE *"),"inf")));
-        addField(new JFieldDeclaration(new JVariableDefinition(new CEmittedTextType("FILE *"),"outf")));
-        addInitStatement(new JExpressionStatement(new JAssignmentExpression(
-                new JFieldAccessExpression("inf"),
-                new JMethodCallExpression("fopen", new JExpression[]{
-                        new JStringLiteral("ref/FFT5.in"),
-                        new JStringLiteral("r")
-                }))));
-        addInitStatement(new JExpressionStatement(new JAssignmentExpression(
-                new JFieldAccessExpression("outf"),
-                new JMethodCallExpression("fopen", new JExpression[]{
-                        new JStringLiteral("fft.out"),
-                        new JStringLiteral("w")
-                }))));
-        
-        addInitStatement(new JExpressionStatement(new JMethodCallExpression(
-                "safe_dec",
-                new JExpression[]{new JFieldAccessExpression(new JArrayAccessExpression(new JFieldAccessExpression("channels"),new JIntLiteral(0)),"free_bytes"),
-                        new JMultExpression(new JIntLiteral(2048), new JFieldAccessExpression(N))
-                })));
-        addInitStatement(new JExpressionStatement(new JMethodCallExpression(
-                "fread",
-                new JExpression[]{new JFieldAccessExpression(new JFieldAccessExpression(new JArrayAccessExpression(new JFieldAccessExpression("channels"),new JIntLiteral(0)),"buf"),"data"),
-                        new JMethodCallExpression("sizeof",new JExpression[]{new JEmittedTextExpression("float")}),
-                        new JMultExpression(new JIntLiteral(512), new JFieldAccessExpression(N)),
-                        new JFieldAccessExpression("inf")
-                })));
-        addInitStatement(new JExpressionStatement(new JMethodCallExpression(
-                "buf_inc_tail",
-                new JExpression[]{new JMethodCallExpression("&",new JExpression[]{new JFieldAccessExpression(new JArrayAccessExpression(new JFieldAccessExpression("channels"),new JIntLiteral(0)),"buf")}),
-                        new JMultExpression(new JIntLiteral(2048), new JFieldAccessExpression(N))
-                })));
-        addInitStatement(new JExpressionStatement(new JCompoundAssignmentExpression(
-                null, Constants.OPE_PLUS,
-                new JFieldAccessExpression(new JArrayAccessExpression(new JFieldAccessExpression("channels"),new JIntLiteral(0)),"used_bytes"),
-                new JMultExpression(new JIntLiteral(2048), new JFieldAccessExpression(N)))));
-        addInitStatement(new JExpressionStatement(new JPostfixExpression(
-                Constants.OPE_POSTDEC,
-                new JNameExpression(null, new JFieldAccessExpression(new JFieldAccessExpression(new JArrayAccessExpression(new JFieldAccessExpression("channels"),new JIntLiteral(0)),"input"),"f"), "incomplete_inputs")
-                )));
-        
-        addInitStatement(new JExpressionStatement(new JMethodCallExpression("ds_run", new JExpression[0])));
-        addInitStatement(new JExpressionStatement(new JMethodCallExpression(
-                "fwrite",
-                new JExpression[]{new JFieldAccessExpression(new JFieldAccessExpression(new JArrayAccessExpression(new JFieldAccessExpression("channels"),new JIntLiteral(15)),"buf"),"data"),
-                        new JMethodCallExpression("sizeof",new JExpression[]{new JEmittedTextExpression("float")}),
-                        new JMultExpression(new JIntLiteral(512), new JFieldAccessExpression(N)),
-                        new JFieldAccessExpression("outf")
-                })));
-        
-        addInitStatement(new JExpressionStatement(new JMethodCallExpression("fclose", new JExpression[]{new JFieldAccessExpression("inf")})));
-        addInitStatement(new JExpressionStatement(new JMethodCallExpression("fclose", new JExpression[]{new JFieldAccessExpression("outf")})));
+        body = new JBlock();
+        body.addStatement(new JExpressionStatement(
+                new JMethodCallExpression("spulib_wait",
+                        new JExpression[]{new JLocalVariableExpression(var), new JIntLiteral(1)})));
+        addCleanupStatement(new JForStatement(init, cond, incr, body));
+
     }
     
+    /**
+     * Add callback function
+     *
+     */
+    public void addCallBackFunction() {
+        JFormalParameter tag = new JFormalParameter(new CEmittedTextType(UINT32_T), "tag");
+        JBlock body = new JBlock();
+        body.addStatement(new JExpressionStatement(new JPostfixExpression(Constants.OPE_POSTDEC, new JFieldAccessExpression(DONE))));
+        JMethodDeclaration cb = new JMethodDeclaration(CStdType.Void, CB, new JFormalParameter[]{tag}, body);
+        addMethod(cb);
+        newline();
+    }
+    
+    /***************************************************************************
+     *                          Util functions
+     ***************************************************************************
+     */
+    
+    /**
+     * Insert a new line.
+     */
+    public void newline() {
+        addInitStatement(new JExpressionStatement(new JEmittedTextExpression("")));
+    }
+    
+    /**
+     * Return the number of inputs to this slicenode.
+     * 
+     * @param sliceNode
+     * @return
+     */
+    private static int getNumInputs(SliceNode sliceNode) {
+        int inputs;
+        if (sliceNode.isInputSlice()) {
+            inputs = sliceNode.getAsInput().getWidth();
+        }
+        else {
+            inputs = 1;
+        }
+        return inputs;
+    }
+    
+    /**
+     * Return the number of outputs of this slicenode.
+     * 
+     * @param sliceNode
+     * @return
+     */
+    private static int getNumOutputs(SliceNode sliceNode) {
+        int outputs;
+        if (sliceNode.isInputSlice()) {
+            outputs = 1;
+        }
+        else if (sliceNode.isFilterSlice()){
+            if (sliceNode.getParent().getTail().isSplitter())
+                outputs = 1;
+            else outputs = sliceNode.getParent().getTail().getWidth();
+        }
+        else {
+            if (sliceNode.getAsOutput().isDuplicateSplitter())
+                outputs = 1;
+            else outputs = sliceNode.getAsOutput().getWidth();
+        }
+        return outputs;
+    }
+    
+    /**
+     * Return the name of this slicenode. If it's a splitter or joiner, prepend
+     * "splitter_" or "joiner_" to the name.
+     * 
+     * @param sliceNode
+     * @return
+     */
+    private static String getFilterName(SliceNode sliceNode) {
+        String basename = 
+            sliceNode.getParent().getFilterNodes().get(0).getFilter().getName();
+        if (sliceNode.isFilterSlice())
+            return basename;
+        else if (sliceNode.isInputSlice())
+            return "joiner_" + basename;
+        else return "splitter_" + basename;
+    }
+    
+    @Deprecated
+    private Integer getIdForSlice(Slice slice) {
+        Integer newId = sliceIdMap.get(slice);
+        if (newId == null) {
+            newId = id;
+            sliceIdMap.put(slice, newId);
+            id++;
+        }
+        return newId;
+    }
+    
+//    public class Buffer {
+//        public final String name;
+//        public final int index;
+//        
+//        public Buffer(String name, int index) {
+//            this.name = name;
+//            this.index = index;
+//        }
+//        
+//        public String toString() {
+//            return name + "[" + index + "]";
+//        }
+//    }
+    
+    private static final String SPU_ADDRESS = "SPU_ADDRESS";
+    private static final String SPU_CMD_GROUP = "SPU_CMD_GROUP *";
+    private static final String LS_ADDRESS = "LS_ADDRESS";
+    private static final String WFA = "wf";
+    private static final String INIT_WFA = "init_wf";
+    private static final String WFA_PREFIX = "wf_";
+    private static final String INIT_FUNC = "initfunc";
+    private static final String INIT_FUNC_PREFIX = "init_";
+    private static final String SPU_FILTER_DESC = "SPU_FILTER_DESC";
+    private static final String SPU_FD = "fd";
+    private static final String SPU_FD_WORK_FUNC = "work_func";
+    private static final String SPU_FD_STATE_SIZE = "state_size";
+    private static final String SPU_FD_NUM_INPUTS = "num_inputs";
+    private static final String SPU_FD_NUM_OUTPUTS = "num_outputs";
+    private static final String GROUP = "g";
+    private static final String SPU_NEW_GROUP = "spu_new_group";
+    private static final String SPU_ISSUE_GROUP = "spu_issue_group";
+    private static final String SPU_FILTER_LOAD = "spu_filter_load";
+    private static final String SPU_FILTER_UNLOAD = "spu_filter_unload";
+    private static final String SPU_FILTER_ATTACH_INPUT = "spu_filter_attach_input";
+    private static final String SPU_FILTER_ATTACH_OUTPUT = "spu_filter_attach_output";
+    private static final String SPU_BUFFER_ALLOC = "spu_buffer_alloc";
+    private static final String SPU_CALL_FUNC = "spu_call_func";
+    private static final String INPUT_BUFFER_ADDR = "iba";
+    private static final String INPUT_BUFFER_SIZE = "ibs";
+    private static final String OUTPUT_BUFFER_ADDR = "oba";
+    private static final String OUTPUT_BUFFER_SIZE = "obs";
+    private static final String PPU_INPUT_BUFFER_SIZE = "pibs";
+    private static final String PPU_INPUT_BUFFER_CB = "picb";
+    private static final String PPU_OUTPUT_BUFFER_SIZE = "pobs";
+    private static final String PPU_OUTPUT_BUFFER_CB = "pocb";
+    private static final String DATA_ADDR = "da";
+    private static final String FCB = "fcb";
+    private static final String CB = "cb";
+    private static final String SPUINIT = "spuinit";
+    private static final String SPULIB_INIT = "spulib_init";
+    private static final String SPULIB_WAIT = "spulib_wait";
+    private static final String RUNSPERITER = "runsperiter";
+    private static final String ITERS = "iters";
+    private static final String SPUITERS = "spuiters";
+    private static final String OUTSPUITEMS = "outspuitems";
+    private static final String FILE_READER = "file_reader";
+    private static final String FILE_WRITER = "file_writer";
+    
+    private static final String UINT32_T = "uint32_t";
+    private static final String TICKS = "ticks";
+    private static final String START = "start";
+    private static final String STARTSPU = "startspu";
+    private static final String PRINTF = "printf";
+    
+    private static final String N = "n", DONE = "done";
+    
+    private static final int FILLER = 128;
+    private static final int FCB_SIZE = 128;
+    private static final int BUFFER_OFFSET = 0;
+    private static final int NO_DEPS = 0;
+    private static final String WAIT_MASK = "0x3f";
+
+    
+    
+
+    @Deprecated
+    public void startNewFilter(InputSliceNode inputNode) {
+        Integer id = getIdForSlice(inputNode.getParent());
+        String fd = idToFd(id);
+        
+        JExpressionStatement newline = new JExpressionStatement(new JEmittedTextExpression(""));
+        addInitStatement(newline);
+        JExpressionStatement newFilter = new JExpressionStatement(new JEmittedTextExpression("// set up code for filter " + id));
+        addInitStatement(newFilter);
+    }
+    
+    @Deprecated
+    public void addNewGroupStatement() {
+
+        JForStatement newgroup;
+        // make init statement - assign zero to <var>.  We need to use
+        // an expression list statement to follow the convention of
+        // other for loops and to get the codegen right.
+        JVariableDefinition var = new JVariableDefinition(CStdType.Integer, "i");
+        
+        JExpression initExpr[] = {
+            new JAssignmentExpression(new JLocalVariableExpression(var),
+                                      new JIntLiteral(0)) };
+        JStatement init = new JExpressionListStatement(initExpr);
+        // make conditional - test if <var> less than <count>
+        JExpression cond = 
+            new JRelationalExpression(Constants.OPE_LT,
+                                      new JLocalVariableExpression(var),
+                                      new JIntLiteral(numspus));
+        JExpression incrExpr = 
+            new JPostfixExpression(Constants.OPE_POSTINC, 
+                                   new JLocalVariableExpression(var));
+        JStatement incr = new JExpressionStatement(incrExpr);
+        
+        JBlock body = new JBlock();
+        
+        JExpressionStatement newGroup = new JExpressionStatement(new JAssignmentExpression(
+                new JEmittedTextExpression(GROUP),
+                new JMethodCallExpression(SPU_NEW_GROUP,new JExpression[]{new JLocalVariableExpression(var), new JIntLiteral(0)})));
+        
+        body.addStatement(newGroup);
+        
+        JExpressionStatement filterLoad = new JExpressionStatement(new JMethodCallExpression(
+                SPU_FILTER_LOAD,
+                new JExpression[]{
+                        new JFieldAccessExpression(GROUP),
+                        new JFieldAccessExpression(FCB),
+                        new JMethodCallExpression("&",new JExpression[]{new JArrayAccessExpression(new JFieldAccessExpression(SPU_FD),new JLocalVariableExpression(var))}),
+                        new JIntLiteral(0),
+                        new JIntLiteral(NO_DEPS)
+                }));
+        body.addStatement(filterLoad);
+        
+        int cmdId = 1;
+        String buffaddr = INPUT_BUFFER_ADDR;
+        String buffsize = INPUT_BUFFER_SIZE;
+        JExpressionStatement bufferAlloc = new JExpressionStatement(new JMethodCallExpression(
+                SPU_BUFFER_ALLOC, new JExpression[]{
+                        new JFieldAccessExpression(GROUP), new JFieldAccessExpression(buffaddr), new JFieldAccessExpression(buffsize),
+                        new JIntLiteral(BUFFER_OFFSET), new JIntLiteral(cmdId), new JIntLiteral(NO_DEPS)}));
+        body.addStatement(bufferAlloc);
+        JExpressionStatement attachBuffer = new JExpressionStatement(new JMethodCallExpression(
+                SPU_FILTER_ATTACH_INPUT, new JExpression[]{
+                        new JFieldAccessExpression(GROUP),
+                        new JFieldAccessExpression(FCB),
+                        new JIntLiteral(0),
+                        new JFieldAccessExpression(buffaddr),
+                        new JIntLiteral(cmdId + 1),
+                        new JIntLiteral(2),
+                        new JIntLiteral(0),
+                        new JIntLiteral(cmdId)
+                }));
+        body.addStatement(attachBuffer);
+        
+        cmdId = 3;
+        buffaddr = OUTPUT_BUFFER_ADDR;
+        buffsize = OUTPUT_BUFFER_SIZE;
+        bufferAlloc = new JExpressionStatement(new JMethodCallExpression(
+                SPU_BUFFER_ALLOC, new JExpression[]{
+                        new JFieldAccessExpression(GROUP), new JFieldAccessExpression(buffaddr), new JFieldAccessExpression(buffsize),
+                        new JIntLiteral(BUFFER_OFFSET), new JIntLiteral(cmdId), new JIntLiteral(NO_DEPS)}));
+        body.addStatement(bufferAlloc);
+        attachBuffer = new JExpressionStatement(new JMethodCallExpression(
+                SPU_FILTER_ATTACH_OUTPUT, new JExpression[]{
+                        new JFieldAccessExpression(GROUP),
+                        new JFieldAccessExpression(FCB),
+                        new JIntLiteral(0),
+                        new JEmittedTextExpression(buffaddr),
+                        new JIntLiteral(cmdId + 1),
+                        new JIntLiteral(2),
+                        new JIntLiteral(0),
+                        new JIntLiteral(cmdId)
+                }));
+        body.addStatement(attachBuffer);
+        
+        cmdId = 5;
+        body.addStatement(new JExpressionStatement(new JMethodCallExpression(
+                SPU_CALL_FUNC, new JExpression[]{
+                        new JFieldAccessExpression(GROUP),
+                        new JArrayAccessExpression(new JFieldAccessExpression(INIT_FUNC),new JLocalVariableExpression(var)),
+                        new JIntLiteral(cmdId),
+                        new JIntLiteral(2),
+                        new JIntLiteral(cmdId - 1),
+                        new JIntLiteral(cmdId - 3)
+                })));
+        
+        newGroup = new JExpressionStatement(new JAssignmentExpression(
+                new JFieldAccessExpression(GROUP),
+                new JMethodCallExpression(SPU_NEW_GROUP,new JExpression[]{new JLocalVariableExpression(var), new JIntLiteral(1)})));
+        body.addStatement(newGroup);
+        
+        JExpressionStatement filterUnload = new JExpressionStatement(new JMethodCallExpression(
+                SPU_FILTER_UNLOAD, new JExpression[]{
+                        new JFieldAccessExpression(GROUP),
+                        new JFieldAccessExpression(FCB),
+                        new JIntLiteral(0),
+                        new JIntLiteral(NO_DEPS)
+                }));
+        body.addStatement(filterUnload);
+        
+        JForStatement forloop = new JForStatement(init, cond, incr, body);
+        
+        addInitStatement(forloop);
+    }
+    
+    @Deprecated
+    public void addNewGroupAndFilterUnload(OutputSliceNode outputNode) {
+        Integer id = getIdForSlice(outputNode.getParent());
+        String group = GROUP;
+        
+        JExpressionStatement newGroup = new JExpressionStatement(new JAssignmentExpression(
+                new JEmittedTextExpression(group),
+                new JMethodCallExpression(SPU_NEW_GROUP,new JExpression[]{new JIntLiteral(id), new JIntLiteral(1)})));
+        addInitStatement(newGroup);
+        
+        JExpressionStatement filterUnload = new JExpressionStatement(new JMethodCallExpression(
+                SPU_FILTER_UNLOAD, new JExpression[]{
+                        new JEmittedTextExpression(group),
+                        new JFieldAccessExpression(FCB),
+                        new JIntLiteral(0),
+                        new JIntLiteral(NO_DEPS)
+                }));
+        addInitStatement(filterUnload);
+    }
+    
+    @Deprecated
+    public void addInputBufferAllocAttach(InputSliceNode inputNode) {
+        Integer id = getIdForSlice(inputNode.getParent());
+        String group = GROUP;
+        
+        int cmdId = 1;
+        for (int i=0; i<inputNode.getWidth(); i++) {
+            String buffaddr = INPUT_BUFFER_ADDR + id + "_" + i;
+            String buffsize = INPUT_BUFFER_SIZE;
+            JExpressionStatement bufferAlloc = new JExpressionStatement(new JMethodCallExpression(
+                    SPU_BUFFER_ALLOC, new JExpression[]{
+                            new JEmittedTextExpression(group), new JEmittedTextExpression(buffaddr), new JFieldAccessExpression(buffsize),
+                            new JIntLiteral(BUFFER_OFFSET), new JIntLiteral(cmdId), new JIntLiteral(NO_DEPS)}));
+            addInitStatement(bufferAlloc);
+            JExpressionStatement attachBuffer = new JExpressionStatement(new JMethodCallExpression(
+                    SPU_FILTER_ATTACH_INPUT, new JExpression[]{
+                            new JEmittedTextExpression(group),
+                            new JFieldAccessExpression(FCB),
+                            new JIntLiteral(i),
+                            new JEmittedTextExpression(buffaddr),
+                            new JIntLiteral(cmdId + inputNode.getWidth()),
+                            new JIntLiteral(2),
+                            new JIntLiteral(0),
+                            new JIntLiteral(cmdId)
+                    }));
+            addInitStatement(attachBuffer);
+            cmdId++;
+        }   
+    }
+    
+    @Deprecated
+    public void addOutputBufferAllocAttach(OutputSliceNode outputNode) {
+        Integer id = getIdForSlice(outputNode.getParent());
+        String group = GROUP;
+        
+        int cmdId = 2*outputNode.getParent().getHead().getWidth() + 1;
+        for (int i=0; i<outputNode.getWidth(); i++) {
+            String buffaddr = OUTPUT_BUFFER_ADDR + id + "_" + i;
+            String buffsize = OUTPUT_BUFFER_SIZE;
+            JExpressionStatement bufferAlloc = new JExpressionStatement(new JMethodCallExpression(
+                    SPU_BUFFER_ALLOC, new JExpression[]{
+                            new JEmittedTextExpression(group), new JEmittedTextExpression(buffaddr), new JFieldAccessExpression(buffsize),
+                            new JIntLiteral(BUFFER_OFFSET), new JIntLiteral(cmdId), new JIntLiteral(NO_DEPS)}));
+            addInitStatement(bufferAlloc);
+            JExpressionStatement attachBuffer = new JExpressionStatement(new JMethodCallExpression(
+                    SPU_FILTER_ATTACH_OUTPUT, new JExpression[]{
+                            new JEmittedTextExpression(group),
+                            new JFieldAccessExpression(FCB),
+                            new JIntLiteral(i),
+                            new JEmittedTextExpression(buffaddr),
+                            new JIntLiteral(cmdId + outputNode.getWidth()),
+                            new JIntLiteral(2),
+                            new JIntLiteral(0),
+                            new JIntLiteral(cmdId)
+                    }));
+            addInitStatement(attachBuffer);
+            cmdId++;
+        }   
+    }
+    
+    @Deprecated
+    public void addIssueGroupAndWait() {
+        // make init statement - assign zero to <var>.  We need to use
+        // an expression list statement to follow the convention of
+        // other for loops and to get the codegen right.
+        JVariableDefinition var = new JVariableDefinition(CStdType.Integer, "i");
+        
+        JExpression initExpr[] = {
+            new JAssignmentExpression(new JLocalVariableExpression(var),
+                                      new JIntLiteral(0)) };
+        JStatement init = new JExpressionListStatement(initExpr);
+        // make conditional - test if <var> less than <count>
+        JExpression cond = 
+            new JRelationalExpression(Constants.OPE_LT,
+                                      new JLocalVariableExpression(var),
+                                      new JIntLiteral(numspus));
+        JExpression incrExpr = 
+            new JPostfixExpression(Constants.OPE_POSTINC, 
+                                   new JLocalVariableExpression(var));
+        JStatement incr = new JExpressionStatement(incrExpr);
+        
+        JBlock body = new JBlock();
+        
+        JExpressionStatement expr = new JExpressionStatement(new JMethodCallExpression(
+                SPU_ISSUE_GROUP, new JExpression[]{
+                        new JLocalVariableExpression(var),
+                        new JIntLiteral(0),
+                        new JFieldAccessExpression(DATA_ADDR)}));
+        body.addStatement(expr);
+        
+        JForStatement forloop = new JForStatement(init, cond, incr, body);
+        addInitStatement(forloop);
+        
+        body = new JBlock();
+        JExpressionStatement wait = new JExpressionStatement(new JMethodCallExpression(
+                SPULIB_WAIT, new JExpression[]{
+                        new JLocalVariableExpression(var),
+                        new JEmittedTextExpression(WAIT_MASK)}));
+        body.addStatement(wait);
+        
+        addInitStatement(new JForStatement(init, cond, incr, body));
+    }
+    
+    @Deprecated
+    public static String idToFd(Integer id) {
+        return SPU_FD + id;
+    }
+    
+    @Deprecated
+    public void addFilterLoad(InputSliceNode inputNode) {
+        Integer id = getIdForSlice(inputNode.getParent());
+        String fd = idToFd(id);
+        String group = GROUP + id;
+        JExpressionStatement filterLoad = new JExpressionStatement(new JMethodCallExpression(
+                SPU_FILTER_LOAD,
+                new JExpression[]{
+                        new JFieldAccessExpression(group),
+                        new JFieldAccessExpression(FCB),
+                        new JEmittedTextExpression("&" + fd),
+                        new JIntLiteral(0),
+                        new JIntLiteral(NO_DEPS)
+                }));
+        addInitStatement(filterLoad);
+    }
+    
+    /**
+     * Add init function address field: 
+     * 
+     * LS_ADDRESS init_[i];
+     */
+    @Deprecated
+    public void addInitFunctionAddressField() {
+        JVariableDefinition initfunc = new JVariableDefinition(
+                new CArrayType(new CEmittedTextType(LS_ADDRESS),
+                        1,
+                        new JExpression[]{new JIntLiteral(CellBackend.numfilters)}),
+                INIT_FUNC);
+        JFieldDeclaration field = new JFieldDeclaration(initfunc);
+        addField(field);
+    }
+
+    @Deprecated
+    public void addInitFunctionAddresses(FilterSliceNode filterNode) {
+        int filterId = CellBackend.filterIdMap.get(filterNode);
+        addInitStatement(new JExpressionStatement(new JAssignmentExpression(
+                new JArrayAccessExpression(new JFieldAccessExpression(INIT_FUNC),new JIntLiteral(filterId)),
+                new JMethodCallExpression("&",new JExpression[]{new JEmittedTextExpression(INIT_FUNC_PREFIX+filterNode.getFilter().getName())}))));
+    }
+    @Deprecated
+    public void addIssueUnload() {
+        
+        JForStatement unload;
+        // make init statement - assign zero to <var>.  We need to use
+        // an expression list statement to follow the convention of
+        // other for loops and to get the codegen right.
+        JVariableDefinition var = new JVariableDefinition(CStdType.Integer, "i");
+        
+        JExpression initExpr[] = {
+            new JAssignmentExpression(new JLocalVariableExpression(var),
+                                      new JIntLiteral(0)) };
+        JStatement init = new JExpressionListStatement(initExpr);
+        // make conditional - test if <var> less than <count>
+        JExpression cond = 
+            new JRelationalExpression(Constants.OPE_LT,
+                                      new JLocalVariableExpression(var),
+                                      new JIntLiteral(numspus));
+        JExpression incrExpr = 
+            new JPostfixExpression(Constants.OPE_POSTINC, 
+                                   new JLocalVariableExpression(var));
+        JStatement incr = new JExpressionStatement(incrExpr);
+        
+        JBlock body = new JBlock();
+        
+        body.addStatement(new JExpressionStatement(
+                new JMethodCallExpression("spu_issue_group",
+                        new JExpression[]{new JLocalVariableExpression(var), new JIntLiteral(1), new JFieldAccessExpression(DATA_ADDR)})));
+
+        addInitStatement(new JForStatement(init, cond, incr, body));
+        
+        body = new JBlock();
+        body.addStatement(new JExpressionStatement(
+                new JMethodCallExpression("spulib_wait",
+                        new JExpression[]{new JLocalVariableExpression(var), new JIntLiteral(1)})));
+        addInitStatement(new JForStatement(init, cond, incr, body));
+    }
+    
+    @Deprecated
+    public void addStartSpuTicks() {
+        addInitStatement(new JExpressionStatement(new JAssignmentExpression(new JFieldAccessExpression(STARTSPU), new JMethodCallExpression(TICKS, new JExpression[0]))));
+    }
+    
+    @Deprecated
+    public void addPrintTicks() {
+        addInitStatement(new JExpressionStatement(new JMethodCallExpression(PRINTF,
+                new JExpression[]{new JStringLiteral("spu time: %d ms\\n"),
+                new JMinusExpression(null, new JMethodCallExpression(TICKS, new JExpression[0]), new JFieldAccessExpression(STARTSPU))})));
+        addInitStatement(new JExpressionStatement(new JMethodCallExpression(PRINTF,
+                new JExpression[]{new JStringLiteral("time: %d ms\\n"),
+                new JMinusExpression(null, new JMethodCallExpression(TICKS, new JExpression[0]), new JFieldAccessExpression(START))})));
+        
+    }
+
+    @Deprecated
+    public void initDuplicateOutputChannelArray(int filterId) {
+        addField(new JFieldDeclaration(new JVariableDefinition(
+                new CArrayType(new CEmittedTextType("BUFFER_CB *"),
+                        1,
+                        new JExpression[]{new JIntLiteral(1)}),
+                        "output_" + filterId)));
+    }
+    
+    @Deprecated
+    public void initChannelArrays(FilterSliceNode filterNode,
+            LinkedList<Integer> inputnums, LinkedList<Integer> outputnums) {
+        InputSliceNode input = filterNode.getParent().getHead();
+        OutputSliceNode output = filterNode.getParent().getTail();
+        //initInputChannelArray(input, inputnums);
+        //initOutputChannelArray(output, outputnums);
+    }
+
+    @Deprecated
+    public void addPPUInputBuffers(String inputName) {
+        addInitStatement(new JExpressionStatement(
+                new JMethodCallExpression(
+                        "init_buffer",
+                        new JExpression[]{
+                                new JMethodCallExpression("&",new JExpression[]{new JFieldAccessExpression(inputName)}),
+                                new JEmittedTextExpression("NULL"),
+                                new JFieldAccessExpression(PPU_INPUT_BUFFER_SIZE),
+                                new JEmittedTextExpression("FALSE"),
+                                new JIntLiteral(0)})));
+        newline();
+    }
+    
+    @Deprecated
+    public void addPPUOutputBuffers(String outputName) {
+        addInitStatement(new JExpressionStatement(
+                new JMethodCallExpression(
+                        "init_buffer",
+                        new JExpression[]{
+                                new JMethodCallExpression("&",new JExpression[]{new JFieldAccessExpression(outputName)}),
+                                new JEmittedTextExpression("NULL"),
+                                new JFieldAccessExpression(PPU_OUTPUT_BUFFER_SIZE),
+                                new JEmittedTextExpression("FALSE"),
+                                new JIntLiteral(0)})));
+    }
+    
+//    public boolean inputBuffersSet(InputSliceNode inputNode) {
+//        for (InterSliceEdge e : inputNode.getSourceList()) {
+//            InterSliceEdge f = CellBackend.getEdgeBetween(e.getSrc(), inputNode);
+//            if (!readyInputs.contains(o))
+//        }
+//    }
+    
+//    public boolean lookupInputBuffers(InputSliceNode inputNode) {
+//        String filtername = inputNode.getNextFilter().getFilter().getName();
+////        addField(new JFieldDeclaration(new JVariableDefinition(
+////                new CArrayType(new CEmittedTextType("BUFFER_CB"),
+////                               1,
+////                               new JExpression[]{new JIntLiteral(inputNode.getWidth())}),
+////                               "input_" + filtername)));
+//        int i=0;
+//        for (InterSliceEdge e : inputNode.getSourceSequence()) {
+//            InterSliceEdge f = CellBackend.getEdgeBetween(e.getSrc(), inputNode);
+//            if (!CellBackend.readyInputs.containsKey(f)) {
+//                System.out.println("no input ready for " + filtername + f);
+//                return false;
+//            }
+//            Buffer b = CellBackend.readyInputs.get(f);
+//            int index;
+//            if (f.getSrc().isDuplicateSplitter()) {
+//                index = 0;
+//            } else {
+//                index = b.index;
+//            }
+//            addInitStatement(new JExpressionStatement(new JMethodCallExpression(
+//                    "duplicate_buffer",
+//                    new JExpression[]{
+//                        new JMethodCallExpression(
+//                                "&",
+//                                new JExpression[]{
+//                                    new JArrayAccessExpression(
+//                                        new JFieldAccessExpression("input_"+filtername),
+//                                        new JIntLiteral(i))}),
+//                        new JMethodCallExpression(
+//                                "&",
+//                                new JExpression[]{
+//                                    new JArrayAccessExpression(
+//                                        new JFieldAccessExpression(b.name),
+//                                        new JIntLiteral(index))})})));
+//            addInitStatement(new JExpressionStatement(new JMethodCallExpression(
+//                    "buf_set_head",
+//                    new JExpression[]{
+//                            new JMethodCallExpression(
+//                                "&",
+//                                new JExpression[]{
+//                                    new JArrayAccessExpression(
+//                                        new JFieldAccessExpression("input_"+filtername),
+//                                        new JIntLiteral(i))}),
+//                            new JIntLiteral(0)})));
+//            i++;
+//        }
+//        if (inputNode.getSources().length > 0) {
+//            addPPUInputBuffers("input_" + filtername);
+//        }
+//        return true;
+//    }
+    
+    @Deprecated
+    public void initOutputBufferFields(InputSliceNode inputNode) {
+        OutputSliceNode outputNode = inputNode.getParent().getTail();
+        String filtername = inputNode.getNextFilter().getFilter().getName();
+        int outputs;
+        if (outputNode.isDuplicateSplitter())
+            outputs = 1;
+        else outputs = outputNode.getWidth();
+        addField(new JFieldDeclaration(new JVariableDefinition(
+                new CArrayType(new CEmittedTextType("BUFFER_CB"),
+                               1,
+                               new JExpression[]{new JIntLiteral(outputs)}),
+                               "output_" + filtername)));
+        if(outputNode.getWidth() > 0)
+            addPPUOutputBuffers("output_" + filtername);
+    }
+    
+//    public void addReadyBuffers(OutputSliceNode outputNode) {
+//        String filtername = outputNode.getPrevFilter().getFilter().getName();
+//        int i=0;
+//        for (InterSliceEdge e : outputNode.getDestSequence()) {
+//            Buffer b = new Buffer("output_" + filtername, i);
+//            CellBackend.readyInputs.put(e, b);
+//            System.out.println("adding buffer: " + e + "\n" + b + "\n" + e.getDest().getNextFilter().getFilter().getName());
+//            i++;
+//        }
+//    }
+    
+    @Deprecated
     public void dynSetupFilter(FilterSliceNode filterNode, int filternum,
             int inputs, int outputs,
             ArrayList<Integer> inputnums, ArrayList<Integer> outputnums) {
@@ -1941,166 +2452,5 @@ public class CellComputeCodeStore extends ComputeCodeStore<CellPU> {
         
         
     }
-    
-    public void printStats() {
-        JForStatement printStats;
-        // make init statement - assign zero to <var>.  We need to use
-        // an expression list statement to follow the convention of
-        // other for loops and to get the codegen right.
-        JVariableDefinition var = new JVariableDefinition(CStdType.Integer, "i");
-        addCleanupStatement(new JVariableDeclarationStatement(var));
-        
-        JExpression initExpr[] = {
-            new JAssignmentExpression(new JLocalVariableExpression(var),
-                                      new JIntLiteral(0)) };
-        JStatement init = new JExpressionListStatement(initExpr);
-        // make conditional - test if <var> less than <count>
-        JExpression cond = 
-            new JRelationalExpression(Constants.OPE_LT,
-                                      new JLocalVariableExpression(var),
-                                      new JIntLiteral(numspus));
-        JExpression incrExpr = 
-            new JPostfixExpression(Constants.OPE_POSTINC, 
-                                   new JLocalVariableExpression(var));
-        JStatement incr = new JExpressionStatement(incrExpr);
-        
-        JBlock body = new JBlock();
-        
-        body.addStatement(new JExpressionStatement(
-                new JAssignmentExpression(
-                        new JFieldAccessExpression(GROUP),
-                        new JMethodCallExpression(
-                                SPU_NEW_GROUP,
-                                new JExpression[]{new JLocalVariableExpression(var), new JIntLiteral(0)}))));
-        body.addStatement(new JExpressionStatement(
-                new JMethodCallExpression(
-                        "spu_stats_print",
-                        new JExpression[]{new JFieldAccessExpression(GROUP), new JIntLiteral(0), new JIntLiteral(0)})));
-        body.addStatement(new JExpressionStatement(
-                new JMethodCallExpression(
-                        SPU_ISSUE_GROUP,
-                        new JExpression[]{new JLocalVariableExpression(var), new JIntLiteral(0), new JIntLiteral(0)})));
-        
-        addCleanupStatement(new JForStatement(init, cond, incr, body));
-        
-        body = new JBlock();
-        body.addStatement(new JExpressionStatement(
-                new JMethodCallExpression("spulib_wait",
-                        new JExpression[]{new JLocalVariableExpression(var), new JIntLiteral(1)})));
-        addCleanupStatement(new JForStatement(init, cond, incr, body));
 
-    }
-    
-    public void newline() {
-        addInitStatement(new JExpressionStatement(new JEmittedTextExpression("")));
-    }
-    
-    public static String idToFd(Integer id) {
-        return SPU_FD + id;
-    }
-    
-    private Integer getIdForSlice(Slice slice) {
-        Integer newId = sliceIdMap.get(slice);
-        if (newId == null) {
-            newId = id;
-            sliceIdMap.put(slice, newId);
-            id++;
-        }
-        return newId;
-    }
-    
-    public class Buffer {
-        public final String name;
-        public final int index;
-        
-        public Buffer(String name, int index) {
-            this.name = name;
-            this.index = index;
-        }
-        
-        public String toString() {
-            return name + "[" + index + "]";
-        }
-    }
-    
-    private static final String SPU_ADDRESS = "SPU_ADDRESS";
-    private static final String SPU_CMD_GROUP = "SPU_CMD_GROUP *";
-    private static final String LS_ADDRESS = "LS_ADDRESS";
-    private static final String WFA = "wf";
-    private static final String INIT_WFA = "init_wf";
-    private static final String WFA_PREFIX = "wf_";
-    private static final String INIT_FUNC = "initfunc";
-    private static final String INIT_FUNC_PREFIX = "init_";
-    private static final String SPU_DATA_START = "spu_data_start";
-    private static final String SPU_DATA_SIZE = "spu_data_size";
-    private static final String SPU_FILTER_DESC = "SPU_FILTER_DESC";
-    private static final String SPU_FD = "fd";
-    private static final String INIT_SPU_FD = "init_fd";
-    private static final String SPU_FD_WORK_FUNC = "work_func";
-    private static final String SPU_FD_STATE_SIZE = "state_size";
-    private static final String SPU_FD_STATE_ADDR = "state_addr";
-    private static final String SPU_FD_NUM_INPUTS = "num_inputs";
-    private static final String SPU_FD_NUM_OUTPUTS = "num_outputs";
-    private static final String GROUP = "g";
-    private static final String SPU_NEW_GROUP = "spu_new_group";
-    private static final String SPU_ISSUE_GROUP = "spu_issue_group";
-    private static final String SPU_FILTER_LOAD = "spu_filter_load";
-    private static final String SPU_FILTER_UNLOAD = "spu_filter_unload";
-    private static final String SPU_FILTER_ATTACH_INPUT = "spu_filter_attach_input";
-    private static final String SPU_FILTER_ATTACH_OUTPUT = "spu_filter_attach_output";
-    private static final String SPU_BUFFER_ALLOC = "spu_buffer_alloc";
-    private static final String SPU_CALL_FUNC = "spu_call_func";
-    private static final String INPUT_BUFFER_ADDR = "iba";
-    private static final String INPUT_BUFFER_SIZE = "ibs";
-    private static final String OUTPUT_BUFFER_ADDR = "oba";
-    private static final String OUTPUT_BUFFER_SIZE = "obs";
-    private static final String PPU_INPUT_BUFFER_ADDR = "piba";
-    private static final String PPU_INPUT_BUFFER_SIZE = "pibs";
-    private static final String PPU_INPUT_BUFFER_CB = "picb";
-    private static final String PPU_OUTPUT_BUFFER_ADDR = "poba";
-    private static final String PPU_OUTPUT_BUFFER_SIZE = "pobs";
-    private static final String PPU_OUTPUT_BUFFER_CB = "pocb";
-    private static final String DATA_ADDR = "da";
-    private static final String FCB = "fcb";
-    private static final String CB = "cb";
-    private static final String LS_SIZE = "LS_SIZE";
-    private static final String CACHE_SIZE = "CACHE_SIZE";
-    private static final String SPUINIT = "spuinit";
-    private static final String SPULIB_INIT = "spulib_init";
-    private static final String SPULIB_WAIT = "spulib_wait";
-    private static final String ALLOC_BUFFER = "alloc_buffer";
-    private static final String BUF_GET_CB = "buf_get_cb";
-    private static final String INDTSZPERITER = "indtszperiter";
-    private static final String OUTDTSZPERITER = "outdtszperiter";
-    private static final String RUNSPERITER = "runsperiter";
-    private static final String ITERS = "iters";
-    private static final String SPUITERS = "spuiters";
-    private static final String INSPUITEMS = "inspuitems";
-    private static final String OUTSPUITEMS = "outspuitems";
-    private static final String FILE_READER = "file_reader";
-    private static final String FILE_WRITER = "file_writer";
-    private static final String CALL_FUNC = "CALL_FUNC";
-    private static final String BEGIN_FUNC = "BEGIN_FUNC";
-    private static final String END_FUNC = "END_FUNC";
-    
-    private static final String UINT32_T = "uint32_t";
-    private static final String PLUS = " + ";
-    private static final String MINUS = " - ";
-    private static final String INCLUDE = "#include";
-    private static final String ROUND_UP = "ROUND_UP";
-    private static final String INIT_TICKS = "init_ticks";
-    private static final String TICKS = "ticks";
-    private static final String START = "start";
-    private static final String STARTSPU = "startspu";
-    private static final String PRINTF = "printf";
-    
-    private static final String N = "n", ND = "nd", DONE = "done";
-    
-    private static final int SPU_RESERVE_SIZE = 4096;
-    private static final int FILLER = 128;
-    private static final int FCB_SIZE = 128;
-    private static final int BUFFER_OFFSET = 0;
-    private static final int NO_DEPS = 0;
-    private static final String WAIT_MASK = "0x3f";
-    
 }

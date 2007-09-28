@@ -57,6 +57,11 @@ public class CellProcessInputSliceNode extends ProcessInputSliceNode {
         ppuCS = backEndBits.getPPU().getComputeCode();
     }
     
+    /**
+     * Does processing before the Init schedule is run. In this stage, we
+     * collect information about the whole graph, assign filters and channels
+     * IDs, and extract splitters and joiners as separate filters as necessary.
+     */
     public void additionalPreInitProcessing() {
         if (inputNode.getNextFilter().isFileOutput())
             return;
@@ -70,7 +75,7 @@ public class CellProcessInputSliceNode extends ProcessInputSliceNode {
             // wf[i] = &wf_... and init_wf[i] = &wf_init_...
             ppuCS.setupWorkFunctionAddress(inputNode);
             // fd[i].state_size/num_inputs/num_outputs = ...
-            ppuCS.setupFilterDescription(inputNode);
+            ppuCS.setupFilter(inputNode);
             // setup EXT_PSP_EX_PARAMS/LAYOUT
             ppuCS.setupPSP(inputNode);
             System.out.println("new joiner " + filterId + " " + inputNode.getIdent() + " " + inputNode.getWidth() + " " + inputNode.getNextFilter().getFilter().getName());
@@ -98,7 +103,7 @@ public class CellProcessInputSliceNode extends ProcessInputSliceNode {
         if (inputNode.isJoiner()) {
             int filterId = CellBackend.filterIdMap.get(inputNode);
             // attach all input channels as inputs to the joiner
-            ppuCS.attachInputChannelArray(filterId, inputIds);
+            ppuCS.attachInputChannelArray(filterId, inputIds, whichPhase);
             //make artificial channel between inputslicenode and filterslicenode
             int channelId = CellBackend.numchannels;
             InterSliceEdge a = new InterSliceEdge(inputNode);
@@ -113,7 +118,7 @@ public class CellProcessInputSliceNode extends ProcessInputSliceNode {
             ppuCS.attachOutputChannelArray(filterId, outputIds);
         }
         
-        addToScheduleLayout();
+        if (!KjcOptions.celldyn) addToScheduleLayout();
     }
     
     @Override

@@ -14,18 +14,21 @@ typedef struct _FILTER_OUTPUT_TAPE FILTER_OUTPUT_TAPE;
 typedef struct _CHANNEL CHANNEL;
 typedef struct _DP_INSTANCE DP_INSTANCE;
 
-typedef void FILTER_WORK_FUNC(void *state, CHANNEL *const *inputs,
+typedef void FILTER_WORK_FUNC(void *param, void *state, CHANNEL *const *inputs,
                               CHANNEL *const *outputs);
+typedef void FILTER_INIT_FUNC(void);
 
 struct _FILTER {
   // from stream graph
-  CHANNEL *inputs; // TODO: make these pointers
-  CHANNEL *outputs;
+  CHANNEL *inputs[MAX_TAPES];
+  CHANNEL *outputs[MAX_TAPES];
   char *name;
   SPU_FILTER_DESC desc;
   bool_t data_parallel;
-  // FILTER_WORK_FUNC *ppu_prework_func;
-  // FILTER_WORK_FUNC *ppu_work_func;
+  FILTER_INIT_FUNC *ppu_init_func;
+  FILTER_WORK_FUNC *ppu_prework_func;
+  FILTER_WORK_FUNC *ppu_work_func;
+  LS_ADDRESS spu_init_func;
   // computed
   bool_t exclusive;
   uint32_t group_iters;
@@ -33,7 +36,7 @@ struct _FILTER {
   uint32_t output_buffered_iters;
   // internal
   bool_t visited;
-  // bool_t done_prework;
+  bool_t done_prework;
   uint32_t incomplete_inputs;
   uint32_t active_count;
   uint32_t avail_iters;
@@ -109,7 +112,7 @@ typedef struct _ACTIVE_OUTPUT_TAPE {
 typedef struct _ACTIVE_FILTER {
   uint32_t spu_id;
   FILTER *f;
-  ACTIVE_INPUT_TAPE inputs[MAX_TAPES - 1];
+  ACTIVE_INPUT_TAPE inputs[MAX_TAPES];
   ACTIVE_OUTPUT_TAPE outputs[MAX_TAPES];
   SPU_ADDRESS filt_cb;
   SPU_ADDRESS cmd_data_start;
@@ -221,11 +224,17 @@ extern DP_INSTANCE dp_instance_data[NUM_SPU * 4];
 extern DP_INSTANCE *next_dp_instance;
 
 void ds_init();
+void ds_run();
+
+// internal for prework
 void init_update_down_channel_used(CHANNEL *c, uint32_t num_bytes);
 void init_update_up_channel_free(CHANNEL *c, uint32_t num_bytes);
+void init_run_filter(FILTER *f);
 
-void ds_init_2(); // after prework has been done, only called by ds_run
-void ds_run();
+// these are only called by ds_run
+void ds_prework();          // at start
+void ds_init_2();           // just after prework
+void ds_spu_init_funcs();   // just before main exec
 
 void schedule_filter(SPU_STATE *spu, FILTER *f, uint32_t iters);
 

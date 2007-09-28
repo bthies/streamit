@@ -38,18 +38,18 @@ main(int argc, char **argv)
 
   FILTER *f = &filters[0];
 
-  f->inputs = &channels[0];
-  f->inputs[0].input.f = f;
-  f->outputs = &channels[1];
-  f->outputs[0].output.f = f;
+  f->inputs[0] = &channels[0];
+  f->inputs[0]->input.f = f;
+  f->outputs[0] = &channels[1];
+  f->outputs[0]->output.f = f;
   f->name = "FFT";
   f->desc.work_func = (LS_ADDRESS)&wf_FFT;
   f->desc.state_size = sizeof(fstate);
   f->desc.state_addr = &fstate;
   f->desc.num_inputs = 1;
   f->desc.num_outputs = 1;
-  f->inputs[0].input.pop_bytes = 2048;
-  f->outputs[0].output.push_bytes = 2048;
+  f->inputs[0]->input.pop_bytes = 2048;
+  f->outputs[0]->output.push_bytes = 2048;
   f->data_parallel = TRUE;
 
   channels[0].buf_size = n * 2048;

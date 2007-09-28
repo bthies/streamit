@@ -147,7 +147,7 @@ setup_input(SPU_CMD_GROUP *g, ACTIVE_FILTER *af, uint32_t iters,
   for (uint32_t i = 0; i < f->desc.num_inputs; i++) {
     spu_dt_in_back_ppu(g,
                        af->inputs[i].spu_buf_data, af->inputs[i].channel_buf,
-                       iters * f->inputs[i].input.pop_bytes,
+                       iters * f->inputs[i]->input.pop_bytes,
                        cmd_id_start + i,
                        2,
                        input_dep_start + i,
@@ -166,7 +166,7 @@ setup_output(SPU_CMD_GROUP *g, ACTIVE_FILTER *af, uint32_t iters,
     spu_dt_out_front_ppu_ex(g,
                             af->outputs[i].spu_buf_data,
                             af->outputs[i].channel_buf,
-                            iters * f->outputs[i].output.push_bytes,
+                            iters * f->outputs[i]->output.push_bytes,
                             f->data_parallel,
                             cmd_id_start + i,
                             2,
@@ -241,7 +241,7 @@ schedule_filter(SPU_STATE *spu, FILTER *f, uint32_t iters)
   input_buf_start = (f->exclusive ? 0 : get_spu_buffer_slot(spu));
 
   for (uint32_t i = 0; i < f->desc.num_inputs; i++) {
-    CHANNEL *c = &f->inputs[i];
+    CHANNEL *c = f->inputs[i];
     ACTIVE_INPUT_TAPE *ait = &af->inputs[i];
     uint32_t pop_bytes;
 
@@ -267,7 +267,7 @@ schedule_filter(SPU_STATE *spu, FILTER *f, uint32_t iters)
     (f->exclusive ? input_buf_start : get_spu_buffer_slot(spu));
 
   for (uint32_t i = 0; i < f->desc.num_outputs; i++) {
-    CHANNEL *c = &f->outputs[i];
+    CHANNEL *c = f->outputs[i];
     ACTIVE_OUTPUT_TAPE *aot = &af->outputs[i];
     uint32_t push_bytes;
 
@@ -344,7 +344,7 @@ setup_load(ACTIVE_FILTER *af)
   for (uint32_t i = 0; i < f->desc.num_inputs; i++) {
     spu_buffer_alloc(g,
                      af->inputs[i].spu_buf_data,
-                     f->inputs[i].input.spu_buf_size,
+                     f->inputs[i]->input.spu_buf_size,
                      af->inputs[i].channel_buf->head & CACHE_MASK,
                      alloc_id_start + i,
                      0);
@@ -377,8 +377,8 @@ setup_init_a(ACTIVE_FILTER *af)
   for (uint32_t i = 0; i < f->desc.num_inputs; i++) {
     spu_dt_in_back_ppu(g,
                        af->inputs[i].spu_buf_data, af->inputs[i].channel_buf,
-                       f->inputs[i].input.peek_extra_bytes +
-                         input_iters * f->inputs[i].input.pop_bytes,
+                       f->inputs[i]->input.peek_extra_bytes +
+                         input_iters * f->inputs[i]->input.pop_bytes,
                        input_id_start + i,
                        0);
   }
@@ -386,7 +386,7 @@ setup_init_a(ACTIVE_FILTER *af)
   for (uint32_t i = 0; i < f->desc.num_outputs; i++) {
     spu_buffer_alloc(g,
                      af->outputs[i].spu_buf_data,
-                     f->outputs[i].output.spu_buf_size,
+                     f->outputs[i]->output.spu_buf_size,
                      af->outputs[i].channel_buf->tail & CACHE_MASK,
                      alloc_id_start + i,
                      1,
@@ -494,7 +494,7 @@ adjust_input(ACTIVE_FILTER *af, uint32_t group)
      sizeof(SPU_FILTER_RUN_CMD));
 
   for (uint32_t i = 0; i < f->desc.num_inputs; i++) {
-    cmd->num_bytes = af->last_group_iters * f->inputs[i].input.pop_bytes;
+    cmd->num_bytes = af->last_group_iters * f->inputs[i]->input.pop_bytes;
     cmd++;
   }
 }
@@ -723,8 +723,8 @@ start_input(ACTIVE_FILTER *af, bool_t first)
   for (uint32_t i = 0; i < f->desc.num_inputs; i++) {
     dt_out_front_ex(af->inputs[i].channel_buf, af->spu_id,
                     af->inputs[i].spu_buf_data,
-                    (first ? f->inputs[i].input.peek_extra_bytes : 0) +
-                      iters * f->inputs[i].input.pop_bytes);
+                    (first ? f->inputs[i]->input.peek_extra_bytes : 0) +
+                      iters * f->inputs[i]->input.pop_bytes);
   }
 }
 
@@ -742,7 +742,7 @@ start_output(ACTIVE_FILTER *af, uint32_t groups_left)
   for (uint32_t i = 0; i < f->desc.num_outputs; i++) {
     dt_in_back_ex(af->outputs[i].channel_buf, af->spu_id,
                   af->outputs[i].spu_buf_data,
-                  iters * f->outputs[i].output.push_bytes);
+                  iters * f->outputs[i]->output.push_bytes);
   }
 }
 
@@ -775,7 +775,7 @@ done_filter(SPU_STATE *spu, ACTIVE_FILTER *af, bool_t current)
     done_dp_instance(f, af->instance);
   } else {
     for (uint32_t i = 0; i < f->desc.num_inputs; i++) {
-      buf_inc_head(&f->inputs[i].buf, -f->inputs[i].input.peek_extra_bytes);
+      buf_inc_head(&f->inputs[i]->buf, -f->inputs[i]->input.peek_extra_bytes);
     }
   }
 
@@ -836,26 +836,26 @@ extend_run(ACTIVE_FILTER *af, uint32_t iters)
   af->last_group_iters = (iters - 1) % f->group_iters + 1;
 
   for (uint32_t i = 0; i < f->desc.num_inputs; i++) {
-    uint32_t pop_bytes = iters * f->inputs[i].input.pop_bytes;
+    uint32_t pop_bytes = iters * f->inputs[i]->input.pop_bytes;
 
-    safe_dec(f->inputs[i].used_bytes, pop_bytes);
+    safe_dec(f->inputs[i]->used_bytes, pop_bytes);
 
     if (f->data_parallel) {
-      buf_inc_head(&f->inputs[i].buf, pop_bytes);
+      buf_inc_head(&f->inputs[i]->buf, pop_bytes);
       IF_CHECK(buf_set_tail(&af->inputs[i].channel_buf_instance,
-                            f->inputs[i].buf.tail));
+                            f->inputs[i]->buf.tail));
     }
   }
 
   for (uint32_t i = 0; i < f->desc.num_outputs; i++) {
-    uint32_t push_bytes = iters * f->outputs[i].output.push_bytes;
+    uint32_t push_bytes = iters * f->outputs[i]->output.push_bytes;
 
-    safe_dec(f->outputs[i].free_bytes, push_bytes);
+    safe_dec(f->outputs[i]->free_bytes, push_bytes);
 
     if (f->data_parallel) {
-      buf_inc_tail(&f->outputs[i].buf, push_bytes);
+      buf_inc_tail(&f->outputs[i]->buf, push_bytes);
       IF_CHECK(buf_set_head(&af->outputs[i].channel_buf_instance,
-                            f->outputs[i].buf.head));
+                            f->outputs[i]->buf.head));
     }
   }
 }
@@ -891,8 +891,8 @@ update_input_channels(ACTIVE_FILTER *af)
     update_dp_input(f, af->instance, iters, done);
   } else {
     for (uint32_t i = 0; i < f->desc.num_inputs; i++) {
-      update_up_channel_free(&f->inputs[i],
-                             iters * f->inputs[i].input.pop_bytes);
+      update_up_channel_free(f->inputs[i],
+                             iters * f->inputs[i]->input.pop_bytes);
     }
   }
 }
@@ -944,8 +944,8 @@ update_output_channels(ACTIVE_FILTER *af, bool_t buffered)
     update_dp_output(f, af->instance, iters, done);
   } else {
     for (uint32_t i = 0; i < f->desc.num_outputs; i++) {
-      update_down_channel_used(&f->outputs[i],
-                               iters * f->outputs[i].output.push_bytes);
+      update_down_channel_used(f->outputs[i],
+                               iters * f->outputs[i]->output.push_bytes);
     }
   }
 }
@@ -988,13 +988,14 @@ done_dp_instance(FILTER *f, DP_INSTANCE *instance)
 
   if (f->instances == instance) {
     for (uint32_t i = 0; i < f->desc.num_inputs; i++) {
-      update_up_channel_free(&f->inputs[i],
-                             input_iters * f->inputs[i].input.pop_bytes);
+      update_up_channel_free(f->inputs[i],
+                             input_iters * f->inputs[i]->input.pop_bytes);
     }
 
     for (uint32_t i = 0; i < f->desc.num_outputs; i++) {
-      update_down_channel_used(&f->outputs[i],
-                               output_iters * f->outputs[i].output.push_bytes);
+      update_down_channel_used(f->outputs[i],
+                               output_iters *
+                                 f->outputs[i]->output.push_bytes);
     }
 
     f->instances = next_instance;
@@ -1041,8 +1042,8 @@ update_dp_input(FILTER *f, DP_INSTANCE *instance, uint32_t input_iters,
 
   if (!wait && (f->instances == instance)) {
     for (uint32_t i = 0; i < f->desc.num_inputs; i++) {
-      update_up_channel_free(&f->inputs[i],
-                             input_iters * f->inputs[i].input.pop_bytes);
+      update_up_channel_free(f->inputs[i],
+                             input_iters * f->inputs[i]->input.pop_bytes);
     }
 
     instance->input_iters = 0;
@@ -1059,8 +1060,9 @@ update_dp_output(FILTER *f, DP_INSTANCE *instance, uint32_t output_iters,
 
   if (!wait && (f->instances == instance)) {
     for (uint32_t i = 0; i < f->desc.num_outputs; i++) {
-      update_down_channel_used(&f->outputs[i],
-                               output_iters * f->outputs[i].output.push_bytes);
+      update_down_channel_used(f->outputs[i],
+                               output_iters *
+                                 f->outputs[i]->output.push_bytes);
     }
 
     instance->output_iters = 0;
@@ -1072,8 +1074,6 @@ update_dp_output(FILTER *f, DP_INSTANCE *instance, uint32_t output_iters,
 static void
 run_init()
 {
-  ds_init_2();
-
   for (uint32_t i = 0; i < num_filters; i++) {
     FILTER *f = &filters[i];
 
@@ -1156,7 +1156,10 @@ run_done_check()
 void
 ds_run()
 {
+  ds_prework();
+  ds_init_2();
   run_init();
+  ds_spu_init_funcs();
 
   spulib_set_all_spu_complete_cb(&spu_cb);
   schedule_all_free_spu(NULL);

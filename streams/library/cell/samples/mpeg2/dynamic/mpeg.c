@@ -44,14 +44,15 @@ main(int argc, char **argv)
   filters[0].desc.state_size = 0;
   filters[0].desc.num_inputs = 1;
   filters[0].desc.num_outputs = 2;
-  filters[0].inputs = &channels[0];
-  filters[0].outputs = &channels[1];
-  filters[0].inputs[0].input.f = &filters[0];
-  filters[0].outputs[0].output.f = &filters[0];
-  filters[0].outputs[1].output.f = &filters[0];
-  filters[0].inputs[0].input.pop_bytes = 403 * sizeof(int);
-  filters[0].outputs[0].output.push_bytes = 384 * sizeof(int);
-  filters[0].outputs[1].output.push_bytes = 19 * sizeof(int);
+  filters[0].inputs[0] = &channels[0];
+  filters[0].outputs[0] = &channels[1];
+  filters[0].outputs[1] = &channels[2];
+  filters[0].inputs[0]->input.f = &filters[0];
+  filters[0].outputs[0]->output.f = &filters[0];
+  filters[0].outputs[1]->output.f = &filters[0];
+  filters[0].inputs[0]->input.pop_bytes = 403 * sizeof(int);
+  filters[0].outputs[0]->output.push_bytes = 384 * sizeof(int);
+  filters[0].outputs[1]->output.push_bytes = 19 * sizeof(int);
   filters[0].data_parallel = TRUE;
 
   filters[1].name = "stateless";
@@ -59,13 +60,14 @@ main(int argc, char **argv)
   filters[1].desc.state_size = 0;
   filters[1].desc.num_inputs = 1;
   filters[1].desc.num_outputs = 1;
-  filters[1].inputs = &channels[1];
-  filters[1].outputs = &channels[3];
-  filters[1].inputs[0].input.f = &filters[1];
-  filters[1].outputs[0].output.f = &filters[1];
-  filters[1].inputs[0].input.pop_bytes = 64 * sizeof(int);
-  filters[1].outputs[0].output.push_bytes = 64 * sizeof(int);
+  filters[1].inputs[0] = &channels[1];
+  filters[1].outputs[0] = &channels[3];
+  filters[1].inputs[0]->input.f = &filters[1];
+  filters[1].outputs[0]->output.f = &filters[1];
+  filters[1].inputs[0]->input.pop_bytes = 64 * sizeof(int);
+  filters[1].outputs[0]->output.push_bytes = 64 * sizeof(int);
   filters[1].data_parallel = TRUE;
+  filters[1].spu_init_func = (LS_ADDRESS)&init_1;
 
   filters[2].name = "stateful";
   filters[2].desc.work_func = (LS_ADDRESS)&wf_2;
@@ -73,26 +75,27 @@ main(int argc, char **argv)
   filters[2].desc.state_size = sizeof(state_2);
   filters[2].desc.num_inputs = 1;
   filters[2].desc.num_outputs = 1;
-  filters[2].inputs = &channels[2];
-  filters[2].outputs = &channels[4];
-  filters[2].inputs[0].input.f = &filters[2];
-  filters[2].outputs[0].output.f = &filters[2];
-  filters[2].inputs[0].input.pop_bytes = 19 * sizeof(int);
-  filters[2].outputs[0].output.push_bytes = 66 * sizeof(int);
+  filters[2].inputs[0] = &channels[2];
+  filters[2].outputs[0] = &channels[4];
+  filters[2].inputs[0]->input.f = &filters[2];
+  filters[2].outputs[0]->output.f = &filters[2];
+  filters[2].inputs[0]->input.pop_bytes = 19 * sizeof(int);
+  filters[2].outputs[0]->output.push_bytes = 66 * sizeof(int);
 
   filters[3].name = "joiner";
   filters[3].desc.work_func = (LS_ADDRESS)&wf_3;
   filters[3].desc.state_size = 0;
   filters[3].desc.num_inputs = 2;
   filters[3].desc.num_outputs = 1;
-  filters[3].inputs = &channels[3];
-  filters[3].outputs = &channels[5];
-  filters[3].inputs[0].input.f = &filters[3];
-  filters[3].inputs[1].input.f = &filters[3];
-  filters[3].outputs[0].output.f = &filters[3];
-  filters[3].inputs[0].input.pop_bytes = 64 * sizeof(int);
-  filters[3].inputs[1].input.pop_bytes = 11 * sizeof(int);
-  filters[3].outputs[0].output.push_bytes = 75 * sizeof(int);
+  filters[3].inputs[0] = &channels[3];
+  filters[3].inputs[1] = &channels[4];
+  filters[3].outputs[0] = &channels[5];
+  filters[3].inputs[0]->input.f = &filters[3];
+  filters[3].inputs[1]->input.f = &filters[3];
+  filters[3].outputs[0]->output.f = &filters[3];
+  filters[3].inputs[0]->input.pop_bytes = 64 * sizeof(int);
+  filters[3].inputs[1]->input.pop_bytes = 11 * sizeof(int);
+  filters[3].outputs[0]->output.push_bytes = 75 * sizeof(int);
   filters[3].data_parallel = TRUE;
 
   ds_init();
@@ -109,15 +112,6 @@ main(int argc, char **argv)
   init_update_down_channel_used(&channels[0], n * 1612);
 
   fclose(inf);
-
-  for (int i = 0; i < num_spu; i++) {
-    SPU_CMD_GROUP *g = spu_new_group(i, 0);
-    spu_call_func(g, (LS_ADDRESS)&init_1, 0, 0);
-    spu_issue_group(i, 0, 0);
-  }
-  for (int i = 0; i < num_spu; i++) {
-    spulib_wait(i, 1);
-  }
 
   ds_run();
 

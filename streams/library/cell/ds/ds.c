@@ -114,7 +114,7 @@ ds_init_2()
     f->incomplete_inputs = f->desc.num_inputs;
 
     for (uint32_t j = 0; j < f->desc.num_inputs; j++) {
-      if (f->inputs[j].source->output.f == NULL) {
+      if (f->inputs[j]->source->output.f == NULL) {
         f->incomplete_inputs--;
       }
     }
@@ -152,7 +152,7 @@ init_update_filter_done(FILTER *f)
     incomplete_filters--;
 
     for (uint32_t i = 0; i < f->desc.num_outputs; i++) {
-      init_update_down_filter_incomplete(&f->outputs[i]);
+      init_update_down_filter_incomplete(f->outputs[i]);
     }
   }
 }
@@ -239,7 +239,7 @@ calc_filter_buffering(FILTER *f)
   uint32_t output_iters = 0;
 
   for (uint32_t i = 0; i < f->desc.num_inputs; i++) {
-    CHANNEL *c = &f->inputs[i];
+    CHANNEL *c = f->inputs[i];
     c->input.spu_buf_size = c->input.peek_extra_bytes +
       ((((c->buf.head + c->input.peek_extra_bytes) | c->input.pop_bytes) &
         QWORD_MASK) == 0 ?
@@ -247,7 +247,7 @@ calc_filter_buffering(FILTER *f)
   }
 
   for (uint32_t i = 0; i < f->desc.num_outputs; i++) {
-    CHANNEL *c = &f->outputs[i];
+    CHANNEL *c = f->outputs[i];
     c->output.spu_buf_size =
       (((c->buf.tail | c->output.push_bytes) & QWORD_MASK) == 0 ?
        0 : QWORD_MASK);
@@ -288,7 +288,7 @@ calc_filter_buffering(FILTER *f)
   if (f->desc.num_inputs != 0) {
     printf("  I:");
     for (uint32_t i = 0; i < f->desc.num_inputs; i++) {
-      uint32_t buf_size = f->inputs[i].input.spu_buf_size;
+      uint32_t buf_size = f->inputs[i]->input.spu_buf_size;
       if (buf_size >= 1024) {
         printf(" %2dk", buf_size >> 10);
       } else {
@@ -301,7 +301,7 @@ calc_filter_buffering(FILTER *f)
   if (f->desc.num_outputs != 0) {
     printf("  O:");
     for (uint32_t i = 0; i < f->desc.num_outputs; i++) {
-      uint32_t buf_size = f->outputs[i].output.spu_buf_size;
+      uint32_t buf_size = f->outputs[i]->output.spu_buf_size;
       if (buf_size >= 1024) {
         printf(" %2dk", buf_size >> 10);
       } else {
@@ -319,7 +319,7 @@ calc_input_buffering(FILTER *f, uint32_t iters, bool_t actual)
   uint32_t total = 0;
 
   for (uint32_t i = 0; i < f->desc.num_inputs; i++) {
-    FILTER_INPUT_TAPE *input = &f->inputs[i].input;
+    FILTER_INPUT_TAPE *input = &f->inputs[i]->input;
     uint32_t pop_bytes = input->pop_bytes * iters;
     uint32_t buf_size =
       next_power_2(input->spu_buf_size + pop_bytes * 2 +
@@ -342,7 +342,7 @@ calc_output_buffering(FILTER *f, uint32_t iters, bool_t actual)
   uint32_t buffering_iters = 0;
 
   for (uint32_t i = 0; i < f->desc.num_outputs; i++) {
-    FILTER_OUTPUT_TAPE *output = &f->outputs[i].output;
+    FILTER_OUTPUT_TAPE *output = &f->outputs[i]->output;
     uint32_t push_bytes = output->push_bytes * iters;
     uint32_t max_buffered = output->spu_buf_size +
       (push_bytes >= CACHE_SIZE + QWORD_MASK ? 0 : CACHE_MASK);
@@ -401,6 +401,76 @@ calc_max_iters(FILTER *f, bool_t inputs, bool_t outputs, uint32_t max_size)
   }
 
   return i;
+}
+
+void
+init_run_filter(FILTER *f)
+{
+  // TODO: magic
+}
+
+void
+ds_prework()
+{
+  for (uint32_t i = 0; i < num_filters; i++) {
+    FILTER *f = &filters[i];
+    f->done_prework = (f->ppu_prework_func == NULL);
+    IF_CHECK(f->visited = FALSE);
+  }
+
+  for (uint32_t i = 0; i < num_filters; i++) {
+    if (!filters[i].done_prework) {
+      init_run_filter(&filters[i]);
+    }
+  }
+}
+
+void
+ds_spu_init_funcs()
+{
+  uint32_t n = 0;
+
+  for (uint32_t i = 0; i < num_spu; i++) {
+    spu_new_group(i, 0);
+  }
+
+  for (uint32_t i = 0; i < num_filters; i++) {
+    FILTER *f = &filters[i];
+
+    if (f->spu_init_func != 0) {
+      for (uint32_t j = 0; j < num_spu; j++) {
+        spu_call_func(spu_get_group(j, 0),
+                      f->spu_init_func,
+                      n,
+                      0);
+      }
+
+      if (++n == 32) {
+        for (uint32_t j = 0; j < num_spu; j++) {
+          spu_issue_group(j, 0, 0);
+        }
+
+        n = 0;
+
+        for (uint32_t j = 0; j < num_spu; j++) {
+          spulib_wait(j, 0xffffffff);
+          spu_new_group(j, 0);
+        }
+      }
+    }
+  }
+
+  if (n != 0) {
+    uint32_t mask = (1 << n) - 1;
+
+    for (uint32_t i = 0; i < num_spu; i++) {
+      spu_issue_group(i, 0, 0);
+    }
+
+    for (uint32_t i = 0; i < num_spu; i++) {
+      spulib_wait(i, mask);
+    }
+  }
 }
 
 #if CHECK

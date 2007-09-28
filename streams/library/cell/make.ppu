@@ -5,7 +5,9 @@ VPATH			:= $(SRC_DIR)
 # PPU_INCLUDE in environment has extra include paths
 INCLUDE			:= $(PPU_INCLUDE) -I $(SPULIB_TOP)/include
 # IMPORTS in environment initially has extra libraries
-IMPORTS			:= $(addsuffix .a,$(SPU_PROGRAMS)) spusymbols.ld \
+IMPORTS			:= $(join $(addsuffix /,$(SPU_PROGRAMS)), \
+                          $(addsuffix .a,$(SPU_PROGRAMS))) \
+                   spusymbols.ld \
                    $(IMPORTS) \
                    $(SPULIB_OUTPUT_DIR)/spulib.a -lspe
 

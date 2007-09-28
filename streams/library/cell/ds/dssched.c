@@ -37,7 +37,7 @@ update_filter_done(FILTER *f)
     incomplete_filters--;
 
     for (uint32_t i = 0; i < f->desc.num_outputs; i++) {
-      update_down_filter_incomplete(&f->outputs[i]);
+      update_down_filter_incomplete(f->outputs[i]);
     }
   }
 }
@@ -161,7 +161,7 @@ update_filter_input(FILTER *f)
     int32_t min_iters = INT32_MAX;
 
     for (uint32_t i = 0; i < f->desc.num_inputs; i++) {
-      CHANNEL *c = &f->inputs[i];
+      CHANNEL *c = f->inputs[i];
       min_iters = min_int32(min_iters,
         ((int32_t)c->used_bytes - (int32_t)c->input.peek_extra_bytes) /
         (int32_t)c->input.pop_bytes);
@@ -180,7 +180,7 @@ update_filter_output(FILTER *f)
     uint32_t min_iters = UINT32_MAX;
 
     for (uint32_t i = 0; i < f->desc.num_outputs; i++) {
-      CHANNEL *c = &f->outputs[i];
+      CHANNEL *c = f->outputs[i];
       min_iters = min_uint32(min_iters, c->free_bytes / c->output.push_bytes);
     }
 

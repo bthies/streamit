@@ -19,7 +19,7 @@
 void
 run_call_func(CALL_FUNC_CMD *cmd)
 {
-  ((void (*)(void))cmd->func)();
+  (*(void (*)(void))cmd->func)();
 
   dep_complete_command();
 }

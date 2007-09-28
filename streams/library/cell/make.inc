@@ -122,10 +122,11 @@ ifneq "$(SRC_DIR)" "$(BUILD_DIR)"
 endif
 
 $(SPU_PROGRAMS): builddir spulib
+	@mkdir -p $(BUILD_DIR)/$@
 	@SPU_PROGRAM=$@ \
 	 OBJS='$(call spu_objs,$@)' \
 	 IMPORTS='$(call spu_imports,$@)' \
-	 $(MAKE) -C $(BUILD_DIR) -f $(SPULIB_TOP)/make.spu
+	 $(MAKE) -C $(BUILD_DIR)/$@ -f $(SPULIB_TOP)/make.spu
 
 spulib: builddir
 ifeq "$(BUILD_SPULIB)" "1"

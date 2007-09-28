@@ -17,8 +17,8 @@ CHANNEL channels[NUM_CHANNELS];
     f->desc.work_func = (LS_ADDRESS)&wf_##_name;                        \
     f->desc.state_size = ((_state) == NULL ? 0 : sizeof(*(_state)));    \
     f->desc.state_addr = (_state);                                      \
-    f->inputs[0].input.pop_bytes = (_io_items) * sizeof(float);         \
-    f->outputs[0].output.push_bytes = (_io_items) * sizeof(float);      \
+    f->inputs[0]->input.pop_bytes = (_io_items) * sizeof(float);        \
+    f->outputs[0]->output.push_bytes = (_io_items) * sizeof(float);     \
   } while (FALSE)
 
 COMBINEDFT_STATE fstate[8];
@@ -58,10 +58,10 @@ main(int argc, char **argv)
 
   for (uint32_t i = 0; i < NUM_FILTERS; i++) {
     FILTER *f = &filters[i];
-    f->inputs = &channels[i];
-    f->inputs[0].input.f = f;
-    f->outputs = &channels[i + 1];
-    f->outputs[0].output.f = f;
+    f->inputs[0] = &channels[i];
+    f->inputs[0]->input.f = f;
+    f->outputs[0] = &channels[i + 1];
+    f->outputs[0]->output.f = f;
     f->desc.num_inputs = 1;
     f->desc.num_outputs = 1;
     f->data_parallel = dp;

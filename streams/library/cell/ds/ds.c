@@ -406,7 +406,19 @@ calc_max_iters(FILTER *f, bool_t inputs, bool_t outputs, uint32_t max_size)
 void
 init_run_filter(FILTER *f)
 {
-  // TODO: magic
+  check((f != NULL) && !f->visited);
+  IF_CHECK(f->visited = TRUE);
+
+  if (f->done_prework) {
+    (*f->ppu_work_func)((void *)f->desc.param, f->desc.state_addr, f->inputs,
+                        f->outputs, 0);
+  } else {
+    (*f->ppu_prework_func)((void *)f->desc.param, f->desc.state_addr,
+                           f->inputs, f->outputs, 0);
+    f->done_prework = TRUE;
+  }
+
+  IF_CHECK(f->visited = FALSE);
 }
 
 void
@@ -414,6 +426,11 @@ ds_prework()
 {
   for (uint32_t i = 0; i < num_filters; i++) {
     FILTER *f = &filters[i];
+
+    if (f->ppu_init_func != NULL) {
+      (*f->ppu_init_func)();
+    }
+
     f->done_prework = (f->ppu_prework_func == NULL);
     IF_CHECK(f->visited = FALSE);
   }

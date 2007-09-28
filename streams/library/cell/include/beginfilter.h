@@ -57,7 +57,7 @@
  * the filter is stateful and push/pop/peek are macros iff the operation makes
  * sense for the filter). Filter code must not define macros named "filter" or
  * "FILTER". Filter code cannot use identifiers or macros named: _state,
- * _input, _inputs, _output, _outputs.
+ * _input, _inputs, _output, _outputs, _iters.
  *---------------------------------------------------------------------------*/
 
 #ifdef _SPULIB_BEGINFILTER_H_
@@ -106,6 +106,12 @@
 #define OUTPUT_ITEM_SIZE sizeof(OUTPUT_ITEM_TYPE)
 
 #endif // NUM_OUTPUT_TAPES != 0
+
+#ifndef USE_CHANNELS
+#define TAPE_TYPE BUFFER_CB
+#else
+#define TAPE_TYPE CHANNEL
+#endif
 
 /*-----------------------------------------------------------------------------
  * Name decoration macros.
@@ -180,8 +186,10 @@
 // Common argument list for function declarations.
 #define COMMON_DECLARATION_ARGS \
   PARAM_ARG(void *param) STATE_ARG_SEP STATE_ARG(void *const _state)          \
-  INPUT_ARG_SEP INPUT_ARG(void *const _input, void *const *const _inputs)     \
-  OUTPUT_ARG_SEP OUTPUT_ARG(void *const _output, void *const *const _outputs)
+  INPUT_ARG_SEP                                                               \
+  INPUT_ARG(TAPE_TYPE *const _input, TAPE_TYPE *const *const _inputs)         \
+  OUTPUT_ARG_SEP                                                              \
+  OUTPUT_ARG(TAPE_TYPE *const _output, TAPE_TYPE *const *const _outputs)
 
 // Common argument list for function calls.
 #define COMMON_CALL_ARGS \
@@ -213,11 +221,11 @@
 #define BEGIN_WORK_FUNC \
   void                                                                        \
   DECORATE_FUNC_NAME(wf)(void *param, void *const _state,                     \
-                         void *const *const _inputs,                          \
-                         void *const *const _outputs, uint32_t _iters)        \
+                         TAPE_TYPE *const *const _inputs,                     \
+                         TAPE_TYPE *const *const _outputs, uint32_t _iters)   \
   {                                                                           \
-    IF_SINGLE_INPUT(void *const _input UNUSED = _inputs[0]);                  \
-    IF_SINGLE_OUTPUT(void *const _output UNUSED = _outputs[0]);               \
+    IF_SINGLE_INPUT(TAPE_TYPE *const _input UNUSED = _inputs[0]);             \
+    IF_SINGLE_OUTPUT(TAPE_TYPE *const _output UNUSED = _outputs[0]);          \
     UNUSED_PARAM(param);                                                      \
     UNUSED_PARAM(_state);                                                     \
     UNUSED_PARAM(_inputs);                                                    \
@@ -226,6 +234,23 @@
 
 #define END_WORK_FUNC \
     } while (--_iters != 0);                                                  \
+  }
+
+#define BEGIN_PREWORK_FUNC \
+  void                                                                        \
+  DECORATE_FUNC_NAME(pwf)(void *param, void *const _state,                    \
+                         TAPE_TYPE *const *const _inputs,                     \
+                         TAPE_TYPE *const *const _outputs, uint32_t _iters)   \
+  {                                                                           \
+    IF_SINGLE_INPUT(TAPE_TYPE *const _input UNUSED = _inputs[0]);             \
+    IF_SINGLE_OUTPUT(TAPE_TYPE *const _output UNUSED = _outputs[0]);          \
+    UNUSED_PARAM(param);                                                      \
+    UNUSED_PARAM(_state);                                                     \
+    UNUSED_PARAM(_inputs);                                                    \
+    UNUSED_PARAM(_outputs);                                                   \
+    UNUSED_PARAM(_iters);
+
+#define END_PREWORK_FUNC \
   }
 
 /*-----------------------------------------------------------------------------
@@ -240,9 +265,10 @@
   {                                                                           \
     PARAM_ARG(void *param UNUSED);                                            \
     STATE_ARG(void *const _state UNUSED);                                     \
-    INPUT_ARG(void *const _input UNUSED, void *const *const _inputs UNUSED);  \
-    OUTPUT_ARG(void *const _output UNUSED,                                    \
-               void *const *const _outputs UNUSED);
+    INPUT_ARG(TAPE_TYPE *const _input UNUSED,                                 \
+              TAPE_TYPE *const *const _inputs UNUSED);                        \
+    OUTPUT_ARG(TAPE_TYPE *const _output UNUSED,                               \
+               TAPE_TYPE *const *const _outputs UNUSED);
 
 #define END_INIT_FUNC \
   }
@@ -259,13 +285,14 @@
 // peek/pop functions and wrapper macros.
 #if (NUM_INPUT_TAPES != 0)
 
+#ifndef USE_CHANNELS
+
 static INLINE INPUT_ITEM_TYPE
-DECORATE_FUNC_NAME(peek)(void *buf_data, uint32_t n)
+DECORATE_FUNC_NAME(peek)(BUFFER_CB *buf, uint32_t n)
 {
-  BUFFER_CB *buf = buf_get_cb(buf_data);
   check(((buf->tail - buf->head) & buf->mask) >= (n + 1) * INPUT_ITEM_SIZE);
   return *(INPUT_ITEM_TYPE *)
-    (buf_data + ((buf->head + n * INPUT_ITEM_SIZE)
+    (buf_get_data(buf) + ((buf->head + n * INPUT_ITEM_SIZE)
 #ifndef PEEK_NO_MOD
                  & buf->mask
 #endif
@@ -273,12 +300,11 @@ DECORATE_FUNC_NAME(peek)(void *buf_data, uint32_t n)
 }
 
 static INLINE INPUT_ITEM_TYPE
-DECORATE_FUNC_NAME(pop)(void *buf_data)
+DECORATE_FUNC_NAME(pop)(BUFFER_CB *buf)
 {
-  BUFFER_CB *buf = buf_get_cb(buf_data);
   INPUT_ITEM_TYPE item;
   check(((buf->tail - buf->head) & buf->mask) >= INPUT_ITEM_SIZE);
-  item = *(INPUT_ITEM_TYPE *)(buf_data + buf->head);
+  item = *(INPUT_ITEM_TYPE *)(buf_get_data(buf) + buf->head);
   buf->head = (buf->head + INPUT_ITEM_SIZE)
 #ifndef POP_NO_MOD
     & buf->mask
@@ -290,14 +316,17 @@ DECORATE_FUNC_NAME(pop)(void *buf_data)
 // popn pops n items and returns the last one - this has different semantics
 // from peek
 static INLINE INPUT_ITEM_TYPE
-DECORATE_FUNC_NAME(popn)(void *buf_data, uint32_t n)
+DECORATE_FUNC_NAME(popn)(BUFFER_CB *buf, uint32_t n)
 {
-  BUFFER_CB *buf = buf_get_cb(buf_data);
   INPUT_ITEM_TYPE item;
   check((n != 0) &&
         (((buf->tail - buf->head) & buf->mask) >= n * INPUT_ITEM_SIZE));
   item = *(INPUT_ITEM_TYPE *)
-    (buf_data + ((buf->head + (n - 1) * INPUT_ITEM_SIZE) & buf->mask));
+    (buf_get_data(buf) + ((buf->head + (n - 1) * INPUT_ITEM_SIZE)
+#ifndef POP_NO_MOD
+                          & buf->mask
+#endif
+                          ));
   buf->head = (buf->head + n * INPUT_ITEM_SIZE)
 #ifndef POP_NO_MOD
     & buf->mask
@@ -306,21 +335,51 @@ DECORATE_FUNC_NAME(popn)(void *buf_data, uint32_t n)
   return item;
 }
 
+#else // USE_CHANNELS
+
+static INLINE INPUT_ITEM_TYPE
+DECORATE_FUNC_NAME(peek)(CHANNEL *c, uint32_t n)
+{
+  return *(INPUT_ITEM_TYPE *)channel_peek_addr(c, INPUT_ITEM_SIZE, n);
+}
+
+static INLINE INPUT_ITEM_TYPE
+DECORATE_FUNC_NAME(popn)(CHANNEL *c, uint32_t n)
+{
+  INPUT_ITEM_TYPE item;
+  check(n != 0);
+  item = *(INPUT_ITEM_TYPE *)channel_peek_addr(c, INPUT_ITEM_SIZE, n - 1);
+  channel_pop(c, n * INPUT_ITEM_SIZE);
+  return item;
+}
+
+static INLINE INPUT_ITEM_TYPE
+DECORATE_FUNC_NAME(pop)(CHANNEL *c)
+{
+  return DECORATE_FUNC_NAME(popn)(1);
+}
+
+#endif
+
 #if (NUM_INPUT_TAPES == 1)
 #define peek(n)             DECORATE_FUNC_NAME(peek)(_input, n)
 #define pop()               DECORATE_FUNC_NAME(pop)(_input)
 #define popn(n)             DECORATE_FUNC_NAME(popn)(_input, n)
+#ifndef USE_CHANNELS
 #define get_input()         \
-  ((INPUT_ITEM_TYPE *)(_input + buf_get_cb(_input)->head))
+  ((INPUT_ITEM_TYPE *)(buf_get_data(_input) + _input->head))
 #define advance_input(n)    buf_advance_head(_input, (n) * INPUT_ITEM_SIZE)
+#endif
 #else
 #define peek(t, n)          DECORATE_FUNC_NAME(peek)(_inputs[t], n)
 #define pop(t)              DECORATE_FUNC_NAME(pop)(_inputs[t])
 #define popn(t, n)          DECORATE_FUNC_NAME(popn)(_inputs[t], n)
+#ifndef USE_CHANNELS
 #define get_input(t)        \
-  ((INPUT_ITEM_TYPE *)(_inputs[t] + buf_get_cb(_inputs[t])->head))
+  ((INPUT_ITEM_TYPE *)(buf_get_data(_inputs[t]) + _inputs[t]->head))
 #define advance_input(t, n) \
   buf_advance_head(_inputs[t], (n) * INPUT_ITEM_SIZE)
+#endif
 #endif
 
 #endif // NUM_INPUT_TAPES != 0
@@ -328,12 +387,13 @@ DECORATE_FUNC_NAME(popn)(void *buf_data, uint32_t n)
 // push function and wrapper macro.
 #if (NUM_OUTPUT_TAPES != 0)
 
+#ifndef USE_CHANNELS
+
 static INLINE void
-DECORATE_FUNC_NAME(push)(void *buf_data, OUTPUT_ITEM_TYPE item)
+DECORATE_FUNC_NAME(push)(BUFFER_CB *buf, OUTPUT_ITEM_TYPE item)
 {
-  BUFFER_CB *buf = buf_get_cb(buf_data);
   check(((buf->head - buf->tail - 1) & buf->mask) >= OUTPUT_ITEM_SIZE);
-  *(OUTPUT_ITEM_TYPE *)(buf_data + buf->tail) = item;
+  *(OUTPUT_ITEM_TYPE *)(buf_get_data(buf) + buf->tail) = item;
   buf->tail = (buf->tail + OUTPUT_ITEM_SIZE)
 #ifndef PUSH_NO_MOD
     & buf->mask
@@ -341,17 +401,32 @@ DECORATE_FUNC_NAME(push)(void *buf_data, OUTPUT_ITEM_TYPE item)
     ;
 }
 
+#else // USE_CHANNELS
+
+static INLINE void
+DECORATE_FUNC_NAME(push)(CHANNEL *c, OUTPUT_ITEM_TYPE item)
+{
+  *(OUTPUT_ITEM_TYPE *)channel_push_addr(c, OUTPUT_ITEM_SIZE) = item;
+  channel_after_push(c, OUTPUT_ITEM_SIZE);
+}
+
+#endif
+
 #if (NUM_OUTPUT_TAPES == 1)
 #define push(item)            DECORATE_FUNC_NAME(push)(_output, item)
+#ifndef USE_CHANNELS
 #define get_output()          \
-  ((OUTPUT_ITEM_TYPE *)(_output + buf_get_cb(_output)->tail))
+  ((OUTPUT_ITEM_TYPE *)(buf_get_data(_output) + _output->tail))
 #define advance_output(n)     buf_advance_tail(_output, (n) * OUTPUT_ITEM_SIZE)
+#endif
 #else
 #define push(t, item)         DECORATE_FUNC_NAME(push)(_outputs[t], item)
+#ifndef USE_CHANNELS
 #define get_output(t)         \
-  ((OUTPUT_ITEM_TYPE *)(_outputs[t] + buf_get_cb(_outputs[t])->tail))
+  ((OUTPUT_ITEM_TYPE *)(buf_get_data(_outputs[t]) + _outputs[t]->tail))
 #define advance_output(t, n)  \
   buf_advance_tail(_outputs[t], (n) * OUTPUT_ITEM_SIZE)
+#endif
 #endif
 
 #endif // NUM_OUTPUT_TAPES != 0

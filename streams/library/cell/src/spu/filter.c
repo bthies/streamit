@@ -7,7 +7,6 @@
 #include "defs.h"
 #include "depend.h"
 #include "filter.h"
-#include "buffer.h"
 #include "dma.h"
 #include "stats.h"
 
@@ -123,13 +122,13 @@ run_filter_load(FILTER_LOAD_CMD *cmd)
     filt->desc = cmd->desc;
 
     // Initialize pointers to input/output tape arrays.
-    filt->inputs = (void **)filt->data;
+    filt->inputs = (BUFFER_CB **)filt->data;
     filt->outputs = filt->inputs + filt->desc.num_inputs;
 
     // Total size of area storing tape pointers (this is padded up to a qword).
     tape_data_size =
       ROUND_UP((filt->desc.num_inputs + filt->desc.num_outputs) *
-                 sizeof(void *),
+                 sizeof(BUFFER_CB *),
                QWORD_SIZE);
     // Initialize pointer to filter state.
     filt->state = filt->data + tape_data_size;
@@ -138,7 +137,7 @@ run_filter_load(FILTER_LOAD_CMD *cmd)
     // Clear input/output tape pointers.
     tape_data = (vec4_uint32_t *)filt->data;
     while (tape_data_size != 0) {
-      *tape_data++ = VEC_SPLAT_U32(0);
+      *tape_data++ = VEC_SPLAT_U32((uint32_t)buf_get_cb(NULL));
       tape_data_size -= QWORD_SIZE;
     }
 #endif
@@ -241,12 +240,11 @@ run_filter_unload(FILTER_UNLOAD_CMD *cmd)
       filt->attached_outputs = 0;
 
       tape_data_count =
-        (filt->desc.num_inputs + filt->desc.num_outputs + QWORD_MASK) >>
-        QWORD_SHIFT;
+        (filt->desc.num_inputs + filt->desc.num_outputs + 3) >> 2;
       tape_data = (vec4_uint32_t *)filt->data;
 
       while (tape_data_count != 0) {
-        *tape_data++ = VEC_SPLAT_U32(0);
+        *tape_data++ = VEC_SPLAT_U32((uint32_t)buf_get_cb(NULL));
         tape_data_count--;
       }
 
@@ -339,7 +337,7 @@ run_filter_attach_input(FILTER_ATTACH_INPUT_CMD *cmd)
   check(!filt->busy);
 
 #if CHECK
-  if (filt->inputs[cmd->tape_id] == NULL) {
+  if (filt->inputs[cmd->tape_id] == buf_get_cb(NULL)) {
     filt->attached_inputs++;
   }
 
@@ -348,7 +346,7 @@ run_filter_attach_input(FILTER_ATTACH_INPUT_CMD *cmd)
   }
 #endif
 
-  filt->inputs[cmd->tape_id] = cmd->buf_data;
+  filt->inputs[cmd->tape_id] = buf_get_cb(cmd->buf_data);
   dep_complete_command();
 }
 
@@ -371,7 +369,7 @@ run_filter_attach_output(FILTER_ATTACH_OUTPUT_CMD *cmd)
   check(!filt->busy);
 
 #if CHECK
-  if (filt->outputs[cmd->tape_id] == NULL) {
+  if (filt->outputs[cmd->tape_id] == buf_get_cb(NULL)) {
     filt->attached_outputs++;
   }
 
@@ -380,7 +378,7 @@ run_filter_attach_output(FILTER_ATTACH_OUTPUT_CMD *cmd)
   }
 #endif
 
-  filt->outputs[cmd->tape_id] = cmd->buf_data;
+  filt->outputs[cmd->tape_id] = buf_get_cb(cmd->buf_data);
   dep_complete_command();
 }
 
@@ -411,13 +409,13 @@ run_filter_run(FILTER_RUN_CMD *cmd)
           (filt->attached_outputs == filt->desc.num_outputs));
 
     for (uint8_t i = 0; i < filt->desc.num_inputs; i++) {
-      BUFFER_CB *buf = buf_get_cb(filt->inputs[i]);
+      BUFFER_CB *buf = filt->inputs[i];
       check(buf->front_action == BUFFER_ACTION_NONE);
       buf->front_action = BUFFER_ACTION_RUN;
     }
 
     for (uint8_t i = 0; i < filt->desc.num_outputs; i++) {
-      BUFFER_CB *buf = buf_get_cb(filt->outputs[i]);
+      BUFFER_CB *buf = filt->outputs[i];
       check(buf->back_action == BUFFER_ACTION_NONE);
       buf->back_action = BUFFER_ACTION_RUN;
     }
@@ -446,12 +444,12 @@ run_filter_run(FILTER_RUN_CMD *cmd)
 
 #if CHECK
   for (uint8_t i = 0; i < filt->desc.num_inputs; i++) {
-    BUFFER_CB *buf = buf_get_cb(filt->inputs[i]);
+    BUFFER_CB *buf = filt->inputs[i];
     buf->ihead = buf->head;
   }
 
   for (uint8_t i = 0; i < filt->desc.num_outputs; i++) {
-    BUFFER_CB *buf = buf_get_cb(filt->outputs[i]);
+    BUFFER_CB *buf = filt->outputs[i];
     buf->otail = buf->tail;
   }
 #endif
@@ -462,11 +460,11 @@ run_filter_run(FILTER_RUN_CMD *cmd)
     filt->busy = FALSE;
 
     for (uint8_t i = 0; i < filt->desc.num_inputs; i++) {
-      buf_get_cb(filt->inputs[i])->front_action = BUFFER_ACTION_NONE;
+      filt->inputs[i]->front_action = BUFFER_ACTION_NONE;
     }
 
     for (uint8_t i = 0; i < filt->desc.num_outputs; i++) {
-      buf_get_cb(filt->outputs[i])->back_action = BUFFER_ACTION_NONE;
+      filt->outputs[i]->back_action = BUFFER_ACTION_NONE;
     }
 #endif
 

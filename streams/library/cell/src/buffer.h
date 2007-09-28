@@ -116,8 +116,6 @@ buf_get_cb(void *buf_data)
   return (BUFFER_CB *)buf_data - 1;
 }
 
-#ifdef __SPU__
-
 /*-----------------------------------------------------------------------------
  * buf_get_data
  *
@@ -126,10 +124,12 @@ buf_get_cb(void *buf_data)
 static INLINE void *
 buf_get_data(BUFFER_CB *buf)
 {
+#ifdef __SPU__
   return (void *)(buf + 1);
-}
-
+#else
+  return buf->data;
 #endif
+}
 
 /*-----------------------------------------------------------------------------
  * buf_get_dt_field_addr/buf_cb_get_dt_field_addr

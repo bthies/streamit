@@ -106,10 +106,8 @@ main(int argc, char **argv)
     exit(1);
   }
 
-  safe_dec(channels[0].free_bytes, n * 1612);
   fread(channels[0].buf.data, sizeof(int), n * 403, inf);
-  buf_inc_tail(&channels[0].buf, n * 1612);
-  init_update_down_channel_used(&channels[0], n * 1612);
+  channel_after_push(&channels[0], n * 1612);
 
   fclose(inf);
 

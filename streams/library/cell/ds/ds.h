@@ -1,10 +1,12 @@
 #ifndef _DS_H_
 #define _DS_H_
 
+#ifndef _DS_INIT_H_
 #include "dsconfig.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include "spulib.h"
+#endif
 
 #define MAX_TAPES 15
 
@@ -12,10 +14,11 @@ typedef struct _FILTER FILTER;
 typedef struct _FILTER_INPUT_TAPE FILTER_INPUT_TAPE;
 typedef struct _FILTER_OUTPUT_TAPE FILTER_OUTPUT_TAPE;
 typedef struct _CHANNEL CHANNEL;
+#ifndef _DS_INIT_H_
 typedef struct _DP_INSTANCE DP_INSTANCE;
 
 typedef void FILTER_WORK_FUNC(void *param, void *state, CHANNEL *const *inputs,
-                              CHANNEL *const *outputs);
+                              CHANNEL *const *outputs, uint32_t iters);
 typedef void FILTER_INIT_FUNC(void);
 
 struct _FILTER {
@@ -45,6 +48,7 @@ struct _FILTER {
   DP_INSTANCE *instances;
   DP_INSTANCE *last_instance;
 };
+#endif
 
 struct _FILTER_INPUT_TAPE {
   // from stream graph
@@ -80,6 +84,7 @@ struct _CHANNEL {
   BUFFER_CB buf;
 };
 
+#ifndef _DS_INIT_H_
 // Program defines and initializes
 extern FILTER filters[];
 extern CHANNEL channels[];
@@ -192,6 +197,7 @@ next_power_2(uint32_t a)
 {
   return 0x80000000 >> (count_ms_zeros(a - 1) - 1);
 }
+#endif
 
 #if CHECK
 #define safe_dec(x, a) \
@@ -205,6 +211,7 @@ next_power_2(uint32_t a)
 #define safe_dec(x, a) ((x) -= (a))
 #endif
 
+#ifndef _DS_INIT_H_
 #define errprintf(...) fprintf(stderr, __VA_ARGS__)
 
 #if CHECK
@@ -225,12 +232,54 @@ extern DP_INSTANCE *next_dp_instance;
 
 void ds_init();
 void ds_run();
+#endif
 
 // internal for prework
 void init_update_down_channel_used(CHANNEL *c, uint32_t num_bytes);
 void init_update_up_channel_free(CHANNEL *c, uint32_t num_bytes);
 void init_run_filter(FILTER *f);
 
+static INLINE void
+channel_gen_data(CHANNEL *c, uint32_t num_bytes)
+{
+  while (c->used_bytes < num_bytes) {
+    init_run_filter(c->source->output.f);
+  }
+}
+
+static INLINE void *
+channel_peek_addr(CHANNEL *c, uint32_t size, uint32_t n)
+{
+  channel_gen_data(c, (n + 1) * size);
+  return c->buf.data + ((c->buf.head + n * size) & c->buf.mask);
+}
+
+static INLINE void
+channel_pop(CHANNEL *c, uint32_t num_bytes)
+{
+  channel_gen_data(c, num_bytes);
+  buf_inc_head(&c->buf, num_bytes);
+  safe_dec(c->used_bytes, num_bytes);
+  init_update_up_channel_free(c, num_bytes);
+}
+
+static INLINE void *
+channel_push_addr(CHANNEL *c, uint32_t num_bytes)
+{
+  UNUSED_PARAM(num_bytes);
+  check(c->free_bytes >= num_bytes);
+  return c->buf.data + c->buf.tail;
+}
+
+static INLINE void
+channel_after_push(CHANNEL *c, uint32_t num_bytes)
+{
+  safe_dec(c->free_bytes, num_bytes);
+  buf_inc_tail(&c->buf, num_bytes);
+  init_update_down_channel_used(c, num_bytes);
+}
+
+#ifndef _DS_INIT_H_
 // these are only called by ds_run
 void ds_prework();          // at start
 void ds_init_2();           // just after prework
@@ -313,5 +362,6 @@ get_spu_cmd_group_slot(SPU_STATE *spu)
   spu->next_cmd_group_slot ^= 1;
   return gid_start;
 }
+#endif
 
 #endif

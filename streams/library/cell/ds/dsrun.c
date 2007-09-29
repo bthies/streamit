@@ -537,13 +537,16 @@ handle_complete(SPU_STATE *spu, ACTIVE_FILTER *af, bool_t current)
       start_input(af, TRUE);
 
       issue_group(af, 1); // init_a
-      setup_init_b(af);
+      // 0-input filters have alloc mask = 0, doing this here could overwrite
+      // load group before spu finishes reading it
+      // setup_init_b(af);
 
       af->phase = PHASE_LOAD;
       af->waiting_mask = get_load_mask(af);
       break;
 
     case PHASE_LOAD:
+      setup_init_b(af);
       issue_group(af, 0); // init_b
 
       af->phase = PHASE_INIT_A;

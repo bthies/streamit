@@ -475,7 +475,7 @@ ext_psp_handler(void *data, uint32_t mask)
       start_input(af);
 
       issue_group(af, 1); // init_a
-      setup_init_b(af);
+      // setup_init_b(af);
 
       af->phase = PHASE_LOAD;
       af->waiting_mask = get_load_mask(af);
@@ -484,6 +484,7 @@ ext_psp_handler(void *data, uint32_t mask)
     case PHASE_LOAD:
       start_output(af);
 
+      setup_init_b(af);
       issue_group(af, 0); // init_b
 
       af->phase = PHASE_INIT_A;

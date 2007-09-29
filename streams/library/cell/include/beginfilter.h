@@ -107,7 +107,11 @@
 
 #endif // NUM_OUTPUT_TAPES != 0
 
-#ifndef USE_CHANNELS
+#ifdef __SPU__
+#undef CHANNEL_INTERFACE
+#endif
+
+#ifndef CHANNEL_INTERFACE
 #define TAPE_TYPE BUFFER_CB
 #else
 #define TAPE_TYPE CHANNEL
@@ -285,7 +289,7 @@
 // peek/pop functions and wrapper macros.
 #if (NUM_INPUT_TAPES != 0)
 
-#ifndef USE_CHANNELS
+#ifndef CHANNEL_INTERFACE
 
 static INLINE INPUT_ITEM_TYPE
 DECORATE_FUNC_NAME(peek)(BUFFER_CB *buf, uint32_t n)
@@ -335,7 +339,7 @@ DECORATE_FUNC_NAME(popn)(BUFFER_CB *buf, uint32_t n)
   return item;
 }
 
-#else // USE_CHANNELS
+#else // CHANNEL_INTERFACE
 
 static INLINE INPUT_ITEM_TYPE
 DECORATE_FUNC_NAME(peek)(CHANNEL *c, uint32_t n)
@@ -356,7 +360,7 @@ DECORATE_FUNC_NAME(popn)(CHANNEL *c, uint32_t n)
 static INLINE INPUT_ITEM_TYPE
 DECORATE_FUNC_NAME(pop)(CHANNEL *c)
 {
-  return DECORATE_FUNC_NAME(popn)(1);
+  return DECORATE_FUNC_NAME(popn)(c, 1);
 }
 
 #endif
@@ -365,7 +369,7 @@ DECORATE_FUNC_NAME(pop)(CHANNEL *c)
 #define peek(n)             DECORATE_FUNC_NAME(peek)(_input, n)
 #define pop()               DECORATE_FUNC_NAME(pop)(_input)
 #define popn(n)             DECORATE_FUNC_NAME(popn)(_input, n)
-#ifndef USE_CHANNELS
+#ifndef CHANNEL_INTERFACE
 #define get_input()         \
   ((INPUT_ITEM_TYPE *)(buf_get_data(_input) + _input->head))
 #define advance_input(n)    buf_advance_head(_input, (n) * INPUT_ITEM_SIZE)
@@ -374,7 +378,7 @@ DECORATE_FUNC_NAME(pop)(CHANNEL *c)
 #define peek(t, n)          DECORATE_FUNC_NAME(peek)(_inputs[t], n)
 #define pop(t)              DECORATE_FUNC_NAME(pop)(_inputs[t])
 #define popn(t, n)          DECORATE_FUNC_NAME(popn)(_inputs[t], n)
-#ifndef USE_CHANNELS
+#ifndef CHANNEL_INTERFACE
 #define get_input(t)        \
   ((INPUT_ITEM_TYPE *)(buf_get_data(_inputs[t]) + _inputs[t]->head))
 #define advance_input(t, n) \
@@ -387,7 +391,7 @@ DECORATE_FUNC_NAME(pop)(CHANNEL *c)
 // push function and wrapper macro.
 #if (NUM_OUTPUT_TAPES != 0)
 
-#ifndef USE_CHANNELS
+#ifndef CHANNEL_INTERFACE
 
 static INLINE void
 DECORATE_FUNC_NAME(push)(BUFFER_CB *buf, OUTPUT_ITEM_TYPE item)
@@ -401,7 +405,7 @@ DECORATE_FUNC_NAME(push)(BUFFER_CB *buf, OUTPUT_ITEM_TYPE item)
     ;
 }
 
-#else // USE_CHANNELS
+#else // CHANNEL_INTERFACE
 
 static INLINE void
 DECORATE_FUNC_NAME(push)(CHANNEL *c, OUTPUT_ITEM_TYPE item)
@@ -414,14 +418,14 @@ DECORATE_FUNC_NAME(push)(CHANNEL *c, OUTPUT_ITEM_TYPE item)
 
 #if (NUM_OUTPUT_TAPES == 1)
 #define push(item)            DECORATE_FUNC_NAME(push)(_output, item)
-#ifndef USE_CHANNELS
+#ifndef CHANNEL_INTERFACE
 #define get_output()          \
   ((OUTPUT_ITEM_TYPE *)(buf_get_data(_output) + _output->tail))
 #define advance_output(n)     buf_advance_tail(_output, (n) * OUTPUT_ITEM_SIZE)
 #endif
 #else
 #define push(t, item)         DECORATE_FUNC_NAME(push)(_outputs[t], item)
-#ifndef USE_CHANNELS
+#ifndef CHANNEL_INTERFACE
 #define get_output(t)         \
   ((OUTPUT_ITEM_TYPE *)(buf_get_data(_outputs[t]) + _outputs[t]->tail))
 #define advance_output(t, n)  \

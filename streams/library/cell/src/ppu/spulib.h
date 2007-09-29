@@ -306,6 +306,7 @@ DECLARE_SPU_COMMAND(call_func,
 #if SPU_STATS_ENABLE
 // Stats commands.
 DECLARE_SPU_COMMAND(stats_print);
+DECLARE_SPU_COMMAND(stats_update);
 #endif
 
 #undef DECLARE_SPU_COMMAND
@@ -364,8 +365,9 @@ void dt_out_front_ex(BUFFER_CB *buf, uint32_t dest_spu,
 void finish_dt_in_back_ex_head(BUFFER_CB *buf, bool_t tail_overlaps);
 void finish_dt_in_back_ex_tail(BUFFER_CB *buf);
 #else
-#define finish_dt_in_back_ex_head(buf, tail_overlaps) ((void)0)
-#define finish_dt_in_back_ex_tail(buf)                ((void)0)
+static INLINE void finish_dt_in_back_ex_head(BUFFER_CB *buf UNUSED,
+                                             bool_t tail_overlaps UNUSED) {}
+static INLINE void finish_dt_in_back_ex_tail(BUFFER_CB *buf UNUSED) {}
 #endif
 
 /*-----------------------------------------------------------------------------
@@ -394,5 +396,13 @@ void spulib_wait(uint32_t spu_id, uint32_t mask);
 
 void spulib_set_all_spu_complete_cb(SPU_COMPLETE_CB *cb);
 void spulib_set_all_ppu_dt_complete_cb(GENERIC_COMPLETE_CB *cb);
+
+#if SPU_STATS_ENABLE
+void spulib_start_stats(uint32_t num_spu);
+void spulib_print_stats(uint32_t num_spu);
+#else
+static INLINE void spulib_start_stats(uint32_t num_spu UNUSED) {}
+static INLINE void spulib_print_stats(uint32_t num_spu UNUSED) {}
+#endif
 
 #endif

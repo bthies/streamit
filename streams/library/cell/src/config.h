@@ -26,7 +26,7 @@
 #ifdef __SPU__  // SPU
 
 // If 1, will print stats whenever a filter is unloaded.
-#define STATS_PRINT_ON_UNLOAD 1
+#define STATS_PRINT_ON_UNLOAD 0
 
 // If 1, dt_in_* commands on SPU will automatically adjust head/tail pointers
 // of empty buffers to match the data offset in the source buffer, if

@@ -168,7 +168,6 @@ spu_handle_complete(uint32_t spu_id, uint32_t mask)
  *
  * Dispatches completed internal command IDs to operation handlers.
  *---------------------------------------------------------------------------*/
-
 static void
 spu_handle_internal_complete(SPU_INFO *spu, uint32_t mask)
 {
@@ -218,7 +217,6 @@ spu_handle_internal_complete(SPU_INFO *spu, uint32_t mask)
  * Returns a new uninitialized internal command group for the specified SPU.
  * Fails if all internal groups are being used.
  *---------------------------------------------------------------------------*/
-
 SPU_CMD_GROUP *
 spu_new_int_group(SPU_INFO *spu)
 {
@@ -234,7 +232,6 @@ spu_new_int_group(SPU_INFO *spu)
  *
  * Frees an internal command group.
  *---------------------------------------------------------------------------*/
-
 void
 spu_free_int_group(SPU_CMD_GROUP *g)
 {
@@ -252,7 +249,6 @@ spu_free_int_group(SPU_CMD_GROUP *g)
  *
  * This must be called before issuing any commands in the operation.
  *---------------------------------------------------------------------------*/
-
 void *
 spu_new_ext_op(SPU_INFO *spu, uint32_t spu_cmd_mask,
                EXTENDED_OP_HANDLER *handler, GENERIC_COMPLETE_CB *cb,
@@ -401,7 +397,6 @@ spulib_poll()
 /*-----------------------------------------------------------------------------
  * spulib_wait
  *---------------------------------------------------------------------------*/
-
 void
 spulib_wait(uint32_t spu_id, uint32_t mask)
 {
@@ -411,7 +406,6 @@ spulib_wait(uint32_t spu_id, uint32_t mask)
 /*-----------------------------------------------------------------------------
  * spulib_set_all_spu_complete_cb
  *---------------------------------------------------------------------------*/
-
 void
 spulib_set_all_spu_complete_cb(SPU_COMPLETE_CB *cb)
 {
@@ -423,7 +417,6 @@ spulib_set_all_spu_complete_cb(SPU_COMPLETE_CB *cb)
 /*-----------------------------------------------------------------------------
  * spulib_set_all_ppu_dt_complete_cb
  *---------------------------------------------------------------------------*/
-
 void
 spulib_set_all_ppu_dt_complete_cb(GENERIC_COMPLETE_CB *cb)
 {
@@ -431,3 +424,65 @@ spulib_set_all_ppu_dt_complete_cb(GENERIC_COMPLETE_CB *cb)
     spu_info[i].ppu_dt_complete_cb = cb;
   }
 }
+
+#if SPU_STATS_ENABLE
+
+/*-----------------------------------------------------------------------------
+ * spulib_start_stats
+ *---------------------------------------------------------------------------*/
+void
+spulib_start_stats(uint32_t num_spu)
+{
+  SPU_COMPLETE_CB *orig_cb[num_spu];
+
+  for (uint32_t i = 0; i < num_spu; i++) {
+    check((spu_info[i].issued_mask == 0) && (spu_info[i].ext_ops == NULL));
+
+    orig_cb[i] = spu_info[i].spu_complete_cb;
+    spu_info[i].spu_complete_cb = NULL;
+
+    spu_null(spu_new_group(i, 0),
+             0,
+             0);
+    spu_issue_group(i, 0, 0);
+  }
+
+  for (uint32_t i = 0; i < num_spu; i++) {
+    spulib_wait(i, 1);
+    spu_info[i].spu_complete_cb = orig_cb[i];
+  }
+}
+
+/*-----------------------------------------------------------------------------
+ * spulib_print_stats
+ *---------------------------------------------------------------------------*/
+void
+spulib_print_stats(uint32_t num_spu)
+{
+  SPU_COMPLETE_CB *orig_cb[num_spu];
+
+  for (uint32_t i = 0; i < num_spu; i++) {
+    check((spu_info[i].issued_mask == 0) && (spu_info[i].ext_ops == NULL));
+
+    orig_cb[i] = spu_info[i].spu_complete_cb;
+    spu_info[i].spu_complete_cb = NULL;
+
+    spu_stats_update(spu_new_group(i, 0),
+                     0,
+                     0);
+    spu_issue_group(i, 0, 0);
+  }
+
+  for (uint32_t i = 0; i < num_spu; i++) {
+    spulib_wait(i, 1);
+    spu_stats_print(spu_new_group(i, 0),
+                    0,
+                    0);
+    spu_issue_group(i, 0, 0);
+    spulib_wait(i, 1);
+
+    spu_info[i].spu_complete_cb = orig_cb[i];
+  }  
+}
+
+#endif

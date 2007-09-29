@@ -395,6 +395,7 @@ void run_dt_in_back(DT_IN_BACK_CMD *cmd);
 void run_call_func(CALL_FUNC_CMD *cmd);
 #if STATS_ENABLE
 void run_stats_print(STATS_PRINT_CMD *cmd);
+void run_stats_update(STATS_UPDATE_CMD *cmd);
 #endif
 
 /*-----------------------------------------------------------------------------
@@ -496,6 +497,10 @@ dep_execute()
 #if STATS_ENABLE
     case CMD_STATS_PRINT:
       run_stats_print((STATS_PRINT_CMD *)cmd);
+      break;
+
+    case CMD_STATS_UPDATE:
+      run_stats_update((STATS_UPDATE_CMD *)cmd);
       break;
 #endif
 

@@ -37,5 +37,6 @@ spu_cmd_size[SPU_NUM_CMD_TYPES] = {
   define_command(NULL),
   define_command(CALL_FUNC),
   // Stats commands.
-  define_command(STATS_PRINT)
+  define_command(STATS_PRINT),
+  define_command(STATS_UPDATE)
 };

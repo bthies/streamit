@@ -249,16 +249,19 @@ main(int argc, char **argv)
   {
     SPU_CMD_GROUP *g = spu_new_group(0, 0);
     spu_filter_unload(g, sl[2].filt_cb, 0, 0);
-    spu_stats_print(g, 1, 1, 0);
+    spu_stats_update(g, 1, 1, 0);
     spu_issue_group(0, 0, 128);
   }  
   for (int i = 1; i < 5; i++) {
     SPU_CMD_GROUP *g = spu_new_group(i, 0);
-    spu_stats_print(g, 0, 0);
+    spu_stats_update(g, 0, 0);
     spu_issue_group(i, 0, 0);
   }
-  spulib_wait(0, 3);
-  for (int i = 1; i < 5; i++) {
+  spulib_wait(0, 2);
+  for (int i = 0; i < 5; i++) {
+    spulib_wait(i, 1);
+    spu_stats_print(spu_new_group(i, 0), 0, 0);
+    spu_issue_group(i, 0, 0);
     spulib_wait(i, 1);
   }
 

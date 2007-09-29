@@ -116,4 +116,12 @@ run_stats_print(STATS_PRINT_CMD *cmd)
   dep_complete_command();
 }
 
+void
+run_stats_update(STATS_UPDATE_CMD *cmd)
+{
+  UNUSED_PARAM(cmd);
+  stats_total_ticks = stats_first_start - spu_read_decrementer();
+  dep_complete_command();
+}
+
 #endif

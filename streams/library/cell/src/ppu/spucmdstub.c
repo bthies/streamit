@@ -314,4 +314,12 @@ DECLARE_SPU_COMMAND(stats_print, STATS_PRINT)
 }
 END_SPU_COMMAND
 
+/*-----------------------------------------------------------------------------
+ * spu_stats_update
+ *---------------------------------------------------------------------------*/
+DECLARE_SPU_COMMAND(stats_update, STATS_UPDATE)
+{
+}
+END_SPU_COMMAND
+
 #endif

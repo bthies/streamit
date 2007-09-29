@@ -411,10 +411,10 @@ init_run_filter(FILTER *f)
 
   if (f->done_prework) {
     (*f->ppu_work_func)((void *)f->desc.param, f->desc.state_addr, f->inputs,
-                        f->outputs, 0);
+                        f->outputs, 1);
   } else {
     (*f->ppu_prework_func)((void *)f->desc.param, f->desc.state_addr,
-                           f->inputs, f->outputs, 0);
+                           f->inputs, f->outputs, 1);
     f->done_prework = TRUE;
   }
 
@@ -445,10 +445,16 @@ ds_prework()
 void
 ds_spu_init_funcs()
 {
-  uint32_t n = 0;
+  uint32_t n = SPU_STATS_ENABLE;
 
   for (uint32_t i = 0; i < num_spu; i++) {
+#if SPU_STATS_ENABLE
+    spu_null(spu_new_group(i, 0),
+             0,
+             0);
+#else
     spu_new_group(i, 0);
+#endif
   }
 
   for (uint32_t i = 0; i < num_filters; i++) {

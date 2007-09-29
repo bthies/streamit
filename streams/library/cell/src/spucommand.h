@@ -42,8 +42,9 @@
 #define SPU_CMD_CALL_FUNC            15
 // Stats commands.
 #define SPU_CMD_STATS_PRINT          16
+#define SPU_CMD_STATS_UPDATE         17
 // Number of command types.
-#define SPU_NUM_CMD_TYPES            17
+#define SPU_NUM_CMD_TYPES            18
 
 /*
  * All command structures (except the SPU's internal worker commands) are
@@ -87,6 +88,14 @@ C_ASSERT(sizeof(SPU_CMD_HEADER) == 5);
 #define SPU_DECLARE_CMD_HEADER_LARGE \
   SPU_CMD_HEADER header;                                                      \
   uint8_t header_deps[SPU_CMD_MAX_DEPS_LARGE];
+
+typedef struct _SPU_NO_PARAM_CMD {
+  SPU_DECLARE_CMD_HEADER
+// 12
+  uint32_t _padding;
+} QWORD_ALIGNED SPU_NO_PARAM_CMD;
+
+C_ASSERT(sizeof(SPU_NO_PARAM_CMD) == 16);
 
 /*-----------------------------------------------------------------------------
  * Filter commands.
@@ -404,13 +413,9 @@ C_ASSERT(sizeof(SPU_CALL_FUNC_CMD) == 16);
  *---------------------------------------------------------------------------*/
 
 // stats_print
-typedef struct _SPU_STATS_PRINT_CMD {
-  SPU_DECLARE_CMD_HEADER
-// 12
-  uint32_t _padding;
-} QWORD_ALIGNED SPU_STATS_PRINT_CMD;
-
-C_ASSERT(sizeof(SPU_STATS_PRINT_CMD) == 16);
+typedef SPU_NO_PARAM_CMD SPU_STATS_PRINT_CMD;
+// stats_update
+typedef SPU_NO_PARAM_CMD SPU_STATS_UPDATE_CMD;
 
 // Size of each command structure.
 extern
@@ -562,6 +567,7 @@ spu_cmd_compose_req(LS_ADDRESS lsa, uint32_t entry, uint32_t size)
 #define CMD_CALL_FUNC             SPU_CMD_CALL_FUNC
 // Stats commands.
 #define CMD_STATS_PRINT           SPU_CMD_STATS_PRINT
+#define CMD_STATS_UPDATE          SPU_CMD_STATS_UPDATE
 // Number of command types.
 #define NUM_CMD_TYPES             SPU_NUM_CMD_TYPES
 
@@ -597,6 +603,7 @@ spu_cmd_compose_req(LS_ADDRESS lsa, uint32_t entry, uint32_t size)
 #define CALL_FUNC_CMD             SPU_CALL_FUNC_CMD
 // Stats commands.
 #define STATS_PRINT_CMD           SPU_STATS_PRINT_CMD
+#define STATS_UPDATE_CMD          SPU_STATS_UPDATE_CMD
 
 #endif
 

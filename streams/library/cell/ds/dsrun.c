@@ -1166,16 +1166,7 @@ ds_run()
   spulib_poll_while(incomplete_filters != 0);
   spulib_set_all_spu_complete_cb(NULL);
 
-#if SPU_STATS_ENABLE
-  for (uint32_t i = 0; i < num_spu; i++) {
-    SPU_CMD_GROUP *g = spu_new_group(i, 0);
-    spu_stats_print(g,
-                    0,
-                    0);
-    spu_issue_group(i, 0, 0);
-    spulib_wait(i, 1);
-  }
-#endif
+  spulib_print_stats(num_spu);
 
   IF_CHECK(run_done_check());
 }

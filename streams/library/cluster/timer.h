@@ -37,15 +37,21 @@ class timer {
   void output(FILE *f);
 };
 
-// proc_timer keeps track of the clock cycles consumed by a process
+#define GET_TIME(x) __asm__ volatile(".byte 0x0f,0x31":"=A"(x))
 
+extern double total_time;
+
+// proc_timer keeps track of the clock cycles consumed by a process
 class proc_timer {
 
   // keeps track of start and stop for current segment
-  struct tms t_start, t_end;
+  unsigned long long int t_start, t_end;
 
-  // total times accumulated by this timer
-  double user, system;
+  // starting and ending times for complete run
+  unsigned long long int start_run, end_run;
+
+  // total times accumulated by this procedure
+  double my_time;
 
   // name for this timer
   char* name;
@@ -55,16 +61,16 @@ class proc_timer {
 
   // inline to help avoid big overhead
   inline void start() { 
-    times(&t_start); 
+      GET_TIME(t_start);
   }
 
   // inline to help avoid big overhead
   inline void stop() {
-    times(&t_end);
+    GET_TIME(t_end);
     
     // add to cumulative
-    user += t_end.tms_utime - t_start.tms_utime;
-    system += t_end.tms_stime - t_start.tms_stime;
+    my_time += t_end - t_start;
+    total_time += t_end - t_start;
   }
 
   void output(FILE *f);

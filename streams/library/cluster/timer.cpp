@@ -19,6 +19,8 @@
 #include <unistd.h>
 #include <stdio.h>
 
+// to keep track of the total elapsed time
+double total_time = 0.0;
 
 void timer::start() {
   gettimeofday(&tv1, &tz);
@@ -40,17 +42,13 @@ void timer::output(FILE *f) {
 
 proc_timer::proc_timer(char* _name) {
   name = _name;
-  user = 0.0;
-  system = 0.0;
+  my_time = 0.0;
 }
 
 void proc_timer::output(FILE *f) {
-  int ticks_per_sec = sysconf(_SC_CLK_TCK);
-  
-  user /= ticks_per_sec;
-  system /= ticks_per_sec;
+  my_time = my_time * 100.0 / total_time;
 
-  fprintf(f, "%s: user %.02f; sys %.02f (%d ticks/sec)\n",
-	 name, user, system, ticks_per_sec);
+  fprintf(f, "%s: %.02f%\n",
+	 name, my_time);
 }
 

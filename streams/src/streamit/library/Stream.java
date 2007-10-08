@@ -525,6 +525,7 @@ public abstract class Stream extends Operator
     boolean marksteady = false;
     boolean printsched = false;
     boolean printreps = false;
+    public static boolean profile = false;
 
     int uncompressedSize = 0;
     int totalSize = 0;
@@ -670,7 +671,7 @@ public abstract class Stream extends Operator
             scheduledRun = false;
         }
     }
-    
+
     // just a runtime hook to run the stream
     public static boolean scheduledRun = true;
     public void run(String args[])
@@ -718,6 +719,10 @@ public abstract class Stream extends Operator
                             else if (args[index].equals("-printreps"))
                                 {
                                     printreps = true;
+                                }
+                            else if (args[index].equals("-profile"))
+                                {
+                                    profile = true;
                                 }
                             else if (args[index].equals("-norun"))
                                 {
@@ -943,6 +948,8 @@ public abstract class Stream extends Operator
             e.printStackTrace();
             System.exit(1);
         }
+
+        if (profile) Timing.saveTimingData();
     }
 
     /*************************************************************/

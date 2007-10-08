@@ -29,6 +29,9 @@ import java.util.LinkedList;
  * StreamIt programs in the Java library.  It is notified of
  * arithmetic operations by instrumentation code that is inserted by
  * the frontend (when run with strc -countops -library).
+ *
+ * Note that this differs from Timing.java, which handles the
+ * --profile option.
  */
 public class Profiler {
     // Temporary list for constructing names of operations.

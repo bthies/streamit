@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.128 2007-08-21 08:21:44 qjli Exp $
+# $Id: strc,v 1.129 2007-10-08 19:25:35 thies Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -942,6 +942,7 @@ sub get_lib_opts
     $opts{marksteady} && ($libopts .= " -marksteady");
     $opts{printsched} && ($libopts .= " -printsched");
     $opts{printreps} && ($libopts .= " -printreps");
+    $opts{profile} && ($libopts .= " -profile");
     $opts{sas} && ($libopts .= " -sas");
     $opts{jcc} && ($libopts .= " -jcc");
     return $libopts;

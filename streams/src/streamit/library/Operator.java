@@ -80,6 +80,7 @@ public class Operator extends DestroyedClass
         currentPushed = 0;
         currentMaxPeek = -1;
         deliverMessages();
+        if (Stream.profile) Timing.registerBegin(this);
     }
     /**
      * Enqueues <pre>message</pre> for delivery to this.
@@ -144,6 +145,7 @@ public class Operator extends DestroyedClass
         }
 
         workExecutions++;
+        if (Stream.profile) Timing.registerEnd(this);
     }
     /**
      * Register a pop, push, or peek.

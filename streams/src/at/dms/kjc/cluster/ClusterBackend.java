@@ -1,7 +1,8 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.128 2007-07-05 04:19:14 thies Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.129 2007-10-17 20:04:52 thies Exp $
 package at.dms.kjc.cluster; 
 
 import at.dms.kjc.flatgraph.FlatNode;
+import at.dms.kjc.flatgraph.DumpSymbolicGraph;
 import at.dms.kjc.flatgraph.GraphFlattener;
 //import at.dms.kjc.flatgraph.*;
 //import at.dms.util.IRPrinter;
@@ -595,6 +596,15 @@ public class ClusterBackend {
         // method names to include the filter name, so we can identify them
         if (KjcOptions.standalone && !KjcOptions.fusion) {
             RenameAll.expandFunctionNames(str);
+        }
+
+        // output a .gph graph description file for our collaborators from France
+        // (only designed for when there is a single static graph)
+        if (numSsgs==1) {
+            ClusterStaticStreamGraph ssg = (ClusterStaticStreamGraph)streamGraph.getStaticSubGraphs()[0];
+            new DumpSymbolicGraph().dumpGraph(strTop, "graph-description.gph", 
+                                              ssg.getExecutionCounts(true),
+                                              ssg.getExecutionCounts(false));
         }
 
         ////////////////////////////////////////////////

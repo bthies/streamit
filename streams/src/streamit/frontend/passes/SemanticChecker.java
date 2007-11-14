@@ -29,7 +29,7 @@ import java.util.*;
  * semantic errors.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SemanticChecker.java,v 1.38 2006-09-25 13:54:54 dimock Exp $
+ * @version $Id: SemanticChecker.java,v 1.39 2007-11-14 13:14:14 rabbah Exp $
  */
 public class SemanticChecker
 {
@@ -859,42 +859,7 @@ public class SemanticChecker
                         // the types are backwards from the initializers
                         Type type = field.getType(i);
                         Expression init = field.getInit(i);
-                        // deep-check the array types (to deal with multi-dim arrays)
-                        boolean recurse = true;
-                        while (type instanceof TypeArray && init!=null && recurse) {
-                            // check that initializer is array initializer
-                            // (I guess it could also be conditional expression?  Don't bother.)
-                            if (!(init instanceof ExprArrayInit)) {
-                                // this is not an error case because
-                                // it might be a function call, e.g.,
-                                // to init_array_1D_float(filename, size)
-
-                                // stop looking deeper into array decl
-                                recurse = false;
-                            } else {
-                                // check that lengths match
-                                Expression lengthExpr = ((TypeArray)type).getLength();
-                                // only check it if we have resolved it
-                                if (lengthExpr instanceof ExprConstInt) {
-                                    int length = ((ExprConstInt)lengthExpr).getVal();
-                                    if (length != ((ExprArrayInit)init).getElements().size()) {
-                                        report(field, 
-                                               "declared array length does not match " +
-                                               "array initializer");
-                                    }
-                                }
-                                // update for next check.  Check as
-                                // long as there are array
-                                // initializers to match.
-                                type = ((TypeArray)type).getBase();
-                                List elems = ((ExprArrayInit)init).getElements();
-                                if (elems.size()>0) {
-                                    init = (Expression)elems.get(0);
-                                } else {
-                                    recurse = false;
-                                }
-                            }
-                        }
+                        verifyArrayDimsMatchInits(field, type, init);
                     }
 
                     return super.visitFieldDecl(field);
@@ -1492,6 +1457,13 @@ public class SemanticChecker
                             if (isStreamParam(name))
                                 report(stmt,
                                        "local variable shadows stream parameter");
+                            
+                            // RMR { verify array dims match array initializers 
+                            // the types are backwards from the initializers
+                            Type type = stmt.getType(i);
+                            Expression init = stmt.getInit(i);
+                            verifyArrayDimsMatchInits(stmt, type, init);
+                            // } RMR
                         }
                     return super.visitStmtVarDecl(stmt);
                 }
@@ -1528,5 +1500,45 @@ public class SemanticChecker
                     return super.visitExprUnary(expr);
                 }
             });
+    }
+    
+    public void verifyArrayDimsMatchInits(FENode stmt, Type type, Expression init)
+    {
+        // deep-check the array types (to deal with multi-dim arrays)
+        boolean recurse = true;
+        while (type instanceof TypeArray && init!=null && recurse) {
+            // check that initializer is array initializer
+            // (I guess it could also be conditional expression?  Don't bother.)
+            if (!(init instanceof ExprArrayInit)) {
+                // this is not an error case because
+                // it might be a function call, e.g.,
+                // to init_array_1D_float(filename, size)
+
+                // stop looking deeper into array decl
+                recurse = false;
+            } else {
+                // check that lengths match
+                Expression lengthExpr = ((TypeArray)type).getLength();
+                // only check it if we have resolved it
+                if (lengthExpr instanceof ExprConstInt) {
+                    int length = ((ExprConstInt)lengthExpr).getVal();
+                    if (length != ((ExprArrayInit)init).getElements().size()) {
+                        report(stmt, 
+                                "declared array length does not match " +
+                                "array initializer");
+                    }
+                }
+                // update for next check.  Check as
+                // long as there are array
+                // initializers to match.
+                type = ((TypeArray)type).getBase();
+                List elems = ((ExprArrayInit)init).getElements();
+                if (elems.size()>0) {
+                    init = (Expression)elems.get(0);
+                } else {
+                    recurse = false;
+                }
+            }
+        }
     }
 }

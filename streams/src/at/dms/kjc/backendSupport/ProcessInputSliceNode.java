@@ -431,6 +431,7 @@ public class ProcessInputSliceNode {
                     JFormalParameter.EMPTY,
                     body);
             joiner_code.setWorkMethod(joinerWork);
+            joiner_code.addMethod(joinerWork);
         }
         
         /**

@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.53 2007-06-25 02:37:54 thies Exp $
+ * $Id: Utils.java,v 1.54 2007-11-15 23:41:28 rabbah Exp $
  */
 
 package at.dms.util;
@@ -1244,7 +1244,7 @@ public abstract class Utils implements Serializable, DeepCloneable {
         if (count instanceof JIntLiteral) {
             int intCount = ((JIntLiteral)count).intValue();
             if (intCount<=0) {
-                // return assignment statement
+                // return empty statement
                 return new JEmptyStatement(null, null);
             }
         }

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMinusExpression.java,v 1.9 2006-10-27 20:48:54 dimock Exp $
+ * $Id: JMinusExpression.java,v 1.10 2007-11-15 04:02:37 rabbah Exp $
  */
 
 package at.dms.kjc;
@@ -96,6 +96,14 @@ public class JMinusExpression extends JBinaryArithmeticExpression {
         throw new UnpositionedError(KjcMessages.MINUS_BADTYPE, leftType, rightType);
     }
 
+    public CType getType() {
+        try {
+            return computeType(left.getType(),right.getType());
+        } catch(UnpositionedError e) {
+            return super.getType();
+        }
+    }
+    
     // ----------------------------------------------------------------------
     // CONSTANT FOLDING
     // ----------------------------------------------------------------------

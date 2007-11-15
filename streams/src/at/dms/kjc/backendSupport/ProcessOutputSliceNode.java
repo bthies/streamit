@@ -341,7 +341,9 @@ public class ProcessOutputSliceNode {
             CodeStoreHelper splitter_code = CodeStoreHelper.findHelperForSliceNode(splitter);
             if (splitter_code == null) {
                 splitter_code = backEndBits.getCodeStoreHelper(splitter);
-                makeSplitterCode(splitter,backEndBits,splitter_code);
+                if (backEndBits.sliceNeedsSplitterCode(splitter.getParent())) {
+                    makeSplitterCode(splitter,backEndBits,splitter_code);
+                }
                 CodeStoreHelper.addHelperForSliceNode(splitter,splitter_code);
             }
             return splitter_code;

@@ -47,7 +47,7 @@ void->Frame pipeline VideoProcessor(int width, int height) {
 	
 
     // comment out for testing
-    add FileReader<bit> ("../testvideos/mobile.cif");
+    add FileReader<bit> ("mobile.cif");
     add BitStream2IntStream();
 	
     // for testing macroblockmaker and framebuilder

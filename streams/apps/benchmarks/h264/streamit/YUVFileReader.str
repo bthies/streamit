@@ -1,7 +1,7 @@
 // testing:
 
 void->int pipeline YUVFileReader() {
-    add FileReader<bit> ("../testvideos/mobile.cif");
+    add FileReader<bit> ("mobile.cif");
     add BitStream2IntStream();
     int width = 352;
     int height = 288;

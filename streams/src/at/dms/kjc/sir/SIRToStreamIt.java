@@ -14,7 +14,7 @@ import at.dms.kjc.common.CodeGenerator;
  * Dump an SIR tree into a StreamIt program.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SIRToStreamIt.java,v 1.41 2007-02-01 21:11:32 dimock Exp $
+ * @version $Id: SIRToStreamIt.java,v 1.42 2007-11-26 20:30:12 rabbah Exp $
  */
 public class SIRToStreamIt
     implements Constants, SLIRVisitor, AttributeStreamVisitor, CodeGenerator
@@ -74,6 +74,43 @@ public class SIRToStreamIt
         run(str, interfaces, interfaceTables, structs);
     }
     
+    /**
+     * Top-level entry point that writes output to buffer param.
+     *
+     * For use on stream graphs
+     * that have already been expanded in the compiler.
+     */
+    public static void run(SIRStream str,
+                           JInterfaceDeclaration[] interfaces,
+                           SIRInterfaceTable[] interfaceTables,
+                           SIRStructure[] structs,
+				           StringBuffer buffer) {
+        SIRToStreamIt s2s = new SIRToStreamIt();
+
+        // allow null structs for simplicity
+        if (structs!=null) {
+            for (int i = 0; i < structs.length; i++) {
+                assert structs[i] != null;
+                if (!(structs[i].getIdent().equals("Complex")))
+                    structs[i].accept(s2s);
+            }
+        }
+
+        // allow null interfaces for simplicity
+        if (interfaces!=null) {
+            for (int i = 0; i < interfaces.length; i++)
+                interfaces[i].accept(s2s);
+        }
+
+        s2s.visitAnyStream(str);
+
+        if (buffer != null) 
+            buffer.append(s2s.getPrinter().getString());
+        // else 
+        // System.err.println(s2s.getPrinter().getString());
+        s2s.close();
+    }
+
     /**
      * Top-level entry point.  
      *
@@ -1095,7 +1132,8 @@ public class SIRToStreamIt
         if (!(thenClause instanceof JBlock)) p.indent();
         thenClause.accept(this);
         if (!(thenClause instanceof JBlock)) p.outdent();
-        if (elseClause != null) {
+        // RMR { do not print the else clause if there is an empty statement } 
+        if ((elseClause != null) && (!(elseClause instanceof JEmptyStatement))) {
             if ((elseClause instanceof JBlock) || (elseClause instanceof JIfStatement)) {
                 p.print(" ");
             } else {
@@ -1150,7 +1188,17 @@ public class SIRToStreamIt
         p.print(")");
         p.newLine();
         p.indent();
-        body.accept(this);
+        
+        // RMR { print empty "{ }" for empty loop bodies
+        if (body instanceof JEmptyStatement) {
+        	p.print("{");
+        	p.print("}");
+        	p.newLine();
+        }
+        else {
+        	body.accept(this);
+        }
+        // } RMR
         p.outdent();
     }
 

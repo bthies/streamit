@@ -201,6 +201,12 @@ public class ThreeAddressCode {
 //            }
 //            return false;
         }
+        /* RMR { lower return statements if necessary */
+        if (stmt instanceof JReturnStatement) {
+            JExpression expr = ((JReturnStatement)stmt).getExpression();
+            return shouldConvertTopExpression(expr);
+        }
+        /* } RMR */
         if (stmt instanceof JExpressionStatement) {
             // often in init or incl position of a 'for' statement.
             JExpression expr = ((JExpressionStatement)stmt).getExpression();
@@ -221,6 +227,7 @@ public class ThreeAddressCode {
             return exprs.length != 1
              || shouldConvertTopExpression(exprs[0]);
         }
+        
         // mark all others to require conversion, and let calls in S
         // to shouldConvertTopExpression sort out what actually needs conversion.
         return true;

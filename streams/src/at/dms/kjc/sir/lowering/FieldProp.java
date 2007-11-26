@@ -8,7 +8,7 @@ import java.util.*;
 /**
  * This class propagates constant assignments to field variables from
  * the init function into other functions.
- * $Id: FieldProp.java,v 1.40 2006-09-25 13:54:42 dimock Exp $
+ * $Id: FieldProp.java,v 1.41 2007-11-26 20:17:56 rabbah Exp $
  */
 public class FieldProp implements Constants
 {
@@ -324,7 +324,7 @@ public class FieldProp implements Constants
      */
     private void invalidateField(String name)
     {
-        //      System.out.println("Invalidating field: " + name);
+        // System.out.println("Invalidating field: " + name);
         nofields.add(name);
         fields.remove(name);
     }
@@ -653,7 +653,6 @@ public class FieldProp implements Constants
         SLIRReplacingVisitor theVisitor = new SLIRReplacingVisitor() {
                 public Object visitAssignmentExpression(JAssignmentExpression self,
                                                         JExpression left, JExpression right) {
-
                     inLeftHandSide[0] = true;
                     JExpression newLeft = (JExpression)left.accept(this);
                     inLeftHandSide[0] = false;
@@ -685,7 +684,7 @@ public class FieldProp implements Constants
                     inArrayOffest[0] = true;
                     // Recurse so we have something to return.
   
-                    //                Object orig = super.visitArrayAccessExpression(self,prefix, acc);
+                    // Object orig = super.visitArrayAccessExpression(self,prefix, acc);
                     JExpression newAcc = (JExpression)accessor.accept(this);
                     if (newAcc != null && newAcc != accessor) {
                         self.setAccessor(newAcc);
@@ -699,6 +698,20 @@ public class FieldProp implements Constants
                     if (!(fae.getPrefix() instanceof JThisExpression))
                         return self;
                     // Okay, the base is a FAE with this. Yay.
+                    
+                    // RMR { progagate into the dims since they may have references
+                    // to fields which should now be resolved; this is done so that
+                    // the field arraytype is fully resolved for later passes
+                    JExpression[] dims = ((CArrayType) fae.getType()).getDims();
+                    for (int i = 0; i < dims.length; i++) {
+                        if (!(dims[i] instanceof JLiteral)) {
+                            // eventually dims[i] will be a JLiteral; requires
+                            // a few passes of the propagator
+                            dims[i] = (JExpression) (dims[i]).accept(this);
+                        }
+                    }
+                    // } RMR
+                    
                     // Save its name.
                     String name = fae.getIdent();
                     // Now, is the offset an integer literal?

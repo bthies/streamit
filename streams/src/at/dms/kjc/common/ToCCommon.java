@@ -316,6 +316,7 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
         p.print(") ");
 
         p.print("{");
+        p.newline();
         p.indent();
         body.accept(this);
         p.outdent();

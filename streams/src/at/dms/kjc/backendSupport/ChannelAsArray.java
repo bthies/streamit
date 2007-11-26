@@ -94,8 +94,11 @@ public class ChannelAsArray extends Channel {
                 at.dms.kjc.Constants.ACC_STATIC,
                 CStdType.Integer, tailName, null);
         bufPrefix = new JFieldAccessExpression(bufName);
+        bufPrefix.setType(edge.getType());
         head = new JFieldAccessExpression(headName);
+        head.setType(CStdType.Integer);
         tail = new JFieldAccessExpression(tailName);
+        tail.setType(CStdType.Integer);
     }
 
     /** Obsolete constructor, don't use. */

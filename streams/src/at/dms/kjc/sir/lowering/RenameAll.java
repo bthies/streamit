@@ -411,7 +411,16 @@ public class RenameAll extends SLIRReplacingVisitor
                 (JExpression)prefix.accept(this),
                 classsymtab.nameFor(ident),
                 newArgs);
-        retval.setMethod(self.getMethod());
+        /* RMR { the method field may have been lost 
+         * in which case preserve the tapeType which
+         * is a backup field carrying the function
+         * return type
+         */
+        if (self.getMethod() != null) 
+        	retval.setMethod(self.getMethod());
+        else 
+        	retval.setType(self.getType());
+        /* } RMR */
         return retval;
     }
 

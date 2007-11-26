@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: TabbedPrintWriter.java,v 1.12 2006-03-24 18:32:18 dimock Exp $
+ * $Id: TabbedPrintWriter.java,v 1.13 2007-11-26 19:53:39 rabbah Exp $
  */
 
 package at.dms.compiler;
@@ -92,7 +92,9 @@ public class TabbedPrintWriter implements at.dms.kjc.DeepCloneable {
      * Print a new line
      */
     public void println() {
-        p.println();
+        // RMR on windows p.println() adds annoying ^M character
+        // p.println();
+        p.print("\n"); 
         column = 0;
         line++;
     }

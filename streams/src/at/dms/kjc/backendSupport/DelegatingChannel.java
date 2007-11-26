@@ -128,6 +128,12 @@ public class DelegatingChannel extends Channel {
         return ident;
     }
 
+    /* RMR { need to be able to get to the 'other' name */
+    public String getDelegatedIdent() {
+        return other.getIdent();
+    }
+    /* } RMR */
+    
     @Override
     public SliceNode getDest() {
         return theEdge.getDest();

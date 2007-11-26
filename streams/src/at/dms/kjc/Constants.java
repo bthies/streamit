@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Constants.java,v 1.6 2007-03-26 19:15:45 dimock Exp $
+ * $Id: Constants.java,v 1.7 2007-11-26 20:12:24 rabbah Exp $
  */
 
 package at.dms.kjc;
@@ -95,58 +95,58 @@ public interface Constants extends at.dms.classfile.Constants {
     // BINARY OPERATORS
     // ----------------------------------------------------------------------
     /** ?? not used in code */
-    int OPE_SIMPLE      = 0;
+    static final int OPE_SIMPLE      = 0;
     /** X += ... for {@link JCompoundAssignmentExpression} */
-    int OPE_PLUS        = 1;
+    static final int OPE_PLUS        = 1;
     /** X -= ... for {@link JCompoundAssignmentExpression} */
-    int OPE_MINUS       = 2;
+    static final int OPE_MINUS       = 2;
     /** X *= ... for {@link JCompoundAssignmentExpression} */
-    int OPE_STAR        = 3;
+    static final int OPE_STAR        = 3;
     /** X /= ... for {@link JCompoundAssignmentExpression} */
-    int OPE_SLASH       = 4;
+    static final int OPE_SLASH       = 4;
     /** X %= ... for {@link JCompoundAssignmentExpression} */
-    int OPE_PERCENT     = 5;
+    static final int OPE_PERCENT     = 5;
     /** X >>= ... for {@link JCompoundAssignmentExpression} */
-    int OPE_SR          = 6;
+    static final int OPE_SR          = 6;
     /** X >>>= ... for {@link JCompoundAssignmentExpression} */
-    int OPE_BSR         = 7;
+    static final int OPE_BSR         = 7;
     /** X <<= ... for {@link JCompoundAssignmentExpression} */
-    int OPE_SL          = 8;
+    static final int OPE_SL          = 8;
     /** X &amp;= ... for {@link JCompoundAssignmentExpression} */
-    int OPE_BAND        = 9;
+    static final int OPE_BAND        = 9;
     /** X ^= ... for {@link JCompoundAssignmentExpression} */
-    int OPE_BXOR        = 10;
+    static final int OPE_BXOR        = 10;
     /** X |= ... for {@link JCompoundAssignmentExpression} */
-    int OPE_BOR         = 11;
+    static final int OPE_BOR         = 11;
     /** ?? KJC legacy not used in code */
-    int OPE_BNOT        = 12;
+    static final int OPE_BNOT        = 12;
     /** ?? KJC legacy not used in code */
-    int OPE_LNOT        = 13;
+    static final int OPE_LNOT        = 13;
     /** X < Y for {@link JRelationalExpression} */
-    int OPE_LT          = 14;
+    static final int OPE_LT          = 14;
     /** X <= Y  for {@link JRelationalExpression} */
-    int OPE_LE          = 15;
+    static final int OPE_LE          = 15;
     /** X > Y  for {@link JRelationalExpression} */
-    int OPE_GT          = 16;
+    static final int OPE_GT          = 16;
     /** X >= Y  for {@link JRelationalExpression} */
-    int OPE_GE          = 17;
+    static final int OPE_GE          = 17;
     /** X == Y for {@link JRelationalExpression} obsolete? @see JEqualityExpression */
-    int OPE_EQ          = 18;
+    static final int OPE_EQ          = 18;
     /** X != Y for {@link JRelationalExpression} obsolete? @see JEqualityExpression */
-    int OPE_NE          = 19;
+    static final int OPE_NE          = 19;
 
     // ----------------------------------------------------------------------
     // UNARY OPERATORS
     // ----------------------------------------------------------------------
 
     /** Unary operator ++X for {@link JPreFixExpression} */
-    int OPE_PREINC      = 20;
+    static final int OPE_PREINC      = 20;
     /** Unary operator --X for {@link JPreFixExpression} */
-    int OPE_PREDEC      = 21;
+    static final int OPE_PREDEC      = 21;
     /** Unary operator X++ for {@link JPostFixExpression} */
-    int OPE_POSTINC     = 22;
+    static final int OPE_POSTINC     = 22;
     /** Unary operator X-- for {@link JPostFixExpression} */
-    int OPE_POSTDEC     = 23;
+    static final int OPE_POSTDEC     = 23;
 
     // ----------------------------------------------------------------------
     // UTILITIES EMPTY COLLECTION

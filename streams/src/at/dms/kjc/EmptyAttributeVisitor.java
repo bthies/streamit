@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: EmptyAttributeVisitor.java,v 1.13 2007-02-01 21:11:31 dimock Exp $
+ * $Id: EmptyAttributeVisitor.java,v 1.14 2007-11-26 20:00:35 rabbah Exp $
  */
 
 package at.dms.kjc;
@@ -883,7 +883,7 @@ public class EmptyAttributeVisitor implements Constants, AttributeVisitor<Object
     // ----------------------------------------------------------------------
 
     /**
-     * prints an array length expression
+     * visits an switch label
      */
     public Object visitSwitchLabel(JSwitchLabel self,
                                    JExpression expr) {
@@ -894,7 +894,7 @@ public class EmptyAttributeVisitor implements Constants, AttributeVisitor<Object
     }
 
     /**
-     * prints an array length expression
+     * visits a switch group
      */
     public Object visitSwitchGroup(JSwitchGroup self,
                                    JSwitchLabel[] labels,
@@ -909,7 +909,7 @@ public class EmptyAttributeVisitor implements Constants, AttributeVisitor<Object
     }
 
     /**
-     * prints an array length expression
+     * visits a catch clause
      */
     public Object visitCatchClause(JCatchClause self,
                                    JFormalParameter exception,

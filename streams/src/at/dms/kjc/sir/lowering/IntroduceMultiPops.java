@@ -18,13 +18,13 @@ import at.dms.compiler.JavaStyleComment;
  *
  */
 
-// This pass will is supposed to take sequences of pop() statements
+// This pass is supposed to take sequences of pop() statements
 // and counted loops containing only pop statements and combine
 // all logically adjacent pop() statements into a single pop(N)
 // statement.
 //
 // To do this, we have to keep track of non-pop statements.
-// wen we find a non-pop statement we stop updating the previous
+// when we find a non-pop statement we stop updating the previous
 // pop statement (if any) and wait for another pop statement
 // to occur in our scan of the code.
 

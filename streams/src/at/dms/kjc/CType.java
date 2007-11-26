@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CType.java,v 1.8 2006-03-24 15:54:47 dimock Exp $
+ * $Id: CType.java,v 1.9 2007-11-26 20:00:35 rabbah Exp $
  */
 
 package at.dms.kjc;
@@ -127,7 +127,7 @@ public abstract class CType extends at.dms.util.Utils implements Constants {
     }
 
     /**
-     * Check if a type is an integer type
+     * Check if a type is a floating point type
      * @return is it a real number type ?
      */
     public boolean isFloatingPoint() {

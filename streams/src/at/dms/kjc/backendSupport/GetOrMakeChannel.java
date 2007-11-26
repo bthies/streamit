@@ -94,14 +94,14 @@ public class GetOrMakeChannel  {
      * (1) there are no filter->filter edges.
      * (2) That there is never a need to buffer data between a filter and a following splitter
      * (i.e. the inter-slice channels connected to by the splitter will provide any necessary bufferring).
-     * If this assumption changes then update hthis code to handle the case.
+     * If this assumption changes then update this code to handle the case.
      * <p>
      * This routine may need to be overridden in the case where it is necessary to buffer
      * data off chip between a joiner and a filter or between a filter and a splitter, or in the
      * case where we are not using simple slices and there are filter->filter edges.
      * </p> 
      * @param e an Edge
-     * @return a channel that implements the edge or <b>null</b> if there no data passes over the edge.
+     * @return a channel that implements the edge or <b>null</b> if no data passes over the edge.
      */
     protected Channel makeIntraSliceChannel(Edge e) {
         SliceNode src = e.getSrc();

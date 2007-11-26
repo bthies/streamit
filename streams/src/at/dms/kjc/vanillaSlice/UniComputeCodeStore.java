@@ -13,7 +13,7 @@ import at.dms.kjc.*;
 public class UniComputeCodeStore extends ComputeCodeStore<UniProcessor> {
     
     /** Construct new ComputeCodeStore for a vanilla processor 
-     * @param parent the processor that this ComputeCodeSpore is storing code for. 
+     * @param parent the processor that this ComputeCodeStore is storing code for. 
      */
     public UniComputeCodeStore(UniProcessor parent) {
         super(parent);

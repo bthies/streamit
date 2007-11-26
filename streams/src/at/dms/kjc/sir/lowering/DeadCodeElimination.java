@@ -77,7 +77,7 @@ public class DeadCodeElimination {
         }
 
 
-        // If we get here, we have a variable reference that is user as a r-value.
+        // If we get here, we have a variable reference that is used as a r-value.
         // add it to set of used variables.
         public Object visitLocalVariableExpression(JLocalVariableExpression self,
                                                  String ident) {

@@ -177,7 +177,7 @@ public class ProcessInputSliceNode {
     
     static inline T joiner_M() {
     
-      / * attempt to place const eitherapplies it to function, or gives parse error
+      / * attempt to place const either applies it to function, or gives parse error
        * do we need to move this to file scope to convince inliner to work on joiner_M?
        * /
       static T (*pops[4])() = {

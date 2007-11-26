@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JBooleanLiteral.java,v 1.14 2006-10-27 20:48:54 dimock Exp $
+ * $Id: JBooleanLiteral.java,v 1.15 2007-11-26 20:03:54 rabbah Exp $
  */
 
 package at.dms.kjc;
@@ -43,6 +43,10 @@ public class JBooleanLiteral extends JLiteral {
     public JBooleanLiteral(TokenReference where, boolean value) {
         super(where);
         this.value = value;
+    }
+    
+    public JBooleanLiteral(boolean value) {
+        this(null, value);
     }
 
     // ----------------------------------------------------------------------

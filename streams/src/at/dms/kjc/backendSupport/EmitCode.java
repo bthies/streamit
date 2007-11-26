@@ -25,7 +25,7 @@ public class EmitCode {
      * Constructor.
      * @param backendbits indicates BackEndFactory containing all useful info.
      */
-    public EmitCode(BackEndFactory backendbits) {
+    public EmitCode (BackEndFactory backendbits) {
         super();
         this.backendbits = backendbits;
         codegen = null;

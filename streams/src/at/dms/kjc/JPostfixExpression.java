@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JPostfixExpression.java,v 1.15 2006-12-20 18:03:33 dimock Exp $
+ * $Id: JPostfixExpression.java,v 1.16 2007-11-26 20:06:21 rabbah Exp $
  */
 
 package at.dms.kjc;
@@ -156,7 +156,7 @@ public class JPostfixExpression extends JExpression {
     public void genCode(CodeSequence code, boolean discardValue) {
         setLineNumber(code);
 
-        int         val = oper == OPE_POSTINC ? 1 : -1;
+        int val = oper == OPE_POSTINC ? 1 : -1;
 
         if ((expr.getType() == CStdType.Integer) &&
             (expr instanceof JLocalVariableExpression)) {

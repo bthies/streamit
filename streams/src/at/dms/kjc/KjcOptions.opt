@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.105 2007-08-31 18:09:15 thies Exp $
+ * $Id: KjcOptions.opt,v 1.106 2007-11-27 00:09:23 rabbah Exp $
  */
 
 prefix Kjc
@@ -725,9 +725,7 @@ longname		"localstoglobals"
 
 
 /* remove: now default */
-/* longname 		"noverbose" */
-/* 	type		boolean */
+/* longname 	"noverbose" */
+/* 	   type		boolean */
 /* 	default		"false" */
-/* 	help		"For cluster, do not print out code in ifdefs that are not true for the compiled configuration." */
-
-
+/* 	   help		"For cluster, do not print out code in ifdefs that are not true for the compiled configuration." */

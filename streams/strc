@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.129 2007-10-08 19:25:35 thies Exp $
+# $Id: strc,v 1.130 2007-11-27 00:03:32 rabbah Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -21,7 +21,7 @@
 
 use strict;
 use warnings;
-use vars qw(%opts $java $javac $cc $rm $make $have_fftw);
+use vars qw(%opts $java $javac $cc $rm $make $have_fftw $vmmemory);
 use POSIX qw(:sys_wait_h);
 
 use Cwd;
@@ -33,6 +33,7 @@ $cc = "time gcc34";
 $rm = "rm";
 $make = "make";
 $have_fftw = "1";
+$vmmemory = "1700M";
 # END AUTOCONFISCATE
 
 # Detect cygwin and adjust java to use new classpath
@@ -41,6 +42,7 @@ if ($ENV{"STRC_HOST_TYPE"} eq "x86-windows") {
     chop($translated_classpath);
     $java = $java . " -cp \"$translated_classpath\"";
     $javac = $javac . " -cp \"$translated_classpath\"";
+    $vmmemory = "10M";
 }
 
 # Allow $cc to be overridden by $CC environment variable
@@ -220,6 +222,7 @@ Usage: strc [options] file.str ...
 * --streamit          Output of the compiler is a StreamIt program
 * --uni               Compile for uniprocessor with C library (deprecated)
     If none of the above, compile for uniprocessor. 
+  --backend class     Compile using named class as the backend
 
 + --memory, -Xmx      Specify Java heap limit (applies to library and compiler)
 * --noexecutable      Do not create an executable (for configurations that 
@@ -369,7 +372,7 @@ EOT
 sub get_options
   {
     $opts{home} = $ENV{STREAMIT_HOME};
-    $opts{memory} = "1700M";
+    $opts{memory} = $vmmemory;
     # Note: the exclamation points below indicate negatable options.  That is,
     # for an option "myoption!", you can pass either "--myoption" or
     # "--no-myoption" at the command line.  Only makes sense for boolean 
@@ -379,6 +382,7 @@ sub get_options
 			    "more-help|help-more",
 			    "much-more-help|help-much-more",
 			    "output|o=s",
+                "backend=s", # RMR accept a backend by name
 			    "raw|r=i",
 			    "verbose|v",
 			    "optimize|O=i",
@@ -493,14 +497,14 @@ sub get_options
 
     # if simpleC specified then rstream, ignoring ignore doloops, absarray
     if ($opts{simpleC}) {
-	$opts{doloops} = 0;
-	$opts{absarray} = 0;
+        $opts{doloops} = 0;
+        $opts{absarray} = 0;
     }
 
     if (! defined($opts{havefftw})) {
-	if ($have_fftw) {
-	    $opts{havefftw} = 1;
-	}
+        if ($have_fftw) {
+            $opts{havefftw} = 1;
+        }
     }
     
     # default number of processors
@@ -679,7 +683,8 @@ sub java_to_c
 		return undef if $result != 0;
 		return [$target];
       } else {
-		my $result = call("$java $xmx $server at.dms.kjc.Main --streamit $compiler_opts $jfiles");
+		my $result = call("$java $xmx $server at.dms.kjc.Main --streamit $compiler_opts $jfiles " .
+                          "--backend $opts{backend}");
 		return undef if $result != 0;
 		# TODO: implement --output flags to all backends.
 		return ["Makefile.streamit"] if $opts{cluster};	# makes multiple cpp files

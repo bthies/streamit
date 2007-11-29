@@ -1,8 +1,8 @@
-#!/usr/uns/bin/perl
+#!/usr/bin/perl
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.130 2007-11-27 00:03:32 rabbah Exp $
+# $Id: strc,v 1.131 2007-11-29 06:14:40 rabbah Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -29,7 +29,7 @@ use Cwd;
 # AUTOCONFISCATE $var = "@VAR@";
 $java = "java";
 $javac = "javac";
-$cc = "time gcc34";
+$cc = "gcc";
 $rm = "rm";
 $make = "make";
 $have_fftw = "1";
@@ -683,8 +683,8 @@ sub java_to_c
 		return undef if $result != 0;
 		return [$target];
       } else {
-		my $result = call("$java $xmx $server at.dms.kjc.Main --streamit $compiler_opts $jfiles " .
-                          "--backend $opts{backend}");
+          my $result = call("$java $xmx $server at.dms.kjc.Main --streamit $compiler_opts $jfiles " .
+                            (! defined($opts{backend}) ? "" : "--backend $opts{backend}"));
 		return undef if $result != 0;
 		# TODO: implement --output flags to all backends.
 		return ["Makefile.streamit"] if $opts{cluster};	# makes multiple cpp files

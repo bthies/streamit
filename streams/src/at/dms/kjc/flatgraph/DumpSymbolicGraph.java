@@ -1,6 +1,7 @@
 package at.dms.kjc.flatgraph;
 
 import at.dms.kjc.sir.*;
+import at.dms.kjc.cluster.CodeEstimate;
 import java.io.*;
 import java.util.*;
 import at.dms.kjc.sir.lowering.fission.StatelessDuplicate;
@@ -90,7 +91,9 @@ public class DumpSymbolicGraph implements FlatVisitor
             int number = getId(node);
             String name = filter.getIdent();
             boolean stateful = StatelessDuplicate.hasMutableState(filter);
+            int sizeOfMutableState =  StatelessDuplicate.sizeOfMutableState(filter);
             int work = WorkEstimate.getWorkEstimate(filter).getWork(filter);
+            int codeSize = CodeEstimate.estimateCode(filter);
             // the amount read or written to a file
             int input = 0, output = 0;
             if (filter instanceof SIRFileWriter) {
@@ -105,7 +108,9 @@ public class DumpSymbolicGraph implements FlatVisitor
                            "\tname:" + name + "\n" +
                            "\tnumber:" + number + "\n" +
                            "\tstate:" + (stateful ? "stateful" : "stateless") + "\n" +
+                           "\tsizeOfState:" + sizeOfMutableState + "\n" + 
                            "\twork:" + mult*work + "\n" +
+                           "\tcodeSize:" + codeSize + "\n" +
                            // their "peek" is our peek-pop
                            "\tpeek:" + peekMinusPop + "\n" +
                            "\tpop:" + pop + "\n" +
@@ -140,7 +145,9 @@ public class DumpSymbolicGraph implements FlatVisitor
                            "\tname:" + splitter.getName() + "\n" +
                            "\tnumber:" + getId(node) + "\n" +
                            "\tstate:stateless\n" + 
+                           "\tsizeOfState:0\n" + 
                            "\twork:0\n" + 
+                           "\tcodeSize:0\n" + 
                            // they define "peek" as our peek-pop
                            "\tpeek:0\n" +
                            "\tpop:" + pop + "\n" + 
@@ -169,7 +176,9 @@ public class DumpSymbolicGraph implements FlatVisitor
                            "\tname:" + joiner.getName() + "\n" +
                            "\tnumber:" + getId(node) + "\n" +
                            "\tstate:stateless\n" + 
+                           "\tsizeOfState:0\n" + 
                            "\twork:0\n" + 
+                           "\tcodeSize:0\n" + 
                            // they define "peek" as our peek-pop
                            "\tpeek:0\n" +
                            "\tpop:" + pop + "\n" + 

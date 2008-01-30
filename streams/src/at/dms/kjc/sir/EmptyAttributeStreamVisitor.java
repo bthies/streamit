@@ -76,7 +76,7 @@ public class EmptyAttributeStreamVisitor implements AttributeStreamVisitor {
         // visit splitter
         self.getSplitter().accept(this);
         // visit children
-        Iterator childIter = self.getChildren().iterator();
+        Iterator childIter = self.getParallelStreams().iterator();
         while(childIter.hasNext()) {
             SIROperator currentChild = (SIROperator)childIter.next();
             currentChild.accept(this);

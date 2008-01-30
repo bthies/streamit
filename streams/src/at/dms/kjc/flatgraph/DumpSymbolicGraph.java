@@ -1,5 +1,6 @@
 package at.dms.kjc.flatgraph;
 
+import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.cluster.CodeEstimate;
 import java.io.*;
@@ -19,8 +20,8 @@ public class DumpSymbolicGraph implements FlatVisitor
     private int nodeId = 0, edgeId = 0;
     /** HashMaps from SIROperator -> Integer for multiplicities */
     private HashMap<FlatNode, Integer> initMults, steadyMults;
-    // id number for each node, starts from 1
-    private HashMap<FlatNode,Integer> id;
+    // id number for each SIROperator, starts from 1
+    private HashMap<SIROperator,Integer> id;
     
     /**
      * Creates the output file representing the flattened graph and
@@ -30,19 +31,21 @@ public class DumpSymbolicGraph implements FlatVisitor
      * {@link RawBackend#createExecutionCounts} because execution multiplicities 
      * need to be set.
      * 
+     * @param str The original SIR graph.
      * @param toplevel The starting node of the FlatNode graph.
      * @param filename The file to write the graph to.
      * @param initExeCounts The multiplicities in the init stage.
      * @param steadyExeCounts The multiplicities in the steady-state stage.
      */
-    public void dumpGraph(FlatNode toplevel, String filename, HashMap<FlatNode, Integer> initExeCounts,
+    public void dumpGraph(SIRStream str, FlatNode toplevel, String filename, HashMap<FlatNode, Integer> initExeCounts,
                           HashMap<FlatNode, Integer> steadyExeCounts) 
     {
         nodeBuf = new StringBuffer();
         edgeBuf = new StringBuffer();
         this.initMults = initExeCounts;
         this.steadyMults = steadyExeCounts; 
-        this.id = new HashMap<FlatNode,Integer>();
+        this.id = new HashMap<SIROperator,Integer>();
+        prepareIds(str);
         toplevel.accept(this, null, true);
         try {
             FileWriter fw = new FileWriter(filename);
@@ -58,16 +61,52 @@ public class DumpSymbolicGraph implements FlatVisitor
     }
 
     /**
+     * Prepares ID numbers for each filter based on the order they
+     * would be executed in a hierarchical schedule.
+     */
+    private void prepareIds(SIRStream str) {
+        final int[] count = { 1 };
+        // just number nodes in the order that the visitor hits them,
+        // which is the same order that a hierarchical schedule hits
+        // them.
+        str.accept(new EmptyAttributeStreamVisitor() {
+                /* visit a filter */
+                public Object visitFilter(SIRFilter self,
+                                          JFieldDeclaration[] fields,
+                                          JMethodDeclaration[] methods,
+                                          JMethodDeclaration init,
+                                          JMethodDeclaration work,
+                                          CType inputType, CType outputType) {
+                    //System.out.println(count[0] + " " + self);
+                    id.put(self, new Integer(count[0]++));
+                    return self;
+                }
+                
+                /* visit a splitter */
+                public Object visitSplitter(SIRSplitter self,
+                                            SIRSplitType type,
+                                            JExpression[] weights) {
+                    //System.out.println(count[0] + " " + self);
+                    id.put(self, new Integer(count[0]++));
+                    return self;
+                }
+                
+                /* visit a joiner */
+                public Object visitJoiner(SIRJoiner self,
+                                          SIRJoinType type,
+                                          JExpression[] weights) {
+                    //System.out.println(count[0] + " " + self);
+                    id.put(self, new Integer(count[0]++));
+                    return self;
+                }
+            });
+    }
+
+    /**
      * Returns the unique ID number assigned to a given node.
      */
     private int getId(FlatNode node) {
-        if (id.containsKey(node)) {
-            return id.get(node).intValue();
-        } else {
-            int myId = ++nodeId;
-            id.put(node, new Integer(myId));
-            return myId;
-        }
+        return id.get(node.contents).intValue();
     }
 
     /**
@@ -79,6 +118,9 @@ public class DumpSymbolicGraph implements FlatVisitor
      */
     public void visitNode(FlatNode node) 
     {
+        // our node count
+        nodeId++;
+
         if (node.contents instanceof SIRFilter) {
             //we are visiting a filter
             SIRFilter filter = (SIRFilter)node.contents;

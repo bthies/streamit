@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.129 2007-10-17 20:04:52 thies Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.130 2008-01-30 00:38:02 thies Exp $
 package at.dms.kjc.cluster; 
 
 import at.dms.kjc.flatgraph.FlatNode;
@@ -602,7 +602,7 @@ public class ClusterBackend {
         // (only designed for when there is a single static graph)
         if (numSsgs==1) {
             ClusterStaticStreamGraph ssg = (ClusterStaticStreamGraph)streamGraph.getStaticSubGraphs()[0];
-            new DumpSymbolicGraph().dumpGraph(strTop, "graph-description.gph", 
+            new DumpSymbolicGraph().dumpGraph(str, strTop, "graph-description.gph", 
                                               ssg.getExecutionCounts(true),
                                               ssg.getExecutionCounts(false));
         }

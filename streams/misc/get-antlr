@@ -1,11 +1,17 @@
 #!/bin/sh
 #
-# get-antlr: download an antlr.jar from the ANTLR Web site
-# needs periodic updating to point to a version that is still
-# kept at antlr.org.
+# get-antlr: get an antlr.jar file
 #
 test -f $1 && exit 0
-wget http://www.antlr.org/download/antlr-2.7.6.tar.gz
+if test -f "/home/streamit/lib/antlr-2.7.6.tar.gz"; then
+  # get it from CAG if we're on CAG
+  cp /home/streamit/lib/antlr-2.7.6.tar.gz .
+else
+  # otherwise, download it from the ANTLR Web site.
+  # needs periodic updating to point to a version that is still
+  # kept at antlr.org.
+  wget http://www.antlr2.org/download/antlr-2.7.6.tar.gz
+fi
 gunzip antlr-2.7.6.tar.gz
 tar xf antlr-2.7.6.tar antlr-2.7.6/antlr.jar
 mv antlr-2.7.6/antlr.jar $1

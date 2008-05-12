@@ -4,7 +4,7 @@
 package at.dms.kjc.spacetime;
 
 import java.util.*;
-import at.dms.kjc.backendSupport.SpaceTimeScheduleAndPartitioner;
+import at.dms.kjc.backendSupport.SpaceTimeScheduleAndSlicer;
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.slicegraph.DataFlowOrder;
 import at.dms.kjc.slicegraph.Slice;
@@ -20,13 +20,13 @@ import at.dms.kjc.KjcOptions;
  *
  */
 public class GeneratePrimePumpSchedule {
-    private SpaceTimeScheduleAndPartitioner spaceTimeSchedule;
+    private SpaceTimeScheduleAndSlicer spaceTimeSchedule;
     //the execution count for each trace during the calculation of the schedule
     private HashMap<Slice, Integer> exeCounts;
     
     
    
-    public GeneratePrimePumpSchedule(SpaceTimeScheduleAndPartitioner sts) {
+    public GeneratePrimePumpSchedule(SpaceTimeScheduleAndSlicer sts) {
         spaceTimeSchedule = sts;
         exeCounts = new HashMap<Slice, Integer>();
     }
@@ -36,7 +36,7 @@ public class GeneratePrimePumpSchedule {
      */
     public void schedule(Slice[] sliceGraph) {
         LinkedList<LinkedList<Slice>> preLoopSchedule = new LinkedList<LinkedList<Slice>>();
-        if (! KjcOptions.spacetime || KjcOptions.noswpipe) {
+        if (! (KjcOptions.spacetime || (KjcOptions.tilera > -1)) || KjcOptions.noswpipe) {
             spaceTimeSchedule.setPrimePumpSchedule(preLoopSchedule);
             return;
         }
@@ -118,7 +118,7 @@ public class GeneratePrimePumpSchedule {
         //one more time than me.
         for (int i = 0; i < depends.length; i++) {
             //file input nodes can always fire
-            if (spaceTimeSchedule.getPartitioner().isIO(depends[i]))
+            if (spaceTimeSchedule.getSlicer().isIO(depends[i]))
                 continue;
             
             int dependsExeCount = getExeCount(depends[i]);
@@ -153,7 +153,7 @@ public class GeneratePrimePumpSchedule {
      * @return should this be counted as a trace that needs to fire.
      */
     private boolean shouldFire(Slice slice) {
-        if (!spaceTimeSchedule.getPartitioner().isIO(slice)) {
+        if (!spaceTimeSchedule.getSlicer().isIO(slice)) {
             return true;
         }
         if (slice.getHead().getNextFilter().isFileOutput()) {

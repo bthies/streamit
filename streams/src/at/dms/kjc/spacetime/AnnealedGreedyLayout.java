@@ -10,7 +10,7 @@ import at.dms.kjc.slicegraph.SliceNode;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.OutputSliceNode;
-import at.dms.kjc.slicegraph.Partitioner;
+import at.dms.kjc.slicegraph.Slicer;
 import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.*;
 
@@ -30,7 +30,7 @@ public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout<R
     private RawChip chip;
     private SpaceTimeSchedule spaceTime;
     private BufferDRAMAssignment assignBuffers;
-    private Partitioner partitioner;
+    private Slicer slicer;
     private Router router;
     private int[] tileCosts;
     private Random rand;
@@ -40,7 +40,7 @@ public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout<R
             StreamlinedDuplicate duplicate) {
         this.chip = chip;
         this.spaceTime = spaceTime;
-        this.partitioner = spaceTime.getPartitioner();
+        this.slicer = spaceTime.getSlicer();
         rand = new Random(17);
         this.duplicate = duplicate;
     }
@@ -56,9 +56,9 @@ public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout<R
         FilterSliceNode fnode = (FilterSliceNode)node;
         if (!fnode.isPredefined()) { 
             tileCosts[getComputeNode(fnode).getTileNumber()] -= 
-                partitioner.getFilterWorkSteadyMult(fnode);
+                slicer.getFilterWorkSteadyMult(fnode);
             tileCosts[tile.getTileNumber()] += 
-                partitioner.getFilterWorkSteadyMult(fnode);
+                slicer.getFilterWorkSteadyMult(fnode);
             //and add the assignment
         }
         
@@ -84,7 +84,7 @@ public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout<R
         while (filters.hasNext()) {
             FilterSliceNode filter = filters.next();
             int bin = ((RawTile)assignment.get(filter)).getTileNumber();
-            tileCosts[bin] += partitioner.getFilterWorkSteadyMult(filter);
+            tileCosts[bin] += slicer.getFilterWorkSteadyMult(filter);
         }
     }
     
@@ -99,7 +99,7 @@ public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout<R
         Slice slice1, slice2;
         FilterSliceNode filter1 = null, filter2 = null;
         int bin1, bin2;
-        Slice[] slices = partitioner.getSliceGraph();
+        Slice[] slices = slicer.getSliceGraph();
         
         recalculateBinWeights();
         
@@ -146,11 +146,11 @@ public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout<R
             int oldSum = tileCosts[bin1] + tileCosts[bin2];
             //check if we should swap the assignment
       
-            tileCosts[bin1] -= partitioner.getFilterWorkSteadyMult(filter1); 
-            tileCosts[bin1] += partitioner.getFilterWorkSteadyMult(filter2); 
+            tileCosts[bin1] -= slicer.getFilterWorkSteadyMult(filter1); 
+            tileCosts[bin1] += slicer.getFilterWorkSteadyMult(filter2); 
       
-            tileCosts[bin2] -= partitioner.getFilterWorkSteadyMult(filter2);
-            tileCosts[bin2] += partitioner.getFilterWorkSteadyMult(filter1); 
+            tileCosts[bin2] -= slicer.getFilterWorkSteadyMult(filter2);
+            tileCosts[bin2] += slicer.getFilterWorkSteadyMult(filter1); 
       
             //System.out.println("Bin1: " + tileCosts[bin1]);
             //System.out.println("Bin2: " + tileCosts[bin2]);
@@ -247,14 +247,14 @@ public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout<R
             for (int i = 0; i < duplicate.getFilterOnTile(t).size(); i++) {
                 SIRFilter filter = duplicate.getFilterOnTile(t).get(i);
                 FilterSliceNode node = 
-                    FilterSliceNode.getFilterNode(spaceTime.getPartitioner().getContent(filter));
+                    FilterSliceNode.getFilterNode(spaceTime.getSlicer().getContent(filter));
                 assignment.put(node, chip.getTile(t));
-                tileCosts[t] += partitioner.getFilterWorkSteadyMult(node); 
+                tileCosts[t] += slicer.getFilterWorkSteadyMult(node); 
             }
         }
         
         Iterator<FilterSliceNode> nodes = 
-            Util.sortedFilterSlicesTime(spaceTime.getPartitioner()).iterator();
+            Util.sortedFilterSlicesTime(spaceTime.getSlicer()).iterator();
         while (nodes.hasNext()) {
             FilterSliceNode node = nodes.next();
             //already assigned above
@@ -264,7 +264,7 @@ public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout<R
             //otherwise put it in the min bin
             int tile = minIndex(tileCosts);
             assignment.put(node, chip.getTile(tile));
-            tileCosts[tile] += partitioner.getFilterWorkSteadyMult(node);
+            tileCosts[tile] += slicer.getFilterWorkSteadyMult(node);
         }
         
     }
@@ -281,14 +281,14 @@ public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout<R
         return minIndex;
     }
     
-    public void run() {
+    public void runLayout() {
         if (duplicate != null && !KjcOptions.partition_greedier)  {
             //if we have used StreamlinedDuplicate, then we want to start with its
             //layout
             duplicateLayout();
         } else {
             greedyLayout = new GreedyLayout(spaceTime, chip);
-            greedyLayout.run();
+            greedyLayout.runLayout();
             //otherwise, start with a greedy bin packing!
             tileCosts = greedyLayout.getBinWeights();
             assignment = (HashMap)greedyLayout.getAssignment().clone();
@@ -316,7 +316,7 @@ public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout<R
      */
     
     private int reorgCrossRoutes() {
-        Slice[] slices = partitioner.getSliceGraph();
+        Slice[] slices = slicer.getSliceGraph();
         int crossed = 0;
         
         router = new SmarterRouter(tileCosts, chip);

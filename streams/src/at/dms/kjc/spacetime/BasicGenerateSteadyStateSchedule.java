@@ -8,7 +8,7 @@ import java.util.LinkedList;
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.slicegraph.DataFlowOrder;
 import at.dms.kjc.slicegraph.Slice;
-import at.dms.kjc.slicegraph.Partitioner;
+import at.dms.kjc.slicegraph.Slicer;
 import at.dms.kjc.KjcOptions;
 
 /**
@@ -25,7 +25,7 @@ import at.dms.kjc.KjcOptions;
  */
 public class BasicGenerateSteadyStateSchedule {
     private BasicSpaceTimeSchedule spaceTime;
-    private Partitioner partitioner;
+    private Slicer slicer;
     private LinkedList<Slice> schedule;
     
     /**
@@ -34,10 +34,10 @@ public class BasicGenerateSteadyStateSchedule {
      * @param layout The layout of filterTraceNode->RawTile, this could
      * be null if we are --noanneal. 
      */
-    public BasicGenerateSteadyStateSchedule(BasicSpaceTimeSchedule sts, Partitioner partitioner) {
+    public BasicGenerateSteadyStateSchedule(BasicSpaceTimeSchedule sts, Slicer slicer) {
       
         spaceTime = sts;
-        this.partitioner = partitioner;
+        this.slicer = slicer;
         schedule = new LinkedList<Slice>();
     }
     
@@ -45,7 +45,7 @@ public class BasicGenerateSteadyStateSchedule {
     public void schedule() {
         if (! KjcOptions.spacetime || KjcOptions.noswpipe) {
             spaceTime.setSchedule(DataFlowOrder.getTraversal
-                    (partitioner.getSliceGraph()));
+                    (slicer.getSliceGraph()));
         }
         else {
             //for now just call schedule work, may want other schemes later
@@ -61,8 +61,8 @@ public class BasicGenerateSteadyStateSchedule {
      */
     private void scheduleWork() {
         // sort traces into decreasing order by bottleneck work.
-        Slice[] tempArray = (Slice[]) partitioner.getSliceGraph().clone();
-        Arrays.sort(tempArray, new CompareSliceBNWork(partitioner));
+        Slice[] tempArray = (Slice[]) slicer.getSliceGraph().clone();
+        Arrays.sort(tempArray, new CompareSliceBNWork(slicer));
         LinkedList<Slice> sortedTraces = new LinkedList<Slice>(Arrays.asList(tempArray));
         Collections.reverse(sortedTraces);
 

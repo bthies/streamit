@@ -154,7 +154,7 @@ public class BCFile
                 }
             }
         //append the number of filters and the number of slices
-        Slice slices[] = spaceTime.getPartitioner().getSliceGraph();
+        Slice slices[] = spaceTime.getSlicer().getSliceGraph();
         int numSlices = 0;
         int numFilters = 0;
         for (int i = 0; i < slices.length; i++) {

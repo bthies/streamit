@@ -8,7 +8,7 @@ import at.dms.kjc.sir.*;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.OutputSliceNode;
-import at.dms.kjc.slicegraph.Partitioner;
+import at.dms.kjc.slicegraph.Slicer;
 import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.slicegraph.SliceNode;
 import at.dms.kjc.*;
@@ -53,7 +53,7 @@ public class SliceDotGraph {
         
         
         List<Slice> steadyTrav = Arrays.asList(schedule);
-        Partitioner partitioner = spaceTime.getPartitioner();
+        Slicer slicer = spaceTime.getSlicer();
         RawProcElements rawChip = spaceTime.getRawChip();
         
         //System.out.println("Creating Slice Dot Graph...");
@@ -80,7 +80,7 @@ public class SliceDotGraph {
                 fw.write("  color=blue;\n");
                 if (label) {
                     fw.write("  label = \"Exe Order: " + order++ + ",BN Work: "
-                         + partitioner.getSliceBNWork(slice) + "\";\n");
+                         + slicer.getSliceBNWork(slice) + "\";\n");
                 }
                 while (node != null) {
                     //System.out.println("   " + node);
@@ -129,7 +129,7 @@ public class SliceDotGraph {
                         FilterInfo filter = FilterInfo
                             .getFilterInfo((FilterSliceNode) node);
                         fw.write("\\nWork: "
-                                 + partitioner
+                                 + slicer
                                  .getFilterWorkSteadyMult((FilterSliceNode) node));
                         fw.write("\\nMult:(" + filter.initMult + ", "
                                  + spaceTime.getPrimePumpTotalMult(filter) + ", " + filter.steadyMult

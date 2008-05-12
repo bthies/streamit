@@ -49,11 +49,11 @@ public class BufferDRAMAssignment {
         this.layout = layout;
         
         rawChip = spaceTime.getRawChip();
-        SliceNode[] sliceNodes = Util.sliceNodeArray(this.spaceTime.getPartitioner().getSliceGraph());
+        SliceNode[] sliceNodes = Util.sliceNodeArray(this.spaceTime.getSlicer().getSliceGraph());
         
         // take care of the file readers and writes
         // assign the reader->output buffer and the input->writer buffer
-        fileStuff(spaceTime.getPartitioner().io);
+        fileStuff(spaceTime.getSlicer().io);
 
         // assign the buffer between inputslicenode and the filter
         // to the filter's home device
@@ -114,7 +114,7 @@ public class BufferDRAMAssignment {
         
         //this is overly strong right now, but lets see if it gets tripped!
         //we see if some dependency chain exists between the stores...
-        assert !gdnStoreSamePortDifferentTile(spaceTime.getPartitioner().getSliceGraph()) :
+        assert !gdnStoreSamePortDifferentTile(spaceTime.getSlicer().getSliceGraph()) :
             "We cannot have two different tiles attempt to store to the same dram using the gdn (race condition)";
         
         //make sure that everything is assigned!!!

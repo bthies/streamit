@@ -73,9 +73,9 @@ public class POVRAYScheduleRep {
             calculateHeightScale();
             setupScene();
             setupColors(spaceTime);
-            for (int i = 0; i < spaceTime.getPartitioner().getSliceGraph().length; i++) {
+            for (int i = 0; i < spaceTime.getSlicer().getSliceGraph().length; i++) {
                 
-                createSliceShape(spaceTime.getPartitioner().getSliceGraph()[i], layout);
+                createSliceShape(spaceTime.getSlicer().getSliceGraph()[i], layout);
             }
             fw.close();
         }
@@ -103,7 +103,7 @@ public class POVRAYScheduleRep {
     private void createSliceShape(Slice slice, Layout<RawTile> layout) 
             throws Exception  {
         //don't do anything for file reader and writer traces
-        if (spaceTime.getPartitioner().isIO(slice))
+        if (spaceTime.getSlicer().isIO(slice))
             return;
         
         fw.write("//-------------------------------------------\n");
@@ -118,7 +118,7 @@ public class POVRAYScheduleRep {
                 heightScale;
             double lowerLeftZ =  
                 (double)(scheduleModel.getFilterEnd(filter) - 
-                        (double)spaceTime.getPartitioner().getFilterWorkSteadyMult(filter));
+                        (double)spaceTime.getSlicer().getFilterWorkSteadyMult(filter));
                                     
             assert lowerLeftZ >= (double)scheduleModel.getFilterStart(filter) : 
 		filter + " " + lowerLeftZ + " " + scheduleModel.getFilterStart(filter);
@@ -147,10 +147,10 @@ public class POVRAYScheduleRep {
         Random random = new Random(17); 
         fw.write("//-------------------------------------------\n");
         fw.write("//Setup colors for the slices\n");
-        for (int i = 0; i < spaceTime.getPartitioner().getSliceGraph().length; i++) {
-            colorName.put(spaceTime.getPartitioner().getSliceGraph()[i], 
+        for (int i = 0; i < spaceTime.getSlicer().getSliceGraph().length; i++) {
+            colorName.put(spaceTime.getSlicer().getSliceGraph()[i], 
                     "color" + colorID++);
-            fw.write("#declare " + colorName.get(spaceTime.getPartitioner().getSliceGraph()[i]) +
+            fw.write("#declare " + colorName.get(spaceTime.getSlicer().getSliceGraph()[i]) +
                     " = rgb<" + random.nextDouble() + ", " + random.nextDouble() + ", " +
                     random.nextDouble() + ">;\n");
         }

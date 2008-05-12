@@ -6,7 +6,7 @@ package at.dms.kjc.spacetime;
 import java.util.*;
 
 
-import at.dms.kjc.slicegraph.Partitioner;
+import at.dms.kjc.slicegraph.Slicer;
 import at.dms.kjc.backendSupport.FilterInfo;
 import at.dms.kjc.slicegraph.FilterContent;
 import at.dms.kjc.sir.SIRFilter;
@@ -37,7 +37,7 @@ import at.dms.kjc.*;
  *
  */
 public class AddBuffering {
-    private Partitioner spaceTime;
+    private Slicer spaceTime;
     private HashSet<Slice> editedSlices;
     private boolean limitTiles;
     private int totalTiles;
@@ -48,12 +48,12 @@ public class AddBuffering {
      *  
      * @param spaceTime The space time schedule.
      */
-    public static void doit(Partitioner spaceTime, boolean limitTiles, int totalTiles) {
+    public static void doit(Slicer spaceTime, boolean limitTiles, int totalTiles) {
         System.out.println("Equalizing splits and joins by buffering...");
         new AddBuffering(spaceTime,limitTiles,totalTiles).doitInternal();
     }
     
-    private AddBuffering(Partitioner st, boolean limit, int tt) {
+    private AddBuffering(Slicer st, boolean limit, int tt) {
         this.spaceTime = st;
         this.limitTiles = limit;
         this.totalTiles = tt;

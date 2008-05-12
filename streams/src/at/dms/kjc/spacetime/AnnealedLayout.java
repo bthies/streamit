@@ -10,7 +10,7 @@ import at.dms.kjc.slicegraph.InterSliceEdge;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.OutputSliceNode;
-import at.dms.kjc.slicegraph.Partitioner;
+import at.dms.kjc.slicegraph.Slicer;
 import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.slicegraph.SliceNode;
 
@@ -57,7 +57,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout<RawTile
     /** A list of filters that need to be assigned to tiles */
     private LinkedList<SliceNode> filterList;
     /** The partitioner we used to partitioner the SIR graph into slices */
-    private Partitioner partitioner;
+    private Slicer slicer;
     /** the number of tiles in the raw chip */
     private int numTiles;
     /** the raw tiles, so we don't have to call rawChip */
@@ -97,7 +97,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout<RawTile
         super();
         this.spaceTime = spaceTime;
         rawChip = spaceTime.getRawChip();
-        this.partitioner = spaceTime.getPartitioner();
+        this.slicer = spaceTime.getSlicer();
         numTiles = rawChip.getTotalTiles();
         tiles = new RawTile[numTiles];
         for (int i = 0; i < numTiles; i++) 
@@ -106,11 +106,11 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout<RawTile
         if (SpaceTimeBackend.NO_SWPIPELINE) {
             //if we are not software pipelining then then respect
             //dataflow dependencies
-            scheduleOrder = DataFlowOrder.getTraversal(spaceTime.getPartitioner().getSliceGraph());
+            scheduleOrder = DataFlowOrder.getTraversal(spaceTime.getSlicer().getSliceGraph());
         } else {
             //if we are software pipelining then sort the slices by work
-            Slice[] tempArray = (Slice[]) spaceTime.getPartitioner().getSliceGraph().clone();
-            Arrays.sort(tempArray, new CompareSliceBNWork(spaceTime.getPartitioner()));
+            Slice[] tempArray = (Slice[]) spaceTime.getSlicer().getSliceGraph().clone();
+            Arrays.sort(tempArray, new CompareSliceBNWork(spaceTime.getSlicer()));
             scheduleOrder = new LinkedList<Slice>(Arrays.asList(tempArray));
             //reverse the list, we want the list in descending order!
             Collections.reverse(scheduleOrder);
@@ -125,7 +125,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout<RawTile
     /**
      * Calculate the assignment of filters of slices to tiles. 
      */
-    public void run() {
+    public void runLayout() {
         System.out.println("Minimizing Critical Path Work...");
         //simAnnealAssign(5, 1000);
         simAnnealAssign(5, 300);
@@ -147,7 +147,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout<RawTile
     /**
      * Get the raw tile that was assigned to filter in the layout.
      * 
-     * Must call {@link AnnealedLayout#run} first.
+     * Must call {@link AnnealedLayout#runLayout} first.
      */
     public RawTile getComputeNode(SliceNode filter) {
         assert assignment.containsKey(filter) : 
@@ -227,7 +227,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout<RawTile
         int attempts = 0;
         while (true) {
             attempts++;
-            slice = partitioner.getSliceGraph()[getRandom(partitioner.getSliceGraph().length)];
+            slice = slicer.getSliceGraph()[getRandom(slicer.getSliceGraph().length)];
                     
             newSliceAssignment(slice.getHead().getNextFilter());
             
@@ -254,11 +254,11 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout<RawTile
      *
      */
     public void swapAssignmentLegal() {
-        Slice[] slices = partitioner.getSliceGraph();
+        Slice[] slices = slicer.getSliceGraph();
         
         
         Slice reassignMe = slices[getRandom(slices.length)];
-        while (partitioner.isIO(reassignMe)) { 
+        while (slicer.isIO(reassignMe)) { 
             reassignMe = slices[getRandom(slices.length)];
         }
         
@@ -488,7 +488,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout<RawTile
      * the entire assignment is legal.
      */
     private void legalInitialPlacement() {
-        Slice[] slices = partitioner.getSliceGraph();
+        Slice[] slices = slicer.getSliceGraph();
         for (int i = 0; i < slices.length; i++) {
             //if (!partitioner.isIO(slices[i]))
             assert newSliceAssignment(slices[i].getHead().getNextFilter()) :
@@ -603,7 +603,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout<RawTile
     }    
     
     private double commCost(int[] tileCosts, ComputeNode tile) {
-        Slice[] slices = partitioner.getSliceGraph();
+        Slice[] slices = slicer.getSliceGraph();
         
         assignBuffers.run(spaceTime, this);
         Router router = new SmarterRouter(tileCosts, rawChip);
@@ -676,7 +676,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout<RawTile
      */
     
     private int reorgCrossRoutes(int[] tileCosts) {
-        Slice[] slices = partitioner.getSliceGraph();
+        Slice[] slices = slicer.getSliceGraph();
         int crossed = 0;
         
         assignBuffers.run(spaceTime, this);
@@ -1000,7 +1000,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout<RawTile
         //create the filter list
         filterList = new LinkedList<SliceNode>();
         Iterator<SliceNode> sliceNodes = 
-            at.dms.kjc.slicegraph.Util.sliceNodeTraversal(partitioner.getSliceGraph());
+            at.dms.kjc.slicegraph.Util.sliceNodeTraversal(slicer.getSliceGraph());
         while (sliceNodes.hasNext()) {
             SliceNode node = sliceNodes.next();
             //add filters to the list of things to assign to tiles,
@@ -1008,7 +1008,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout<RawTile
             //"occupy" the tile of their neighbor stream...
             if (node.isFilterSlice() && 
                     !(node.getAsFilter().isPredefined()))  {
-                totalWork += partitioner.getFilterWorkSteadyMult(node.getAsFilter());
+                totalWork += slicer.getFilterWorkSteadyMult(node.getAsFilter());
                 filterList.add(node);
             }
         }
@@ -1019,8 +1019,8 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout<RawTile
         //set up the file readers and file writers list
         //these are filters the read directly from a file
         //or write directly to a file (not the file readers and writers themselves).
-        for (int i = 0; i < partitioner.io.length; i++) {
-            Slice slice = partitioner.io[i];
+        for (int i = 0; i < slicer.io.length; i++) {
+            Slice slice = slicer.io[i];
             if (slice.getHead().isFileOutput() && slice.getHead().oneInput()) {
                 fileWriters.add(slice.getHead().getSingleEdge().getSrc().getPrevFilter());
             }

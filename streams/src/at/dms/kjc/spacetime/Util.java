@@ -11,7 +11,7 @@ import at.dms.kjc.slicegraph.Edge;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.OutputSliceNode;
-import at.dms.kjc.slicegraph.Partitioner;
+import at.dms.kjc.slicegraph.Slicer;
 import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.slicegraph.SliceNode;
 
@@ -366,19 +366,19 @@ public class Util {
      * Return a sorted list of filter trace nodes for time only that does not 
      * include io traces.
      * 
-     * @param partitioner
+     * @param slicer
      * @return a sorted list of filter trace nodes for time only that does not 
      * include io traces.
      */
-    public static LinkedList<FilterSliceNode> sortedFilterSlicesTime(Partitioner partitioner) {
+    public static LinkedList<FilterSliceNode> sortedFilterSlicesTime(Slicer slicer) {
         //now sort the filters by work
         LinkedList<FilterSliceNode> sortedList = new LinkedList<FilterSliceNode>();
         LinkedList<Slice> scheduleOrder;
  
   
 
-        Slice[] tempArray = (Slice[]) partitioner.getSliceGraph().clone();
-        Arrays.sort(tempArray, new CompareSliceBNWork(partitioner));
+        Slice[] tempArray = (Slice[]) slicer.getSliceGraph().clone();
+        Arrays.sort(tempArray, new CompareSliceBNWork(slicer));
         scheduleOrder = new LinkedList<Slice>(Arrays.asList(tempArray));
         //reverse the list, we want the list in descending order!
         Collections.reverse(scheduleOrder);

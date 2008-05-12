@@ -3,10 +3,10 @@ package at.dms.kjc.spacetime;
 import java.util.*;
 
 import at.dms.kjc.backendSupport.FilterInfo;
-import at.dms.kjc.backendSupport.SpaceTimeScheduleAndPartitioner;
+import at.dms.kjc.backendSupport.SpaceTimeScheduleAndSlicer;
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.slicegraph.FilterSliceNode;
-import at.dms.kjc.slicegraph.Partitioner;
+import at.dms.kjc.slicegraph.Slicer;
 import at.dms.kjc.slicegraph.Slice;
 
 /**
@@ -21,7 +21,7 @@ import at.dms.kjc.slicegraph.Slice;
  * @author mgordon
  *
  */
-public class SpaceTimeSchedule extends SpaceTimeScheduleAndPartitioner {
+public class SpaceTimeSchedule extends SpaceTimeScheduleAndSlicer {
     //the raw chip that we are compiling to
     private RawChip rawChip;
     
@@ -30,7 +30,7 @@ public class SpaceTimeSchedule extends SpaceTimeScheduleAndPartitioner {
      * @param p Partitioner is carried around with schedule.
      * @param r rawChip is carried around with schedule. 
      */
-    public SpaceTimeSchedule(Partitioner p, RawChip r) {
+    public SpaceTimeSchedule(Slicer p, RawChip r) {
         super(p);
         rawChip = r;
     }

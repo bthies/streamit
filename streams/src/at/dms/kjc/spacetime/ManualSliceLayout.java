@@ -35,19 +35,19 @@ public class ManualSliceLayout implements Layout<RawTile> {
         assignment.put(node, tile);
     }
     
-    public void run() {
+    public void runLayout() {
         assignment = new HashMap<SliceNode,RawTile>();
         //call layout on traces!
-        Slice[] traces = spaceTime.getPartitioner().getSliceGraph();
+        Slice[] traces = spaceTime.getSlicer().getSliceGraph();
         
         for (int i = 0; i < traces.length; i++) {
-            if (!spaceTime.getPartitioner().isIO(traces[i]))
+            if (!spaceTime.getSlicer().isIO(traces[i]))
                 layout(spaceTime.getRawChip(), traces[i]);
         }
         
         //now set the tiles of the i/o
-        for (int i = 0; i < spaceTime.getPartitioner().io.length; i++) {
-            Slice slice = spaceTime.getPartitioner().io[i];
+        for (int i = 0; i < spaceTime.getSlicer().io.length; i++) {
+            Slice slice = spaceTime.getSlicer().io[i];
             if (slice.getHead().getNextFilter().isFileOutput()) {
                 //file writer
                 assert slice.getHead().oneInput();

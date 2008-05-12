@@ -92,7 +92,7 @@ public class GreedyLayout implements Layout<RawTile> {
     /**
      * Calcuate the assignment of filters to tiles.
      */
-    public void run() {
+    public void runLayout() {
         assignment = new HashMap<SliceNode, RawTile>();
         pack();
         System.out.println("IdealWork = " + totalWork / chip.getTotalTiles());
@@ -115,11 +115,11 @@ public class GreedyLayout implements Layout<RawTile> {
         if (SpaceTimeBackend.NO_SWPIPELINE) {
             //if we are not software pipelining then use then respect
             //dataflow dependencies
-            scheduleOrder = DataFlowOrder.getTraversal(spaceTime.getPartitioner().getSliceGraph());
+            scheduleOrder = DataFlowOrder.getTraversal(spaceTime.getSlicer().getSliceGraph());
         } else {
             //if we are software pipelining then sort the traces by work
-            Slice[] tempArray = (Slice[]) spaceTime.getPartitioner().getSliceGraph().clone();
-            Arrays.sort(tempArray, new CompareSliceBNWork(spaceTime.getPartitioner()));
+            Slice[] tempArray = (Slice[]) spaceTime.getSlicer().getSliceGraph().clone();
+            Arrays.sort(tempArray, new CompareSliceBNWork(spaceTime.getSlicer()));
            // System.out.println(tempArray.length);
             scheduleOrder = new LinkedList<Slice>(Arrays.asList(tempArray));
             //reverse the list, we want the list in descending order!
@@ -148,10 +148,10 @@ public class GreedyLayout implements Layout<RawTile> {
             
             bins[bin].add(node);
             assignment.put(node, chip.getTile(bin));
-            binWeight[bin] += spaceTime.getPartitioner().getFilterWorkSteadyMult(node);
-            totalWork += spaceTime.getPartitioner().getFilterWorkSteadyMult(node);
+            binWeight[bin] += spaceTime.getSlicer().getFilterWorkSteadyMult(node);
+            totalWork += spaceTime.getSlicer().getFilterWorkSteadyMult(node);
             System.out.println(" Placing: " + node + " work = " + 
-                    spaceTime.getPartitioner().getFilterWorkSteadyMult(node) + 
+                    spaceTime.getSlicer().getFilterWorkSteadyMult(node) + 
                             " on bin " + bin + ", bin work = " + binWeight[bin]);
 
         }

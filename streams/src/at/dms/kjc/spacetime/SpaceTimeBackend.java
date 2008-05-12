@@ -13,7 +13,7 @@ import at.dms.kjc.backendSupport.CommonPasses;
 import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.sir.lowering.partition.*;
 import at.dms.kjc.slicegraph.DataFlowOrder;
-import at.dms.kjc.slicegraph.Partitioner;
+import at.dms.kjc.slicegraph.Slicer;
 import at.dms.kjc.slicegraph.Slice;
 import java.util.*;
 
@@ -109,13 +109,13 @@ public class SpaceTimeBackend {
             }
         }
         
-        Partitioner partitioner = commonPasses.getPartitioner();
+        Slicer slicer = commonPasses.getSlicer();
 
 
         //We have to create multilevel splits and/or joins if their width
         //is greater than the number of memories of the chip...
-        new MultiLevelSplitsJoins(partitioner, rawChip.getNumDev()).doit();
-        partitioner.dumpGraph("traces-after-multi.dot");
+        new MultiLevelSplitsJoins(slicer, rawChip.getNumDev()).doit();
+        slicer.dumpGraph("traces-after-multi.dot");
         
         /*
          * System.gc(); System.out.println("MEM:
@@ -146,21 +146,21 @@ public class SpaceTimeBackend {
         //COMP_COMM_RATIO = CompCommRatio.ratio(partitioner);
         
         System.out.println("Multiplying Steady-State...");
-        MultiplySteadyState.doit(partitioner.getSliceGraph());
+        MultiplySteadyState.doit(slicer.getSliceGraph());
      
         //we can now use filter infos, everything is set
         FilterInfo.canUse();
         
         //create the space/time schedule object to be filled in by the passes 
-        SpaceTimeSchedule spaceTimeSchedule = new SpaceTimeSchedule(partitioner, rawChip);
+        SpaceTimeSchedule spaceTimeSchedule = new SpaceTimeSchedule(slicer, rawChip);
         //check to see if we need to add any buffering before splitters or joiners
         //for correct execution of the init stage and steady state
         if (KjcOptions.raw > 0) {
-            AddBuffering.doit(partitioner,true,rawChip.getTotalTiles());
+            AddBuffering.doit(slicer,true,rawChip.getTotalTiles());
         }
         
         //generate the schedule modeling values for each filter/slice 
-        partitioner.calculateWorkStats();
+        slicer.calculateWorkStats();
         
         if (KjcOptions.stats) {
             BenchChar.doit(spaceTimeSchedule, origSTR);
@@ -180,13 +180,13 @@ public class SpaceTimeBackend {
         } else {
             layout = new AnnealedLayout(spaceTimeSchedule);
         }
-        layout.run();
+        layout.runLayout();
         new BufferDRAMAssignment().run(spaceTimeSchedule, layout);
         
         
         System.out.println("Space/Time Scheduling Steady-State...");
         BasicGenerateSteadyStateSchedule spaceTimeScheduler = new BasicGenerateSteadyStateSchedule(
-                spaceTimeSchedule, partitioner);
+                spaceTimeSchedule, slicer);
         spaceTimeScheduler.schedule();
   
         /*
@@ -200,11 +200,11 @@ public class SpaceTimeBackend {
                 
         //calculate preloop and initialization code
         System.out.println("Creating Initialization Schedule...");
-        spaceTimeSchedule.setInitSchedule(DataFlowOrder.getTraversal(spaceTimeSchedule.getPartitioner().getSliceGraph()));
+        spaceTimeSchedule.setInitSchedule(DataFlowOrder.getTraversal(spaceTimeSchedule.getSlicer().getSliceGraph()));
         
         System.out.println("Creating Pre-Loop Schedule...");
         GeneratePrimePumpSchedule preLoopSched = new GeneratePrimePumpSchedule(spaceTimeSchedule);
-        preLoopSched.schedule(spaceTimeSchedule.getPartitioner().getSliceGraph());
+        preLoopSched.schedule(spaceTimeSchedule.getSlicer().getSliceGraph());
         
         //System.out.println("Assigning Buffers to DRAMs...");
         //new BufferDRAMAssignment().run(spaceTimeSchedule);
@@ -252,7 +252,7 @@ public class SpaceTimeBackend {
         // generate the bc file depending on if we have number gathering enabled
         if (KjcOptions.numbers > 0)
             BCFile.generate(spaceTimeSchedule, rawChip, 
-                    NumberGathering.doit(rawChip, partitioner.io));
+                    NumberGathering.doit(rawChip, slicer.io));
         else
             BCFile.generate(spaceTimeSchedule, rawChip, null);
         

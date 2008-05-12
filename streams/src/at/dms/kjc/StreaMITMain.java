@@ -101,7 +101,10 @@ public class StreaMITMain {
             backendClass = "at.dms.kjc.cluster.ClusterBackend";
         } else if (KjcOptions.newSimple != -1) {
             backendClass = "at.dms.kjc.vanillaSlice.UniBackEnd";
-        } else {
+        } else if (KjcOptions.tilera != -1) {
+	    backendClass = "at.dms.kjc.tilera.TileraBackend";
+	}	
+	else {
             backendClass = "at.dms.kjc.sir.lowering.Flattener";
             // backendMethod = "flatten";
         }

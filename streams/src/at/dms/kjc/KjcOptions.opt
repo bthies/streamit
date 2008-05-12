@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.106 2007-11-27 00:09:23 rabbah Exp $
+ * $Id: KjcOptions.opt,v 1.107 2008-05-12 19:31:07 mgordon Exp $
  */
 
 prefix Kjc
@@ -567,13 +567,6 @@ longname		"steadymult"
 /* 	default		"false" */
 /* 	help		"For the SpaceTime RAW backend, use try to minimize communication in layout" */
 
-/* removed: only a single scheduler now */
-/* longname		"scheduler" */
-/* 	type 		String */
-/* 	default		"work" */
-/* 	requireArgument */
-/* 	help		"For the SpaceTime RAW backend, either work, dep, or comm." */
-
 longname 		"rstream"
 	shortcut	"R"
 	type 		boolean
@@ -723,6 +716,20 @@ longname		"localstoglobals"
 	default		"false"
 	help		"Convert local variables to global variables (can avoid stack overflow)."
 
+
+longname		"tilera"
+	shortcut	"t"
+	type		int
+	default		"-1"
+	requireArgument
+	help		"Uses the experimental Tilera (Tile64) backend with <n> cores"
+
+
+ longname		"partitioner" 
+ 	type 		String 
+ 	default		"tmd"
+ 	requireArgument 
+ 	help		"For Tilera, choose a partitioner, tmd (default) or smd."
 
 /* remove: now default */
 /* longname 	"noverbose" */

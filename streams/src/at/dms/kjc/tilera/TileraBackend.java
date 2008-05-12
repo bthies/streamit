@@ -8,7 +8,7 @@ import at.dms.kjc.slicegraph.*;
 public class TileraBackend {
     public static Scheduler scheduler;
     public static TileraChip chip;
-    public static BackEndFactory<TileraChip, Tile, TileCodeStore, Integer> backEndBits;
+    public static TileraBackEndFactory backEndBits;
     
     public static void run(SIRStream str,
                            JInterfaceDeclaration[] interfaces,

@@ -9,6 +9,7 @@ public class Tile extends ComputeNode<TileCodeStore> {
     protected int Y;
     /** the parent RawChip */
     protected TileraChip tile64Chip;
+    
 
     /**
      * Construct a new ComputeNode of chip. 

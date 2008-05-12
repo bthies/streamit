@@ -4,7 +4,7 @@ import at.dms.kjc.backendSupport.ComputeNode;
 import at.dms.kjc.backendSupport.ComputeNodesI;
 import at.dms.util.Utils;
 
-public class TileraChip implements ComputeNodesI {
+public class TileraChip implements ComputeNodesI<TileCodeStore> {
     protected int gXSize;
     protected int gYSize;
     protected Tile[][] tiles;

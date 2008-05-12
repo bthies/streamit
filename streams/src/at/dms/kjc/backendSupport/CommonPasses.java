@@ -54,8 +54,8 @@ import at.dms.kjc.slicegraph.AdaptivePartitioner;
 import at.dms.kjc.slicegraph.DataFlowOrder;
 import at.dms.kjc.slicegraph.FlattenAndPartition;
 import at.dms.kjc.slicegraph.FlattenGraph;
-import at.dms.kjc.slicegraph.Partitioner;
-import at.dms.kjc.slicegraph.SimplePartitioner;
+import at.dms.kjc.slicegraph.Slicer;
+import at.dms.kjc.slicegraph.SimpleSlicer;
 import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.slicegraph.UnflatFilter;
 import at.dms.kjc.spacetime.AddBuffering;
@@ -66,6 +66,8 @@ import at.dms.kjc.spacetime.DuplicateBottleneck;
 import at.dms.kjc.spacetime.GranularityAdjust;
 import at.dms.kjc.spacetime.GreedyBinPacking;
 import at.dms.kjc.spacetime.StreamlinedDuplicate;
+import at.dms.kjc.tilera.TileraBackend;
+
 /**
  * Common passes, useful in new back ends.
  * @author dimock
@@ -73,7 +75,7 @@ import at.dms.kjc.spacetime.StreamlinedDuplicate;
  */
 public class CommonPasses {
     /** field that may be useful later */
-    private Partitioner partitioner;
+    private Slicer slicer;
     
     /** field that may be useful later */
     private WorkEstimate workEstimate;
@@ -194,6 +196,8 @@ public class CommonPasses {
         StreamlinedDuplicate duplicate = null;
         WorkEstimate work = WorkEstimate.getWorkEstimate(str);
         work.printGraph(str, "work_estimate.dot");
+
+        /*
         WorkList workList = work.getSortedFilterWork();
         for (int i = 0; i < workList.size(); i++) {
             SIRFilter filter = workList.getFilter(i);
@@ -201,24 +205,37 @@ public class CommonPasses {
             System.out.println("Sorted Work " + i + ": " + filter + " work " 
                     + filterWork + ", is fissable: " + StatelessDuplicate.isFissable(filter));
         }
+        */
         
-        //for right now, we use the dup parameter to specify the type 
-        //of data-parallelization we are using
-        //if we want to enable the data-parallelization
-        //stuff from asplos 06, use dup == 1
-        if (KjcOptions.dup == 1) {
+        if (KjcOptions.tilera != -1) {
+            //running the tilera backend
+            
             DuplicateBottleneck dup = new DuplicateBottleneck();
             dup.percentStateless(str);
             str = FusePipelines.fusePipelinesOfStatelessStreams(str);
             StreamItDot.printGraph(str, "after-fuse-stateless.dot");
-            dup.smarterDuplicate(str, numCores);
-        } else if (KjcOptions.dup == numCores) {
-            //if we want to use fine-grained parallelization
-            //then set dup to be the number of tiles (cores)
-            DuplicateBottleneck dup = new DuplicateBottleneck();
-            System.out.println("Fine-Grained Data Parallelism...");
-            dup.duplicateFilters(str, numCores);
-	}
+            
+            TileraBackend.scheduler.run(str, numCores);
+        } else {
+            // some backend other than tilera
+            // for right now, we use the dup parameter to specify the type
+            // of data-parallelization we are using
+            // if we want to enable the data-parallelization
+            // stuff from asplos 06, use dup == 1
+            if (KjcOptions.dup == 1) {
+                DuplicateBottleneck dup = new DuplicateBottleneck();
+                dup.percentStateless(str);
+                str = FusePipelines.fusePipelinesOfStatelessStreams(str);
+                StreamItDot.printGraph(str, "after-fuse-stateless.dot");
+                dup.smarterDuplicate(str, numCores);
+            } else if (KjcOptions.dup == numCores) {
+                // if we want to use fine-grained parallelization
+                // then set dup to be the number of tiles (cores)
+                DuplicateBottleneck dup = new DuplicateBottleneck();
+                System.out.println("Fine-Grained Data Parallelism...");
+                dup.duplicateFilters(str, numCores);
+            }
+        }
         
         // If not software-pipelining, don't expect to
         // split the stream graph horizontally so fuse
@@ -236,7 +253,12 @@ public class CommonPasses {
             StreamItDot.printGraph(str, "before-granularity-adjust.dot");
             str = GranularityAdjust.doit(str, numCores);
             StreamItDot.printGraph(str, "after-granularity-adjust.dot");
+            
         }
+        
+        
+       
+       
         
         // vertical fission requested.
         if (KjcOptions.fission > 1) {
@@ -359,28 +381,28 @@ public class CommonPasses {
         Slice[] sliceGraph = null; 
         
         
-        setPartitioner(null);
+        setSlicer(null);
         if (KjcOptions.autoparams) {
             GreedyBinPacking greedyBinPacking = new GreedyBinPacking(str,
                     numCores, getWorkEstimate());
             greedyBinPacking.pack();
 
-            setPartitioner(new AdaptivePartitioner(topNodes, executionCounts,
+            setSlicer(new AdaptivePartitioner(topNodes, executionCounts,
                     lfa, getWorkEstimate(), numCores, greedyBinPacking));
         }
         if (KjcOptions.nopartition) {
-            setPartitioner(new FlattenAndPartition(topNodes,
+            setSlicer(new FlattenAndPartition(topNodes,
                     executionCounts, lfa, getWorkEstimate(), numCores));
-            ((FlattenAndPartition)getPartitioner()).flatten(str, executionCounts);
+            ((FlattenAndPartition)getSlicer()).flatten(str, executionCounts);
         }
         else { 
-            setPartitioner(new SimplePartitioner(topNodes,
+            setSlicer(new SimpleSlicer(topNodes,
                     executionCounts, lfa, getWorkEstimate(), numCores));
         }
 
-        sliceGraph = getPartitioner().partition();
+        sliceGraph = getSlicer().partition();
         System.out.println("Traces: " + sliceGraph.length);
-        getPartitioner().dumpGraph("traces.dot");
+        getSlicer().dumpGraph("traces.dot");
         
         // Need to make slice graph, partitioner accessible.
         return sliceGraph;
@@ -399,13 +421,13 @@ public class CommonPasses {
      */
     public void simplifySlices() {
         // Create code for predefined content: file readers, file writers.
-        partitioner.createPredefinedContent();
+        slicer.createPredefinedContent();
         // guarantee that we are not going to hack properties of filters in the future
         FilterInfo.canUse();
         // fix any rate skew introduced in conversion to Slice graph.
-        AddBuffering.doit(partitioner,false,numCores);
+        AddBuffering.doit(slicer,false,numCores);
         // decompose any pipelines of filters in the Slice graph.
-        partitioner.ensureSimpleSlices();
+        slicer.ensureSimpleSlices();
         
     }
 
@@ -414,36 +436,40 @@ public class CommonPasses {
      * Affected by KjcOptions.spacetime, KjcOptions.noswpipe.
      * @return a Scheduler from which the schedules for the phases may be extracted. 
      */
-    public SpaceTimeScheduleAndPartitioner scheduleSlices() {
+    public SpaceTimeScheduleAndSlicer scheduleSlices() {
         // Set schedules for initialization, priming (if --spacetime), and steady state.
-        SpaceTimeScheduleAndPartitioner schedule = new SpaceTimeScheduleAndPartitioner(partitioner);
+        SpaceTimeScheduleAndSlicer schedule = new SpaceTimeScheduleAndSlicer(slicer);
         // set init schedule in standard order
-        schedule.setInitSchedule(DataFlowOrder.getTraversal(partitioner.getSliceGraph()));
+        schedule.setInitSchedule(DataFlowOrder.getTraversal(slicer.getSliceGraph()));
         // set prime pump schedule (if --spacetime and not --noswpipe)
-        new at.dms.kjc.spacetime.GeneratePrimePumpSchedule(schedule).schedule(partitioner.getSliceGraph());
+        if (KjcOptions.spacetime) {
+            new at.dms.kjc.spacetime.GeneratePrimePumpSchedule(schedule).schedule(slicer.getSliceGraph());
+        } else {
+            new GeneratePrimePump(schedule).schedule(slicer.getSliceGraph());
+        }
         // set steady schedule in standard order unless --spacetime in which case in 
         // decreasing order of estimated work
-        new BasicGenerateSteadyStateSchedule(schedule, partitioner).schedule();
+        new BasicGenerateSteadyStateSchedule(schedule, slicer).schedule();
         return schedule;
     }
     
     /**
-     * Allows you to change the value returned by {@link #getPartitioner() getWorkEstimate} after
+     * Allows you to change the value returned by {@link #getSlicer() getWorkEstimate} after
      * the initial value has been set by {@link #run(SIRStream, JInterfaceDeclaration[], SIRInterfaceTable[], SIRStructure[], SIRHelper[], SIRGlobal, int) run}.
-     * @param partitioner the partitioner to set
+     * @param slicer the slicer to set
      */
-    private void setPartitioner(Partitioner partitioner) {
-        this.partitioner = partitioner;
+    private void setSlicer(Slicer slicer) {
+        this.slicer = slicer;
     }
 
 
 
     /**
-     * Get the Partitioner used in {@link #run(SIRStream, JInterfaceDeclaration[], SIRInterfaceTable[], SIRStructure[], SIRHelper[], SIRGlobal, int) run}.
-     * @return the partitioner
+     * Get the slicer used in {@link #run(SIRStream, JInterfaceDeclaration[], SIRInterfaceTable[], SIRStructure[], SIRHelper[], SIRGlobal, int) run}.
+     * @return the slicer
      */
-    public Partitioner getPartitioner() {
-        return partitioner;
+    public Slicer getSlicer() {
+        return slicer;
     }
 
 

@@ -22,7 +22,7 @@ import at.dms.kjc.spacetime.SpaceTimeBackend;
  */
 public class BasicGreedyLayout<T extends ComputeNode> implements Layout<T> {
     private HashMap<SliceNode, T> assignment;
-    private SpaceTimeScheduleAndPartitioner spaceTime;
+    private SpaceTimeScheduleAndSlicer spaceTime;
     private int numBins;
     private LinkedList<SliceNode>[] bins;
     private int[] binWeight;
@@ -35,7 +35,7 @@ public class BasicGreedyLayout<T extends ComputeNode> implements Layout<T> {
      * @param spaceTime
      * @param nodes
      */
-    public BasicGreedyLayout(SpaceTimeScheduleAndPartitioner spaceTime, T[] nodes) {
+    public BasicGreedyLayout(SpaceTimeScheduleAndSlicer spaceTime, T[] nodes) {
         this.spaceTime = spaceTime;
         this.nodes = nodes;
         this.numBins = nodes.length;
@@ -60,7 +60,7 @@ public class BasicGreedyLayout<T extends ComputeNode> implements Layout<T> {
     public void setComputeNode(SliceNode node, T tile) {
         assignment.put(node, tile);
     }
-    public void run() {
+    public void runLayout() {
         assignment = new HashMap<SliceNode, T>();
         pack();
 
@@ -77,11 +77,11 @@ public class BasicGreedyLayout<T extends ComputeNode> implements Layout<T> {
         if (SpaceTimeBackend.NO_SWPIPELINE) {
             //if we are not software pipelining then use then respect
             //dataflow dependencies
-            scheduleOrder = DataFlowOrder.getTraversal(spaceTime.getPartitioner().getSliceGraph());
+            scheduleOrder = DataFlowOrder.getTraversal(spaceTime.getSlicer().getSliceGraph());
         } else {
             //if we are software pipelining then sort the traces by work
-            Slice[] tempArray = (Slice[]) spaceTime.getPartitioner().getSliceGraph().clone();
-            Arrays.sort(tempArray, new CompareSliceBNWork(spaceTime.getPartitioner()));
+            Slice[] tempArray = (Slice[]) spaceTime.getSlicer().getSliceGraph().clone();
+            Arrays.sort(tempArray, new CompareSliceBNWork(spaceTime.getSlicer()));
             scheduleOrder = new LinkedList<Slice>(Arrays.asList(tempArray));
             //reverse the list, we want the list in descending order!
             Collections.reverse(scheduleOrder);
@@ -105,14 +105,14 @@ public class BasicGreedyLayout<T extends ComputeNode> implements Layout<T> {
 
                 bins[bin].add(fnode);
                 assignment.put(fnode, nodes[bin]);
-                binWeight[bin] += spaceTime.getPartitioner()
+                binWeight[bin] += spaceTime.getSlicer()
                         .getFilterWorkSteadyMult(fnode);
-                totalWork += spaceTime.getPartitioner()
+                totalWork += spaceTime.getSlicer()
                         .getFilterWorkSteadyMult(fnode);
                 System.out.println(" Placing: "
                         + fnode
                         + " work = "
-                        + spaceTime.getPartitioner().getFilterWorkSteadyMult(
+                        + spaceTime.getSlicer().getFilterWorkSteadyMult(
                                 fnode) + " on bin " + bin + ", bin work = "
                         + binWeight[bin]);
                 if (snode.getPrevious() instanceof InputSliceNode) {

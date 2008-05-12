@@ -22,5 +22,5 @@ public interface Layout<T extends at.dms.kjc.backendSupport.ComputeNode> {
      */
     public void setComputeNode(SliceNode node, T computeNode);
     /** Do the setup for {@link #getComputeNode(SliceNode) getComputeNode}. */
-    public void run();
+    public void runLayout();
 }

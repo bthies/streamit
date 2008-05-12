@@ -13,7 +13,7 @@ import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.OutputSliceNode;
 import at.dms.kjc.slicegraph.Slice;
-import at.dms.kjc.slicegraph.Partitioner;
+import at.dms.kjc.slicegraph.Slicer;
 
 /**
  * @author mgordon
@@ -21,7 +21,7 @@ import at.dms.kjc.slicegraph.Partitioner;
  */
 public class NoSWPipeLayout<T extends ComputeNode, Ts extends ComputeNodesI> extends SimulatedAnnealing implements Layout<T> {
     
-    protected Partitioner partitioner;
+    protected Slicer slicer;
     protected Ts chip;
     protected LinkedList<Slice> scheduleOrder;
     protected LinkedList<SliceNode> assignedFilters;
@@ -30,11 +30,11 @@ public class NoSWPipeLayout<T extends ComputeNode, Ts extends ComputeNodesI> ext
     /** from assignment when done with simulated annealing */
     private HashMap<SliceNode, T> layout;
     
-    public NoSWPipeLayout(SpaceTimeScheduleAndPartitioner spaceTime, Ts chip) {
+    public NoSWPipeLayout(SpaceTimeScheduleAndSlicer spaceTime, Ts chip) {
         this.chip = chip;
-        this.partitioner = spaceTime.getPartitioner();
+        this.slicer = spaceTime.getSlicer();
         scheduleOrder = 
-            DataFlowOrder.getTraversal(spaceTime.getPartitioner().getSliceGraph());
+            DataFlowOrder.getTraversal(spaceTime.getSlicer().getSliceGraph());
         assignedFilters = new LinkedList<SliceNode>();
         rand = new Random(17);
     }
@@ -112,7 +112,7 @@ public class NoSWPipeLayout<T extends ComputeNode, Ts extends ComputeNodesI> ext
             Slice slice = slices.next();
             //System.err.println(slice.toString());
             T tile = (T)assignment.get(slice.getHead().getNextFilter());
-            double traceWork = partitioner.getSliceBNWork(slice); 
+            double traceWork = slicer.getSliceBNWork(slice); 
             double startTime = 0;
             //now find the start time
             
@@ -122,7 +122,7 @@ public class NoSWPipeLayout<T extends ComputeNode, Ts extends ComputeNodesI> ext
             Iterator<InterSliceEdge> inEdges = input.getSourceSet().iterator();
             while (inEdges.hasNext()) {
                 InterSliceEdge edge = inEdges.next();
-                if (partitioner.isIO(edge.getSrc().getParent()))
+                if (slicer.isIO(edge.getSrc().getParent()))
                     continue;
                 FilterSliceNode upStream = edge.getSrc().getPrevFilter();
                 
@@ -171,7 +171,7 @@ public class NoSWPipeLayout<T extends ComputeNode, Ts extends ComputeNodesI> ext
         return false;
     }
         
-    public void run() { 
+    public void runLayout() { 
         //initialPlacement();
         
         // set up assignemts for filters in assignment

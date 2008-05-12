@@ -1,4 +1,4 @@
-//$Id: SpaceTimeScheduleAndPartitioner.java,v 1.2 2007-03-14 14:22:06 dimock Exp $
+//$Id: SpaceTimeScheduleAndSlicer.java,v 1.1 2008-05-12 19:22:30 mgordon Exp $
 /**
  * Extracts the "schedule" part of Mike's SpaceTimeSchedule.
  * 
@@ -8,32 +8,32 @@ package at.dms.kjc.backendSupport;
 import java.util.Vector;
 
 import at.dms.kjc.slicegraph.FilterSliceNode;
-import at.dms.kjc.slicegraph.Partitioner;
+import at.dms.kjc.slicegraph.Slicer;
 import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.spacetime.BasicSpaceTimeSchedule;
 
 /**
- * Extend BasicSpaceTimeSchedule by storing a partitioner.
+ * Extend BasicSpaceTimeSchedule by storing a slicer.
  * 
  * BasicSpaceTimeSchedule collects initialization schedule, prime-pump schedule
  * and steady-state schedule in one place.
  * This is purely a data structure: it is operated on by 
  * other classes to generate these schedules.
  * 
- * It is convenient for classes performing layout to keep the partitioner with
- * the schedule.  The partitioner supplies the initial slice graph and includes
+ * It is convenient for classes performing layout to keep the slicer with
+ * the schedule.  The slicer supplies the initial slice graph and includes
  * a map from filters to the amount of work that they perform, which is needed
  * to partition.
  * 
  * @author mgordon (refactored dimock)
  */
-public class SpaceTimeScheduleAndPartitioner extends BasicSpaceTimeSchedule {
+public class SpaceTimeScheduleAndSlicer extends BasicSpaceTimeSchedule {
     /** Partitioner stored with schedule. */
-    private Partitioner partitioner;
+    private Slicer slicer;
     
-    public SpaceTimeScheduleAndPartitioner(Partitioner partitioner) {
+    public SpaceTimeScheduleAndSlicer(Slicer slicer) {
         super();
-        this.partitioner = partitioner;
+        this.slicer = slicer;
     }
     
     
@@ -49,9 +49,9 @@ public class SpaceTimeScheduleAndPartitioner extends BasicSpaceTimeSchedule {
         
         //get all the file writers
         Vector<Slice> fileWriters = new Vector<Slice>();
-        for (int i = 0; i < getPartitioner().io.length; i++) 
-            if (getPartitioner().io[i].getHead().isFileOutput())
-                fileWriters.add(getPartitioner().io[i]);
+        for (int i = 0; i < getSlicer().io.length; i++) 
+            if (getSlicer().io[i].getHead().isFileOutput())
+                fileWriters.add(getSlicer().io[i]);
         
         for (int i = 0; i < fileWriters.size(); i++) {
             FilterSliceNode node = (FilterSliceNode)fileWriters.get(i).getHead().getNext();
@@ -67,16 +67,16 @@ public class SpaceTimeScheduleAndPartitioner extends BasicSpaceTimeSchedule {
 
     
     /** 
-     * @param partitioner
+     * @param slicer
      */
-    public void setPartitioner(Partitioner partitioner) {
-        this.partitioner = partitioner;
+    public void setSlicer(Slicer slicer) {
+        this.slicer = slicer;
     }
 
     /**
      * @return the partitioner associated with this schedule.
      */
-    public Partitioner getPartitioner() {
-        return partitioner;
+    public Slicer getSlicer() {
+        return slicer;
     }
 }

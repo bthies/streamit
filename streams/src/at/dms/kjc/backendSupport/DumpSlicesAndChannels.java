@@ -7,16 +7,16 @@ import java.io.*;
 /** Dump a graph with info about slices and channels. */
 public class DumpSlicesAndChannels {
     // dump the the completed partition to a dot file
-    public static void dumpGraph(String filename, Partitioner partitioner, BackEndFactory backendbits) {
+    public static void dumpGraph(String filename, Slicer slicer, BackEndFactory backendbits) {
         StringBuffer buf = new StringBuffer();
         buf.append("digraph Flattend {\n");
         buf.append("size = \"8, 10.5\";\n");
 
-        for (int i = 0; i < partitioner.getSliceGraph().length; i++) {
-            Slice slice = partitioner.getSliceGraph()[i];
+        for (int i = 0; i < slicer.getSliceGraph().length; i++) {
+            Slice slice = slicer.getSliceGraph()[i];
             assert slice != null;
             buf.append(slice.hashCode() + " [ " + 
-                    sliceName(slice, partitioner, backendbits) + 
+                    sliceName(slice, slicer, backendbits) + 
                     "\" ];\n");
             Edge[] outgoing = slice.getTail().getDestList();
             for (Edge e : outgoing) {
@@ -65,7 +65,7 @@ public class DumpSlicesAndChannels {
     
     /**return a string with all of the names of the filterslicenodes
      * and blue if linear. */
-    private static  String sliceName(Slice slice, Partitioner partitioner, BackEndFactory backendbits) {
+    private static  String sliceName(Slice slice, Slicer slicer, BackEndFactory backendbits) {
         SliceNode node = slice.getHead();
 
         StringBuffer out = new StringBuffer();
@@ -85,7 +85,7 @@ public class DumpSlicesAndChannels {
             if (node.isFilterSlice()) {
                 FilterContent f = node.getAsFilter().getFilter();
                 out.append("\\n" + node.toString() + "{"
-                        + partitioner.getFilterWork(node.getAsFilter())
+                        + slicer.getFilterWork(node.getAsFilter())
                         + "}");
                 if (f.isTwoStage())
                     out.append("\\npre:(peek, pop, push): (" + 

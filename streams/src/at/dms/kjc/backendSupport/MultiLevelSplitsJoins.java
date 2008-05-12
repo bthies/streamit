@@ -14,7 +14,7 @@ import at.dms.kjc.slicegraph.InterSliceEdge;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.OutputSliceNode;
-import at.dms.kjc.slicegraph.Partitioner;
+import at.dms.kjc.slicegraph.Slicer;
 import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.spacetime.RawProcElements;
 
@@ -34,18 +34,18 @@ public class MultiLevelSplitsJoins {
     /** The maximum width allowed for any split or join, it is set to the
      * number of devices*/
     private int maxWidth;
-    private Partitioner partitioner;
+    private Slicer slicer;
     
     /**
      * Create an instance of the pass that will operate on the 
      * partitioning calculated by partitioner for the number of memories
      * in RawChip.
      * 
-     * @param partitioner The partitioning.
+     * @param slicer The partitioning.
      * @param maxWidth The Raw chip.
      */
-    public MultiLevelSplitsJoins(Partitioner partitioner, int maxWidth) {
-        this.partitioner = partitioner;
+    public MultiLevelSplitsJoins(Slicer slicer, int maxWidth) {
+        this.slicer = slicer;
         //set max width to number of devices
         this.maxWidth = maxWidth;
         System.out.println("Maxwidth: " + maxWidth);
@@ -63,12 +63,12 @@ public class MultiLevelSplitsJoins {
         //created by this pass, to be installed in the partitioner at the 
         //end of this driver
         LinkedList<Slice> slices = new LinkedList<Slice>();
-        int oldNumSlices = partitioner.getSliceGraph().length;
+        int oldNumSlices = slicer.getSliceGraph().length;
         
         //cycle thru the trace graph and see if there are any 
         //splits or joins that need to be reduced...
-        for (int i = 0; i < partitioner.getSliceGraph().length; i++) {
-            Slice slice = partitioner.getSliceGraph()[i];
+        for (int i = 0; i < slicer.getSliceGraph().length; i++) {
+            Slice slice = slicer.getSliceGraph()[i];
            
             //see if the width of the joiner is too wide and 
             //keep breaking it up until it is, adding new levels...
@@ -91,9 +91,9 @@ public class MultiLevelSplitsJoins {
         }
         //set the trace graph to the new list of traces that we have
         //calculated in this pass
-        partitioner.setSliceGraphNewIds(slices.toArray(new Slice[0]));
+        slicer.setSliceGraphNewIds(slices.toArray(new Slice[0]));
         System.out.println("Done Breaking Splits / Joins (was " + oldNumSlices + 
-                " traces, now " + partitioner.getSliceGraph().length + " traces).");
+                " traces, now " + slicer.getSliceGraph().length + " traces).");
         
     }
     

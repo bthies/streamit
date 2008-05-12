@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.131 2007-11-29 06:14:40 rabbah Exp $
+# $Id: strc,v 1.132 2008-05-12 19:18:28 mgordon Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -174,7 +174,7 @@ exit(0);
 sub non_streamit_backend_defined {
     return $opts{library} || 
     $opts{cluster} || 
-    $opts{raw} || $opts{spacedynamic} || $opts{spacetime} || defined($opts{cell}) || 
+    $opts{raw} || $opts{tilera} || $opts{spacedynamic} || $opts{spacetime} || defined($opts{cell}) || 
     $opts{rstream} || $opts{simpleC} ||
     defined($opts{newSimple}) || 
 	$opts{uni} 
@@ -210,6 +210,7 @@ Usage: strc [options] file.str ...
   --more-help         Include extra options
 * --much-more-help    Include internal-only options
 
+  --tilera n, -t n    Compile for Tilera Processor (using ilib) and n tiles 
   --cell n            Compile for Cell processor with n SPUs
   --celldyn           Compile for Cell using dynamic scheduler
   --cluster n         Compile for a cluster or multicore with n nodes
@@ -217,6 +218,7 @@ Usage: strc [options] file.str ...
 * --newSimple         (in development)
   --simpleC           Use basic backend (not full-featured) to generate C output
   --raw n, -r n       Compile for Raw, with an n-by-n grid
+  --tilera n, -t n    Compiee for Tilera's Tile64, targeting n-by-n cores
   --rstream, -R       Generate C-like file to be compiled by RStream compiler 
 * --standalone, -S    Use Raw backend to generate C file for uniprocessor
 * --streamit          Output of the compiler is a StreamIt program
@@ -288,6 +290,9 @@ Usage: strc [options] file.str ...
 * --numult            Do not increase multiplicity of partitions
 * --peekratio n       Expand filters so that (pops * n) >= (peeks - pops)
 + --profile           Add a timer for each filter body (cluster)
+
++ Options specific to Tilera backend:
++ --partitioner       For Tilera, choose a partitioner, tmd (default) or smd.
 
  Options specific to Raw backend:
   --asciifileio       Use ascii format for file I/O (also works on -simpleC)
@@ -384,6 +389,7 @@ sub get_options
 			    "output|o=s",
                 "backend=s", # RMR accept a backend by name
 			    "raw|r=i",
+			    "tilera|t=i",
 			    "verbose|v",
 			    "optimize|O=i",
 			    "atlas!",
@@ -419,6 +425,7 @@ sub get_options
 			    "magic-net|magic_net|M",
 			    "macros",
 			    "optfile=s",
+			    "partitioner=s",
 			    "memory|Xmx=s",
 			    "modfusion",
 			    "manuallayout",
@@ -831,6 +838,7 @@ sub cluster_to_out {
 sub get_compiler_opts
   {
     my $copts = "";
+    $opts{tilera} && ($copts .= " -tilera " . $opts{tilera});
     $opts{raw} && ($copts .= " -raw " . $opts{raw});
     $opts{raw} && $opts{spacetime} && ($copts .= " --spacetime");
     $opts{raw} && $opts{space} && ($copts .= " --space");
@@ -863,6 +871,7 @@ sub get_compiler_opts
     $opts{'magic-net'} && ($copts .= " --magic_net");
     $opts{macros} && ($copts .= " --macros ");
     $opts{optfile} && ($copts .= " --optfile " . $opts{optfile});
+    $opts{partitioner} && ($copts .= " --partitioner " . $opts{partitioner});
     $opts{modfusion} && ($copts .= " --modfusion");
     $opts{manuallayout} && ($copts .= " --manuallayout");
     $opts{newSimple} && ($copts .= " --newSimple " . $opts{newSimple});

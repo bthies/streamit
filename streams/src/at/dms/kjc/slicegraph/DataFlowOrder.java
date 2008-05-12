@@ -27,8 +27,6 @@ public class DataFlowOrder {
      * @param topSlices The slice forest.
      * @return A LinkedList of slices in data-flow order
      */
-//  (don't add I/O slices to the traversal).  // no longer true
-
     public static LinkedList<Slice> getTraversal(Slice[] topSlices) {
         LinkedList<Slice> schedule = new LinkedList<Slice>();
         HashSet<Slice> visited = new HashSet<Slice>();
@@ -54,9 +52,7 @@ public class DataFlowOrder {
                                 queue.add(current);
                         }
                     }
-                    //if (!slice.getHead().getNextFilter().isPredefined()) {
                     schedule.add(slice);
-                    //}
                 }
             }
         }

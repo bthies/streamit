@@ -17,7 +17,7 @@ import at.dms.kjc.spacetime.LinearFission;
  * @author mgordon
  *
  */
-public class SimplePartitioner extends Partitioner {
+public class SimpleSlicer extends Slicer {
     // slice work threshold, higher number, more restrictive, smaller slices
     private static double TRASHOLD;
     //if true, then each filter occupies its own slice, useful for debugging...
@@ -28,7 +28,7 @@ public class SimplePartitioner extends Partitioner {
     private static final boolean IGNORE_WORK_EST = false;
    
     
-    public SimplePartitioner(UnflatFilter[] topFilters, HashMap[] exeCounts,
+    public SimpleSlicer(UnflatFilter[] topFilters, HashMap[] exeCounts,
                              LinearAnalyzer lfa, WorkEstimate work, int maxPartitions) {
         super(topFilters, exeCounts, lfa, work, maxPartitions);
         workEstimation = new HashMap<FilterContent, Integer>();

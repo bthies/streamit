@@ -23,7 +23,7 @@ import at.dms.kjc.common.CommonUtils;
  * @author mgordon
  * 
  */
-public class FlattenAndPartition extends Partitioner {
+public class FlattenAndPartition extends Slicer {
     private SIRToSliceNodes sliceNodes;
 
     private HashMap<OutputSliceNode, HashMap<InputSliceNode, InterSliceEdge>> edges;

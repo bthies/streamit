@@ -30,7 +30,7 @@ import java.util.*;
  * @author mgordon
  * 
  */
-public class AdaptivePartitioner extends Partitioner {
+public class AdaptivePartitioner extends Slicer {
     
     private HashSet<SIRFilter> criticalPath;
     

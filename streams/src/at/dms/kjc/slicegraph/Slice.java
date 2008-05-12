@@ -117,6 +117,7 @@ public class Slice {
         return len;
     }
 
+        
     /**
      * Set the tail of this slice to out.  This method
      * does not fix the intra-slice connections of the slice nodes, but 
@@ -141,6 +142,15 @@ public class Slice {
         node.setParent(this);
     }
 
+    /**
+     * Get the first FilterSliceNode of this slice.
+     *   
+     * @return The first FilterSliceNode of this Slice.
+     */
+    public FilterSliceNode getFirstFilter() {
+        return head.getNextFilter();
+    }
+    
     /**
      * get the InputSliceNode of the Slice containing this node.
      * @return

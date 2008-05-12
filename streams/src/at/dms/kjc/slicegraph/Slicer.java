@@ -27,7 +27,7 @@ import at.dms.kjc.sir.lowering.partition.WorkEstimate;
  * @author mgordon
  * 
  */
-public abstract class Partitioner {
+public abstract class Slicer {
     // Slice->Integer for bottleNeck work estimation
     protected HashMap<Slice, Integer> sliceBNWork;
 
@@ -86,7 +86,7 @@ public abstract class Partitioner {
      * @param work a work estimate, see {@link at.dms.kjc.sir.lowering.partition}, updeted if filters are added to a slice.
      * @param maxPartitions if non-zero, a maximum number of partitions to create
      */
-    public Partitioner(UnflatFilter[] topFilters, HashMap[] exeCounts,
+    public Slicer(UnflatFilter[] topFilters, HashMap[] exeCounts,
                        LinearAnalyzer lfa, WorkEstimate work, int maxPartitions) {
         this.maxPartitions = maxPartitions;
         this.topFilters = topFilters;

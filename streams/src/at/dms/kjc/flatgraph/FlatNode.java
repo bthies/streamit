@@ -2,7 +2,8 @@ package at.dms.kjc.flatgraph;
 
 import at.dms.kjc.sir.*;
 import at.dms.util.Utils;
-import java.util.HashSet;
+import java.util.HashSet; 
+import java.util.Set;
 
 /**
  * This class represents a node in the flattened graph.  It has incoming edges
@@ -689,5 +690,47 @@ public final class FlatNode {
      */
     public FlatNode[] getEdges() {
         return edges;
+    }
+    
+    /**
+     * Build and return the set of all filter FlatNodes that are immediately downstream
+     * of this Filter FlatNode (passing through splitters and joiners).  This must be called
+     * on a Filter FlatNode.  
+     * 
+     * @return The set of all immediately downstream Filter FlatNodes (passing through splitters and 
+     * joiners) 
+     */
+    public Set<FlatNode> downStreamFilters() {
+        //can only call on filter
+        assert isFilter();
+        HashSet<FlatNode> ds = new HashSet<FlatNode>();
+        
+        if (ways == 0 || edges.length == 0 || edges[0] == null)
+            return ds;
+        
+        downStreamFiltersHelper(edges[0], ds);
+                    
+        return ds;
+    }
+    
+    /**
+     * A recursive helper to find the set of all immediate downstream filters (passing through
+     * splitters and joiners) 
+     * 
+     * @param current The current downstream flatnode
+     * @param set The downstream flatnodes found so far
+     */
+    private void downStreamFiltersHelper(FlatNode current, HashSet<FlatNode> set) {
+        if (current == null)
+            return;
+        
+        if (current.isFilter()) {
+            set.add(current);
+            return;
+        }
+                
+        for (int i = 0; i < current.ways; i++) {
+            downStreamFiltersHelper(current.edges[i], set);
+        }
     }
 }

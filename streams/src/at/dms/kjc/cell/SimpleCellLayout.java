@@ -3,17 +3,17 @@ package at.dms.kjc.cell;
 import java.util.HashMap;
 
 import at.dms.kjc.backendSupport.Layout;
-import at.dms.kjc.backendSupport.SpaceTimeScheduleAndPartitioner;
+import at.dms.kjc.backendSupport.SpaceTimeScheduleAndSlicer;
 import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.slicegraph.SliceNode;
 
 public class SimpleCellLayout implements Layout<CellPU> {
 
     private HashMap<SliceNode,CellPU> layout;
-    SpaceTimeScheduleAndPartitioner spaceTime;
+    SpaceTimeScheduleAndSlicer spaceTime;
     CellChip cellChip;
     
-    public SimpleCellLayout(SpaceTimeScheduleAndPartitioner spaceTime, CellChip cellChip) {
+    public SimpleCellLayout(SpaceTimeScheduleAndSlicer spaceTime, CellChip cellChip) {
         this.spaceTime = spaceTime;
         this.cellChip = cellChip;
     }
@@ -23,7 +23,7 @@ public class SimpleCellLayout implements Layout<CellPU> {
         return null;
     }
 
-    public void run() {
+    public void runLayout() {
         Slice[] schedule = spaceTime.getSchedule();
         for (int i=0; i<schedule.length; i++) {
             Slice s = schedule[i];

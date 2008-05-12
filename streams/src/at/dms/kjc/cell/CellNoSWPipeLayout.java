@@ -10,7 +10,7 @@ import at.dms.kjc.slicegraph.*;
  *
  */
 public class CellNoSWPipeLayout extends NoSWPipeLayout<CellPU,CellChip> {
-    public CellNoSWPipeLayout(SpaceTimeScheduleAndPartitioner spaceTime, CellChip chip) {
+    public CellNoSWPipeLayout(SpaceTimeScheduleAndSlicer spaceTime, CellChip chip) {
         super(spaceTime,chip);
     }
     

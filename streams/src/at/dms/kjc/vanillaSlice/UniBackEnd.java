@@ -38,9 +38,9 @@ public class UniBackEnd {
         // perform some standard cleanup on the slice graph.
         commonPasses.simplifySlices();
         // Set schedules for initialization, prime-pump (if KjcOptions.spacetime), and steady state.
-        SpaceTimeScheduleAndPartitioner schedule = commonPasses.scheduleSlices();
+        SpaceTimeScheduleAndSlicer schedule = commonPasses.scheduleSlices();
         // partitioner contains information about the Slice graph used by dumpGraph
-        Partitioner partitioner = commonPasses.getPartitioner();
+        Slicer slicer = commonPasses.getSlicer();
 
 
         // create a collection of (very uninformative) processor descriptions.
@@ -53,7 +53,7 @@ public class UniBackEnd {
         } else {
             layout = new NoSWPipeLayout<UniProcessor,UniProcessors>(schedule, processors);
         }
-        layout.run();
+        layout.runLayout();
  
         // create other info needed to convert Slice graphs to Kopi code + Channels
         BackEndFactory<UniProcessors, UniProcessor, UniComputeCodeStore, Integer> uniBackEndBits  = new UniBackEndFactory(processors);
@@ -65,7 +65,7 @@ public class UniBackEnd {
         top_call.run(schedule, backEndBits);
 
         // Dump graphical representation
-        DumpSlicesAndChannels.dumpGraph("slicesAndChannels.dot", partitioner, backEndBits);
+        DumpSlicesAndChannels.dumpGraph("slicesAndChannels.dot", slicer, backEndBits);
         
         /*
          * Emit code to structs.h

@@ -129,7 +129,7 @@ public abstract class BackEndFactory<
     public Collection<Channel> getChannels() {
         return Channel.getBuffers();
     }
-    
+        
     /**
      * Back end needs to generate subclasses of channel.
      * Routine here to get a channel that implements communication over an edge.

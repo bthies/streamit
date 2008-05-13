@@ -14,7 +14,7 @@ import at.dms.kjc.*;
 import at.dms.util.Utils;
 
 /**
- * A Buffer is an implementation of an Edge in a back end.
+ * A Channel is an implementation of an Edge in a back end.
  * It refers to nodes in a slice graph like an edge does, but a Buffer also
  * contains code that a back end can emit to pass data between nodes in the slice graph.
  * 

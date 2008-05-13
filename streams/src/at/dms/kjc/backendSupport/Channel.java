@@ -76,7 +76,7 @@ public class Channel {
     
     
     /**
-     * Determine whther a channel for an edge exists in out collection of channels.
+     * Determine whther a channel for an edge exists in our collection of channels.
      * @param edge  Edge that the channel should implement
      * @return an existing channel if there is one, else null.
      */
@@ -140,7 +140,7 @@ public class Channel {
     /* (non-Javadoc)
      * @see at.dms.kjc.backendSupport.ChannelI#setExtralength(int)
      */
-    public void setExtralength(int extracount) {
+    public void setExtraCount(int extracount) {
         this.extraCount = extracount;
     }
     

@@ -36,8 +36,12 @@ public class RawChip {
         simulatedYSize = ySize;
 
         //do some trickery because we can only simulate configurations with
-        //4x4 or 8x8 tiles.  Everything else must use these 2 configs 
-        if (xSize > 4 || ySize > 4) {
+        //4x4 or 8x8 tiles.  Everything else must use these 2 configs
+        if (xSize > 8 || ySize > 8) {
+            gXSize = xSize;
+            gYSize = ySize;
+        }
+        else if (xSize > 4 || ySize > 4) {
             gXSize = 8;
             gYSize = 8;
         }

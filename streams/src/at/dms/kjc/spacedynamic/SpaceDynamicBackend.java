@@ -1,10 +1,13 @@
 package at.dms.kjc.spacedynamic;
 
 import at.dms.kjc.common.*;
+import at.dms.kjc.flatgraph.LevelDotGraph;
+import at.dms.kjc.flatgraph.LevelMap;
 import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.flatgraph.FlatGraphToSIR;
 import at.dms.kjc.flatgraph.GraphFlattener;
 import at.dms.kjc.flatgraph.DumpGraph;
+import at.dms.kjc.flatgraph.LevelMap;
 import at.dms.util.IRPrinter;
 import at.dms.util.Utils;
 import at.dms.util.SIRPrinter;
@@ -121,7 +124,11 @@ public class SpaceDynamicBackend {
     
         streamGraph = new SpdStreamGraph(graphFlattener.top, rawChip);
         (new DumpGraph()).dumpGraph(graphFlattener.top, "before-subgraphs.dot", null, null);
-
+        
+        LevelMap.buildMap(graphFlattener.top, 0);
+        LevelMap.createLevelColors();
+        (new LevelDotGraph()).dumpGraph(graphFlattener.top, "levels-streamgraph.dot");
+        
         //create the static stream graphs cutting at dynamic rate boundaries
         streamGraph.createStaticStreamGraphs();
 
@@ -305,6 +312,10 @@ public class SpaceDynamicBackend {
                 }
         
             } while (!fitsInIMEM);
+            
+            LevelMap.buildMap(ssg.getTopLevel(), 0);
+            LevelMap.createLevelColors();
+            (new LevelDotGraph()).dumpGraph(ssg.getTopLevel(), "levels-after-partition.dot");
         }
 
         //see if we can remove any joiners, doesn't run in the old space backend...
@@ -314,6 +325,8 @@ public class SpaceDynamicBackend {
         streamGraph.layoutGraph();
         System.out.println("Done with tile assignment.");
     
+        System.exit(0);
+        
         if (KjcOptions.magic_net) {
             assert false;
             //MagicNetworkSchedule.generateSchedules(ssg.getTopLevel());

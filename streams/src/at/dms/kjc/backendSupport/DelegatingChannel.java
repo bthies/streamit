@@ -205,8 +205,8 @@ public class DelegatingChannel extends Channel {
     }
 
     @Override
-    public void setExtralength(int extracount) {
-        other.setExtralength(extracount);
+    public void setExtraCount(int extracount) {
+        other.setExtraCount(extracount);
     }
 
     @Override

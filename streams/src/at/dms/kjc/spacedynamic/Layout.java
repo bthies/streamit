@@ -1,6 +1,7 @@
 package at.dms.kjc.spacedynamic;
 
 import at.dms.kjc.flatgraph.FlatNode;
+import at.dms.kjc.flatgraph.LevelMap;
 import at.dms.kjc.flatgraph.FlatVisitor;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
@@ -258,6 +259,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
     }
 
     public void dumpLayout(String fileName) {
+        dumpLayoutLevels("levels_"+ fileName);
         StringBuffer buf = new StringBuffer();
 
         buf.append("digraph Layout {\n");
@@ -881,7 +883,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
             // The first iteration is really just to get a
             // good initial layout. Some random layouts really kill the
             // algorithm
-            for (int two = 0; two < rawChip.getYSize(); two++) {
+            for (int two = 0; two < 1/*rawChip.getYSize()*/; two++) {
                 System.out.print("\nRunning Annealing Step (" + currentCost
                                  + ", " + minCost + ")");
                 double t = annealMaxTemp();
@@ -1221,6 +1223,55 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
             workEstimates.addEstimate(node);
             joiners.add(node);
             assigned.add(node);
+        }
+    }
+    
+    public void dumpLayoutLevels(String fileName) {
+        StringBuffer buf = new StringBuffer();
+        
+        buf.append("digraph Layout {\n");
+        buf.append("size = \"7.5, 10\";\n");
+        buf.append("ratio=compress;\n");
+        buf.append("node [style=filled,fillcolor=white,shape=box,fixedsize=true,width=2.5,height=1];\nnodesep=.5;\nranksep=\"2.0 equally\";\nedge[arrowhead=dot, style=dotted]\n");
+        for (int i = 0; i < rawChip.getYSize(); i++) {
+            buf.append("{rank = same;");
+            for (int j = 0; j < rawChip.getXSize(); j++) {
+                buf
+                    .append("tile" + rawChip.getTile(j, i).getTileNumber()
+                            + "[label=\"\"];");
+            }
+            buf.append("}\n");
+        }
+        for (int i = 0; i < rawChip.getYSize(); i++) {
+            for (int j = 0; j < rawChip.getXSize(); j++) {
+                Iterator<RawTile> neighbors = rawChip.getTile(j, i)
+                    .getSouthAndEastNeighbors().iterator();
+                while (neighbors.hasNext()) {
+                    RawTile n = neighbors.next();
+                    buf.append("tile" + rawChip.getTile(j, i).getTileNumber()
+                               + " -> tile" + n.getTileNumber()
+                               + " [weight = 100000000];\n");
+                }
+            }
+        }
+        Iterator<FlatNode> it = tileAssignment.values().iterator();
+        while (it.hasNext()) {
+            FlatNode node = it.next();
+            if (streamGraph.getFileState().fileNodes.contains(node))
+                continue;
+            buf.append("tile" + getTileNumber(node) + "[label=\"\", fillcolor=" +
+                    LevelMap.getLevelColor(node) + "];\n");
+        }
+
+        
+        buf.append("}\n");
+
+        try {
+            FileWriter fw = new FileWriter(fileName);
+            fw.write(buf.toString());
+            fw.close();
+        } catch (Exception e) {
+            System.err.println("Could not print layout");
         }
     }
 }

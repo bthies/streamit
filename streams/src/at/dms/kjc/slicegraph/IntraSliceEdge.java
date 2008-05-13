@@ -13,7 +13,7 @@ public class IntraSliceEdge extends Edge {
     
     public IntraSliceEdge(SliceNode src, SliceNode dst) {
         super(src, dst);
-        assert src.getParent() == dst.getParent();
+        //assert src.getParent() == dst.getParent(); //can't assume that parent pointer is set up
         //could use a lot more checking here, but at this point, not really crucial
     }
 }

@@ -37,9 +37,15 @@ public class TileraBackend {
         backEndBits = new TileraBackEndFactory(chip);
         backEndBits.setLayout(scheduler);
         
+	        
+        //create all buffers and set the rotation lengths
+        
+	//create all ChannelAsDistributedBuffers
+
         //now convert to Kopi code plus channels.  
         backEndBits.getBackEndMain().run(graphSchedule, backEndBits);
                 
+	
 	System.exit(0);
     }
     

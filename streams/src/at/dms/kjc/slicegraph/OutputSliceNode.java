@@ -257,6 +257,19 @@ public class OutputSliceNode extends SliceNode {
     }
 
     /**
+     * Return a set of all the destination slices of this output slice node.
+     * 
+     * @return a set of all the destination slices of this output slice node.
+     */
+    public Set<Slice> getDestSlices() {
+        HashSet<Slice> dests = new HashSet<Slice>();
+        for (InterSliceEdge edge : getDestSet()) {
+            dests.add(edge.getDest().getParent());
+        }
+        return dests;
+    }
+    
+    /**
      * Return a list of the dests in round-robin order flattening
      * the duplicates.  
      * 

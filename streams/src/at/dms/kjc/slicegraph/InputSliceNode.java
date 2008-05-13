@@ -287,6 +287,19 @@ public class InputSliceNode extends SliceNode {
     }
     
     /**
+     * Return a set of all the slices that are inputs to this slice.
+     * 
+     * @return a set of all the slices that are inputs to this slice.
+     */
+    public Set<Slice> getSourceSlices() {
+        HashSet<Slice> slices = new HashSet<Slice>();
+        for (InterSliceEdge edge : getSourceList()) {
+            slices.add(edge.getSrc().getParent());
+        }
+        return slices;
+    }
+    
+    /**
      * Return a linked list of the sources pattern.
      * 
      * @return The linked list of the sources pattern.

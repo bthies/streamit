@@ -91,8 +91,12 @@ public class Slice {
         filterNodes = new FilterSliceNode[size];
         int i = 0;
         node = getHead().getNext();
+        //remember that setting a node's next will also set the next node's previous edge
+        //so no need to set the previous edges explicitly 
+        getHead().setNext(node);
         while (node.isFilterSlice()) {
             filterNodes[i++] = node.getAsFilter();
+            node.setNext(node.getNext());
             node = node.getNext();
         }
         assert i == size;

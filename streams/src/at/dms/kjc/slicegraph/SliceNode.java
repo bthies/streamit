@@ -6,8 +6,8 @@ package at.dms.kjc.slicegraph;
  * They can be specialized into {@link InputSliceNode}, {@link FilterSliceNode}, or {@link OutputSliceNode}. 
  */
 public class SliceNode {
-    private Edge toNext = null;  // internal to slice: remains null for OutputSliceNode
-    private Edge toPrev = null;  // internal to slice: remains null for InputSliceNode
+    private IntraSliceEdge toNext = null;  // internal to slice: remains null for OutputSliceNode
+    private IntraSliceEdge toPrev = null;  // internal to slice: remains null for InputSliceNode
 
     private Slice parent;
 
@@ -19,28 +19,47 @@ public class SliceNode {
         return (toPrev == null)? null : toPrev.getSrc();
     }
 
-    public void setPrevious(SliceNode prev) {
-        assert ! (this instanceof InputSliceNode);
-        if (toPrev == null) { 
-            toPrev = new Edge(prev,this); 
-        } else {
-            toPrev.setSrc(prev);
-        }
-    }
-
-    public void setNext(SliceNode next) {
-        assert ! (this instanceof OutputSliceNode);
-        if (toNext == null) {
-            toNext = new Edge(this,next);
-        } else {
-            toNext.setDest(next);
-        }
-    }
-
-    public Edge getEdgeToNext() {
+    public IntraSliceEdge getEdgeToNext() {
         return toNext;
     }
     
+    public IntraSliceEdge getEdgeToPrev() {
+        return toPrev;
+    }
+
+    private void setNextEdge(IntraSliceEdge edge) {
+        toNext = edge;
+    }
+    
+
+    private void setPrevEdge(IntraSliceEdge edge) {
+        toPrev = edge;
+    }
+    
+    /**
+     * Set the IntraSliceEdge pointing to previous to prev, by creating a new edge.  
+     * Also, set prev's next edge to the newly created edge. 
+     * 
+     * @param prev The new previous node
+     */
+    public void setPrevious(SliceNode prev) {
+        assert ! (this instanceof InputSliceNode); 
+        toPrev = new IntraSliceEdge(prev,this);
+        prev.setNextEdge(toPrev);
+    }
+
+    /**
+     * Set the intraslicenedge pointing to the next node to next by creating 
+     * a new edge.  Also, set next's edge to the newly created edge.
+     * 
+     * @param next The new next node
+     */
+    public void setNext(SliceNode next) {
+        assert ! (this instanceof OutputSliceNode);
+        toNext = new IntraSliceEdge(this, next);
+        next.setPrevEdge(toNext);
+    }
+
 //    public Edge getEdgeToPrev() {
 //        return toPrev;
 //    }

@@ -5,8 +5,9 @@ import at.dms.kjc.CType;
 /**
  * An Edge connects two {@link SliceNode}s.
  * Edges can be differentiated into {@link InterSliceEdge}s that connect the OutputSliceNode of a slice
- * and the InputSliceNode of a slice, and <pre>Intra-Slice Edges</pre> that connect two SliceNodes in
- * the same slice.
+ * and the InputSliceNode of a slice, and {@link IntraSliceEdge} that connect two SliceNodes in
+ * the same slice.  
+ * 
  * TODO: <b>Warning</b> Edge is currently used as a key for Channel, but sophisticated graph optimizations
  * remove SIRIdentity filters, and remove redundant adjacent edges. A RR(1) splitter connected to a 
  * RR(1) joiner in a slice graph could represent an identity operation, but could also represent a 

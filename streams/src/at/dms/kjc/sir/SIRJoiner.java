@@ -70,12 +70,11 @@ public class SIRJoiner extends SIROperator {
             return createWeightedRR(parent,weights);
         } else if (type==SIRJoinType.ROUND_ROBIN) {
             JExpression weight = (weights.length>0 ? weights[0] : new JIntLiteral(1));
-            createUniformRR(parent,weight);
+            return createUniformRR(parent,weight);
         } else {
             Utils.fail("Unrecognized joiner type.");
+            return null;
         }
-        // stupid compiler
-        return null;
     }
 
     /**
@@ -93,14 +92,15 @@ public class SIRJoiner extends SIROperator {
         } else if (type==SIRJoinType.WEIGHTED_RR) {
             // if making a weighted round robin, should use other constructor
             Utils.fail("Need to specify weights for weighted round robin");
+            return null;
         } else if (type==SIRJoinType.ROUND_ROBIN) {
             // if making a round robin, should use other constructor
             Utils.fail("Need to specify weight for uniform round robin");
+            return null;
         } else {
             Utils.fail("Unreckognized joiner type.");
+            return null;
         }
-        // stupid compiler
-        return null;
     }
 
     /**

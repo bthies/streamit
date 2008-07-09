@@ -22,6 +22,8 @@ import at.dms.util.Utils;
 
 public class FilterCodeGeneration extends CodeStoreHelper {
 
+    private FilterSliceNode filterNode;
+    private FilterInfo filterInfo;
     private static String exeIndex1Name = "__EXEINDEX__1__";
     private JVariableDefinition exeIndex1;
     private boolean exeIndex1Used;
@@ -46,6 +48,8 @@ public class FilterCodeGeneration extends CodeStoreHelper {
      */
     public FilterCodeGeneration(FilterSliceNode node, TileraBackEndFactory backEndBits) {
         super(node,node.getAsFilter().getFilter(),backEndBits);
+        filterNode = node;
+        filterInfo = FilterInfo.getFilterInfo(filterNode);
     }
 
     /**
@@ -65,15 +69,14 @@ public class FilterCodeGeneration extends CodeStoreHelper {
         FilterContent filter = ((FilterSliceNode) sliceNode).getFilter();
 
         // channel code before work block
+        //slice has input, so we 
         if (backEndBits.sliceHasUpstreamChannel(sliceNode.getParent())) {
-            for (JStatement stmt : backEndBits.getChannel(
-                    sliceNode.getPrevious().getEdgeToNext()).beginInitRead()) {
+            for (JStatement stmt : InputBuffer.getInputBuffer(filterNode).beginInitRead()) {
                 statements.addStatement(stmt);
             }
         }
         if (backEndBits.sliceHasDownstreamChannel(sliceNode.getParent())) {
-            for (JStatement stmt : backEndBits.getChannel(
-                    sliceNode.getEdgeToNext()).beginInitWrite()) {
+            for (JStatement stmt : OutputBuffer.getOutputBuffer(filterNode).beginInitWrite()) {
                 statements.addStatement(stmt);
             }
         }
@@ -87,9 +90,7 @@ public class FilterCodeGeneration extends CodeStoreHelper {
             statements.addStatement(new JExpressionStatement(initWorkCall));
 
             if (backEndBits.sliceHasUpstreamChannel(sliceNode.getParent())) {
-                for (JStatement stmt : backEndBits.getChannel(
-                        sliceNode.getPrevious().getEdgeToNext())
-                        .postPreworkInitRead()) {
+                for (JStatement stmt : InputBuffer.getInputBuffer(filterNode).postPreworkInitRead()) {
                     statements.addStatement(stmt);
                 }
             }
@@ -99,14 +100,12 @@ public class FilterCodeGeneration extends CodeStoreHelper {
 
         // channel code after work block
         if (backEndBits.sliceHasUpstreamChannel(sliceNode.getParent())) {
-            for (JStatement stmt : backEndBits.getChannel(
-                    sliceNode.getPrevious().getEdgeToNext()).endInitRead()) {
+            for (JStatement stmt : InputBuffer.getInputBuffer(filterNode).endInitRead()) {
                 statements.addStatement(stmt);
             }
         }
         if (backEndBits.sliceHasDownstreamChannel(sliceNode.getParent())) {
-            for (JStatement stmt : backEndBits.getChannel(
-                    sliceNode.getEdgeToNext()).endInitWrite()) {
+            for (JStatement stmt : OutputBuffer.getOutputBuffer(filterNode).endInitWrite()) {
                 statements.addStatement(stmt);
             }
         }
@@ -158,43 +157,82 @@ public class FilterCodeGeneration extends CodeStoreHelper {
                            new JIntLiteral(filterInfo.initMult));
     }
 
-    @Override
     public JMethodDeclaration getPrimePumpMethod() {
-        return super.getPrimePumpMethodForFilter(FilterInfo.getFilterInfo((FilterSliceNode)sliceNode));
+        if (primePumpMethod != null) {
+            return primePumpMethod;
+        }
+        
+        JBlock statements = new JBlock();
+        // channel code before work block
+        if (backEndBits.sliceHasUpstreamChannel(sliceNode.getParent())) {
+            for (JStatement stmt : InputBuffer.getInputBuffer(filterNode).beginSteadyRead()) {
+                statements.addStatement(stmt);
+            }
+        }
+        if (backEndBits.sliceHasDownstreamChannel(sliceNode.getParent())) {
+            for (JStatement stmt : OutputBuffer.getOutputBuffer(filterNode).beginSteadyWrite()) {
+                statements.addStatement(stmt);
+            }
+        }
+        // add the calls to the work function for the priming of the pipeline
+        statements.addStatement(getWorkFunctionBlock(filterInfo.steadyMult));
+        // channel code after work block
+        if (backEndBits.sliceHasUpstreamChannel(sliceNode.getParent())) {
+            for (JStatement stmt : InputBuffer.getInputBuffer(filterNode).endSteadyRead()) {
+                statements.addStatement(stmt);
+            }
+        }
+        if (backEndBits.sliceHasDownstreamChannel(sliceNode.getParent())) {
+            for (JStatement stmt : OutputBuffer.getOutputBuffer(filterNode).endSteadyWrite()) {
+                statements.addStatement(stmt);
+            }
+        }
+        //return the method
+        primePumpMethod = new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
+                                      CStdType.Void,
+                                      primePumpStage + uniqueID,
+                                      JFormalParameter.EMPTY,
+                                      CClassType.EMPTY,
+                                      statements,
+                                      null,
+                                      null);
+        return primePumpMethod;
     }
 
     @Override
     public JBlock getSteadyBlock() {
         JBlock statements = new JBlock();
+        
         // channel code before work block
         if (backEndBits.sliceHasUpstreamChannel(sliceNode.getParent())) {
-            for (JStatement stmt : backEndBits.getChannel(
-                    sliceNode.getPrevious().getEdgeToNext()).beginSteadyRead()) {
+            for (JStatement stmt : InputBuffer.getInputBuffer(filterNode).beginSteadyRead()) {
                 statements.addStatement(stmt);
             }
         }
+        
         if (backEndBits.sliceHasDownstreamChannel(sliceNode.getParent())) {
-            for (JStatement stmt : backEndBits.getChannel(
-                    sliceNode.getEdgeToNext()).beginSteadyWrite()) {
+            for (JStatement stmt : OutputBuffer.getOutputBuffer(filterNode).beginSteadyWrite()) {
                 statements.addStatement(stmt);
             }
         }
+        
         // iterate work function as needed
         statements.addStatement(getWorkFunctionBlock(FilterInfo
                 .getFilterInfo((FilterSliceNode) sliceNode).steadyMult));
+        
         // channel code after work block
         if (backEndBits.sliceHasUpstreamChannel(sliceNode.getParent())) {
-            for (JStatement stmt : backEndBits.getChannel(
-                    sliceNode.getPrevious().getEdgeToNext()).endSteadyRead()) {
+            for (JStatement stmt : InputBuffer.getInputBuffer(filterNode).endSteadyRead()) {
                 statements.addStatement(stmt);
             }
         }
         if (backEndBits.sliceHasDownstreamChannel(sliceNode.getParent())) {
-            for (JStatement stmt : backEndBits.getChannel(
-                    sliceNode.getEdgeToNext()).endSteadyWrite()) {
+            for (JStatement stmt : OutputBuffer.getOutputBuffer(filterNode).endSteadyWrite()) {
                 statements.addStatement(stmt);
             }
         }
         return statements;
     }
+    
+    
 }

@@ -40,9 +40,12 @@ public class TileraBackend {
         //create all buffers and set the rotation lengths
         Buffer.createBuffers(graphSchedule);
 	        
-        //now convert to Kopi code plus dma commands.  
+        //now convert to Kopi code plus communication commands.  
         backEndBits.getBackEndMain().run(graphSchedule, backEndBits);
         	
+        //emit c code for all tiles
+        EmitTileCode.doit(backEndBits);
+        
 	System.exit(0);
     }
     

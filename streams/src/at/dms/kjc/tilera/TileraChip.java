@@ -1,5 +1,7 @@
 package at.dms.kjc.tilera;
 
+import java.util.LinkedList;
+
 import at.dms.kjc.backendSupport.ComputeNode;
 import at.dms.kjc.backendSupport.ComputeNodesI;
 import at.dms.util.Utils;
@@ -26,6 +28,14 @@ public class TileraChip implements ComputeNodesI<TileCodeStore> {
                 tiles[x][y] = new Tile(x, y, this);             
             }
         }
+    }
+    
+    public LinkedList<Tile> getTiles() {
+        LinkedList<Tile> ts = new LinkedList<Tile>();
+        for (int x = 0; x < tiles.length; x++)
+            for (int y= 0; y < tiles[x].length; y++)
+                ts.add(tiles[x][y]);
+        return ts;
     }
     
     public int getXSize() {

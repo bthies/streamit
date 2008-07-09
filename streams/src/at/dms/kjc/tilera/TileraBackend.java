@@ -37,7 +37,6 @@ public class TileraBackend {
         backEndBits = new TileraBackEndFactory(chip);
         backEndBits.setLayout(scheduler);
         
-	        
         //create all buffers and set the rotation lengths
         Buffer.createBuffers(graphSchedule);
 	        

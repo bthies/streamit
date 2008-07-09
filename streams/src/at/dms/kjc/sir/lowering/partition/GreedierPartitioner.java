@@ -164,11 +164,12 @@ public class GreedierPartitioner {
         int count=Partitioner.countTilesNeeded(str, joinersNeedTiles);
         System.out.println("  GreedierPartitioner detects " + count + " tiles.");
         boolean cont;
-        do { //Iterate till can't (# fissable filters is always decreasing)
+       do { //Iterate till can't (# fissable filters is always decreasing)
             cont=false;
             boolean fiss=shouldFiss(); //Try Fiss
 	    //Fiss while appropriate and under target num of tiles
-            while(fiss&&count<numTiles) {
+            System.out.println("Tiles: " + numTiles);
+           while(fiss&&count<numTiles) {
                 cont=true; //Some change so continue iterating
                 Node big=nodes.lastKey(); //Get biggest Node
                 System.out.println("  Fissing: "+big.filter);
@@ -179,6 +180,7 @@ public class GreedierPartitioner {
                 System.out.println("  GreedierPartitioner detects " + count + " tiles.");
             }
             while(count>numTiles) { //Try Fuse
+                System.out.println("one pass");
                 cont=true; //Some change so continue iterating
                 Pair smallest=findSmallest();  //Get smallest Pair
                 fuse(smallest); //Fuse
@@ -186,7 +188,7 @@ public class GreedierPartitioner {
                 count=Partitioner.countTilesNeeded(str, joinersNeedTiles);
                 System.out.println("  GreedierPartitioner detects " + count + " tiles.");
             }
-        } while(cont); //Iterate till convergence
+          } while(cont); //Iterate till convergence
         return str;
     }
     
@@ -252,12 +254,17 @@ public class GreedierPartitioner {
     private boolean shouldFiss() {
         Node big=nodes.lastKey();
         if(!big.fissable)
+        {
+            System.out.println("The biggest is not fissable!");    
             return false;
+        }
         Pair small=(Pair)pairs.firstKey();
         pairs.remove(small);
         Pair testSmall=(Pair)pairs.firstKey(); // Make sure 2nd smallest pair is below bottleneck
         pairs.put(small,null);
-        return testSmall.work+FUSION_OVERHEAD<big.work;
+        //if (testSmall.work+FUSION_OVERHEAD>big.work)
+        //    System.out.println("The biggest filter is not worth fissing!");
+        return true;//testSmall.work+FUSION_OVERHEAD<big.work;
     }
 
     /**
@@ -338,6 +345,8 @@ public class GreedierPartitioner {
         n1.next=n2;
         n2.prev=n1;
         Node prev=node.prev;
+        n1.fissable=true;
+        n2.fissable=true;
         if(prev!=null) { //Fix connections
             prev.next=n1;
             n1.prev=prev;

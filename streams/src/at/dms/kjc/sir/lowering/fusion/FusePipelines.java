@@ -45,22 +45,16 @@ public class FusePipelines {
      */
     private static final int FUSE_PIPELINES_OF_STATELESS_STREAMS = 2;
     /**
-     * Mode indicating that splitjoins should be fused so long as the
-     * RESULT of the fusion will be stateless.  This will do a
-     * deep-fusion, possibly fusing other children in the splitjoin
-     */
-    private static final int FUSE_SPLITJOINS_OF_STATELESS_STREAMS = 3;
-    /**
      * Mode indicating that pipeline segments should be fused so long 
      * as the RESULT of fusion will be naively vectorizable.
      */
-    private static final int FUSE_PIPELINES_OF_VECTORIZABLE_FILTERS = 4;
+    private static final int FUSE_PIPELINES_OF_VECTORIZABLE_FILTERS = 3;
     /**
      * Mode indicating that pipeline segments should be fused so long 
      * as the RESULT of fusion will be naively vectorizable.  This will do a
      * deep-fusion, possibly fusing splitjoin children.
      */
-    private static final int FUSE_PIPELINES_OF_VECTORIZABLE_STREAMS = 5;
+    private static final int FUSE_PIPELINES_OF_VECTORIZABLE_STREAMS = 4;
     
     /**
      * Fuses all adjacent filters whos parent is a pipeline.  If a
@@ -114,40 +108,6 @@ public class FusePipelines {
         SIRStream result = (SIRStream)str.accept(fuser);
         //fuser.predictFusion.debugPrint();
         new PredictFusion(); // clean up static data structures
-        return result;
-    }
-    /**
-     * Fuses any splitjoin in 'str' so long as the result of fusion
-     * will be stateless.
-     *
-     * @param str input stream to fuse, may be modified by this method.
-     * @return  stream with fusion having taken place
-     */
-    public static SIRStream fuseSplitjoinsOfStatelessStreams(SIRStream str) {
-        // first eliminate wrapper pipelines, as they obscure
-        // continuous pipeline sections
-        Lifter.lift(str);
-        // put each splitjoin in a wrapper pipeline, since we're going
-        // to call a pipeline fusion stage that will check for a
-        // single splitjoin child
-        str.accept(new EmptyAttributeStreamVisitor() {
-                public Object visitSplitJoin(SIRSplitJoin self,
-                                             JFieldDeclaration[] fields,
-                                             JMethodDeclaration[] methods,
-                                             JMethodDeclaration init,
-                                             SIRSplitter splitter,
-                                             SIRJoiner joiner) {
-                    super.visitSplitJoin(self, fields, methods, init, splitter, joiner);
-                    return SIRContainer.makeWrapper(self);
-                }
-            });
-        // do the fusion
-        PipelineFuser fuser = new PipelineFuser(FUSE_SPLITJOINS_OF_STATELESS_STREAMS);
-        SIRStream result = (SIRStream)str.accept(fuser);
-        //fuser.predictFusion.debugPrint();
-        new PredictFusion(); // clean up static data structures
-        // lift again to eliminate wrapper pipelines
-        Lifter.lift(str);
         return result;
     }
     /**
@@ -225,9 +185,8 @@ public class FusePipelines {
          */
         public PipelineFuser(int mode) {
             this.mode = mode;
-            if (mode == FUSE_PIPELINES_OF_STATELESS_STREAMS ||
-                mode == FUSE_SPLITJOINS_OF_STATELESS_STREAMS ||
-                mode == FUSE_PIPELINES_OF_VECTORIZABLE_STREAMS) {
+            if (mode == FUSE_PIPELINES_OF_STATELESS_STREAMS
+                    || mode == FUSE_PIPELINES_OF_VECTORIZABLE_STREAMS) {
                 predictFusion = new PredictFusion();
             }
         }
@@ -341,8 +300,7 @@ public class FusePipelines {
             // introduce state.  
             if (filter instanceof SIRFilter &&
                 (mode == FUSE_PIPELINES_OF_STATELESS_FILTERS ||
-                 mode == FUSE_PIPELINES_OF_STATELESS_STREAMS ||
-                 mode == FUSE_SPLITJOINS_OF_STATELESS_STREAMS)) {
+                 mode == FUSE_PIPELINES_OF_STATELESS_STREAMS)) {
                 assert !StatelessDuplicate.hasMutableState((SIRFilter)filter) :
                         "Accidentally introduced state into fusion product " + filter;
             }
@@ -382,15 +340,6 @@ public class FusePipelines {
                         !predictFusion.isTwoStage(child) &&
                         // only first filter can peek
                         (i==0 || !predictFusion.doesPeeking(child)));
-            case FUSE_SPLITJOINS_OF_STATELESS_STREAMS:
-                return (// must be a splitjoin
-                        child instanceof SIRSplitJoin &&
-                        // must be fusable
-                        predictFusion.isFusable(child) &&
-                        // must be stateless
-                        !predictFusion.hasState(child) &&
-                        // cannot be a two-stage filter (could introduce fusion state?)
-                        !predictFusion.isTwoStage(child));
             case FUSE_PIPELINES_OF_VECTORIZABLE_FILTERS:
                 return (// can only fuse filters
                         child instanceof SIRFilter &&

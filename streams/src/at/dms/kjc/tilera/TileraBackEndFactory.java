@@ -7,6 +7,9 @@ import at.dms.kjc.backendSupport.BackEndFactory;
 import at.dms.kjc.backendSupport.BackEndScaffold;
 import at.dms.kjc.backendSupport.Channel;
 import at.dms.kjc.backendSupport.CodeStoreHelper;
+import at.dms.kjc.backendSupport.CodeStoreHelperJoiner;
+import at.dms.kjc.backendSupport.CodeStoreHelperSimple;
+import at.dms.kjc.backendSupport.CodeStoreHelperSplitter;
 import at.dms.kjc.backendSupport.ComputeCodeStore;
 import at.dms.kjc.backendSupport.ComputeNode;
 import at.dms.kjc.backendSupport.ComputeNodesI;
@@ -64,7 +67,13 @@ public class TileraBackEndFactory extends BackEndFactory<TileraChip, Tile, TileC
     @Override
     public CodeStoreHelper getCodeStoreHelper(SliceNode node) {
         // TODO Auto-generated method stub
-        return null;
+        if (node instanceof FilterSliceNode) {
+            // simply do appropriate wrapping of calls...
+            return new FilterCodeGeneration((FilterSliceNode)node,this);
+        } else {
+            assert false;
+            return null;
+        }
     }
 
     /* (non-Javadoc)
@@ -98,7 +107,7 @@ public class TileraBackEndFactory extends BackEndFactory<TileraChip, Tile, TileC
     public void processFilterSliceNode(FilterSliceNode filter,
             SchedulingPhase whichPhase, TileraChip chip) {
         System.out.println("Processing: " + filter + " on tile " + layout.getComputeNode(filter).getTileNumber() + "(" + whichPhase + ")");
-
+        (new ProcessFilterSliceNode(filter, whichPhase, this)).processFilterSliceNode();
     }
 
     /* (non-Javadoc)
@@ -107,8 +116,7 @@ public class TileraBackEndFactory extends BackEndFactory<TileraChip, Tile, TileC
     @Override
     public void processFilterSlices(Slice slice, SchedulingPhase whichPhase,
             TileraChip chip) {
-        // TODO Auto-generated method stub
-
+        assert false : "The Tilera backend does not support slices with multiple filters (processFilterSlices()).";
     }
 
     /* (non-Javadoc)
@@ -118,7 +126,9 @@ public class TileraBackEndFactory extends BackEndFactory<TileraChip, Tile, TileC
     public void processInputSliceNode(InputSliceNode input,
             SchedulingPhase whichPhase, TileraChip chip) {
         // TODO Auto-generated method stub
-        System.out.println("Processing: " + input); 
+        System.out.println("Processing: " + input);
+        // Convert the channel accesses to reads from and writes to the input and output buffers
+       
     }
 
     /* (non-Javadoc)

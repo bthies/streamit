@@ -11,6 +11,7 @@ import at.dms.util.Utils;
 /**
  * For creation of additional code necessary to getting filter / joiner / splitter code hooked
  * up to a ComputeCodeStore.  
+ * 
  * @author dimock / concept and stolen code from mgordon
  */
 public abstract  class CodeStoreHelper extends MinCodeUnit {

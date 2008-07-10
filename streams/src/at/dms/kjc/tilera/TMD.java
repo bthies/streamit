@@ -58,13 +58,13 @@ public class TMD extends Scheduler {
         System.out.println("Levels: " + levels.length);
         
         for (int l = 0; l < levels.length; l++) {
-            assert levels[l].length  <= TileraBackend.chip.size() : "Too many filters in level for TMD layout!";
+            assert levels[l].length  <= TileraBackend.chip.abstractSize() : "Too many filters in level for TMD layout!";
             
-            if (levels[l].length < TileraBackend.chip.size())
+            if (levels[l].length < TileraBackend.chip.abstractSize())
                 System.out.println("Warning: Level " + l + " of slice graph has fewer filters than tiles.");
             
             for (int f = 0; f < levels[l].length; f++) {
-                setComputeNode(levels[l][f].getFirstFilter(), TileraBackend.chip.getNthComputeNode(f));
+                setComputeNode(levels[l][f].getFirstFilter(), getTranslatedTile(f));
             }
         }
     }
@@ -80,7 +80,6 @@ public class TMD extends Scheduler {
      */
     public void run(SIRStream str, int tiles) {
         System.out.println("Running TMD Partitioner...");
-        
         
         WorkEstimate work = WorkEstimate.getWorkEstimate(str);
         WorkList workList = work.getSortedFilterWork();

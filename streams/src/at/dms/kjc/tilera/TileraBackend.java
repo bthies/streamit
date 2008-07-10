@@ -19,12 +19,13 @@ public class TileraBackend {
 	System.out.println("Entry to Tilera Backend...");
         
 	setScheduler();
-        chip = new TileraChip(KjcOptions.tilera, KjcOptions.tilera);     
+	//always create a chip with 64 tiles, let layout (Scheduler) worry about smaller chips
+        chip = new TileraChip();     
 
         // The usual optimizations and transformation to slice graph
         CommonPasses commonPasses = new CommonPasses();
-        // perform standard optimizations.
-        commonPasses.run(str, interfaces, interfaceTables, structs, helpers, global, chip.size());
+        // perform standard optimizations, use the number of tiles the user wants to target
+        commonPasses.run(str, interfaces, interfaceTables, structs, helpers, global, chip.abstractSize());
         // perform some standard cleanup on the slice graph.
         commonPasses.simplifySlices();
         // Set schedules for initialization, prime-pump (if KjcOptions.spacetime), and steady state.

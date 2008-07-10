@@ -1,10 +1,9 @@
 package at.dms.kjc.tilera;
 
 import java.util.LinkedList;
-
-import at.dms.kjc.backendSupport.ComputeNode;
 import at.dms.kjc.backendSupport.ComputeNodesI;
 import at.dms.util.Utils;
+import at.dms.kjc.KjcOptions;
 
 public class TileraChip implements ComputeNodesI<TileCodeStore> {
     protected int gXSize;
@@ -12,7 +11,7 @@ public class TileraChip implements ComputeNodesI<TileCodeStore> {
     protected Tile[][] tiles;
     
     /**
-     * Data strucures for a <b>xSize</b> x <b>ySize</b> Tile64 chip.
+     * Data structures for a <b>xSize</b> x <b>ySize</b> Tile64 chip.
      *   
      * @param xSize
      * @param ySize
@@ -28,6 +27,10 @@ public class TileraChip implements ComputeNodesI<TileCodeStore> {
                 tiles[x][y] = new Tile(x, y, this);             
             }
         }
+    }
+    
+    public TileraChip() {
+        this(8, 8);
     }
     
     public LinkedList<Tile> getTiles() {
@@ -169,6 +172,18 @@ public class TileraChip implements ComputeNodesI<TileCodeStore> {
         return 0;
     }
 
+    /**
+     * Given that we for now we have to generate code for an 8x8 config and 
+     * we might not want to use all those tiles, this returns the number of tiles that 
+     * we would actually want to use from the 64 tiles.  It just squares KjcOption.tilera,
+     * the parameter value that the user passes to the backend.
+     * 
+     * @return The number of tiles the user would like to generate code for
+     */
+    public int abstractSize() {
+        return KjcOptions.tilera * KjcOptions.tilera;
+    }
+    
     public int size() {
         // TODO Auto-generated method stub
         return gXSize * gYSize;

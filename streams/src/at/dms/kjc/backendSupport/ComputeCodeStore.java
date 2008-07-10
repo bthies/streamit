@@ -44,7 +44,7 @@ import at.dms.kjc.common.ALocalVariable;
  * ComputeCodeStore and ComputeNode types are extended in parallel, and each refers to the other.
  * New constructors allow ComputeCodeStore to be constructed without reference to a ComputeNode.
  * 
- * @author mgodon / dimock
+ * @author mgordon / dimock
  *
  * @param <ComputeNodeType> nasty recursive type, historical relic.  TODO: get rid of. 
  */

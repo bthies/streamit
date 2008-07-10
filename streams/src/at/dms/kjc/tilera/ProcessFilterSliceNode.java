@@ -113,6 +113,8 @@ public class ProcessFilterSliceNode {
         location = backEndBits.getLayout().getComputeNode(filterNode);
         assert location != null;
         codeStore = location.getComputeCode();
+        //remember that this tile has code that needs to execute
+        codeStore.setHasCode();
     }
     
     protected void standardPreInitProcessing() {

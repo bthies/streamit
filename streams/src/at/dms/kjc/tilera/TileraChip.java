@@ -174,4 +174,19 @@ public class TileraChip implements ComputeNodesI<TileCodeStore> {
         return gXSize * gYSize;
     }
 
+    /** 
+     * Return the number of tiles that have code that needs to execute.
+     * 
+     * @return the number of tiles that have code that needs to execute.
+     */
+    public int tilesWithCompute() {
+        int mappedTiles = 0;
+        
+        for (Tile t : getTiles()) {
+            if (t.getComputeCode().shouldGenerateCode()) 
+                mappedTiles++;
+        }
+        
+        return mappedTiles;
+    }
 }

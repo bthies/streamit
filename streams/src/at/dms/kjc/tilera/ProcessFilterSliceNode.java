@@ -73,19 +73,19 @@ public class ProcessFilterSliceNode {
                     ", has_downstream_channel " + backEndBits.sliceHasDownstreamChannel(filterNode.getParent()));
             }
             
-            Channel inputChannel = null;
+            Buffer inputBuffer = null;
             
             if (backEndBits.sliceHasUpstreamChannel(filterNode.getParent())) {
-                inputChannel = backEndBits.getChannel(filterNode.getPrevious().getEdgeToNext());
+                inputBuffer = InputBuffer.getInputBuffer(filterNode);
             }
             
-            Channel outputChannel = null;
+            Buffer outputBuffer = null;
             
             if (backEndBits.sliceHasDownstreamChannel(filterNode.getParent())) {
-                outputChannel = backEndBits.getChannel(filterNode.getEdgeToNext());
+                outputBuffer = OutputBuffer.getOutputBuffer(filterNode);
             }
 
-            filterCode = getFilterCode(filterNode,inputChannel,outputChannel,backEndBits);
+            filterCode = getFilterCode(filterNode,inputBuffer,outputBuffer,backEndBits);
         }
         
 

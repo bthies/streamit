@@ -20,7 +20,7 @@ public class ChannelAsArray extends Channel {
 
     /** array size in elements */
     protected int bufSize;
-    /** type of array: aray of element type */
+    /** type of array: array of element type */
     protected CType bufType;
     /** array name */
     protected String bufName;
@@ -40,15 +40,18 @@ public class ChannelAsArray extends Channel {
     protected JExpression head;
     /** reference to tail */
     protected JExpression tail;
-    /** Create an array reference given an offset */
+    
+    /** Create an array reference given an offset */   
     protected JArrayAccessExpression bufRef(JExpression offset) {
         return new JArrayAccessExpression(bufPrefix,offset);
     }
+    
     /** Create statement zeroing out head */
     protected JStatement zeroOutHead() {
         return new JExpressionStatement(
                         new JAssignmentExpression(head, new JIntLiteral(0)));
     }
+    
     /** Create statement zeroing out tail */
     protected JStatement zeroOutTail() {
         return new JExpressionStatement(

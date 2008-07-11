@@ -1,8 +1,11 @@
 package at.dms.kjc.tilera;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
+
 import at.dms.kjc.spacetime.*;
 import at.dms.kjc.CStdType;
 import at.dms.kjc.CType;
@@ -70,7 +73,7 @@ public class OutputBuffer extends Buffer {
         super(filterNode.getEdgeToNext(), filterNode);
         buffers.put(filterNode, this);
     }
-    
+   
     /**
      * Return the output buffer associated with the filter node.
      * 
@@ -79,6 +82,24 @@ public class OutputBuffer extends Buffer {
      */
     public static OutputBuffer getOutputBuffer(FilterSliceNode fsn) {
         return buffers.get(fsn);
+    }
+    
+    /**
+     * Return the set of all the InputBuffers that are mapped to tile t.
+     */
+    public static Set<Buffer> getBuffersOnTile(Tile t) {
+        HashSet<Buffer> set = new HashSet<Buffer>();
+        
+        for (Buffer b : buffers.values()) {
+            if (TileraBackend.backEndBits.getLayout().getComputeNode(b.getFilterNode()).equals(t))
+                set.add(b);
+        }
+        
+        return set;
+    }
+    
+    protected void setBufferSize() {
+        
     }
     
     /* (non-Javadoc)

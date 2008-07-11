@@ -48,8 +48,9 @@ public class BufferSize {
         }
     }
     
-    /** number of items pushed during init / pre-work, prime-pump?? */
-    private static int initPush(FilterInfo fi) {
+    /** number of items pushed during init / pre-work, account for primepump
+     * because each stage of the primepump does the work of the steady-state*/
+    public static int initPush(FilterInfo fi) {
         int items= fi.initMult * fi.push;
         // account for the initpush.
         // currently overestimates if there is a preWork and it pushes
@@ -61,7 +62,7 @@ public class BufferSize {
     }
     
     /** number of items pushed in a steady state (takes multiplicity into account). */
-    private static int steadyPush(FilterInfo fi) {
+    public static int steadyPush(FilterInfo fi) {
         return fi.push*fi.steadyMult;
     }
     

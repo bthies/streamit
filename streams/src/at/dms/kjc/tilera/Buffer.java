@@ -1,9 +1,19 @@
 package at.dms.kjc.tilera;
 
+import at.dms.kjc.CStdType;
+import at.dms.kjc.CType;
+import at.dms.kjc.JArrayAccessExpression;
+import at.dms.kjc.JExpression;
+import at.dms.kjc.JFieldAccessExpression;
+import at.dms.kjc.JVariableDefinition;
 import at.dms.kjc.backendSupport.*;
+import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.slicegraph.*;
 import java.util.LinkedList;
 import at.dms.kjc.spacetime.*;
+import at.dms.kjc.*;
+import at.dms.kjc.common.CommonUtils;
+import java.util.Set;
 
 /**
  * A buffer represents a block of memory that a filter reads from or writes to.
@@ -16,14 +26,27 @@ import at.dms.kjc.spacetime.*;
  */
 public abstract class Buffer extends Channel {
     
-    /** the maximum size of this buffer in bytes for one rotation */
-    protected BufferSize bufSize;
+    /** reference to whole array, prefix to element access */
+    protected JExpression bufPrefix;
+    /** definition for array */
+    protected JVariableDefinition bufDefn;
+    /** array size in elements */
+    protected int bufSize;
+    /** type of array: array of element type */
+    protected CType bufType;
+    /** array name */
+    protected String bufName;
     /** the filter this buffer is associated with */
     protected FilterSliceNode filterNode;
            
     protected Buffer(Edge edge, FilterSliceNode fsn) {
         super(edge);
         filterNode = fsn;
+        bufName = this.getIdent() + "buf";
+        setBufferSize();
+        bufDefn = CommonUtils.makeArrayVariableDefn(bufSize,edge.getType(),bufName);
+                bufPrefix = new JFieldAccessExpression(bufName);
+        bufPrefix.setType(edge.getType());
     }
    
     /**
@@ -44,9 +67,11 @@ public abstract class Buffer extends Channel {
      * 
      * @return the maximum size for this buffer for one rotation
      */
-    public BufferSize getBufferSize() {
+    public int getBufferSize() {
         return bufSize;
     }
+    
+    protected abstract void setBufferSize();
     
     /** 
      * Return the filter this buffer is associated with.
@@ -55,6 +80,10 @@ public abstract class Buffer extends Channel {
      */
     public FilterSliceNode getFilterNode() {
         return filterNode;
+    }
+    
+    public static Set<Buffer> getBuffersOnTile(Tile t) {
+        return null;
     }
     
     /**
@@ -71,5 +100,10 @@ public abstract class Buffer extends Channel {
     public void setExtraCount(int extracount) {
         assert false;
         this.extraCount = extracount;
+    }
+    
+    /** Create an array reference given an offset */   
+    protected JArrayAccessExpression bufRef(JExpression offset) {
+        return new JArrayAccessExpression(bufPrefix,offset);
     }
 }

@@ -141,7 +141,7 @@ public class FilterInfo {
         if (!filter.isTwoStage())
             initFire++;
 
-        // see my thesis for an explanation of this calculation
+        // see mgordon's masters thesis for an explanation of this calculation
         if (initFire - 1 > 0) {
             bottomPeek = Math.max(0, peek - (prePeek - prePop));
         } else

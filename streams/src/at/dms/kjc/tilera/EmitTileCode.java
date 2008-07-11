@@ -3,8 +3,16 @@ package at.dms.kjc.tilera;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Set;
+
+import at.dms.kjc.JFieldDeclaration;
+import at.dms.kjc.JMethodDeclaration;
+import at.dms.kjc.JStatement;
+import at.dms.kjc.backendSupport.Channel;
+import at.dms.kjc.backendSupport.ComputeNode;
 import at.dms.kjc.backendSupport.EmitCode;
 import at.dms.kjc.common.CodegenPrintWriter;
+import at.dms.kjc.sir.SIRCodeUnit;
 
 /**
  * Emit c code for tiles.
@@ -167,5 +175,105 @@ public class EmitTileCode extends EmitCode {
         p.println(" .PHONY: run test build clean");
         p.close();
 
+    }
+    
+    /**
+     * Given a ComputeNode and a CodegenPrintWrite, print all code for the ComputeNode.
+     * Channel information relevant to the ComputeNode is printed based on data in the
+     * BackEndFactory passed when this class was instantiated.
+     * 
+     * @param n The ComputeNode to emit code for.
+     * @param p The CodegenPrintWriter (left open on return).
+     */
+    public void emitCodeForComputeStore (SIRCodeUnit fieldsAndMethods,
+            ComputeNode n, CodegenPrintWriter p, CodeGen codegen) {
+        
+        // Standard final optimization of a code unit before code emission:
+        // unrolling and constant prop as allowed, DCE, array destruction into scalars.
+        (new at.dms.kjc.sir.lowering.FinalUnitOptimize()).optimize(fieldsAndMethods);
+        
+        p.println("// code for processor " + n.getUniqueId());
+        
+        // generate function prototypes for methods so that they can call each other
+        // in C.
+        codegen.setDeclOnly(true);
+        for (JMethodDeclaration method : fieldsAndMethods.getMethods()) {
+            method.accept(codegen);
+        }
+        p.println("");
+        codegen.setDeclOnly(false);
+
+        // generate code for ends of channels that connect to code on this ComputeNode
+        Set <Buffer> outputBuffers = OutputBuffer.getBuffersOnTile((Tile)n);
+        Set <Buffer> inputBuffers = InputBuffer.getBuffersOnTile((Tile)n);
+        
+        // externs
+        for (Buffer c : outputBuffers) {
+            if (c.writeDeclsExtern() != null) {
+                for (JStatement d : c.writeDeclsExtern()) { d.accept(codegen); }
+            }
+        }
+       
+        for (Buffer c : inputBuffers) {
+            if (c.readDeclsExtern() != null) {
+                for (JStatement d : c.readDeclsExtern()) { d.accept(codegen); }
+            }
+        }
+
+        for (Buffer c : outputBuffers) {
+            if (c.dataDecls() != null) {
+                // wrap in #ifndef for case where different ends have
+                // are in different files that eventually get concatenated.
+                p.println();
+                p.println("#ifndef " + c.getIdent() + "_CHANNEL_DATA");
+                for (JStatement d : c.dataDecls()) { d.accept(codegen); }
+                p.println();
+                p.println("#define " + c.getIdent() + "_CHANNEL_DATA");
+                p.println("#endif");
+            }
+        }
+        
+        for (Buffer c : inputBuffers) {
+            if (c.dataDecls() != null && ! outputBuffers.contains(c)) {
+                p.println("#ifndef " + c.getIdent() + "_CHANNEL_DATA");
+                for (JStatement d : c.dataDecls()) { d.accept(codegen); }
+                p.println();
+                p.println("#define " + c.getIdent() + "_CHANNEL_DATA");
+                p.println("#endif");
+            }
+        }
+
+        for (Buffer c : outputBuffers) {
+            p.println("/* output buffer " + "(" + c.getIdent() + " of " + c.getFilterNode() + ") */");
+            if (c.writeDecls() != null) {
+                for (JStatement d : c.writeDecls()) { d.accept(codegen); }
+            }
+            if (c.pushMethod() != null) { c.pushMethod().accept(codegen); }
+        }
+
+        for (Buffer c : inputBuffers) {
+            p.println("/* input buffer (" + c.getIdent() + " of " + c.getFilterNode() + ") */");
+            if (c.readDecls() != null) {
+                for (JStatement d : c.readDecls()) { d.accept(codegen); }
+            }
+            if (c.peekMethod() != null) { c.peekMethod().accept(codegen); }
+            if (c.assignFromPeekMethod() != null) { c.assignFromPeekMethod().accept(codegen); }
+            if (c.popMethod() != null) { c.popMethod().accept(codegen); }
+            if (c.assignFromPopMethod() != null) { c.assignFromPopMethod().accept(codegen); }
+            if (c.popManyMethod() != null) { c.popManyMethod().accept(codegen); }
+         }
+        p.println("");
+        
+        // generate declarations for fields
+        for (JFieldDeclaration field : fieldsAndMethods.getFields()) {
+            field.accept(codegen);
+        }
+        p.println("");
+        
+        // generate functions for methods
+        codegen.setDeclOnly(false);
+        for (JMethodDeclaration method : fieldsAndMethods.getMethods()) {
+            method.accept(codegen);
+        }
     }
 }

@@ -1,19 +1,27 @@
 package at.dms.kjc.tilera;
 
+import at.dms.kjc.CClassType;
 import at.dms.kjc.CStdType;
 import at.dms.kjc.CType;
+import at.dms.kjc.JAssignmentExpression;
 import at.dms.kjc.JBlock;
 import at.dms.kjc.JExpression;
 import at.dms.kjc.JExpressionStatement;
+import at.dms.kjc.JFieldAccessExpression;
 import at.dms.kjc.JFormalParameter;
+import at.dms.kjc.JIntLiteral;
 import at.dms.kjc.JLocalVariableExpression;
 import at.dms.kjc.JMethodCallExpression;
 import at.dms.kjc.JMethodDeclaration;
+import at.dms.kjc.JPostfixExpression;
+import at.dms.kjc.JReturnStatement;
 import at.dms.kjc.JStatement;
 import at.dms.kjc.JVariableDefinition;
 import at.dms.kjc.slicegraph.*;
 import at.dms.util.Utils;
 import at.dms.kjc.spacetime.*;
+import at.dms.kjc.backendSupport.*;
+import at.dms.kjc.common.CommonUtils;
 
 import java.util.*;
 
@@ -27,6 +35,12 @@ public class InputBuffer extends Buffer {
 
     /** map of all the input buffers from filter -> inputbuffer */
     protected static HashMap<FilterSliceNode, InputBuffer> buffers;
+    /** name of variable containing tail of array offset */
+    protected String tailName;
+     /** definition for tail */
+    protected JVariableDefinition tailDefn;
+       /** reference to tail */
+    protected JExpression tail;
     
     static {
         buffers = new HashMap<FilterSliceNode, InputBuffer>();
@@ -68,6 +82,16 @@ public class InputBuffer extends Buffer {
         }
     }
 
+    /**
+     * Set the buffer size of this input buffer based on the max
+     * number of items it receives.
+     */
+    protected void setBufferSize() {
+        FilterInfo fi = FilterInfo.getFilterInfo(filterNode);
+        
+        bufSize = Math.max(fi.totalItemsReceived(SchedulingPhase.INIT),
+                (fi.totalItemsReceived(SchedulingPhase.STEADY) + fi.remaining));
+    }
         
     /**
      * Create a new input buffer that is associated with the filter node.
@@ -77,6 +101,13 @@ public class InputBuffer extends Buffer {
     private InputBuffer(FilterSliceNode filterNode) {
         super(filterNode.getEdgeToPrev(), filterNode);
         buffers.put(filterNode, this);
+        
+        tailName = this.getIdent() + "tail";
+        tailDefn = new JVariableDefinition(null,
+                at.dms.kjc.Constants.ACC_STATIC,
+                CStdType.Integer, tailName, null);
+        tail = new JFieldAccessExpression(tailName);
+        tail.setType(CStdType.Integer);
     }
     
     /**
@@ -89,6 +120,20 @@ public class InputBuffer extends Buffer {
         return buffers.get(fsn);
     }
     
+    /**
+     * Return the set of all the InputBuffers that are mapped to tile t.
+     */
+    public static Set<Buffer> getBuffersOnTile(Tile t) {
+        HashSet<Buffer> set = new HashSet<Buffer>();
+        
+        for (Buffer b : buffers.values()) {
+            if (TileraBackend.backEndBits.getLayout().getComputeNode(b.getFilterNode()).equals(t))
+                set.add(b);
+        }
+        
+        return set;
+    }
+    
     /* (non-Javadoc)
      * @see at.dms.kjc.backendSupport.ChannelI#popMethodName()
      */
@@ -99,7 +144,19 @@ public class InputBuffer extends Buffer {
      * @see at.dms.kjc.backendSupport.ChannelI#popMethod()
      */
     public JMethodDeclaration popMethod() {
-        return null;
+        JBlock body = new JBlock();
+        JMethodDeclaration retval = new JMethodDeclaration(
+                null,
+                /*at.dms.kjc.Constants.ACC_PUBLIC | at.dms.kjc.Constants.ACC_STATIC |*/ at.dms.kjc.Constants.ACC_INLINE,
+                theEdge.getType(),
+                popMethodName(),
+                new JFormalParameter[0],
+                CClassType.EMPTY,
+                body, null, null);
+        body.addStatement(
+        new JReturnStatement(null,
+                bufRef(new JPostfixExpression(at.dms.kjc.Constants.OPE_POSTINC, tail)),null));
+        return retval;
     }
     
     /* (non-Javadoc)
@@ -317,5 +374,12 @@ public class InputBuffer extends Buffer {
     public List<JStatement> writeDecls() {
         return new LinkedList<JStatement>();
     }   
+   
+    
+    /** Create statement zeroing out tail */
+    protected JStatement zeroOutTail() {
+        return new JExpressionStatement(
+                new JAssignmentExpression(tail, new JIntLiteral(0)));
+    }
     
 }

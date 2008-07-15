@@ -3,8 +3,10 @@ package at.dms.kjc.tilera;
 import at.dms.kjc.CClassType;
 import at.dms.kjc.CStdType;
 import at.dms.kjc.CType;
+import at.dms.kjc.JAddExpression;
 import at.dms.kjc.JAssignmentExpression;
 import at.dms.kjc.JBlock;
+import at.dms.kjc.JEmittedTextExpression;
 import at.dms.kjc.JExpression;
 import at.dms.kjc.JExpressionStatement;
 import at.dms.kjc.JFieldAccessExpression;
@@ -16,6 +18,7 @@ import at.dms.kjc.JMethodDeclaration;
 import at.dms.kjc.JPostfixExpression;
 import at.dms.kjc.JReturnStatement;
 import at.dms.kjc.JStatement;
+import at.dms.kjc.JVariableDeclarationStatement;
 import at.dms.kjc.JVariableDefinition;
 import at.dms.kjc.slicegraph.*;
 import at.dms.util.Utils;
@@ -211,7 +214,25 @@ public class InputBuffer extends Buffer {
      * @see at.dms.kjc.backendSupport.ChannelI#assignFromPopMethod()
      */
     public JMethodDeclaration assignFromPopMethod() {
-        return null;
+        String parameterName = "__val";
+        JFormalParameter val = new JFormalParameter(
+                CStdType.Integer,
+                parameterName);
+        JLocalVariableExpression valRef = new JLocalVariableExpression(val);
+        JBlock body = new JBlock();
+        JMethodDeclaration retval = new JMethodDeclaration(
+                null,
+                /*at.dms.kjc.Constants.ACC_PUBLIC | at.dms.kjc.Constants.ACC_STATIC |*/ at.dms.kjc.Constants.ACC_INLINE,
+                CStdType.Void,
+                assignFromPopMethodName(),
+                new JFormalParameter[]{val},
+                CClassType.EMPTY,
+                body, null, null);
+        body.addStatement(
+                new JExpressionStatement(
+                        new JEmittedTextExpression(
+                                "/* assignFromPopMethod not yet implemented */")));
+        return retval;
     }
     
     /* (non-Javadoc)
@@ -224,9 +245,26 @@ public class InputBuffer extends Buffer {
      * @see at.dms.kjc.backendSupport.ChannelI#peekMethod()
      */
     public JMethodDeclaration peekMethod() {
-        return null;
+        String parameterName = "__offset";
+        JFormalParameter offset = new JFormalParameter(
+                CStdType.Integer,
+                parameterName);
+        JLocalVariableExpression offsetRef = new JLocalVariableExpression(offset);
+        JBlock body = new JBlock();
+        JMethodDeclaration retval = new JMethodDeclaration(
+                null,
+                /*at.dms.kjc.Constants.ACC_PUBLIC | at.dms.kjc.Constants.ACC_STATIC |*/ at.dms.kjc.Constants.ACC_INLINE,
+                theEdge.getType(),
+                peekMethodName(),
+                new JFormalParameter[]{offset},
+                CClassType.EMPTY,
+                body, null, null);
+        body.addStatement(
+                new JReturnStatement(null,
+                        bufRef(new JAddExpression(tail, offsetRef)),null));
+        return retval;
     }
-    
+
     /* (non-Javadoc)
      * @see at.dms.kjc.backendSupport.ChannelI#assignFromPeekMethodName()
      */
@@ -237,7 +275,30 @@ public class InputBuffer extends Buffer {
      * @see at.dms.kjc.backendSupport.ChannelI#assignFromPeekMethod()
      */
     public JMethodDeclaration assignFromPeekMethod() {
-        return null;
+        String valName = "__val";
+        JFormalParameter val = new JFormalParameter(
+                CStdType.Integer,
+                valName);
+        JLocalVariableExpression valRef = new JLocalVariableExpression(val);
+        String offsetName = "__offset";
+        JFormalParameter offset = new JFormalParameter(
+                CStdType.Integer,
+                offsetName);
+        JLocalVariableExpression offsetRef = new JLocalVariableExpression(offset);
+        JBlock body = new JBlock();
+        JMethodDeclaration retval = new JMethodDeclaration(
+                null,
+                /*at.dms.kjc.Constants.ACC_PUBLIC | at.dms.kjc.Constants.ACC_STATIC |*/ at.dms.kjc.Constants.ACC_INLINE,
+                CStdType.Void,
+                assignFromPeekMethodName(),
+                new JFormalParameter[]{val,offset},
+                CClassType.EMPTY,
+                body, null, null);
+         body.addStatement(
+                new JExpressionStatement(
+                        new JEmittedTextExpression(
+                                "/* assignFromPeekMethod not yet implemented */")));
+        return retval;
     }
     
     /* (non-Javadoc)
@@ -343,7 +404,11 @@ public class InputBuffer extends Buffer {
      * @see at.dms.kjc.backendSupport.ChannelI#dataDecls()
      */
     public List<JStatement> dataDecls() {
-        return new LinkedList<JStatement>();
+        //declare the buffer array
+        JStatement arrayDecl = new JVariableDeclarationStatement(bufDefn); 
+        List<JStatement> retval = new LinkedList<JStatement>();
+        retval.add(arrayDecl);
+        return retval;
     }
     
     /* (non-Javadoc)
@@ -357,7 +422,11 @@ public class InputBuffer extends Buffer {
      * @see at.dms.kjc.backendSupport.ChannelI#readDecls()
      */
     public List<JStatement> readDecls() {
-        return new LinkedList<JStatement>();
+        //declare the tail
+        JStatement headDecl = new JVariableDeclarationStatement(tailDefn);
+        List<JStatement> retval = new LinkedList<JStatement>();
+        retval.add(headDecl);
+        return retval;
     }   
     
     

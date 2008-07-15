@@ -6,17 +6,21 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import at.dms.kjc.backendSupport.BufferSize;
+import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.spacetime.*;
 import at.dms.kjc.CStdType;
 import at.dms.kjc.CType;
 import at.dms.kjc.JBlock;
 import at.dms.kjc.JExpression;
 import at.dms.kjc.JExpressionStatement;
+import at.dms.kjc.JFieldAccessExpression;
 import at.dms.kjc.JFormalParameter;
 import at.dms.kjc.JLocalVariableExpression;
 import at.dms.kjc.JMethodCallExpression;
 import at.dms.kjc.JMethodDeclaration;
 import at.dms.kjc.JStatement;
+import at.dms.kjc.JVariableDeclarationStatement;
 import at.dms.kjc.JVariableDefinition;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.Slice;
@@ -27,7 +31,13 @@ public class OutputBuffer extends Buffer {
     
     /** map of all the output buffers from filter -> outputbuffer */
     protected static HashMap<FilterSliceNode, OutputBuffer> buffers;
-    
+    /** name of variable containing head of array offset */
+    protected String headName;
+    /** definition for head */
+    protected JVariableDefinition headDefn;
+    /** reference to head */
+    protected JExpression head;         
+        
     static {
         buffers = new HashMap<FilterSliceNode, OutputBuffer>();
     }
@@ -72,6 +82,13 @@ public class OutputBuffer extends Buffer {
     private OutputBuffer(FilterSliceNode filterNode) {
         super(filterNode.getEdgeToNext(), filterNode);
         buffers.put(filterNode, this);
+        headName = this.getIdent() + "head";
+        headDefn = new JVariableDefinition(null,
+                at.dms.kjc.Constants.ACC_STATIC,
+                CStdType.Integer, headName, null);
+        
+        head = new JFieldAccessExpression(headName);
+        head.setType(CStdType.Integer);
     }
    
     /**
@@ -281,7 +298,7 @@ public class OutputBuffer extends Buffer {
      * @see at.dms.kjc.backendSupport.ChannelI#dataDecls()
      */
     public List<JStatement> dataDecls() {
-        return new LinkedList<JStatement>();
+        return null;
     }
     
     /* (non-Javadoc)

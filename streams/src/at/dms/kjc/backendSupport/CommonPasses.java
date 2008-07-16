@@ -444,7 +444,10 @@ public class CommonPasses {
         // set prime pump schedule (if --spacetime and not --noswpipe)
         if (KjcOptions.spacetime) {
             new at.dms.kjc.spacetime.GeneratePrimePumpSchedule(schedule).schedule(slicer.getSliceGraph());
-        } else {
+        } else if (KjcOptions.tilera > -1) {
+            new at.dms.kjc.tilera.GeneratePrimePumpSchedule(schedule).schedule(slicer.getSliceGraph());
+        }
+        else {
             new GeneratePrimePump(schedule).schedule(slicer.getSliceGraph());
         }
         // set steady schedule in standard order unless --spacetime in which case in 

@@ -422,7 +422,7 @@ public class InputBuffer extends Buffer {
      * @see at.dms.kjc.backendSupport.ChannelI#readDecls()
      */
     public List<JStatement> readDecls() {
-        //declare the tail
+        //declare the tail    
         JStatement headDecl = new JVariableDeclarationStatement(tailDefn);
         List<JStatement> retval = new LinkedList<JStatement>();
         retval.add(headDecl);

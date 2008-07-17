@@ -9,6 +9,7 @@ public class TileraBackend {
     public static Scheduler scheduler;
     public static TileraChip chip;
     public static TileraBackEndFactory backEndBits;
+    public static Structs_h structs_h;
     
     public static void run(SIRStream str,
                            JInterfaceDeclaration[] interfaces,
@@ -20,7 +21,9 @@ public class TileraBackend {
         
 	setScheduler();
 	//always create a chip with 64 tiles, let layout (Scheduler) worry about smaller chips
-        chip = new TileraChip();     
+        chip = new TileraChip();
+        //create a new structs.h file for typedefs etc.
+        structs_h = new Structs_h();
 
         // The usual optimizations and transformation to slice graph
         CommonPasses commonPasses = new CommonPasses();
@@ -46,6 +49,9 @@ public class TileraBackend {
         	
         //emit c code for all tiles
         EmitTileCode.doit(backEndBits);
+        
+        //dump structs.h file
+        structs_h.writeToFile();
         
 	System.exit(0);
     }

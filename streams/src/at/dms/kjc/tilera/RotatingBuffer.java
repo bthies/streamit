@@ -14,6 +14,7 @@ import at.dms.kjc.spacetime.*;
 import at.dms.kjc.*;
 import at.dms.kjc.common.CommonUtils;
 import java.util.Set;
+import java.util.HashSet;
 
 /**
  * A buffer represents a block of memory that a filter reads from or writes to.
@@ -26,27 +27,30 @@ import java.util.Set;
  */
 public abstract class RotatingBuffer extends Channel {
     
-    /** reference to whole array, prefix to element access */
-    protected JExpression bufPrefix;
-    /** definition for array */
-    protected JVariableDefinition bufDefn;
-    /** array size in elements */
+    /** array size in elements of each buffer of the rotation*/
     protected int bufSize;
     /** type of array: array of element type */
     protected CType bufType;
-    /** array name */
-    protected String bufName;
+    /** the name of the rotation structure */
+    protected String rotStructName;
     /** the filter this buffer is associated with */
     protected FilterSliceNode filterNode;
+    /** the names of the individual buffers */
+    protected String[] bufferNames;
+    /** a set of all the buffer types in the application */
+    protected static HashSet<CType> types;
+    /** prefix of the variable name for the rotating buffers */
+    public static String rotTypeDefPrefix = "__rotating_buffer_";
            
+    static {
+        types = new HashSet<CType>();
+    }
+    
     protected RotatingBuffer(Edge edge, FilterSliceNode fsn) {
         super(edge);
         filterNode = fsn;
-        bufName = this.getIdent() + "buf";
+        rotStructName = this.getIdent() + "buf";
         setBufferSize();
-        bufDefn = CommonUtils.makeArrayVariableDefn(bufSize,edge.getType(),bufName);
-                bufPrefix = new JFieldAccessExpression(bufName);
-        bufPrefix.setType(edge.getType());
     }
    
     /**
@@ -54,16 +58,25 @@ public abstract class RotatingBuffer extends Channel {
      * Each filter that produces output will have an output buffer and each 
      * filter that expects input will have an input buffer.
      * 
-     * @param slices
+     * @param schedule  The spacetime schedule of the application
      */
     public static void createBuffers(BasicSpaceTimeSchedule schedule) {
         InputRotatingBuffer.createInputBuffers(schedule);
         OutputRotatingBuffer.createOutputBuffers(schedule);
+        //now add the typedefs needed for the rotating buffers to structs.h
+        for (CType type : types) {
+            TileraBackend.structs_h.addLineSC("typedef struct __rotating_struct_" +
+                    type.toString() + "__" + 
+                    " *__rot_ptr_" + type.toString() + "__");
+            TileraBackend.structs_h.addText("typedef struct __rotating_struct_" + type.toString() + "__ {\n");
+            TileraBackend.structs_h.addText("\t" + type.toString() + " *buffer;\n");
+            TileraBackend.structs_h.addText("\t__rot_ptr_" + type.toString() + "__ next;\n");
+            TileraBackend.structs_h.addText("} " + rotTypeDefPrefix + type.toString() + ";\n");
+        }
     }
     
     /**
-     * Return the number of bytes that should be allocated for one rotation
-     * of this buffer.
+     * Return the number of elements for each rotation of this buffer
      * 
      * @return the maximum size for this buffer for one rotation
      */
@@ -104,6 +117,7 @@ public abstract class RotatingBuffer extends Channel {
     
     /** Create an array reference given an offset */   
     protected JArrayAccessExpression bufRef(JExpression offset) {
-        return new JArrayAccessExpression(bufPrefix,offset);
+        //return new JArrayAccessExpression(bufPrefix,offset);
+        return null;
     }
 }

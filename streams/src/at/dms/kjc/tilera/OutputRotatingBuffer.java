@@ -81,6 +81,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
      */
     private OutputRotatingBuffer(FilterSliceNode filterNode) {
         super(filterNode.getEdgeToNext(), filterNode);
+        bufType = filterNode.getFilter().getOutputType();
         buffers.put(filterNode, this);
         headName = this.getIdent() + "head";
         headDefn = new JVariableDefinition(null,
@@ -89,6 +90,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
         
         head = new JFieldAccessExpression(headName);
         head.setType(CStdType.Integer);
+        
     }
    
     /**

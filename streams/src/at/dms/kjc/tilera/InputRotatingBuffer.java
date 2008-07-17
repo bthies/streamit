@@ -103,6 +103,8 @@ public class InputRotatingBuffer extends RotatingBuffer {
      */
     private InputRotatingBuffer(FilterSliceNode filterNode) {
         super(filterNode.getEdgeToPrev(), filterNode);
+        bufType = filterNode.getFilter().getInputType();
+        types.add(bufType);
         buffers.put(filterNode, this);
         
         tailName = this.getIdent() + "tail";
@@ -405,9 +407,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
      */
     public List<JStatement> dataDecls() {
         //declare the buffer array
-        JStatement arrayDecl = new JVariableDeclarationStatement(bufDefn); 
         List<JStatement> retval = new LinkedList<JStatement>();
-        retval.add(arrayDecl);
         return retval;
     }
     

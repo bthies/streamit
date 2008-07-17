@@ -34,10 +34,10 @@ import java.util.*;
  * @author mgordon
  *
  */
-public class InputBuffer extends Buffer {
+public class InputRotatingBuffer extends RotatingBuffer {
 
     /** map of all the input buffers from filter -> inputbuffer */
-    protected static HashMap<FilterSliceNode, InputBuffer> buffers;
+    protected static HashMap<FilterSliceNode, InputRotatingBuffer> buffers;
     /** name of variable containing tail of array offset */
     protected String tailName;
      /** definition for tail */
@@ -46,7 +46,7 @@ public class InputBuffer extends Buffer {
     protected JExpression tail;
     
     static {
-        buffers = new HashMap<FilterSliceNode, InputBuffer>();
+        buffers = new HashMap<FilterSliceNode, InputRotatingBuffer>();
     }
 
     /**
@@ -64,7 +64,7 @@ public class InputBuffer extends Buffer {
                 assert slice.getHead().totalWeights() > 0;
                 //create the new buffer, the constructor will put the buffer in the 
                 //hashmap
-                InputBuffer buf = new InputBuffer(slice.getFirstFilter());
+                InputRotatingBuffer buf = new InputRotatingBuffer(slice.getFirstFilter());
                 
                 //now set the rotation length
                 int destMult = schedule.getPrimePumpMult(slice);
@@ -101,7 +101,7 @@ public class InputBuffer extends Buffer {
      * 
      * @param filterNode The filternode for which to create a new input buffer.
      */
-    private InputBuffer(FilterSliceNode filterNode) {
+    private InputRotatingBuffer(FilterSliceNode filterNode) {
         super(filterNode.getEdgeToPrev(), filterNode);
         buffers.put(filterNode, this);
         
@@ -119,17 +119,17 @@ public class InputBuffer extends Buffer {
      * @param fsn The filter node in question.
      * @return The input buffer of the filter node.
      */
-    public static InputBuffer getInputBuffer(FilterSliceNode fsn) {
+    public static InputRotatingBuffer getInputBuffer(FilterSliceNode fsn) {
         return buffers.get(fsn);
     }
     
     /**
      * Return the set of all the InputBuffers that are mapped to tile t.
      */
-    public static Set<Buffer> getBuffersOnTile(Tile t) {
-        HashSet<Buffer> set = new HashSet<Buffer>();
+    public static Set<RotatingBuffer> getBuffersOnTile(Tile t) {
+        HashSet<RotatingBuffer> set = new HashSet<RotatingBuffer>();
         
-        for (Buffer b : buffers.values()) {
+        for (RotatingBuffer b : buffers.values()) {
             if (TileraBackend.backEndBits.getLayout().getComputeNode(b.getFilterNode()).equals(t))
                 set.add(b);
         }

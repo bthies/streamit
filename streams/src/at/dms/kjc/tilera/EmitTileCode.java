@@ -204,23 +204,23 @@ public class EmitTileCode extends EmitCode {
         codegen.setDeclOnly(false);
 
         // generate code for ends of channels that connect to code on this ComputeNode
-        Set <Buffer> outputBuffers = OutputBuffer.getBuffersOnTile((Tile)n);
-        Set <Buffer> inputBuffers = InputBuffer.getBuffersOnTile((Tile)n);
+        Set <RotatingBuffer> outputBuffers = OutputRotatingBuffer.getBuffersOnTile((Tile)n);
+        Set <RotatingBuffer> inputBuffers = InputRotatingBuffer.getBuffersOnTile((Tile)n);
         
         // externs
-        for (Buffer c : outputBuffers) {
+        for (RotatingBuffer c : outputBuffers) {
             if (c.writeDeclsExtern() != null) {
                 for (JStatement d : c.writeDeclsExtern()) { d.accept(codegen); }
             }
         }
        
-        for (Buffer c : inputBuffers) {
+        for (RotatingBuffer c : inputBuffers) {
             if (c.readDeclsExtern() != null) {
                 for (JStatement d : c.readDeclsExtern()) { d.accept(codegen); }
             }
         }
 
-        for (Buffer c : outputBuffers) {
+        for (RotatingBuffer c : outputBuffers) {
             if (c.dataDecls() != null) {
                 // wrap in #ifndef for case where different ends have
                 // are in different files that eventually get concatenated.
@@ -233,7 +233,7 @@ public class EmitTileCode extends EmitCode {
             }
         }
         
-        for (Buffer c : inputBuffers) {
+        for (RotatingBuffer c : inputBuffers) {
             if (c.dataDecls() != null && ! outputBuffers.contains(c)) {
                 p.println("#ifndef " + c.getIdent() + "_CHANNEL_DATA");
                 for (JStatement d : c.dataDecls()) { d.accept(codegen); }
@@ -243,7 +243,7 @@ public class EmitTileCode extends EmitCode {
             }
         }
 
-        for (Buffer c : outputBuffers) {
+        for (RotatingBuffer c : outputBuffers) {
             p.println("/* output buffer " + "(" + c.getIdent() + " of " + c.getFilterNode() + ") */");
             if (c.writeDecls() != null) {
                 for (JStatement d : c.writeDecls()) { d.accept(codegen); }
@@ -251,7 +251,7 @@ public class EmitTileCode extends EmitCode {
             if (c.pushMethod() != null) { c.pushMethod().accept(codegen); }
         }
 
-        for (Buffer c : inputBuffers) {
+        for (RotatingBuffer c : inputBuffers) {
             p.println("/* input buffer (" + c.getIdent() + " of " + c.getFilterNode() + ") */");
             if (c.readDecls() != null) {
                 for (JStatement d : c.readDecls()) { d.accept(codegen); }

@@ -71,12 +71,12 @@ public class FilterCodeGeneration extends CodeStoreHelper {
         // channel code before work block
         //slice has input, so we 
         if (backEndBits.sliceHasUpstreamChannel(sliceNode.getParent())) {
-            for (JStatement stmt : InputBuffer.getInputBuffer(filterNode).beginInitRead()) {
+            for (JStatement stmt : InputRotatingBuffer.getInputBuffer(filterNode).beginInitRead()) {
                 statements.addStatement(stmt);
             }
         }
         if (backEndBits.sliceHasDownstreamChannel(sliceNode.getParent())) {
-            for (JStatement stmt : OutputBuffer.getOutputBuffer(filterNode).beginInitWrite()) {
+            for (JStatement stmt : OutputRotatingBuffer.getOutputBuffer(filterNode).beginInitWrite()) {
                 statements.addStatement(stmt);
             }
         }
@@ -90,7 +90,7 @@ public class FilterCodeGeneration extends CodeStoreHelper {
             statements.addStatement(new JExpressionStatement(initWorkCall));
 
             if (backEndBits.sliceHasUpstreamChannel(sliceNode.getParent())) {
-                for (JStatement stmt : InputBuffer.getInputBuffer(filterNode).postPreworkInitRead()) {
+                for (JStatement stmt : InputRotatingBuffer.getInputBuffer(filterNode).postPreworkInitRead()) {
                     statements.addStatement(stmt);
                 }
             }
@@ -100,12 +100,12 @@ public class FilterCodeGeneration extends CodeStoreHelper {
 
         // channel code after work block
         if (backEndBits.sliceHasUpstreamChannel(sliceNode.getParent())) {
-            for (JStatement stmt : InputBuffer.getInputBuffer(filterNode).endInitRead()) {
+            for (JStatement stmt : InputRotatingBuffer.getInputBuffer(filterNode).endInitRead()) {
                 statements.addStatement(stmt);
             }
         }
         if (backEndBits.sliceHasDownstreamChannel(sliceNode.getParent())) {
-            for (JStatement stmt : OutputBuffer.getOutputBuffer(filterNode).endInitWrite()) {
+            for (JStatement stmt : OutputRotatingBuffer.getOutputBuffer(filterNode).endInitWrite()) {
                 statements.addStatement(stmt);
             }
         }
@@ -165,12 +165,12 @@ public class FilterCodeGeneration extends CodeStoreHelper {
         JBlock statements = new JBlock();
         // channel code before work block
         if (backEndBits.sliceHasUpstreamChannel(sliceNode.getParent())) {
-            for (JStatement stmt : InputBuffer.getInputBuffer(filterNode).beginSteadyRead()) {
+            for (JStatement stmt : InputRotatingBuffer.getInputBuffer(filterNode).beginSteadyRead()) {
                 statements.addStatement(stmt);
             }
         }
         if (backEndBits.sliceHasDownstreamChannel(sliceNode.getParent())) {
-            for (JStatement stmt : OutputBuffer.getOutputBuffer(filterNode).beginSteadyWrite()) {
+            for (JStatement stmt : OutputRotatingBuffer.getOutputBuffer(filterNode).beginSteadyWrite()) {
                 statements.addStatement(stmt);
             }
         }
@@ -178,12 +178,12 @@ public class FilterCodeGeneration extends CodeStoreHelper {
         statements.addStatement(getWorkFunctionBlock(filterInfo.steadyMult));
         // channel code after work block
         if (backEndBits.sliceHasUpstreamChannel(sliceNode.getParent())) {
-            for (JStatement stmt : InputBuffer.getInputBuffer(filterNode).endSteadyRead()) {
+            for (JStatement stmt : InputRotatingBuffer.getInputBuffer(filterNode).endSteadyRead()) {
                 statements.addStatement(stmt);
             }
         }
         if (backEndBits.sliceHasDownstreamChannel(sliceNode.getParent())) {
-            for (JStatement stmt : OutputBuffer.getOutputBuffer(filterNode).endSteadyWrite()) {
+            for (JStatement stmt : OutputRotatingBuffer.getOutputBuffer(filterNode).endSteadyWrite()) {
                 statements.addStatement(stmt);
             }
         }
@@ -205,13 +205,13 @@ public class FilterCodeGeneration extends CodeStoreHelper {
         
         // channel code before work block
         if (backEndBits.sliceHasUpstreamChannel(sliceNode.getParent())) {
-            for (JStatement stmt : InputBuffer.getInputBuffer(filterNode).beginSteadyRead()) {
+            for (JStatement stmt : InputRotatingBuffer.getInputBuffer(filterNode).beginSteadyRead()) {
                 statements.addStatement(stmt);
             }
         }
         
         if (backEndBits.sliceHasDownstreamChannel(sliceNode.getParent())) {
-            for (JStatement stmt : OutputBuffer.getOutputBuffer(filterNode).beginSteadyWrite()) {
+            for (JStatement stmt : OutputRotatingBuffer.getOutputBuffer(filterNode).beginSteadyWrite()) {
                 statements.addStatement(stmt);
             }
         }
@@ -222,12 +222,12 @@ public class FilterCodeGeneration extends CodeStoreHelper {
         
         // channel code after work block
         if (backEndBits.sliceHasUpstreamChannel(sliceNode.getParent())) {
-            for (JStatement stmt : InputBuffer.getInputBuffer(filterNode).endSteadyRead()) {
+            for (JStatement stmt : InputRotatingBuffer.getInputBuffer(filterNode).endSteadyRead()) {
                 statements.addStatement(stmt);
             }
         }
         if (backEndBits.sliceHasDownstreamChannel(sliceNode.getParent())) {
-            for (JStatement stmt : OutputBuffer.getOutputBuffer(filterNode).endSteadyWrite()) {
+            for (JStatement stmt : OutputRotatingBuffer.getOutputBuffer(filterNode).endSteadyWrite()) {
                 statements.addStatement(stmt);
             }
         }

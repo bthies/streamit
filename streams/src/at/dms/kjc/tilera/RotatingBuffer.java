@@ -24,7 +24,7 @@ import java.util.Set;
  * @author mgordon
  *
  */
-public abstract class Buffer extends Channel {
+public abstract class RotatingBuffer extends Channel {
     
     /** reference to whole array, prefix to element access */
     protected JExpression bufPrefix;
@@ -39,7 +39,7 @@ public abstract class Buffer extends Channel {
     /** the filter this buffer is associated with */
     protected FilterSliceNode filterNode;
            
-    protected Buffer(Edge edge, FilterSliceNode fsn) {
+    protected RotatingBuffer(Edge edge, FilterSliceNode fsn) {
         super(edge);
         filterNode = fsn;
         bufName = this.getIdent() + "buf";
@@ -57,8 +57,8 @@ public abstract class Buffer extends Channel {
      * @param slices
      */
     public static void createBuffers(BasicSpaceTimeSchedule schedule) {
-        InputBuffer.createInputBuffers(schedule);
-        OutputBuffer.createOutputBuffers(schedule);
+        InputRotatingBuffer.createInputBuffers(schedule);
+        OutputRotatingBuffer.createOutputBuffers(schedule);
     }
     
     /**
@@ -82,7 +82,7 @@ public abstract class Buffer extends Channel {
         return filterNode;
     }
     
-    public static Set<Buffer> getBuffersOnTile(Tile t) {
+    public static Set<RotatingBuffer> getBuffersOnTile(Tile t) {
         return null;
     }
     

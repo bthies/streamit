@@ -39,7 +39,7 @@ public class TileraBackend {
         backEndBits.setLayout(scheduler);
         
         //create all buffers and set the rotation lengths
-        Buffer.createBuffers(graphSchedule);
+        RotatingBuffer.createBuffers(graphSchedule);
 	        
         //now convert to Kopi code plus communication commands.  
         backEndBits.getBackEndMain().run(graphSchedule, backEndBits);

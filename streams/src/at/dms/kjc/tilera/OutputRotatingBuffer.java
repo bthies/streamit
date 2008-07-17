@@ -27,10 +27,10 @@ import at.dms.kjc.slicegraph.Slice;
 import at.dms.util.Utils;
 
 
-public class OutputBuffer extends Buffer {
+public class OutputRotatingBuffer extends RotatingBuffer {
     
     /** map of all the output buffers from filter -> outputbuffer */
-    protected static HashMap<FilterSliceNode, OutputBuffer> buffers;
+    protected static HashMap<FilterSliceNode, OutputRotatingBuffer> buffers;
     /** name of variable containing head of array offset */
     protected String headName;
     /** definition for head */
@@ -39,7 +39,7 @@ public class OutputBuffer extends Buffer {
     protected JExpression head;         
         
     static {
-        buffers = new HashMap<FilterSliceNode, OutputBuffer>();
+        buffers = new HashMap<FilterSliceNode, OutputRotatingBuffer>();
     }
 
     /**
@@ -56,7 +56,7 @@ public class OutputBuffer extends Buffer {
                 assert slice.getTail().totalWeights() > 0;
                 //create the new buffer, the constructor will put the buffer in the 
                 //hashmap
-                OutputBuffer buf = new OutputBuffer(slice.getFirstFilter());
+                OutputRotatingBuffer buf = new OutputRotatingBuffer(slice.getFirstFilter());
                 
                 //calculate the rotation length
                 int srcMult = schedule.getPrimePumpMult(slice);
@@ -79,7 +79,7 @@ public class OutputBuffer extends Buffer {
      * 
      * @param filterNode The filternode for which to create a new output buffer.
      */
-    private OutputBuffer(FilterSliceNode filterNode) {
+    private OutputRotatingBuffer(FilterSliceNode filterNode) {
         super(filterNode.getEdgeToNext(), filterNode);
         buffers.put(filterNode, this);
         headName = this.getIdent() + "head";
@@ -97,17 +97,17 @@ public class OutputBuffer extends Buffer {
      * @param fsn The filter node in question.
      * @return The output buffer of the filter node.
      */
-    public static OutputBuffer getOutputBuffer(FilterSliceNode fsn) {
+    public static OutputRotatingBuffer getOutputBuffer(FilterSliceNode fsn) {
         return buffers.get(fsn);
     }
     
     /**
      * Return the set of all the InputBuffers that are mapped to tile t.
      */
-    public static Set<Buffer> getBuffersOnTile(Tile t) {
-        HashSet<Buffer> set = new HashSet<Buffer>();
+    public static Set<RotatingBuffer> getBuffersOnTile(Tile t) {
+        HashSet<RotatingBuffer> set = new HashSet<RotatingBuffer>();
         
-        for (Buffer b : buffers.values()) {
+        for (RotatingBuffer b : buffers.values()) {
             if (TileraBackend.backEndBits.getLayout().getComputeNode(b.getFilterNode()).equals(t))
                 set.add(b);
         }

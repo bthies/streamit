@@ -225,7 +225,7 @@ public class CommunicateAddrs
     /**
      * Generate the c code that will setup the rotation structure for buffer
      * assign to tile.  It creates a circular linked list that has length equal to 
-     * the rotation length of the buffer, where each entry in the list is points
+     * the rotation length of the buffer, where each entry in the list points
      * to a component of the rotated buffer.
      * 
      * @param buffer The buffer.

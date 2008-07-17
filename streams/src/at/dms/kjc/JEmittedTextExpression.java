@@ -42,7 +42,7 @@ public class JEmittedTextExpression extends JExpression {
         this.parts = new Object[]{text};
     }
     
-    /** create with a misture of text strings, expressions, and types */
+    /** create with a mixture of text strings, expressions, and types */
     public JEmittedTextExpression(Object[] parts) {
         for (Object o : parts) {
             assert (o instanceof String 

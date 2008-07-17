@@ -8,6 +8,7 @@ import at.dms.kjc.common.CommonUtils;
 
 /**
  * Emit code defining the vector types and structure types used in the program.
+ * 
  * @author dimock
  */
 public class EmitTypedefs {

@@ -23,7 +23,7 @@ public class Tile extends ComputeNode<TileCodeStore> {
         X = x;
         Y = y;
         setTileNumber();
-        computeCode = new TileCodeStore();
+        computeCode = new TileCodeStore(this);
     }
     
     private void setTileNumber() {

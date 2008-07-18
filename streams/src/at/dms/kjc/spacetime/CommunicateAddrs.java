@@ -243,11 +243,11 @@ public class CommunicateAddrs
         String rotType = rotTypeDefPrefix + buffer.getType().toString();
         
         
-//      add the declaration of the source rotation buffer of the appriopriate rotation type
+//      add the declaration of the source rotation buffer of the appropriate rotation type
         fields.get(tile).append(rotTypeDefPrefix + 
                 buffer.getType().toString() + " *" + buffer.getIdent(true) + ";\n");
         
-//      add the declaration of the dest rotation buffer of the appriopriate rotation type
+//      add the declaration of the dest rotation buffer of the appropriate rotation type
         fields.get(tile).append(rotTypeDefPrefix + 
                 buffer.getType().toString() + " *" + buffer.getIdent(false) + ";\n");
         

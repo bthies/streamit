@@ -4,15 +4,8 @@
 package at.dms.kjc.tilera;
 
 import at.dms.kjc.backendSupport.BackEndFactory;
-import at.dms.kjc.backendSupport.BackEndScaffold;
 import at.dms.kjc.backendSupport.Channel;
 import at.dms.kjc.backendSupport.CodeStoreHelper;
-import at.dms.kjc.backendSupport.CodeStoreHelperJoiner;
-import at.dms.kjc.backendSupport.CodeStoreHelperSimple;
-import at.dms.kjc.backendSupport.CodeStoreHelperSplitter;
-import at.dms.kjc.backendSupport.ComputeCodeStore;
-import at.dms.kjc.backendSupport.ComputeNode;
-import at.dms.kjc.backendSupport.ComputeNodesI;
 import at.dms.kjc.backendSupport.SchedulingPhase;
 import at.dms.kjc.slicegraph.Edge;
 import at.dms.kjc.slicegraph.FilterSliceNode;

@@ -57,6 +57,13 @@ public class EmitTileCode extends EmitCode {
         }
     }
     
+    /**
+     * This will generate the main function for the executable that creates the application (e.g., 
+     * spawns the filter code for all the tiles).
+     * 
+     * @param backendBits The backend factory
+     * @throws IOException
+     */
     private static void generateMainFunction(TileraBackEndFactory backendBits) throws IOException {
         CodegenPrintWriter p = new CodegenPrintWriter(new BufferedWriter(new FileWriter(MAIN_FILE, false)));
         generateIncludes(p);
@@ -275,5 +282,24 @@ public class EmitTileCode extends EmitCode {
         for (JMethodDeclaration method : fieldsAndMethods.getMethods()) {
             method.accept(codegen);
         }
+    }
+    
+    /**
+     * Generate a "main" function for the current tile (this is used for filter code).
+     */
+    public void generateMain(CodegenPrintWriter p) {
+        p.println();
+        p.println();
+        p.println("// main() Function Here");
+        // dumb template to override
+        p.println(
+"int main(int argc, char** argv) {\n");
+        p.indent();
+        p.println(TileCodeStore.bufferInitMethName + "();");
+        p.println(
+backendbits.getComputeNodes().getNthComputeNode(0).getComputeCode().getMainFunction().getName()
++ "();");
+        p.outdent();
+        p.println("}");
     }
 }

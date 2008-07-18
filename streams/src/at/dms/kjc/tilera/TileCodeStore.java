@@ -2,14 +2,21 @@ package at.dms.kjc.tilera;
 
 import at.dms.kjc.backendSupport.ComputeCodeStore;
 import at.dms.kjc.common.ALocalVariable;
+import at.dms.kjc.*;
 
 public class TileCodeStore extends ComputeCodeStore<Tile> {
     /** True if this tile code store has code appended to it */
     private boolean hasCode = false;
+    /** The method that will malloc the buffers and receive addresses from downstream
+     * tiles*/
+    protected JMethodDeclaration bufferInit;
+    /** The name of the bufferInit method */
+    public static final String bufferInitMethName = "buffer_and_address_init";
     
     public TileCodeStore(Tile nodeType) {
         super(nodeType);
         setMyMainName("__main__");
+        createBufferInitMethod();
     }
     
     /**
@@ -20,6 +27,23 @@ public class TileCodeStore extends ComputeCodeStore<Tile> {
     public TileCodeStore(Tile parent, ALocalVariable iterationBound) {
        super(parent, iterationBound);
        setMyMainName("__main__");
+       createBufferInitMethod();
+    }
+    
+    private void createBufferInitMethod() {
+        //create the method that will malloc the buffers and receive the addresses from downstream tiles
+        bufferInit = new JMethodDeclaration(CStdType.Void, bufferInitMethName, new JFormalParameter[0], new JBlock());
+        addMethod(bufferInit);
+    }
+    
+    /**
+     * Add stmt to the end of the method that will perform the allocation of buffers
+     * and receive addresses of buffers from downstream tiles.
+     * 
+     * @param stmt The statement to add to the end of the method
+     */
+    public void addStatementToBufferInit(JStatement stmt) {
+        bufferInit.getBody().addStatement(stmt);
     }
     
     /**

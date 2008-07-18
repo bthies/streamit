@@ -6,12 +6,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-import at.dms.kjc.backendSupport.BufferSize;
-import at.dms.kjc.common.CommonUtils;
+import at.dms.kjc.backendSupport.FilterInfo;
+import at.dms.kjc.backendSupport.SchedulingPhase;
 import at.dms.kjc.spacetime.*;
 import at.dms.kjc.CStdType;
-import at.dms.kjc.CType;
-import at.dms.kjc.JBlock;
 import at.dms.kjc.JExpression;
 import at.dms.kjc.JExpressionStatement;
 import at.dms.kjc.JFieldAccessExpression;
@@ -120,7 +118,10 @@ public class OutputRotatingBuffer extends RotatingBuffer {
     }
     
     protected void setBufferSize() {
+        FilterInfo fi = FilterInfo.getFilterInfo(filterNode);
         
+        bufSize = Math.max(fi.totalItemsSent(SchedulingPhase.INIT),
+                fi.totalItemsSent(SchedulingPhase.STEADY));
     }
     
     /* (non-Javadoc)

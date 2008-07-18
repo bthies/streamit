@@ -12,6 +12,8 @@ public class TileCodeStore extends ComputeCodeStore<Tile> {
     protected JMethodDeclaration bufferInit;
     /** The name of the bufferInit method */
     public static final String bufferInitMethName = "buffer_and_address_init";
+    /** Any text that should appear outside a function declaration in the c code */
+    private StringBuffer globalTxt = new StringBuffer();
     
     public TileCodeStore(Tile nodeType) {
         super(nodeType);
@@ -30,10 +32,38 @@ public class TileCodeStore extends ComputeCodeStore<Tile> {
        createBufferInitMethod();
     }
     
+    /**
+     * Return the method that initializes the rotating buffers and communicates
+     * addresses.
+     * @return the method that initializes the rotating buffers and communicates
+     * addresses.
+     */
+    public JMethodDeclaration getBufferInitMethod() {
+        return bufferInit;
+    }
+    
     private void createBufferInitMethod() {
         //create the method that will malloc the buffers and receive the addresses from downstream tiles
         bufferInit = new JMethodDeclaration(CStdType.Void, bufferInitMethName, new JFormalParameter[0], new JBlock());
-        addMethod(bufferInit);
+        //addMethod(bufferInit);
+    }
+    
+    /**
+     * Append str to the text that will appear outside of any function near the top 
+     * of the code for this tile.
+     * 
+     * @param str The string to add
+     */
+    public void appendTxtToGlobal(String str) {
+        globalTxt.append(str);
+    }
+    
+    /**
+     * Return the string to add to the global portion of the c file
+     * @return the string to add to the global portion of the c file
+     */
+    public String getGlobalText() {
+        return globalTxt.toString();
     }
     
     /**
@@ -43,6 +73,28 @@ public class TileCodeStore extends ComputeCodeStore<Tile> {
      * @param stmt The statement to add to the end of the method
      */
     public void addStatementToBufferInit(JStatement stmt) {
+        bufferInit.getBody().addStatement(stmt);
+    }
+    
+    /**
+     * Add txt to the beginning of the method that will perform the allocation of buffers
+     * and receive addresses of buffers from downstream tiles.  Don't use ; or newline
+     * 
+     * @param txt The statement to add to the end of the method
+     */
+    public void addStatementFirstToBufferInit(String txt) {
+        JStatement stmt = new JExpressionStatement(new JEmittedTextExpression(txt));
+        bufferInit.getBody().addStatementFirst(stmt);
+    }
+    
+    /**
+     * Add txt to the end of the method that will perform the allocation of buffers
+     * and receive addresses of buffers from downstream tiles.  Don't use ; or newline
+     * 
+     * @param txt The statement to add to the end of the method
+     */
+    public void addStatementToBufferInit(String txt) {
+        JStatement stmt = new JExpressionStatement(new JEmittedTextExpression(txt));
         bufferInit.getBody().addStatement(stmt);
     }
     

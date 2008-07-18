@@ -43,7 +43,8 @@ public abstract class RotatingBuffer extends Channel {
     public static String rotTypeDefPrefix = "__rotating_buffer_";
     /** the tile this buffer is mapped to */
     protected Tile parent;
-           
+    protected final String temp = "__temp__";
+    
     static {
         types = new HashSet<CType>();
     }
@@ -52,7 +53,7 @@ public abstract class RotatingBuffer extends Channel {
         super(edge);
         this.parent = parent;
         filterNode = fsn;
-        rotStructName = this.getIdent() + "buf";
+        rotStructName = this.getIdent() + "_rot_struct";
         setBufferSize();
     }
    
@@ -86,7 +87,20 @@ public abstract class RotatingBuffer extends Channel {
             TileraBackend.structs_h.addText("} " + rotTypeDefPrefix + type.toString() + ";\n");
         }
     }
+    /**
+     * Generate the code necessary to allocate the buffers, setup the rotation structure,
+     * and communicate addresses.
+     * 
+     */
+    protected void createInitCode() {
+        this.setBufferNames();
+        this.allocBuffers();
+        this.setupRotation();
+    }
     
+    /**
+     * Allocate the constituent buffers of this rotating buffer structure
+     */
     protected void allocBuffers() {
         for (int i = 0; i < rotationLength; i++) {
             TileCodeStore cs = this.parent.getComputeCode();
@@ -101,6 +115,53 @@ public abstract class RotatingBuffer extends Channel {
                     "*) malloc(" + this.getBufferSize() + " * sizeof(" +
                     this.getType() + "))")));
         }
+    }
+    
+    /**
+     * Generate the code to setup the structure of the rotating buffer 
+     * as a circular linked list.
+     */
+    protected void setupRotation() {
+        String temp = "__temp__";
+        TileCodeStore cs = parent.getComputeCode();
+        //this is the typedef we will use for this buffer rotation structure
+        String rotType = rotTypeDefPrefix + getType().toString();
+        
+        //add the declaration of the rotation buffer of the appropriate rotation type
+        parent.getComputeCode().appendTxtToGlobal(rotType + " *" + rotStructName + ";\n");
+        
+        JBlock block = new JBlock();
+        
+        //create a temp var
+        block.addStatement(Util.toStmt(rotType + " *" + temp));
+        
+        //create the first entry!!
+        block.addStatement(Util.toStmt(rotStructName + " =  (" + rotType+ "*)" + "malloc(sizeof("
+                + rotType + "))"));
+        
+        //modify the first entry
+        block.addStatement(Util.toStmt(rotStructName + "->buffer = " + bufferNames[0]));
+        if (this.rotationLength == 1) 
+            block.addStatement(Util.toStmt(rotStructName + "->next = " + rotStructName));
+        else {
+            block.addStatement(Util.toStmt(temp + " = (" + rotType+ "*)" + "malloc(sizeof("
+                    + rotType + "))"));    
+            
+            block.addStatement(Util.toStmt(rotStructName + "->next = " + 
+                    temp));
+            
+            block.addStatement(Util.toStmt(temp + "->buffer = " + bufferNames[1]));
+            
+            for (int i = 2; i < this.rotationLength; i++) {
+                block.addStatement(Util.toStmt(temp + "->next =  (" + rotType+ "*)" + "malloc(sizeof("
+                        + rotType + "))"));
+                block.addStatement(Util.toStmt(temp + " = " + temp + "->next"));
+                block.addStatement(Util.toStmt(temp + "->buffer = " + bufferNames[i]));
+            }
+            
+            block.addStatement(Util.toStmt(temp + "->next = " + rotStructName));
+        }
+        cs.addStatementToBufferInit(block);
     }
     
     /**

@@ -57,6 +57,8 @@ public class EmitTileCode extends EmitCode {
         }
     }
     
+    
+    
     /**
      * This will generate the main function for the executable that creates the application (e.g., 
      * spawns the filter code for all the tiles).
@@ -199,7 +201,9 @@ public class EmitTileCode extends EmitCode {
         // unrolling and constant prop as allowed, DCE, array destruction into scalars.
         (new at.dms.kjc.sir.lowering.FinalUnitOptimize()).optimize(fieldsAndMethods);
         
-        p.println("// code for processor " + n.getUniqueId());
+        p.println("// code for tile " + n.getUniqueId());
+        
+        p.println(((Tile)n).getComputeCode().getGlobalText());
         
         // generate function prototypes for methods so that they can call each other
         // in C.
@@ -209,7 +213,10 @@ public class EmitTileCode extends EmitCode {
         }
         p.println("");
         codegen.setDeclOnly(false);
-
+        //handle the buffer initialization method separately because we do not want it
+        //optimized (it is not in the methods list of the code store
+        ((Tile)n).getComputeCode().getBufferInitMethod().accept(codegen);
+        
         // generate code for ends of channels that connect to code on this ComputeNode
         Set <RotatingBuffer> outputBuffers = OutputRotatingBuffer.getBuffersOnTile((Tile)n);
         Set <RotatingBuffer> inputBuffers = InputRotatingBuffer.getBuffersOnTile((Tile)n);

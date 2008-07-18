@@ -81,8 +81,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
                     }
                 }
                 buf.rotationLength = maxRotationLength;
-                buf.setBufferNames();
-                buf.allocBuffers();
+                buf.createInitCode();
                 //System.out.println("Setting input buf " + buf.getFilterNode() + " to " + buf.rotationLength);
             }
         }

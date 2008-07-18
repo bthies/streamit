@@ -69,8 +69,8 @@ public class OutputRotatingBuffer extends RotatingBuffer {
                         maxRotLength = diff;
                 }
                 buf.rotationLength = maxRotLength;
-                buf.setBufferNames();
-                //System.out.println("Setting output buf " + buf.getFilterNode() + " to " + buf.rotationLength);    
+                buf.createInitCode();
+                //System.out.println("Setting output buf " + buf.getIdent() + " to " + buf.rotationLength);    
             }
         }
     }

@@ -62,9 +62,10 @@ public class InputRotatingBuffer extends RotatingBuffer {
             assert slice.getNumFilters() == 1;
             if (!slice.getHead().noInputs()) {
                 assert slice.getHead().totalWeights() > 0;
+                Tile parent = TileraBackend.backEndBits.getLayout().getComputeNode(slice.getFirstFilter());
                 //create the new buffer, the constructor will put the buffer in the 
                 //hashmap
-                InputRotatingBuffer buf = new InputRotatingBuffer(slice.getFirstFilter());
+                InputRotatingBuffer buf = new InputRotatingBuffer(slice.getFirstFilter(), parent);
                 
                 //now set the rotation length
                 int destMult = schedule.getPrimePumpMult(slice);
@@ -80,6 +81,8 @@ public class InputRotatingBuffer extends RotatingBuffer {
                     }
                 }
                 buf.rotationLength = maxRotationLength;
+                buf.setBufferNames();
+                buf.allocBuffers();
                 //System.out.println("Setting input buf " + buf.getFilterNode() + " to " + buf.rotationLength);
             }
         }
@@ -101,8 +104,8 @@ public class InputRotatingBuffer extends RotatingBuffer {
      * 
      * @param filterNode The filternode for which to create a new input buffer.
      */
-    private InputRotatingBuffer(FilterSliceNode filterNode) {
-        super(filterNode.getEdgeToPrev(), filterNode);
+    private InputRotatingBuffer(FilterSliceNode filterNode, Tile parent) {
+        super(filterNode.getEdgeToPrev(), filterNode, parent);
         bufType = filterNode.getFilter().getInputType();
         types.add(bufType);
         buffers.put(filterNode, this);

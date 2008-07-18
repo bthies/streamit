@@ -54,9 +54,10 @@ public class OutputRotatingBuffer extends RotatingBuffer {
             assert slice.getNumFilters() == 1;
             if (!slice.getTail().noOutputs()) {
                 assert slice.getTail().totalWeights() > 0;
+                Tile parent = TileraBackend.backEndBits.getLayout().getComputeNode(slice.getFirstFilter());
                 //create the new buffer, the constructor will put the buffer in the 
                 //hashmap
-                OutputRotatingBuffer buf = new OutputRotatingBuffer(slice.getFirstFilter());
+                OutputRotatingBuffer buf = new OutputRotatingBuffer(slice.getFirstFilter(), parent);
                 
                 //calculate the rotation length
                 int srcMult = schedule.getPrimePumpMult(slice);
@@ -68,6 +69,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
                         maxRotLength = diff;
                 }
                 buf.rotationLength = maxRotLength;
+                buf.setBufferNames();
                 //System.out.println("Setting output buf " + buf.getFilterNode() + " to " + buf.rotationLength);    
             }
         }
@@ -79,8 +81,8 @@ public class OutputRotatingBuffer extends RotatingBuffer {
      * 
      * @param filterNode The filternode for which to create a new output buffer.
      */
-    private OutputRotatingBuffer(FilterSliceNode filterNode) {
-        super(filterNode.getEdgeToNext(), filterNode);
+    private OutputRotatingBuffer(FilterSliceNode filterNode, Tile parent) {
+        super(filterNode.getEdgeToNext(), filterNode, parent);
         bufType = filterNode.getFilter().getOutputType();
         buffers.put(filterNode, this);
         headName = this.getIdent() + "head";

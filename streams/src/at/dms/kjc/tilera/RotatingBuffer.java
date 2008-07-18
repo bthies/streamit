@@ -41,13 +41,16 @@ public abstract class RotatingBuffer extends Channel {
     protected static HashSet<CType> types;
     /** prefix of the variable name for the rotating buffers */
     public static String rotTypeDefPrefix = "__rotating_buffer_";
+    /** the tile this buffer is mapped to */
+    protected Tile parent;
            
     static {
         types = new HashSet<CType>();
     }
     
-    protected RotatingBuffer(Edge edge, FilterSliceNode fsn) {
+    protected RotatingBuffer(Edge edge, FilterSliceNode fsn, Tile parent) {
         super(edge);
+        this.parent = parent;
         filterNode = fsn;
         rotStructName = this.getIdent() + "buf";
         setBufferSize();
@@ -64,6 +67,15 @@ public abstract class RotatingBuffer extends Channel {
         InputRotatingBuffer.createInputBuffers(schedule);
         OutputRotatingBuffer.createOutputBuffers(schedule);
         //now add the typedefs needed for the rotating buffers to structs.h
+        rotTypeDefs();
+        
+    }
+    
+    /**
+     * Create the typedef for the rotating buffer structure, one for each type 
+     * we see in the program (each channel type).
+     */
+    protected static void rotTypeDefs() {
         for (CType type : types) {
             TileraBackend.structs_h.addLineSC("typedef struct __rotating_struct_" +
                     type.toString() + "__" + 
@@ -72,6 +84,22 @@ public abstract class RotatingBuffer extends Channel {
             TileraBackend.structs_h.addText("\t" + type.toString() + " *buffer;\n");
             TileraBackend.structs_h.addText("\t__rot_ptr_" + type.toString() + "__ next;\n");
             TileraBackend.structs_h.addText("} " + rotTypeDefPrefix + type.toString() + ";\n");
+        }
+    }
+    
+    protected void allocBuffers() {
+        for (int i = 0; i < rotationLength; i++) {
+            TileCodeStore cs = this.parent.getComputeCode();
+            
+            //create the pointer to the this buffer constituent 
+            cs.addStatementToBufferInit(new JExpressionStatement(new JEmittedTextExpression(this.getType().toString() + "* " + 
+                    bufferNames[i])));
+            
+            //malloc the steady buffer
+            cs.addStatementToBufferInit(new JExpressionStatement(new JEmittedTextExpression(
+                    bufferNames[i] + " = (" + this.getType() + 
+                    "*) malloc(" + this.getBufferSize() + " * sizeof(" +
+                    this.getType() + "))")));
         }
     }
     
@@ -85,6 +113,16 @@ public abstract class RotatingBuffer extends Channel {
     }
     
     protected abstract void setBufferSize();
+    
+    /**
+     * Set the names of the buffers that comprise this rotating buffer.
+     */
+    protected void setBufferNames() {
+        bufferNames = new String[rotationLength];
+        for (int i = 0; i < rotationLength; i++) {
+            bufferNames[i] = this.getIdent() + "_Buf_" + i;
+        }
+    }
     
     /** 
      * Return the filter this buffer is associated with.

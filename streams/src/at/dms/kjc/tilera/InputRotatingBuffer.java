@@ -147,6 +147,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
     public String popMethodName() {
         return "__pop_" + unique_id;
     }
+    
     /* (non-Javadoc)
      * @see at.dms.kjc.backendSupport.ChannelI#popMethod()
      */

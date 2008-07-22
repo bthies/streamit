@@ -31,8 +31,12 @@ public abstract class RotatingBuffer extends Channel {
     protected int bufSize;
     /** type of array: array of element type */
     protected CType bufType;
-    /** the name of the rotation structure */
+    /** the name of the rotation structure (always points to its head) */
     protected String rotStructName;
+    /** the name of the pointer to the current rotation of this buffer */
+    protected String currentRotName;
+    /** the name of the pointer to the buffer of the current rotation */
+    protected String currentBufName;
     /** the filter this buffer is associated with */
     protected FilterSliceNode filterNode;
     /** the names of the individual buffers */
@@ -54,6 +58,8 @@ public abstract class RotatingBuffer extends Channel {
         this.parent = parent;
         filterNode = fsn;
         rotStructName = this.getIdent() + "_rot_struct";
+        currentRotName =this.getIdent() + "_rot_current";
+        currentBufName =this.getIdent() + "_cur_buf";
         setBufferSize();
     }
    
@@ -129,6 +135,10 @@ public abstract class RotatingBuffer extends Channel {
         
         //add the declaration of the rotation buffer of the appropriate rotation type
         parent.getComputeCode().appendTxtToGlobal(rotType + " *" + rotStructName + ";\n");
+        //add the declaration of the pointer that points to the current rotation in the rotation structure
+        parent.getComputeCode().appendTxtToGlobal(rotType + " *" + currentRotName + ";\n");
+        //add the declaration of the pointer that points to the current buffer in the current rotation
+        parent.getComputeCode().appendTxtToGlobal(bufType.toString() + " *" + currentBufName + ";\n");
         
         JBlock block = new JBlock();
         
@@ -161,6 +171,8 @@ public abstract class RotatingBuffer extends Channel {
             
             block.addStatement(Util.toStmt(temp + "->next = " + rotStructName));
         }
+        block.addStatement(Util.toStmt(currentRotName + " = " + rotStructName));
+        block.addStatement(Util.toStmt(currentBufName + " = " + currentRotName + "->buffer"));
         cs.addStatementToBufferInit(block);
     }
     
@@ -216,7 +228,7 @@ public abstract class RotatingBuffer extends Channel {
     
     /** Create an array reference given an offset */   
     protected JArrayAccessExpression bufRef(JExpression offset) {
-        //return new JArrayAccessExpression(bufPrefix,offset);
-        return null;
+        JFieldAccessExpression bufAccess = new JFieldAccessExpression(new JThisExpression(), currentBufName);
+        return new JArrayAccessExpression(bufAccess, offset);
     }
 }

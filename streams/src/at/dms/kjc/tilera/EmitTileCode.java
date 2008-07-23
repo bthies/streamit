@@ -143,7 +143,7 @@ public class EmitTileCode extends EmitCode {
         p.println();
         p.println("COMMON_ARGS = \\");
         p.println("  --config tile64 \\");
-        p.println("  $(foreach exe,$(EXECUTABLES), --upload $(exe) $(exe)) \\");
+        p.println("  $(foreach exe,$(EXECUTABLES), --upload $(exe),$(exe)) \\");
         p.println("  -- $(BOOT_EXE)");
         p.println();
         p.println("run: $(EXECUTABLES)");

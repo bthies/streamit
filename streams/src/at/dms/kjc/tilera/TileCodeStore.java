@@ -3,6 +3,9 @@ package at.dms.kjc.tilera;
 import at.dms.kjc.backendSupport.ComputeCodeStore;
 import at.dms.kjc.common.ALocalVariable;
 import at.dms.kjc.*;
+import java.util.HashSet;
+import java.util.Set;
+import at.dms.kjc.slicegraph.*;
 
 public class TileCodeStore extends ComputeCodeStore<Tile> {
     /** True if this tile code store has code appended to it */
@@ -14,10 +17,13 @@ public class TileCodeStore extends ComputeCodeStore<Tile> {
     public static final String bufferInitMethName = "buffer_and_address_init";
     /** Any text that should appear outside a function declaration in the c code */
     private StringBuffer globalTxt = new StringBuffer();
+    /** set of filterslicenodes that are mapped to this tile */
+    protected HashSet<FilterSliceNode> filters;
     
     public TileCodeStore(Tile nodeType) {
         super(nodeType);
         setMyMainName("__main__");
+        filters = new HashSet<FilterSliceNode>();
         createBufferInitMethod();
     }
     
@@ -30,6 +36,25 @@ public class TileCodeStore extends ComputeCodeStore<Tile> {
        super(parent, iterationBound);
        setMyMainName("__main__");
        createBufferInitMethod();
+    }
+    
+    /**
+     * Remember that this filter is mapped to this tile.
+     * 
+     * @param filter The filter we are mapping to this tile.
+     */
+    public void addFilter(FilterSliceNode filter) {
+        filters.add(filter);
+        this.setHasCode();
+    }
+    
+    /**
+     * return all of the filters that are mapped to this tile.
+     * 
+     * @return all of the filters that are mapped to this tile.
+     */
+    public Set<FilterSliceNode> getFilters() {
+        return filters;
     }
     
     /**

@@ -21,7 +21,10 @@ import java.util.List;
 
 
 /**
- * A buffer represents a block of memory that a filter reads from or writes to.
+ * A rotating buffer represents a block of memory that a filter reads from or writes to that
+ * is rotated because we are double buffering.  This class generates code that implements initialization
+ * of all the buffers for the application including allocation, setting up the rotation structure, and
+ * communicating shared addresses.
  * 
  * Note the we are not using extraCount of Channel for double buffering accounting,
  * instead we are using rotationLength.
@@ -72,6 +75,9 @@ public abstract class RotatingBuffer extends Channel {
      * Each filter that produces output will have an output buffer and each 
      * filter that expects input will have an input buffer.
      * 
+     * This call also creates code for allocating the rotating buffers and 
+     * communicating the addresses of shared buffers.
+     * 
      * @param schedule  The spacetime schedule of the application
      */
     public static void createBuffers(BasicSpaceTimeSchedule schedule) {
@@ -79,7 +85,32 @@ public abstract class RotatingBuffer extends Channel {
         OutputRotatingBuffer.createOutputBuffers(schedule);
         //now add the typedefs needed for the rotating buffers to structs.h
         rotTypeDefs();
-        
+        //now that all the buffers are allocated, we create a barrier on all the tiles
+        //so that we wait for all the shared memory to be allocated
+        for (int t = 0; t < TileraBackend.chip.abstractSize(); t++) {
+            TileCodeStore cs = TileraBackend.chip.getTranslatedTile(t).getComputeCode();
+            cs.addStatementToBufferInit("ilib_msg_barrier(ILIB_GROUP_SIBLINGS)");
+        }
+        //generate the code for the address communication stage
+        communicateAddresses();
+    }
+    
+    
+    /**
+     * Generate the code necessary to communicate the addresses of the shared input buffers 
+     * of all input rotational structures to the sources that will write to the buffer 
+     * susing DMA commands.
+     */
+    protected static void communicateAddresses() {
+        for (int t = 0; t < TileraBackend.chip.abstractSize(); t++) {
+            Tile tile = TileraBackend.chip.getTranslatedTile(t);
+            TileCodeStore cs = tile.getComputeCode();
+            
+            for (FilterSliceNode filter : cs.getFilters()) {
+                InputRotatingBuffer buf = InputRotatingBuffer.getInputBuffer(filter);
+                
+            }
+        }
     }
     
     /**

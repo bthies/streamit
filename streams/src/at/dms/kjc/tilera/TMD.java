@@ -40,6 +40,8 @@ public class TMD extends Scheduler {
     public void setComputeNode(SliceNode node, Tile tile) {
         assert node != null && tile != null;
         layoutMap.put(node, tile);
+        //remember what filters each tile has mapped to it
+        tile.getComputeCode().addFilter(node.getAsFilter());
     }
     
     /**
@@ -64,7 +66,7 @@ public class TMD extends Scheduler {
                 System.out.println("Warning: Level " + l + " of slice graph has fewer filters than tiles.");
             
             for (int f = 0; f < levels[l].length; f++) {
-                setComputeNode(levels[l][f].getFirstFilter(), getTranslatedTile(f));
+                setComputeNode(levels[l][f].getFirstFilter(), TileraBackend.chip.getTranslatedTile(f));
             }
         }
     }

@@ -38,36 +38,5 @@ public abstract class Scheduler implements Layout<Tile> {
     
     public abstract void run(SIRStream str, int tiles);
     
-    /** 
-     * Given that we always have to generate code for an 8x8 config, but we might 
-     * not want to use all those tiles, this function translates a tile number on the 
-     * abstract chip config (where we could have a config smaller than 8x8) to a tile 
-     * number on the 8x8 chip.  The top left of the chip will be used for smaller configs.
-     * 
-     * This will work for only square configs.
-     * 
-     * @param n The abstract tile number to translate
-     * 
-     * @return The tile number translated to the 8x8 config
-     */
-    public int translateTileNumber(int n) {
-        int row = n / KjcOptions.tilera;
-        int col = n % KjcOptions.tilera;
-        
-        return TileraBackend.chip.getComputeNode(row, col).getTileNumber();
-    }
-    
-    /**
-     * Given a tile number in the abstract chip configuration that the 
-     * user requested (where tiles per row could be less than 8 and/or tiles per
-     * column could be less than 8), get the tile in the actual chip (alway 8x8) 
-     * that corresponds to this tile.  
-     * 
-     * @param n The abstract tile number of the tile we want
-     * 
-     * @return The tile we desire
-     */
-    public Tile getTranslatedTile(int n) {
-        return TileraBackend.chip.getNthComputeNode(translateTileNumber(n));
-    }
+
 }

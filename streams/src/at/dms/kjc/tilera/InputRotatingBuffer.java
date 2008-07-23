@@ -40,10 +40,12 @@ public class InputRotatingBuffer extends RotatingBuffer {
     protected static HashMap<FilterSliceNode, InputRotatingBuffer> buffers;
     /** name of variable containing tail of array offset */
     protected String tailName;
-     /** definition for tail */
+    /** definition for tail */
     protected JVariableDefinition tailDefn;
-       /** reference to tail */
+    /** reference to tail */
     protected JExpression tail;
+    /** all the address buffers that are on the tiles that feed this input buffer */
+    protected DMAAddressRotation[] addressBufs;
     
     static {
         buffers = new HashMap<FilterSliceNode, InputRotatingBuffer>();
@@ -82,11 +84,26 @@ public class InputRotatingBuffer extends RotatingBuffer {
                 }
                 buf.rotationLength = maxRotationLength;
                 buf.createInitCode(true);
+                buf.createDMAAddressBufs();
                 //System.out.println("Setting input buf " + buf.getFilterNode() + " to " + buf.rotationLength);
             }
         }
     }
 
+    /**
+     * 
+     */
+    protected void createDMAAddressBufs() {
+       addressBufs = new DMAAddressRotation[filterNode.getParent().getHead().getSourceSlices().size()];
+       int i = 0;
+       for (Slice src : filterNode.getParent().getHead().getSourceSlices()) {
+           Tile tile = TileraBackend.backEndBits.getLayout().getComputeNode(src.getFirstFilter());
+           DMAAddressRotation rot = new DMAAddressRotation(tile, this);
+           addressBufs[i] = rot;
+           i++;
+       }
+    }
+    
     /**
      * Set the buffer size of this input buffer based on the max
      * number of items it receives.

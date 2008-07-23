@@ -81,7 +81,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
                     }
                 }
                 buf.rotationLength = maxRotationLength;
-                buf.createInitCode();
+                buf.createInitCode(true);
                 //System.out.println("Setting input buf " + buf.getFilterNode() + " to " + buf.rotationLength);
             }
         }
@@ -325,7 +325,9 @@ public class InputRotatingBuffer extends RotatingBuffer {
      * @see at.dms.kjc.backendSupport.ChannelI#beginInitRead()
      */
     public List<JStatement> beginInitRead() {
-        return new LinkedList<JStatement>(); 
+        LinkedList<JStatement> list = new LinkedList<JStatement>();
+        list.add(zeroOutTail());
+        return list;
     }
 
     /* (non-Javadoc)
@@ -343,47 +345,24 @@ public class InputRotatingBuffer extends RotatingBuffer {
     }
 
     /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#beginInitWrite()
-     */
-    public List<JStatement> beginInitWrite() {
-        return new LinkedList<JStatement>(); 
-    }
-
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#endInitWrite()
-     */
-    public List<JStatement> endInitWrite() {
-        return new LinkedList<JStatement>(); 
-    }
-    
-    /* (non-Javadoc)
      * @see at.dms.kjc.backendSupport.ChannelI#beginSteadyRead()
      */
     public List<JStatement> beginSteadyRead() {
-        return new LinkedList<JStatement>(); 
+        LinkedList<JStatement> list = new LinkedList<JStatement>();
+        list.add(zeroOutTail());
+        return list;
     }
 
+   
     /* (non-Javadoc)
      * @see at.dms.kjc.backendSupport.ChannelI#endSteadyRead()
      */
     public List<JStatement> endSteadyRead() {
-        return new LinkedList<JStatement>(); 
+        LinkedList<JStatement> list = new LinkedList<JStatement>();
+        list.addAll(rotateStatements());
+        return list;
     }
 
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#beginSteadyWrite()
-     */
-    public List<JStatement> beginSteadyWrite() {
-        return new LinkedList<JStatement>(); 
-    }
-
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#endSteadyWrite()
-     */
-    public List<JStatement> endSteadyWrite() {
-        return new LinkedList<JStatement>(); 
-    }
-    
     /* (non-Javadoc)
      * @see at.dms.kjc.backendSupport.ChannelI#topOfWorkSteadyRead()
      */
@@ -391,13 +370,6 @@ public class InputRotatingBuffer extends RotatingBuffer {
         return new LinkedList<JStatement>(); 
     }
     
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#topOfWorkSteadyWrite()
-     */
-    public List<JStatement> topOfWorkSteadyWrite() {
-        return new LinkedList<JStatement>(); 
-    }
- 
     /* (non-Javadoc)
      * @see at.dms.kjc.backendSupport.ChannelI#dataDeclsH()
      */
@@ -431,22 +403,6 @@ public class InputRotatingBuffer extends RotatingBuffer {
         retval.add(headDecl);
         return retval;
     }   
-    
-    
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#writeDeclsExtern()
-     */
-    public List<JStatement> writeDeclsExtern() {
-        return new LinkedList<JStatement>();
-    }   
-    
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#writeDecls()
-     */
-    public List<JStatement> writeDecls() {
-        return new LinkedList<JStatement>();
-    }   
-   
     
     /** Create statement zeroing out tail */
     protected JStatement zeroOutTail() {

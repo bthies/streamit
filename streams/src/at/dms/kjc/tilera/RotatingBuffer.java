@@ -15,6 +15,10 @@ import at.dms.kjc.*;
 import at.dms.kjc.common.CommonUtils;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+
+
 
 /**
  * A buffer represents a block of memory that a filter reads from or writes to.
@@ -97,17 +101,18 @@ public abstract class RotatingBuffer extends Channel {
      * Generate the code necessary to allocate the buffers, setup the rotation structure,
      * and communicate addresses.
      * 
+     * @param input true if this is an input buffer
      */
-    protected void createInitCode() {
+    protected void createInitCode(boolean input) {
         this.setBufferNames();
-        this.allocBuffers();
+        this.allocBuffers(input);
         this.setupRotation();
     }
     
     /**
      * Allocate the constituent buffers of this rotating buffer structure
      */
-    protected void allocBuffers() {
+    protected void allocBuffers(boolean shared) {
         for (int i = 0; i < rotationLength; i++) {
             TileCodeStore cs = this.parent.getComputeCode();
             
@@ -118,7 +123,10 @@ public abstract class RotatingBuffer extends Channel {
             //malloc the steady buffer
             cs.addStatementToBufferInit(new JExpressionStatement(new JEmittedTextExpression(
                     bufferNames[i] + " = (" + this.getType() + 
-                    "*) malloc(" + this.getBufferSize() + " * sizeof(" +
+                    "*) " +  
+                    (shared ? "malloc_shared" : "malloc") +
+                    "(" + 
+                    this.getBufferSize() + " * sizeof(" +
                     this.getType() + "))")));
         }
     }
@@ -224,6 +232,13 @@ public abstract class RotatingBuffer extends Channel {
     public void setExtraCount(int extracount) {
         assert false;
         this.extraCount = extracount;
+    }
+    
+    protected List<JStatement> rotateStatements() {
+        LinkedList<JStatement> list = new LinkedList<JStatement>();
+        list.add(Util.toStmt(currentRotName + " = " + currentRotName + "->next"));
+        list.add(Util.toStmt(currentBufName + " = " + currentRotName + "->buffer"));
+        return list;
     }
     
     /** Create an array reference given an offset */   

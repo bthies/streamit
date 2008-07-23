@@ -9,14 +9,19 @@ import java.util.Set;
 import at.dms.kjc.backendSupport.FilterInfo;
 import at.dms.kjc.backendSupport.SchedulingPhase;
 import at.dms.kjc.spacetime.*;
+import at.dms.kjc.CClassType;
 import at.dms.kjc.CStdType;
+import at.dms.kjc.JAssignmentExpression;
+import at.dms.kjc.JBlock;
 import at.dms.kjc.JExpression;
 import at.dms.kjc.JExpressionStatement;
 import at.dms.kjc.JFieldAccessExpression;
 import at.dms.kjc.JFormalParameter;
+import at.dms.kjc.JIntLiteral;
 import at.dms.kjc.JLocalVariableExpression;
 import at.dms.kjc.JMethodCallExpression;
 import at.dms.kjc.JMethodDeclaration;
+import at.dms.kjc.JPostfixExpression;
 import at.dms.kjc.JStatement;
 import at.dms.kjc.JVariableDeclarationStatement;
 import at.dms.kjc.JVariableDefinition;
@@ -67,7 +72,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
                         maxRotLength = diff;
                 }
                 buf.rotationLength = maxRotLength;
-                buf.createInitCode();
+                buf.createInitCode(false);
                 //System.out.println("Setting output buf " + buf.getIdent() + " to " + buf.rotationLength);    
             }
         }
@@ -212,35 +217,35 @@ public class OutputRotatingBuffer extends RotatingBuffer {
      * @see at.dms.kjc.backendSupport.ChannelI#pushMethod()
      */
     public JMethodDeclaration pushMethod() {
-        return null;
+        String valName = "__val";
+        JFormalParameter val = new JFormalParameter(
+                theEdge.getType(),
+                valName);
+        JLocalVariableExpression valRef = new JLocalVariableExpression(val);
+        JBlock body = new JBlock();
+        JMethodDeclaration retval = new JMethodDeclaration(
+                null,
+                /*at.dms.kjc.Constants.ACC_PUBLIC | at.dms.kjc.Constants.ACC_STATIC |*/ at.dms.kjc.Constants.ACC_INLINE,
+                CStdType.Void,
+                pushMethodName(),
+                new JFormalParameter[]{val},
+                CClassType.EMPTY,
+                body, null, null);
+        body.addStatement(
+        new JExpressionStatement(new JAssignmentExpression(
+                bufRef(new JPostfixExpression(at.dms.kjc.Constants.OPE_POSTINC,
+                        head)),
+                valRef)));
+        return retval;
     }
     
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#beginInitRead()
-     */
-    public List<JStatement> beginInitRead() {
-        return new LinkedList<JStatement>(); 
-    }
-
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#beginInitRead()
-     */
-    public List<JStatement> postPreworkInitRead() {
-        return new LinkedList<JStatement>(); 
-    }
-
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#endInitRead()
-     */
-    public List<JStatement> endInitRead() {
-        return new LinkedList<JStatement>(); 
-    }
-
     /* (non-Javadoc)
      * @see at.dms.kjc.backendSupport.ChannelI#beginInitWrite()
      */
     public List<JStatement> beginInitWrite() {
-        return new LinkedList<JStatement>(); 
+        LinkedList<JStatement> list = new LinkedList<JStatement>();
+        list.add(zeroOutHead());
+        return list;
     }
 
     /* (non-Javadoc)
@@ -251,38 +256,21 @@ public class OutputRotatingBuffer extends RotatingBuffer {
     }
     
     /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#beginSteadyRead()
-     */
-    public List<JStatement> beginSteadyRead() {
-        return new LinkedList<JStatement>(); 
-    }
-
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#endSteadyRead()
-     */
-    public List<JStatement> endSteadyRead() {
-        return new LinkedList<JStatement>(); 
-    }
-
-    /* (non-Javadoc)
      * @see at.dms.kjc.backendSupport.ChannelI#beginSteadyWrite()
      */
     public List<JStatement> beginSteadyWrite() {
-        return new LinkedList<JStatement>(); 
+        LinkedList<JStatement> list = new LinkedList<JStatement>();
+        list.add(zeroOutHead());
+        return list;
     }
 
     /* (non-Javadoc)
      * @see at.dms.kjc.backendSupport.ChannelI#endSteadyWrite()
      */
     public List<JStatement> endSteadyWrite() {
-        return new LinkedList<JStatement>(); 
-    }
-    
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#topOfWorkSteadyRead()
-     */
-    public List<JStatement> topOfWorkSteadyRead() {
-        return new LinkedList<JStatement>(); 
+        LinkedList<JStatement> list = new LinkedList<JStatement>();
+        list.addAll(rotateStatements());
+        return list;
     }
     
     /* (non-Javadoc)
@@ -307,21 +295,6 @@ public class OutputRotatingBuffer extends RotatingBuffer {
     }
     
     /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#readDeclsExtern()
-     */
-    public List<JStatement> readDeclsExtern() {
-        return new LinkedList<JStatement>();
-    }   
-    
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#readDecls()
-     */
-    public List<JStatement> readDecls() {
-        return new LinkedList<JStatement>();
-    }   
-    
-    
-    /* (non-Javadoc)
      * @see at.dms.kjc.backendSupport.ChannelI#writeDeclsExtern()
      */
     public List<JStatement> writeDeclsExtern() {
@@ -332,7 +305,16 @@ public class OutputRotatingBuffer extends RotatingBuffer {
      * @see at.dms.kjc.backendSupport.ChannelI#writeDecls()
      */
     public List<JStatement> writeDecls() {
-        return new LinkedList<JStatement>();
+        JStatement tailDecl = new JVariableDeclarationStatement(headDefn);
+        List<JStatement> retval = new LinkedList<JStatement>();
+        retval.add(tailDecl);
+        return retval;
     }   
+
+    /** Create statement zeroing out head */
+    protected JStatement zeroOutHead() {
+        return new JExpressionStatement(
+                        new JAssignmentExpression(head, new JIntLiteral(0)));
+    }
     
 }

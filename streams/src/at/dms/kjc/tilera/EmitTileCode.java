@@ -79,7 +79,8 @@ public class EmitTileCode extends EmitCode {
         p.println("    //spawning application");
         int processNumber = 0;
         // create the ilib calls to spawn the appropriate binary on each mapped tile
-        for (Tile tile : backendBits.getComputeNodes().getTiles()) {
+        for (int i = 0; i < TileraBackend.chip.abstractSize(); i++) {
+            Tile tile = TileraBackend.chip.getTranslatedTile(i);
             // if no code was written to this tile's code store, then skip it
             if (!tile.getComputeCode().shouldGenerateCode())
                 continue;
@@ -302,10 +303,13 @@ public class EmitTileCode extends EmitCode {
         p.println(
 "int main(int argc, char** argv) {\n");
         p.indent();
+        p.println("ilib_init();");
         p.println(TileCodeStore.bufferInitMethName + "();");
         p.println(
 backendbits.getComputeNodes().getNthComputeNode(0).getComputeCode().getMainFunction().getName()
 + "();");
+        p.println("ilib_finish();");
+        p.println("return 0;");
         p.outdent();
         p.println("}");
     }

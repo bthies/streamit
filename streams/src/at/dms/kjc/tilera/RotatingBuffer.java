@@ -109,12 +109,15 @@ public abstract class RotatingBuffer extends Channel {
                 if (buf == null)
                     continue;
                 for (int i = 0; i < buf.getAddressBuffers().length; i++) {
+                    DMAAddressRotation addr = buf.getAddressBuffers()[i];
+                    //create the declaration of the buffers on the tile
+                    addr.declareBuffers();
                     //send the address from the home tile to this source
                 
                     //receive the addresses on the source tile
                 
                     //set up the rotation structure at the source
-                    buf.getAddressBuffers()[i].setupRotation();
+                    addr.setupRotation();
                 }
             }
             //after we are all done with sending the addresses for this tile
@@ -160,8 +163,8 @@ public abstract class RotatingBuffer extends Channel {
             TileCodeStore cs = this.parent.getComputeCode();
             
             //create the pointer to the this buffer constituent 
-            cs.addStatementToBufferInit(new JExpressionStatement(new JEmittedTextExpression(this.getType().toString() + "* " + 
-                    bufferNames[i])));
+            cs.addStatementFirstToBufferInit(this.getType().toString() + "* " + 
+                    bufferNames[i]);
             
             //malloc the steady buffer
             cs.addStatementToBufferInit(new JExpressionStatement(new JEmittedTextExpression(
@@ -225,6 +228,14 @@ public abstract class RotatingBuffer extends Channel {
         block.addStatement(Util.toStmt(currentRotName + " = " + rotStructName));
         block.addStatement(Util.toStmt(currentBufName + " = " + currentRotName + "->buffer"));
         cs.addStatementToBufferInit(block);
+    }
+    
+    /**
+     * Return the number of buffers that comprise this rotating buffer.
+     * @return the number of buffers that comprise this rotating buffer.
+     */
+    public int getRotationLength() {
+        return rotationLength;
     }
     
     /**

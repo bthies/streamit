@@ -1,5 +1,7 @@
 package at.dms.kjc.tilera;
 
+import at.dms.kjc.JEmittedTextExpression;
+import at.dms.kjc.JExpressionStatement;
 import at.dms.kjc.slicegraph.*;
 
 /**
@@ -12,27 +14,39 @@ import at.dms.kjc.slicegraph.*;
  *
  */
 public class DMAAddressRotation extends RotatingBuffer {
-    /** The tile this rotation structure is declared on */
-    protected Tile tile;
     /** The InputBuffer this rotation models */
     protected InputRotatingBuffer inputBuffer;
     
     public DMAAddressRotation(Tile tile, InputRotatingBuffer buf, FilterSliceNode dest, Edge edge) {
         super(edge, dest, tile);
-        this.tile = tile;
+        this.parent = tile;
         this.inputBuffer = buf;
         setBufferSize();
         bufType = buf.bufType;
-        rotStructName = buf.getIdent() + "_addr_rot_struct";
-        currentRotName = buf.getIdent() + "_addr_rot_current";
-        currentBufName = buf.getIdent() + "_cur_addr_buf";
+        this.ident = buf.getIdent() + "_addr_";
+        rotStructName = this.getIdent() + "rot_struct";
+        currentRotName = this.getIdent() + "rot_current";
+        currentBufName = this.getIdent() + "_cur_buf";
+        this.rotationLength = buf.getRotationLength();
         //set the names of the individual address buffers that constitute this rotation
         setBufferNames();
+
     }
     
     public void setBufferSize() {
         if (inputBuffer == null)
             return;
         bufSize = inputBuffer.getBufferSize();
+    }
+    
+    public void declareBuffers() {
+        for (int i = 0; i < rotationLength; i++) {
+            
+            TileCodeStore cs = this.parent.getComputeCode();
+            
+            //create the pointer that will point to the buffer constituent on the dest tile
+            cs.addStatementToBufferInit(new JExpressionStatement(new JEmittedTextExpression(this.getType().toString() + "* " + 
+                    bufferNames[i])));
+        }
     }
 }

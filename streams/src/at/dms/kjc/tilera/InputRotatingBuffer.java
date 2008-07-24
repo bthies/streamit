@@ -91,6 +91,14 @@ public class InputRotatingBuffer extends RotatingBuffer {
     }
 
     /**
+     * Return the set of address buffers that are declared on tiles that feed this buffer.
+     * @return the set of address buffers that are declared on tiles that feed this buffer.
+     */
+    public DMAAddressRotation[] getAddressBuffers() {
+        return addressBufs;
+    }
+    
+    /**
      * 
      */
     protected void createDMAAddressBufs() {
@@ -98,7 +106,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
        int i = 0;
        for (Slice src : filterNode.getParent().getHead().getSourceSlices()) {
            Tile tile = TileraBackend.backEndBits.getLayout().getComputeNode(src.getFirstFilter());
-           DMAAddressRotation rot = new DMAAddressRotation(tile, this);
+           DMAAddressRotation rot = new DMAAddressRotation(tile, this, filterNode, theEdge);
            addressBufs[i] = rot;
            i++;
        }

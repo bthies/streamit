@@ -87,19 +87,16 @@ public abstract class RotatingBuffer extends Channel {
         rotTypeDefs();
         //now that all the buffers are allocated, we create a barrier on all the tiles
         //so that we wait for all the shared memory to be allocated
-        for (int t = 0; t < TileraBackend.chip.abstractSize(); t++) {
-            TileCodeStore cs = TileraBackend.chip.getTranslatedTile(t).getComputeCode();
-            cs.addStatementToBufferInit("ilib_msg_barrier(ILIB_GROUP_SIBLINGS)");
-        }
+        TileCodeStore.addBufferInitBarrier();
         //generate the code for the address communication stage
         communicateAddresses();
     }
     
-    
+        
     /**
      * Generate the code necessary to communicate the addresses of the shared input buffers 
      * of all input rotational structures to the sources that will write to the buffer 
-     * susing DMA commands.
+     * using DMA commands.
      */
     protected static void communicateAddresses() {
         for (int t = 0; t < TileraBackend.chip.abstractSize(); t++) {
@@ -108,8 +105,21 @@ public abstract class RotatingBuffer extends Channel {
             
             for (FilterSliceNode filter : cs.getFilters()) {
                 InputRotatingBuffer buf = InputRotatingBuffer.getInputBuffer(filter);
+                //if this filter does not have an input buffer, then continue
+                if (buf == null)
+                    continue;
+                for (int i = 0; i < buf.getAddressBuffers().length; i++) {
+                    //send the address from the home tile to this source
                 
+                    //receive the addresses on the source tile
+                
+                    //set up the rotation structure at the source
+                    buf.getAddressBuffers()[i].setupRotation();
+                }
             }
+            //after we are all done with sending the addresses for this tile
+            //append a barrier instruction to all of the tiles
+            TileCodeStore.addBufferInitBarrier();
         }
     }
     
@@ -141,7 +151,9 @@ public abstract class RotatingBuffer extends Channel {
     }
     
     /**
-     * Allocate the constituent buffers of this rotating buffer structure
+     * Allocate the constituent buffers of this rotating buffer structure.  This is used
+     * for buffers that need allocation from memory but not for dma rotational buffers
+     * are just pointers to memory on another tile.
      */
     protected void allocBuffers(boolean shared) {
         for (int i = 0; i < rotationLength; i++) {

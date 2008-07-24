@@ -58,6 +58,17 @@ public class TileCodeStore extends ComputeCodeStore<Tile> {
     }
     
     /**
+     * Append a barrier instruction to all of the (abstract) tiles in the buffer init
+     * method.
+     */
+    public static void addBufferInitBarrier() {
+        for (int t = 0; t < TileraBackend.chip.abstractSize(); t++) {
+            TileCodeStore cs = TileraBackend.chip.getTranslatedTile(t).getComputeCode();
+            cs.addStatementToBufferInit("ilib_msg_barrier(ILIB_GROUP_SIBLINGS)");
+        }
+    }
+    
+    /**
      * Return the method that initializes the rotating buffers and communicates
      * addresses.
      * @return the method that initializes the rotating buffers and communicates

@@ -184,6 +184,23 @@ public class TileraChip implements ComputeNodesI<TileCodeStore> {
         return KjcOptions.tilera * KjcOptions.tilera;
     }
     
+    /**
+     * Given that we always have to generate code for an 8x8 config, but we might 
+     * not want to use all those tiles, this function takes a tile number on the 8x8 config
+     * and translates it into an abstract tile number on the config size the user specifies.
+     * 
+     * @param t tile number in the 8x8 actual config
+     * 
+     * @return The abstract tile number for the user specified config
+     */
+    public int getTranslatedTileNumber(int t) {
+        Tile tile = getNthComputeNode(t);
+        assert tile.X < KjcOptions.tilera;
+        assert tile.Y < KjcOptions.tilera;
+        
+        return tile.X * KjcOptions.tilera + tile.Y;
+    }
+    
     /** 
      * Given that we always have to generate code for an 8x8 config, but we might 
      * not want to use all those tiles, this function translates a tile number on the 

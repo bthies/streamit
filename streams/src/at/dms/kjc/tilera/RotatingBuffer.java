@@ -99,26 +99,44 @@ public abstract class RotatingBuffer extends Channel {
      * using DMA commands.
      */
     protected static void communicateAddresses() {
+        //the tag for the messages that we are using to send around the address
+        int tag = 0;
+        
         for (int t = 0; t < TileraBackend.chip.abstractSize(); t++) {
-            Tile tile = TileraBackend.chip.getTranslatedTile(t);
-            TileCodeStore cs = tile.getComputeCode();
+            Tile ownerTile = TileraBackend.chip.getTranslatedTile(t);
+            TileCodeStore cs = ownerTile.getComputeCode();
             
             for (FilterSliceNode filter : cs.getFilters()) {
                 InputRotatingBuffer buf = InputRotatingBuffer.getInputBuffer(filter);
                 //if this filter does not have an input buffer, then continue
                 if (buf == null)
-                    continue;
+                    continue;                
                 for (int i = 0; i < buf.getAddressBuffers().length; i++) {
                     DMAAddressRotation addr = buf.getAddressBuffers()[i];
+                    Tile srcTile = addr.parent;
                     //create the declaration of the buffers on the tile
                     addr.declareBuffers();
-                    //send the address from the home tile to this source
-                
-                    //receive the addresses on the source tile
-                
+                    for (int b = 0; b < buf.rotationLength; b++) {
+                        //send the address from the home tile to this source
+                        cs.addStatementToBufferInit("" +
+                                "ilib_msg_send(ILIB_GROUP_SIBLINGS, " +
+                    		TileraBackend.chip.getTranslatedTileNumber(srcTile.getTileNumber()) + ", " +
+                    		tag + ", " +
+                    		"&" + buf.bufferNames[b] + ", " +
+                    		"sizeof (" + buf.bufType + "*))");
+                    		
+                        //receive the addresses on the source tile
+                        srcTile.getComputeCode().addStatementToBufferInit(
+                                "ilib_msg_receive(ILIB_GROUP_SIBLINGS, " +
+                                TileraBackend.chip.getTranslatedTileNumber(ownerTile.getTileNumber()) + ", " +
+                                tag + ", " +
+                                "&" + addr.bufferNames[b] + ", " +                                
+                                "sizeof (" + buf.bufType + "*), &status)");
+                        tag++;
+                    }
                     //set up the rotation structure at the source
                     addr.setupRotation();
-                }
+                }               
             }
             //after we are all done with sending the addresses for this tile
             //append a barrier instruction to all of the tiles

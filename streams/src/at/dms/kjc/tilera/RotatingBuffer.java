@@ -117,22 +117,30 @@ public abstract class RotatingBuffer extends Channel {
                     //create the declaration of the buffers on the tile
                     addr.declareBuffers();
                     for (int b = 0; b < buf.rotationLength; b++) {
-                        //send the address from the home tile to this source
-                        cs.addStatementToBufferInit("" +
-                                "ilib_msg_send(ILIB_GROUP_SIBLINGS, " +
-                    		TileraBackend.chip.getTranslatedTileNumber(srcTile.getTileNumber()) + ", " +
-                    		tag + ", " +
-                    		"&" + buf.bufferNames[b] + ", " +
-                    		"sizeof (" + buf.bufType + "*))");
-                    		
-                        //receive the addresses on the source tile
-                        srcTile.getComputeCode().addStatementToBufferInit(
-                                "ilib_msg_receive(ILIB_GROUP_SIBLINGS, " +
-                                TileraBackend.chip.getTranslatedTileNumber(ownerTile.getTileNumber()) + ", " +
-                                tag + ", " +
-                                "&" + addr.bufferNames[b] + ", " +                                
-                                "sizeof (" + buf.bufType + "*), &status)");
-                        tag++;
+                        if (srcTile.equals(ownerTile)) {
+                            //if they are on the same tile, then just assign them directly
+                            srcTile.getComputeCode().addStatementToBufferInit(
+                                    addr.bufferNames[b] + " = " + buf.bufferNames[b]);
+                        }
+                        else {
+                        
+                            //send the address from the home tile to this source
+                            cs.addStatementToBufferInit("" +
+                                    "ilib_msg_send(ILIB_GROUP_SIBLINGS, " +
+                                    TileraBackend.chip.getTranslatedTileNumber(srcTile.getTileNumber()) + ", " +
+                                    tag + ", " +
+                                    "&" + buf.bufferNames[b] + ", " +
+                                    "sizeof (" + buf.bufType + "*))");
+
+                            //receive the addresses on the source tile
+                            srcTile.getComputeCode().addStatementToBufferInit(
+                                    "ilib_msg_receive(ILIB_GROUP_SIBLINGS, " +
+                                    TileraBackend.chip.getTranslatedTileNumber(ownerTile.getTileNumber()) + ", " +
+                                    tag + ", " +
+                                    "&" + addr.bufferNames[b] + ", " +                                
+                                    "sizeof (" + buf.bufType + "*), &status)");
+                            tag++;
+                        }
                     }
                     //set up the rotation structure at the source
                     addr.setupRotation();

@@ -48,6 +48,8 @@ public class InputRotatingBuffer extends RotatingBuffer {
     protected DMAAddressRotation[] addressBufs;
     /** a map from tile to address buf */
     protected HashMap<Tile, DMAAddressRotation> addrBufMap;
+    /** true if what feeds this inputbuffer is a file reader */
+    protected boolean upstreamFileReader;
     
     static {
         buffers = new HashMap<FilterSliceNode, InputRotatingBuffer>();
@@ -153,6 +155,11 @@ public class InputRotatingBuffer extends RotatingBuffer {
                 CStdType.Integer, tailName, null);
         tail = new JFieldAccessExpression(tailName);
         tail.setType(CStdType.Integer);
+        
+        //if we have a file reader source for this filter, right now
+        //we only support a single input for a filter that is feed by a file
+        upstreamFileReader = filterNode.getParent().getHead().hasFileInput();
+        assert filterNode.getParent().getHead().oneInput();
         
         addrBufMap = new HashMap<Tile, DMAAddressRotation>();
     }
@@ -473,5 +480,13 @@ public class InputRotatingBuffer extends RotatingBuffer {
         }
         return retval;
     }
+    /*
+    protected List<JStatement> dmaFileReadCommands() {
+        
+    }
     
+    protected List<JStatement> fileReadWait() {
+        
+    }
+    */
 }

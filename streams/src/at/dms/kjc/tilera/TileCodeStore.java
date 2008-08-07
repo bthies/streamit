@@ -86,6 +86,10 @@ public class TileCodeStore extends ComputeCodeStore<Tile> {
         //addMethod(bufferInit);
     }
     
+    public Tile getParent() {
+        return (Tile)parent;
+    }
+    
     /**
      * Append str to the text that will appear outside of any function near the top 
      * of the code for this tile.

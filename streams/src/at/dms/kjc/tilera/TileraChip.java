@@ -1,6 +1,7 @@
 package at.dms.kjc.tilera;
 
 import java.util.LinkedList;
+import java.util.List;
 import at.dms.kjc.backendSupport.ComputeNodesI;
 import at.dms.util.Utils;
 import at.dms.kjc.KjcOptions;
@@ -182,6 +183,22 @@ public class TileraChip implements ComputeNodesI<TileCodeStore> {
      */
     public int abstractSize() {
         return KjcOptions.tilera * KjcOptions.tilera;
+    }
+    
+    /**
+     * Return a linked list of the tiles that we are mapping to (a subset of the 
+     * 8x8 grid specified by the user)
+     * 
+     * @return list of tiles we are mapping to
+     */
+    public List<Tile> getAbstractTiles() {
+        LinkedList<Tile> tiles = new LinkedList<Tile>();
+        
+        for (int x = 0; x < KjcOptions.tilera; x++)
+            for (int y = 0; y < KjcOptions.tilera; y++)
+                tiles.add(this.tiles[x][y]);
+        
+        return tiles;
     }
     
     /**

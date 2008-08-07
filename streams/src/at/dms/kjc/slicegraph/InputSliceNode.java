@@ -125,6 +125,34 @@ public class InputSliceNode extends SliceNode {
     }
 
     /**
+     * @return true if each input edge appears only once in the schedule of joining
+     */
+    public boolean singleAppearance() {
+        return getSourceSet().size() == getSourceList().size();
+    }
+    
+    /**
+     * return the sum of the weights that appear before this edge in the joining schedule
+     * 
+     * @param edge the edge in question
+     * 
+     * @return the sum of the weights before edge
+     */
+    public int weightBefore(InterSliceEdge edge) {
+        assert singleAppearance();
+        
+        int total = 0;
+        for (int i = 0; i < weights.length; i++) {
+            if (sources[i] == edge) 
+                return total;
+            
+            total += weights[i];
+        }
+        assert false;
+        return 0;
+    }
+    
+    /**
      * Return the number of unique inputs (Edges) to this join.
      * 
      * @return The width of the join.

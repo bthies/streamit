@@ -239,10 +239,7 @@ public class OutputSliceNode extends SliceNode {
 
         for (int i = 0; i < dests.length; i++) {
             for (int j = 0; j < dests[i].length; j++) {
-                // System.out.println("Checking dest(" + i + ", " + j + ")");
-                // System.out.println(dests[i][j] + " ?= " + in);
                 if (dests[i][j] == in) {
-                    // System.out.println("Found edge");
                     sum += weights[i];
                     break;
                 }
@@ -299,6 +296,14 @@ public class OutputSliceNode extends SliceNode {
         return set;
     }
 
+    /**
+     * @return true if each output edge appears only once in the schedule of splitting
+     */
+    public boolean singleAppearance() {
+        return getDestSet().size() == getDestList().length;
+    }
+    
+    
     public boolean oneOutput() {
         return (weights.length == 1 && dests[0].length == 1);
     }
@@ -410,6 +415,35 @@ public class OutputSliceNode extends SliceNode {
                 fileOutputs.add(edge.getDest());
         }
         return fileOutputs;
+    }
+    
+    /**
+     * Return the sum of weights for edges before this edge appears in the splitting schedule.
+     * This output slice node must be single appearance.
+     * 
+     * @param edge The edge in question
+     * @return The total weights before edge
+     */
+    public int weightBefore(InterSliceEdge edge) {
+        assert singleAppearance();
+        int total = 0;
+        
+        for (int w = 0; w < weights.length; w++ ) {
+            boolean found = false;
+            //see if the edge is in this dest list
+            for (int d = 0; d < dests[w].length; d++) {
+                if (dests[w][d] == edge) {
+                    found = true;
+                    break;
+                }
+            }
+            if (found) {
+                return total;
+            }
+            total += weights[w];
+        }
+        assert false;
+        return 0;
     }
     
     /*

@@ -232,12 +232,6 @@ public class FilterInfo {
     public int initItemsSent() {
         int items = push * initMult;
         if (isTwoStage()) {
-            /*
-             * upStreamItems -=
-             * ((SIRTwoStageFilter)previous.getFilter()).getPushInt();
-             * upStreamItems +=
-             * ((SIRTwoStageFilter)previous.getFilter()).getInitPush();
-             */
             items -= push;
             items += prePush;
         }
@@ -377,7 +371,25 @@ public class FilterInfo {
         
     }
     
-    
+    /**
+     * Return the number of items this filter pops in during the scheduling phase
+     * 
+     * @param whichPhase The scheduling phase
+     * @return the number of items pop'ed
+     */
+    public int totalItemsPopped(SchedulingPhase whichPhase) {
+        if (whichPhase == SchedulingPhase.INIT) {
+            int items = (initMult * pop);
+            if (isTwoStage()) {
+                items -= pop;
+                items += prePop;
+            }
+            return items;
+        }
+        else
+            return steadyMult * pop;
+        
+    }
     
     /**
      * @param exeCount The iteration we are querying. 

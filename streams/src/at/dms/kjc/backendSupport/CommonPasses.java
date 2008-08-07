@@ -445,7 +445,13 @@ public class CommonPasses {
         if (KjcOptions.spacetime) {
             new at.dms.kjc.spacetime.GeneratePrimePumpSchedule(schedule).schedule(slicer.getSliceGraph());
         } else if (KjcOptions.tilera > -1) {
-            new at.dms.kjc.tilera.GeneratePrimePumpSchedule(schedule).schedule(slicer.getSliceGraph());
+            //for space multiplexing on tilera we need to use a different primepump scheduler because
+            //we are space multiplexing and we need to prime the pipe more so that everything can fire
+            //when ready
+            if (at.dms.kjc.tilera.TileraBackend.scheduler.isSMD())
+                new at.dms.kjc.tilera.GeneratePrimePumpScheduleSMD(schedule).schedule(slicer.getSliceGraph());
+            else 
+                new GeneratePrimePump(schedule).schedule(slicer.getSliceGraph());
         }
         else {
             new GeneratePrimePump(schedule).schedule(slicer.getSliceGraph());

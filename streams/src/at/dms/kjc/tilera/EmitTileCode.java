@@ -107,6 +107,7 @@ public class EmitTileCode extends EmitCode {
     
     public void generateCHeader(CodegenPrintWriter p) {
         generateIncludes(p);
+        p.println("ilibStatus ignore_status;");
     }
     
     /**
@@ -241,8 +242,7 @@ public class EmitTileCode extends EmitCode {
                 // are in different files that eventually get concatenated.
                 p.println();
                 p.println("#ifndef " + c.getIdent() + "_CHANNEL_DATA");
-                for (JStatement d : c.dataDecls()) { d.accept(codegen); }
-                p.println();
+                for (JStatement d : c.dataDecls()) { d.accept(codegen); p.println();}
                 p.println("#define " + c.getIdent() + "_CHANNEL_DATA");
                 p.println("#endif");
             }
@@ -251,8 +251,7 @@ public class EmitTileCode extends EmitCode {
         for (RotatingBuffer c : inputBuffers) {
             if (c.dataDecls() != null && ! outputBuffers.contains(c)) {
                 p.println("#ifndef " + c.getIdent() + "_CHANNEL_DATA");
-                for (JStatement d : c.dataDecls()) { d.accept(codegen); }
-                p.println();
+                for (JStatement d : c.dataDecls()) { d.accept(codegen); p.println();}
                 p.println("#define " + c.getIdent() + "_CHANNEL_DATA");
                 p.println("#endif");
             }
@@ -261,7 +260,7 @@ public class EmitTileCode extends EmitCode {
         for (RotatingBuffer c : outputBuffers) {
             p.println("/* output buffer " + "(" + c.getIdent() + " of " + c.getFilterNode() + ") */");
             if (c.writeDecls() != null) {
-                for (JStatement d : c.writeDecls()) { d.accept(codegen); }
+                for (JStatement d : c.writeDecls()) { d.accept(codegen); p.println();}
             }
             if (c.pushMethod() != null) { c.pushMethod().accept(codegen); }
         }

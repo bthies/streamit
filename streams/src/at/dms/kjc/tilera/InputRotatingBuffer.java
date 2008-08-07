@@ -46,6 +46,8 @@ public class InputRotatingBuffer extends RotatingBuffer {
     protected JExpression tail;
     /** all the address buffers that are on the tiles that feed this input buffer */
     protected DMAAddressRotation[] addressBufs;
+    /** a map from tile to address buf */
+    protected HashMap<Tile, DMAAddressRotation> addrBufMap;
     
     static {
         buffers = new HashMap<FilterSliceNode, InputRotatingBuffer>();
@@ -82,10 +84,10 @@ public class InputRotatingBuffer extends RotatingBuffer {
                         maxRotationLength = diff;
                     }
                 }
-                buf.rotationLength = maxRotationLength;
+                buf.rotationLength = maxRotationLength + 1;
                 buf.createInitCode(true);
                 buf.createDMAAddressBufs();
-                //System.out.println("Setting input buf " + buf.getFilterNode() + " to " + buf.rotationLength);
+                System.out.println("Setting input buf " + buf.getFilterNode() + " to " + buf.rotationLength);
             }
         }
     }
@@ -108,8 +110,19 @@ public class InputRotatingBuffer extends RotatingBuffer {
            Tile tile = TileraBackend.backEndBits.getLayout().getComputeNode(src.getFirstFilter());
            DMAAddressRotation rot = new DMAAddressRotation(tile, this, filterNode, theEdge);
            addressBufs[i] = rot;
+           addrBufMap.put(tile, rot);
            i++;
        }
+    }
+    
+    /**
+     * Return the address buffer rotation for this input buffer on the tile.
+     * 
+     * @param tile The tile
+     * @return the address buffer for this input buffer on the tile
+     */
+    public DMAAddressRotation getAddressRotation(Tile tile) {
+        return addrBufMap.get(tile);
     }
     
     /**
@@ -140,6 +153,8 @@ public class InputRotatingBuffer extends RotatingBuffer {
                 CStdType.Integer, tailName, null);
         tail = new JFieldAccessExpression(tailName);
         tail.setType(CStdType.Integer);
+        
+        addrBufMap = new HashMap<Tile, DMAAddressRotation>();
     }
     
     /**
@@ -384,6 +399,9 @@ public class InputRotatingBuffer extends RotatingBuffer {
      */
     public List<JStatement> endSteadyRead() {
         LinkedList<JStatement> list = new LinkedList<JStatement>();
+        //copy the remaining items to the next rotation buffer
+        list.addAll(copyDownStatements());
+        //rotate to the next buffer
         list.addAll(rotateStatements());
         return list;
     }
@@ -433,6 +451,27 @@ public class InputRotatingBuffer extends RotatingBuffer {
     protected JStatement zeroOutTail() {
         return new JExpressionStatement(
                 new JAssignmentExpression(tail, new JIntLiteral(0)));
+    }
+    
+    /** 
+     * Generate and return the statements that implement the copying of the items remaining on 
+     * a buffer to the next rotating buffer.  Only done for each primepump stage and the steady stage,
+     * not done for init.
+     * 
+     * @return statements to implement the copy down
+     */
+    protected List<JStatement> copyDownStatements() {
+        List<JStatement> retval = new LinkedList<JStatement>();
+        //if we have items remaining on the buffer after filter execution, we must copy them 
+        //to the next buffer, use memcpy for now
+        if (filterInfo.remaining > 0) {
+            String size = (filterInfo.remaining * Util.getTypeSize(bufType) * 4) + "";
+            String dst = currentRotName + "->next->buffer";
+            String src = currentBufName + " + " +
+                (Util.getTypeSize(bufType) * 4 * filterInfo.totalItemsPopped(SchedulingPhase.STEADY));
+            retval.add(Util.toStmt("memcpy(" + dst + ", " + src + ", " + size + ")"));
+        }
+        return retval;
     }
     
 }

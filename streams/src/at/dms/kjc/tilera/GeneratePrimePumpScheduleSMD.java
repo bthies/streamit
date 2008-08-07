@@ -19,14 +19,14 @@ import at.dms.kjc.KjcOptions;
  * @author mgordon
  *
  */
-public class GeneratePrimePumpSchedule {
+public class GeneratePrimePumpScheduleSMD {
     private SpaceTimeScheduleAndSlicer spaceTimeSchedule;
     //the execution count for each trace during the calculation of the schedule
     private HashMap<Object, Integer> exeCounts;
     
     
    
-    public GeneratePrimePumpSchedule(SpaceTimeScheduleAndSlicer sts) {
+    public GeneratePrimePumpScheduleSMD(SpaceTimeScheduleAndSlicer sts) {
         spaceTimeSchedule = sts;
         exeCounts = new HashMap<Object, Integer>();
     }

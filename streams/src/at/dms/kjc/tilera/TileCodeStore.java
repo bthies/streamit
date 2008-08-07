@@ -126,6 +126,17 @@ public class TileCodeStore extends ComputeCodeStore<Tile> {
     }
     
     /**
+     * Add stmt to the beginning of the method that will perform the allocation of buffers
+     * and receive addresses of buffers from downstream tiles.
+     * 
+     * @param stmt The statement to add to the end of the method
+     */
+    public void addStatementFirstToBufferInit(JStatement stmt) {
+        bufferInit.getBody().addStatementFirst(stmt);
+    }
+    
+    
+    /**
      * Add txt to the end of the method that will perform the allocation of buffers
      * and receive addresses of buffers from downstream tiles.  Don't use ; or newline
      * 

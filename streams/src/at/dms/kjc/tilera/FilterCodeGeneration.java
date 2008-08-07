@@ -110,6 +110,8 @@ public class FilterCodeGeneration extends CodeStoreHelper {
             }
         }
 
+        statements.addAllStatements(endSchedulingPhase());
+        
         return new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
                 CStdType.Void, initStage + uniqueID, JFormalParameter.EMPTY,
                 CClassType.EMPTY, statements, null, null);
@@ -187,6 +189,7 @@ public class FilterCodeGeneration extends CodeStoreHelper {
                 statements.addStatement(stmt);
             }
         }
+        statements.addAllStatements(endSchedulingPhase());
         //return the method
         primePumpMethod = new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
                                       CStdType.Void,
@@ -231,8 +234,23 @@ public class FilterCodeGeneration extends CodeStoreHelper {
                 statements.addStatement(stmt);
             }
         }
+        statements.addAllStatements(endSchedulingPhase());
         return statements;
     }
     
-    
+    /**
+     * Code returned by this function will be appended to the methods for the init, primepump, and
+     * steady stages for this filter.
+     * 
+     * @return  The block of code to append
+     */
+    protected JBlock endSchedulingPhase() {
+        JBlock block = new JBlock();
+        
+        if (TileraBackend.scheduler.isTMD()) {
+            block.addStatement(Util.toStmt("ilib_msg_barrier(ILIB_GROUP_SIBLINGS)"));
+        }
+        
+        return block;
+    }
 }

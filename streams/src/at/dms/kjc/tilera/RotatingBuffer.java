@@ -54,7 +54,10 @@ public abstract class RotatingBuffer extends Channel {
     public static String rotTypeDefPrefix = "__rotating_buffer_";
     /** the tile this buffer is mapped to */
     protected Tile parent;
+    /** the filter info object for the filter that contains this buffer */
+    protected FilterInfo filterInfo;
     protected final String temp = "__temp__";
+    
     
     static {
         types = new HashSet<CType>();
@@ -64,6 +67,7 @@ public abstract class RotatingBuffer extends Channel {
         super(edge);
         this.parent = parent;
         filterNode = fsn;
+        filterInfo = FilterInfo.getFilterInfo(fsn);
         rotStructName = this.getIdent() + "_rot_struct";
         currentRotName =this.getIdent() + "_rot_current";
         currentBufName =this.getIdent() + "_cur_buf";
@@ -223,7 +227,8 @@ public abstract class RotatingBuffer extends Channel {
         JBlock block = new JBlock();
         
         //create a temp var
-        block.addStatement(Util.toStmt(rotType + " *" + temp));
+        if (this.rotationLength > 1)
+            block.addStatement(Util.toStmt(rotType + " *" + temp));
         
         //create the first entry!!
         block.addStatement(Util.toStmt(rotStructName + " =  (" + rotType+ "*)" + "malloc(sizeof("
@@ -313,7 +318,7 @@ public abstract class RotatingBuffer extends Channel {
         assert false;
         this.extraCount = extracount;
     }
-    
+
     protected List<JStatement> rotateStatements() {
         LinkedList<JStatement> list = new LinkedList<JStatement>();
         list.add(Util.toStmt(currentRotName + " = " + currentRotName + "->next"));

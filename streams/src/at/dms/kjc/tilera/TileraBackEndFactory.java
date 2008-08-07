@@ -99,8 +99,14 @@ public class TileraBackEndFactory extends BackEndFactory<TileraChip, Tile, TileC
     @Override
     public void processFilterSliceNode(FilterSliceNode filter,
             SchedulingPhase whichPhase, TileraChip chip) {
-        System.out.println("Processing: " + filter + " on tile " + layout.getComputeNode(filter).getTileNumber() + "(" + whichPhase + ")");
-        (new ProcessFilterSliceNode(filter, whichPhase, this)).processFilterSliceNode();
+        //System.out.println("Processing: " + filter + " on tile " + layout.getComputeNode(filter).getTileNumber() + "(" + whichPhase + ")");
+        if (filter.isPredefined()) {
+            if (filter.isFileInput())
+                (new ProcessFileReader(filter, whichPhase, this)).processFileReader();
+        } 
+        else {
+            (new ProcessFilterSliceNode(filter, whichPhase, this)).processFilterSliceNode();
+        }
     }
 
     /* (non-Javadoc)
@@ -119,7 +125,7 @@ public class TileraBackEndFactory extends BackEndFactory<TileraChip, Tile, TileC
     public void processInputSliceNode(InputSliceNode input,
             SchedulingPhase whichPhase, TileraChip chip) {
         // TODO Auto-generated method stub
-        System.out.println("Processing: " + input);
+        //System.out.println("Processing: " + input);
         // Convert the channel accesses to reads from and writes to the input and output buffers
        
     }
@@ -131,6 +137,6 @@ public class TileraBackEndFactory extends BackEndFactory<TileraChip, Tile, TileC
     public void processOutputSliceNode(OutputSliceNode output,
             SchedulingPhase whichPhase, TileraChip chip) {
         // TODO Auto-generated method stub
-        System.out.println("Processing: " + output);
+        //System.out.println("Processing: " + output);
     }
 }

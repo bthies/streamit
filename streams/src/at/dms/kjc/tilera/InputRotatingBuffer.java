@@ -1,30 +1,11 @@
 package at.dms.kjc.tilera;
 
-import at.dms.kjc.CClassType;
-import at.dms.kjc.CStdType;
-import at.dms.kjc.CType;
-import at.dms.kjc.JAddExpression;
-import at.dms.kjc.JAssignmentExpression;
-import at.dms.kjc.JBlock;
-import at.dms.kjc.JEmittedTextExpression;
-import at.dms.kjc.JExpression;
-import at.dms.kjc.JExpressionStatement;
-import at.dms.kjc.JFieldAccessExpression;
-import at.dms.kjc.JFormalParameter;
-import at.dms.kjc.JIntLiteral;
-import at.dms.kjc.JLocalVariableExpression;
-import at.dms.kjc.JMethodCallExpression;
-import at.dms.kjc.JMethodDeclaration;
-import at.dms.kjc.JPostfixExpression;
-import at.dms.kjc.JReturnStatement;
-import at.dms.kjc.JStatement;
-import at.dms.kjc.JVariableDeclarationStatement;
-import at.dms.kjc.JVariableDefinition;
 import at.dms.kjc.slicegraph.*;
 import at.dms.util.Utils;
 import at.dms.kjc.spacetime.*;
 import at.dms.kjc.backendSupport.*;
 import at.dms.kjc.common.CommonUtils;
+import at.dms.kjc.*;
 
 import java.util.*;
 
@@ -50,6 +31,8 @@ public class InputRotatingBuffer extends RotatingBuffer {
     protected HashMap<Tile, DMAAddressRotation> addrBufMap;
     /** true if what feeds this inputbuffer is a file reader */
     protected boolean upstreamFileReader;
+    /** if this is fed by a file reader, then we need dma commands for it */
+    protected FileReaderDMACommands fileReaderCommands;
     
     static {
         buffers = new HashMap<FilterSliceNode, InputRotatingBuffer>();
@@ -118,6 +101,18 @@ public class InputRotatingBuffer extends RotatingBuffer {
     }
     
     /**
+     * If this input buffer is fed by a file reader, then put the dma commands to prime
+     * the buffer at the end of the rotation setup.
+     */
+    protected JStatement endOfRotationSetup() {
+        JBlock block = new JBlock();
+        if (upstreamFileReader) {
+            block.addAllStatements(fileReaderCommands.dmaCommands(SchedulingPhase.INIT));
+        }
+        return block;
+    }
+    
+    /**
      * Return the address buffer rotation for this input buffer on the tile.
      * 
      * @param tile The tile
@@ -159,8 +154,10 @@ public class InputRotatingBuffer extends RotatingBuffer {
         //if we have a file reader source for this filter, right now
         //we only support a single input for a filter that is feed by a file
         upstreamFileReader = filterNode.getParent().getHead().hasFileInput();
-        assert filterNode.getParent().getHead().oneInput();
-        
+        if (upstreamFileReader) {
+            assert filterNode.getParent().getHead().oneInput();
+            fileReaderCommands = new FileReaderDMACommands(this);
+        }
         addrBufMap = new HashMap<Tile, DMAAddressRotation>();
     }
     
@@ -388,7 +385,18 @@ public class InputRotatingBuffer extends RotatingBuffer {
      * @see at.dms.kjc.backendSupport.ChannelI#endInitRead()
      */
     public List<JStatement> endInitRead() {
-        return new LinkedList<JStatement>(); 
+        LinkedList<JStatement> list = new LinkedList<JStatement>(); 
+        //we need to refill the buffer it is filled by a file reader,
+        //remember that we are rotating the file input buffer even in the init
+        //that is why we use the steady commands in the init, the init commands 
+        //are used during the setupRotation stage
+        if (upstreamFileReader) {
+            list.addAll(fileReaderCommands.dmaCommands(SchedulingPhase.STEADY));
+            list.addAll(fileReaderCommands.waitCallsSteady());
+            list.addAll(copyDownStatements());
+            list.addAll(rotateStatements());
+        }
+        return list;
     }
 
     /* (non-Javadoc)
@@ -396,6 +404,9 @@ public class InputRotatingBuffer extends RotatingBuffer {
      */
     public List<JStatement> beginSteadyRead() {
         LinkedList<JStatement> list = new LinkedList<JStatement>();
+        if (upstreamFileReader) {
+            list.addAll(fileReaderCommands.dmaCommands(SchedulingPhase.STEADY));
+        }
         list.add(zeroOutTail());
         return list;
     }
@@ -408,8 +419,11 @@ public class InputRotatingBuffer extends RotatingBuffer {
         LinkedList<JStatement> list = new LinkedList<JStatement>();
         //copy the remaining items to the next rotation buffer
         list.addAll(copyDownStatements());
+        if (upstreamFileReader) {
+            list.addAll(fileReaderCommands.waitCallsSteady());
+        }
         //rotate to the next buffer
-        list.addAll(rotateStatements());
+        list.addAll(rotateStatements());        
         return list;
     }
 
@@ -451,6 +465,10 @@ public class InputRotatingBuffer extends RotatingBuffer {
         JStatement headDecl = new JVariableDeclarationStatement(tailDefn);
         List<JStatement> retval = new LinkedList<JStatement>();
         retval.add(headDecl);
+        //if we have a file reader feeding this then add the decls for 
+        //the dma commands we generate for it.
+        if (upstreamFileReader) 
+            retval.addAll(fileReaderCommands.decls());
         return retval;
     }   
     

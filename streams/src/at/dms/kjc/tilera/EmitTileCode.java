@@ -131,6 +131,7 @@ public class EmitTileCode extends EmitCode {
         p.println("endif");
         p.println();
         p.println("CC = $(BIN)tile-cc");
+        p.println("CFLAGS = -O3");
         p.println("SIM = $(BIN)tile-sim");
         p.println();
         p.println("EXECUTABLES = $(BOOT_EXE) $(TILES)");
@@ -215,10 +216,7 @@ public class EmitTileCode extends EmitCode {
         }
         p.println("");
         codegen.setDeclOnly(false);
-        //handle the buffer initialization method separately because we do not want it
-        //optimized (it is not in the methods list of the code store
-        ((Tile)n).getComputeCode().getBufferInitMethod().accept(codegen);
-        
+
         // generate code for ends of channels that connect to code on this ComputeNode
         Set <RotatingBuffer> outputBuffers = OutputRotatingBuffer.getBuffersOnTile((Tile)n);
         Set <RotatingBuffer> inputBuffers = InputRotatingBuffer.getBuffersOnTile((Tile)n);
@@ -268,7 +266,7 @@ public class EmitTileCode extends EmitCode {
         for (RotatingBuffer c : inputBuffers) {
             p.println("/* input buffer (" + c.getIdent() + " of " + c.getFilterNode() + ") */");
             if (c.readDecls() != null) {
-                for (JStatement d : c.readDecls()) { d.accept(codegen); }
+                for (JStatement d : c.readDecls()) { d.accept(codegen); p.println();}
             }
             if (c.peekMethod() != null) { c.peekMethod().accept(codegen); }
             if (c.assignFromPeekMethod() != null) { c.assignFromPeekMethod().accept(codegen); }
@@ -283,6 +281,10 @@ public class EmitTileCode extends EmitCode {
             field.accept(codegen);
         }
         p.println("");
+        
+        //handle the buffer initialization method separately because we do not want it
+        //optimized (it is not in the methods list of the code store
+        ((Tile)n).getComputeCode().getBufferInitMethod().accept(codegen);
         
         // generate functions for methods
         codegen.setDeclOnly(false);

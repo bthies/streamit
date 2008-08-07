@@ -258,7 +258,19 @@ public abstract class RotatingBuffer extends Channel {
         }
         block.addStatement(Util.toStmt(currentRotName + " = " + rotStructName));
         block.addStatement(Util.toStmt(currentBufName + " = " + currentRotName + "->buffer"));
+        block.addStatement(endOfRotationSetup());
         cs.addStatementToBufferInit(block);
+    }
+    
+    /** 
+     * The statement returned by this method will be added to the end of the rotation setup for this
+     * buffer.
+     * 
+     * @return The statement to add
+     */
+    protected JStatement endOfRotationSetup() {
+       JBlock block = new JBlock();
+       return block;
     }
     
     /**

@@ -9,8 +9,9 @@ import at.dms.kjc.JStatement;
 public class OutputBufferDMATransfers {
     /** the output buffer that these dma commands uses as its source */
     private OutputRotatingBuffer parent;
-    /** the block of ilib_wait calls, one for each dma command generated */
-    private List<JStatement> waitCalls;
+    /** the block of ilib_wait calls, one for each dma command generated, separated for steady 
+     * because we have concurrency, for init they are in commandsInit*/
+    private List<JStatement> waitCallsSteady;
     /** the dma commands block */
     private List<JStatement> commandsSteady;
     /** the dma commands block */
@@ -22,7 +23,7 @@ public class OutputBufferDMATransfers {
     
     public OutputBufferDMATransfers(OutputRotatingBuffer buf) {
         parent = buf;
-        waitCalls = new LinkedList<JStatement>();
+        waitCallsSteady= new LinkedList<JStatement>();
         commandsSteady = new LinkedList<JStatement>();
         commandsInit = new LinkedList<JStatement>();
         decls = new LinkedList<JStatement>();
@@ -58,17 +59,17 @@ public class OutputBufferDMATransfers {
                 String src_stride = "" + (itemSize * output.totalWeights());
                 String block_size = "" + (itemSize * output.getWeight(edge));
                
-                String num_blocks_init = "" + 
+                int num_blocks_init = 
                     srcInfo.totalItemsSent(SchedulingPhase.INIT) / output.totalWeights();
                                 
                 assert (dstInfo.totalItemsPopped(SchedulingPhase.STEADY) / input.totalWeights()) ==
                     (srcInfo.totalItemsSent(SchedulingPhase.STEADY) / output.totalWeights());
                 
-                String num_blocks_steady = "" + 
+                int num_blocks_steady = 
                     dstInfo.totalItemsPopped(SchedulingPhase.STEADY) / input.totalWeights();
                 
-               
-                commandsInit.add(Util.toStmt("ilib_mem_start_strided_dma(" +
+                if (num_blocks_init > 0) {
+                    commandsInit.add(Util.toStmt("ilib_mem_start_strided_dma(" +
                         dst + ", " + 
                         dst_stride + ", " + 
                         src_init + ", " + 
@@ -76,9 +77,12 @@ public class OutputBufferDMATransfers {
                         block_size + ", " + 
                         num_blocks_init + ", " + 
                         "&" + requestVar + ")"));
+                    //generate the wait call
+                    commandsInit.add(Util.toStmt("ilib_wait(&" + requestVar + ", &ignore_status)"));
+                }
                 
-
-                commandsSteady.add(Util.toStmt("ilib_mem_start_strided_dma(" +
+                if (num_blocks_steady > 0) {
+                    commandsSteady.add(Util.toStmt("ilib_mem_start_strided_dma(" +
                         dst + ", " + 
                         dst_stride + ", " + 
                         src_steady + ", " + 
@@ -86,11 +90,13 @@ public class OutputBufferDMATransfers {
                         block_size + ", " + 
                         num_blocks_steady + ", " +
                         "&" + requestVar + ")"));
+                    //generate the wait call
+                    waitCallsSteady.add(Util.toStmt("ilib_wait(&" + requestVar + ", &ignore_status)"));
+                }
                 
                 //generate the decl of the request var
                 decls.add(Util.toStmt("ilibRequest " + requestVar));
-                //generate the wait call
-                waitCalls.add(Util.toStmt("ilib_wait(&" + requestVar + ", &ignore_status)"));
+              
             }
         }
     }
@@ -138,7 +144,7 @@ public class OutputBufferDMATransfers {
      * 
      * @return the wait statements
      */
-    public List<JStatement> waitCalls() {
-        return waitCalls;    
+    public List<JStatement> waitCallsSteady() {
+        return waitCallsSteady;    
     }
 }

@@ -297,7 +297,6 @@ public class OutputRotatingBuffer extends RotatingBuffer {
         //but we have to wait until the end because are not double buffering
         //also, don't rotate anything here
         list.addAll(dmaCommands.dmaCommands(SchedulingPhase.INIT));
-        list.addAll(dmaCommands.waitCalls());
         return list;
     }
     
@@ -325,7 +324,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
      */
     public List<JStatement> endSteadyWrite() {
         LinkedList<JStatement> list = new LinkedList<JStatement>();
-        list.addAll(dmaCommands.waitCalls());
+        list.addAll(dmaCommands.waitCallsSteady());
         //generate the rotate statements for this output buffer
         list.addAll(rotateStatements());
         

@@ -47,7 +47,10 @@ public class OutputBufferDMATransfers {
                 assert input.getWeight(edge) == output.getWeight(edge);
                 
                 //generate the dma command
-                String dst = addrBuf.currentBufName + " + " + 
+                String dst_init = addrBuf.currentBufName + " + " + 
+                    input.weightBefore(edge);
+                //in the steady state, you want to skip the copy down for the dest
+                String dst_steady = addrBuf.currentBufName + " + " + 
                     (dstInfo.copyDown + input.weightBefore(edge));
                 String dst_stride = "" + (itemBytes * input.totalWeights());
                 //in the init stage we transfer after we complete the filter execution, so we use
@@ -70,7 +73,7 @@ public class OutputBufferDMATransfers {
                 
                 if (num_blocks_init > 0) {
                     commandsInit.add(Util.toStmt("ilib_mem_start_strided_dma(" +
-                        dst + ", " + 
+                        dst_init + ", " + 
                         dst_stride + ", " + 
                         src_init + ", " + 
                         src_stride + ", " + 
@@ -83,7 +86,7 @@ public class OutputBufferDMATransfers {
                 
                 if (num_blocks_steady > 0) {
                     commandsSteady.add(Util.toStmt("ilib_mem_start_strided_dma(" +
-                        dst + ", " + 
+                        dst_steady + ", " + 
                         dst_stride + ", " + 
                         src_steady + ", " + 
                         src_stride + ", " + 

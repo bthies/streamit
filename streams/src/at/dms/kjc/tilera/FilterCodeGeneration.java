@@ -167,12 +167,12 @@ public class FilterCodeGeneration extends CodeStoreHelper {
         JBlock statements = new JBlock();
         // channel code before work block
         if (backEndBits.sliceHasUpstreamChannel(sliceNode.getParent())) {
-            for (JStatement stmt : InputRotatingBuffer.getInputBuffer(filterNode).beginSteadyRead()) {
+            for (JStatement stmt : InputRotatingBuffer.getInputBuffer(filterNode).beginPrimePumpRead()) {
                 statements.addStatement(stmt);
             }
         }
         if (backEndBits.sliceHasDownstreamChannel(sliceNode.getParent())) {
-            for (JStatement stmt : OutputRotatingBuffer.getOutputBuffer(filterNode).beginSteadyWrite()) {
+            for (JStatement stmt : OutputRotatingBuffer.getOutputBuffer(filterNode).beginPrimePumpWrite()) {
                 statements.addStatement(stmt);
             }
         }
@@ -180,12 +180,12 @@ public class FilterCodeGeneration extends CodeStoreHelper {
         statements.addStatement(getWorkFunctionBlock(filterInfo.steadyMult));
         // channel code after work block
         if (backEndBits.sliceHasUpstreamChannel(sliceNode.getParent())) {
-            for (JStatement stmt : InputRotatingBuffer.getInputBuffer(filterNode).endSteadyRead()) {
+            for (JStatement stmt : InputRotatingBuffer.getInputBuffer(filterNode).endPrimePumpRead()) {
                 statements.addStatement(stmt);
             }
         }
         if (backEndBits.sliceHasDownstreamChannel(sliceNode.getParent())) {
-            for (JStatement stmt : OutputRotatingBuffer.getOutputBuffer(filterNode).endSteadyWrite()) {
+            for (JStatement stmt : OutputRotatingBuffer.getOutputBuffer(filterNode).endPrimePumpWrite()) {
                 statements.addStatement(stmt);
             }
         }

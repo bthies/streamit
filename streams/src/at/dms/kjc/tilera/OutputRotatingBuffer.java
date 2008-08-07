@@ -11,12 +11,16 @@ import at.dms.kjc.CClassType;
 import at.dms.kjc.CStdType;
 import at.dms.kjc.JAssignmentExpression;
 import at.dms.kjc.JBlock;
+import at.dms.kjc.JBooleanLiteral;
+import at.dms.kjc.JEmittedTextExpression;
 import at.dms.kjc.JExpression;
 import at.dms.kjc.JExpressionStatement;
 import at.dms.kjc.JFieldAccessExpression;
 import at.dms.kjc.JFormalParameter;
+import at.dms.kjc.JIfStatement;
 import at.dms.kjc.JIntLiteral;
 import at.dms.kjc.JLocalVariableExpression;
+import at.dms.kjc.JLogicalComplementExpression;
 import at.dms.kjc.JMethodDeclaration;
 import at.dms.kjc.JPostfixExpression;
 import at.dms.kjc.JStatement;
@@ -44,6 +48,9 @@ public class OutputRotatingBuffer extends RotatingBuffer {
     protected String headName;
     /** definition for head */
     protected JVariableDefinition headDefn;
+    /** definition of boolean used during primepump to see if it is the first exection */
+    protected JVariableDefinition firstExe;
+    protected String firstExeName;
     /** the output slice node for this output buffer */
     protected OutputSliceNode outputNode;
     /** reference to head */
@@ -107,11 +114,19 @@ public class OutputRotatingBuffer extends RotatingBuffer {
         headDefn = new JVariableDefinition(null,
                 at.dms.kjc.Constants.ACC_STATIC,
                 CStdType.Integer, headName, null);
+        
+        firstExeName = "__first__" + this.getIdent();        
+        firstExe = new JVariableDefinition(null,
+                at.dms.kjc.Constants.ACC_STATIC,
+                CStdType.Boolean, firstExeName, new JBooleanLiteral(true));
+        
         transRotName = this.getIdent() + "_rot_trans";
         transBufName = this.getIdent() + "_trans_buf";
         
         head = new JFieldAccessExpression(headName);
         head.setType(CStdType.Integer);
+      
+        
         tile = TileraBackend.backEndBits.getLayout().getComputeNode(filterNode);
         
         //fill the dmaaddressbuffers array
@@ -300,6 +315,65 @@ public class OutputRotatingBuffer extends RotatingBuffer {
         return list;
     }
     
+    /**
+     *  We don't want to transfer during the first execution of the primepump
+     *  so guard the execution in an if statement.
+     */
+    public List<JStatement> beginPrimePumpWrite() {
+        LinkedList<JStatement> list = new LinkedList<JStatement>();
+                
+        list.add(zeroOutHead());
+        
+        JBlock block = new JBlock();
+        block.addAllStatements(dmaCommands.dmaCommands(SchedulingPhase.STEADY));
+        
+        
+        JIfStatement guard = new JIfStatement(null, new JLogicalComplementExpression(null, 
+                new JEmittedTextExpression(firstExeName)), 
+                block , new JBlock(), null);
+        
+        list.add(guard);
+        return list;
+    }
+    
+    public List<JStatement> endPrimePumpWrite() {
+        LinkedList<JStatement> list = new LinkedList<JStatement>();
+        
+        //the wait for dma commands, only wait if this is not the first exec
+        JBlock block1 = new JBlock();
+        block1.addAllStatements(dmaCommands.waitCallsSteady());
+        JIfStatement guard1 = new JIfStatement(null, new JLogicalComplementExpression(null, 
+                new JEmittedTextExpression(firstExeName)), 
+                block1 , new JBlock(), null);  
+        list.add(guard1);
+                
+        
+        //generate the rotate statements for this output buffer
+        list.addAll(rotateStatementsCurRot());
+        
+        JBlock block2 = new JBlock();
+        //rotate the transfer buffer only when it is not first
+        block2.addAllStatements(rotateStatementsTransRot());
+        //generate the rotation statements for the address buffers that this output
+        //buffer uses, only do this after first execution
+        for (DMAAddressRotation addrRot : addressBuffers.values()) {
+            block2.addAllStatements(addrRot.rotateStatements());
+        }
+        JIfStatement guard2 = new JIfStatement(null, new JLogicalComplementExpression(null, 
+                new JEmittedTextExpression(firstExeName)), 
+                block2, new JBlock(), null);    
+        list.add(guard2);
+        
+        //now we are done with the first execution to set firstExe to false
+        list.add(new JExpressionStatement(
+                new JAssignmentExpression(new JEmittedTextExpression(firstExeName), 
+                        new JBooleanLiteral(false))));
+        
+        return list;
+    }
+    
+    
+    
     /* (non-Javadoc)
      * @see at.dms.kjc.backendSupport.ChannelI#beginSteadyWrite()
      */
@@ -310,12 +384,28 @@ public class OutputRotatingBuffer extends RotatingBuffer {
         return list;
     }
     
-    protected List<JStatement> rotateStatements() {
+    protected List<JStatement> rotateStatementsCurRot() {
         LinkedList<JStatement> list = new LinkedList<JStatement>();
         list.add(Util.toStmt(currentRotName + " = " + currentRotName + "->next"));
         list.add(Util.toStmt(currentBufName + " = " + currentRotName + "->buffer"));
+        return list;
+    }
+    
+    protected List<JStatement> rotateStatementsTransRot() {
+        LinkedList<JStatement> list = new LinkedList<JStatement>();
         list.add(Util.toStmt(transRotName + " = " + transRotName + "->next"));
         list.add(Util.toStmt(transBufName + " = " + transRotName + "->buffer"));
+        return list;
+    }
+    
+    /**
+     * The rotate statements that includes the current buffer (for output of this 
+     * firing) and transfer buffer.
+     */
+    protected List<JStatement> rotateStatements() {
+        LinkedList<JStatement> list = new LinkedList<JStatement>();
+        list.addAll(rotateStatementsTransRot());
+        list.addAll(rotateStatementsCurRot());
         return list;
     }
 
@@ -370,8 +460,10 @@ public class OutputRotatingBuffer extends RotatingBuffer {
      */
     public List<JStatement> writeDecls() {
         JStatement tailDecl = new JVariableDeclarationStatement(headDefn);
+        JStatement firstDecl = new JVariableDeclarationStatement(firstExe);
         List<JStatement> retval = new LinkedList<JStatement>();
         retval.add(tailDecl);
+        retval.add(firstDecl);
         retval.addAll(dmaCommands.decls());
         return retval;
     }   
@@ -418,11 +510,6 @@ public class OutputRotatingBuffer extends RotatingBuffer {
         //modify the first entry
         block.addStatement(Util.toStmt(rotStructName + "->buffer = " + bufferNames[0]));
         if (this.rotationLength == 1)  {
-            //we want to start the transfer buffer one behind the current buffer we are 
-            //writing to, so set the transfer buffer to the last entry
-            //remember that that transfer buffer pointer is not used during the init stage
-            block.addStatement(Util.toStmt(transRotName + " = " + rotStructName));
-            block.addStatement(Util.toStmt(transBufName + " = " + rotStructName + "->buffer"));
             //loop the structure
             block.addStatement(Util.toStmt(rotStructName + "->next = " + rotStructName));
         }
@@ -442,17 +529,12 @@ public class OutputRotatingBuffer extends RotatingBuffer {
                 block.addStatement(Util.toStmt(temp + "->buffer = " + bufferNames[i]));
             }
             
-            //we want to start the transfer buffer one behind the current buffer we are 
-            //writing to, so set the transfer buffer to the last entry
-            //remember that that transfer buffer pointer is not used during the init stage
-            block.addStatement(Util.toStmt(transRotName + " = " + temp));
-            block.addStatement(Util.toStmt(transBufName + " = " + temp + "->buffer"));
-            
-
             block.addStatement(Util.toStmt(temp + "->next = " + rotStructName));
         }
         block.addStatement(Util.toStmt(currentRotName + " = " + rotStructName));
         block.addStatement(Util.toStmt(currentBufName + " = " + currentRotName + "->buffer"));
+        block.addStatement(Util.toStmt(transRotName + " = " + rotStructName));
+        block.addStatement(Util.toStmt(transBufName + " = " + currentRotName + "->buffer"));
         cs.addStatementToBufferInit(block);
     }
     

@@ -399,6 +399,14 @@ public class InputRotatingBuffer extends RotatingBuffer {
         return list;
     }
 
+    public List<JStatement> beginPrimePumpRead() {
+        return beginSteadyRead();
+    }
+    
+    public List<JStatement> endPrimePumpRead() {
+        return endSteadyRead();
+    }
+    
     /* (non-Javadoc)
      * @see at.dms.kjc.backendSupport.ChannelI#beginSteadyRead()
      */

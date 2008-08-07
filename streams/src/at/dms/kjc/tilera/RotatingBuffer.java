@@ -5,6 +5,7 @@ import at.dms.kjc.CType;
 import at.dms.kjc.JArrayAccessExpression;
 import at.dms.kjc.JExpression;
 import at.dms.kjc.JFieldAccessExpression;
+import at.dms.kjc.JStatement;
 import at.dms.kjc.JVariableDefinition;
 import at.dms.kjc.backendSupport.*;
 import at.dms.kjc.common.CommonUtils;
@@ -342,5 +343,33 @@ public abstract class RotatingBuffer extends Channel {
     protected JArrayAccessExpression bufRef(JExpression offset) {
         JFieldAccessExpression bufAccess = new JFieldAccessExpression(new JThisExpression(), currentBufName);
         return new JArrayAccessExpression(bufAccess, offset);
+    }
+    
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#beginSteadyRead()
+     */
+    public List<JStatement> beginPrimePumpRead() {
+        return new LinkedList<JStatement>(); 
+    }
+
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#endSteadyRead()
+     */
+    public List<JStatement> endPrimePumpRead() {
+        return new LinkedList<JStatement>(); 
+    }
+
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#beginSteadyWrite()
+     */
+    public List<JStatement> beginPrimePumpWrite() {
+        return new LinkedList<JStatement>(); 
+    }
+
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#endSteadyWrite()
+     */
+    public List<JStatement> endPrimePumpWrite() {
+        return new LinkedList<JStatement>(); 
     }
 }

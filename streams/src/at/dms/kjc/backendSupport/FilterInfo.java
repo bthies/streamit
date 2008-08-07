@@ -22,9 +22,12 @@ public class FilterInfo {
     public int prePop;
     /** pushed amount in pre-work in two-stage filter */
     public int prePush;
-    /** number of items remaining in buffer between steady states ?? */
+    /** number of items remaining in buffer between steady states */
+    public int copyDown;
+    /** during init, the number of items that we receive from upstream, but we don't need
+     * during init
+     */
     public int remaining;
-
     public int bottomPeek;
     /** multiplicity of calls to work function from init stage */
     public int initMult;
@@ -186,11 +189,16 @@ public class FilterInfo {
             }
         }
         
-        initItemsNeeded = (prePeek + bottomPeek + Math.max((initFire - 2), 0) * pop); 
+        initItemsNeeded = (prePeek + bottomPeek + Math.max((initFire - 2), 0) * pop);
+        assert initItemsRec >= initItemsNeeded;
+        
+        int initItemsPopped = (prePop + ((initFire - 1) * pop));
         
         remaining = initItemsRec
             - initItemsNeeded;
-
+        //the number of items that remain on the input buffer after the init stage
+        copyDown = initItemsRec - initItemsPopped;
+        System.out.println(sliceNode + " " + copyDown);
         assert remaining >= 0 : filter.getName()
             + ": Error calculating remaining " + initItemsRec + " < "
             + initItemsNeeded;

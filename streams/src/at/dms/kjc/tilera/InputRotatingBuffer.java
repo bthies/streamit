@@ -72,7 +72,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
                 buf.rotationLength = maxRotationLength + 1;
                 buf.createInitCode(true);
                 buf.createDMAAddressBufs();
-                System.out.println("Setting input buf " + buf.getFilterNode() + " to " + buf.rotationLength);
+                //System.out.println("Setting input buf " + buf.getFilterNode() + " to " + buf.rotationLength);
             }
         }
     }
@@ -130,7 +130,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
         FilterInfo fi = FilterInfo.getFilterInfo(filterNode);
         
         bufSize = Math.max(fi.totalItemsReceived(SchedulingPhase.INIT),
-                (fi.totalItemsReceived(SchedulingPhase.STEADY) + fi.remaining));
+                (fi.totalItemsReceived(SchedulingPhase.STEADY) + fi.copyDown));
     }
         
     /**
@@ -417,7 +417,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
      */
     public List<JStatement> endSteadyRead() {
         LinkedList<JStatement> list = new LinkedList<JStatement>();
-        //copy the remaining items to the next rotation buffer
+        //copy the copyDown items to the next rotation buffer
         list.addAll(copyDownStatements());
         if (upstreamFileReader) {
             list.addAll(fileReaderCommands.waitCallsSteady());
@@ -479,7 +479,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
     }
     
     /** 
-     * Generate and return the statements that implement the copying of the items remaining on 
+     * Generate and return the statements that implement the copying of the items on 
      * a buffer to the next rotating buffer.  Only done for each primepump stage and the steady stage,
      * not done for init.
      * 
@@ -487,13 +487,13 @@ public class InputRotatingBuffer extends RotatingBuffer {
      */
     protected List<JStatement> copyDownStatements() {
         List<JStatement> retval = new LinkedList<JStatement>();
-        //if we have items remaining on the buffer after filter execution, we must copy them 
+        //if we have items on the buffer after filter execution, we must copy them 
         //to the next buffer, use memcpy for now
-        if (filterInfo.remaining > 0) {
-            String size = (filterInfo.remaining * Util.getTypeSize(bufType) * 4) + "";
+        if (filterInfo.copyDown > 0) {
+            String size = (filterInfo.copyDown * Util.getTypeSize(bufType) * 4) + "";
             String dst = currentRotName + "->next->buffer";
             String src = currentBufName + " + " +
-                (Util.getTypeSize(bufType) * 4 * filterInfo.totalItemsPopped(SchedulingPhase.STEADY));
+                (Util.getTypeSize(bufType) * filterInfo.totalItemsPopped(SchedulingPhase.STEADY));
             retval.add(Util.toStmt("memcpy(" + dst + ", " + src + ", " + size + ")"));
         }
         return retval;

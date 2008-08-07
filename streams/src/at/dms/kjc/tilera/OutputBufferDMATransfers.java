@@ -42,22 +42,22 @@ public class OutputBufferDMATransfers {
                                 
                 DMAAddressRotation addrBuf = parent.getAddressBuffer(input);
                 String requestVar = addrBuf.rotStructName  + "_request";
-                int itemSize = Util.getTypeSize(parent.getType()) * 4;
+                int itemBytes = Util.getTypeSize(parent.getType()) * 4;
                 //make sure the input weight equals the output weight for now
                 assert input.getWeight(edge) == output.getWeight(edge);
                 
                 //generate the dma command
                 String dst = addrBuf.currentBufName + " + " + 
-                    (itemSize * (dstInfo.remaining + input.weightBefore(edge)));
-                String dst_stride = "" + (itemSize * input.totalWeights());
+                    (dstInfo.copyDown + input.weightBefore(edge));
+                String dst_stride = "" + (itemBytes * input.totalWeights());
                 //in the init stage we transfer after we complete the filter execution, so we use
                 //the pointer to the buffer that was just written
-                String src_init = parent.currentBufName + " + " + (itemSize * output.weightBefore(edge));
+                String src_init = parent.currentBufName + " + " + (output.weightBefore(edge));
                 //in the steady state transfer from the transfer buffer that is one behind the 
                 //current buffer we are writing (we do this because we are double buffering)
-                String src_steady = parent.transBufName + " + " + (itemSize * output.weightBefore(edge));
-                String src_stride = "" + (itemSize * output.totalWeights());
-                String block_size = "" + (itemSize * output.getWeight(edge));
+                String src_steady = parent.transBufName + " + " + (output.weightBefore(edge));
+                String src_stride = "" + (itemBytes * output.totalWeights());
+                String block_size = "" + (itemBytes * output.getWeight(edge));
                
                 int num_blocks_init = 
                     srcInfo.totalItemsSent(SchedulingPhase.INIT) / output.totalWeights();

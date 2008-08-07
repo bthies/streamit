@@ -53,25 +53,25 @@ public class FileReaderDMACommands {
     private void generateStatements() {
         FilterInfo srcInfo = FilterInfo.getFilterInfo(fileOutput.getPrevFilter());
         FilterInfo dstInfo = FilterInfo.getFilterInfo(input.getNextFilter());
-
+                
         String requestVar = parent.rotStructName  + "_request";
-        int itemSize = Util.getTypeSize(parent.getType()) * 4;
+        int itemBytes = Util.getTypeSize(parent.getType()) * 4;
         
         //generate the dma command
        
         //if we are in the init stage, transfer into the current buffer because we are
-        //not double buffering, also, don't skip the remaining because this is the first
+        //not double buffering, also, don't skip the copydown because this is the first
         //transfer
         String dst_init = parent.currentBufName;
         //we want to transfer into the next buffer if we are in the steady (primepump)  
         String dst_steady = parent.currentRotName + "->next->buffer + " + 
-            (itemSize * dstInfo.remaining);
+            (dstInfo.copyDown);
         //the stride should always be 1 in this case, but keep this here for the future
-        String dst_stride = "" + (itemSize * input.totalWeights());
+        String dst_stride = "" + (itemBytes * input.totalWeights());
         //the source is always the file read buffer
-        String src = "fileReadBuffer + " + (itemSize * fileOutput.weightBefore(edge));
-        String src_stride = "" + (itemSize * fileOutput.totalWeights());
-        String block_size = "" + (itemSize * fileOutput.getWeight(edge));
+        String src = "fileReadBuffer + fileReadIndex + " + (fileOutput.weightBefore(edge));
+        String src_stride = "" + (itemBytes * fileOutput.totalWeights());
+        String block_size = "" + (itemBytes * fileOutput.getWeight(edge));
 
         String num_blocks_init = "" + 
             srcInfo.totalItemsSent(SchedulingPhase.INIT) / fileOutput.totalWeights();
@@ -92,6 +92,7 @@ public class FileReaderDMACommands {
                 num_blocks_init + ", " + 
                 "&" + requestVar + ")"));
         commandsInit.add(Util.toStmt("ilib_wait(&" + requestVar + ", &ignore_status)"));
+        commandsInit.add(Util.toStmt("fileReadIndex += " + srcInfo.totalItemsSent(SchedulingPhase.INIT)));
 
         commandsSteady.add(Util.toStmt("ilib_mem_start_strided_dma(" +
                 dst_steady + ", " + 
@@ -101,9 +102,10 @@ public class FileReaderDMACommands {
                 block_size + ", " + 
                 num_blocks_steady + ", " +
                 "&" + requestVar + ")"));
+        //increment the file index
+        commandsSteady.add(Util.toStmt("fileReadIndex += " + srcInfo.totalItemsSent(SchedulingPhase.STEADY)));
         //generate the wait call
         waitCallsSteady.add(Util.toStmt("ilib_wait(&" + requestVar + ", &ignore_status)"));
-
 
         //generate the decl of the request var
         decls.add(Util.toStmt("ilibRequest " + requestVar));

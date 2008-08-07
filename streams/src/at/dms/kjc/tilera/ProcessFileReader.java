@@ -31,14 +31,14 @@ public class ProcessFileReader {
             block.addStatement(Util.toStmt("int flags = ILIB_MEM_SHARED | ILIB_MEM_UNCACHEABLE"));
             block.addStatement(Util.toStmt("ilib_mem_create_heap(flags, &fileReadHeap)"));
             
+            codeStore.appendTxtToGlobal(fileInput.getType() + "*fileReadBuffer;\n");
+            codeStore.appendTxtToGlobal("int fileReadIndex = 0;\n");
             //malloc enough from the heap to store the entire file
-            codeStore.appendTxtToGlobal("void *fileReadBuffer;\n");
-            block.addStatement(Util.toStmt("fileReadBuffer = ilib_mem_malloc_heap(fileReadHeap, " + 
+            block.addStatement(Util.toStmt("fileReadBuffer = (int*)ilib_mem_malloc_heap(fileReadHeap, " + 
                     fileSize + ")"));
             
             //open the file read the file into the buffer on the heap
             codeStore.appendTxtToGlobal("FILE *INPUT;\n");
-            codeStore.appendTxtToGlobal("int fileReadBufIndex = 0;\n");
             block.addStatement(Util.toStmt("INPUT = fopen(\"" + fileInput.getFileName() + "\", \"r\")"));
             block.addStatement(Util.toStmt("fread(fileReadBuffer, 1, " + fileSize + ", INPUT)"));
             block.addStatement(Util.toStmt("fclose(INPUT)"));
@@ -47,22 +47,22 @@ public class ProcessFileReader {
             block.addStatement(Util.toStmt("ilibStatus ignore"));
             block.addStatement(Util.toStmt("ilib_msg_broadcast(ILIB_GROUP_SIBLINGS, " +
                     TileraBackend.chip.translateTileNumber(codeStore.getParent().getTileNumber()) + ", " +
-                    "&fileReadBuffer, sizeof(void *), &ignore)"));
+                    "&fileReadBuffer, sizeof(int *), &ignore)"));
                                 
             //generate the receive msg broadcast on the other tiles and the declarations for the buffer/index
             for (Tile other : TileraBackend.chip.getAbstractTiles()) {
                 if (codeStore.getParent() == other) 
                     continue;
                 
-                other.getComputeCode().appendTxtToGlobal("void *fileReadBuffer;\n");
-                other.getComputeCode().appendTxtToGlobal("int fileReadBufIndex = 0;\n");
-                
+                other.getComputeCode().appendTxtToGlobal(fileInput.getType() + "*fileReadBuffer;\n");
+                other.getComputeCode().appendTxtToGlobal("int fileReadIndex = 0;\n");
+                               
                 JBlock jb = new JBlock();
                 jb.addStatement(Util.toStmt("ilibStatus ignore"));
                 jb.addStatement(Util.toStmt(
                         "ilib_msg_broadcast(ILIB_GROUP_SIBLINGS, " +
                         TileraBackend.chip.translateTileNumber(codeStore.getParent().getTileNumber()) + ", " +
-                    "&fileReadBuffer, sizeof(void *), &ignore)"));
+                    "&fileReadBuffer, sizeof(int *), &ignore)"));
                 other.getComputeCode().addStatementFirstToBufferInit(jb);
             }
             

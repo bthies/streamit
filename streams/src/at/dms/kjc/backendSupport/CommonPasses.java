@@ -176,6 +176,11 @@ public class CommonPasses {
         // pipelines, so do it here.
         Lifter.liftAggressiveSync(str);
         
+        
+        double CCRatioOrig = CompCommRatio.ratio(str, WorkEstimate.getWorkEstimate(str),
+                SIRScheduler.getExecutionCounts(str)[1]);
+        System.out.println("Comp/Comm Ratio of original SIR graph: " + CCRatioOrig);
+        
         if (KjcOptions.fusion || KjcOptions.dup >= 1 || KjcOptions.noswpipe) {
             // if we are about to fuse filters, we should perform
             // any vectorization now, since vectorization can not work inside
@@ -361,7 +366,7 @@ public class CommonPasses {
             // Print out computation to communication ratio.
             double CCRatio = CompCommRatio.ratio(str, getWorkEstimate(),
                     executionCounts[1]);
-            System.out.println("Comp/Comm Ratio of SIR graph: " + CCRatio);
+            //System.out.println("Comp/Comm Ratio of SIR graph: " + CCRatio);
             // and average max slice size.
             new CalculateParams(str, CCRatio, executionCounts[1]).doit();
         }

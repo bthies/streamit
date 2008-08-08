@@ -120,6 +120,7 @@ public class EmitTileCode extends EmitCode {
         p.println("#include <stdio.h>");    // in case of FileReader / FileWriter
         p.println("#include \"structs.h\"");
         p.println("#include <sys/archlib.h>");
+        p.println("#include <pass.h>");
         p.newLine();
         p.newLine();
     }

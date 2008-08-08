@@ -189,7 +189,7 @@ public class TileCodeStore extends ComputeCodeStore<Tile> {
     
     public void generateNumbersCode() {
         appendTxtToGlobal("uint32_t cycle_low;\n");
-        addSteadyLoopStatement(Util.toStmt("printf(\"SS Diff: %d\\n\", (spr_read_cycle_count_low() - cycle_low))"));
+        addSteadyLoopStatement(Util.toStmt("PASS(spr_read_cycle_count_low() - cycle_low)"));
         addSteadyLoopStatement(Util.toStmt("cycle_low = spr_read_cycle_count_low()"));
         addSteadyLoopStatement(Util.toStmt(
                 "if (spr_read_cycle_count_high() > 0) printf(\"Warning: Cycle count overflow\\n\")"));   

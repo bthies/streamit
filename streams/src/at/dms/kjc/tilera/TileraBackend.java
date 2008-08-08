@@ -46,7 +46,9 @@ public class TileraBackend {
 	        
         //now convert to Kopi code plus communication commands.  
         backEndBits.getBackEndMain().run(graphSchedule, backEndBits);
-        	
+        
+        chip.getComputeNode(0, 0).getComputeCode().generateNumbersCode();
+        
         //emit c code for all tiles
         EmitTileCode.doit(backEndBits);
         

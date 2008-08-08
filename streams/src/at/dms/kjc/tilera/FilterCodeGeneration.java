@@ -21,12 +21,13 @@ import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.util.Utils;
 
 public class FilterCodeGeneration extends CodeStoreHelper {
-
+ 
     private FilterSliceNode filterNode;
     private FilterInfo filterInfo;
     private static String exeIndex1Name = "__EXEINDEX__1__";
     private JVariableDefinition exeIndex1;
     private boolean exeIndex1Used;
+    
     private JVariableDefinition useExeIndex1() {
         if (exeIndex1Used) return exeIndex1;
         else {
@@ -235,6 +236,7 @@ public class FilterCodeGeneration extends CodeStoreHelper {
             }
         }
         statements.addAllStatements(endSchedulingPhase());
+    
         return statements;
     }
     

@@ -8,20 +8,32 @@ import at.dms.kjc.*;
 
 /**
  * Each Slice is started by an InputSlice Node that is either a joiner connecting several other slices, 
- * or a connection to a single other slice.
+ * or a connection to a single other slice.  There is a possibility that an input slice node could have 
+ * a different schedule for the initialization stage. This is not the common case, so most methods 
+ * assume there is not a separate schedule and use the single (steady and init) weights/sources.
+ * 
  * Has an array of weights and corresponding {@link InterSliceEdge}s.
  */
 public class InputSliceNode extends SliceNode {
+    /** the incoming round robin weights for this input slice node for the steady and for init 
+     * if the initWeights are null.
+     */
     private int[] weights;
-
+    /** the sources that correspond to the weights for the steady and for init if initWeights/initSources
+     * are null
+     */
     private InterSliceEdge[] sources;
-
+    /** if this inputslicenode requires a different joiner pattern for init, this will encode the weights */
+    private int[] initWeights;
+    /** if this inputslicenode requires a different joiner patter for init, this will encode the sources */
+    private InterSliceEdge[] initSources;
+    /** used to construct a unique identifier */
     private static int unique = 0;
-
+    /** unique identifier */
     private String ident;
-
+    /** used if no joining is performed* */
     private static int[] EMPTY_WEIGHTS = new int[0];
-
+    /** used if no joining is performed */
     private static InterSliceEdge[] EMPTY_SRCS = new InterSliceEdge[0];
 
     /** Creator */
@@ -77,6 +89,19 @@ public class InputSliceNode extends SliceNode {
         unique++;
     }
 
+    /**
+     * Return true if this input node has a different schedule for the initialization 
+     * stage.  This mean initWeights and initSources are not null.  Otherwise, return false
+     * meaning the init stages is the same as the steady.
+     * 
+     * @return 
+     */
+    public boolean hasInitPattern() {
+        assert (initWeights == null && initSources == null) || 
+            (initWeights != null && initSources != null); 
+        return (initWeights != null);
+    }
+    
     /**
      * Merge neighboring edges and weights if the neighboring edges
      * are actually the same Edge object. 
@@ -181,7 +206,7 @@ public class InputSliceNode extends SliceNode {
         
         return items;
     }
-  
+
     /** @return array of edge weights */
     public int[] getWeights() {
         return weights;
@@ -192,6 +217,18 @@ public class InputSliceNode extends SliceNode {
         return sources;
     }
 
+
+    /** @return array of edge weights for the init schedule */
+    public int[] getInitWeights() {
+        return initWeights;
+    }
+
+    /** @return array of edges for the init schedule*/
+    public InterSliceEdge[] getInitSources() {
+        return initSources;
+    }
+
+    
     /**
      * Set the weights and sources array of this input slice node
      * to the weights list and the edges list.
@@ -211,7 +248,20 @@ public class InputSliceNode extends SliceNode {
     }
     
     /**
-     * Set the weights to newWeights.
+     * Set the initialization weights.
+     * 
+     * @param newWeights The new weights
+     */
+    public void setInitWeights(int[] newWeights) {
+        if (newWeights.length == 1)
+            this.initWeights = new int[]{1};
+        else 
+            this.initWeights = newWeights;
+    }
+    
+    /**
+     * If the initialization pattern needs to be different from steady,
+     * set the weights to newWeights.
      * 
      * @param newWeights
      */
@@ -227,6 +277,16 @@ public class InputSliceNode extends SliceNode {
         this.sources = sources;
     }
 
+    /**
+     * If the initialization pattern needs to be different from steady,
+     * set the sources to newSrcs.  (shares, does not copy)
+     * 
+     * @param newSrcs The new sources.
+     */
+    public void setInitSources(InterSliceEdge[] newSrcs) {
+        this.initSources = newSrcs;
+    }
+    
     /** @return total weight of all edges */
     public int totalWeights() {
         int sum = 0;

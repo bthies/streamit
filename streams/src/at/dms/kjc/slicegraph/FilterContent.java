@@ -19,6 +19,7 @@ import at.dms.kjc.spacetime.SafeFileReaderWriterPositions;
  * SIRFilter at construction time. FilterContent is immutable and a
  * more compact representation. Truly flat. No pointers back to any
  * previously existing structure.
+ * 
  * @author jasperln
  */
 public class FilterContent implements SIRCodeUnit {
@@ -29,7 +30,7 @@ public class FilterContent implements SIRCodeUnit {
     /** Filter name */
     private String name; 
     /** PreWork and Work method declarations */
-    protected JMethodDeclaration[] prework,steady; 
+    protected JMethodDeclaration[] prework, steady; 
     /** Input and output types */
     protected CType inputType,outputType; 
     /** Multiplicities from scheduler */

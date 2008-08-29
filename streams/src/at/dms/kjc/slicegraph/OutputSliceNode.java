@@ -12,32 +12,41 @@ import java.util.List;
 
 /**
  * Each slice is terminated by an OutputSliceNode that has single input (the last filter) 
- * and multiple outputs (to downstream slices through edges).
+ * and multiple outputs (to downstream slices through edges). There is a possibility that 
+ * an output slice node could have a different schedule for the initialization stage. 
+ * This is not the common case, so most methods assume there is not a separate schedule and use the 
+ * single (steady and init) weights/dests.
  * 
  * @author mgordon
  */
 public class OutputSliceNode extends SliceNode {
-    // the (round-robin) weight for each edge.
+    /** the (round-robin) weight for each edge used for the steady and for init if this
+     * node does not have a separate init pattern.
+     */
     private int[] weights;
-
-    // Ordered array of sets of edges.
-    // The order in the outer array corresponds to the order of weights.
-    // The inner array is just a set: the elements correspond to 
-    // elements of dulicate splitters fused with the top-level
-    // round-robin splitter (by synch removal).
-    // A round-robin splitter of size n would be an Edge[n][1]
-    // A duplicate splitter of size n would be an Edge[1][n]
+    /** Ordered array of sets of edges
+     * The order in the outer array corresponds to the order of weights.
+     * The inner array is just a set: the elements correspond to 
+     * elements of duplicate splitters fused with the top-level
+     * round-robin splitter (by synch removal).
+     * A round-robin splitter of size n would be an Edge[n][1]
+     * A duplicate splitter of size n would be an Edge[1][n]
+     */
     private InterSliceEdge[][] dests;
-
+    /** the weights for init if this node requires a different init splitting pattern */
+    private int[] initWeights;
+    /** the dest array for init if this node requires a differnt init splitting pattern */
+    private InterSliceEdge[][] initDests; 
+        /** unique identifier for this node */
     private String ident;
-
+    /** used to generate unique id */
     private static int unique = 0;
-
+    /** used to initialize the weights array */
     private static int[] EMPTY_WEIGHTS = new int[0];
-
+    /** used to initialize the weights array */
     private static InterSliceEdge[][] EMPTY_DESTS = new InterSliceEdge[0][0];
-
-    private List sortedOutputs;
+    /** the outputs of this node sorted by the numbers of items sent to the output */
+    private List<InterSliceEdge> sortedOutputs;
 
     
     /**
@@ -104,9 +113,31 @@ public class OutputSliceNode extends SliceNode {
         dests = EMPTY_DESTS;
     }
 
-    /** Set the weights */
+    /**
+     * Return true if this output node has a different schedule for the initialization 
+     * stage.  This mean initWeights and initDests are not null.  Otherwise, return false
+     * meaning the init stages is the same as the steady.
+     * 
+     * @return 
+     */
+    public boolean hasInitPattern() {
+        assert (initWeights == null && initDests == null) || 
+            (initWeights != null && initDests != null); 
+        return (initWeights != null);
+    }
+    
+    
+    /** Set the weights for the steady state (and for init if this
+     * node does not require a different pattern for init) */
     public void setWeights(int[] newW) {
         this.weights = newW;
+    }
+
+    /** Set the weights for the init stage, this means that init will 
+     * have a splitting pattern that is different from steady 
+     * */
+    public void setInitWeights(int[] newW) {
+        this.initWeights = newW;
     }
     
     /**
@@ -136,6 +167,14 @@ public class OutputSliceNode extends SliceNode {
         return weights;
     }
 
+    /** 
+     * @return the weights for the initialization stage, note that this may be null
+     * if the splitting pattern for init is the same as steady. 
+     */
+    public int[] getInitWeights() {
+        return initWeights;
+    }
+    
     /** @return whether previous filter was FileInput */
     public boolean isFileInput() {
         return ((FilterSliceNode) getPrevious()).isFileInput();
@@ -149,6 +188,22 @@ public class OutputSliceNode extends SliceNode {
     /** Set dests */
     public void setDests(InterSliceEdge[][] dests) {
         this.dests = dests;
+    }
+
+    /** 
+     * Return the initialization pattern for splitting.  Note that this may be null
+     * if the pattern is the same as the steady pattern. 
+     * @return dests 
+     */
+    public InterSliceEdge[][] getInitDests() {
+        return initDests;
+    }
+
+    /** 
+     * Set the initialization pattern for splitting.
+     */
+    public void setInitDests(InterSliceEdge[][] dests) {
+        this.initDests = dests;
     }
 
     /** @return unique string */
@@ -165,7 +220,7 @@ public class OutputSliceNode extends SliceNode {
     }
 
     /**
-     * Combine the weights of adajacent outputs that have equal 
+     * Combine the weights of adjacent outputs that have equal 
      * destinations.
      * This operation exists as a cleanup operation for synch removal.
      * Code generation for Edges may rely on {@link InputSliceNode#canonicalize()}

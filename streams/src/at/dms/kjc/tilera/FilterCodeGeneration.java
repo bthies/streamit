@@ -250,7 +250,7 @@ public class FilterCodeGeneration extends CodeStoreHelper {
         JBlock block = new JBlock();
         
         if (TileraBackend.scheduler.isTMD()) {
-            block.addStatement(Util.toStmt("ilib_msg_barrier(ILIB_GROUP_SIBLINGS)"));
+            //block.addStatement(Util.toStmt("ilib_msg_barrier(ILIB_GROUP_SIBLINGS)"));
         }
         
         return block;

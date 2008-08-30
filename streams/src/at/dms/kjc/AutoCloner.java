@@ -1,6 +1,7 @@
 package at.dms.kjc;
 
 import at.dms.kjc.sir.*;
+import at.dms.kjc.slicegraph.*;
 import at.dms.kjc.iterator.*;
 import at.dms.util.*;
 import at.dms.compiler.JavaStyleComment;
@@ -84,6 +85,23 @@ public class AutoCloner {
         return result;
     }
 
+    /**
+     * Clone a slice.
+     * 
+     * @param slice the slice to clone
+     * @return the new slice
+     */
+    static public Object deepCopy (Slice slice) {
+        // not sure what toBeCloned should be in this case... for now
+        // make it empty.
+        toBeCloned = new HashSet<DeepCloneable>();
+
+        registry = new HashMap<RegistryWrapper, Object>();
+        Object result = cloneToplevel(slice);
+        registry = null;
+        return result;
+    }
+    
     /**
      * Clone everything in a kopi2sir, useful for recursive stream
      * definitions.

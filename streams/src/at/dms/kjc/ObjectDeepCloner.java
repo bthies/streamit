@@ -12,6 +12,7 @@
 package at.dms.kjc;
 
 import at.dms.kjc.sir.*;
+import at.dms.kjc.slicegraph.*;
 import at.dms.kjc.iterator.*;
 import at.dms.util.*;
 import at.dms.compiler.JavaStyleComment;
@@ -37,6 +38,19 @@ public class ObjectDeepCloner
 
     // so that nobody can accidentally create an ObjectCloner object
     private ObjectDeepCloner(){}
+    
+    /**
+     * Deep copy a slice.
+     * 
+     */ 
+    static public Object deepCopy(Slice oldObj) {
+        if (!KjcOptions.clone_with_serialization) {
+            return AutoCloner.deepCopy(oldObj);
+        } else {
+            assert false : "Cloning a slice works only with the new cloning implementation.";
+            return null;
+        }
+    }
 
     /**
      * Deep copy a stream structure.

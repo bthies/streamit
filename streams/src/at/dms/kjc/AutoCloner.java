@@ -162,7 +162,7 @@ public class AutoCloner {
             result = o;
         } 
         else if (o instanceof at.dms.kjc.slicegraph.Slice) {
-            result = cloneSlice((Slice)o);
+            result = cloneSlice((at.dms.kjc.slicegraph.Slice)o);
         }
         // other kjc classes, do deep cloning
         else if (CloneGenerator.inTargetClasses(typeName)) {

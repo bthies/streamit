@@ -179,7 +179,7 @@ public class FileOutputContent extends OutputContent {
         workBlock.addStatement(new JExpressionStatement(new JAssignmentExpression(tmp.getRef(),pop)));
     
     
-        // RMR { support ascii or binary file operations for reading
+        // RMR { support ascii or binary file operations for reading }
         JMethodCallExpression fileio;
 
         if (KjcOptions.asciifileio) {

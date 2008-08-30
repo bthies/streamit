@@ -34,7 +34,7 @@ public class Slice {
     /**
      * Create slice with an InputSliceNode.
      * "head" is expected to be linked to a FilterSliceNode by the time finish is called.
-     * @{link {@link #finish() finish} will tack on an OutputSliceNode if missing.
+     * @{link {@link #finish() finish} } will tack on an OutputSliceNode if missing.
      * @param head  the InputSliceNode
      */
     public Slice(InputSliceNode head) {

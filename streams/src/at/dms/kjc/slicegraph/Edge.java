@@ -20,7 +20,7 @@ import at.dms.kjc.CType;
  */
 
 public class Edge {
-
+    public static final String[] DO_NOT_CLONE_THESE_FIELDS = { "src", "dest" };
     /**
      * Source of directed edge in Slice graph
      */

@@ -20,6 +20,9 @@ import java.util.List;
  * @author mgordon
  */
 public class OutputSliceNode extends SliceNode {
+    public static final String[] DO_NOT_CLONE_THESE_FIELDS = 
+        { "weights", "dests", "initWeights", "initDests" };
+    
     /** the (round-robin) weight for each edge used for the steady and for init if this
      * node does not have a separate init pattern.
      */

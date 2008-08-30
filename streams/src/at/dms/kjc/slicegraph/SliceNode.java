@@ -6,6 +6,8 @@ package at.dms.kjc.slicegraph;
  * They can be specialized into {@link InputSliceNode}, {@link FilterSliceNode}, or {@link OutputSliceNode}. 
  */
 public class SliceNode {
+    public static final String[] DO_NOT_CLONE_THESE_FIELDS = { "toNext", "toPrev" };
+
     private IntraSliceEdge toNext = null;  // internal to slice: remains null for OutputSliceNode
     private IntraSliceEdge toPrev = null;  // internal to slice: remains null for InputSliceNode
 

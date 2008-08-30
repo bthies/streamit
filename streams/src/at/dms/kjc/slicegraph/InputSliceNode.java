@@ -15,6 +15,9 @@ import at.dms.kjc.*;
  * Has an array of weights and corresponding {@link InterSliceEdge}s.
  */
 public class InputSliceNode extends SliceNode {
+    public static final String[] DO_NOT_CLONE_THESE_FIELDS = 
+        { "weights", "sources", "initWeights", "initSources" };
+    
     /** the incoming round robin weights for this input slice node for the steady and for init 
      * if the initWeights are null.
      */

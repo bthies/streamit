@@ -12,6 +12,7 @@ import java.util.ArrayList;
  * @author mgordon
  */
 public class Slice {
+        
     //The head of the slice.
     protected InputSliceNode head;
     //the Tail of the slice.

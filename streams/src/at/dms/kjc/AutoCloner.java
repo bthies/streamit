@@ -161,6 +161,9 @@ public class AutoCloner {
             // don't clone these since they're immutable or shouldn't be copied
             result = o;
         } 
+        else if (o instanceof at.dms.kjc.slicegraph.Slice) {
+            result = cloneSlice((Slice)o);
+        }
         // other kjc classes, do deep cloning
         else if (CloneGenerator.inTargetClasses(typeName)) {
             // first pass:  output deep cloning for everything in at.dms
@@ -251,6 +254,18 @@ public class AutoCloner {
         }
     }
 
+    /**
+     * Special case for a Slice of at.dms.kjc.slicegraph.  Clone the slice and 
+     * then call finish to set up the references inside the 
+
+     * @param slice
+     * @return
+     */
+    static private Object cloneSlice(at.dms.kjc.slicegraph.Slice slice) {
+        at.dms.kjc.slicegraph.Slice newSlice = slice.deepClone();
+        slice.finish();
+    }
+    
     /**
      * Helper function.  Should only be called as part of automatic
      * cloning process.

@@ -587,6 +587,20 @@ public class CloneGenerator {
         "at.dms.kjc.sir.SIRStructure",
         "at.dms.kjc.sir.SIRTwoStageFilter",
         //"at.dms.kjc.sir.StreamVisitor"  -- shouldn't have references to this,
-        "at.dms.kjc.rstream.JDoLoopStatement"
+        "at.dms.kjc.rstream.JDoLoopStatement",
+        "at.dms.kjc.slicegraph.Edge",
+        "at.dms.kjc.slicegraph.FileInputContent",
+        "at.dms.kjc.slicegraph.FileOutputContent",
+        "at.dms.kjc.slicegraph.FilterContent",
+        "at.dms.kjc.slicegraph.FilterSliceNode",
+        "at.dms.kjc.slicegraph.InputContent",
+        "at.dms.kjc.slicegraph.InputSliceNode",
+        "at.dms.kjc.slicegraph.InterSliceEdge",
+        "at.dms.kjc.slicegraph.IntraSliceEdge",
+        "at.dms.kjc.slicegraph.OutputContent",
+        "at.dms.kjc.slicegraph.OutputSliceNode",
+        "at.dms.kjc.slicegraph.PredefinedContent",
+        "at.dms.kjc.slicegraph.Slice",
+        "at.dms.kjc.slicegraph.SliceNode"
     };
 }

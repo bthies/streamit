@@ -168,4 +168,23 @@ public class Edge {
     }
 
 
+
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.slicegraph.Edge other = new at.dms.kjc.slicegraph.Edge();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
+
+    /** Clones all fields of this into <pre>other</pre> */
+    protected void deepCloneInto(at.dms.kjc.slicegraph.Edge other) {
+        other.src = this.src;
+        other.dest = this.dest;
+        other.type = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.type);
+    }
+
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

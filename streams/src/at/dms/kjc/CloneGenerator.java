@@ -108,7 +108,7 @@ public class CloneGenerator {
             sb.append("INTERFACE - ABORTING\n");
             return sb.toString();
         }
-        sb.append("    /** Clones all fields of this into <pre>pre</pre>other</pre> */\n");
+        sb.append("    /** Clones all fields of this into <pre>other</pre> */\n");
         sb.append("    protected void deepCloneInto(" + c.getName() + " other) {\n");
         // if there's a superclass, then call deepClone on super.
         if (c.getSuperclass()!=null && !c.getSuperclass().getName().equals("java.lang.Object")) {
@@ -282,7 +282,8 @@ public class CloneGenerator {
             // the end of the class -- find end of class by counting {
             // and }
             int braces = 0;
-            int pos = -1;
+            // skip over initial comments, which may include open and close braces
+            int pos = contentsStr.indexOf("class");
             boolean started = false;
             do {
                 pos++;

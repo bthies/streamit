@@ -71,6 +71,12 @@ public class FilterContent implements SIRCodeUnit {
     private int total;
     
     /**
+     * No argument constructor, FOR AUTOMATIC CLONING ONLY.
+     */
+    protected FilterContent() {
+    }
+
+    /**
      * Copy constructor for FilterContent
      * @param content The FilterContent to copy.
      */
@@ -749,4 +755,41 @@ public class FilterContent implements SIRCodeUnit {
         return paramList;
     }
     */
+
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.slicegraph.FilterContent other = new at.dms.kjc.slicegraph.FilterContent();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
+
+    /** Clones all fields of this into <pre>other</pre> */
+    protected void deepCloneInto(at.dms.kjc.slicegraph.FilterContent other) {
+        other.my_unique_ID = this.my_unique_ID;
+        other.name = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.name);
+        other.prework = (at.dms.kjc.JMethodDeclaration[])at.dms.kjc.AutoCloner.cloneToplevel(this.prework);
+        other.steady = (at.dms.kjc.JMethodDeclaration[])at.dms.kjc.AutoCloner.cloneToplevel(this.steady);
+        other.inputType = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.inputType);
+        other.outputType = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.outputType);
+        other.initMult = this.initMult;
+        other.steadyMult = this.steadyMult;
+        other.methods = (at.dms.kjc.JMethodDeclaration[])at.dms.kjc.AutoCloner.cloneToplevel(this.methods);
+        other.initFunction = (at.dms.kjc.JMethodDeclaration)at.dms.kjc.AutoCloner.cloneToplevel(this.initFunction);
+        other.is2stage = this.is2stage;
+        other.fields = (at.dms.kjc.JFieldDeclaration[])at.dms.kjc.AutoCloner.cloneToplevel(this.fields);
+        other.popCount = this.popCount;
+        other.peek = this.peek;
+        other.linear = this.linear;
+        other.array = (double[])at.dms.kjc.AutoCloner.cloneToplevel(this.array);
+        other.constant = this.constant;
+        other.begin = this.begin;
+        other.end = this.end;
+        other.pos = this.pos;
+        other.total = this.total;
+    }
+
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

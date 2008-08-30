@@ -4,13 +4,19 @@ import at.dms.kjc.backendSupport.FilterInfo;
 import at.dms.kjc.backendSupport.SchedulingPhase;
 
 /**
- *  This class represents an edge in the partitioned stream graph between slices.
+ *  An InterSliceEdge represents an edge in the partitioned stream graph between slices.
  *  But it actually connects {@link OutputSliceNode}s to {@link InputSliceNodes}.
  * 
  * @author mgordon
  *
  */
 public class InterSliceEdge extends Edge {
+    /**
+     * No argument constructor, FOR AUTOMATIC CLONING ONLY.
+     */
+    private InterSliceEdge() {
+        super();
+    }
     
     /**
      * Full constructor, (type will be inferred from src / dest).

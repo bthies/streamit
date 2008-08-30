@@ -376,6 +376,7 @@ public class SIRFeedbackLoop extends SIRContainer implements Cloneable {
         other.splitter = (at.dms.kjc.sir.SIRSplitter)at.dms.kjc.AutoCloner.cloneToplevel(this.splitter);
         other.delay = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.delay);
         other.initPath = (at.dms.kjc.JMethodDeclaration)at.dms.kjc.AutoCloner.cloneToplevel(this.initPath);
+        other.warned = this.warned;
     }
 
     /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

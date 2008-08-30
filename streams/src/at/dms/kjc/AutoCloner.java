@@ -262,8 +262,9 @@ public class AutoCloner {
      * @return
      */
     static private Object cloneSlice(at.dms.kjc.slicegraph.Slice slice) {
-        at.dms.kjc.slicegraph.Slice newSlice = slice.deepClone();
+        Object newSlice = slice.deepClone();
         slice.finish();
+        return newSlice;
     }
     
     /**

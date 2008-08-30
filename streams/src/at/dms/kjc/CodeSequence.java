@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CodeSequence.java,v 1.10 2006-09-25 13:54:34 dimock Exp $
+ * $Id: CodeSequence.java,v 1.11 2008-08-30 01:34:19 thies Exp $
  */
 
 /**
@@ -524,7 +524,7 @@ public final class CodeSequence extends at.dms.util.Utils implements Constants {
         other.labelAtEnd = this.labelAtEnd;
         other.lineNumber = this.lineNumber;
         other.lastLine = this.lastLine;
-        other.contexts = (java.util.Stack<JStatement>)at.dms.kjc.AutoCloner.cloneToplevel(this.contexts);
+        other.contexts = (java.util.Stack)at.dms.kjc.AutoCloner.cloneToplevel(this.contexts);
     }
 
     /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

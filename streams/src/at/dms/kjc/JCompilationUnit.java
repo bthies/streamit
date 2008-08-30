@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JCompilationUnit.java,v 1.13 2006-09-25 13:54:34 dimock Exp $
+ * $Id: JCompilationUnit.java,v 1.14 2008-08-30 01:34:19 thies Exp $
  */
 
 package at.dms.kjc;
@@ -259,7 +259,7 @@ public class JCompilationUnit extends JPhylum {
         other.importedClasses = (at.dms.kjc.JClassImport[])at.dms.kjc.AutoCloner.cloneToplevel(this.importedClasses);
         other.importedPackages = (at.dms.kjc.JPackageImport[])at.dms.kjc.AutoCloner.cloneToplevel(this.importedPackages);
         other.typeDeclarations = (at.dms.kjc.JTypeDeclaration[])at.dms.kjc.AutoCloner.cloneToplevel(this.typeDeclarations);
-        other.allLoadedClasses = (java.util.Hashtable<String, CClassType>)at.dms.kjc.AutoCloner.cloneToplevel(this.allLoadedClasses);
+        other.allLoadedClasses = (java.util.Hashtable)at.dms.kjc.AutoCloner.cloneToplevel(this.allLoadedClasses);
         other.export = (at.dms.kjc.CCompilationUnit)at.dms.kjc.AutoCloner.cloneToplevel(this.export);
     }
 

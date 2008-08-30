@@ -132,6 +132,7 @@ public class SIRStructure extends SIRStream
     /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.sir.SIRStructure other) {
         super.deepCloneInto(other);
+        other.isCUnion = this.isCUnion;
     }
 
     /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JBlock.java,v 1.26 2006-11-15 18:35:21 dimock Exp $
+ * $Id: JBlock.java,v 1.27 2008-08-30 01:34:19 thies Exp $
  */
 
 package at.dms.kjc;
@@ -279,7 +279,6 @@ public class JBlock extends JStatement {
     /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.JBlock other) {
         super.deepCloneInto(other);
-        List<JStatement> cloneToplevel = (List<JStatement>)at.dms.kjc.AutoCloner.cloneToplevel(this.body);
         other.body = (java.util.LinkedList)at.dms.kjc.AutoCloner.cloneToplevel(this.body);
     }
 

@@ -16,6 +16,13 @@ public class FileOutputContent extends OutputContent {
     private int outputs; //Expected number of outputs
 
     /**
+     * No argument constructor, FOR AUTOMATIC CLONING ONLY.
+     */
+    private FileOutputContent() {
+        super();
+    }
+
+    /**
      * Copy constructor for FileOutputContent.
      * @param content The FileOutputContent to copy.
      */
@@ -288,4 +295,24 @@ public class FileOutputContent extends OutputContent {
         this.setTheMethods(new JMethodDeclaration[]{initMethod,workMethod,closeMethod});
     }
 
+
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.slicegraph.FileOutputContent other = new at.dms.kjc.slicegraph.FileOutputContent();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
+
+    /** Clones all fields of this into <pre>other</pre> */
+    protected void deepCloneInto(at.dms.kjc.slicegraph.FileOutputContent other) {
+        super.deepCloneInto(other);
+        other.filename = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.filename);
+        other.outputs = this.outputs;
+        other.closeMethod = (at.dms.kjc.JMethodDeclaration)at.dms.kjc.AutoCloner.cloneToplevel(this.closeMethod);
+    }
+
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CBodyContext.java,v 1.11 2006-09-25 13:54:33 dimock Exp $
+ * $Id: CBodyContext.java,v 1.12 2008-08-30 01:34:18 thies Exp $
  */
 
 package at.dms.kjc;
@@ -582,7 +582,7 @@ public abstract class CBodyContext extends CContext {
         other.flowState = this.flowState;
         other.variableInfo = (at.dms.kjc.CVariableInfo)at.dms.kjc.AutoCloner.cloneToplevel(this.variableInfo);
         other.fieldInfo = (at.dms.kjc.CVariableInfo)at.dms.kjc.AutoCloner.cloneToplevel(this.fieldInfo);
-        other.throwables = (java.util.Hashtable<Serializable, CThrowableInfo>)at.dms.kjc.AutoCloner.cloneToplevel(this.throwables);
+        other.throwables = (java.util.Hashtable)at.dms.kjc.AutoCloner.cloneToplevel(this.throwables);
     }
 
     /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

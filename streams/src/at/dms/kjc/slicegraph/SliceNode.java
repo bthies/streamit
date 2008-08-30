@@ -106,4 +106,23 @@ public class SliceNode {
         assert parent != null : "parent not set for slice node";
         return parent;
     }
+
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.slicegraph.SliceNode other = new at.dms.kjc.slicegraph.SliceNode();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
+
+    /** Clones all fields of this into <pre>other</pre> */
+    protected void deepCloneInto(at.dms.kjc.slicegraph.SliceNode other) {
+        other.toNext = this.toNext;
+        other.toPrev = this.toPrev;
+        other.parent = (at.dms.kjc.slicegraph.Slice)at.dms.kjc.AutoCloner.cloneToplevel(this.parent);
+    }
+
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

@@ -206,4 +206,24 @@ public class Slice {
     public java.util.List<FilterSliceNode> getFilterNodes() {
         return java.util.Collections.unmodifiableList(java.util.Arrays.asList(filterNodes));
     }
+
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.slicegraph.Slice other = new at.dms.kjc.slicegraph.Slice();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
+
+    /** Clones all fields of this into <pre>other</pre> */
+    protected void deepCloneInto(at.dms.kjc.slicegraph.Slice other) {
+        other.head = (at.dms.kjc.slicegraph.InputSliceNode)at.dms.kjc.AutoCloner.cloneToplevel(this.head);
+        other.tail = (at.dms.kjc.slicegraph.OutputSliceNode)at.dms.kjc.AutoCloner.cloneToplevel(this.tail);
+        other.len = this.len;
+        other.filterNodes = (at.dms.kjc.slicegraph.FilterSliceNode[])at.dms.kjc.AutoCloner.cloneToplevel(this.filterNodes);
+    }
+
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

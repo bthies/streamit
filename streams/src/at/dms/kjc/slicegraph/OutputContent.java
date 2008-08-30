@@ -14,6 +14,13 @@ import at.dms.kjc.sir.linear.*;
  */
 public abstract class OutputContent extends PredefinedContent {
     /**
+     * No argument constructor, FOR AUTOMATIC CLONING ONLY.
+     */
+    protected OutputContent() {
+        super();
+    }
+
+    /**
      * Copy constructor for OutputContent.
      * @param content The OutputContent to copy.
      */
@@ -38,4 +45,16 @@ public abstract class OutputContent extends PredefinedContent {
     }
     
     public abstract void createContent();
+
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+    /** Returns a deep clone of this object. */
+    public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated cloning methods - deepClone was called on an abstract class."); return null; }
+
+    /** Clones all fields of this into <pre>other</pre> */
+    protected void deepCloneInto(at.dms.kjc.slicegraph.OutputContent other) {
+        super.deepCloneInto(other);
+    }
+
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

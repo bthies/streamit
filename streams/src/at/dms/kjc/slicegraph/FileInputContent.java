@@ -13,6 +13,13 @@ public class FileInputContent extends InputContent {
     private String filename; //The filename
     
     /**
+     * No argument constructor, FOR AUTOMATIC CLONING ONLY.
+     */
+    private FileInputContent() {
+        super();
+    }
+
+    /**
      * Copy constructor for FileInputContent.
      * @param content The FileInputContent to copy.
      */
@@ -233,4 +240,22 @@ public class FileInputContent extends InputContent {
     }
 
     
+
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.slicegraph.FileInputContent other = new at.dms.kjc.slicegraph.FileInputContent();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
+
+    /** Clones all fields of this into <pre>other</pre> */
+    protected void deepCloneInto(at.dms.kjc.slicegraph.FileInputContent other) {
+        super.deepCloneInto(other);
+        other.filename = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.filename);
+    }
+
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

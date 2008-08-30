@@ -86,7 +86,7 @@ public class JEmittedTextExpression extends JExpression {
         return other;
     }
 
-    /** Clones all fields of this into <pre>pre</pre>other</pre> */
+    /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.JEmittedTextExpression other) {
         super.deepCloneInto(other);
         other.parts = (java.lang.Object[])at.dms.kjc.AutoCloner.cloneToplevel(this.parts);

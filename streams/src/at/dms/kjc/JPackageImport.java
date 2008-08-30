@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JPackageImport.java,v 1.12 2006-09-25 13:54:34 dimock Exp $
+ * $Id: JPackageImport.java,v 1.13 2008-08-30 01:34:19 thies Exp $
  */
 
 package at.dms.kjc;
@@ -170,7 +170,7 @@ public class JPackageImport extends JPhylum {
         super.deepCloneInto(other);
         other.name = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.name);
         other.comments = (at.dms.compiler.JavaStyleComment[])at.dms.kjc.AutoCloner.cloneToplevel(this.comments);
-        other.classesUsed = (java.util.Vector<String>)at.dms.kjc.AutoCloner.cloneToplevel(this.classesUsed);
+        other.classesUsed = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.classesUsed);
     }
 
     /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

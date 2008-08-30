@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CMethodContext.java,v 1.10 2006-09-25 13:54:34 dimock Exp $
+ * $Id: CMethodContext.java,v 1.11 2008-08-30 01:34:19 thies Exp $
  */
 
 package at.dms.kjc;
@@ -192,7 +192,7 @@ public class CMethodContext extends CContext {
     /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.CMethodContext other) {
         super.deepCloneInto(other);
-        other.throwables = (java.util.Hashtable<Serializable, CThrowableInfo>)at.dms.kjc.AutoCloner.cloneToplevel(this.throwables);
+        other.throwables = (java.util.Hashtable)at.dms.kjc.AutoCloner.cloneToplevel(this.throwables);
         other.labels = (java.util.Hashtable)at.dms.kjc.AutoCloner.cloneToplevel(this.labels);
         other.self = (at.dms.kjc.CMethod)at.dms.kjc.AutoCloner.cloneToplevel(this.self);
     }

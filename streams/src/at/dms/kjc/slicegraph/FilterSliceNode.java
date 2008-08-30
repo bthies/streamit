@@ -20,6 +20,13 @@ public class FilterSliceNode extends SliceNode
         contentToNode = new HashMap<FilterContent, FilterSliceNode>();
     }
     
+    /**
+     * No argument constructor, FOR AUTOMATIC CLONING ONLY.
+     */
+    private FilterSliceNode() {
+        super();
+    }
+
     public FilterSliceNode(FilterContent filter) {
         predefined = (filter instanceof PredefinedContent);
         this.filter = filter;
@@ -65,6 +72,26 @@ public class FilterSliceNode extends SliceNode
     {
         return (filter instanceof FileOutputContent);
     }
+
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.slicegraph.FilterSliceNode other = new at.dms.kjc.slicegraph.FilterSliceNode();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
+
+    /** Clones all fields of this into <pre>other</pre> */
+    protected void deepCloneInto(at.dms.kjc.slicegraph.FilterSliceNode other) {
+        super.deepCloneInto(other);
+        other.filter = (at.dms.kjc.slicegraph.FilterContent)at.dms.kjc.AutoCloner.cloneToplevel(this.filter);
+        other.predefined = this.predefined;
+        other.laidout = this.laidout;
+    }
+
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }
 
 

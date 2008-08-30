@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CCompilationUnit.java,v 1.11 2006-09-25 13:54:34 dimock Exp $
+ * $Id: CCompilationUnit.java,v 1.12 2008-08-30 01:34:19 thies Exp $
  */
 
 package at.dms.kjc;
@@ -148,7 +148,7 @@ public class CCompilationUnit implements java.io.Serializable, DeepCloneable {
         other.packageName = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.packageName);
         other.importedClasses = (at.dms.kjc.JClassImport[])at.dms.kjc.AutoCloner.cloneToplevel(this.importedClasses);
         other.importedPackages = (at.dms.kjc.JPackageImport[])at.dms.kjc.AutoCloner.cloneToplevel(this.importedPackages);
-        other.loadedClasses = (java.util.Hashtable<String, CClassType>)at.dms.kjc.AutoCloner.cloneToplevel(this.loadedClasses);
+        other.loadedClasses = (java.util.Hashtable)at.dms.kjc.AutoCloner.cloneToplevel(this.loadedClasses);
     }
 
     /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

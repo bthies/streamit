@@ -2907,17 +2907,18 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
         other.interfaceList = this.interfaceList;
         other.interfaceTableList = this.interfaceTableList;
         other.structureList = this.structureList;
-        other.helperList = (java.util.Vector<SIRHelper>)at.dms.kjc.AutoCloner.cloneToplevel(this.helperList);
+        other.helperList = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.helperList);
         other.global = (at.dms.kjc.sir.SIRGlobal)at.dms.kjc.AutoCloner.cloneToplevel(this.global);
-        other.searchList = (java.util.LinkedList<String>)at.dms.kjc.AutoCloner.cloneToplevel(this.searchList);
+        other.searchList = (java.util.LinkedList)at.dms.kjc.AutoCloner.cloneToplevel(this.searchList);
         other.params = (at.dms.kjc.JFormalParameter[])at.dms.kjc.AutoCloner.cloneToplevel(this.params);
         other.paramNames = (java.lang.String[])at.dms.kjc.AutoCloner.cloneToplevel(this.paramNames);
-        other.finalVars = (java.util.LinkedList<LinkedList<JLocalVariable>>)at.dms.kjc.AutoCloner.cloneToplevel(this.finalVars);
+        other.finalVars = (java.util.LinkedList)at.dms.kjc.AutoCloner.cloneToplevel(this.finalVars);
         other.anonCreation = this.anonCreation;
         other.nextLatency = (at.dms.kjc.sir.SIRLatency)at.dms.kjc.AutoCloner.cloneToplevel(this.nextLatency);
         other.methodToPushRate = this.methodToPushRate;
         other.methodToPopRate = this.methodToPopRate;
         other.methodToPeekRate = this.methodToPeekRate;
     }
+
     /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

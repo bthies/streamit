@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CClass.java,v 1.16 2006-12-20 18:03:32 dimock Exp $
+ * $Id: CClass.java,v 1.17 2008-08-30 01:34:18 thies Exp $
  */
 
 package at.dms.kjc;
@@ -824,7 +824,7 @@ public abstract class CClass extends CMember {
         other.innerClasses = (at.dms.kjc.CClassType[])at.dms.kjc.AutoCloner.cloneToplevel(this.innerClasses);
         other.superClass = (at.dms.kjc.CClassType)at.dms.kjc.AutoCloner.cloneToplevel(this.superClass);
         other.hasOuterThis = this.hasOuterThis;
-        other.fields = (java.util.Hashtable<String, CField>)at.dms.kjc.AutoCloner.cloneToplevel(this.fields);
+        other.fields = (java.util.Hashtable)at.dms.kjc.AutoCloner.cloneToplevel(this.fields);
         other.methods = (at.dms.kjc.CMethod[])at.dms.kjc.AutoCloner.cloneToplevel(this.methods);
         other.qualifiedAndAnonymous = this.qualifiedAndAnonymous;
     }

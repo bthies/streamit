@@ -602,6 +602,7 @@ public class CloneGenerator {
         "at.dms.kjc.slicegraph.OutputSliceNode",
         "at.dms.kjc.slicegraph.PredefinedContent",
         "at.dms.kjc.slicegraph.Slice",
-        "at.dms.kjc.slicegraph.SliceNode"
+        "at.dms.kjc.slicegraph.SliceNode",
+        "at.dms.kjc.slicegraph.SimpleSlice"
     };
 }

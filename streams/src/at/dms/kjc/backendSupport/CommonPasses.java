@@ -426,7 +426,6 @@ public class CommonPasses {
         AddBuffering.doit(slicer,false,numCores);
         // decompose any pipelines of filters in the Slice graph.
         slicer.ensureSimpleSlices();
-        
     }
 
     /** 

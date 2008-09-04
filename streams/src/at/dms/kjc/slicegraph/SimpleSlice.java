@@ -9,7 +9,7 @@ package at.dms.kjc.slicegraph;
  * @author dimock
  *
  */
-public class SimpleSlice extends Slice {
+public class SimpleSlice extends Slice implements at.dms.kjc.DeepCloneable {
 
     protected FilterSliceNode body;
     
@@ -63,6 +63,8 @@ public class SimpleSlice extends Slice {
             tail.setPrevious(body);
     }
     
+    protected SimpleSlice(){};
+    
     /**
      * @param head
      */
@@ -83,11 +85,11 @@ public class SimpleSlice extends Slice {
     public int finish() {
         super.finish();
         
-        assert head.getNext() == body.getPrevious() 
-        && tail.getPrevious() == body.getNext()
-        && head.getParent() == this 
-        && body.getParent() == this
-        && tail.getParent() == this;
+        assert head.getNext() == body : head.getNext() + " " + body.getPrevious();
+        assert tail.getPrevious() == body;
+        assert head.getParent() == this; 
+        assert body.getParent() == this;
+        assert tail.getParent() == this;
         return 1;
     }
     
@@ -127,4 +129,22 @@ public class SimpleSlice extends Slice {
         this.body = body; 
         body.setParent(this);
     }
+    
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */    
+    
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.slicegraph.SimpleSlice other = new at.dms.kjc.slicegraph.SimpleSlice();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
+
+    /** Clones all fields of this into <pre>other</pre> */
+    protected void deepCloneInto(at.dms.kjc.slicegraph.SimpleSlice other) {
+        super.deepCloneInto(other);
+        other.body = (at.dms.kjc.slicegraph.FilterSliceNode)at.dms.kjc.AutoCloner.cloneToplevel(this.body);
+    }
+
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

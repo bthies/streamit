@@ -6,14 +6,7 @@ package at.dms.kjc.backendSupport;
 import java.util.*;
 
 import at.dms.kjc.common.*;
-import at.dms.kjc.slicegraph.DataFlowOrder;
-import at.dms.kjc.slicegraph.InterSliceEdge;
-import at.dms.kjc.slicegraph.SliceNode;
-import at.dms.kjc.slicegraph.InputSliceNode;
-import at.dms.kjc.slicegraph.FilterSliceNode;
-import at.dms.kjc.slicegraph.OutputSliceNode;
-import at.dms.kjc.slicegraph.Slice;
-import at.dms.kjc.slicegraph.Slicer;
+import at.dms.kjc.slicegraph.*;
 
 /**
  * @author mgordon
@@ -21,7 +14,7 @@ import at.dms.kjc.slicegraph.Slicer;
  */
 public class NoSWPipeLayout<T extends ComputeNode, Ts extends ComputeNodesI> extends SimulatedAnnealing implements Layout<T> {
     
-    protected Slicer slicer;
+    protected SIRSlicer slicer;
     protected Ts chip;
     protected LinkedList<Slice> scheduleOrder;
     protected LinkedList<SliceNode> assignedFilters;
@@ -32,7 +25,7 @@ public class NoSWPipeLayout<T extends ComputeNode, Ts extends ComputeNodesI> ext
     
     public NoSWPipeLayout(SpaceTimeScheduleAndSlicer spaceTime, Ts chip) {
         this.chip = chip;
-        this.slicer = spaceTime.getSlicer();
+        this.slicer = (SIRSlicer)spaceTime.getSlicer();
         scheduleOrder = 
             DataFlowOrder.getTraversal(spaceTime.getSlicer().getSliceGraph());
         assignedFilters = new LinkedList<SliceNode>();

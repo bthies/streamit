@@ -8,7 +8,7 @@ import at.dms.kjc.sir.*;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.OutputSliceNode;
-import at.dms.kjc.slicegraph.Slicer;
+import at.dms.kjc.slicegraph.SIRSlicer;
 import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.slicegraph.SliceNode;
 import at.dms.kjc.*;
@@ -53,7 +53,7 @@ public class SliceDotGraph {
         
         
         List<Slice> steadyTrav = Arrays.asList(schedule);
-        Slicer slicer = spaceTime.getSlicer();
+        SIRSlicer slicer = spaceTime.getSIRSlicer();
         RawProcElements rawChip = spaceTime.getRawChip();
         
         //System.out.println("Creating Slice Dot Graph...");

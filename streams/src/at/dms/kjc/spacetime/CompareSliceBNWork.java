@@ -5,7 +5,7 @@ package at.dms.kjc.spacetime;
 
 import java.util.Comparator;
 
-import at.dms.kjc.slicegraph.Slicer;
+import at.dms.kjc.slicegraph.SIRSlicer;
 import at.dms.kjc.slicegraph.Slice;
 
 /**
@@ -18,14 +18,14 @@ import at.dms.kjc.slicegraph.Slice;
  */
 public class CompareSliceBNWork implements Comparator<Slice> {
     /** The partition we used */
-    private Slicer slicer;
+    private SIRSlicer slicer;
     
     /**
      * Create a new object that uses the work estimates of partitioner.
      * 
      * @param slicer
      */
-    public CompareSliceBNWork(Slicer slicer) {
+    public CompareSliceBNWork(SIRSlicer slicer) {
         this.slicer = slicer;
     }
     

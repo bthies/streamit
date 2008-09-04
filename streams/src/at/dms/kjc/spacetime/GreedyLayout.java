@@ -119,7 +119,7 @@ public class GreedyLayout implements Layout<RawTile> {
         } else {
             //if we are software pipelining then sort the traces by work
             Slice[] tempArray = (Slice[]) spaceTime.getSlicer().getSliceGraph().clone();
-            Arrays.sort(tempArray, new CompareSliceBNWork(spaceTime.getSlicer()));
+            Arrays.sort(tempArray, new CompareSliceBNWork(spaceTime.getSIRSlicer()));
            // System.out.println(tempArray.length);
             scheduleOrder = new LinkedList<Slice>(Arrays.asList(tempArray));
             //reverse the list, we want the list in descending order!
@@ -148,10 +148,10 @@ public class GreedyLayout implements Layout<RawTile> {
             
             bins[bin].add(node);
             assignment.put(node, chip.getTile(bin));
-            binWeight[bin] += spaceTime.getSlicer().getFilterWorkSteadyMult(node);
-            totalWork += spaceTime.getSlicer().getFilterWorkSteadyMult(node);
+            binWeight[bin] += spaceTime.getSIRSlicer().getFilterWorkSteadyMult(node);
+            totalWork += spaceTime.getSIRSlicer().getFilterWorkSteadyMult(node);
             System.out.println(" Placing: " + node + " work = " + 
-                    spaceTime.getSlicer().getFilterWorkSteadyMult(node) + 
+                    spaceTime.getSIRSlicer().getFilterWorkSteadyMult(node) + 
                             " on bin " + bin + ", bin work = " + binWeight[bin]);
 
         }

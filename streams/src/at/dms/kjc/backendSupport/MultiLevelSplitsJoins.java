@@ -14,7 +14,7 @@ import at.dms.kjc.slicegraph.InterSliceEdge;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.OutputSliceNode;
-import at.dms.kjc.slicegraph.Slicer;
+import at.dms.kjc.slicegraph.SIRSlicer;
 import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.spacetime.RawProcElements;
 
@@ -34,7 +34,7 @@ public class MultiLevelSplitsJoins {
     /** The maximum width allowed for any split or join, it is set to the
      * number of devices*/
     private int maxWidth;
-    private Slicer slicer;
+    private SIRSlicer slicer;
     
     /**
      * Create an instance of the pass that will operate on the 
@@ -44,7 +44,7 @@ public class MultiLevelSplitsJoins {
      * @param slicer The partitioning.
      * @param maxWidth The Raw chip.
      */
-    public MultiLevelSplitsJoins(Slicer slicer, int maxWidth) {
+    public MultiLevelSplitsJoins(SIRSlicer slicer, int maxWidth) {
         this.slicer = slicer;
         //set max width to number of devices
         this.maxWidth = maxWidth;

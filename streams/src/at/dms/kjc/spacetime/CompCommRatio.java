@@ -8,7 +8,7 @@ import at.dms.kjc.slicegraph.DataFlowOrder;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.OutputSliceNode;
-import at.dms.kjc.slicegraph.Slicer;
+import at.dms.kjc.slicegraph.SIRSlicer;
 import at.dms.kjc.slicegraph.SliceNode;
 import at.dms.kjc.slicegraph.Util;
 
@@ -85,7 +85,7 @@ public class CompCommRatio {
      * 
      * @return The computation to communication ratio.
      */
-    public static double ratio(Slicer slicer) {
+    public static double ratio(SIRSlicer slicer) {
         int comp = 0, comm = 0;
         // get the slice node travesal
         Iterator<SliceNode> sliceNodeIt = Util.sliceNodeTraversal(DataFlowOrder

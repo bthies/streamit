@@ -25,7 +25,7 @@ import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.InterSliceEdge;
 import at.dms.kjc.slicegraph.OutputSliceNode;
-import at.dms.kjc.slicegraph.Slicer;
+import at.dms.kjc.slicegraph.SIRSlicer;
 import at.dms.kjc.slicegraph.SliceNode;
 import at.dms.kjc.spacetime.SliceDotGraph;
 import at.dms.kjc.spacetime.SpaceTimeSchedule;
@@ -61,7 +61,7 @@ public class CellBackend {
         commonPasses.run(str, interfaces, interfaceTables, structs, helpers, global, numCores);
         
         // partitioner contains information about the Slice graph used by dumpGraph
-        Slicer slicer = commonPasses.getSlicer();
+        SIRSlicer slicer = (SIRSlicer)commonPasses.getSlicer();
         
         new MultiLevelSplitsJoins(slicer, MAX_TAPES/2).doit();
         slicer.dumpGraph("traces-after-multi.dot");

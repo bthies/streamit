@@ -13,7 +13,7 @@ import at.dms.kjc.backendSupport.CommonPasses;
 import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.sir.lowering.partition.*;
 import at.dms.kjc.slicegraph.DataFlowOrder;
-import at.dms.kjc.slicegraph.Slicer;
+import at.dms.kjc.slicegraph.SIRSlicer;
 import at.dms.kjc.slicegraph.Slice;
 import java.util.*;
 
@@ -109,7 +109,7 @@ public class SpaceTimeBackend {
             }
         }
         
-        Slicer slicer = commonPasses.getSlicer();
+        SIRSlicer slicer = (SIRSlicer)commonPasses.getSlicer();
 
 
         //We have to create multilevel splits and/or joins if their width

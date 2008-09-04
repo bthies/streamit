@@ -10,7 +10,7 @@ import at.dms.kjc.slicegraph.SliceNode;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.OutputSliceNode;
-import at.dms.kjc.slicegraph.Slicer;
+import at.dms.kjc.slicegraph.SIRSlicer;
 import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.*;
 
@@ -30,7 +30,7 @@ public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout<R
     private RawChip chip;
     private SpaceTimeSchedule spaceTime;
     private BufferDRAMAssignment assignBuffers;
-    private Slicer slicer;
+    private SIRSlicer slicer;
     private Router router;
     private int[] tileCosts;
     private Random rand;
@@ -40,7 +40,7 @@ public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout<R
             StreamlinedDuplicate duplicate) {
         this.chip = chip;
         this.spaceTime = spaceTime;
-        this.slicer = spaceTime.getSlicer();
+        this.slicer = spaceTime.getSIRSlicer();
         rand = new Random(17);
         this.duplicate = duplicate;
     }
@@ -247,14 +247,14 @@ public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout<R
             for (int i = 0; i < duplicate.getFilterOnTile(t).size(); i++) {
                 SIRFilter filter = duplicate.getFilterOnTile(t).get(i);
                 FilterSliceNode node = 
-                    FilterSliceNode.getFilterNode(spaceTime.getSlicer().getContent(filter));
+                    FilterSliceNode.getFilterNode(spaceTime.getSIRSlicer().getContent(filter));
                 assignment.put(node, chip.getTile(t));
                 tileCosts[t] += slicer.getFilterWorkSteadyMult(node); 
             }
         }
         
         Iterator<FilterSliceNode> nodes = 
-            Util.sortedFilterSlicesTime(spaceTime.getSlicer()).iterator();
+            Util.sortedFilterSlicesTime(spaceTime.getSIRSlicer()).iterator();
         while (nodes.hasNext()) {
             FilterSliceNode node = nodes.next();
             //already assigned above

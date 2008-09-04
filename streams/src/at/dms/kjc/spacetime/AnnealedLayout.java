@@ -10,7 +10,7 @@ import at.dms.kjc.slicegraph.InterSliceEdge;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.OutputSliceNode;
-import at.dms.kjc.slicegraph.Slicer;
+import at.dms.kjc.slicegraph.SIRSlicer;
 import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.slicegraph.SliceNode;
 
@@ -57,7 +57,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout<RawTile
     /** A list of filters that need to be assigned to tiles */
     private LinkedList<SliceNode> filterList;
     /** The partitioner we used to partitioner the SIR graph into slices */
-    private Slicer slicer;
+    private SIRSlicer slicer;
     /** the number of tiles in the raw chip */
     private int numTiles;
     /** the raw tiles, so we don't have to call rawChip */
@@ -97,7 +97,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout<RawTile
         super();
         this.spaceTime = spaceTime;
         rawChip = spaceTime.getRawChip();
-        this.slicer = spaceTime.getSlicer();
+        this.slicer = spaceTime.getSIRSlicer();
         numTiles = rawChip.getTotalTiles();
         tiles = new RawTile[numTiles];
         for (int i = 0; i < numTiles; i++) 
@@ -110,7 +110,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout<RawTile
         } else {
             //if we are software pipelining then sort the slices by work
             Slice[] tempArray = (Slice[]) spaceTime.getSlicer().getSliceGraph().clone();
-            Arrays.sort(tempArray, new CompareSliceBNWork(spaceTime.getSlicer()));
+            Arrays.sort(tempArray, new CompareSliceBNWork(spaceTime.getSIRSlicer()));
             scheduleOrder = new LinkedList<Slice>(Arrays.asList(tempArray));
             //reverse the list, we want the list in descending order!
             Collections.reverse(scheduleOrder);

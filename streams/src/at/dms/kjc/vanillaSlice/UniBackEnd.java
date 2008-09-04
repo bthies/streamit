@@ -40,7 +40,7 @@ public class UniBackEnd {
         // Set schedules for initialization, prime-pump (if KjcOptions.spacetime), and steady state.
         SpaceTimeScheduleAndSlicer schedule = commonPasses.scheduleSlices();
         // partitioner contains information about the Slice graph used by dumpGraph
-        Slicer slicer = commonPasses.getSlicer();
+        SIRSlicer slicer = (SIRSlicer)commonPasses.getSlicer();
 
 
         // create a collection of (very uninformative) processor descriptions.

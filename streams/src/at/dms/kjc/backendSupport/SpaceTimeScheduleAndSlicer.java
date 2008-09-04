@@ -1,4 +1,4 @@
-//$Id: SpaceTimeScheduleAndSlicer.java,v 1.1 2008-05-12 19:22:30 mgordon Exp $
+//$Id: SpaceTimeScheduleAndSlicer.java,v 1.2 2008-09-04 18:53:25 mgordon Exp $
 /**
  * Extracts the "schedule" part of Mike's SpaceTimeSchedule.
  * 
@@ -7,9 +7,7 @@ package at.dms.kjc.backendSupport;
 
 import java.util.Vector;
 
-import at.dms.kjc.slicegraph.FilterSliceNode;
-import at.dms.kjc.slicegraph.Slicer;
-import at.dms.kjc.slicegraph.Slice;
+import at.dms.kjc.slicegraph.*;
 import at.dms.kjc.spacetime.BasicSpaceTimeSchedule;
 
 /**

@@ -5,12 +5,7 @@ package at.dms.kjc.backendSupport;
 
 import java.util.*;
 
-import at.dms.kjc.slicegraph.DataFlowOrder;
-import at.dms.kjc.slicegraph.SliceNode;
-import at.dms.kjc.slicegraph.FilterSliceNode;
-import at.dms.kjc.slicegraph.InputSliceNode;
-import at.dms.kjc.slicegraph.OutputSliceNode;
-import at.dms.kjc.slicegraph.Slice;
+import at.dms.kjc.slicegraph.*;
 import at.dms.kjc.spacetime.CompareSliceBNWork;
 import at.dms.kjc.spacetime.SpaceTimeBackend;
 
@@ -29,6 +24,7 @@ public class BasicGreedyLayout<T extends ComputeNode> implements Layout<T> {
     //private int[] searchOrder;
     private int totalWork;
     private T[] nodes;
+    private SIRSlicer slicer;
     
     /**
      * Constructor
@@ -36,6 +32,7 @@ public class BasicGreedyLayout<T extends ComputeNode> implements Layout<T> {
      * @param nodes
      */
     public BasicGreedyLayout(SpaceTimeScheduleAndSlicer spaceTime, T[] nodes) {
+        this.slicer = (SIRSlicer)spaceTime.getSlicer();
         this.spaceTime = spaceTime;
         this.nodes = nodes;
         this.numBins = nodes.length;
@@ -81,7 +78,7 @@ public class BasicGreedyLayout<T extends ComputeNode> implements Layout<T> {
         } else {
             //if we are software pipelining then sort the traces by work
             Slice[] tempArray = (Slice[]) spaceTime.getSlicer().getSliceGraph().clone();
-            Arrays.sort(tempArray, new CompareSliceBNWork(spaceTime.getSlicer()));
+            Arrays.sort(tempArray, new CompareSliceBNWork(slicer));
             scheduleOrder = new LinkedList<Slice>(Arrays.asList(tempArray));
             //reverse the list, we want the list in descending order!
             Collections.reverse(scheduleOrder);
@@ -105,14 +102,14 @@ public class BasicGreedyLayout<T extends ComputeNode> implements Layout<T> {
 
                 bins[bin].add(fnode);
                 assignment.put(fnode, nodes[bin]);
-                binWeight[bin] += spaceTime.getSlicer()
+                binWeight[bin] += slicer
                         .getFilterWorkSteadyMult(fnode);
-                totalWork += spaceTime.getSlicer()
+                totalWork += slicer
                         .getFilterWorkSteadyMult(fnode);
                 System.out.println(" Placing: "
                         + fnode
                         + " work = "
-                        + spaceTime.getSlicer().getFilterWorkSteadyMult(
+                        + slicer.getFilterWorkSteadyMult(
                                 fnode) + " on bin " + bin + ", bin work = "
                         + binWeight[bin]);
                 if (snode.getPrevious() instanceof InputSliceNode) {

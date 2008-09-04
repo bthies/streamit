@@ -6,7 +6,7 @@ import at.dms.kjc.backendSupport.FilterInfo;
 import at.dms.kjc.backendSupport.SpaceTimeScheduleAndSlicer;
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.slicegraph.FilterSliceNode;
-import at.dms.kjc.slicegraph.Slicer;
+import at.dms.kjc.slicegraph.SIRSlicer;
 import at.dms.kjc.slicegraph.Slice;
 
 /**
@@ -25,13 +25,16 @@ public class SpaceTimeSchedule extends SpaceTimeScheduleAndSlicer {
     //the raw chip that we are compiling to
     private RawChip rawChip;
     
+    protected SIRSlicer sirSlicer;
+    
     /**
      * Constructor
      * @param p Partitioner is carried around with schedule.
      * @param r rawChip is carried around with schedule. 
      */
-    public SpaceTimeSchedule(Slicer p, RawChip r) {
+    public SpaceTimeSchedule(SIRSlicer p, RawChip r) {
         super(p);
+        sirSlicer = p;
         rawChip = r;
     }
      
@@ -47,5 +50,7 @@ public class SpaceTimeSchedule extends SpaceTimeScheduleAndSlicer {
         return rawChip.getTotalTiles();
     }
     
-  
+    public SIRSlicer getSIRSlicer() {
+        return sirSlicer;
+    }
 }

@@ -71,7 +71,7 @@ public class GenerateSteadyStateSchedule {
     private void scheduleWork() {
         // sort traces...
         Slice[] tempArray = (Slice[]) spaceTime.getSlicer().getSliceGraph().clone();
-        Arrays.sort(tempArray, new CompareSliceBNWork(spaceTime.getSlicer()));
+        Arrays.sort(tempArray, new CompareSliceBNWork(spaceTime.getSIRSlicer()));
         LinkedList<Slice> sortedTraces = new LinkedList<Slice>(Arrays.asList(tempArray));
 
         // schedule predefined filters first, but don't put them in the
@@ -86,7 +86,7 @@ public class GenerateSteadyStateSchedule {
         while (it.hasNext()) {
             Slice slice = it.next();
             CommonUtils.println_debugging(" * " + slice + " (work: "
-                               + spaceTime.getSlicer().getSliceBNWork(slice) + ")");
+                               + spaceTime.getSIRSlicer().getSliceBNWork(slice) + ")");
         }
 
         
@@ -147,7 +147,7 @@ public class GenerateSteadyStateSchedule {
             tileAvail[tile.getTileNumber()] = ((currentTime > tileAvail[tile
                                                                         .getTileNumber()]) ? currentTime : tileAvail[tile
                                                                                                                      .getTileNumber()])
-                + spaceTime.getSlicer().getSliceBNWork(slice);
+                + spaceTime.getSIRSlicer().getSliceBNWork(slice);
             CommonUtils.println_debugging("   * new avail for " + tile + " = "
                                + tileAvail[tile.getTileNumber()]);
             // SpaceTimeBackend.println(" *(" + currentTime + ") Assigning " + node +

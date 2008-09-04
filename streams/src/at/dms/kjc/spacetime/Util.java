@@ -11,7 +11,7 @@ import at.dms.kjc.slicegraph.Edge;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.OutputSliceNode;
-import at.dms.kjc.slicegraph.Slicer;
+import at.dms.kjc.slicegraph.SIRSlicer;
 import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.slicegraph.SliceNode;
 
@@ -370,7 +370,7 @@ public class Util {
      * @return a sorted list of filter trace nodes for time only that does not 
      * include io traces.
      */
-    public static LinkedList<FilterSliceNode> sortedFilterSlicesTime(Slicer slicer) {
+    public static LinkedList<FilterSliceNode> sortedFilterSlicesTime(SIRSlicer slicer) {
         //now sort the filters by work
         LinkedList<FilterSliceNode> sortedList = new LinkedList<FilterSliceNode>();
         LinkedList<Slice> scheduleOrder;

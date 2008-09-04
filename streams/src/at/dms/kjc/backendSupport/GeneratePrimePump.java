@@ -28,6 +28,13 @@ public class GeneratePrimePump {
     }
     
     /**
+     * Set the primepump schedule to be empty.
+     */
+    public void setEmptySchedule() {
+        spaceTimeSchedule.setPrimePumpSchedule(new LinkedList<LinkedList<Slice>>());
+    }
+    
+    /**
      * Create the preloop schedule and place it in the SpaceTimeSchedule.
      */
     public void schedule(Slice[] sliceGraph) {

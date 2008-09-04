@@ -118,7 +118,7 @@ public class POVRAYScheduleRep {
                 heightScale;
             double lowerLeftZ =  
                 (double)(scheduleModel.getFilterEnd(filter) - 
-                        (double)spaceTime.getSlicer().getFilterWorkSteadyMult(filter));
+                        (double)spaceTime.getSIRSlicer().getFilterWorkSteadyMult(filter));
                                     
             assert lowerLeftZ >= (double)scheduleModel.getFilterStart(filter) : 
 		filter + " " + lowerLeftZ + " " + scheduleModel.getFilterStart(filter);

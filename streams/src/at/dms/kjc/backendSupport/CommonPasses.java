@@ -50,14 +50,7 @@ import at.dms.kjc.sir.lowering.partition.ManualPartition;
 import at.dms.kjc.sir.lowering.partition.SJToPipe;
 import at.dms.kjc.sir.lowering.partition.WorkEstimate;
 import at.dms.kjc.sir.lowering.partition.WorkList;
-import at.dms.kjc.slicegraph.AdaptivePartitioner;
-import at.dms.kjc.slicegraph.DataFlowOrder;
-import at.dms.kjc.slicegraph.FlattenAndPartition;
-import at.dms.kjc.slicegraph.FlattenGraph;
-import at.dms.kjc.slicegraph.Slicer;
-import at.dms.kjc.slicegraph.SimpleSlicer;
-import at.dms.kjc.slicegraph.Slice;
-import at.dms.kjc.slicegraph.UnflatFilter;
+import at.dms.kjc.slicegraph.*;
 import at.dms.kjc.spacetime.AddBuffering;
 import at.dms.kjc.spacetime.BasicGenerateSteadyStateSchedule;
 import at.dms.kjc.spacetime.CalculateParams;
@@ -384,8 +377,9 @@ public class CommonPasses {
 
         Slice[] sliceGraph = null; 
         
-        
         setSlicer(null);
+        setSlicer(new OneFilterSlicer(topNodes, executionCounts));
+        
         if (KjcOptions.autoparams) {
             GreedyBinPacking greedyBinPacking = new GreedyBinPacking(str,
                     numCores, getWorkEstimate());
@@ -438,6 +432,8 @@ public class CommonPasses {
     /** 
      * Create schedules for init, prime-pump and steady phases.
      * Affected by KjcOptions.spacetime, KjcOptions.noswpipe.
+     * Not called for Tilera!
+     * 
      * @return a Scheduler from which the schedules for the phases may be extracted. 
      */
     public SpaceTimeScheduleAndSlicer scheduleSlices() {
@@ -448,21 +444,13 @@ public class CommonPasses {
         // set prime pump schedule (if --spacetime and not --noswpipe)
         if (KjcOptions.spacetime) {
             new at.dms.kjc.spacetime.GeneratePrimePumpSchedule(schedule).schedule(slicer.getSliceGraph());
-        } else if (KjcOptions.tilera > -1) {
-            //for space multiplexing on tilera we need to use a different primepump scheduler because
-            //we are space multiplexing and we need to prime the pipe more so that everything can fire
-            //when ready
-            if (at.dms.kjc.tilera.TileraBackend.scheduler.isSMD())
-                new at.dms.kjc.tilera.GeneratePrimePumpScheduleSMD(schedule).schedule(slicer.getSliceGraph());
-            else 
-                new GeneratePrimePump(schedule).schedule(slicer.getSliceGraph());
-        }
+        } 
         else {
             new GeneratePrimePump(schedule).schedule(slicer.getSliceGraph());
         }
         // set steady schedule in standard order unless --spacetime in which case in 
         // decreasing order of estimated work
-        new BasicGenerateSteadyStateSchedule(schedule, slicer).schedule();
+        new BasicGenerateSteadyStateSchedule(schedule, (SIRSlicer)slicer).schedule();
         return schedule;
     }
     

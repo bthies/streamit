@@ -4,6 +4,7 @@ import at.dms.kjc.*;
 import at.dms.kjc.backendSupport.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.slicegraph.*;
+import at.dms.kjc.spacetime.BasicGenerateSteadyStateSchedule;
 
 public class TileraBackend {
     public static Scheduler scheduler;
@@ -32,7 +33,7 @@ public class TileraBackend {
         // perform some standard cleanup on the slice graph.
         commonPasses.simplifySlices();
         // Set schedules for initialization, prime-pump (if KjcOptions.spacetime), and steady state.
-        SpaceTimeScheduleAndSlicer graphSchedule = commonPasses.scheduleSlices();
+        SpaceTimeScheduleAndSlicer graphSchedule = scheduleSlices(commonPasses.getSlicer());
         scheduler.setGraphSchedule(graphSchedule);
         
         //partition the slice graph based on the scheduling policy
@@ -58,6 +59,33 @@ public class TileraBackend {
         
 	System.exit(0);
     }
+    
+    /** 
+     * Create schedules for init, prime-pump and steady phases.
+     *
+     * @return a Scheduler from which the schedules for the phases may be extracted. 
+     */
+    public static SpaceTimeScheduleAndSlicer scheduleSlices(Slicer slicer) {
+        // Set schedules for initialization, priming (if --spacetime), and steady state.
+        SpaceTimeScheduleAndSlicer schedule = new SpaceTimeScheduleAndSlicer(slicer);
+  
+        // set init schedule in standard order
+        schedule.setInitSchedule(DataFlowOrder.getTraversal(slicer.getSliceGraph()));
+        
+        //set the prime pump to be empty
+        new GeneratePrimePump(schedule).setEmptySchedule();
+
+        //for space multiplexing on tilera we need to use a different primepump scheduler because
+        //we are space multiplexing and we need to prime the pipe more so that everything can fire
+        //when ready
+        if (at.dms.kjc.tilera.TileraBackend.scheduler.isSMD())
+            new at.dms.kjc.tilera.GeneratePrimePumpScheduleSMD(schedule).schedule(slicer.getSliceGraph());
+
+        //Still need to generate the steady state schedule!
+
+        return schedule;
+    }
+
     
     /**
      * Set the scheduler field to the correct leaf class that implements a scheduling 

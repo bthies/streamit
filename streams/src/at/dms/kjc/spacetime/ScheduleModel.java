@@ -181,27 +181,27 @@ public class ScheduleModel {
                 //has produced enough data for the current to start and when its
                 //tile is avail
                 int currentStart =  Math.max(tileCosts[tile.getTileNumber()], 
-                        prevStart + spaceTime.getSlicer().getFilterStartupCost(current));
+                        prevStart + spaceTime.getSIRSlicer().getFilterStartupCost(current));
                 
                 if (debug)
                     System.out.println("  prev start + startUp Cost: " + 
-                            (prevStart + spaceTime.getSlicer().getFilterStartupCost(current)));
+                            (prevStart + spaceTime.getSIRSlicer().getFilterStartupCost(current)));
                 
                 //now the tile avail for this current tile is the max of the current
                 //start plus the current occupancy and the previous end plus one iteration
                 //of the current, this is because the have to give the current enough
                 //cycles after the last filter completes to complete one iteration
                 int tileAvail = 
-                    Math.max(spaceTime.getSlicer().getFilterOccupancy(current) +
+                    Math.max(spaceTime.getSIRSlicer().getFilterOccupancy(current) +
                             currentStart, 
-                            prevEnd + spaceTime.getSlicer().getWorkEstOneFiring(current));
+                            prevEnd + spaceTime.getSIRSlicer().getWorkEstOneFiring(current));
                 if (debug)
                     System.out.println("  Occ + start = " + 
-                            spaceTime.getSlicer().getFilterOccupancy(current) + " " +
+                            spaceTime.getSIRSlicer().getFilterOccupancy(current) + " " +
                             currentStart);
                 if (debug)
                     System.out.println("  PrevEnd + One firing = " + 
-                            prevEnd + " " + spaceTime.getSlicer().getWorkEstOneFiring(current));
+                            prevEnd + " " + spaceTime.getSIRSlicer().getWorkEstOneFiring(current));
                 
                 if (debug)
                     System.out.println("Checking start of " + current + " on " + tile + 
@@ -251,7 +251,7 @@ public class ScheduleModel {
                         tileCosts[bottleNeckTile.getTileNumber()]);
             
             int nextFinish = tileCosts[bottleNeckTile.getTileNumber()];
-            int next1Iter = spaceTime.getSlicer().getWorkEstOneFiring(bottleNeck);
+            int next1Iter = spaceTime.getSIRSlicer().getWorkEstOneFiring(bottleNeck);
             SliceNode current = bottleNeck.getPrevious();
             //record the end time for the bottleneck filter
             endTime.put(bottleNeck, new Integer(nextFinish));
@@ -269,7 +269,7 @@ public class ScheduleModel {
                 //record the end time of this filter on the tile
                 endTime.put(current.getAsFilter(), new Integer(nextFinish));
                 //get ready for next iteration
-                next1Iter = spaceTime.getSlicer().getWorkEstOneFiring(current.getAsFilter());
+                next1Iter = spaceTime.getSIRSlicer().getWorkEstOneFiring(current.getAsFilter());
                 current = current.getPrevious();
             }
             /*
@@ -293,12 +293,12 @@ public class ScheduleModel {
             for (FilterSliceNode fsn : slice.getFilterNodes()) {
                 assert getFilterStart(fsn) <=
                     (getFilterEnd(fsn) - 
-                    spaceTime.getSlicer().getFilterWorkSteadyMult(fsn)) :
+                    spaceTime.getSIRSlicer().getFilterWorkSteadyMult(fsn)) :
    
                         fsn + " " + 
                         getFilterStart(fsn) + " <= " +
                             getFilterEnd(fsn) + " - " + 
-                                    spaceTime.getSlicer().getFilterWorkSteadyMult(fsn) +
+                                    spaceTime.getSIRSlicer().getFilterWorkSteadyMult(fsn) +
                                         " (bottleneck: " + bottleNeck + ")";
             }
         }
@@ -328,7 +328,7 @@ public class ScheduleModel {
        while (slices.hasNext()) {
            Slice slice = slices.next();
            RawTile tile = layout.getComputeNode(slice.getHead().getNextFilter());
-           int traceWork = spaceTime.getSlicer().getSliceBNWork(slice); 
+           int traceWork = spaceTime.getSIRSlicer().getSliceBNWork(slice); 
            int myStart = 0;
            //now find the start time
            

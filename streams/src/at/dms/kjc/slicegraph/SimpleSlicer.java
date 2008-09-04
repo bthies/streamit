@@ -17,7 +17,7 @@ import at.dms.kjc.spacetime.LinearFission;
  * @author mgordon
  *
  */
-public class SimpleSlicer extends Slicer {
+public class SimpleSlicer extends SIRSlicer {
     // slice work threshold, higher number, more restrictive, smaller slices
     private static double TRASHOLD;
     //if true, then each filter occupies its own slice, useful for debugging...

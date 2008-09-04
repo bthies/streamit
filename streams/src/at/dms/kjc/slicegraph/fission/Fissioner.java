@@ -295,32 +295,8 @@ public class Fissioner {
         for(int x = 1 ; x < fizzAmount ; x++)
             sliceClones[x] = (Slice)ObjectDeepCloner.deepCopy(slice);
 
-        // Calculate new steady-state multiplicity based upon fizzAmount.  
-        // Because work is shared among all Slice clones, steady-state 
-        // multiplicity for each Slice clone is divided by fizzAmount
-
-        // TODO: Make sure scheduling code still works given new behavior of
-        //       dividing multiplicity
-
-        sliceMult = 
-            sliceClones[0].getFirstFilter().getFilter().getSteadyMult() / fizzAmount;
-
-        for(int x = 0 ; x < sliceClones.length ; x++)
-            sliceClones[x].getFirstFilter().getFilter().setSteadyMult(sliceMult);
-
-        // Add cloned Slices to HashMap.  Map each clone to the entire set of
-        // cloned Slices.  This helps remember which set of cloned Slices a
-        // Slice belongs to.
-
-        Vector<Slice> cloneVector = new Vector<Slice>();
-        for(int x = 0 ; x < sliceClones.length ; x++)
-            cloneVector.add(sliceClones[x]);
-
-        for(int x = 0 ; x < sliceClones.length ; x++)
-            sliceToFizzedCopies.put(sliceClones[x], cloneVector);
-
         /**********************************************************************
-         *                         Setup initialization                       *
+         *                   Setup initialization schedule                    *
          **********************************************************************/
 
         // Disable prework functions for all Slice clones, except for first 
@@ -349,19 +325,22 @@ public class Fissioner {
         // Only first Slice will excecute during initialization
 
         for(int x = 1 ; x < sliceClones.length ; x++)
-            sliceClones[x].getFirstFilter().getFilter().setInitMult(0);
+            sliceClones[x].getFirstFilter().getFilter().setInitMult(0);       
 
-        /*
-         * Construct splitter-joiner scheduling between source Slices and cloned
-         * Slices
-         *
-         * First source Slice will send initialization data to the first Slice
-         * clone.  The remaining Slice clones will receive nothing during
-         * initialization since their execution is disabled.
-         */
+        // Construct splitter-joiner schedule between source Slices and Slice
+        // clones
+        //
+        // If there are multiple source Slices, it is assumed that only the
+        // first source Slice will execute during initialization.  Only the
+        // first source Slice will transmit during initialization.
+        //
+        // By design, only the first Slice clone will execute during
+        // initialization.  Only the first Slice clone will receive during
+        // initialization.
+        //
+        // The schedule therefore simply involves the first source Slice
+        // transmitting to the first Slice clone.
 
-        // Set first source to send data to first clone
-        // Set first clone to receive data from first source
         edgeSetSet = new LinkedList<LinkedList<InterSliceEdge>>();
         weights = new LinkedList<Integer>();
 	
@@ -376,32 +355,30 @@ public class Fissioner {
         sliceClones[0].getHead().setInitWeights(toArray(weights));
         sliceClones[0].getHead().setInitSources(toArray(edgeSet));
 
-        // TODO: Figure out if this hurts more than it helps
-
-        // Set all other source Slices to send nothing during initialization
         for(int x = 1 ; x < sources.length ; x++) {
             sources[x].getTail().setInitWeights(new int[0]);
             sources[x].getTail().setInitDests(new InterSliceEdge[0][0]);
         }
 	
-        // Set all other Slice clones to receive nothing during initialization
         for(int x = 1 ; x < sliceClones.length ; x++) {
             sliceClones[x].getHead().setInitWeights(new int[0]);
             sliceClones[x].getHead().setInitSources(new InterSliceEdge[0]);
         }
-	
-        /* 
-         * Splitter-joiner scheduling between Slice clones and dest Slices
-         *
-         * First Slice clone will send initialization data to first dest Slice.
-         * If there is more than one dest Slice, the remaining dest Slices will
-         * receive nothing during initialization.  This is because the remaining
-         * dest Slices would have had their executions disabled during
-         * initialization when the dest Slices were originally fizzed.
-         */
 
-        // Set first clone to send data to first dest
-        // Set first dest to receive data from first clone
+        // Construct splitter-joiner schedule between Slice clones and dest
+        // Slices
+        //
+        // By design, only the first Slice clone will execute during
+        // initialization.  Only the first Slice clone will transmit during
+        // initialization.
+        //
+        // If there are multiple dest Slices, it is assumed that only the first
+        // dest Slice will execute during initialization.  Only the first dest
+        // Slice will receive during initialization.
+        //
+        // The schedule therefore simply involves the first Slice clone
+        // transmitting to the first dest Slice.
+
         edgeSetSet = new LinkedList<LinkedList<InterSliceEdge>>();
         weights = new LinkedList<Integer>();
 	
@@ -415,117 +392,33 @@ public class Fissioner {
 
         dests[0].getHead().setInitWeights(toArray(weights));
         dests[0].getHead().setInitSources(toArray(edgeSet));
-	
-        // TODO: Figure out if this hurts more than it helps
 
-        // Set all other Slice clones to send nothing during initialization
         for(int x = 1 ; x < sliceClones.length ; x++) {
             sliceClones[x].getTail().setInitWeights(new int[0]);
             sliceClones[x].getTail().setDests(new InterSliceEdge[0][0]);
         }
 	
-        // Set all other dest Slices to receive nothing during initialization
         for(int x = 1 ; x < dests.length ; x++) {
             dests[x].getHead().setInitWeights(new int[0]);
             dests[x].getHead().setInitSources(new InterSliceEdge[0]);
         }
 
         /**********************************************************************
-         *                         Setup steady-state                         *
+         *                     Setup steady-state schedule                    *
          **********************************************************************/
 
-        // TODO: FIX INITIALIZATION MULTIPLICITY
-        // TODO: Make sure scheduling code still works given new behavior of 
-        //       wrapping for-loops around work functions
+        // Calculate new steady-state multiplicity based upon fizzAmount.  
+        // Because work is shared among all Slice clones, steady-state 
+        // multiplicity for each Slice clone is divided by fizzAmount
 
-        // Roll the steady-state multiplicity into a loop around the work
-        // functions of the Slices.  Set multiplicity for Slice to 1 and
-        // recalculate peek/pop/push rates for Slice given the new work 
-        // function.
+        sliceMult = 
+            sliceClones[0].getFirstFilter().getFilter().getSteadyMult() / fizzAmount;
 
-        for(int x = 0 ; x < sliceClones.length ; x++) {
+        for(int x = 0 ; x < sliceClones.length ; x++)
+            sliceClones[x].getFirstFilter().getFilter().setSteadyMult(sliceMult);
 
-            // Get original work body
-            JMethodDeclaration filterWorkMethod = 
-                sliceClones[x].getFirstFilter().getFilter().getWork();
-            JBlock filterWorkBody = filterWorkMethod.getBody();
-
-            // Construct new work body
-            JBlock newFilterWorkBody = new JBlock();
-
-            // Add declaration for for-loop counter variable
-            JVariableDefinition forLoopVar =
-                new JVariableDefinition(0, 
-                                        CStdType.Integer,
-                                        "multCount",
-                                        new JIntLiteral(0));
-
-            JVariableDeclarationStatement forLoopVarDecl = new JVariableDeclarationStatement(forLoopVar);
-            newFilterWorkBody.addStatement(forLoopVarDecl);
-
-            // Add for-loop that wraps around existing work body
-            JRelationalExpression forLoopCond =
-                new JRelationalExpression(JRelationalExpression.OPE_LT,
-                                          new JLocalVariableExpression(forLoopVar),
-                                          new JIntLiteral(newSliceMult));
-
-            JExpressionStatement forLoopIncr = 
-                new JExpressionStatement(new JAssignmentExpression(new JLocalVariableExpression(forLoopVar),
-                                                                   new JAddExpression(new JLocalVariableExpression(forLoopVar),
-                                                                                      new JIntLiteral(1))));
-
-            JForStatement forLoop =
-                new JForStatement(null,
-                                  forLoopCond,
-                                  forLoopIncr,
-                                  filterWorkBody);
-            newFilterWorkBody.addStatement(forLoop);
-
-            // Set new work body
-            filterWorkMethod.setBody(newFilterWorkBody);
-
-            // Set multiplicity to 1, recalculate rates given new work body
-            int newSlicePeek = slicePop * newSliceMult + slicePeek - slicePop;
-            int newSlicePop = slicePop * newSliceMult;
-            int newSlicePush = slicePush * newSliceMult;
-
-            sliceClones[x].getFirstFilter().getFilter().setSteadyMult(1);
-            sliceClones[x].getFirstFilter().getFilter().getWork().setPeek(newSlicePeek);
-            sliceClones[x].getFirstFilter().getFilter().getWork().setPop(newSlicePop);
-            sliceClones[x].getFirstFilter().getFilter().getWork().setPush(newSlicePush);
-        }
-
-        // Normally, Slices remember peek - pop elements between steady-state
-        // iterations.  However, after fizzing, these elements no longer need to
-        // be remembered between iterations.  These elements therefore need to 
-        // be removed at the end of each steady-state iteration
-        //
-        // This code adds a pop statement to the end of each work function, 
-        // removing the unneeded peek - pop elements.  The code also adjusts the
-        // pop rate to reflect that more elements are being popped.
-        //
-        // NOTE: First Slice clone will actually need to remember elements
-        //       between iterations, so this doesn't apply to first Slice clone
-
-        for(int x = 1 ; x < sliceClones.length ; x++) {
-            CType inputType = 
-                sliceClones[x].getFirstFilter().getFilter().getInputType();
-            
-            SIRPopExpression popExpr =
-                new SIRPopExpression(inputType, slicePeek - slicePop);
-            JExpressionStatement popStmnt =
-                new JExpressionStatement(popExpr);
-
-            sliceClones[x].getFirstFilter().getFilter().getWork().getBody()
-                .addStatement(popStmnt);
-
-            int newSlicePop = slicePop * newSliceMult + slicePeek - slicePop;
-            sliceClones[x].getFirstFilter().getFilter().getWork().setPop(newSlicePop);
-        }
-
-        /*
-         * Splitter-joiner scheduling between source Slices and Slice clones
-         */
+        // Construct splitter-joiner schedule between source Slices and Slice 
+        // clones
 
         if(sources.length == 1) {
             /* Only one source Slice, source Slice was not fizzed */
@@ -722,9 +615,8 @@ public class Fissioner {
             return false;
         }
 
-        /*
-         * Splitter-joiner scheduling between Slice clones and dest Slices
-         */
+        // Construct splitter-joiner schedule between Slice clones and dest 
+        // Slices
 
         if(dests.length == 1) {
             /* Only one destination Slice, so destination Slice was not fizzed */
@@ -891,6 +783,110 @@ public class Fissioner {
                                "was not fizzed by the same amount");
             return false;
         }
+
+        /**********************************************************************
+         *               Roll steady-state multiplicity into loop             *
+         **********************************************************************/
+
+        // Roll the steady-state multiplicity into a loop around the work
+        // functions of the Slices.  Set multiplicity for Slice to 1 and
+        // recalculate peek/pop/push rates for Slice given the new work 
+        // function.
+
+        for(int x = 0 ; x < sliceClones.length ; x++) {
+
+            // Get original work body
+            JMethodDeclaration filterWorkMethod = 
+                sliceClones[x].getFirstFilter().getFilter().getWork();
+            JBlock filterWorkBody = filterWorkMethod.getBody();
+
+            // Construct new work body
+            JBlock newFilterWorkBody = new JBlock();
+
+            // Add declaration for for-loop counter variable
+            JVariableDefinition forLoopVar =
+                new JVariableDefinition(0, 
+                                        CStdType.Integer,
+                                        "multCount",
+                                        new JIntLiteral(0));
+
+            JVariableDeclarationStatement forLoopVarDecl = new JVariableDeclarationStatement(forLoopVar);
+            newFilterWorkBody.addStatement(forLoopVarDecl);
+
+            // Add for-loop that wraps around existing work body
+            JRelationalExpression forLoopCond =
+                new JRelationalExpression(JRelationalExpression.OPE_LT,
+                                          new JLocalVariableExpression(forLoopVar),
+                                          new JIntLiteral(sliceMult));
+
+            JExpressionStatement forLoopIncr = 
+                new JExpressionStatement(new JAssignmentExpression(new JLocalVariableExpression(forLoopVar),
+                                                                   new JAddExpression(new JLocalVariableExpression(forLoopVar),
+                                                                                      new JIntLiteral(1))));
+
+            JForStatement forLoop =
+                new JForStatement(null,
+                                  forLoopCond,
+                                  forLoopIncr,
+                                  filterWorkBody);
+            newFilterWorkBody.addStatement(forLoop);
+
+            // Set new work body
+            filterWorkMethod.setBody(newFilterWorkBody);
+
+            // Set multiplicity to 1, recalculate rates given new work body
+            int newSlicePeek = slicePop * sliceMult + slicePeek - slicePop;
+            int newSlicePop = slicePop * sliceMult;
+            int newSlicePush = slicePush * sliceMult;
+
+            sliceClones[x].getFirstFilter().getFilter().setSteadyMult(1);
+            sliceClones[x].getFirstFilter().getFilter().getWork().setPeek(newSlicePeek);
+            sliceClones[x].getFirstFilter().getFilter().getWork().setPop(newSlicePop);
+            sliceClones[x].getFirstFilter().getFilter().getWork().setPush(newSlicePush);
+        }
+
+        // Normally, Slices remember peek - pop elements between steady-state
+        // iterations.  However, after fizzing, these elements no longer need to
+        // be remembered between iterations.  These elements therefore need to 
+        // be removed at the end of each steady-state iteration
+        //
+        // This code adds a pop statement to the end of each work function, 
+        // removing the unneeded peek - pop elements.  The code also adjusts the
+        // pop rate to reflect that more elements are being popped.
+        //
+        // NOTE: First Slice clone will actually need to remember elements
+        //       between iterations, so this doesn't apply to first Slice clone
+
+        for(int x = 1 ; x < sliceClones.length ; x++) {
+            CType inputType = 
+                sliceClones[x].getFirstFilter().getFilter().getInputType();
+            
+            SIRPopExpression popExpr =
+                new SIRPopExpression(inputType, slicePeek - slicePop);
+            JExpressionStatement popStmnt =
+                new JExpressionStatement(popExpr);
+
+            sliceClones[x].getFirstFilter().getFilter().getWork().getBody()
+                .addStatement(popStmnt);
+
+            int newSlicePop = slicePop * sliceMult + slicePeek - slicePop;
+            sliceClones[x].getFirstFilter().getFilter().getWork().setPop(newSlicePop);
+        }
+
+        /**********************************************************************
+         *                              Finish up                             *
+         **********************************************************************/
+
+        // Add cloned Slices to HashMap.  Map each clone to the entire set of
+        // cloned Slices.  This helps remember which set of cloned Slices a
+        // Slice belongs to.
+
+        Vector<Slice> cloneVector = new Vector<Slice>();
+        for(int x = 0 ; x < sliceClones.length ; x++)
+            cloneVector.add(sliceClones[x]);
+
+        for(int x = 0 ; x < sliceClones.length ; x++)
+            sliceToFizzedCopies.put(sliceClones[x], cloneVector);
 
         return true;
     }

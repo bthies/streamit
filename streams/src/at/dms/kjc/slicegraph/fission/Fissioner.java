@@ -796,9 +796,7 @@ public class Fissioner {
                 sliceClones[x].getFirstFilter().getFilter().getWork().getBody();
 
         // Roll the steady-state multiplicity into a loop around the work
-        // body of each Slice.  Set multiplicity for Slice to 1 and
-        // recalculate peek/pop/push rates for Slice given the new work body.
-
+        // body of each Slice.
         for(int x = 0 ; x < fizzAmount ; x++) {
 
             // Construct new work body
@@ -834,12 +832,17 @@ public class Fissioner {
 
             // Set new work body
             sliceClones[x].getFirstFilter().getFilter().getWork().setBody(newWorkBody);
-            
-            // Set multiplicity to 1, recalculate rates given new work body
-            slicePeek = slicePop * sliceMult + slicePeek - slicePop;
-            slicePop = slicePop * sliceMult;
-            slicePush = slicePush * sliceMult;
+        }
 
+        // Now that steady-state multiplicity has been rolled around the work
+        // bodies of the Slices, change steady-state multiplicity to 1.
+        // Recalculate new Slice rates given new steady-state multiplicity.
+            
+        slicePeek = slicePop * sliceMult + slicePeek - slicePop;
+        slicePop = slicePop * sliceMult;
+        slicePush = slicePush * sliceMult;
+        
+        for(int x = 0 ; x < fizzAmount ; x++) {
             sliceClones[x].getFirstFilter().getFilter().setSteadyMult(1);
             sliceClones[x].getFirstFilter().getFilter().getWork().setPeek(slicePeek);
             sliceClones[x].getFirstFilter().getFilter().getWork().setPop(slicePop);
@@ -851,27 +854,35 @@ public class Fissioner {
         // be remembered between iterations.  These elements therefore need to 
         // be removed at the end of each steady-state iteration
         //
-        // This code adds a pop statement to the end of each work function, 
-        // removing the unneeded peek - pop elements.  The code also adjusts the
-        // pop rate to reflect that more elements are being popped.
+        // This code adds a pop statement to the end of each work body, removing
+        // the unneeded peek - pop elements.  The code also adjusts the pop rate
+        // to reflect that more elements are being popped.
         //
         // NOTE: First Slice clone will actually need to remember elements
         //       between iterations, so this doesn't apply to first Slice clone
 
-        for(int x = 1 ; x < fizzAmount ; x++) {
-            CType inputType = 
-                sliceClones[x].getFirstFilter().getFilter().getInputType();
-            
-            SIRPopExpression popExpr =
-                new SIRPopExpression(inputType, slicePeek - slicePop);
-            JExpressionStatement popStmnt =
-                new JExpressionStatement(popExpr);
+        if(slicePeek - slicePop > 0) {
+            // Add pop statement to end of each work body
+            for(int x = 1 ; x < fizzAmount ; x++) {
+                CType inputType = 
+                    sliceClones[x].getFirstFilter().getFilter().getInputType();
 
-            sliceClones[x].getFirstFilter().getFilter().getWork().getBody()
-                .addStatement(popStmnt);
+                System.out.println("Testing: " + (slicePeek - slicePop));
+                
+                SIRPopExpression popExpr =
+                    new SIRPopExpression(inputType, slicePeek - slicePop);
+                JExpressionStatement popStmnt =
+                    new JExpressionStatement(popExpr);
+                
+                sliceClones[x].getFirstFilter().getFilter().getWork().getBody()
+                    .addStatement(popStmnt);
+            }
 
-            slicePop = slicePop * sliceMult + slicePeek - slicePop;
-            sliceClones[x].getFirstFilter().getFilter().getWork().setPop(slicePop);
+            // Adjust pop rates since more elements are now popped
+            slicePop += (slicePeek - slicePop);
+
+            for(int x = 1 ; x < fizzAmount ; x++)
+                sliceClones[x].getFirstFilter().getFilter().getWork().setPop(slicePop);
         }
 
         /*
@@ -888,7 +899,14 @@ public class Fissioner {
          * the work body
          */
 
+        // Construct new work body for first Slice clone.  Will contain both
+        // original work body and modified work body with steady-state
+        // multiplicity wrapped around it
+
+        JBlock newWorkBody = new JBlock();        
+
         // Variables storing if Slice is in initialization
+
         JVariableDefinition initBoolVar =
             new JVariableDefinition(0,
                                     CStdType.Boolean,
@@ -903,7 +921,11 @@ public class Fissioner {
         JVariableDeclarationStatement initBoolDecl = new JVariableDeclarationStatement(initBoolVar);
         JVariableDeclarationStatement initMultCountDecl = new JVariableDeclarationStatement(initMultCountVar);
 
+        newWorkBody.addStatement(initBoolDecl);
+        newWorkBody.addStatement(initMultCountDecl);
+
         // Check to see if Slice is in initialization
+
         JEqualityExpression ifCond =
             new JEqualityExpression(null,
                                     true,
@@ -912,6 +934,7 @@ public class Fissioner {
 
         // If in initialization, run original work body, then check to see if
         // still in initialization
+
         JBlock thenStatement = new JBlock();
         thenStatement.addStatement((JBlock)ObjectDeepCloner.deepCopy(origWorkBodies[0]));
         thenStatement.addStatement(new JExpressionStatement(new JAssignmentExpression(new JLocalVariableExpression(initMultCountVar),
@@ -929,18 +952,18 @@ public class Fissioner {
         
         // If not in initialization, run modified work body with steady-state
         // multiplicity wrapped around it
+
         JBlock elseStatement = 
             sliceClones[0].getFirstFilter().getFilter().getWork().getBody();
 
-        // Change work method for first Slice clone
-        JBlock newWorkBody = new JBlock();        
-        newWorkBody.addStatement(initBoolDecl);
-        newWorkBody.addStatement(initMultCountDecl);
+        // Set work method for first Slice clone
+
         newWorkBody.addStatement(new JIfStatement(null,
                                                   ifCond,
                                                   thenStatement,
                                                   elseStatement,
                                                   null));
+
         sliceClones[0].getFirstFilter().getFilter().getWork().setBody(newWorkBody);
 
         /**********************************************************************

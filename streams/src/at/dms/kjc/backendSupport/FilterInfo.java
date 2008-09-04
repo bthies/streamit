@@ -12,7 +12,9 @@ import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.InterSliceEdge;
 
 /**
- * A class to hold all the various information for a filter.
+ * A class to hold all the various information for a filter.  Be careful, 
+ * because this class caches the data of the FilterContent, so if the underlying 
+ * FilterContent changes, then you have to reset() the FilterInfos.
  * 
  */
 public class FilterInfo {

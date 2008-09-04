@@ -124,7 +124,7 @@ public class Fissioner {
         }
 
         // Make sure that Slice has only one FilterSliceNode
-        if(!(filter.getNext() instanceof FilterSliceNode)) {
+        if(!(slice.getNumFilters() == 1)) {
             if(debug) System.out.println("Can't fizz: Slice has more than one FilterSliceNode");
             return false;
         }
@@ -226,7 +226,7 @@ public class Fissioner {
         "Rates between Slice and dests do not match";
 
         // Check copyDown constraint: copyDown < mult * pop
-        if(sliceCopyDown <= sliceMult * slicePop) {
+        if(sliceCopyDown >= sliceMult * slicePop) {
             if(debug) System.out.println("Can't fizz: Slice does not meet copyDown constraint");
             return false;
         }
@@ -881,7 +881,7 @@ public class Fissioner {
          * multiplicity for the first Slice clone is now broken.
          *
          * To fix this, the first Slice clone switches between two work bodies.
-         * In initialiation, the first Slice clone runs the original work body 
+         * In initialization, the first Slice clone runs the original work body 
          * where the steady-state multiplicity has not been rolled around the 
          * work body.  In steady-state, the first Slice clone runs the modified
          * work body where the steady-state multiplicity has been rolled around

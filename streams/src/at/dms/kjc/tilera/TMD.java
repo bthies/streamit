@@ -10,6 +10,9 @@ import at.dms.kjc.sir.lowering.fission.StatelessDuplicate;
 import at.dms.kjc.sir.lowering.partition.WorkEstimate;
 import at.dms.kjc.sir.lowering.partition.WorkList;
 import at.dms.kjc.slicegraph.*;
+import java.util.LinkedList;
+import at.dms.kjc.backendSupport.*;
+import at.dms.kjc.slicegraph.fission.*;
 
 /**
  * 
@@ -19,6 +22,8 @@ import at.dms.kjc.slicegraph.*;
  */
 public class TMD extends Scheduler {
 
+    private double DUP_THRESHOLD = .1;
+    
     public TMD() {
         super();
     }
@@ -72,6 +77,86 @@ public class TMD extends Scheduler {
     }
     
     /**
+     * Run the Time-Multiplexing Data-parallel scheduler.  Right now, it assumes 
+     * a pipeline of stateless filters
+     */
+    public void run(int tiles) {
+        int factor = multiplicityFactor(tiles);
+        System.out.println("Using fission steady multiplicty factor: " + factor);
+        
+        LinkedList<Slice> slices = DataFlowOrder.getTraversal(graphSchedule.getSlicer().getTopSlices());
+        
+        //go through and multiply the steady multiplicity of each filter by factor
+        for (Slice slice : slices) {
+            FilterContent filter = slice.getFirstFilter().getFilter();
+            filter.multSteadyMult(factor);
+        }
+        
+        //because we have changed the multiplicities of the FilterContents
+        //we have to reset the filter info's because they cache the date of the 
+        //FilterContents
+        FilterInfo.reset();
+        
+        //fiss each slice by the number of tiles, assume pipelines for now (no TP)
+        for (Slice slice: slices) {
+            if (!slice.getFirstFilter().isPredefined()) {
+                Fissioner.canFizz(slice, tiles, true);
+                assert Fissioner.fizzSlice(slice, tiles) : "Could not fiss slice: " + slice;
+            }
+        }
+    }
+    
+    /**
+     * Determine the factor that we are going to multiple each slice by so that 
+     * fission on the slice graph is legal.  Keep trying multiples of the number 
+     * tiles until each slice passes the tests for legality.
+     *  
+     * @param tiles The number of tiles we are targeting 
+     * @return the factor to multiply the steady multiplicities by
+     */
+    private int multiplicityFactor(int tiles) {
+        int factor = 0;
+        LinkedList<Slice> slices = DataFlowOrder.getTraversal(graphSchedule.getSlicer().getTopSlices());
+        boolean allPassed = false;
+        
+        
+        while (!allPassed) {
+            factor += tiles;
+            System.out.println("Trying Factor: " + factor);
+            allPassed = true;
+            for (Slice slice : slices) {
+                //this works only for pipelines right now, so just that we have at most
+                //one input and at most one output for the slice
+                assert slice.getHead().getSourceSet().size() <= 1 &&
+                    slice.getTail().getDestSet().size() <= 1;
+                
+                FilterInfo fi = FilterInfo.getFilterInfo(slice.getFirstFilter());
+                //nothing to do for filters with no input
+                if (fi.pop == 0)
+                    continue;
+                
+                //check that we have reached the threshold for duplicated items
+                if (((double)(fi.peek - fi.pop)) >= 
+                        (DUP_THRESHOLD * ((double)fi.pop * fi.steadyMult * factor))) {
+                    allPassed = false;
+                    break;
+                }
+                
+                //check that copy down is less than the
+                if (fi.copyDown >= fi.pop * fi.steadyMult * factor) {
+                    allPassed = false;
+                    break;
+                }
+            }
+        }
+        
+        return factor;
+    }
+    
+    /**
+     * This is no longer used, it ran on the SIR graph and partitioned the graph based
+     * on the ASPLOS 06 TMD scheduling policy.
+     *  
      * Use fission to create a time-multiplexed, data-parallel version of the 
      * application. Use the cousins algorithm specifying the number of tiles, so that
      * we duplicate each data parallel (stateless) filter a number of times taking 
@@ -80,7 +165,7 @@ public class TMD extends Scheduler {
      * @param str The stream graph
      * @param tiles The number of cores of the target machine
      */
-    public void run(SIRStream str, int tiles) {
+    public void oldRun(SIRStream str, int tiles) {
         System.out.println("Running TMD Partitioner...");
         
         WorkEstimate work = WorkEstimate.getWorkEstimate(str);

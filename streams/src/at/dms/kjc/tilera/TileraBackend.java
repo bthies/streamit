@@ -34,8 +34,9 @@ public class TileraBackend {
         // Set schedules for initialization, prime-pump (if KjcOptions.spacetime), and steady state.
         SpaceTimeScheduleAndSlicer graphSchedule = commonPasses.scheduleSlices();
         scheduler.setGraphSchedule(graphSchedule);
-        // slicer contains information about the Slice graph used by dumpGraph
-        Slicer slicer = commonPasses.getSlicer();
+        
+        //partition the slice graph based on the scheduling policy
+        scheduler.run(chip.abstractSize());
 
         scheduler.runLayout();
         backEndBits = new TileraBackEndFactory(chip);

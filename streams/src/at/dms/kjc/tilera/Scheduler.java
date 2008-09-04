@@ -36,7 +36,7 @@ public abstract class Scheduler implements Layout<Tile> {
         this.graphSchedule = graphSchedule;
     }
     
-    public abstract void run(SIRStream str, int tiles);
+    public abstract void run(int tiles);
     
 
 }

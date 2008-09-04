@@ -5,7 +5,7 @@ import at.dms.kjc.slicegraph.SliceNode;
 
 public class SMD extends Scheduler {
 
-    public void run(SIRStream str, int tiles) {
+    public void run(int tiles) {
         
     }
     

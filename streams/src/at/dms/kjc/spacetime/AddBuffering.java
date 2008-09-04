@@ -132,12 +132,7 @@ public class AddBuffering {
             }
             //don't forget to reset the filter infos after each iteration
             FilterInfo.reset();
-            //tell the partitioner that new slices maybe have been added!
-            LinkedList<Slice> newSlices = 
-                DataFlowOrder.getTraversal(spaceTime.getSliceGraph());
-            spaceTime.setSliceGraphNewIds(
-                    newSlices.toArray(new Slice[newSlices.size()]));
-                    
+            
         } while (change);
     }
     

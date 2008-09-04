@@ -9,12 +9,13 @@ import java.util.Map;
 import at.dms.kjc.sir.SIRFileReader;
 import at.dms.kjc.sir.SIRFileWriter;
 
-
+/**
+ * 
+ * @author mgordon
+ *
+ */
 public abstract class Slicer {
     
-    // the completed slice graph
-    protected Slice[] sliceGraph;
-
     protected UnflatFilter[] topFilters;
 
     protected HashMap[] exeCounts;
@@ -92,6 +93,7 @@ public abstract class Slicer {
      * @return True if the slice graph contains slice.
      */
     public boolean containsSlice(Slice slice) {
+        Slice[] sliceGraph = getSliceGraph();
         for (int i = 0; i < sliceGraph.length; i++) 
             if (sliceGraph[i] == slice)
                 return true;
@@ -100,6 +102,7 @@ public abstract class Slicer {
   
     // dump the the completed partition to a dot file
     public void dumpGraph(String filename) {
+        Slice[] sliceGraph = getSliceGraph();
         StringBuffer buf = new StringBuffer();
         buf.append("digraph Flattend {\n");
         buf.append("size = \"8, 10.5\";\n");
@@ -218,6 +221,7 @@ public abstract class Slicer {
      */
     
     public void ensureSimpleSlices() {
+        Slice[] sliceGraph = getSliceGraph();
         // update sliceGraph, topSlices, io, sliceBNWork, bottleNeckFilter
         // Assume that topSlices, io, sliceBNWork.keys(), bottleNeckFilter.keys() 
         // are all proper subsets of sliceGraph.

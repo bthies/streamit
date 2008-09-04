@@ -81,6 +81,8 @@ public class SimpleSlice extends Slice {
      * Not needed for SimpleSlice, kept as a sanity check.
      */
     public int finish() {
+        super.finish();
+        
         assert head.getNext() == body.getPrevious() 
         && tail.getPrevious() == body.getNext()
         && head.getParent() == this 

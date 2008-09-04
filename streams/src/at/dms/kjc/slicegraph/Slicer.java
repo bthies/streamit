@@ -6,15 +6,9 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-
-import at.dms.kjc.KjcOptions;
-import at.dms.kjc.backendSupport.MultiLevelSplitsJoins;
-import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.sir.SIRFileReader;
 import at.dms.kjc.sir.SIRFileWriter;
-import at.dms.kjc.sir.SIRFilter;
-import at.dms.kjc.sir.linear.LinearAnalyzer;
-import at.dms.kjc.sir.lowering.partition.WorkEstimate;
+
 
 public abstract class Slicer {
     
@@ -66,18 +60,22 @@ public abstract class Slicer {
         }
         return false;
     }
-
+    
     /**
      * Get all slices
      * @return All the slices of the slice graph. 
      */
     public Slice[] getSliceGraph() {
-        assert sliceGraph != null;
-        return sliceGraph;
+        //new slices may have been added so we need to reconstruct the graph each time
+        LinkedList<Slice> sliceGraph = 
+            DataFlowOrder.getTraversal(topSlices);
+        
+        return sliceGraph.toArray(new Slice[sliceGraph.size()]);
     }
     
     /**
-     *  Get just top level slices in the slice graph.
+     * Get just top level slices in the slice graph.
+     * 
      * @return top level slices
      */
     public Slice[] getTopSlices() {
@@ -85,15 +83,6 @@ public abstract class Slicer {
         return topSlices;
     }
 
-    /**
-     * Set the slice graph to slices.
-     * 
-     * @param slices The slice list to install as the new slice graph.
-     */
-    private void setSliceGraph(Slice[] slices) {
-        sliceGraph = slices;
-    }
-    
     /**
      * Does the the slice graph contain slice (perform a simple linear
      * search).
@@ -336,16 +325,5 @@ public abstract class Slicer {
             Slice slice) {
     }
     
-    /**
-     * Set the slice graph to slices, where the only difference between the 
-     * previous slice graph and the new slice graph is the addition of identity
-     * slices (meaning slices with only an identities filter).
-     *  
-     * @param slices The new slice graph.
-     */
-    public void setSliceGraphNewIds(Slice[] slices) {
-        //now set the new slice graph...
-        setSliceGraph(slices);
-    }
-    
+
 }

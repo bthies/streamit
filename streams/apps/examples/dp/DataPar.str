@@ -1,0 +1,21 @@
+void->void pipeline DataPar 
+{
+    add FileReader<int>("test.in");
+    add Work();
+    add Work();
+    add FileWriter<int>("test.out");
+}
+
+int->int filter Work 
+{
+    work push 1 pop 1 peek 2 
+    {
+	int x = peek(1);
+	x += pop();
+	
+	for (int i = 0; i < 10000; i++)
+	    x += i;
+
+	push(x);
+    }    
+}

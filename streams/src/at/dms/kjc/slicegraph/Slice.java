@@ -11,7 +11,7 @@ import java.util.ArrayList;
  *  
  * @author mgordon
  */
-public class Slice {
+public class Slice implements at.dms.kjc.DeepCloneable {
         
     //The head of the slice.
     protected InputSliceNode head;

@@ -14,7 +14,7 @@ import at.dms.kjc.*;
  * 
  * Has an array of weights and corresponding {@link InterSliceEdge}s.
  */
-public class InputSliceNode extends SliceNode {
+public class InputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneable {
     public static final String[] DO_NOT_CLONE_THESE_FIELDS = 
         { "weights", "sources", "initWeights", "initSources" };
     

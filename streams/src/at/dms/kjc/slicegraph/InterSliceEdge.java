@@ -10,7 +10,7 @@ import at.dms.kjc.backendSupport.SchedulingPhase;
  * @author mgordon
  *
  */
-public class InterSliceEdge extends Edge {
+public class InterSliceEdge extends Edge implements at.dms.kjc.DeepCloneable {
     /**
      * No argument constructor, FOR AUTOMATIC CLONING ONLY.
      */

@@ -5,7 +5,7 @@ package at.dms.kjc.slicegraph;
  * SliceNode's are a doubly-linked list with a parent pointer to a Slice.
  * They can be specialized into {@link InputSliceNode}, {@link FilterSliceNode}, or {@link OutputSliceNode}. 
  */
-public class SliceNode {
+public class SliceNode implements at.dms.kjc.DeepCloneable      {
     public static final String[] DO_NOT_CLONE_THESE_FIELDS = { "toNext", "toPrev" };
 
     private IntraSliceEdge toNext = null;  // internal to slice: remains null for OutputSliceNode

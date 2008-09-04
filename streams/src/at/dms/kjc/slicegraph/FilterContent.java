@@ -22,7 +22,7 @@ import at.dms.kjc.spacetime.SafeFileReaderWriterPositions;
  * 
  * @author jasperln
  */
-public class FilterContent implements SIRCodeUnit {
+public class FilterContent implements SIRCodeUnit, at.dms.kjc.DeepCloneable {
     /** Static unique id used in new name if one FilterContent created from another. */
     private static int unique_ID = 0; 
     /** The unique id given to this FilterContent for use in constructing names */

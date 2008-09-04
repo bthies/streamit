@@ -7,7 +7,7 @@ import java.util.*;
 /** 
  * A {@link SliceNode} that references a {@link FilterContent}.
  **/
-public class FilterSliceNode extends SliceNode
+public class FilterSliceNode extends SliceNode implements at.dms.kjc.DeepCloneable
 {
     private FilterContent filter;
    

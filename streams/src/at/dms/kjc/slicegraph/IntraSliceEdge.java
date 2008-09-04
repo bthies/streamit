@@ -9,7 +9,7 @@ import java.util.*;
  * @author mgordon
  *
  */
-public class IntraSliceEdge extends Edge {
+public class IntraSliceEdge extends Edge implements at.dms.kjc.DeepCloneable {
     /**
      * No argument constructor, FOR AUTOMATIC CLONING ONLY.
      */

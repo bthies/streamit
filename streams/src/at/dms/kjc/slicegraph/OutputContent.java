@@ -12,7 +12,7 @@ import at.dms.kjc.sir.linear.*;
  * and can hold code common for predefined output.
  * @author jasperln
  */
-public abstract class OutputContent extends PredefinedContent {
+public abstract class OutputContent extends PredefinedContent implements at.dms.kjc.DeepCloneable {
     /**
      * No argument constructor, FOR AUTOMATIC CLONING ONLY.
      */

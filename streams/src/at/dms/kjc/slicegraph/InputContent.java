@@ -12,7 +12,7 @@ import at.dms.kjc.sir.*;
  * and can hold code common for predefined input.
  * @author jasperln
  */
-public abstract class InputContent extends PredefinedContent {
+public abstract class InputContent extends PredefinedContent implements at.dms.kjc.DeepCloneable {
     /**
      * No argument constructor, FOR AUTOMATIC CLONING ONLY.
      */

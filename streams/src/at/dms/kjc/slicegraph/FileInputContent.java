@@ -9,7 +9,7 @@ import at.dms.kjc.common.*;
  * Predefined FilterContent for file input, expands to implement a FileReader.
  * @author jasperln
  */
-public class FileInputContent extends InputContent {
+public class FileInputContent extends InputContent implements at.dms.kjc.DeepCloneable {
     private String filename; //The filename
     
     /**

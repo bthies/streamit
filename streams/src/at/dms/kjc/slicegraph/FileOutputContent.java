@@ -11,7 +11,7 @@ import at.dms.kjc.common.*;
  * Predefined FilterContent for file output, expands to implement a FileWriter.
  * @author jasperln
  */
-public class FileOutputContent extends OutputContent {
+public class FileOutputContent extends OutputContent implements at.dms.kjc.DeepCloneable {
     private String filename; //The filename
     private int outputs; //Expected number of outputs
 

@@ -19,7 +19,7 @@ import at.dms.kjc.CType;
  *
  */
 
-public class Edge {
+public class Edge implements at.dms.kjc.DeepCloneable {
     public static final String[] DO_NOT_CLONE_THESE_FIELDS = { "src", "dest" };
     /**
      * Source of directed edge in Slice graph

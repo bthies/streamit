@@ -519,8 +519,6 @@ public class FilterContent implements SIRCodeUnit, at.dms.kjc.DeepCloneable {
     public void multSteadyMult(int mult) 
     {
         steadyMult *= mult;
-        System.out.println("mult steady mult " + this);
-
     }
     
     /**

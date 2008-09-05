@@ -147,6 +147,7 @@ public class AutoCloner {
         if (alreadyCloned!=null) {
             return alreadyCloned;
         }
+        
         // otherwise, we'll get a new cloned result for <pre>pre</pre>o</pre>.  
         Object result;
         // dispatch on type of <pre>pre</pre>o</pre>...
@@ -281,7 +282,7 @@ public class AutoCloner {
      */
     static private Object cloneSlice(at.dms.kjc.slicegraph.Slice slice) {
         Object newSlice = slice.deepClone();
-        slice.finish();
+        ((Slice)newSlice).finishClone();
         return newSlice;
     }
     

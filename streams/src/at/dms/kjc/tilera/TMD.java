@@ -125,10 +125,8 @@ public class TMD extends Scheduler {
         //go through and multiply the steady multiplicity of each filter by factor
         for (Slice slice : slices) {
             FilterContent filter = slice.getFirstFilter().getFilter();
-            System.out.println(filter + " " + filter.getSteadyMult());
             filter.multSteadyMult(factor);
-            System.out.println(filter + " " + filter.getSteadyMult());
-        }
+         }
         
         //because we have changed the multiplicities of the FilterContents
         //we have to reset the filter info's because they cache the date of the 
@@ -160,7 +158,7 @@ public class TMD extends Scheduler {
         
         while (!allPassed) {
             factor += tiles;
-            System.out.println("Trying Factor: " + factor);
+            //System.out.println("Trying Factor: " + factor);
             allPassed = true;
             for (Slice slice : slices) {
                 //this works only for pipelines right now, so just that we have at most

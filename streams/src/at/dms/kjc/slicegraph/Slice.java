@@ -62,9 +62,39 @@ public class Slice implements at.dms.kjc.DeepCloneable {
     }
     
     /**
+     * After a slice has been cloned, set up the fields of the slicenodes included 
+     * in it.
+     */
+    public void finishClone() {
+        
+        //set the head refs
+        head.setParent(this);
+        head.setNext(filterNodes[0]);
+        
+        //set the filternodes' prev, head, and parent
+        for (int i = 0; i < filterNodes.length; i++) {
+            filterNodes[i].setParent(this);
+            if (i == 0)         
+                filterNodes[i].setPrevious(head);
+            else
+                filterNodes[i].setPrevious(filterNodes[i-1]);
+            
+            if (i == filterNodes.length - 1) 
+                filterNodes[i].setNext(tail);
+            else
+                filterNodes[i].setNext(filterNodes[i+1]);
+        }
+        
+        //set the tail's structures
+        tail.setParent(this);
+        tail.setPrevious(filterNodes[filterNodes.length -1]);
+    }
+    
+    /**
      * Finishes creating Slice.
      * Expects the slice to have an InputSliceNode, and 1 or more FilterSliceNodes. 
      * Creates an OutputSliceNode if necessary.
+     * 
      * @return The number of FilterSliceNodes.
      */
     public int finish() {
@@ -223,8 +253,7 @@ public class Slice implements at.dms.kjc.DeepCloneable {
         other.tail = (at.dms.kjc.slicegraph.OutputSliceNode)at.dms.kjc.AutoCloner.cloneToplevel(this.tail);
         other.len = this.len;
         other.filterNodes = (at.dms.kjc.slicegraph.FilterSliceNode[])at.dms.kjc.AutoCloner.cloneToplevel(this.filterNodes);
-        System.out.println(this);
-        System.out.println(other.filterNodes[0].hashCode() + " " + filterNodes[0].hashCode());
+        //System.out.println(other.filterNodes[0].hashCode() + " " + filterNodes[0].hashCode());
     }
 
     /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

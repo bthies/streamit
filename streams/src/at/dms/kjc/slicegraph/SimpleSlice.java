@@ -144,7 +144,6 @@ public class SimpleSlice extends Slice implements at.dms.kjc.DeepCloneable {
     protected void deepCloneInto(at.dms.kjc.slicegraph.SimpleSlice other) {
         super.deepCloneInto(other);
         other.body = (at.dms.kjc.slicegraph.FilterSliceNode)at.dms.kjc.AutoCloner.cloneToplevel(this.body);
-        System.out.println(other.body.hashCode() + " " + body.hashCode());
     }
 
     /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

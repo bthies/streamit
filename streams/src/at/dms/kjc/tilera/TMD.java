@@ -89,7 +89,9 @@ public class TMD extends Scheduler {
         //go through and multiply the steady multiplicity of each filter by factor
         for (Slice slice : slices) {
             FilterContent filter = slice.getFirstFilter().getFilter();
+            System.out.println(filter + " " + filter.getSteadyMult());
             filter.multSteadyMult(factor);
+            System.out.println(filter + " " + filter.getSteadyMult());
         }
         
         //because we have changed the multiplicities of the FilterContents
@@ -137,7 +139,8 @@ public class TMD extends Scheduler {
                 
                 //check that we have reached the threshold for duplicated items
                 if (((double)(fi.peek - fi.pop)) >= 
-                        (DUP_THRESHOLD * ((double)fi.pop * fi.steadyMult * factor))) {
+                        (DUP_THRESHOLD * (((double)fi.pop) * ((double)fi.steadyMult) * 
+                                ((double)factor)/((double)tiles)))) {
                     allPassed = false;
                     break;
                 }

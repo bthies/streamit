@@ -115,15 +115,6 @@ public abstract class SIRSlicer extends Slicer {
     }
 
     /**
-     * Get all slices
-     * @return All the slices of the slice graph. 
-     */
-    public Slice[] getSliceGraph() {
-        assert sliceGraph != null;
-        return sliceGraph;
-    }
-    
-    /**
      *  Get just top level slices in the slice graph.
      * @return top level slices
      */
@@ -138,7 +129,6 @@ public abstract class SIRSlicer extends Slicer {
      * @param slices The slice list to install as the new slice graph.
      */
     private void setSliceGraph(Slice[] slices) {
-        sliceGraph = slices;
         
         //perform some checks on the slice graph...
         for (int i = 0; i < slices.length; i++) {
@@ -160,6 +150,7 @@ public abstract class SIRSlicer extends Slicer {
      * @return True if the slice graph contains slice.
      */
     public boolean containsSlice(Slice slice) {
+        Slice[] sliceGraph = getSliceGraph();
         for (int i = 0; i < sliceGraph.length; i++) 
             if (sliceGraph[i] == slice)
                 return true;
@@ -433,6 +424,7 @@ public abstract class SIRSlicer extends Slicer {
     }
     // dump the the completed partition to a dot file
     public void dumpGraph(String filename) {
+        Slice[] sliceGraph = getSliceGraph();
         StringBuffer buf = new StringBuffer();
         buf.append("digraph Flattend {\n");
         buf.append("size = \"8, 10.5\";\n");
@@ -601,6 +593,7 @@ public abstract class SIRSlicer extends Slicer {
         // add to ss1 ... ssn to newSliceGraph,
         // replace newtopSlices: s |-> null with s -> ss1
         // replace newIo: s |-> null with s -> ss1
+        Slice[] sliceGraph = getSliceGraph();
         for (Slice s : sliceGraph) {
 //            if (s.getNumFilters() == 1) {
 //                SimpleSlice ss = new SimpleSlice(s.getHead(), s.getFilterNodes().get(0), s.getTail());

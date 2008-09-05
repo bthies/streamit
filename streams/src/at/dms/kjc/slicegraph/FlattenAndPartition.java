@@ -41,6 +41,7 @@ public class FlattenAndPartition extends SIRSlicer {
     }
 
     public Slice[] partition() {
+        Slice[] sliceGraph = getSliceGraph();
         return sliceGraph;
     }
 
@@ -58,7 +59,7 @@ public class FlattenAndPartition extends SIRSlicer {
         flattenInternal(fg.top);
 
         System.out.println("Slices: " + sliceList.size());
-        sliceGraph = sliceList.toArray(new Slice[sliceList.size()]);
+        //sliceGraph = sliceList.toArray(new Slice[sliceList.size()]);
         io = ioList.toArray(new Slice[ioList.size()]);
     }
 

@@ -32,16 +32,20 @@ public class TileraBackend {
         commonPasses.run(str, interfaces, interfaceTables, structs, helpers, global, chip.abstractSize());
         // perform some standard cleanup on the slice graph.
         commonPasses.simplifySlices();
-        // Set schedules for initialization, prime-pump (if KjcOptions.spacetime), and steady state.
-        SpaceTimeScheduleAndSlicer graphSchedule = scheduleSlices(commonPasses.getSlicer());
+        
+        SpaceTimeScheduleAndSlicer graphSchedule = new SpaceTimeScheduleAndSlicer(commonPasses.getSlicer());
         scheduler.setGraphSchedule(graphSchedule);
         
         //partition the slice graph based on the scheduling policy
         scheduler.run(chip.abstractSize());
-
+        
+        scheduleSlices(graphSchedule);      
+       
         scheduler.runLayout();
         backEndBits = new TileraBackEndFactory(chip);
         backEndBits.setLayout(scheduler);
+        
+        graphSchedule.getSlicer().dumpGraph("after_slice_partition.dot");
         
         //create all buffers and set the rotation lengths
         RotatingBuffer.createBuffers(graphSchedule);
@@ -65,10 +69,9 @@ public class TileraBackend {
      *
      * @return a Scheduler from which the schedules for the phases may be extracted. 
      */
-    public static SpaceTimeScheduleAndSlicer scheduleSlices(Slicer slicer) {
-        // Set schedules for initialization, priming (if --spacetime), and steady state.
-        SpaceTimeScheduleAndSlicer schedule = new SpaceTimeScheduleAndSlicer(slicer);
-  
+    public static void scheduleSlices(SpaceTimeScheduleAndSlicer schedule) {
+        Slicer slicer = schedule.getSlicer();
+        
         // set init schedule in standard order
         schedule.setInitSchedule(DataFlowOrder.getTraversal(slicer.getSliceGraph()));
         
@@ -82,8 +85,8 @@ public class TileraBackend {
             new at.dms.kjc.tilera.GeneratePrimePumpScheduleSMD(schedule).schedule(slicer.getSliceGraph());
 
         //Still need to generate the steady state schedule!
-
-        return schedule;
+        schedule.setSchedule(DataFlowOrder.getTraversal(slicer.getTopSlices()));
+        
     }
 
     

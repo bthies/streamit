@@ -248,15 +248,13 @@ public class SimpleSlicer extends SIRSlicer {
                 slice.finish();
             }
         }
-
-        sliceGraph = new Slice[slices.size()];
-        slices.toArray(sliceGraph);
         topSlicesList.toArray(topSlices);
         setupIO();
-        return sliceGraph;
+        return getSliceGraph();
     }
 
     private void setupIO() {
+        Slice[] sliceGraph = getSliceGraph();
         int len = sliceGraph.length;
         int newLen = len;
         for (int i = 0; i < len; i++)

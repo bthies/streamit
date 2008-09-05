@@ -508,8 +508,6 @@ public class Fissioner {
 
         sliceSteadyMult /= fizzAmount;
 
-	System.out.println("Slice Steady Mult: " + sliceSteadyMult);
-
         for(int x = 0 ; x < fizzAmount ; x++)
             sliceClones[x].getFirstFilter().getFilter().setSteadyMult(sliceSteadyMult);
 
@@ -519,22 +517,29 @@ public class Fissioner {
         if(sources.length == 1) {
             /* Only one source Slice, source Slice was not fizzed */
 
+	    // Calculate single phase in splitter schedule
+	    int numDup = slicePeek - slicePop;
+	    int numSingle = (sliceSteadyMult * slicePop) - (slicePeek - slicePop);
+
             // Generate steady-state splitter schedule for source Slice
             edgeSetSet = new LinkedList<LinkedList<InterSliceEdge>>();
             weights = new LinkedList<Integer>();
 
             for(int x = 0 ; x < fizzAmount ; x++) {
-                edgeSet = new LinkedList<InterSliceEdge>();
-                edgeSet.add(new InterSliceEdge(sources[0].getTail(), sliceClones[(x + fizzAmount - 1) % fizzAmount].getHead()));
-                edgeSet.add(new InterSliceEdge(sources[0].getTail(), sliceClones[x].getHead()));
-                edgeSetSet.add(edgeSet);
-                weights.add(new Integer(slicePeek - slicePop));
+		if(numDup > 0) {
+		    edgeSet = new LinkedList<InterSliceEdge>();
+		    edgeSet.add(new InterSliceEdge(sources[0].getTail(), sliceClones[(x + fizzAmount - 1) % fizzAmount].getHead()));
+		    edgeSet.add(new InterSliceEdge(sources[0].getTail(), sliceClones[x].getHead()));
+		    edgeSetSet.add(edgeSet);
+		    weights.add(new Integer(numDup));
+		}
 
-                edgeSet = new LinkedList<InterSliceEdge>();
-                edgeSet.add(new InterSliceEdge(sources[0].getTail(), sliceClones[x].getHead()));
-                edgeSetSet.add(edgeSet);
-                weights.add(new Integer((sliceSteadyMult * slicePop) -
-                                        (slicePeek - slicePop)));
+		if(numSingle > 0) {
+		    edgeSet = new LinkedList<InterSliceEdge>();
+		    edgeSet.add(new InterSliceEdge(sources[0].getTail(), sliceClones[x].getHead()));
+		    edgeSetSet.add(edgeSet);
+		    weights.add(new Integer(numSingle));
+		}
             }
 
             int rotateAmount = sliceCopyDown;
@@ -956,8 +961,6 @@ public class Fissioner {
         slicePeek = slicePop * sliceSteadyMult + slicePeek - slicePop;
         slicePop = slicePop * sliceSteadyMult;
         slicePush = slicePush * sliceSteadyMult;
-        
-	System.out.println("Slice Push: " + slicePush);
 
         for(int x = 0 ; x < fizzAmount ; x++) {
             sliceClones[x].getFirstFilter().getFilter().setSteadyMult(1);

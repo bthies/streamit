@@ -300,6 +300,9 @@ public class Fissioner {
         int sliceSteadyMult = filterInfo.steadyMult;
         int sliceCopyDown = filterInfo.copyDown;
 
+	// TODO: Remove debug println
+	System.out.println("Slice copy down: " + sliceCopyDown);   
+
         // Get Slice sources and destinations
         Slice sources[] = getSources(slice);
         Slice dests[] = getDests(slice);
@@ -328,97 +331,94 @@ public class Fissioner {
         // original prework body.  The initialization multiplicity is rolled
         // into a loop around the copied work body.
 
-        JBlock firstWorkBody =
-            sliceClones[0].getFirstFilter().getFilter().getWork().getBody();
+	if(sliceInitMult > 0) {
+	    JBlock firstWorkBody =
+		sliceClones[0].getFirstFilter().getFilter().getWork().getBody();
+	    
+	    JBlock newPreworkBody = new JBlock();
+	    
+	    if(sliceClones[0].getFirstFilter().getFilter().getPrework() != null &&
+	       sliceClones[0].getFirstFilter().getFilter().getPrework().length > 0 &&
+	       sliceClones[0].getFirstFilter().getFilter().getPrework()[0] != null &&
+	       sliceClones[0].getFirstFilter().getFilter().getPrework()[0].getBody() != null) {
+		newPreworkBody.addStatement(sliceClones[0].getFirstFilter().getFilter().getPrework()[0].getBody());
+	    }
 
-        JBlock newPreworkBody = new JBlock();
+	    JVariableDefinition initMultLoopVar =
+		new JVariableDefinition(0,
+					CStdType.Integer,
+					"initMultCount",
+					new JIntLiteral(0));
 
-        if(sliceClones[0].getFirstFilter().getFilter().getPrework() != null &&
-           sliceClones[0].getFirstFilter().getFilter().getPrework().length > 0 &&
-           sliceClones[0].getFirstFilter().getFilter().getPrework()[0] != null &&
-           sliceClones[0].getFirstFilter().getFilter().getPrework()[0].getBody() != null) {
-            newPreworkBody.addStatement(sliceClones[0].getFirstFilter().getFilter().getPrework()[0].getBody());
-        }
+	    JVariableDeclarationStatement initMultLoopVarDecl = new JVariableDeclarationStatement(initMultLoopVar);
+	    newPreworkBody.addStatementFirst(initMultLoopVarDecl);
+	    
+	    JRelationalExpression initMultLoopCond =
+		new JRelationalExpression(JRelationalExpression.OPE_LT,
+					  new JLocalVariableExpression(initMultLoopVar),
+					  new JIntLiteral(sliceInitMult));
+	    
+	    JExpressionStatement initMultLoopIncr =
+		new JExpressionStatement(new JAssignmentExpression(new JLocalVariableExpression(initMultLoopVar),
+								   new JAddExpression(new JLocalVariableExpression(initMultLoopVar),
+										      new JIntLiteral(1))));
+	    
+	    JForStatement initMultLoop =
+		new JForStatement(null,
+				  initMultLoopCond,
+				  initMultLoopIncr,
+				  (JBlock)ObjectDeepCloner.deepCopy(firstWorkBody));
+	    newPreworkBody.addStatement(initMultLoop);
+	    
+	    if(sliceClones[0].getFirstFilter().getFilter().getPrework() == null ||
+	       sliceClones[0].getFirstFilter().getFilter().getPrework().length == 0 ||
+	       sliceClones[0].getFirstFilter().getFilter().getPrework()[0] == null) {
+		JMethodDeclaration newPreworkMethod =
+		    new JMethodDeclaration(null,
+					   at.dms.kjc.Constants.ACC_PUBLIC,
+					   CStdType.Void,
+					   "Fission-generated prework",
+					   JFormalParameter.EMPTY,
+					   CClassType.EMPTY,
+					   newPreworkBody,
+					   null,
+					   null);
 
-        JVariableDefinition initMultLoopVar =
-            new JVariableDefinition(0,
-                                    CStdType.Integer,
-                                    "initMultCount",
-                                    new JIntLiteral(0));
+		sliceClones[0].getFirstFilter().getFilter().setPrework(newPreworkMethod);
 
-        JVariableDeclarationStatement initMultLoopVarDecl = new JVariableDeclarationStatement(initMultLoopVar);
-        newPreworkBody.addStatementFirst(initMultLoopVarDecl);
-
-        JRelationalExpression initMultLoopCond =
-            new JRelationalExpression(JRelationalExpression.OPE_LT,
-                                      new JLocalVariableExpression(initMultLoopVar),
-                                      new JIntLiteral(sliceInitMult));
-
-        JExpressionStatement initMultLoopIncr =
-            new JExpressionStatement(new JAssignmentExpression(new JLocalVariableExpression(initMultLoopVar),
-                                                               new JAddExpression(new JLocalVariableExpression(initMultLoopVar),
-                                                                                  new JIntLiteral(1))));
-
-        JForStatement initMultLoop =
-            new JForStatement(null,
-                              initMultLoopCond,
-                              initMultLoopIncr,
-                              (JBlock)ObjectDeepCloner.deepCopy(firstWorkBody));
-        newPreworkBody.addStatement(initMultLoop);
-
-        if(sliceClones[0].getFirstFilter().getFilter().getPrework() == null ||
-           sliceClones[0].getFirstFilter().getFilter().getPrework().length == 0 ||
-           sliceClones[0].getFirstFilter().getFilter().getPrework()[0] == null) {
-            JMethodDeclaration newPreworkMethod =
-                new JMethodDeclaration(null,
-                                       at.dms.kjc.Constants.ACC_PUBLIC,
-                                       CStdType.Void,
-                                       "Fission-generated prework",
-                                       JFormalParameter.EMPTY,
-                                       CClassType.EMPTY,
-                                       newPreworkBody,
-                                       null,
-                                       null);
-
-            sliceClones[0].getFirstFilter().getFilter().setPrework(newPreworkMethod);
-        }
-        else {
-            sliceClones[0].getFirstFilter().getFilter().getPrework()[0].setBody(newPreworkBody);
-        }
-
-        // For the first Slice clone, adjust prework rates to reflect that 
-        // initialization work was moved into prework
-
-        slicePrePeek = Math.max(slicePrePeek,
-                                slicePrePop + (sliceInitMult * slicePop) + (slicePeek - slicePop));
-        slicePrePop = slicePrePop + sliceInitMult * slicePop;
-        slicePrePush = slicePrePush + sliceInitMult * slicePush;
-
-        sliceClones[0].getFirstFilter().getFilter().getPrework()[0].setPeek(slicePrePeek);
-        sliceClones[0].getFirstFilter().getFilter().getPrework()[0].setPop(slicePrePop);
-        sliceClones[0].getFirstFilter().getFilter().getPrework()[0].setPush(slicePrePush);
-
-        // Since the initialization work has been moved into prework, set
-        // the initialization multiplicity of the first Slice clone to 0
-        
-        sliceClones[0].getFirstFilter().getFilter().setInitMult(0);
+		slicePrePeek = 0;
+		slicePrePush = 0;
+		slicePrePop = 0;
+	    }
+	    else {
+		sliceClones[0].getFirstFilter().getFilter().getPrework()[0].setBody(newPreworkBody);
+	    }
+	    
+	    // For the first Slice clone, adjust prework rates to reflect that 
+	    // initialization work was moved into prework
+	    
+	    slicePrePeek = Math.max(slicePrePeek,
+				    slicePrePop + (sliceInitMult * slicePop) + (slicePeek - slicePop));
+	    slicePrePop = slicePrePop + sliceInitMult * slicePop;
+	    slicePrePush = slicePrePush + sliceInitMult * slicePush;
+	    
+	    sliceClones[0].getFirstFilter().getFilter().getPrework()[0].setPeek(slicePrePeek);
+	    sliceClones[0].getFirstFilter().getFilter().getPrework()[0].setPop(slicePrePop);
+	    sliceClones[0].getFirstFilter().getFilter().getPrework()[0].setPush(slicePrePush);
+	    
+	    // Since the initialization work has been moved into prework, set
+	    // the initialization multiplicity of the first Slice clone to 0
+	    
+	    sliceClones[0].getFirstFilter().getFilter().setInitMult(1);
+	}
 
         // Disable all other Slice clones in initialization.  This involves
         // disabling prework and seting initialization multiplicty to 0
 
-        JMethodDeclaration emptyPrework;
         for(int x = 1 ; x < fizzAmount ; x++) {
-            emptyPrework = 
-                new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
-                                       CStdType.Void, "emptyPrework",
-                                       JFormalParameter.EMPTY, CClassType.EMPTY,
-                                       new JBlock(), null, null);
-            
-            sliceClones[x].getFirstFilter().getFilter().setPrework(emptyPrework);
-        }
-
-        for(int x = 0 ; x < fizzAmount ; x++)
+	    sliceClones[x].getFirstFilter().getFilter().setPrework(null);
             sliceClones[x].getFirstFilter().getFilter().setInitMult(0);
+	}
 
         sliceInitMult = 0;
 
@@ -494,6 +494,16 @@ public class Fissioner {
         // Set prepop for the last Slice clone.  Initially in steady-state, last
         // Slice clone will receive elements that it won't need.  Use prepop to
         // remove these unneeded elements.
+
+	if(!sliceClones[fizzAmount - 1].getFirstFilter().getFilter().isTwoStage()) {
+	    JMethodDeclaration prework = 
+                new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
+                                       CStdType.Void, "emptyPrework",
+                                       JFormalParameter.EMPTY, CClassType.EMPTY,
+                                       new JBlock(), null, null);
+
+	    sliceClones[fizzAmount - 1].getFirstFilter().getFilter().setPrework(prework);
+	}
 
         sliceClones[fizzAmount - 1].getFirstFilter().getFilter().getPrework()[0]
             .setPop(Math.max(0, (slicePeek - slicePop) - sliceCopyDown));
@@ -632,19 +642,31 @@ public class Fissioner {
             }
 
             // Generate steady-state splitter schedules for source Slices
+	    // TODO: Remove debug printlns
+	    System.out.println("Generating steady-state splitter schedule for multiple source Slices");
+
             for(int x = 0 ; x < fizzAmount ; x++) {
+		System.out.println("Source slice #" + x);
+
                 edgeSetSet = new LinkedList<LinkedList<InterSliceEdge>>();
                 weights = new LinkedList<Integer>();
 
                 if(numDup1 > 0) {
+		    System.out.println("  EdgeSet");
+		    System.out.println("    Edge: " + x + " -> " + (x + fizzAmount - 1) % fizzAmount);
+		    System.out.println("    Edge: " + x + " -> " + x);
+		    System.out.println("    Weight: " + numDup1);
                     edgeSet = new LinkedList<InterSliceEdge>();
-                    edgeSet.add(new InterSliceEdge(sources[x].getTail(), sliceClones[(x + fizzAmount- 1) % fizzAmount].getHead()));
+                    edgeSet.add(new InterSliceEdge(sources[x].getTail(), sliceClones[(x + fizzAmount - 1) % fizzAmount].getHead()));
                     edgeSet.add(new InterSliceEdge(sources[x].getTail(), sliceClones[x].getHead()));
                     edgeSetSet.add(edgeSet);
                     weights.add(new Integer(numDup1));
                 }
 
                 if(numSingle1 > 0) {
+		    System.out.println("  EdgeSet");
+		    System.out.println("    Edge: " + x + " -> " + x);
+		    System.out.println("    Weight: " + numSingle1);
                     edgeSet = new LinkedList<InterSliceEdge>();
                     edgeSet.add(new InterSliceEdge(sources[x].getTail(), sliceClones[x].getHead()));
                     edgeSetSet.add(edgeSet);
@@ -652,6 +674,10 @@ public class Fissioner {
                 }
 
                 if(numDup2 > 0) {
+		    System.out.println("  EdgeSet");
+		    System.out.println("    Edge: " + x + " -> " + x);
+		    System.out.println("    Edge: " + x + " -> " + (x + 1) % fizzAmount);
+		    System.out.println("    Weight: " + numDup2);
                     edgeSet = new LinkedList<InterSliceEdge>();
                     edgeSet.add(new InterSliceEdge(sources[x].getTail(), sliceClones[x].getHead()));
                     edgeSet.add(new InterSliceEdge(sources[x].getTail(), sliceClones[(x + 1) % fizzAmount].getHead()));
@@ -660,6 +686,9 @@ public class Fissioner {
                 }
 
                 if(numSingle2 > 0) {
+		    System.out.println("  EdgeSet");
+		    System.out.println("    Edge: " + x + " -> " + (x + 1) % fizzAmount);
+		    System.out.println("    Weight: " + numSingle2);
                     edgeSet = new LinkedList<InterSliceEdge>();
                     edgeSet.add(new InterSliceEdge(sources[x].getTail(), sliceClones[(x + 1) % fizzAmount].getHead()));
                     edgeSetSet.add(edgeSet);
@@ -674,8 +703,12 @@ public class Fissioner {
             edgeSet = new LinkedList<InterSliceEdge>();
             weights = new LinkedList<Integer>();
 
-            edgeSet.add(new InterSliceEdge(sources[0].getTail(), sliceClones[0].getHead()));
-            weights.add(new Integer((sliceSteadyMult * slicePop) + (slicePeek - slicePop) - sliceCopyDown));
+	    if((sliceSteadyMult * slicePop) + (slicePeek - slicePop) - sliceCopyDown > 0) {
+		edgeSet.add(new InterSliceEdge(sources[0].getTail(), sliceClones[0].getHead()));
+		weights.add(new Integer((sliceSteadyMult * slicePop) + (slicePeek - slicePop) - sliceCopyDown));
+	    }
+
+	    System.out.println("Slice copy down 2: " + sliceCopyDown);
 
             if(sliceCopyDown > 0) {
                 edgeSet.add(new InterSliceEdge(sources[fizzAmount - 1].getTail(), sliceClones[0].getHead()));
@@ -693,9 +726,11 @@ public class Fissioner {
                     edgeSet.add(new InterSliceEdge(sources[(x + fizzAmount - 1) % fizzAmount].getTail(), sliceClones[x].getHead()));
                     weights.add(new Integer(sliceCopyDown));
                 }
-
-                edgeSet.add(new InterSliceEdge(sources[x].getTail(), sliceClones[x].getHead()));
-                weights.add(new Integer((sliceSteadyMult * slicePop) + (slicePeek - slicePop) - sliceCopyDown));
+		
+		if((sliceSteadyMult * slicePop) + (slicePeek - slicePop) - sliceCopyDown > 0) {
+		    edgeSet.add(new InterSliceEdge(sources[x].getTail(), sliceClones[x].getHead()));
+		    weights.add(new Integer((sliceSteadyMult * slicePop) + (slicePeek - slicePop) - sliceCopyDown));
+		}
 
                 sliceClones[x].getHead().setWeights(toArray(weights));
                 sliceClones[x].getHead().setSources(toArray(edgeSet));

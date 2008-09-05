@@ -671,11 +671,18 @@ public class FilterContent implements SIRCodeUnit, at.dms.kjc.DeepCloneable {
      * @param meth The new init work method.
      */
     public void setPrework(JMethodDeclaration meth) {
-        if (prework == null || prework.length == 0) {
-            prework = new JMethodDeclaration[1];
-        }
-        is2stage = true;
-        prework[0] = meth;
+	if(meth == null) {
+	    is2stage = false;
+	    prework = new JMethodDeclaration[0];
+	}
+	else {
+	    if (prework == null || prework.length == 0) {
+		prework = new JMethodDeclaration[1];
+	    }
+
+	    is2stage = true;
+	    prework[0] = meth;
+	}
     }
 
     /**

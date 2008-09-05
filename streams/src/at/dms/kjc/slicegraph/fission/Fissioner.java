@@ -508,6 +508,8 @@ public class Fissioner {
 
         sliceSteadyMult /= fizzAmount;
 
+	System.out.println("Slice Steady Mult: " + sliceSteadyMult);
+
         for(int x = 0 ; x < fizzAmount ; x++)
             sliceClones[x].getFirstFilter().getFilter().setSteadyMult(sliceSteadyMult);
 
@@ -735,7 +737,7 @@ public class Fissioner {
 
             for(int x = 0 ; x < fizzAmount ; x++) {
                 edgeSet.add(new InterSliceEdge(sliceClones[x].getTail(), dests[0].getHead()));
-                weights.add(new Integer(slicePush));
+                weights.add(new Integer(sliceSteadyMult * slicePush));
             }
 
             dests[0].getHead().setWeights(toArray(weights));
@@ -955,6 +957,8 @@ public class Fissioner {
         slicePop = slicePop * sliceSteadyMult;
         slicePush = slicePush * sliceSteadyMult;
         
+	System.out.println("Slice Push: " + slicePush);
+
         for(int x = 0 ; x < fizzAmount ; x++) {
             sliceClones[x].getFirstFilter().getFilter().setSteadyMult(1);
             sliceClones[x].getFirstFilter().getFilter().getWork().setPeek(slicePeek);

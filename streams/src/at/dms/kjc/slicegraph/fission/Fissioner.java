@@ -329,9 +329,14 @@ public class Fissioner {
         JBlock firstWorkBody =
             sliceClones[0].getFirstFilter().getFilter().getWork().getBody();
 
-
         JBlock newPreworkBody = new JBlock();
-        newPreworkBody.addStatement(sliceClones[0].getFirstFilter().getFilter().getPrework()[0].getBody());
+
+        if(sliceClones[0].getFirstFilter().getFilter().getPrework() != null &&
+           sliceClones[0].getFirstFilter().getFilter().getPrework().length > 0 &&
+           sliceClones[0].getFirstFilter().getFilter().getPrework()[0] != null &&
+           sliceClones[0].getFirstFilter().getFilter().getPrework()[0].getBody() != null) {
+            newPreworkBody.addStatement(sliceClones[0].getFirstFilter().getFilter().getPrework()[0].getBody());
+        }
 
         JVariableDefinition initMultLoopVar =
             new JVariableDefinition(0,
@@ -359,7 +364,25 @@ public class Fissioner {
                               (JBlock)ObjectDeepCloner.deepCopy(firstWorkBody));
         newPreworkBody.addStatement(initMultLoop);
 
-        sliceClones[0].getFirstFilter().getFilter().getPrework()[0].setBody(newPreworkBody);
+        if(sliceClones[0].getFirstFilter().getFilter().getPrework() == null ||
+           sliceClones[0].getFirstFilter().getFilter().getPrework().length == 0 ||
+           sliceClones[0].getFirstFilter().getFilter().getPrework()[0] == null) {
+            JMethodDeclaration newPreworkMethod =
+                new JMethodDeclaration(null,
+                                       at.dms.kjc.Constants.ACC_PUBLIC,
+                                       CStdType.Void,
+                                       "Fission-generated prework",
+                                       JFormalParameter.EMPTY,
+                                       CClassType.EMPTY,
+                                       newPreworkBody,
+                                       null,
+                                       null);
+
+            sliceClones[0].getFirstFilter().getFilter().setPrework(newPreworkMethod);
+        }
+        else {
+            sliceClones[0].getFirstFilter().getFilter().getPrework()[0].setBody(newPreworkBody);
+        }
 
         // For the first Slice clone, adjust prework rates to reflect that 
         // initialization work was moved into prework

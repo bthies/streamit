@@ -97,6 +97,8 @@ public class Fissioner {
     public static boolean canFizz(Slice slice, int fizzAmount, boolean debug) {
 
         // Get information on Slice rates
+        FilterInfo.reset();
+
         FilterSliceNode filter = getFirstFilter(slice);
         FilterInfo filterInfo = FilterInfo.getFilterInfo(filter);
         
@@ -504,8 +506,7 @@ public class Fissioner {
         // Because work is equally shared among all Slice clones, steady-state 
         // multiplicity is divided by fizzAmount for each Slice clone
 
-        sliceSteadyMult = 
-            sliceClones[0].getFirstFilter().getFilter().getSteadyMult() / fizzAmount;
+        sliceSteadyMult /= fizzAmount;
 
         for(int x = 0 ; x < fizzAmount ; x++)
             sliceClones[x].getFirstFilter().getFilter().setSteadyMult(sliceSteadyMult);

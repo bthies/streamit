@@ -13,6 +13,9 @@ import at.dms.kjc.slicegraph.*;
 import java.util.LinkedList;
 import at.dms.kjc.backendSupport.*;
 import at.dms.kjc.slicegraph.fission.*;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.HashSet;
 
 /**
  * 
@@ -57,8 +60,6 @@ public class TMD extends Scheduler {
         assert graphSchedule != null : 
             "Must set the graph schedule (multiplicities) before running layout";
         
-        //TODO Assign file readers and writers to something on the chip
-        
         LevelizeSliceGraph lsg = new LevelizeSliceGraph(graphSchedule.getSlicer().getTopSlices());
         Slice[][] levels = lsg.getLevels();
         
@@ -66,14 +67,59 @@ public class TMD extends Scheduler {
         
         for (int l = 0; l < levels.length; l++) {
             assert levels[l].length  <= TileraBackend.chip.abstractSize() : "Too many filters in level for TMD layout!";
+            HashSet<Tile> allocatedTiles = new HashSet<Tile>(); 
             
             if (levels[l].length < TileraBackend.chip.abstractSize())
                 System.out.println("Warning: Level " + l + " of slice graph has fewer filters than tiles.");
             
             for (int f = 0; f < levels[l].length; f++) {
+                
                 setComputeNode(levels[l][f].getFirstFilter(), TileraBackend.chip.getTranslatedTile(f));
             }
         }
+    }
+    
+    private class TileAndInputs implements Comparable<TileAndInputs> {
+        public Tile tile;
+        public int inputs;
+        
+        public int compareTo(TileAndInputs t) {
+            if (this.inputs > t.inputs)
+                return -1;
+            else if (this.inputs < t.inputs)
+                return 1;
+            else return 0;              
+        }
+    }
+    
+    private Set<TileAndInputs> sortedByInputs(Slice slice, TileraChip chip, Set<Tile> allocatedTiles) {
+        TreeSet<TileAndInputs> sortedList = new TreeSet<TileAndInputs>();
+           
+        //add the tiles to the list that are allocated to upstream inputs
+        for (Edge edge : slice.getHead().getSourceSet()) {
+            Tile upstreamTile = getComputeNode(edge.getSrc().getPrevious());
+            if (allocatedTiles.contains(upstreamTile))
+                continue;
+            TileAndInputs ti = new TileAndInputs();
+            ti.tile = upstreamTile;
+            ti.inputs = slice.getHead().getWeight(edge);
+            
+            sortedList.add(ti);
+        }
+        
+        //Add the rest of the tiles that are not allocated in this level and are not
+        //allocated to upstream inputs
+        for (Tile tile : chip.getAbstractTiles()) {
+            if (sortedList.contains(tile) ||
+                    allocatedTiles.contains(tile))
+                continue;
+            TileAndInputs ti = new TileAndInputs();
+            ti.tile = tile;
+            ti.inputs = 0;
+            sortedList.add(ti);
+        }
+        
+        return sortedList;
     }
     
     /**

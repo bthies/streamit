@@ -187,7 +187,8 @@ public abstract class Slicer {
         if (((FilterSliceNode)node.getNext()).getFilter().getArray() != null)
             out.append("color=cornflowerblue, style=filled, ");
         
-        out.append("label=\"" + node.getAsInput().debugString(true));//toString());
+        out.append("label=\"" + slice.hashCode() + "\\n" +
+                    node.getAsInput().debugString(true));//toString());
         
         node = node.getNext();
         while (node != null ) {

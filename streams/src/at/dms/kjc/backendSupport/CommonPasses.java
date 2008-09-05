@@ -378,26 +378,28 @@ public class CommonPasses {
         Slice[] sliceGraph = null; 
         
         setSlicer(null);
-        setSlicer(new OneFilterSlicer(topNodes, executionCounts));
-        
-        if (KjcOptions.autoparams) {
-            GreedyBinPacking greedyBinPacking = new GreedyBinPacking(str,
-                    numCores, getWorkEstimate());
-            greedyBinPacking.pack();
+        if (KjcOptions.tilera > 1) {
+            setSlicer(new OneFilterSlicer(topNodes, executionCounts));
+        }
+        else {
+            if (KjcOptions.autoparams) {
+                GreedyBinPacking greedyBinPacking = new GreedyBinPacking(str,
+                        numCores, getWorkEstimate());
+                greedyBinPacking.pack();
 
-            setSlicer(new AdaptivePartitioner(topNodes, executionCounts,
-                    lfa, getWorkEstimate(), numCores, greedyBinPacking));
+                setSlicer(new AdaptivePartitioner(topNodes, executionCounts,
+                        lfa, getWorkEstimate(), numCores, greedyBinPacking));
+            }
+            if (KjcOptions.nopartition) {
+                setSlicer(new FlattenAndPartition(topNodes,
+                        executionCounts, lfa, getWorkEstimate(), numCores));
+                ((FlattenAndPartition)getSlicer()).flatten(str, executionCounts);
+            }
+            else { 
+                setSlicer(new SimpleSlicer(topNodes,
+                        executionCounts, lfa, getWorkEstimate(), numCores));
+            }
         }
-        if (KjcOptions.nopartition) {
-            setSlicer(new FlattenAndPartition(topNodes,
-                    executionCounts, lfa, getWorkEstimate(), numCores));
-            ((FlattenAndPartition)getSlicer()).flatten(str, executionCounts);
-        }
-        else { 
-            setSlicer(new SimpleSlicer(topNodes,
-                    executionCounts, lfa, getWorkEstimate(), numCores));
-        }
-
         sliceGraph = getSlicer().partition();
         System.out.println("Traces: " + sliceGraph.length);
         getSlicer().dumpGraph("traces.dot");

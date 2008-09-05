@@ -674,6 +674,7 @@ public class FilterContent implements SIRCodeUnit, at.dms.kjc.DeepCloneable {
         if (prework == null || prework.length == 0) {
             prework = new JMethodDeclaration[1];
         }
+        is2stage = true;
         prework[0] = meth;
     }
 

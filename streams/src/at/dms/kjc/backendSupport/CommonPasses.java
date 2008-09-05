@@ -402,7 +402,7 @@ public class CommonPasses {
         }
         sliceGraph = getSlicer().partition();
         System.out.println("Traces: " + sliceGraph.length);
-        getSlicer().dumpGraph("traces.dot");
+        getSlicer().dumpGraph("traces.dot", null);
         
         // Need to make slice graph, partitioner accessible.
         return sliceGraph;
@@ -427,7 +427,7 @@ public class CommonPasses {
         // fix any rate skew introduced in conversion to Slice graph.
         AddBuffering.doit(slicer,false,numCores);
         // decompose any pipelines of filters in the Slice graph.
-        slicer.ensureSimpleSlices();
+        //slicer.ensureSimpleSlices();
     }
 
     /** 

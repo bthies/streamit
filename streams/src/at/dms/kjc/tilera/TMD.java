@@ -73,53 +73,43 @@ public class TMD extends Scheduler {
                 System.out.println("Warning: Level " + l + " of slice graph has fewer filters than tiles.");
             
             for (int f = 0; f < levels[l].length; f++) {
-                
-                setComputeNode(levels[l][f].getFirstFilter(), TileraBackend.chip.getTranslatedTile(f));
+                Slice slice = levels[l][f];
+                Tile theTile = tileToAssign(slice, TileraBackend.chip, allocatedTiles);
+                setComputeNode(slice.getFirstFilter(), theTile);
+                allocatedTiles.add(theTile);
             }
         }
     }
-    
-    private class TileAndInputs implements Comparable<TileAndInputs> {
-        public Tile tile;
-        public int inputs;
-        
-        public int compareTo(TileAndInputs t) {
-            if (this.inputs > t.inputs)
-                return -1;
-            else if (this.inputs < t.inputs)
-                return 1;
-            else return 0;              
-        }
-    }
-    
-    private Set<TileAndInputs> sortedByInputs(Slice slice, TileraChip chip, Set<Tile> allocatedTiles) {
-        TreeSet<TileAndInputs> sortedList = new TreeSet<TileAndInputs>();
+ 
+    private Tile tileToAssign(Slice slice, TileraChip chip, Set<Tile> allocatedTiles) {
+        Tile theBest = null;
+        int bestInputs = -1;
            
         //add the tiles to the list that are allocated to upstream inputs
         for (Edge edge : slice.getHead().getSourceSet()) {
             Tile upstreamTile = getComputeNode(edge.getSrc().getPrevious());
             if (allocatedTiles.contains(upstreamTile))
                 continue;
-            TileAndInputs ti = new TileAndInputs();
-            ti.tile = upstreamTile;
-            ti.inputs = slice.getHead().getWeight(edge);
             
-            sortedList.add(ti);
+            if (slice.getHead().getWeight(edge) > bestInputs) {
+                theBest = upstreamTile;
+                bestInputs = slice.getHead().getWeight(edge);
+            }
         }
         
-        //Add the rest of the tiles that are not allocated in this level and are not
-        //allocated to upstream inputs
-        for (Tile tile : chip.getAbstractTiles()) {
-            if (sortedList.contains(tile) ||
-                    allocatedTiles.contains(tile))
-                continue;
-            TileAndInputs ti = new TileAndInputs();
-            ti.tile = tile;
-            ti.inputs = 0;
-            sortedList.add(ti);
+        if (theBest == null) {
+            //could not find a tile that was allocated to an upstream input
+            //just pick a tile
+            for (Tile tile : chip.getAbstractTiles()) {
+                if (allocatedTiles.contains(tile))
+                    continue;
+                theBest = tile;
+                break;
+            }
         }
         
-        return sortedList;
+        assert theBest != null;
+        return theBest;
     }
     
     /**

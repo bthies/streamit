@@ -223,6 +223,8 @@ public class Slice implements at.dms.kjc.DeepCloneable {
         other.tail = (at.dms.kjc.slicegraph.OutputSliceNode)at.dms.kjc.AutoCloner.cloneToplevel(this.tail);
         other.len = this.len;
         other.filterNodes = (at.dms.kjc.slicegraph.FilterSliceNode[])at.dms.kjc.AutoCloner.cloneToplevel(this.filterNodes);
+        System.out.println(this);
+        System.out.println(other.filterNodes[0].hashCode() + " " + filterNodes[0].hashCode());
     }
 
     /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

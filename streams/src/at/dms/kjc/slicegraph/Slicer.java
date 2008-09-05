@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import at.dms.kjc.sir.SIRFileReader;
 import at.dms.kjc.sir.SIRFileWriter;
+import at.dms.kjc.backendSupport.*;
 
 /**
  * 
@@ -101,7 +102,7 @@ public abstract class Slicer {
     }
   
     // dump the the completed partition to a dot file
-    public void dumpGraph(String filename) {
+    public void dumpGraph(String filename, Layout layout) {
         Slice[] sliceGraph = getSliceGraph();
         StringBuffer buf = new StringBuffer();
         buf.append("digraph Flattend {\n");
@@ -111,7 +112,7 @@ public abstract class Slicer {
             Slice slice = sliceGraph[i];
             assert slice != null;
             buf.append(slice.hashCode() + " [ " + 
-                    sliceName(slice) + 
+                    sliceName(slice, layout) + 
                     "\" ];\n");
             Slice[] next = getNext(slice/* ,parent */);
             for (int j = 0; j < next.length; j++) {
@@ -178,7 +179,7 @@ public abstract class Slicer {
     
     //return a string with all of the names of the filterslicenodes
     // and blue if linear
-    protected  String sliceName(Slice slice) {
+    protected  String sliceName(Slice slice, Layout layout) {
         SliceNode node = slice.getHead();
 
         StringBuffer out = new StringBuffer();
@@ -202,6 +203,8 @@ public abstract class Slicer {
                 out.append(")\\n(peek, pop, push: (" + 
                         f.getPeekInt() + ", " + f.getPopInt() + ", " + f.getPushInt() + ")");
                 out.append("\\nMult: init " + f.getInitMult() + ", steady " + f.getSteadyMult());
+                if (layout != null) 
+                    out.append("\\nTile: " + layout.getComputeNode(slice.getFirstFilter()).getUniqueId());
                 out.append("\\n *** ");
             }
             else {

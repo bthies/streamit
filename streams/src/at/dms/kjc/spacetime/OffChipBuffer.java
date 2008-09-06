@@ -9,6 +9,7 @@ import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.OutputSliceNode;
+import at.dms.kjc.slicegraph.SchedulingPhase;
 import at.dms.kjc.slicegraph.SliceNode;
 import at.dms.kjc.slicegraph.Edge;
 
@@ -53,7 +54,7 @@ public abstract class OffChipBuffer extends Channel {
         if (input.noInputs())
             return true;
         if (input.oneInput()
-            && (InterSliceBuffer.getBuffer(input.getSingleEdge()).getDRAM() == IntraSliceBuffer
+            && (InterSliceBuffer.getBuffer(input.getSingleEdge(SchedulingPhase.STEADY)).getDRAM() == IntraSliceBuffer
                 .getBuffer(input, (FilterSliceNode) input.getNext())
                 .getDRAM()))
             return true;
@@ -68,7 +69,7 @@ public abstract class OffChipBuffer extends Channel {
             && (IntraSliceBuffer.getBuffer(
                                            (FilterSliceNode) output.getPrevious(), output)
                 .getDRAM() == InterSliceBuffer.getBuffer(
-                                                         output.getSingleEdge()).getDRAM()))
+                                                         output.getSingleEdge(SchedulingPhase.STEADY)).getDRAM()))
             return true;
         return false;
     }

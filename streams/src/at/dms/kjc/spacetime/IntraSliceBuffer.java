@@ -1,14 +1,7 @@
 package at.dms.kjc.spacetime;
 
 import at.dms.kjc.backendSupport.FilterInfo;
-import at.dms.kjc.slicegraph.SliceNode;
-import at.dms.kjc.slicegraph.FilterSliceNode;
-import at.dms.kjc.slicegraph.InputSliceNode;
-import at.dms.kjc.slicegraph.OutputSliceNode;
-import at.dms.kjc.slicegraph.Slice;
-import at.dms.kjc.slicegraph.Edge;
-import at.dms.kjc.slicegraph.Util;
-
+import at.dms.kjc.slicegraph.*;
 /**
  * This class represents the buffer between the sink filter of a slice
  * and outputslicenode or between the inputslicenode and the source filter of a
@@ -32,7 +25,7 @@ public class IntraSliceBuffer extends OffChipBuffer {
     }
     
     private static IntraSliceBuffer getBufferSrcDst(SliceNode src, SliceNode dst) {
-        Edge e = Util.srcDstToEdge(src, dst);
+        Edge e = at.dms.kjc.slicegraph.Util.srcDstToEdge(src, dst, SchedulingPhase.STEADY);
         if (!bufferStore.containsKey(e)) {
             //System.out.println("Creating Buffer from " + src + " to " + dst);
             bufferStore.put(e, new IntraSliceBuffer(e));
@@ -91,7 +84,7 @@ public class IntraSliceBuffer extends OffChipBuffer {
             // if redundant get the previous buffer and call getNonRedundant
             if (redundant())
                 return InterSliceBuffer.getBuffer(
-                                                  ((InputSliceNode) theEdge.getSrc()).getSingleEdge())
+                                                  ((InputSliceNode) theEdge.getSrc()).getSingleEdge(SchedulingPhase.STEADY))
                     .getNonRedundant();
             // otherwise return this...
             return this;

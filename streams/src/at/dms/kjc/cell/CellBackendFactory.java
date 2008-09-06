@@ -10,11 +10,11 @@ import at.dms.kjc.backendSupport.CodeStoreHelperJoiner;
 import at.dms.kjc.backendSupport.CodeStoreHelperSimple;
 import at.dms.kjc.backendSupport.CodeStoreHelperSplitter;
 import at.dms.kjc.backendSupport.Layout;
-import at.dms.kjc.backendSupport.SchedulingPhase;
 import at.dms.kjc.slicegraph.Edge;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.OutputSliceNode;
+import at.dms.kjc.slicegraph.SchedulingPhase;
 import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.slicegraph.SliceNode;
 

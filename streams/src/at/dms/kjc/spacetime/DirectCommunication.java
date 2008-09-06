@@ -4,7 +4,6 @@ import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.backendSupport.FilterInfo;
 import at.dms.kjc.backendSupport.Layout;
-import at.dms.kjc.backendSupport.SchedulingPhase;
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.iterator.*;
 import at.dms.util.Utils;
@@ -20,6 +19,7 @@ import at.dms.compiler.*;
 import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
+import at.dms.kjc.slicegraph.SchedulingPhase;
 
 import java.util.Hashtable;
 import java.math.BigInteger;

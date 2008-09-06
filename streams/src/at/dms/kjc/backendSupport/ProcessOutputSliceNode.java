@@ -205,7 +205,7 @@ public class ProcessOutputSliceNode {
 
             // size is number of edges with non-zero weight.
             int size = 0;
-            for (int w : splitter.getWeights()) {
+            for (int w : splitter.getWeights(SchedulingPhase.STEADY)) {
                 if (w != 0) {size++;}
             }
             
@@ -239,7 +239,7 @@ public class ProcessOutputSliceNode {
             JIntLiteral[] weightVals = new JIntLiteral[size];
             {
                 int i = 0;
-                for (int w : splitter.getWeights()) {
+                for (int w : splitter.getWeights(SchedulingPhase.STEADY)) {
                     if (w != 0) {
                         weightVals[i++] = new JIntLiteral(w - 1);
                     }
@@ -286,9 +286,9 @@ public class ProcessOutputSliceNode {
             
             {
                 int i = 0;
-                for (int j = 0; j < splitter.getWeights().length; j++) {
-                    if (splitter.getWeights()[j] != 0) {
-                        Edge[] edges = splitter.getDests()[j];
+                for (int j = 0; j < splitter.getWeights(SchedulingPhase.STEADY).length; j++) {
+                    if (splitter.getWeights(SchedulingPhase.STEADY)[j] != 0) {
+                        Edge[] edges = splitter.getDests(SchedulingPhase.STEADY)[j];
                         JStatement[] pushes = new JStatement[edges.length + 1];
                         for (int k = 0; k < edges.length; k++) {
                             pushes[k] = new JExpressionStatement(

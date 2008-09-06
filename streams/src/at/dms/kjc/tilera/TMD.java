@@ -10,6 +10,7 @@ import at.dms.kjc.sir.lowering.fission.StatelessDuplicate;
 import at.dms.kjc.sir.lowering.partition.WorkEstimate;
 import at.dms.kjc.sir.lowering.partition.WorkList;
 import at.dms.kjc.slicegraph.*;
+
 import java.util.LinkedList;
 import at.dms.kjc.backendSupport.*;
 import at.dms.kjc.slicegraph.fission.*;
@@ -86,14 +87,14 @@ public class TMD extends Scheduler {
         int bestInputs = -1;
            
         //add the tiles to the list that are allocated to upstream inputs
-        for (Edge edge : slice.getHead().getSourceSet()) {
+        for (Edge edge : slice.getHead().getSourceSet(SchedulingPhase.STEADY)) {
             Tile upstreamTile = getComputeNode(edge.getSrc().getPrevious());
             if (allocatedTiles.contains(upstreamTile))
                 continue;
             
-            if (slice.getHead().getWeight(edge) > bestInputs) {
+            if (slice.getHead().getWeight(edge, SchedulingPhase.STEADY) > bestInputs) {
                 theBest = upstreamTile;
-                bestInputs = slice.getHead().getWeight(edge);
+                bestInputs = slice.getHead().getWeight(edge, SchedulingPhase.STEADY);
             }
         }
         
@@ -163,8 +164,8 @@ public class TMD extends Scheduler {
             for (Slice slice : slices) {
                 //this works only for pipelines right now, so just that we have at most
                 //one input and at most one output for the slice
-                assert slice.getHead().getSourceSet().size() <= 1 &&
-                    slice.getTail().getDestSet().size() <= 1;
+                assert slice.getHead().getSourceSet(SchedulingPhase.STEADY).size() <= 1 &&
+                    slice.getTail().getDestSet(SchedulingPhase.STEADY).size() <= 1;
                 
                 FilterInfo fi = FilterInfo.getFilterInfo(slice.getFirstFilter());
                 //nothing to do for filters with no input

@@ -12,6 +12,7 @@ import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.OutputSliceNode;
 import at.dms.kjc.slicegraph.SIRSlicer;
+import at.dms.kjc.slicegraph.SchedulingPhase;
 import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.slicegraph.SliceNode;
 
@@ -471,8 +472,8 @@ public class Util {
     public static boolean onlyWritingToAFile(OutputSliceNode outNode) {
         if (outNode.oneOutput()
                 && OffChipBuffer.unnecessary(outNode)
-                && outNode.getSingleEdge().getDest().isFileOutput()
-                && OffChipBuffer.unnecessary(outNode.getSingleEdge()
+                && outNode.getSingleEdge(SchedulingPhase.STEADY).getDest().isFileOutput()
+                && OffChipBuffer.unnecessary(outNode.getSingleEdge(SchedulingPhase.STEADY)
                                      .getDest())) {
             return true;
         }

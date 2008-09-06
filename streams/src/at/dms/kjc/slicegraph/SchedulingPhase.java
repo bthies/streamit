@@ -1,4 +1,4 @@
-package at.dms.kjc.backendSupport;
+package at.dms.kjc.slicegraph;
 
 /** What phase of Slice graph scheduling is a bit of code generation associated with? 
  * This enum should tell: initialization, pump priming for software pipelining, or steady state. 
@@ -13,7 +13,10 @@ public enum SchedulingPhase {
     /** indicates schdulting for the steady state */
     STEADY;
     
-
+    public static boolean isSteady(SchedulingPhase phase) {
+        return phase == STEADY;
+    }
+    
     /**
      * to determine if INIT || PRIMEPUMP.
      */

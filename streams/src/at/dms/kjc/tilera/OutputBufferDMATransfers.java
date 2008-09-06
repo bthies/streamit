@@ -29,13 +29,16 @@ public class OutputBufferDMATransfers {
         decls = new LinkedList<JStatement>();
         output = parent.filterNode.getParent().getTail();
         
-        checkSimple();
-        generateStatements();
+        checkSimple(SchedulingPhase.INIT);
+        generateStatements(SchedulingPhase.INIT);
+        checkSimple(SchedulingPhase.STEADY);
+        generateStatements(SchedulingPhase.STEADY);
+      
     }
 
-    private void generateStatements() {
-        for (int w = 0; w < output.getWeights().length; w++) {
-            for (InterSliceEdge edge : output.getDests()[w]) {
+    private void generateStatements(SchedulingPhase phase) {
+        for (int w = 0; w < output.getWeights(phase).length; w++) {
+            for (InterSliceEdge edge : output.getDests(phase)[w]) {
                 InputSliceNode input = edge.getDest();
                 FilterInfo srcInfo = FilterInfo.getFilterInfo(output.getPrevFilter());
                 FilterInfo dstInfo = FilterInfo.getFilterInfo(input.getNextFilter());
@@ -44,62 +47,47 @@ public class OutputBufferDMATransfers {
                 String requestVar = addrBuf.rotStructName  + "_request";
                 int itemBytes = Util.getTypeSize(parent.getType()) * 4;
                 //make sure the input weight equals the output weight for now
-                assert input.getWeight(edge) == output.getWeight(edge);
+                assert input.getWeight(edge, phase) == output.getWeight(edge, phase);
                 
                 //generate the dma command
-                String dst_init = addrBuf.currentBufName + " + " + 
-                    input.weightBefore(edge);
                 //in the steady state, you want to skip the copy down for the dest
-                String dst_steady = addrBuf.currentBufName + " + " + 
-                    (dstInfo.copyDown + input.weightBefore(edge));
-                String dst_stride = "" + (itemBytes * input.totalWeights());
+                String dst = addrBuf.currentBufName + " + " + ((phase == SchedulingPhase.INIT ? 0 : dstInfo.copyDown) + 
+                    input.weightBefore(edge, phase));
+                
+                String dst_stride = "" + (itemBytes * input.totalWeights(phase));
+                
                 //in the init stage we transfer after we complete the filter execution, so we use
                 //the pointer to the buffer that was just written
-                String src_init = parent.currentBufName + " + " + (output.weightBefore(edge));
                 //in the steady state transfer from the transfer buffer that is one behind the 
                 //current buffer we are writing (we do this because we are double buffering)
-                String src_steady = parent.transBufName + " + " + (output.weightBefore(edge));
-                String src_stride = "" + (itemBytes * output.totalWeights());
-                String block_size = "" + (itemBytes * output.getWeight(edge));
+                String src = (phase == SchedulingPhase.INIT ? parent.currentBufName : parent.transBufName) 
+                        + " + " + (output.weightBefore(edge, phase));
+                                                
+                String src_stride = "" + (itemBytes * output.totalWeights(phase));
+                String block_size = "" + (itemBytes * output.getWeight(edge, phase));
                
-                int num_blocks_init = 
-                    srcInfo.totalItemsSent(SchedulingPhase.INIT) / output.totalWeights();
+                int num_blocks = 
+                    srcInfo.totalItemsSent(phase) / output.totalWeights(phase);
                                 
-                assert (dstInfo.totalItemsPopped(SchedulingPhase.STEADY) / input.totalWeights()) ==
-                    (srcInfo.totalItemsSent(SchedulingPhase.STEADY) / output.totalWeights());
+                List<JStatement> commands = (phase == SchedulingPhase.INIT ? commandsInit : commandsSteady);
                 
-                int num_blocks_steady = 
-                    dstInfo.totalItemsPopped(SchedulingPhase.STEADY) / input.totalWeights();
-                
-                if (num_blocks_init > 0) {
-                    commandsInit.add(Util.toStmt("ilib_mem_start_strided_dma(" +
-                        dst_init + ", " + 
+                if (num_blocks > 0) {
+                    commands.add(Util.toStmt("ilib_mem_start_strided_dma(" +
+                        dst + ", " + 
                         dst_stride + ", " + 
-                        src_init + ", " + 
+                        src + ", " + 
                         src_stride + ", " + 
                         block_size + ", " + 
-                        num_blocks_init + ", " + 
+                        num_blocks+ ", " + 
                         "&" + requestVar + ")"));
                     //generate the wait call
-                    commandsInit.add(Util.toStmt("ilib_wait(&" + requestVar + ", &ignore_status)"));
+                    if (phase == SchedulingPhase.INIT) 
+                        commandsInit.add(Util.toStmt("ilib_wait(&" + requestVar + ", &ignore_status)"));
+                    else
+                        waitCallsSteady.add(Util.toStmt("ilib_wait(&" + requestVar + ", &ignore_status)"));
                 }
-                
-                if (num_blocks_steady > 0) {
-                    commandsSteady.add(Util.toStmt("ilib_mem_start_strided_dma(" +
-                        dst_steady + ", " + 
-                        dst_stride + ", " + 
-                        src_steady + ", " + 
-                        src_stride + ", " + 
-                        block_size + ", " + 
-                        num_blocks_steady + ", " +
-                        "&" + requestVar + ")"));
-                    //generate the wait call
-                    waitCallsSteady.add(Util.toStmt("ilib_wait(&" + requestVar + ", &ignore_status)"));
-                }
-                
                 //generate the decl of the request var
                 decls.add(Util.toStmt("ilibRequest " + requestVar));
-              
             }
         }
     }
@@ -107,16 +95,16 @@ public class OutputBufferDMATransfers {
     /**
      * Do some checks to make sure we will generate correct code for this distribution pattern.
      */
-    private void checkSimple() {
+    private void checkSimple(SchedulingPhase phase) {
         assert output.singleAppearance();
-        for (int w = 0; w < output.getWeights().length; w++) {
-            for (InterSliceEdge edge : output.getDests()[w]) {
+        for (int w = 0; w < output.getWeights(phase).length; w++) {
+            for (InterSliceEdge edge : output.getDests(phase)[w]) {
                 InputSliceNode input = edge.getDest();
                 //assert that we don't have a single edge appear more than once for the input slice node
                 assert input.singleAppearance();
                 
-                int inWeight = input.getWeight(edge);
-                assert inWeight == output.getWeights()[w];
+                int inWeight = input.getWeight(edge, phase);
+                assert inWeight == output.getWeights(phase)[w];
             }
         }
     }

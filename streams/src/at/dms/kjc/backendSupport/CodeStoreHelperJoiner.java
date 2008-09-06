@@ -23,7 +23,7 @@ public class CodeStoreHelperJoiner extends CodeStoreHelper {
         FilterInfo filterInfo = FilterInfo.getFilterInfo(sliceNode.getNext().getAsFilter());
 
         // channel code before work block
-        for (InterSliceEdge e : sliceNode.getAsInput().getSourceList()) {
+        for (InterSliceEdge e : sliceNode.getAsInput().getSourceList(SchedulingPhase.INIT)) {
             for (JStatement stmt : backEndBits.getChannel(e).beginInitRead()) {
                 statements.addStatement(stmt);
             }
@@ -34,7 +34,7 @@ public class CodeStoreHelperJoiner extends CodeStoreHelper {
         // work block
         statements.addStatement(getWorkFunctionBlock(filterInfo.initItemsReceived()));
         // channel code after work block
-        for (InterSliceEdge e : sliceNode.getAsInput().getSourceList()) {
+        for (InterSliceEdge e : sliceNode.getAsInput().getSourceList(SchedulingPhase.INIT)) {
             for (JStatement stmt : backEndBits.getChannel(e).endInitRead()) {
                 statements.addStatement(stmt);
             }
@@ -64,7 +64,7 @@ public class CodeStoreHelperJoiner extends CodeStoreHelper {
         FilterInfo filterInfo = FilterInfo.getFilterInfo(sliceNode.getNext().getAsFilter());
         
         // channel code before work block
-        for (InterSliceEdge e : sliceNode.getAsInput().getSourceList()) {
+        for (InterSliceEdge e : sliceNode.getAsInput().getSourceList(SchedulingPhase.STEADY)) {
             for (JStatement stmt : backEndBits.getChannel(e).beginSteadyRead()) {
                 statements.addStatement(stmt);
             }
@@ -76,7 +76,7 @@ public class CodeStoreHelperJoiner extends CodeStoreHelper {
         JStatement work = getWorkFunctionBlock(filterInfo.totalItemsReceived(SchedulingPhase.PRIMEPUMP));
         if (work != null) {statements.addStatement(work); }
         // channel code after work block
-        for (InterSliceEdge e : sliceNode.getAsInput().getSourceList()) {
+        for (InterSliceEdge e : sliceNode.getAsInput().getSourceList(SchedulingPhase.STEADY)) {
             for (JStatement stmt : backEndBits.getChannel(e).endSteadyRead()) {
                 statements.addStatement(stmt);
             }
@@ -107,7 +107,7 @@ public class CodeStoreHelperJoiner extends CodeStoreHelper {
         FilterInfo filterInfo = FilterInfo.getFilterInfo(sliceNode.getNext().getAsFilter());
         
         // channel code before work block
-        for (InterSliceEdge e : sliceNode.getAsInput().getSourceList()) {
+        for (InterSliceEdge e : sliceNode.getAsInput().getSourceList(SchedulingPhase.STEADY)) {
             for (JStatement stmt : backEndBits.getChannel(e).beginSteadyRead()) {
                 statements.addStatement(stmt);
             }
@@ -118,7 +118,7 @@ public class CodeStoreHelperJoiner extends CodeStoreHelper {
         // work block / work call
         statements.addStatement(getWorkFunctionBlock(filterInfo.totalItemsReceived(SchedulingPhase.STEADY)));
         // channel code after work block
-        for (InterSliceEdge e : sliceNode.getAsInput().getSourceList()) {
+        for (InterSliceEdge e : sliceNode.getAsInput().getSourceList(SchedulingPhase.STEADY)) {
             for (JStatement stmt : backEndBits.getChannel(e).endSteadyRead()) {
                 statements.addStatement(stmt);
             }

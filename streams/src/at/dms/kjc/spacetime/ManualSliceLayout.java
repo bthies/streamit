@@ -10,6 +10,7 @@ import java.util.HashMap;
 import at.dms.kjc.backendSupport.ComputeNode;
 import at.dms.kjc.backendSupport.Layout;
 import at.dms.kjc.slicegraph.FilterSliceNode;
+import at.dms.kjc.slicegraph.SchedulingPhase;
 import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.slicegraph.SliceNode;
 
@@ -53,14 +54,14 @@ public class ManualSliceLayout implements Layout<RawTile> {
                 assert slice.getHead().oneInput();
                 //set this file writer tile to the tile of its upstream input
                 assignment.put(slice.getHead().getNextFilter(),
-                        getComputeNode(slice.getHead().getSingleEdge().getSrc().getPrevFilter()));
+                        getComputeNode(slice.getHead().getSingleEdge(SchedulingPhase.STEADY).getSrc().getPrevFilter()));
             }
             else if (slice.getTail().getPrevFilter().isFileInput()) {
                 //file reader
                 assert slice.getTail().oneOutput();
                 //set this file reader to the tile of its downstream reader
                 assignment.put(slice.getTail().getPrevFilter(),
-                        getComputeNode(slice.getTail().getSingleEdge().getDest().getNextFilter()));
+                        getComputeNode(slice.getTail().getSingleEdge(SchedulingPhase.STEADY).getDest().getNextFilter()));
             }
             else 
                 assert false : "Some unknown i/o trace...";

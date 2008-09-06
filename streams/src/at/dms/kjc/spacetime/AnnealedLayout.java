@@ -11,6 +11,7 @@ import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.OutputSliceNode;
 import at.dms.kjc.slicegraph.SIRSlicer;
+import at.dms.kjc.slicegraph.SchedulingPhase;
 import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.slicegraph.SliceNode;
 
@@ -615,7 +616,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout<RawTile
         
         for (int i = 0; i < slices.length; i++) {
             Slice slice = slices[i];
-            Iterator edges = slice.getTail().getDestSet().iterator();
+            Iterator edges = slice.getTail().getDestSet(SchedulingPhase.STEADY).iterator();
             while (edges.hasNext()) {
                 InterSliceEdge edge = (InterSliceEdge)edges.next();
                // System.out.println(" Checking if " + edge + " crosses.");
@@ -694,7 +695,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout<RawTile
         
         for (int i = 0; i < slices.length; i++) {
             Slice slice = slices[i];
-            Iterator edges = slice.getTail().getDestSet().iterator();
+            Iterator edges = slice.getTail().getDestSet(SchedulingPhase.STEADY).iterator();
             while (edges.hasNext()) {
                 InterSliceEdge edge = (InterSliceEdge)edges.next();
                // System.out.println(" Checking if " + edge + " crosses.");
@@ -1022,10 +1023,10 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout<RawTile
         for (int i = 0; i < slicer.io.length; i++) {
             Slice slice = slicer.io[i];
             if (slice.getHead().isFileOutput() && slice.getHead().oneInput()) {
-                fileWriters.add(slice.getHead().getSingleEdge().getSrc().getPrevFilter());
+                fileWriters.add(slice.getHead().getSingleEdge(SchedulingPhase.STEADY).getSrc().getPrevFilter());
             }
             else if (slice.getTail().isFileInput() && slice.getTail().oneOutput()) {
-                fileReaders.add(slice.getTail().getSingleEdge().getDest().getNextFilter());
+                fileReaders.add(slice.getTail().getSingleEdge(SchedulingPhase.STEADY).getDest().getNextFilter());
             }
          }
 
@@ -1110,11 +1111,11 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout<RawTile
         if (input.noInputs())
             return false;
         
-        Iterator<InterSliceEdge> inEdges = input.getSourceSet().iterator();
+        Iterator<InterSliceEdge> inEdges = input.getSourceSet(SchedulingPhase.STEADY).iterator();
         while (inEdges.hasNext()) {
             InterSliceEdge inEdge = inEdges.next();
             OutputSliceNode output = inEdge.getSrc();
-            Iterator<InterSliceEdge> upstreamOutEdges = output.getDestSet().iterator();
+            Iterator<InterSliceEdge> upstreamOutEdges = output.getDestSet(SchedulingPhase.STEADY).iterator();
             while (upstreamOutEdges.hasNext()) {
                 InterSliceEdge upstreamOutEdge = upstreamOutEdges.next();
                 if (assignment.containsKey(upstreamOutEdge.getDest().getNextFilter()) &&

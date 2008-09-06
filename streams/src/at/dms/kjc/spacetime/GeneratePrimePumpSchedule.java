@@ -7,6 +7,7 @@ import java.util.*;
 import at.dms.kjc.backendSupport.SpaceTimeScheduleAndSlicer;
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.slicegraph.DataFlowOrder;
+import at.dms.kjc.slicegraph.SchedulingPhase;
 import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.KjcOptions;
 
@@ -110,7 +111,7 @@ public class GeneratePrimePumpSchedule {
         if (!shouldFire(slice))
             return false;
                    
-        Slice[] depends = slice.getDependencies();
+        Slice[] depends = slice.getDependencies(SchedulingPhase.STEADY);
         
         int myExeCount = getExeCount(slice);
         

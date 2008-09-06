@@ -16,8 +16,8 @@ import at.dms.kjc.backendSupport.BackEndFactory;
 import at.dms.kjc.backendSupport.CodeStoreHelper;
 import at.dms.kjc.backendSupport.ProcessFilterSliceNode;
 import at.dms.kjc.backendSupport.ProcessOutputSliceNode;
-import at.dms.kjc.backendSupport.SchedulingPhase;
 import at.dms.kjc.slicegraph.OutputSliceNode;
+import at.dms.kjc.slicegraph.SchedulingPhase;
 
 public class CellProcessOutputSliceNode extends ProcessOutputSliceNode {
 
@@ -35,7 +35,7 @@ public class CellProcessOutputSliceNode extends ProcessOutputSliceNode {
         if (outputNode.getPrevFilter().isFileInput())
             return;
         // Create new filter for RR splitter
-        if (outputNode.isRRSplitter()) {
+        if (outputNode.isRRSplitter(SchedulingPhase.STEADY)) {
             int filterId = CellBackend.numfilters;
             CellBackend.filters.add(outputNode);
             CellBackend.filterIdMap.put(outputNode, filterId);
@@ -52,7 +52,7 @@ public class CellProcessOutputSliceNode extends ProcessOutputSliceNode {
             LinkedList<Integer> outputIds = CellBackend.outputChannelMap.get(outputNode);
             ppuCS.attachOutputChannelArray(filterId, outputIds);
 
-            System.out.println("new splitter " + filterId + " " + outputNode.getIdent() + " " + outputNode.getWidth() + " " + outputNode.getPrevFilter().getFilter().getName());
+            System.out.println("new splitter " + filterId + " " + outputNode.getIdent() + " " + outputNode.getWidth(SchedulingPhase.STEADY) + " " + outputNode.getPrevFilter().getFilter().getName());
         }
         
         if (!KjcOptions.celldyn) addToScheduleLayout();
@@ -79,16 +79,16 @@ public class CellProcessOutputSliceNode extends ProcessOutputSliceNode {
     @Override
     public void additionalSteadyProcessing() {
         //System.out.println("processing output: " + outputNode.getPrevFilter().getFilter().getName());
-        if (outputNode.isRRSplitter()) {
+        if (outputNode.isRRSplitter(SchedulingPhase.STEADY)) {
 
-        } else if (outputNode.isDuplicateSplitter()) {
+        } else if (outputNode.isDuplicateSplitter(SchedulingPhase.STEADY)) {
             //ppuCS.duplicateOutput(outputNode);
         }
 //        ppuCS.addReadyBuffers(outputNode);
     }
     
     private void addToScheduleLayout() {
-        if (outputNode.isRRSplitter()) {
+        if (outputNode.isRRSplitter(SchedulingPhase.STEADY)) {
             int filterId = CellBackend.filterIdMap.get(outputNode);
             LinkedList<Integer> currentGroup = CellBackend.getLastScheduleGroup();
             int artificialId = CellBackend.artificialRRSplitterChannels.get(outputNode);
@@ -122,7 +122,7 @@ public class CellProcessOutputSliceNode extends ProcessOutputSliceNode {
     private CellPU getLocationFromScheduleLayout(OutputSliceNode sliceNode) {
         int cpu = -1;
         int filterId;
-        if (sliceNode.isRRSplitter())
+        if (sliceNode.isRRSplitter(SchedulingPhase.STEADY))
             filterId = CellBackend.filterIdMap.get(sliceNode);
         else filterId = CellBackend.filterIdMap.get(sliceNode.getPrevFilter());
         for (LinkedList<Integer> l : CellBackend.scheduleLayout) {
@@ -159,7 +159,7 @@ public class CellProcessOutputSliceNode extends ProcessOutputSliceNode {
 
         // size is number of edges with non-zero weight.
         int size = 0;
-        for (int w : splitter.getWeights()) {
+        for (int w : splitter.getWeights(SchedulingPhase.STEADY)) {
             if (w != 0) {size++;}
         }
         
@@ -278,7 +278,7 @@ public class CellProcessOutputSliceNode extends ProcessOutputSliceNode {
         splitter_block.addStatement(
                 new JExpressionStatement(
                         new JMethodCallExpression(
-                                backEndBits.getChannel(splitter.getDests()[0][0]).pushMethodName(),
+                                backEndBits.getChannel(splitter.getDests(SchedulingPhase.STEADY)[0][0]).pushMethodName(),
                                 new JExpression[]{
                                     argExpr
                                 })));
@@ -291,7 +291,7 @@ public class CellProcessOutputSliceNode extends ProcessOutputSliceNode {
         //if (whichPhase == SchedulingPhase.PREINIT) return;
         location = backEndBits.getLayout().getComputeNode(outputNode);
         assert location != null;
-        if (outputNode.isRRSplitter()) {
+        if (outputNode.isRRSplitter(SchedulingPhase.STEADY)) {
             codeStore = ((CellPU)location).getComputeCodeStore(outputNode);
             initCodeStore = ((CellPU)location).getInitComputeCodeStore(outputNode);
         } else {

@@ -10,6 +10,7 @@ import at.dms.kjc.slicegraph.FilterContent;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.InterSliceEdge;
+import at.dms.kjc.slicegraph.SchedulingPhase;
 
 /**
  * A class to hold all the various information for a filter.  Be careful, 
@@ -167,8 +168,8 @@ public class FilterInfo {
             InputSliceNode in = (InputSliceNode) sliceNode.getPrevious();
 
             // add all the upstream filters items that reach this filter
-            for (int i = 0; i < in.getWeights().length; i++) {
-                InterSliceEdge incoming = in.getSources()[i];
+            for (int i = 0; i < in.getWeights(SchedulingPhase.INIT).length; i++) {
+                InterSliceEdge incoming = in.getSources(SchedulingPhase.INIT)[i];
                 FilterContent filterC = ((FilterSliceNode) incoming.getSrc()
                                          .getPrevious()).getFilter();
                 // calculate the init items sent by the upstream filter
@@ -187,7 +188,7 @@ public class FilterInfo {
                  incoming.getSrc().ratio(incoming));
                  */
                 initItemsRec += (int) (((double) upstreamInitItems) * incoming
-                                       .getSrc().ratio(incoming));
+                                       .getSrc().ratio(incoming, SchedulingPhase.INIT));
             }
         }
         
@@ -287,20 +288,20 @@ public class FilterInfo {
             if (debug)
                 System.out.println(" Upstream input node:");
             // add all the upstream filters items that reach this filter
-            Iterator<InterSliceEdge> edges = in.getSourceSet().iterator();
+            Iterator<InterSliceEdge> edges = in.getSourceSet(SchedulingPhase.INIT).iterator();
             while (edges.hasNext()) {
                 InterSliceEdge incoming = edges.next();
                 upStreamItems += 
                     (int) 
                     ((double)FilterInfo.getFilterInfo((FilterSliceNode)incoming.getSrc().getPrevious())
-                            .initItemsSent() * incoming.getSrc().ratio(incoming));
+                            .initItemsSent() * incoming.getSrc().ratio(incoming, SchedulingPhase.INIT));
                 if (debug) {
                     System.out.println("   " + incoming + ": sends " + 
                             FilterInfo.getFilterInfo((FilterSliceNode)incoming.getSrc().getPrevious())
-                            .initItemsSent() + ", at ratio " + incoming.getSrc().ratio(incoming) + " = " +
+                            .initItemsSent() + ", at ratio " + incoming.getSrc().ratio(incoming, SchedulingPhase.INIT) + " = " +
                             (int) 
                             ((double)FilterInfo.getFilterInfo((FilterSliceNode)incoming.getSrc().getPrevious())
-                                    .initItemsSent() * incoming.getSrc().ratio(incoming)));
+                                    .initItemsSent() * incoming.getSrc().ratio(incoming, SchedulingPhase.INIT)));
                 }
                             //((double) incoming.getSrc()
                             //        .getWeight(incoming) / incoming.getSrc().totalWeights()));

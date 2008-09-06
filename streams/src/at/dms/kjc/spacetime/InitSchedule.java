@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.Vector;
 
 import at.dms.kjc.slicegraph.Edge;
+import at.dms.kjc.slicegraph.SchedulingPhase;
 import at.dms.kjc.slicegraph.Slice;
 import at.dms.util.Utils;
 
@@ -26,12 +27,12 @@ public class InitSchedule
                 Slice slice = queue.removeFirst();
                 if (!visited.contains(slice)) {
                     visited.add(slice);
-                    Iterator dests = slice.getTail().getDestSet().iterator();
+                    Iterator dests = slice.getTail().getDestSet(SchedulingPhase.INIT).iterator();
                     while (dests.hasNext()) {
                         Slice current = ((Edge)dests.next()).getDest().getParent();
                         if (!visited.contains(current)) {
                             //only add if all sources has been visited
-                            Iterator sources = current.getHead().getSourceSet().iterator();
+                            Iterator sources = current.getHead().getSourceSet(SchedulingPhase.INIT).iterator();
                             boolean addMe = true;
                             while (sources.hasNext()) {
                                 if (!visited.contains(((Edge)sources.next()).getSrc().getParent())) {

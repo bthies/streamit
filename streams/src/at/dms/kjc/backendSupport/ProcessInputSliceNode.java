@@ -234,7 +234,7 @@ public class ProcessInputSliceNode {
             
             // size is number of edges with non-zero weight.
             int size = 0;
-            for (int w : joiner.getWeights()) {
+            for (int w : joiner.getWeights(SchedulingPhase.STEADY)) {
                 if (w != 0) {size++;}
             }
             
@@ -264,7 +264,7 @@ public class ProcessInputSliceNode {
             JIntLiteral[] weightVals = new JIntLiteral[size];
             {
                 int i = 0;
-                for (int w : joiner.getWeights()) {
+                for (int w : joiner.getWeights(SchedulingPhase.STEADY)) {
                     if (w != 0) {
                         weightVals[i++] = new JIntLiteral(w - 1);
                     }
@@ -311,10 +311,10 @@ public class ProcessInputSliceNode {
             
             {
                 int i = 0;
-                for (int j = 0; j < joiner.getWeights().length; j++) {
-                    if (joiner.getWeights()[j] != 0) {
+                for (int j = 0; j < joiner.getWeights(SchedulingPhase.STEADY).length; j++) {
+                    if (joiner.getWeights(SchedulingPhase.STEADY)[j] != 0) {
                         JMethodCallExpression pop = new JMethodCallExpression(
-                                backEndBits.getChannel(joiner.getSources()[j]).popMethodName(),
+                                backEndBits.getChannel(joiner.getSources(SchedulingPhase.STEADY)[j]).popMethodName(),
                                 new JExpression[0]);
                         pop.setType(joiner.getType());
     
@@ -408,8 +408,8 @@ public class ProcessInputSliceNode {
                 // tmp = pop();
                 // push(tmp);
                 //
-                assert joiner.getWidth() == 1;
-                Channel upstream = backEndBits.getChannel(joiner.getSingleEdge());
+                assert joiner.getWidth(SchedulingPhase.STEADY) == 1;
+                Channel upstream = backEndBits.getChannel(joiner.getSingleEdge(SchedulingPhase.STEADY));
 
                 body.addStatement(t.getDecl());
                 body.addStatement(new JExpressionStatement(

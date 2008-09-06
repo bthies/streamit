@@ -6,7 +6,6 @@ package at.dms.kjc.tilera;
 import java.util.*;
 import at.dms.kjc.backendSupport.SpaceTimeScheduleAndSlicer;
 import at.dms.kjc.common.CommonUtils;
-import at.dms.kjc.slicegraph.DataFlowOrder;
 import at.dms.kjc.slicegraph.*;
 import at.dms.kjc.KjcOptions;
 
@@ -58,7 +57,7 @@ public class GeneratePrimePumpScheduleSMD {
                     CommonUtils.println_debugging("  Adding " + slice);
                 }
                 //check the outgoing edges of the slice to see if any of them can "fire"
-                for (InterSliceEdge edge : slice.getTail().getDestSet()) {
+                for (InterSliceEdge edge : slice.getTail().getDestSet(SchedulingPhase.STEADY)) {
                     if (canFire(edge)) {
                         fired.add(edge);
                         CommonUtils.println_debugging("  Adding " + edge);
@@ -120,7 +119,7 @@ public class GeneratePrimePumpScheduleSMD {
 
             //check each of the depends to make sure that they have fired at least
             //one more time than me.
-            for (InterSliceEdge edge : slice.getHead().getSources()) {
+            for (InterSliceEdge edge : slice.getHead().getSources(SchedulingPhase.STEADY)) {
                 
                 int dependsExeCount = getExeCount(edge);
                 assert !(myExeCount > dependsExeCount);
@@ -144,7 +143,7 @@ public class GeneratePrimePumpScheduleSMD {
      */
     private boolean canEverythingFire(LinkedList<Slice> dataFlowTraversal) {
         for (Slice slice : dataFlowTraversal) {
-            for (InterSliceEdge edge : slice.getTail().getDestSet()) {
+            for (InterSliceEdge edge : slice.getTail().getDestSet(SchedulingPhase.STEADY)) {
                 if (!(canFire(edge))) {
                     System.out.println(slice + " ||| " + edge);
                     return false;

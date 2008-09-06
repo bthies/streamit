@@ -50,7 +50,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
         for (Slice slice : schedule.getScheduleList()) {
             assert slice.getNumFilters() == 1;
             if (!slice.getHead().noInputs()) {
-                assert slice.getHead().totalWeights() > 0;
+                assert slice.getHead().totalWeights(SchedulingPhase.STEADY) > 0;
                 Tile parent = TileraBackend.backEndBits.getLayout().getComputeNode(slice.getFirstFilter());
                 //create the new buffer, the constructor will put the buffer in the 
                 //hashmap
@@ -62,7 +62,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
                 //mults of all the sources
                 int maxRotationLength = 0;
                 
-                for (Slice src : slice.getHead().getSourceSlices()) {
+                for (Slice src : slice.getHead().getSourceSlices(SchedulingPhase.STEADY)) {
                     int diff = schedule.getPrimePumpMult(src) - destMult; 
                     assert diff >= 0;
                     if (diff > maxRotationLength) {
@@ -89,9 +89,9 @@ public class InputRotatingBuffer extends RotatingBuffer {
      * 
      */
     protected void createDMAAddressBufs() {
-       addressBufs = new DMAAddressRotation[filterNode.getParent().getHead().getSourceSlices().size()];
+       addressBufs = new DMAAddressRotation[filterNode.getParent().getHead().getSourceSlices(SchedulingPhase.STEADY).size()];
        int i = 0;
-       for (Slice src : filterNode.getParent().getHead().getSourceSlices()) {
+       for (Slice src : filterNode.getParent().getHead().getSourceSlices(SchedulingPhase.STEADY)) {
            Tile tile = TileraBackend.backEndBits.getLayout().getComputeNode(src.getFirstFilter());
            DMAAddressRotation rot = new DMAAddressRotation(tile, this, filterNode, theEdge);
            addressBufs[i] = rot;

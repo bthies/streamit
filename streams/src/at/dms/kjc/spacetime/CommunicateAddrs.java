@@ -7,7 +7,7 @@ import at.dms.kjc.*;
 import at.dms.kjc.backendSupport.Channel;
 import at.dms.kjc.backendSupport.ComputeNode;
 import at.dms.kjc.common.CommonUtils;
-
+import at.dms.kjc.slicegraph.*;
 /**
  * This class will generate code to allocate the off chip buffers on the necessary
  * tiles and then communicate each buffer's global address to the tiles that need
@@ -194,7 +194,7 @@ public class CommunicateAddrs
                     
                     //now for the steady
                     SwitchCodeStore.generateSwitchCode(xyRouter, allocatingTile, 
-                            dest, 0);
+                            dest, SchedulingPhase.STEADY);
                     
                     
                     //add the code to the owner to send the address to the

@@ -156,7 +156,11 @@ public class InputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneabl
      * @return true if each input edge appears only once in the schedule of joining
      */
     public boolean singleAppearance() {
-        return getSourceSet().size() == getSourceList().size();
+        if (hasInitPattern() && 
+                getSourceSet(SchedulingPhase.INIT).size() != getSourceList(SchedulingPhase.INIT).size())
+            return false;
+        
+        return getSourceSet(SchedulingPhase.STEADY).size() == getSourceList(SchedulingPhase.STEADY).size();
     }
     
     /**
@@ -166,15 +170,15 @@ public class InputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneabl
      * 
      * @return the sum of the weights before edge
      */
-    public int weightBefore(InterSliceEdge edge) {
+    public int weightBefore(InterSliceEdge edge, SchedulingPhase phase) {
         assert singleAppearance();
         
         int total = 0;
-        for (int i = 0; i < weights.length; i++) {
-            if (sources[i] == edge) 
+        for (int i = 0; i < getWeights(phase).length; i++) {
+            if (getSources(phase)[i] == edge) 
                 return total;
             
-            total += weights[i];
+            total += getWeights(phase)[i];
         }
         assert false;
         return 0;
@@ -185,8 +189,8 @@ public class InputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneabl
      * 
      * @return The width of the join.
      */
-    public int getWidth() {
-        return getSourceSet().size();
+    public int getWidth(SchedulingPhase phase) {
+        return getSourceSet(phase).size();
     }
     
     /**
@@ -198,12 +202,12 @@ public class InputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneabl
      * @param edge The edge to query.
      * @return The number of items passing on the edge.
      */
-    public int getItems(InterSliceEdge edge) {
+    public int getItems(InterSliceEdge edge, SchedulingPhase phase) {
         int items = 0;
         
-        for (int i = 0; i < sources.length; i++) {
-            if (sources[i] == edge) {
-                items += weights[i];
+        for (int i = 0; i < getSources(phase).length; i++) {
+            if (getSources(phase)[i] == edge) {
+                items += getWeights(phase)[i];
             }
         }
         
@@ -211,12 +215,18 @@ public class InputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneabl
     }
 
     /** @return array of edge weights */
-    public int[] getWeights() {
+    public int[] getWeights(SchedulingPhase phase) {
+        if (phase == SchedulingPhase.INIT && hasInitPattern())
+            return initWeights;
+        
         return weights;
     }
 
     /** @return array of edges */
-    public InterSliceEdge[] getSources() {
+    public InterSliceEdge[] getSources(SchedulingPhase phase) {
+        if (phase == SchedulingPhase.INIT && hasInitPattern())
+            return initSources;
+        
         return sources;
     }
 
@@ -291,29 +301,33 @@ public class InputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneabl
     }
     
     /** @return total weight of all edges */
-    public int totalWeights() {
+    public int totalWeights(SchedulingPhase phase) {
         int sum = 0;
-        for (int i = 0; i < weights.length; i++)
-            sum += weights[i];
+        for (int i = 0; i < getWeights(phase).length; i++)
+            sum += getWeights(phase)[i];
         return sum;
     }
 
     /** @return total weight on all connections to a single Edge. 
      * @param out The Edge that we are interested in*/
-    public int getWeight(Edge out) {
+    public int getWeight(Edge out, SchedulingPhase phase) {
         int sum = 0;
 
-        for (int i = 0; i < sources.length; i++)
-            if (sources[i] == out)
-                sum += weights[i];
+        for (int i = 0; i < getSources(phase).length; i++)
+            if (getSources(phase)[i] == out)
+                sum += getWeights(phase)[i];
 
         return sum;
     }
 
     /**
-     * Does sources have a single element. 
+     * Does sources have a single element.
+     *  
      * @return true if there is a single element in sources. */
     public boolean oneInput() {
+        if (getSources(SchedulingPhase.INIT).length != 1)
+            return false;
+        
         return (sources.length == 1);
     }
     
@@ -321,17 +335,17 @@ public class InputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneabl
      * Is a joiner if there are at least 2 sources (even if same Edge object).
      * @return is a joiner.
      */
-    public boolean isJoiner() {
-        return sources.length >= 2;
+    public boolean isJoiner(SchedulingPhase phase) {
+        return getSources(phase).length >= 2;
     }
 
     /** Get the singleton edge. 
      * Must have only one input in sources.
      * @return the edge, or throw AssertionError
      */
-    public InterSliceEdge getSingleEdge() {
+    public InterSliceEdge getSingleEdge(SchedulingPhase phase) {
         assert oneInput() : "Calling getSingeEdge() on InputSlice with less/more than one input";
-        return sources[0];
+        return getSources(phase)[0];
     }
 
     /** 
@@ -347,6 +361,9 @@ public class InputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneabl
      * @return
      */
     public boolean noInputs() {
+        if (getSources(SchedulingPhase.INIT).length != 0)
+            return false;
+        
         return sources.length == 0;
     }
 
@@ -355,10 +372,10 @@ public class InputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneabl
      * @param edge
      * @return  0.0 if totalWeights() == 0, else ratio.
      */
-    public double ratio(Edge edge) {
-        if (totalWeights() == 0)
+    public double ratio(Edge edge, SchedulingPhase phase) {
+        if (totalWeights(phase) == 0)
             return 0.0;
-        return ((double) getWeight(edge) / (double) totalWeights());
+        return ((double) getWeight(edge, phase) / (double) totalWeights(phase));
     }
 
     /**
@@ -368,11 +385,11 @@ public class InputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneabl
      * 
      * @return The list.
      */
-    public LinkedList<InterSliceEdge> getSourceSequence() {
+    public LinkedList<InterSliceEdge> getSourceSequence(SchedulingPhase phase) {
         LinkedList<InterSliceEdge> list = new LinkedList<InterSliceEdge>();
-        for (int i = 0; i < sources.length; i++) {
-            if (!list.contains(sources[i]))
-                list.add(sources[i]);
+        for (int i = 0; i < getSources(phase).length; i++) {
+            if (!list.contains(getSources(phase)[i]))
+                list.add(getSources(phase)[i]);
         }
         return list;
     }
@@ -382,9 +399,9 @@ public class InputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneabl
      * 
      * @return a set of all the slices that are inputs to this slice.
      */
-    public Set<Slice> getSourceSlices() {
+    public Set<Slice> getSourceSlices(SchedulingPhase phase) {
         HashSet<Slice> slices = new HashSet<Slice>();
-        for (InterSliceEdge edge : getSourceList()) {
+        for (InterSliceEdge edge : getSourceList(phase)) {
             slices.add(edge.getSrc().getParent());
         }
         return slices;
@@ -395,17 +412,17 @@ public class InputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneabl
      * 
      * @return The linked list of the sources pattern.
      */
-    public LinkedList<InterSliceEdge> getSourceList() {
+    public LinkedList<InterSliceEdge> getSourceList(SchedulingPhase phase) {
        LinkedList<InterSliceEdge> list = new LinkedList<InterSliceEdge>();
-       for (int i = 0; i < sources.length; i++)
-           list.add(sources[i]);
+       for (int i = 0; i < getSources(phase).length; i++)
+           list.add(getSources(phase)[i]);
        return list;
     }
     
-    public Set<InterSliceEdge> getSourceSet() {
+    public Set<InterSliceEdge> getSourceSet(SchedulingPhase phase) {
         HashSet<InterSliceEdge> set = new HashSet<InterSliceEdge>();
-        for (int i = 0; i < sources.length; i++)
-            set.add(sources[i]);
+        for (int i = 0; i < getSources(phase).length; i++)
+            set.add(getSources(phase)[i]);
         return set;
     }
 
@@ -446,13 +463,22 @@ public class InputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneabl
      * @param oldEdge The edge to replace.
      * @param newEdge The edge to install.
      */
-    public void replaceEdge(InterSliceEdge oldEdge, InterSliceEdge newEdge) {
-        for (int i = 0; i < sources.length; i++) {
-            if (sources[i] == oldEdge)
-                sources[i] = newEdge;
+    public void replaceEdge(InterSliceEdge oldEdge, InterSliceEdge newEdge, SchedulingPhase phase) {
+        if (phase == SchedulingPhase.INIT && hasInitPattern()) {
+            for (int i = 0; i < initSources.length; i++) {
+                if (initSources[i] == oldEdge)
+                    initSources[i] = newEdge;
+            }
+
+        }
+        else {
+            for (int i = 0; i < sources.length; i++) {
+                if (sources[i] == oldEdge)
+                    sources[i] = newEdge;
+            }
         }
     }
-    
+
     public CType getType() {
         return getNextFilter().getFilter().getInputType();
     }

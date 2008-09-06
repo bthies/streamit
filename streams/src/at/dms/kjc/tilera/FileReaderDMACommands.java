@@ -5,10 +5,10 @@ import java.util.List;
 
 import at.dms.kjc.JStatement;
 import at.dms.kjc.backendSupport.FilterInfo;
-import at.dms.kjc.backendSupport.SchedulingPhase;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.InterSliceEdge;
 import at.dms.kjc.slicegraph.OutputSliceNode;
+import at.dms.kjc.slicegraph.SchedulingPhase;
 
 /**
  * This currently only works for if the filter that is downstream of the filter reader has only
@@ -44,8 +44,8 @@ public class FileReaderDMACommands {
         commandsInit = new LinkedList<JStatement>();
         decls = new LinkedList<JStatement>();
         input = parent.filterNode.getParent().getHead();
-        fileOutput = input.getSingleEdge().getSrc();    
-        edge = input.getSingleEdge();
+        fileOutput = input.getSingleEdge(SchedulingPhase.STEADY).getSrc();    
+        edge = input.getSingleEdge(SchedulingPhase.STEADY);
         checkSimple();
         generateStatements();
     }
@@ -67,28 +67,32 @@ public class FileReaderDMACommands {
         String dst_steady = parent.currentRotName + "->next->buffer + " + 
             (dstInfo.copyDown);
         //the stride should always be 1 in this case, but keep this here for the future
-        String dst_stride = "" + (itemBytes * input.totalWeights());
+        String dst_stride_steady = "" + (itemBytes * input.totalWeights(SchedulingPhase.STEADY));
+        String dst_stride_init = "" + (itemBytes * input.totalWeights(SchedulingPhase.INIT));
         //the source is always the file read buffer
-        String src = "fileReadBuffer + fileReadIndex + " + (fileOutput.weightBefore(edge));
-        String src_stride = "" + (itemBytes * fileOutput.totalWeights());
-        String block_size = "" + (itemBytes * fileOutput.getWeight(edge));
+        String src_steady = "fileReadBuffer + fileReadIndex + " + (fileOutput.weightBefore(edge, SchedulingPhase.STEADY));
+        String src_init = "fileReadBuffer + fileReadIndex + " + (fileOutput.weightBefore(edge, SchedulingPhase.INIT));
+        String src_stride_steady = "" + (itemBytes * fileOutput.totalWeights(SchedulingPhase.STEADY));
+        String src_stride_init = "" + (itemBytes * fileOutput.totalWeights(SchedulingPhase.INIT));
+        String block_size_init = "" + (itemBytes * fileOutput.getWeight(edge, SchedulingPhase.INIT));
+        String block_size_steady = "" + (itemBytes * fileOutput.getWeight(edge, SchedulingPhase.STEADY));
 
         String num_blocks_init = "" + 
-            srcInfo.totalItemsSent(SchedulingPhase.INIT) / fileOutput.totalWeights();
+            srcInfo.totalItemsSent(SchedulingPhase.INIT) / fileOutput.totalWeights(SchedulingPhase.INIT);
 
-        assert (dstInfo.totalItemsPopped(SchedulingPhase.STEADY) / input.totalWeights()) ==
-            (srcInfo.totalItemsSent(SchedulingPhase.STEADY) / fileOutput.totalWeights());
+        assert (dstInfo.totalItemsPopped(SchedulingPhase.STEADY) / input.totalWeights(SchedulingPhase.STEADY)) ==
+            (srcInfo.totalItemsSent(SchedulingPhase.STEADY) / fileOutput.totalWeights(SchedulingPhase.STEADY));
 
         String num_blocks_steady = "" + 
-            dstInfo.totalItemsPopped(SchedulingPhase.STEADY) / input.totalWeights();
+            dstInfo.totalItemsPopped(SchedulingPhase.STEADY) / input.totalWeights(SchedulingPhase.STEADY);
 
 
         commandsInit.add(Util.toStmt("ilib_mem_start_strided_dma(" +
                 dst_init + ", " + 
-                dst_stride + ", " + 
-                src + ", " + 
-                src_stride + ", " + 
-                block_size + ", " + 
+                dst_stride_init + ", " + 
+                src_init + ", " + 
+                src_stride_init + ", " + 
+                block_size_init + ", " + 
                 num_blocks_init + ", " + 
                 "&" + requestVar + ")"));
         commandsInit.add(Util.toStmt("ilib_wait(&" + requestVar + ", &ignore_status)"));
@@ -96,10 +100,10 @@ public class FileReaderDMACommands {
 
         commandsSteady.add(Util.toStmt("ilib_mem_start_strided_dma(" +
                 dst_steady + ", " + 
-                dst_stride + ", " + 
-                src + ", " + 
-                src_stride + ", " + 
-                block_size + ", " + 
+                dst_stride_init + ", " + 
+                src_init + ", " + 
+                src_stride_init + ", " + 
+                block_size_init + ", " + 
                 num_blocks_steady + ", " +
                 "&" + requestVar + ")"));
         //increment the file index
@@ -117,7 +121,10 @@ public class FileReaderDMACommands {
     private void checkSimple() {
         assert input.singleAppearance();
         assert fileOutput.singleAppearance();
-        assert input.getWeight(input.getSingleEdge()) == fileOutput.getWeight(input.getSingleEdge());
+        assert input.getWeight(input.getSingleEdge(SchedulingPhase.INIT), SchedulingPhase.INIT) == 
+            fileOutput.getWeight(input.getSingleEdge(SchedulingPhase.INIT), SchedulingPhase.INIT);
+        assert input.getWeight(input.getSingleEdge(SchedulingPhase.STEADY),SchedulingPhase.STEADY) == 
+            fileOutput.getWeight(input.getSingleEdge(SchedulingPhase.STEADY), SchedulingPhase.STEADY);
     }
     
     /**

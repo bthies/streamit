@@ -45,7 +45,7 @@ public class ReduceSJWidth
     private static void reduceIncomingEdges(Slice slice) 
     {
         //check if there is anything to do
-        if (slice.getHead().getSourceSet().size() <= DRAMs)
+        if (slice.getHead().getSourceSet(SchedulingPhase.STEADY).size() <= DRAMs)
             return;
 
         //create the new trace to add with an identity
@@ -55,10 +55,10 @@ public class ReduceSJWidth
         //set the connections
         //choose first DRAMs incoming filters
         HashSet<Edge> coalesce = new HashSet<Edge>();
-        for (int i = 0; i < input.getSources().length; i++) {
+        for (int i = 0; i < input.getSources(SchedulingPhase.STEADY).length; i++) {
             //if not already in the set, add it
-            if (!coalesce.contains(input.getSources()[i]))
-                coalesce.add(input.getSources()[i]);
+            if (!coalesce.contains(input.getSources(SchedulingPhase.STEADY)[i]))
+                coalesce.add(input.getSources(SchedulingPhase.STEADY)[i]);
             //break when we have DRAMs traces in the set
             if (coalesce.size() >= DRAMs)
                 break;
@@ -69,7 +69,7 @@ public class ReduceSJWidth
         Vector newEdgesNewTrace = new Vector();
         int i = 0;
 
-        while (i < input.getSources().length) {
+        while (i < input.getSources(SchedulingPhase.STEADY).length) {
             int sum = 0;
             //      if (input.getSources[i])
 

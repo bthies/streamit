@@ -114,7 +114,7 @@ public abstract class Slicer {
             buf.append(slice.hashCode() + " [ " + 
                     sliceName(slice, layout) + 
                     "\" ];\n");
-            Slice[] next = getNext(slice/* ,parent */);
+            Slice[] next = getNext(slice/* ,parent */, SchedulingPhase.STEADY);
             for (int j = 0; j < next.length; j++) {
                 assert next[j] != null;
                 buf.append(slice.hashCode() + " -> " + next[j].hashCode()
@@ -135,7 +135,7 @@ public abstract class Slicer {
     
     // get the downstream slices we cannot use the edge[] of slice
     // because it is for execution order and this is not determined yet.
-    protected Slice[] getNext(Slice slice) {
+    protected Slice[] getNext(Slice slice, SchedulingPhase phase) {
         SliceNode node = slice.getHead();
         if (node instanceof InputSliceNode)
             node = node.getNext();
@@ -143,7 +143,7 @@ public abstract class Slicer {
             node = node.getNext();
         }
         if (node instanceof OutputSliceNode) {
-            Edge[][] dests = ((OutputSliceNode) node).getDests();
+            Edge[][] dests = ((OutputSliceNode) node).getDests(phase);
             ArrayList<Object> output = new ArrayList<Object>();
             for (int i = 0; i < dests.length; i++) {
                 Edge[] inner = dests[i];

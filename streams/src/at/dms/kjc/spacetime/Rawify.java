@@ -6,13 +6,13 @@ import java.util.Iterator;
 import at.dms.kjc.backendSupport.ComputeNode;
 import at.dms.kjc.backendSupport.FilterInfo;
 import at.dms.kjc.backendSupport.Layout;
-import at.dms.kjc.backendSupport.SchedulingPhase;
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.slicegraph.InterSliceEdge;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.OutputSliceNode;
+import at.dms.kjc.slicegraph.SchedulingPhase;
 import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.slicegraph.SliceNode;
 import at.dms.kjc.*;
@@ -117,7 +117,7 @@ public class Rawify {
         traces = schedule.getSchedule();
         
         if (SpaceTimeBackend.NO_SWPIPELINE) {
-            RawComputeCodeStore.barrier(rawChip, false, false);
+            RawComputeCodeStore.barrier(rawChip, SchedulingPhase.STEADY);
             iterateNoSWPipe(schedule.getScheduleList(), SchedulingPhase.STEADY, rawChip);
         } else {
             //iterate over the joiners then the filters then 
@@ -222,7 +222,7 @@ public class Rawify {
                         hasBeenJoined.add(notSched.getHead());
                     }
                         
-                    Iterator<InterSliceEdge> inEdges = notSched.getHead().getSourceSet().iterator();
+                    Iterator<InterSliceEdge> inEdges = notSched.getHead().getSourceSet(whichPhase).iterator();
                     boolean canJoin = true;
                     while (inEdges.hasNext()) {
                         InterSliceEdge inEdge = inEdges.next();
@@ -491,12 +491,12 @@ public class Rawify {
         // if there are no files, do nothing
         if (!input.hasFileInput())
             return;
-        for (int i = 0; i < input.getSources().length; i++) {
+        for (int i = 0; i < input.getSources(whichPhase).length; i++) {
             // do nothing for non-file readers
-            if (!input.getSources()[i].getSrc().isFileInput())
+            if (!input.getSources(whichPhase)[i].getSrc().isFileInput())
                 continue;
 
-            OutputSliceNode fileO = input.getSources()[i].getSrc();
+            OutputSliceNode fileO = input.getSources(whichPhase)[i].getSrc();
 
             assert fileO.getPrevFilter().getFilter() instanceof FileInputContent : "FileReader should be a FileInputContent";
 
@@ -535,14 +535,14 @@ public class Rawify {
         if (items == 0)
             return;
     
-        assert items % input.totalWeights() == 0 : "weights on input trace node does not divide evenly with items received";
+        assert items % input.totalWeights(whichPhase) == 0 : "weights on input trace node does not divide evenly with items received";
         // iterations of "joiner"
-        int iterations = items / input.totalWeights();
+        int iterations = items / input.totalWeights(whichPhase);
         int typeSize = Util.getTypeSize(filter.getFilter().getInputType());
 
         // generate the commands to read from the o/i temp buffer
         // for each input to the input trace node
-        Iterator<InterSliceEdge> edges = input.getSourceSet().iterator(); 
+        Iterator<InterSliceEdge> edges = input.getSourceSet(whichPhase).iterator(); 
         while (edges.hasNext()) {
             InterSliceEdge edge = edges.next();
             // get the first non-redundant buffer         
@@ -554,7 +554,7 @@ public class Rawify {
             CommonUtils.println_debugging("Generate the DRAM read command for "
                                      + srcBuffer);
             int readWords = iterations * typeSize
-                * input.getItems(edge);
+                * input.getItems(edge, whichPhase);
             if (srcBuffer.getDest() instanceof OutputSliceNode
                 && ((OutputSliceNode) srcBuffer.getDest()).isFileInput())
                 srcBuffer.getOwner().getComputeCode().addFileCommand(true,
@@ -619,7 +619,7 @@ public class Rawify {
         }
 
         // now generate the store drm command
-        Iterator dests = output.getDestSet().iterator();
+        Iterator dests = output.getDestSet(whichPhase).iterator();
         while (dests.hasNext()) {
             InterSliceEdge edge = (InterSliceEdge) dests.next();
             InterSliceBuffer destBuffer = InterSliceBuffer.getBuffer(edge);
@@ -829,7 +829,7 @@ public class Rawify {
         //generate the switch code to send the item from the owner 
         //to the srcTile of the data
         SwitchCodeStore.generateSwitchCode(router, buffer.getOwner(), 
-                new RawComputeNode[]{srcTile}, (SchedulingPhase.isInitOrPrimepump(whichPhase) ? 1 : 2));
+                new RawComputeNode[]{srcTile}, whichPhase);
     }
     
     /**
@@ -948,8 +948,8 @@ public class Rawify {
 
         typeSize = Util.getTypeSize(filter.getFilter().getInputType());
         // the numbers of times we should cycle thru this "joiner"
-        assert items % traceNode.totalWeights() == 0 : "weights on input trace node does not divide evenly with items received";
-        iterations = items / traceNode.totalWeights();
+        assert items % traceNode.totalWeights(whichPhase) == 0 : "weights on input trace node does not divide evenly with items received";
+        iterations = items / traceNode.totalWeights(whichPhase);
 
         StreamingDram[] dest = { IntraSliceBuffer.getBuffer(traceNode, filter)
                                  .getDRAM() };
@@ -958,7 +958,7 @@ public class Rawify {
         dest[0].getNeighboringTile().getSwitchCode().appendComment(SchedulingPhase.isInitOrPrimepump(whichPhase),
                                                                    "Start join: This is the dest (" + filter.toString() + ")");
 
-        Iterator<InterSliceEdge> sources = traceNode.getSourceSet().iterator();
+        Iterator<InterSliceEdge> sources = traceNode.getSourceSet(whichPhase).iterator();
         while (sources.hasNext()) {
             StreamingDram dram = 
                 InterSliceBuffer.getBuffer((InterSliceEdge) sources.next()).getNonRedundant().getDRAM();
@@ -973,38 +973,38 @@ public class Rawify {
 
             // find all the tiles used in this join
             HashSet<RawComputeNode> tiles = new HashSet<RawComputeNode>();
-            for (int j = 0; j < traceNode.getWeights().length; j++) {
+            for (int j = 0; j < traceNode.getWeights(whichPhase).length; j++) {
                 // get the source buffer, pass thru redundant buffer(s)
                 StreamingDram source = InterSliceBuffer.getBuffer(
-                                                                  traceNode.getSources()[j]).getNonRedundant().getDRAM();
+                                                                  traceNode.getSources(whichPhase)[j]).getNonRedundant().getDRAM();
                 tiles.addAll(SwitchCodeStore.getTilesInRoutes(router, source, dest));
             }
             // generate the loop header on all tiles involved
             HashMap<RawTile, Label> labels = SwitchCodeStore.switchLoopHeader(tiles,
                                                               iterations, init, primepump);
             // generate the switch instructions
-            for (int j = 0; j < traceNode.getWeights().length; j++) {
+            for (int j = 0; j < traceNode.getWeights(whichPhase).length; j++) {
                 // get the source buffer, pass thru redundant buffer(s)
                 StreamingDram source = InterSliceBuffer.getBuffer(
-                                                                  traceNode.getSources()[j]).getNonRedundant().getDRAM();
-                for (int k = 0; k < traceNode.getWeights()[j]; k++) {
+                                                                  traceNode.getSources(whichPhase)[j]).getNonRedundant().getDRAM();
+                for (int k = 0; k < traceNode.getWeights(whichPhase)[j]; k++) {
                     for (int q = 0; q < typeSize; q++)
-                        SwitchCodeStore.generateSwitchCode(router, source, dest, stage);
+                        SwitchCodeStore.generateSwitchCode(router, source, dest, whichPhase);
                 }
             }
             // generate the loop trailer
             SwitchCodeStore.switchLoopTrailer(labels, init, primepump);
         } else {
             for (int i = 0; i < iterations; i++) {
-                for (int j = 0; j < traceNode.getWeights().length; j++) {
+                for (int j = 0; j < traceNode.getWeights(whichPhase).length; j++) {
                     // get the source buffer, pass thru redundant buffer(s)
                     StreamingDram source = 
-                        InterSliceBuffer.getBuffer(traceNode.getSources()[j]).getNonRedundant()
+                        InterSliceBuffer.getBuffer(traceNode.getSources(whichPhase)[j]).getNonRedundant()
                         .getDRAM();
-                    for (int k = 0; k < traceNode.getWeights()[j]; k++) {
+                    for (int k = 0; k < traceNode.getWeights(whichPhase)[j]; k++) {
                         for (int q = 0; q < typeSize; q++)
                             SwitchCodeStore.generateSwitchCode(router, source, dest,
-                                                               stage);
+                                                               whichPhase);
                     }
                 }
             }
@@ -1019,12 +1019,12 @@ public class Rawify {
             SwitchCodeStore.dummyOutgoing(dest[0], dummy, init || primepump);
         }
         // disregard remainder of inputs coming from temp offchip buffers
-        Iterator<InterSliceEdge> edges = traceNode.getSourceSet().iterator();
+        Iterator<InterSliceEdge> edges = traceNode.getSourceSet(whichPhase).iterator();
         while (edges.hasNext()) {
             InterSliceEdge edge = edges.next();
             if (edge.getSrc().isFileInput())
                 continue;
-            int remainder = ((iterations * typeSize * traceNode.getItems(edge)) % 
+            int remainder = ((iterations * typeSize * traceNode.getItems(edge, whichPhase)) % 
                     RawChip.cacheLineWords);
             if (remainder > 0
                 && !(edge.getSrc().isFileInput() && OffChipBuffer
@@ -1040,7 +1040,7 @@ public class Rawify {
                                                                    "End join: This is the dest (" + filter.toString() + ")");
 
        //generate some comments
-        sources = traceNode.getSourceSet().iterator();
+        sources = traceNode.getSourceSet(whichPhase).iterator();
         while (sources.hasNext()) {
             StreamingDram dram = InterSliceBuffer.getBuffer(
                                                             (InterSliceEdge) sources.next()).getNonRedundant().getDRAM();
@@ -1095,14 +1095,14 @@ public class Rawify {
         }
 
         // the numbers of times we should cycle thru this "splitter"
-        assert items % traceNode.totalWeights() == 0 : "weights on output trace node does not divide evenly with items sent";
-        int iterations = items / traceNode.totalWeights();
+        assert items % traceNode.totalWeights(whichPhase) == 0 : "weights on output trace node does not divide evenly with items sent";
+        int iterations = items / traceNode.totalWeights(whichPhase);
 
         // add some comments to the switch code
         sourcePort.getNeighboringTile().getSwitchCode().appendComment(
                                                                       init || primepump,
                                                                       "Start split: This is the source (" + filter.toString() + ")");
-        Iterator dests = traceNode.getDestSet().iterator();
+        Iterator dests = traceNode.getDestSet(whichPhase).iterator();
         while (dests.hasNext()) {
             StreamingDram dram = InterSliceBuffer
                 .getBuffer((InterSliceEdge) dests.next()).getDRAM();
@@ -1120,7 +1120,7 @@ public class Rawify {
         if (SWITCH_COMP && iterations > SC_THRESHOLD) {
             assert iterations > 1;
             Iterator<RawComputeNode> tiles = getTilesUsedInSplit(traceNode,
-                                                 IntraSliceBuffer.getBuffer(filter, traceNode).getDRAM())
+                                                 IntraSliceBuffer.getBuffer(filter, traceNode).getDRAM(), whichPhase)
                 .iterator();
 
             HashMap<RawTile, Label> labels = new HashMap<RawTile, Label>();
@@ -1137,12 +1137,11 @@ public class Rawify {
                 labels.put(tile, label);
             }
 
-            performSplitOutputSlice(traceNode, filter, filterInfo, init,
-                                    primepump, 1);
+            performSplitOutputSlice(traceNode, filter, filterInfo, whichPhase, 1);
 
             // now generate the jump back
             tiles = getTilesUsedInSplit(traceNode,
-                                        IntraSliceBuffer.getBuffer(filter, traceNode).getDRAM())
+                                        IntraSliceBuffer.getBuffer(filter, traceNode).getDRAM(), whichPhase)
                 .iterator();
             while (tiles.hasNext()) {
                 RawTile tile = (RawTile) tiles.next();
@@ -1155,13 +1154,10 @@ public class Rawify {
 
             // end loop
 
-            fillCacheLineSplitOutputSlice(traceNode, filter, filterInfo, init,
-                                          primepump, iterations);
+            fillCacheLineSplitOutputSlice(traceNode, filter, filterInfo, whichPhase, iterations);
         } else { //no compression
-            performSplitOutputSlice(traceNode, filter, filterInfo, init,
-                                    primepump, iterations);
-            fillCacheLineSplitOutputSlice(traceNode, filter, filterInfo, init,
-                                          primepump, iterations);
+            performSplitOutputSlice(traceNode, filter, filterInfo, whichPhase, iterations);
+            fillCacheLineSplitOutputSlice(traceNode, filter, filterInfo, whichPhase, iterations);
 
         }
 
@@ -1170,7 +1166,7 @@ public class Rawify {
         // for the primepump we always read out of the init buffer for real
         // output tracenodes
         int typeSize = Util.getTypeSize(filterInfo.filter.getOutputType());
-        int mod = (((iterations) * traceNode.totalWeights() * typeSize) % RawChip.cacheLineWords);
+        int mod = (((iterations) * traceNode.totalWeights(whichPhase) * typeSize) % RawChip.cacheLineWords);
         // don't cache align file readers
         if (mod > 0
             && !traceNode.isFileInput()) {
@@ -1185,7 +1181,7 @@ public class Rawify {
         sourcePort.getNeighboringTile().getSwitchCode().appendComment(
                                                                       init || primepump,
                                                                       "End split: This is the source (" + filter.toString() + ")");
-        dests = traceNode.getDestSet().iterator();
+        dests = traceNode.getDestSet(whichPhase).iterator();
         while (dests.hasNext()) {
             StreamingDram dram = InterSliceBuffer
                 .getBuffer((InterSliceEdge) dests.next()).getDRAM();
@@ -1209,15 +1205,14 @@ public class Rawify {
      * @param iterations
      */
     private static void performSplitOutputSlice(OutputSliceNode traceNode,
-                                                FilterSliceNode filter, FilterInfo filterInfo, boolean init,
-                                                boolean primepump, int iterations)
+                                                FilterSliceNode filter, FilterInfo filterInfo, SchedulingPhase whichPhase, 
+                                                int iterations)
     {
         if (iterations > 0) {
-            int stage = 1, typeSize;
+            int typeSize;
             // the stage we are generating code for as used below for
             // generateSwitchCode()
-            if (!init && !primepump)
-                stage = 2;
+       
 
             typeSize = Util.getTypeSize(filter.getFilter().getOutputType());
 
@@ -1227,17 +1222,17 @@ public class Rawify {
             StreamingDram sourcePort = IntraSliceBuffer.getBuffer(filter, traceNode).getDRAM();
           
             for (int i = 0; i < iterations; i++) {
-                for (int j = 0; j < traceNode.getWeights().length; j++) {
-                    for (int k = 0; k < traceNode.getWeights()[j]; k++) {
+                for (int j = 0; j < traceNode.getWeights(whichPhase).length; j++) {
+                    for (int k = 0; k < traceNode.getWeights(whichPhase)[j]; k++) {
                         // generate the array of compute node dests
                         RawComputeNode dests[] = new RawComputeNode[traceNode
-                                                              .getDests()[j].length];
+                                                              .getDests(whichPhase)[j].length];
                         for (int d = 0; d < dests.length; d++)
                             dests[d] = InterSliceBuffer.getBuffer(
-                                                                  traceNode.getDests()[j][d]).getDRAM();
+                                                                  traceNode.getDests(whichPhase)[j][d]).getDRAM();
                         for (int q = 0; q < typeSize; q++)
                             SwitchCodeStore.generateSwitchCode(router, sourcePort,
-                                                               dests, stage);
+                                                               dests, whichPhase);
                     }
                 }
             }
@@ -1258,26 +1253,25 @@ public class Rawify {
      */
     private static void fillCacheLineSplitOutputSlice(OutputSliceNode traceNode, 
             FilterSliceNode filter,
-            FilterInfo filterInfo, boolean init, boolean primepump,
+            FilterInfo filterInfo, SchedulingPhase whichPhase,
             int iterations) {
         if (iterations > 0) {
             int typeSize = Util.getTypeSize(filter.getFilter().getOutputType());
             // write dummy values into each temp buffer with a remainder
-            Iterator it = traceNode.getDestSet().iterator();
+            Iterator it = traceNode.getDestSet(whichPhase).iterator();
             while (it.hasNext()) {
                 InterSliceEdge edge = (InterSliceEdge) it.next();
                 if (edge.getDest().isFileOutput())
                     continue;
                 int remainder = ((typeSize * iterations * traceNode
-                                  .getWeight(edge)) % RawChip.cacheLineWords);
+                                  .getWeight(edge, whichPhase)) % RawChip.cacheLineWords);
                 // don't fill cache line for files
                 if (remainder > 0
                     && !(edge.getDest().isFileOutput() && OffChipBuffer
                          .unnecessary(edge.getDest())))
                     SwitchCodeStore.dummyOutgoing(InterSliceBuffer.getBuffer(
                                                                              edge).getDRAM(),
-                                                  RawChip.cacheLineWords - remainder, init
-                                                  || primepump);
+                                                  RawChip.cacheLineWords - remainder, SchedulingPhase.isInitOrPrimepump(whichPhase));
             }
         }
     }
@@ -1291,15 +1285,15 @@ public class Rawify {
      * @return Set of tiles used in the splitting
      */
     public static HashSet<RawComputeNode> getTilesUsedInSplit(OutputSliceNode traceNode,
-                                              StreamingDram sourcePort) {
+                                              StreamingDram sourcePort, SchedulingPhase whichPhase) {
         // find all the tiles used in the split
         HashSet<RawComputeNode> tiles = new HashSet<RawComputeNode>();
-        for (int j = 0; j < traceNode.getWeights().length; j++) {
-            for (int k = 0; k < traceNode.getWeights()[j]; k++) {
+        for (int j = 0; j < traceNode.getWeights(whichPhase).length; j++) {
+            for (int k = 0; k < traceNode.getWeights(whichPhase)[j]; k++) {
                 // generate the array of compute node dests
-                RawComputeNode dests[] = new RawComputeNode[traceNode.getDests()[j].length];
+                RawComputeNode dests[] = new RawComputeNode[traceNode.getDests(whichPhase)[j].length];
                 for (int d = 0; d < dests.length; d++)
-                    dests[d] = InterSliceBuffer.getBuffer(traceNode.getDests()[j][d]).getDRAM();
+                    dests[d] = InterSliceBuffer.getBuffer(traceNode.getDests(whichPhase)[j][d]).getDRAM();
                 tiles.addAll(SwitchCodeStore.getTilesInRoutes(router, sourcePort, dests));
             }
         }

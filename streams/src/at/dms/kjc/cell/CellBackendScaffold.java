@@ -13,7 +13,7 @@ import at.dms.kjc.backendSupport.BackEndFactory;
 import at.dms.kjc.backendSupport.BackEndScaffold;
 import at.dms.kjc.backendSupport.CodeStoreHelper;
 import at.dms.kjc.backendSupport.ComputeNodesI;
-import at.dms.kjc.backendSupport.SchedulingPhase;
+import at.dms.kjc.slicegraph.SchedulingPhase;
 import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.slicegraph.SliceNode;
 import at.dms.kjc.spacetime.BasicSpaceTimeSchedule;
@@ -120,7 +120,7 @@ public class CellBackendScaffold extends BackEndScaffold {
             int peeks = sliceNode.getNext().getAsFilter().getFilter().getPeekInt();
             int pops = sliceNode.getNext().getAsFilter().getFilter().getPopInt();
             int items = Math.max(peeks, pops) + (mult-1)*pops;
-            iters = items / sliceNode.getAsInput().totalWeights();
+            iters = items / sliceNode.getAsInput().totalWeights(whichPhase);
         } else if (sliceNode.isOutputSlice()) {
             int mult;
             if (whichPhase == SchedulingPhase.INIT)
@@ -128,7 +128,7 @@ public class CellBackendScaffold extends BackEndScaffold {
             else mult = sliceNode.getPrevious().getAsFilter().getFilter().getSteadyMult() * CellBackend.ITERS_PER_BATCH;
             int pushes = sliceNode.getPrevious().getAsFilter().getFilter().getPushInt();
             int items = mult * pushes;
-            iters = items/ sliceNode.getAsOutput().totalWeights();
+            iters = items/ sliceNode.getAsOutput().totalWeights(whichPhase);
         } else {
             if (whichPhase == SchedulingPhase.STEADY)
                 return CellBackend.ITERS_PER_BATCH;

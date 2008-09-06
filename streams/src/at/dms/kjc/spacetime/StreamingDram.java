@@ -59,7 +59,7 @@ public class StreamingDram extends IODevice
     public static boolean differentDRAMs(OutputSliceNode out) 
     {
         HashSet<StreamingDram> drams = new HashSet<StreamingDram>();
-        Iterator edges = out.getDestSet().iterator();
+        Iterator edges = out.getDestSet(SchedulingPhase.STEADY).iterator();
         while(edges.hasNext()) {
             InterSliceEdge edge = (InterSliceEdge)edges.next();
             //System.out.println(out + "->" + in);
@@ -76,7 +76,7 @@ public class StreamingDram extends IODevice
     {
         HashSet<StreamingDram> drams = new HashSet<StreamingDram>();
         //get the source set, so there are no duplicate edges.
-        Iterator edges = in.getSourceSet().iterator();
+        Iterator edges = in.getSourceSet(SchedulingPhase.STEADY).iterator();
         while(edges.hasNext()) {
             InterSliceEdge edge = (InterSliceEdge)edges.next();
             if (drams.contains(InterSliceBuffer.getBuffer(edge).getDRAM()))

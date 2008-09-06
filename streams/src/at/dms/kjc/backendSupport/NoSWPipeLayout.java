@@ -112,7 +112,7 @@ public class NoSWPipeLayout<T extends ComputeNode, Ts extends ComputeNodesI> ext
             //find the max end times of all the traces that this trace depends on
             double maxDepStartTime = 0;
             InputSliceNode input = slice.getHead();
-            Iterator<InterSliceEdge> inEdges = input.getSourceSet().iterator();
+            Iterator<InterSliceEdge> inEdges = input.getSourceSet(SchedulingPhase.STEADY).iterator();
             while (inEdges.hasNext()) {
                 InterSliceEdge edge = inEdges.next();
                 if (slicer.isIO(edge.getSrc().getParent()))

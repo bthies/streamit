@@ -38,11 +38,11 @@ import at.dms.kjc.backendSupport.Channel;
 import at.dms.kjc.backendSupport.CodeStoreHelper;
 import at.dms.kjc.backendSupport.ProcessFilterSliceNode;
 import at.dms.kjc.backendSupport.ProcessInputSliceNode;
-import at.dms.kjc.backendSupport.SchedulingPhase;
 import at.dms.kjc.common.ALocalVariable;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.InterSliceEdge;
+import at.dms.kjc.slicegraph.SchedulingPhase;
 import at.dms.kjc.slicegraph.SliceNode;
 
 public class CellProcessInputSliceNode extends ProcessInputSliceNode {
@@ -67,7 +67,7 @@ public class CellProcessInputSliceNode extends ProcessInputSliceNode {
             return;
         // If InputSliceNode is a joiner (i.e. has at least 2 inputs), add it
         // as a filter.
-        if (inputNode.isJoiner()) {
+        if (inputNode.isJoiner(SchedulingPhase.STEADY)) {
             int filterId = CellBackend.numfilters;
             CellBackend.filters.add(inputNode);
             CellBackend.filterIdMap.put(inputNode, filterId);
@@ -78,13 +78,13 @@ public class CellProcessInputSliceNode extends ProcessInputSliceNode {
             ppuCS.setupFilter(inputNode);
             // setup EXT_PSP_EX_PARAMS/LAYOUT
             ppuCS.setupPSP(inputNode);
-            System.out.println("new joiner " + filterId + " " + inputNode.getIdent() + " " + inputNode.getWidth() + " " + inputNode.getNextFilter().getFilter().getName());
+            System.out.println("new joiner " + filterId + " " + inputNode.getIdent() + " " + inputNode.getWidth(SchedulingPhase.STEADY) + " " + inputNode.getNextFilter().getFilter().getName());
         }
         
         // Ids of channels that are inputs to this filter
         LinkedList<Integer> inputIds = new LinkedList<Integer>();
         // Populate Channel-ID mapping, and increase number of channels.
-        for (InterSliceEdge e : inputNode.getSourceList()) {
+        for (InterSliceEdge e : inputNode.getSourceList(SchedulingPhase.STEADY)) {
             // Always use output->input direction for edges
             InterSliceEdge f = CellBackend.getEdgeBetween(e.getSrc(),inputNode);
             if(!CellBackend.channelIdMap.containsKey(f)) {
@@ -100,7 +100,7 @@ public class CellProcessInputSliceNode extends ProcessInputSliceNode {
         }
         CellBackend.inputChannelMap.put(inputNode, inputIds);
 
-        if (inputNode.isJoiner()) {
+        if (inputNode.isJoiner(SchedulingPhase.STEADY)) {
             int filterId = CellBackend.filterIdMap.get(inputNode);
             // attach all input channels as inputs to the joiner
             ppuCS.attachInputChannelArray(filterId, inputIds, whichPhase);
@@ -165,7 +165,7 @@ public class CellProcessInputSliceNode extends ProcessInputSliceNode {
     }
     
     private void addToScheduleLayout() {
-        if (inputNode.isJoiner()) {
+        if (inputNode.isJoiner(SchedulingPhase.STEADY)) {
             int filterId = CellBackend.filterIdMap.get(inputNode);
             LinkedList<Integer> inputIds = CellBackend.inputChannelMap.get(inputNode);
             LinkedList<Integer> currentGroup = CellBackend.getLastScheduleGroup();
@@ -200,7 +200,7 @@ public class CellProcessInputSliceNode extends ProcessInputSliceNode {
     private CellPU getLocationFromScheduleLayout(InputSliceNode sliceNode) {
         int cpu = -1;
         int filterId;
-        if (sliceNode.isJoiner())
+        if (sliceNode.isJoiner(SchedulingPhase.STEADY))
             filterId = CellBackend.filterIdMap.get(sliceNode);
         else filterId = CellBackend.filterIdMap.get(sliceNode.getNextFilter());
         for (LinkedList<Integer> l : CellBackend.scheduleLayout) {
@@ -245,7 +245,7 @@ public class CellProcessInputSliceNode extends ProcessInputSliceNode {
 
         // size is number of edges with non-zero weight.
         int size = 0;
-        for (int w : joiner.getWeights()) {
+        for (int w : joiner.getWeights(SchedulingPhase.STEADY)) {
             if (w != 0) {size++;}
         }
         
@@ -264,7 +264,7 @@ public class CellProcessInputSliceNode extends ProcessInputSliceNode {
         
         JBlock joiner_block = joiner_method.getBody();
         JMethodCallExpression pop = new JMethodCallExpression(
-                backEndBits.getChannel(joiner.getSources()[0]).popMethodName(),
+                backEndBits.getChannel(joiner.getSources(SchedulingPhase.STEADY)[0]).popMethodName(),
                 new JExpression[0]);
         JReturnStatement ret = new JReturnStatement(
                 null, pop, null);
@@ -330,8 +330,8 @@ public class CellProcessInputSliceNode extends ProcessInputSliceNode {
             // tmp = pop();
             // push(tmp);
             //
-            assert joiner.getWidth() == 1;
-            Channel upstream = backEndBits.getChannel(joiner.getSingleEdge());
+            assert joiner.getWidth(SchedulingPhase.STEADY) == 1;
+            Channel upstream = backEndBits.getChannel(joiner.getSingleEdge(SchedulingPhase.STEADY));
 
             body.addStatement(t.getDecl());
             body.addStatement(new JExpressionStatement(
@@ -360,7 +360,7 @@ public class CellProcessInputSliceNode extends ProcessInputSliceNode {
         //if (whichPhase == SchedulingPhase.PREINIT) return;
         location = backEndBits.getLayout().getComputeNode(inputNode);
         assert location != null;
-        if (inputNode.isJoiner()) {
+        if (inputNode.isJoiner(SchedulingPhase.STEADY)) {
             codeStore = ((CellPU)location).getComputeCodeStore(inputNode);
             initCodeStore = ((CellPU)location).getInitComputeCodeStore(inputNode);
         } else {

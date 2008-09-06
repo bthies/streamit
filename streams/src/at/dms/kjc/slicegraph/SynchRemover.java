@@ -67,8 +67,8 @@ public class SynchRemover {
 
             System.out.println(current.toString());
 
-            for (int i=0; i<current.getHead().getWeights().length; i++) {
-                System.out.println(current.getHead().getWeights()[i]);
+            for (int i=0; i<current.getHead().getWeights(SchedulingPhase.STEADY).length; i++) {
+                System.out.println(current.getHead().getWeights(SchedulingPhase.STEADY)[i]);
             }
 
             if (!isIdentity(current)) {
@@ -91,9 +91,9 @@ public class SynchRemover {
     private void createSSOutput(Slice current) {
         // index to keep track of the output
         int index = 1;
-        int sumweights = current.getTail().totalWeights();
-        int[] weights = current.getTail().getWeights();
-        InterSliceEdge[][] outputs = current.getTail().getDests();
+        int sumweights = current.getTail().totalWeights(SchedulingPhase.STEADY);
+        int[] weights = current.getTail().getWeights(SchedulingPhase.STEADY);
+        InterSliceEdge[][] outputs = current.getTail().getDests(SchedulingPhase.STEADY);
         // outer loop loops over duplicate copies
         for (int i=0; i<outputs.length; i++) {
             int weight = weights[i];
@@ -114,9 +114,9 @@ public class SynchRemover {
             HashMap<InterSliceEdge,SSSequence> inMap = new HashMap<InterSliceEdge,SSSequence>();
             
             Slice id = identities.removeFirst();
-            Slice[] parents = id.getDependencies();
-            int[] inweights = id.getHead().getWeights();
-            int inweightsum = id.getHead().totalWeights();
+            Slice[] parents = id.getDependencies(SchedulingPhase.STEADY);
+            int[] inweights = id.getHead().getWeights(SchedulingPhase.STEADY);
+            int inweightsum = id.getHead().totalWeights(SchedulingPhase.STEADY);
             
             // Array to store output SSSequences of each parent slice 
             SSSequence[] parentOutputSeqs = new SSSequence[parents.length];
@@ -156,7 +156,7 @@ public class SynchRemover {
             }
             
             // calculate overall multiplicity for inputs and outputs
-            int outweightsum = id.getTail().totalWeights();
+            int outweightsum = id.getTail().totalWeights(SchedulingPhase.STEADY);
             int lcm = lcm(inweightsum*tempinmult, outweightsum);
             int outmult = lcm/outweightsum;
             int inmult = lcm/inweightsum;
@@ -166,8 +166,8 @@ public class SynchRemover {
             for (int i=0; i<parents.length; i++) {
                 // retrieve information for ith parent
                 Slice parent = parents[i];
-                InterSliceEdge[][] parentOutEdges = parent.getTail().getDests();
-                int[] weights = parent.getTail().getWeights();
+                InterSliceEdge[][] parentOutEdges = parent.getTail().getDests(SchedulingPhase.STEADY);
+                int[] weights = parent.getTail().getWeights(SchedulingPhase.STEADY);
                 
                 // calculate number of times this parent's outputs have to be
                 // repeated
@@ -210,9 +210,9 @@ public class SynchRemover {
             Iterator<SSElement> iter = out.iterator();
             
             // Distribute single sequence over all of the output Slices
-            InterSliceEdge[][] outedges = id.getTail().getDests();
+            InterSliceEdge[][] outedges = id.getTail().getDests(SchedulingPhase.STEADY);
             SSSequence[] outseqs = new SSSequence[outedges.length];
-            int[] outweights = id.getTail().getWeights();
+            int[] outweights = id.getTail().getWeights(SchedulingPhase.STEADY);
             
             for (int i=0; i<outmult; i++) {
                 for (int j=0; j<outedges.length; j++) {
@@ -234,8 +234,8 @@ public class SynchRemover {
             // create new outgoing edges for all of the parent slices
             for (int i=0; i<parents.length; i++) {
                 Slice parent = parents[i];
-                InterSliceEdge[][] parentOutEdges = parent.getTail().getDests();
-                int[] weights = parent.getTail().getWeights();
+                InterSliceEdge[][] parentOutEdges = parent.getTail().getDests(SchedulingPhase.STEADY);
+                int[] weights = parent.getTail().getWeights(SchedulingPhase.STEADY);
                 HashMap<Integer,LinkedList<InterSliceEdge>> newEdgesMap = 
                     new HashMap<Integer,LinkedList<InterSliceEdge>>();
                 System.out.println("creating new outgoing edges for parents");
@@ -322,7 +322,7 @@ public class SynchRemover {
     }
 
     private static InterSliceEdge getEdgeBetween(Slice from, Slice to) {
-        for (InterSliceEdge e : from.getTail().getDestSequence()) {
+        for (InterSliceEdge e : from.getTail().getDestSequence(SchedulingPhase.STEADY)) {
             if (e.getDest() == to.getHead())
                 return e;
         }
@@ -406,7 +406,7 @@ public class SynchRemover {
     }
     
     private static ArrayList<Slice> makeRepeatedOutputList(Slice s, int mult) {
-        return makeRepeatedList(getChildSlices(s), s.getTail().getWeights(), mult);
+        return makeRepeatedList(getChildSlices(s), s.getTail().getWeights(SchedulingPhase.STEADY), mult);
     }
 
     /**
@@ -507,7 +507,7 @@ public class SynchRemover {
      */
     private static Slice[] getParentSlices(Slice slice) {
         LinkedList<Slice> parents = new LinkedList<Slice>();
-        LinkedList<InterSliceEdge> inEdges = slice.getHead().getSourceList();
+        LinkedList<InterSliceEdge> inEdges = slice.getHead().getSourceList(SchedulingPhase.STEADY);
         
         for (InterSliceEdge e : inEdges) {
             Slice parent = e.getSrc().getParent();
@@ -524,7 +524,7 @@ public class SynchRemover {
      */
     private static Slice[] getChildSlices(Slice slice) {
         LinkedList<Slice> children = new LinkedList<Slice>();
-        InterSliceEdge[] outEdges = slice.getTail().getDestList();
+        InterSliceEdge[] outEdges = slice.getTail().getDestList(SchedulingPhase.STEADY);
         
         for (int i=0; i<outEdges.length; i++) {
             Slice child = outEdges[i].getDest().getParent();

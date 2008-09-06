@@ -95,7 +95,7 @@ public class AdaptivePartitioner extends SIRSlicer {
             //for each slice find the interslice communication cost
             //first for the input
             InputSliceNode input = sliceGraph[i].getHead();
-            Iterator<InterSliceEdge> edges = input.getSourceSet().iterator();
+            Iterator<InterSliceEdge> edges = input.getSourceSet(SchedulingPhase.STEADY).iterator();
             while (edges.hasNext()) {
                 InterSliceEdge edge = edges.next();
                 if (!InterSliceBuffer.getBuffer(edge).redundant()) {  
@@ -103,7 +103,7 @@ public class AdaptivePartitioner extends SIRSlicer {
                 }
             }
             //now the output
-            edges = sliceGraph[i].getTail().getDestSet().iterator();
+            edges = sliceGraph[i].getTail().getDestSet(SchedulingPhase.STEADY).iterator();
             while (edges.hasNext()) {
                 InterSliceEdge edge = edges.next();
                                

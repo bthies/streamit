@@ -1,4 +1,4 @@
-// $Id: BackEndScaffold.java,v 1.10 2007-08-22 10:52:22 qjli Exp $
+// $Id: BackEndScaffold.java,v 1.11 2008-09-06 18:45:32 mgordon Exp $
 package at.dms.kjc.backendSupport;
 
 import java.util.*;
@@ -209,7 +209,7 @@ public class BackEndScaffold  {
                 // feeding the joiner have all been created.
                 // XXX WTF: Precludes feedback loops.
                 boolean canJoin = true;
-                for (InterSliceEdge inEdge : notSched.getHead().getSourceSet()) {
+                for (InterSliceEdge inEdge : notSched.getHead().getSourceSet(whichPhase)) {
                     if (!hasBeenSplit.contains(inEdge.getSrc())) {
                         canJoin = false;
                         break;

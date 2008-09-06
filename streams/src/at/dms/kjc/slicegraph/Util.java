@@ -71,9 +71,9 @@ public class Util {
      * @param dst  Destination SliceNode for Edge
      * @return an InterSliceEdge or Edge from src to dst
      */
-    public static Edge srcDstToEdge(SliceNode src, SliceNode dst) {
+    public static Edge srcDstToEdge(SliceNode src, SliceNode dst, SchedulingPhase phase) {
         if (src instanceof OutputSliceNode && dst instanceof InputSliceNode) {
-            InterSliceEdge[][] edgesedges = ((OutputSliceNode)src).getDests();
+            InterSliceEdge[][] edgesedges = ((OutputSliceNode)src).getDests(phase);
             for (InterSliceEdge[] edges : edgesedges) {
                 for (InterSliceEdge edge : edges) {
                     assert edge.src == src;

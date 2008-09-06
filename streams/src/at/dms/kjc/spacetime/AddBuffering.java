@@ -7,6 +7,7 @@ import java.util.*;
 
 
 import at.dms.kjc.slicegraph.SIRSlicer;
+import at.dms.kjc.slicegraph.SchedulingPhase;
 import at.dms.kjc.backendSupport.FilterInfo;
 import at.dms.kjc.slicegraph.*;
 import at.dms.kjc.sir.SIRFilter;
@@ -90,11 +91,11 @@ public class AddBuffering {
         if (filter.initItemsPushed() == 0) 
             return;
         
-        if (filter.initItemsPushed() % output.totalWeights() != 0) {
+        if (filter.initItemsPushed() % output.totalWeights(SchedulingPhase.INIT) != 0) {
             //if the number of items of produced by the filter does not
             //divide equal the total weights of the output slice node
             //we have to buffer to items by adding an upstream id filter
-            int itemsToBuffer = filter.initItemsPushed() % output.totalWeights();
+            int itemsToBuffer = filter.initItemsPushed() % output.totalWeights(SchedulingPhase.INIT);
             int itemsIDShouldPass = filter.initItemsPushed() - itemsToBuffer;
             Slice slice = output.getParent();
             System.out.println(" * Adding buffering after " + slice.getTail().getPrevious() + 
@@ -146,7 +147,7 @@ public class AddBuffering {
      */
     private boolean fixInputNodeBuffering(InputSliceNode input) {
         
-        Iterator<InterSliceEdge> edges = input.getSourceSet().iterator();
+        Iterator<InterSliceEdge> edges = input.getSourceSet(SchedulingPhase.INIT).iterator();
         HashMap<InterSliceEdge, Double> mults = new HashMap<InterSliceEdge, Double>();
         double minMult = Double.MAX_VALUE;
 
@@ -161,7 +162,7 @@ public class AddBuffering {
             InterSliceEdge edge = edges.next();
             
             double mult = 
-                (initItemsPushed(edge) / ((double)input.getWeight(edge)));
+                (initItemsPushed(edge) / ((double)input.getWeight(edge, SchedulingPhase.INIT)));
             
             //System.out.print(edge + " mult: " + mult + ": ");
             //System.out.println(initItemsPushed(edge) + " / " + input.getWeight(edge));
@@ -190,7 +191,7 @@ public class AddBuffering {
         //filter
         boolean changes = false;
         
-        edges = input.getSourceSet().iterator();
+        edges = input.getSourceSet(SchedulingPhase.INIT).iterator();
         while (edges.hasNext()) {
             InterSliceEdge edge = edges.next();
             
@@ -222,7 +223,7 @@ public class AddBuffering {
                     //add a new buffering slice that will buffer all the items that
                     //are produced greater than the new mult
                     addNewBufferingSlice(slice, edge, 
-                            (int)(((double)minMult) * input.getWeight(edge)));
+                            (int)(((double)minMult) * input.getWeight(edge, SchedulingPhase.INIT)));
                 }
             }
         }
@@ -271,7 +272,7 @@ public class AddBuffering {
         
         //now install the edge at the input of the downstream slice instead 
         //of the old edge
-        downSlice.getHead().replaceEdge(edge, newEdge);
+        downSlice.getHead().replaceEdge(edge, newEdge, SchedulingPhase.INIT);
         
         //reset the dest of the existing edge to be the new buffering slice
         edge.setDest(newInput);
@@ -290,7 +291,7 @@ public class AddBuffering {
         //calc the number of steady items
         int steadyItems = (int) 
              (((double)(prev.getSteadyMult() * prev.getPushInt())) *  
-                edge.getSrc().ratio(edge));
+                edge.getSrc().ratio(edge, SchedulingPhase.INIT));
         
         System.out.println("   with initMult: " + itemsToPassInit + 
                 ", steadyMult: " + steadyItems);
@@ -319,15 +320,15 @@ public class AddBuffering {
         
         OutputSliceNode output = slice.getTail();
         
-        Iterator<InterSliceEdge> edges = output.getDestSet().iterator(); 
+        Iterator<InterSliceEdge> edges = output.getDestSet(SchedulingPhase.INIT).iterator(); 
         while (edges.hasNext()) {
             InterSliceEdge edge = edges.next();
             FilterInfo downstream = FilterInfo.getFilterInfo(edge.getDest().getNextFilter());
             
             int itemsRecOnEdge = (int) (((double)initItemsSent) *
-                    output.ratio(edge));
+                    output.ratio(edge, SchedulingPhase.INIT));
             int itemsNeededOnEdge = (int) (((double)downstream.initItemsNeeded) * 
-                    edge.getDest().ratio(edge));
+                    edge.getDest().ratio(edge, SchedulingPhase.INIT));
             
             if (itemsRecOnEdge < itemsNeededOnEdge) {
                 System.out.println("Cannot add buffering inside slice: " + edge);
@@ -357,7 +358,7 @@ public class AddBuffering {
         
         //the number of items that should now flow over this edge 
         //in the init stage
-        double edgeItems = (((double)inputMult) * ((double)input.getWeight(edge)));
+        double edgeItems = (((double)inputMult) * ((double)input.getWeight(edge, SchedulingPhase.INIT)));
 
         //System.out.println("  Edge Items = " + edgeItems + " = " + 
         //        inputMult +  " * " +  
@@ -369,8 +370,8 @@ public class AddBuffering {
         
         //this is the number of items that need to be passed to the
         //output slice node inorder for edgeItems to flow on edge
-        return (int)(((double)output.totalWeights() / 
-                ((double)output.getWeight(edge))) *
+        return (int)(((double)output.totalWeights(SchedulingPhase.INIT) / 
+                ((double)output.getWeight(edge, SchedulingPhase.INIT))) *
                 ((double)edgeItems));
     }
     
@@ -427,6 +428,6 @@ public class AddBuffering {
      */
     private double initItemsPushed(InterSliceEdge edge) {
         return ((double)edge.getSrc().getPrevFilter().getFilter().initItemsPushed()) *
-        edge.getSrc().ratio(edge);
+        edge.getSrc().ratio(edge, SchedulingPhase.INIT);
     }
 }

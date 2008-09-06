@@ -77,7 +77,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
         for (Slice slice : schedule.getScheduleList()) {
             assert slice.getNumFilters() == 1;
             if (!slice.getTail().noOutputs()) {
-                assert slice.getTail().totalWeights() > 0;
+                assert slice.getTail().totalWeights(SchedulingPhase.STEADY) > 0;
                 Tile parent = TileraBackend.backEndBits.getLayout().getComputeNode(slice.getFirstFilter());
                 //create the new buffer, the constructor will put the buffer in the 
                 //hashmap
@@ -86,7 +86,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
                 //calculate the rotation length
                 int srcMult = schedule.getPrimePumpMult(slice);
                 int maxRotLength = 0;
-                for (Slice dest : slice.getTail().getDestSlices()) {
+                for (Slice dest : slice.getTail().getDestSlices(SchedulingPhase.STEADY)) {
                     int diff = srcMult - schedule.getPrimePumpMult(dest);
                     assert diff >= 0;
                     if (diff > maxRotLength)
@@ -131,7 +131,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
         
         //fill the dmaaddressbuffers array
         addressBuffers = new HashMap<InputRotatingBuffer, DMAAddressRotation>();
-        for (InterSliceEdge edge : outputNode.getDestSet()) {
+        for (InterSliceEdge edge : outputNode.getDestSet(SchedulingPhase.STEADY)) {
             InputRotatingBuffer input = InputRotatingBuffer.getInputBuffer(edge.getDest().getNextFilter());
             addressBuffers.put(input, input.getAddressRotation(tile));               
         }

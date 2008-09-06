@@ -8,6 +8,7 @@ import at.dms.kjc.slicegraph.Edge;
 //import at.dms.kjc.slicegraph.InterSliceEdge;
 import at.dms.kjc.slicegraph.SliceNode;
 import at.dms.kjc.slicegraph.Util;
+import at.dms.kjc.slicegraph.SchedulingPhase;
 import at.dms.kjc.spacetime.BasicSpaceTimeSchedule;
 //import at.dms.kjc.spacetime.InterSliceBuffer;
 import at.dms.kjc.*;
@@ -71,7 +72,7 @@ public class Channel {
      * @param dst
      */
     protected Channel(SliceNode src, SliceNode dst) {
-        this(Util.srcDstToEdge(src, dst));
+        this(Util.srcDstToEdge(src, dst, SchedulingPhase.STEADY));
     }
     
     

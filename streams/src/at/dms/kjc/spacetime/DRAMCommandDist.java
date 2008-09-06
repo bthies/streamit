@@ -7,6 +7,7 @@ import java.util.Iterator;
 
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.slicegraph.InterSliceEdge;
+import at.dms.kjc.slicegraph.SchedulingPhase;
 import at.dms.kjc.slicegraph.Slice;
 
 /**
@@ -111,8 +112,8 @@ public class DRAMCommandDist {
                 //if we have a inputtracebuffer that does something, count its 
                 //reads and writers
                 //the reads of the incoming arcs of the joiner
-                for (int s = 0; s < slice.getHead().getSources().length; s++) {
-                    InterSliceEdge edge = slice.getHead().getSources()[s];
+                for (int s = 0; s < slice.getHead().getSources(SchedulingPhase.STEADY).length; s++) {
+                    InterSliceEdge edge = slice.getHead().getSources(SchedulingPhase.STEADY)[s];
                     OffChipBuffer buf = InterSliceBuffer.getBuffer(edge);
                     interReads[buf.getDRAM().port]++;
                 }
@@ -123,7 +124,7 @@ public class DRAMCommandDist {
                 //if we have an outputtracenode that splits, count its read
                 //and all of its writes
                 interReads[IntraSliceBuffer.getDstIntraBuf(slice).getDRAM().port]++;
-                Iterator dsts = slice.getTail().getDestSet().iterator();
+                Iterator dsts = slice.getTail().getDestSet(SchedulingPhase.STEADY).iterator();
                 while (dsts.hasNext()) {
                     InterSliceEdge edge = (InterSliceEdge)dsts.next();
                     OffChipBuffer buf = InterSliceBuffer.getBuffer(edge);

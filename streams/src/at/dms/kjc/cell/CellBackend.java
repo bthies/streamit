@@ -21,12 +21,7 @@ import at.dms.kjc.sir.SIRHelper;
 import at.dms.kjc.sir.SIRInterfaceTable;
 import at.dms.kjc.sir.SIRStream;
 import at.dms.kjc.sir.SIRStructure;
-import at.dms.kjc.slicegraph.FilterSliceNode;
-import at.dms.kjc.slicegraph.InputSliceNode;
-import at.dms.kjc.slicegraph.InterSliceEdge;
-import at.dms.kjc.slicegraph.OutputSliceNode;
-import at.dms.kjc.slicegraph.SIRSlicer;
-import at.dms.kjc.slicegraph.SliceNode;
+import at.dms.kjc.slicegraph.*;
 import at.dms.kjc.spacetime.SliceDotGraph;
 import at.dms.kjc.spacetime.SpaceTimeSchedule;
 import at.dms.kjc.vanillaSlice.EmitStandaloneCode;
@@ -288,7 +283,7 @@ public class CellBackend {
             SliceNode sliceNode = filters.get(i);
             if (sliceNode.isInputSlice()) {
                 InputSliceNode inputNode = sliceNode.getAsInput();
-                if (inputNode.isJoiner()) {
+                if (inputNode.isJoiner(SchedulingPhase.STEADY)) {
                     // mark artificial channel to filterslicenode as ready
                     int artificialId = artificialJoinerChannels.get(inputNode);
                     readyInputs.add(artificialId);
@@ -296,7 +291,7 @@ public class CellBackend {
             } else if (sliceNode.isFilterSlice()) {
                 FilterSliceNode filterNode = sliceNode.getAsFilter();
                 OutputSliceNode outputNode = filterNode.getNext().getAsOutput();
-                if (outputNode.isRRSplitter()) {
+                if (outputNode.isRRSplitter(SchedulingPhase.STEADY)) {
                     // mark artificial channel to outputslicenode as ready 
                     int artificialId = artificialRRSplitterChannels.get(outputNode);
                     readyInputs.add(artificialId);
@@ -307,7 +302,7 @@ public class CellBackend {
                 }
             } else {
                 OutputSliceNode outputNode = sliceNode.getAsOutput();
-                if (outputNode.isRRSplitter()) {
+                if (outputNode.isRRSplitter(SchedulingPhase.STEADY)) {
                     // Mark all outputs as ready
                     LinkedList<Integer> outputIds = outputChannelMap.get(outputNode);
                     readyInputs.addAll(outputIds);
@@ -317,7 +312,7 @@ public class CellBackend {
     }
     
     public static InterSliceEdge getEdgeBetween(OutputSliceNode src, InputSliceNode dest) {
-        for (InterSliceEdge e : src.getDestSequence()) {
+        for (InterSliceEdge e : src.getDestSequence(SchedulingPhase.STEADY)) {
             if (e.getDest() == dest)
                 return e;
         }

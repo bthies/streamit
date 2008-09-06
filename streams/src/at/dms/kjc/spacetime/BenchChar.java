@@ -8,6 +8,7 @@ import java.util.*;
 import at.dms.kjc.backendSupport.FilterInfo;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.slicegraph.InterSliceEdge;
+import at.dms.kjc.slicegraph.SchedulingPhase;
 import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.slicegraph.SliceNode;
 
@@ -134,7 +135,7 @@ public class BenchChar {
     private static int longestPathToSink(Slice slice) {
         if (slice.getTail().noOutputs())
             return 0;
-        Iterator<InterSliceEdge> edges = slice.getTail().getDestSet().iterator();
+        Iterator<InterSliceEdge> edges = slice.getTail().getDestSet(SchedulingPhase.STEADY).iterator();
         int maxPath = 0;
         while (edges.hasNext()) {
             InterSliceEdge edge = edges.next();
@@ -148,7 +149,7 @@ public class BenchChar {
     private static int shortestPathToSink(Slice slice) {
         if (slice.getTail().noOutputs())
             return 0;
-        Iterator<InterSliceEdge> edges = slice.getTail().getDestSet().iterator();
+        Iterator<InterSliceEdge> edges = slice.getTail().getDestSet(SchedulingPhase.STEADY).iterator();
         int minPath = Integer.MAX_VALUE;
         while (edges.hasNext()) {
             InterSliceEdge edge = edges.next();

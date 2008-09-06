@@ -126,13 +126,13 @@ public class GetOrMakeChannel  {
                             (InputSliceNode) src, backEndBits)
                             .getMethods()[0].getName();
                     c = UnbufferredPopChannel.getChannel(e, popName);
-                    for (InterSliceEdge joiner_edge : ((InputSliceNode) src).getSourceList()) {
+                    for (InterSliceEdge joiner_edge : ((InputSliceNode) src).getSourceList(SchedulingPhase.STEADY)) {
                         ((UnbufferredPopChannel)c).addChannelForHeaders(getOrMakeChannel(joiner_edge));
                     }
                 } else if (backEndBits.sliceHasUpstreamChannel(s)) {
                     // no joiner at all: delegate to the channel for InputSliceNode.
                     Channel upstream = getOrMakeChannel(((InputSliceNode) src)
-                            .getSingleEdge());
+                            .getSingleEdge(SchedulingPhase.STEADY));
                     c = DelegatingChannel.getChannel(e, upstream);
                 } else {
                     // no data over edge: return null channel.
@@ -163,13 +163,13 @@ public class GetOrMakeChannel  {
                     ProcessOutputSliceNode.getSplitterCode((OutputSliceNode)dst,backEndBits).
                         getMethods()[0].getName();
                 c = UnbufferredPushChannel.getChannel(e,pushName);
-                for (InterSliceEdge joiner_edge : ((OutputSliceNode) dst).getDestSequence()) {
+                for (InterSliceEdge joiner_edge : ((OutputSliceNode) dst).getDestSequence(SchedulingPhase.STEADY)) {
                     ((UnbufferredPushChannel)c).addChannelForHeaders(getOrMakeChannel(joiner_edge));
                 }
             } else if (backEndBits.sliceHasDownstreamChannel(s)) {
                 // there is no splitter code, this channel has no effect except delegating
                 // to downstream channel.
-                Channel downstream = getOrMakeChannel(((OutputSliceNode)dst).getDests()[0][0]);
+                Channel downstream = getOrMakeChannel(((OutputSliceNode)dst).getDests(SchedulingPhase.STEADY)[0][0]);
                 c = DelegatingChannel.getChannel(e, downstream);
             } else {
                 c = null;

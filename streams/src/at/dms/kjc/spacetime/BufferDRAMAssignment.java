@@ -153,9 +153,9 @@ public class BufferDRAMAssignment {
             SliceNode tn = tns.next();
             List<InterSliceEdge> edges;
             if (tn.isOutputSlice())
-                edges = tn.getAsOutput().getSortedOutputs();
+                edges = tn.getAsOutput().getSortedOutputs(SchedulingPhase.STEADY);
             else 
-                edges = tn.getAsInput().getSourceSequence();
+                edges = tn.getAsInput().getSourceSequence(SchedulingPhase.STEADY);
             //System.out.println("Assigning edges for " + tn + " (" + edges.size() + ")");
             if (!assignRemaining(edges,0))
                 assert false;
@@ -165,9 +165,9 @@ public class BufferDRAMAssignment {
     private void unsetDramAssignment(SliceNode tn) {
         List<InterSliceEdge> edges;
         if (tn.isOutputSlice())
-            edges = tn.getAsOutput().getSortedOutputs();
+            edges = tn.getAsOutput().getSortedOutputs(SchedulingPhase.STEADY);
         else 
-            edges = tn.getAsInput().getSourceSequence();
+            edges = tn.getAsInput().getSourceSequence(SchedulingPhase.STEADY);
         for (int i = 0; i < edges.size(); i++) {
             InterSliceBuffer.getBuffer(edges.get(i)).unsetDRAM();
         }
@@ -177,9 +177,9 @@ public class BufferDRAMAssignment {
         assert node.isOutputSlice() || node.isInputSlice();
         int width;
         if (node.isOutputSlice()) 
-            width = node.getAsOutput().getWidth();
+            width = node.getAsOutput().getWidth(SchedulingPhase.STEADY);
         else //(node.isInputSlice())
-            width = node.getAsInput().getWidth();
+            width = node.getAsInput().getWidth(SchedulingPhase.STEADY);
         
         return width;
     }
@@ -264,7 +264,7 @@ public class BufferDRAMAssignment {
                 RawTile tile;
                 if (files[i].getHead().oneInput()) {
 //                 set the filter tile to be the tile of the upstream tile
-                    tile = layout.getComputeNode(files[i].getHead().getSingleEdge().getSrc().getPrevFilter());
+                    tile = layout.getComputeNode(files[i].getHead().getSingleEdge(SchedulingPhase.STEADY).getSrc().getPrevFilter());
                     layout.setComputeNode(files[i].getHead().getNextFilter(), tile);
                 } else {
                     tile = layout.getComputeNode(filter); 
@@ -299,7 +299,7 @@ public class BufferDRAMAssignment {
                 //if there is only one output, then force its assignment to the 
                 //filter that the tile is assigned to so that there is no copying
                 if (files[i].getTail().oneOutput()) {
-                    tile = layout.getComputeNode(files[i].getTail().getSingleEdge().getDest().getNextFilter());
+                    tile = layout.getComputeNode(files[i].getTail().getSingleEdge(SchedulingPhase.STEADY).getDest().getNextFilter());
                     layout.setComputeNode(files[i].getHead().getNextFilter(), tile);                
                 } else {
                     tile = layout.getComputeNode(filter);
@@ -365,10 +365,10 @@ public class BufferDRAMAssignment {
         
         //if the dest has one input (not joined) then set the output to write to
         //the dest's home device...
-        if (output.getSingleEdge().getDest().oneInput()) {
+        if (output.getSingleEdge(SchedulingPhase.STEADY).getDest().oneInput()) {
           
             //get the tile that the downstream filter is assigned to
-            ComputeNode dsTile = layout.getComputeNode(output.getSingleEdge().getDest().getNextFilter());   
+            ComputeNode dsTile = layout.getComputeNode(output.getSingleEdge(SchedulingPhase.STEADY).getDest().getNextFilter());   
             buf.setDRAM(getHomeDevice(dsTile));
             
             //should we use the dynamic network
@@ -378,12 +378,12 @@ public class BufferDRAMAssignment {
                 upTile);
             
             //now set the interslicebuffer between the two
-            InterSliceBuffer interBuf = InterSliceBuffer.getBuffer(output.getSingleEdge());
+            InterSliceBuffer interBuf = InterSliceBuffer.getBuffer(output.getSingleEdge(SchedulingPhase.STEADY));
             interBuf.setDRAM(getHomeDevice(dsTile));
         }
         else {
             //joined downstream slice
-            InputSliceNode input = output.getSingleEdge().getDest();
+            InputSliceNode input = output.getSingleEdge(SchedulingPhase.STEADY).getDest();
             StreamingDram assignment = null;
             //we would like to assign this output to the home base of 
             //the upstream tile, but it might have been assigned already
@@ -413,11 +413,11 @@ public class BufferDRAMAssignment {
     private void singleInputAssignment(InputSliceNode input) {
         assert input.oneInput();
         
-        OutputSliceNode output = input.getSingleEdge().getSrc();
+        OutputSliceNode output = input.getSingleEdge(SchedulingPhase.STEADY).getSrc();
         
         //get the single input we are interested in
         InterSliceBuffer buffer = 
-            InterSliceBuffer.getBuffer(input.getSingleEdge());
+            InterSliceBuffer.getBuffer(input.getSingleEdge(SchedulingPhase.STEADY));
         
         //we have already assigned this dram
         if (buffer.isAssigned())
@@ -438,7 +438,7 @@ public class BufferDRAMAssignment {
      * @return
      */
     private boolean valid(OutputSliceNode sliceNode) {
-       Iterator<InterSliceEdge> edges = sliceNode.getDestSet().iterator();
+       Iterator<InterSliceEdge> edges = sliceNode.getDestSet(SchedulingPhase.STEADY).iterator();
        HashSet<Integer> freePorts = new HashSet<Integer>();
        //System.out.println(" * For " + sliceNode);
        while (edges.hasNext()) {
@@ -449,7 +449,7 @@ public class BufferDRAMAssignment {
            for (int i = 0; i < rawChip.getNumDev(); i++) 
                ports.add(new Integer(i));
            System.out.println("      " + input + "is using:");
-           Iterator<InterSliceEdge> inEdges = input.getSourceSet().iterator();
+           Iterator<InterSliceEdge> inEdges = input.getSourceSet(SchedulingPhase.STEADY).iterator();
            while (inEdges.hasNext()) {
                InterSliceEdge inEdge = inEdges.next();
                InterSliceBuffer buffer = InterSliceBuffer.getBuffer(inEdge);
@@ -469,7 +469,7 @@ public class BufferDRAMAssignment {
                return false;
            freePorts.addAll(ports);
        }
-       if (freePorts.size() < sliceNode.getWidth())
+       if (freePorts.size() < sliceNode.getWidth(SchedulingPhase.STEADY))
            return false;
        return true;
     }
@@ -478,7 +478,7 @@ public class BufferDRAMAssignment {
         //System.out.println("Calling assignRemaining for: " + sliceNode);
         //get all the edges of this output slice node
         //sorted by their weight
-        List<InterSliceEdge>edges = sliceNode.getSortedOutputs();
+        List<InterSliceEdge>edges = sliceNode.getSortedOutputs(SchedulingPhase.STEADY);
         
         //assert valid(sliceNode);
         
@@ -576,7 +576,7 @@ public class BufferDRAMAssignment {
      */
     private Set<StreamingDram> assignedOutputDRAMs(OutputSliceNode output) {
         HashSet<StreamingDram> set = new HashSet<StreamingDram>();
-        Iterator dests = output.getDestSet().iterator();
+        Iterator dests = output.getDestSet(SchedulingPhase.STEADY).iterator();
         while (dests.hasNext()) {
             InterSliceEdge edge = (InterSliceEdge)dests.next();
             if (InterSliceBuffer.getBuffer(edge).isAssigned()) {
@@ -598,12 +598,12 @@ public class BufferDRAMAssignment {
      */
     private Set<StreamingDram> assignedInputDRAMs(InputSliceNode input) {
         HashSet<StreamingDram> set = new HashSet<StreamingDram>();
-        for (int i = 0; i < input.getSources().length; i++) {
-            if (InterSliceBuffer.getBuffer(input.getSources()[i]).isAssigned()) {
+        for (int i = 0; i < input.getSources(SchedulingPhase.STEADY).length; i++) {
+            if (InterSliceBuffer.getBuffer(input.getSources(SchedulingPhase.STEADY)[i]).isAssigned()) {
                 //System.out.println("      " +         
                 //        InterSliceBuffer.getBuffer(input.getSources()[i])
                 //        .getDRAM() + " (downstream input)");
-                set.add(InterSliceBuffer.getBuffer(input.getSources()[i])
+                set.add(InterSliceBuffer.getBuffer(input.getSources(SchedulingPhase.STEADY)[i])
                         .getDRAM());
             }
         }

@@ -2,6 +2,7 @@ package at.dms.kjc.backendSupport;
 
 import java.util.*;
 import at.dms.kjc.slicegraph.*;
+
 import java.io.*;
 
 /** Dump a graph with info about slices and channels. */
@@ -18,7 +19,7 @@ public class DumpSlicesAndChannels {
             buf.append(slice.hashCode() + " [ " + 
                     sliceName(slice, slicer, backendbits) + 
                     "\" ];\n");
-            Edge[] outgoing = slice.getTail().getDestList();
+            Edge[] outgoing = slice.getTail().getDestList(SchedulingPhase.STEADY);
             for (Edge e : outgoing) {
                 assert e != null && e.getDest() != null;
                 Slice next = e.getDest().getParent();

@@ -2,6 +2,7 @@ package at.dms.kjc.backendSupport;
 
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.slicegraph.DataFlowOrder;
+import at.dms.kjc.slicegraph.SchedulingPhase;
 import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.KjcOptions;
 import java.util.*;
@@ -113,7 +114,7 @@ public class GeneratePrimePump {
      * @return True if the trace can fire.
      */
     private boolean canFire(Slice slice) {       
-        Slice[] depends = slice.getDependencies();
+        Slice[] depends = slice.getDependencies(SchedulingPhase.STEADY);
         int myExeCount = getExeCount(slice);
         
         //check each of the depends to make sure that they have fired at least

@@ -9,6 +9,7 @@ import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.OutputSliceNode;
 import at.dms.kjc.slicegraph.SIRSlicer;
+import at.dms.kjc.slicegraph.SchedulingPhase;
 import at.dms.kjc.slicegraph.SliceNode;
 import at.dms.kjc.slicegraph.Util;
 
@@ -108,15 +109,15 @@ public class CompCommRatio {
 
                 int itemsReceived = filter.getFilter().getPushInt()
                     * filter.getFilter().getSteadyMult();
-                int iterations = (output.totalWeights() != 0 ? itemsReceived
-                                  / output.totalWeights() : 0);
+                int iterations = (output.totalWeights(SchedulingPhase.STEADY) != 0 ? itemsReceived
+                                  / output.totalWeights(SchedulingPhase.STEADY) : 0);
 
                 int itemsSent = 0;
 
-                for (int j = 0; j < output.getWeights().length; j++) {
-                    for (int k = 0; k < output.getWeights()[j]; k++) {
+                for (int j = 0; j < output.getWeights(SchedulingPhase.STEADY).length; j++) {
+                    for (int k = 0; k < output.getWeights(SchedulingPhase.STEADY)[j]; k++) {
                         // generate the array of compute node dests
-                        itemsSent += output.getDests()[j].length;
+                        itemsSent += output.getDests(SchedulingPhase.STEADY)[j].length;
                     }
                 }
 
@@ -129,13 +130,13 @@ public class CompCommRatio {
                 int itemsSent = filter.getFilter().getSteadyMult()
                     * filter.getFilter().getPopInt();
 
-                int iterations = (input.totalWeights() != 0 ? itemsSent
-                                  / input.totalWeights() : 0);
+                int iterations = (input.totalWeights(SchedulingPhase.STEADY) != 0 ? itemsSent
+                                  / input.totalWeights(SchedulingPhase.STEADY) : 0);
                 int itemsReceived = 0;
 
-                for (int j = 0; j < input.getWeights().length; j++) {
+                for (int j = 0; j < input.getWeights(SchedulingPhase.STEADY).length; j++) {
                     // get the source buffer, pass thru redundant buffer(s)
-                    itemsReceived += input.getWeights()[j];
+                    itemsReceived += input.getWeights(SchedulingPhase.STEADY)[j];
                 }
 
                 comm += (iterations * itemsReceived);

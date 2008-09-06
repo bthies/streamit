@@ -4,7 +4,7 @@ import java.util.Vector;
 
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.spacetime.switchIR.*;
-
+import at.dms.kjc.slicegraph.*;
 import java.util.LinkedList;
 import java.util.Iterator;
 import java.util.HashMap;
@@ -163,7 +163,7 @@ public class SwitchCodeStore {
      */
     public static void generateSwitchCode(Router router, 
             RawComputeNode source, RawComputeNode[] dests,
-            int stage)
+            SchedulingPhase whichStage)
     {
         RouteIns[] ins = new RouteIns[source.getRawChip().getXSize() *
                                       source.getRawChip().getYSize()];
@@ -204,11 +204,11 @@ public class SwitchCodeStore {
         //add the non-null instructions
         for (int i = 0; i < ins.length; i++) {
             if (ins[i] != null) { 
-                if (stage == 0) 
+                if (whichStage == SchedulingPhase.INIT)
                     source.getRawChip().getTile(i).getSwitchCode().appendCommAddrIns(ins[i]);
-                if (stage == 1) 
+                if (whichStage == SchedulingPhase.PRIMEPUMP)
                     source.getRawChip().getTile(i).getSwitchCode().appendIns(ins[i], true);
-                if (stage == 2)
+                if (whichStage == SchedulingPhase.STEADY)
                     source.getRawChip().getTile(i).getSwitchCode().appendIns(ins[i], false);
             }
         }

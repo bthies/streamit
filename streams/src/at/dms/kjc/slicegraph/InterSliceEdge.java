@@ -1,7 +1,6 @@
 package at.dms.kjc.slicegraph;
 
 import at.dms.kjc.backendSupport.FilterInfo;
-import at.dms.kjc.backendSupport.SchedulingPhase;
 
 /**
  *  An InterSliceEdge represents an edge in the partitioned stream graph between slices.
@@ -79,13 +78,13 @@ public class InterSliceEdge extends Edge implements at.dms.kjc.DeepCloneable {
         FilterInfo next = FilterInfo.getFilterInfo((FilterSliceNode) ((InputSliceNode)dest)
                                                    .getNext());
         
-        itemsSent = (int) ((double) next.initItemsReceived() * ((InputSliceNode)dest).ratio(this));
+        itemsSent = (int) ((double) next.initItemsReceived() * ((InputSliceNode)dest).ratio(this, SchedulingPhase.INIT));
         //System.out.println(next.initItemsReceived()  + " * " + ((InputSliceNode)dest).ratio(this));
         
         // calculate the items the output slice sends
         FilterInfo prev = FilterInfo.getFilterInfo((FilterSliceNode) ((OutputSliceNode)src)
                                                    .getPrevious());
-        itemsReceived = (int) ((double) prev.initItemsSent() * ((OutputSliceNode)src).ratio(this));
+        itemsReceived = (int) ((double) prev.initItemsSent() * ((OutputSliceNode)src).ratio(this, SchedulingPhase.INIT));
 
         if (itemsSent != itemsReceived) {
             System.out.println("*** Init: Items received != Items Sent!");
@@ -95,9 +94,9 @@ public class InterSliceEdge extends Edge implements at.dms.kjc.DeepCloneable {
             System.out.println("Push: " + prev.prePush + " " + prev.push);
             System.out.println("Pop: " + next.pop);
             System.out.println("Init items Sent * Ratio: " + prev.initItemsSent() + " * " +
-                    ((OutputSliceNode)src).ratio(this));
+                    ((OutputSliceNode)src).ratio(this, SchedulingPhase.INIT));
             System.out.println("Items Received: " + next.initItemsReceived(true));
-            System.out.println("Ratio received: " + ((InputSliceNode)dest).ratio(this));
+            System.out.println("Ratio received: " + ((InputSliceNode)dest).ratio(this, SchedulingPhase.INIT));
             
         }
         
@@ -118,13 +117,13 @@ public class InterSliceEdge extends Edge implements at.dms.kjc.DeepCloneable {
         // calculate the items the input slice receives
         FilterInfo next = FilterInfo.getFilterInfo(((InputSliceNode)dest).getNextFilter());
         itemsSent = (int) ((next.steadyMult * next.pop) * ((double) ((InputSliceNode)dest)
-                                                           .getWeight(this) / ((InputSliceNode)dest).totalWeights()));
+                                                           .getWeight(this, SchedulingPhase.STEADY) / ((InputSliceNode)dest).totalWeights(SchedulingPhase.STEADY)));
 
         // calculate the items the output slice sends
         FilterInfo prev = FilterInfo.getFilterInfo((FilterSliceNode) ((OutputSliceNode)src)
                                                    .getPrevious());
         itemsReceived = (int) ((prev.steadyMult * prev.push) * ((double) ((OutputSliceNode)src)
-                                                                .getWeight(this) / ((OutputSliceNode)src).totalWeights()));
+                                                                .getWeight(this, SchedulingPhase.STEADY) / ((OutputSliceNode)src).totalWeights(SchedulingPhase.STEADY)));
 
         assert (itemsSent == itemsReceived) : "Calculating steady state: items received != items sent on buffer "
             + itemsSent + " " + itemsReceived + " " + prev + " " + next;
@@ -141,7 +140,7 @@ public class InterSliceEdge extends Edge implements at.dms.kjc.DeepCloneable {
     */
     public int primePumpItems() {
         return (int) ((double) FilterInfo.getFilterInfo(((OutputSliceNode)src).getPrevFilter())
-                      .totalItemsSent(SchedulingPhase.PRIMEPUMP) * ((OutputSliceNode)src).ratio(this));
+                      .totalItemsSent(SchedulingPhase.PRIMEPUMP) * ((OutputSliceNode)src).ratio(this, SchedulingPhase.STEADY));
     }
 
 }

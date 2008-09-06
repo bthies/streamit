@@ -17,7 +17,7 @@ import at.dms.util.Utils;
 public class DataFlowOrder {
     
     /**
-     * Generate a list of slices in data-flow order.
+     * Generate a list of slices in data-flow order for the steady state
      * <p>
      * TODO: need to add markers for feedbackloops in original graph.
      * Order would be: (1) fake node with just a preWork to push enqueued.
@@ -37,12 +37,12 @@ public class DataFlowOrder {
                 Slice slice = queue.removeFirst();
                 if (!visited.contains(slice)) {
                     visited.add(slice);
-                    for (Edge destEdge : slice.getTail().getDestSet()) {
+                    for (Edge destEdge : slice.getTail().getDestSet(SchedulingPhase.STEADY)) {
                         Slice current = destEdge.getDest().getParent();
                         if (!visited.contains(current)) {
                             // only add if all sources has been visited
                             boolean addMe = true;
-                            for (Edge oneSource : current.getHead().getSourceSet()) {
+                            for (Edge oneSource : current.getHead().getSourceSet(SchedulingPhase.STEADY)) {
                                 if (!visited.contains(oneSource.getSrc().getParent())) {
                                     addMe = false;
                                     break;

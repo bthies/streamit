@@ -12,6 +12,7 @@ import at.dms.kjc.slicegraph.InterSliceEdge;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.OutputSliceNode;
+import at.dms.kjc.slicegraph.SchedulingPhase;
 import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.slicegraph.SliceNode;
 import at.dms.kjc.slicegraph.Util;
@@ -71,7 +72,7 @@ public class ManualDRAMPortAssignment {
     
     private static void manualInterSliceAssignment(OutputSliceNode output, RawProcElements chip) {
         // get the assignment for each input trace node
-        Iterator edges = output.getDestSet().iterator();
+        Iterator edges = output.getDestSet(SchedulingPhase.STEADY).iterator();
         
         // commit the assignment
         while (edges.hasNext()) {

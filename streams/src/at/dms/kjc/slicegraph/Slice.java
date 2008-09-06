@@ -137,11 +137,11 @@ public class Slice implements at.dms.kjc.DeepCloneable {
     /**
      * @return The incoming Slices (Slices) in the partitioned stream graph for this slice (slice). 
      */
-    public Slice[] getDependencies() {
-        Slice[] depends = new Slice[head.getSources().length];
+    public Slice[] getDependencies(SchedulingPhase phase) {
+        Slice[] depends = new Slice[head.getSources(phase).length];
         
         for (int i = 0; i < depends.length; i++)
-            depends[i] = head.getSources()[i].getSrc().getParent();
+            depends[i] = head.getSources(phase)[i].getSrc().getParent();
         
         return depends;
     }

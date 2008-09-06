@@ -464,7 +464,7 @@ public abstract class SIRSlicer extends Slicer {
             node = node.getNext();
         }
         if (node instanceof OutputSliceNode) {
-            Edge[][] dests = ((OutputSliceNode) node).getDests();
+            Edge[][] dests = ((OutputSliceNode) node).getDests(SchedulingPhase.STEADY);
             ArrayList<Object> output = new ArrayList<Object>();
             for (int i = 0; i < dests.length; i++) {
                 Edge[] inner = dests[i];

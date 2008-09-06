@@ -13,6 +13,7 @@ import at.dms.kjc.backendSupport.Layout;
 import at.dms.kjc.slicegraph.InterSliceEdge;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
+import at.dms.kjc.slicegraph.SchedulingPhase;
 import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.slicegraph.SliceNode;
 
@@ -335,7 +336,7 @@ public class ScheduleModel {
            //find the max end times of all the traces that this trace depends on
            int maxDepStartTime = 0;
            InputSliceNode input = slice.getHead();
-           Iterator<InterSliceEdge> inEdges = input.getSourceSet().iterator();
+           Iterator<InterSliceEdge> inEdges = input.getSourceSet(SchedulingPhase.STEADY).iterator();
            while (inEdges.hasNext()) {
                InterSliceEdge edge = inEdges.next();
                if (spaceTime.getSlicer().isIO(edge.getSrc().getParent()))

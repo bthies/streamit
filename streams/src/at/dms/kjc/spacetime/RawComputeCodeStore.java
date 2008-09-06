@@ -6,13 +6,13 @@ import at.dms.kjc.backendSupport.ComputeCodeStore;
 import at.dms.kjc.backendSupport.ComputeNode;
 import at.dms.kjc.backendSupport.FilterInfo;
 import at.dms.kjc.backendSupport.Layout;
-import at.dms.kjc.backendSupport.SchedulingPhase;
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.sir.*;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import at.dms.kjc.slicegraph.FilterContent;
+import at.dms.kjc.slicegraph.SchedulingPhase;
 
 /**
  * 
@@ -760,18 +760,12 @@ public class RawComputeCodeStore extends ComputeCodeStore<RawTile> implements SI
      * 
      * @param chip The raw chip.
      */
-    public static void barrier(RawChip chip, boolean init, boolean primepump) {
-       if (debugging) {System.err.println("barrier " + init + " " + primepump);}
-       Router router = new XYRouter();
-        
-        boolean steady = !init && !primepump;
-        int stage = 1;
-        if (steady)
-            stage = 2;
+    public static void barrier(RawChip chip, SchedulingPhase whichPhase) {
+        Router router = new XYRouter();
         
         for (int i = 0; i < chip.getTotalTiles(); i++) {
             RawTile tile = chip.getTile(i);
-            if (steady)
+            if (SchedulingPhase.isSteady(whichPhase))
                 tile.getComputeCode().steadyLoop.addStatement(RawExecutionCode.boundToSwitchStmt(100));
             else
                 tile.getComputeCode().initBlock.addStatement(RawExecutionCode.boundToSwitchStmt(100));
@@ -784,14 +778,14 @@ public class RawComputeCodeStore extends ComputeCodeStore<RawTile> implements SI
                         new JExpressionStatement(
                                 new JAssignmentExpression(new JFieldAccessExpression(TraceIRtoC.DUMMY_VOLATILE),
                                         new JFieldAccessExpression(Util.CSTIINTVAR)));
-                    if (steady) 
+                    if (SchedulingPhase.isSteady(whichPhase)) 
                         dest.getComputeCode().addSteadyLoopStatement(rec);
                     else 
                         dest.getComputeCode().addInitStatement(rec);
                     dests[index++] = chip.getTile(x);
                 }
             }
-            SwitchCodeStore.generateSwitchCode(router, tile, dests, stage);
+            SwitchCodeStore.generateSwitchCode(router, tile, dests, whichPhase);
         }
     }
     

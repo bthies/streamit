@@ -201,14 +201,14 @@ public abstract class BackEndFactory<
      * May want to set false if upstream channel is to off-chip device and code for a filter controls that
      * device, but this implementation seems a good default. */
     public boolean sliceHasUpstreamChannel(Slice s) {
-        return s.getHead().getWidth() > 0;
+        return s.getHead().getWidth(SchedulingPhase.STEADY) > 0;
     }
 
     /** @return true if slice has a downstream channel that it needs to send data to, false otherwise 
      * May want to set false if downstream channel is to off-chip device and code for a filter controls that
      * device, but this implementation seems a good default. */
     public boolean sliceHasDownstreamChannel(Slice s) {
-        return s.getTail().getWidth() > 0;
+        return s.getTail().getWidth(SchedulingPhase.STEADY) > 0;
     }
 
     /**
@@ -217,7 +217,7 @@ public abstract class BackEndFactory<
      * @return 
      */
     public boolean sliceNeedsJoinerCode(Slice s) {
-        return s.getHead().getWidth() > 1;
+        return s.getHead().getWidth(SchedulingPhase.STEADY) > 1;
     }
 
     /**
@@ -240,7 +240,7 @@ public abstract class BackEndFactory<
      * @return
      */
     public boolean sliceNeedsSplitterCode(Slice s) {
-        return s.getTail().getWidth() > 1;
+        return s.getTail().getWidth(SchedulingPhase.STEADY) > 1;
     }
 
     /**

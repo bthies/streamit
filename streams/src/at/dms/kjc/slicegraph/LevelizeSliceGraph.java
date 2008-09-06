@@ -34,13 +34,13 @@ public class LevelizeSliceGraph {
             Slice slice = queue.removeFirst();
             if (!visited.contains(slice)) {
                 visited.add(slice);
-                for (Edge destEdge : slice.getTail().getDestSet()) {
+                for (Edge destEdge : slice.getTail().getDestSet(SchedulingPhase.STEADY)) {
                     Slice current = destEdge.getDest().getParent();
                     if (!visited.contains(current)) {
                         // only add if all sources has been visited
                         boolean addMe = true;
                         int maxParentLevel = 0;
-                        for (Edge sourceEdge : current.getHead().getSourceSet()) {
+                        for (Edge sourceEdge : current.getHead().getSourceSet(SchedulingPhase.STEADY)) {
                             if (!visited.contains(sourceEdge.getSrc().getParent())) {
                                 addMe = false;
                                 break;

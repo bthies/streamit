@@ -23,10 +23,7 @@ import at.dms.kjc.backendSupport.EmitCode;
 import at.dms.kjc.common.CodegenPrintWriter;
 import at.dms.kjc.common.MacroConversion;
 import at.dms.kjc.sir.SIRCodeUnit;
-import at.dms.kjc.slicegraph.FilterSliceNode;
-import at.dms.kjc.slicegraph.InputSliceNode;
-import at.dms.kjc.slicegraph.OutputSliceNode;
-import at.dms.kjc.slicegraph.SliceNode;
+import at.dms.kjc.slicegraph.*;
 import at.dms.util.Utils;
 
 public class EmitCellCode extends EmitCode {
@@ -93,18 +90,18 @@ public class EmitCellCode extends EmitCode {
         String str = "";
         if (init) str = "init_"; 
         p.println("#define FILTER_NAME " + str + "joiner_" + s.getNext().getAsFilter().getFilter().getName());
-        if (s.isJoiner()) {
-            p.println("#define NUM_INPUT_TAPES " + s.getWidth());
+        if (s.isJoiner(SchedulingPhase.STEADY)) {
+            p.println("#define NUM_INPUT_TAPES " + s.getWidth(SchedulingPhase.STEADY));
             p.print("#define JOINER_RATES {");
-            p.print(s.getWeights()[0]);
-            for (int i=1; i<s.getWidth(); i++) {
-                p.print(", " + s.getWeights()[i]);
+            p.print(s.getWeights(SchedulingPhase.STEADY)[0]);
+            for (int i=1; i<s.getWidth(SchedulingPhase.STEADY); i++) {
+                p.print(", " + s.getWeights(SchedulingPhase.STEADY)[i]);
             }
             p.println("}");
         }
         
         p.println("#include \"beginfilter.h\"");
-        if (s.isJoiner()) 
+        if (s.isJoiner(SchedulingPhase.STEADY)) 
             p.println("#include \"rrjoiner.h\"");
     }
     
@@ -112,17 +109,17 @@ public class EmitCellCode extends EmitCode {
         String str = "";
         if (init) str = "init_";
         p.println("#define FILTER_NAME " + str + "splitter_" + s.getPrevious().getAsFilter().getFilter().getName());
-        if (s.isRRSplitter()) {
-            p.println("#define NUM_OUTPUT_TAPES " + s.getWidth());
+        if (s.isRRSplitter(SchedulingPhase.STEADY)) {
+            p.println("#define NUM_OUTPUT_TAPES " + s.getWidth(SchedulingPhase.STEADY));
             p.print("#define SPLITTER_RATES {");
-            p.print(s.getWeights()[0]);
-            for (int i=1; i<s.getWidth(); i++) {
-                p.print(", " + s.getWeights()[i]);
+            p.print(s.getWeights(SchedulingPhase.STEADY)[0]);
+            for (int i=1; i<s.getWidth(SchedulingPhase.STEADY); i++) {
+                p.print(", " + s.getWeights(SchedulingPhase.STEADY)[i]);
             }
             p.println("}");
         }
         p.println("#include \"beginfilter.h\"");
-        if (s.isRRSplitter())
+        if (s.isRRSplitter(SchedulingPhase.STEADY))
             p.println("#include \"rrsplitter.h\"");
     }
     
@@ -431,9 +428,9 @@ public class EmitCellCode extends EmitCode {
                 MacroConversion.doConvert(self, isDeclOnly(), this);
                 return;
             }
-            if (cs.getSliceNode().isInputSlice() && cs.getSliceNode().getAsInput().isJoiner())
+            if (cs.getSliceNode().isInputSlice() && cs.getSliceNode().getAsInput().isJoiner(SchedulingPhase.STEADY))
                 return;
-            if (cs.getSliceNode().isOutputSlice() && cs.getSliceNode().getAsOutput().isRRSplitter())
+            if (cs.getSliceNode().isOutputSlice() && cs.getSliceNode().getAsOutput().isRRSplitter(SchedulingPhase.STEADY))
                 return;
             declsAreLocal = true;
             if (! this.isDeclOnly()) { p.newLine(); } // some extra space if not just declaration.

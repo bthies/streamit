@@ -53,11 +53,13 @@ public class Fissioner {
     }
 
     private static Slice[] getSources(Slice slice) {
-        return slice.getHead().getSourceSlices().toArray(new Slice[0]);
+      //BELOW LINE CHANGED BY MGORDON
+        return slice.getHead().getSourceSlices(SchedulingPhase.STEADY).toArray(new Slice[0]);
     }
 
     private static Slice[] getDests(Slice slice) {
-        return slice.getTail().getDestSlices().toArray(new Slice[0]);
+      //BELOW LINE CHANGED BY MGORDON
+        return slice.getTail().getDestSlices(SchedulingPhase.STEADY).toArray(new Slice[0]);
     }
 
     private static int[] toArray(LinkedList<Integer> list) {
@@ -153,7 +155,8 @@ public class Fissioner {
 
         // Make sure that sources only push to this Slice
         for(int x = 0 ; x < sources.length ; x++) {
-            if(sources[x].getTail().getDestSlices().size() > 1) {
+            //BELOW LINE CHANGED BY MGORDON
+            if(sources[x].getTail().getDestSlices(SchedulingPhase.STEADY).size() > 1) {
                 if(debug) System.out.println("Can't fizz: Sources for Slice send to other Slices");
                 return false;
             }
@@ -161,7 +164,8 @@ public class Fissioner {
 
         // Make sure that dests only pop from this Slice
         for(int x = 0 ; x < dests.length ; x++) {
-            if(dests[x].getHead().getSourceSlices().size() > 1) {
+            //BELOW LINE CHANGED BY MGORDON
+            if(dests[x].getHead().getSourceSlices(SchedulingPhase.STEADY).size() > 1) {
                 if(debug) System.out.println("Can't fizz: Dests for Slice receives from other Slices");
                 return false;
             }

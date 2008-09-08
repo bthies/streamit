@@ -165,7 +165,7 @@ public class OutputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneab
         
     /** @return the weights */
     public int[] getWeights(SchedulingPhase phase) {
-        if (phase == SchedulingPhase.INIT)
+        if (phase == SchedulingPhase.INIT && hasInitPattern())
             return initWeights;
         
         return weights;

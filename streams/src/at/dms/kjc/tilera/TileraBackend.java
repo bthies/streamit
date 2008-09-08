@@ -11,6 +11,8 @@ public class TileraBackend {
     public static TileraChip chip;
     public static TileraBackEndFactory backEndBits;
     public static Structs_h structs_h;
+    /** if true use DMA otherwise remote writes */
+    public static boolean DMA = false;
     
     public static void run(SIRStream str,
                            JInterfaceDeclaration[] interfaces,

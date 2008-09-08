@@ -17,35 +17,11 @@ import at.dms.kjc.slicegraph.SchedulingPhase;
  * @author mgordon
  *
  */
-public class FileReaderDMACommands {
+public class FileReaderDMACommands extends FileReaderCode{
 
-    /** the output buffer that these dma commands uses as its source */
-    private InputRotatingBuffer parent;
-    /** the block of ilib_wait calls, one for each dma command generated, for steady
-     * because we have concurrency, for init they are in commandsInit */
-    private List<JStatement> waitCallsSteady;
-    /** the dma commands block */
-    private List<JStatement> commandsSteady;
-    /** the dma commands block */
-    private List<JStatement> commandsInit;
-    /** the output slice node */
-    private InputSliceNode input;
-    /** any declarations that are needed */
-    private List<JStatement> decls;
-    /** the output slice node of the file */
-    private OutputSliceNode fileOutput;
-    /** the edge between the file reader and this input buffer */
-    private InterSliceEdge edge;
-    
+ 
     public FileReaderDMACommands(InputRotatingBuffer buf) {
-        parent = buf;
-        waitCallsSteady = new LinkedList<JStatement>();
-        commandsSteady = new LinkedList<JStatement>();
-        commandsInit = new LinkedList<JStatement>();
-        decls = new LinkedList<JStatement>();
-        input = parent.filterNode.getParent().getHead();
-        fileOutput = input.getSingleEdge(SchedulingPhase.STEADY).getSrc();    
-        edge = input.getSingleEdge(SchedulingPhase.STEADY);
+        super(buf);
         checkSimple();
         generateStatements();
     }
@@ -133,7 +109,7 @@ public class FileReaderDMACommands {
      * 
      * @return the dma commands
      */
-    public List<JStatement> dmaCommands(SchedulingPhase which) {
+    public List<JStatement> getCode(SchedulingPhase which) {
         if (which == SchedulingPhase.INIT)
             return commandsInit;
         

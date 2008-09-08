@@ -16,7 +16,7 @@ import java.util.*;
  *
  */
 public class InputRotatingBuffer extends RotatingBuffer {
-
+    
     /** map of all the input buffers from filter -> inputbuffer */
     protected static HashMap<FilterSliceNode, InputRotatingBuffer> buffers;
     /** name of variable containing tail of array offset */
@@ -32,7 +32,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
     /** true if what feeds this inputbuffer is a file reader */
     protected boolean upstreamFileReader;
     /** if this is fed by a file reader, then we need dma commands for it */
-    protected FileReaderDMACommands fileReaderCommands;
+    protected FileReaderCode fileReaderCode;
     
     static {
         buffers = new HashMap<FilterSliceNode, InputRotatingBuffer>();
@@ -107,7 +107,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
     protected JStatement endOfRotationSetup() {
         JBlock block = new JBlock();
         if (upstreamFileReader) {
-            block.addAllStatements(fileReaderCommands.dmaCommands(SchedulingPhase.INIT));
+            block.addAllStatements(fileReaderCode.getCode(SchedulingPhase.INIT));
         }
         return block;
     }
@@ -155,8 +155,13 @@ public class InputRotatingBuffer extends RotatingBuffer {
         //we only support a single input for a filter that is feed by a file
         upstreamFileReader = filterNode.getParent().getHead().hasFileInput();
         if (upstreamFileReader) {
-            assert filterNode.getParent().getHead().oneInput();
-            fileReaderCommands = new FileReaderDMACommands(this);
+            System.out.println(filterNode);
+            assert filterNode.getParent().getHead().getWidth(SchedulingPhase.INIT) <= 1 &&
+            filterNode.getParent().getHead().getWidth(SchedulingPhase.STEADY) <= 1;
+            if (TileraBackend.DMA)
+                fileReaderCode = new FileReaderDMACommands(this);
+            else
+                fileReaderCode = new FileReaderRemoteReads(this);
         }
         addrBufMap = new HashMap<Tile, DMAAddressRotation>();
     }
@@ -391,8 +396,8 @@ public class InputRotatingBuffer extends RotatingBuffer {
         //that is why we use the steady commands in the init, the init commands 
         //are used during the setupRotation stage
         if (upstreamFileReader) {
-            list.addAll(fileReaderCommands.dmaCommands(SchedulingPhase.STEADY));
-            list.addAll(fileReaderCommands.waitCallsSteady());
+            list.addAll(fileReaderCode.getCode(SchedulingPhase.STEADY));
+            list.addAll(fileReaderCode.waitCallsSteady());
             list.addAll(copyDownStatements());
             list.addAll(rotateStatements());
         }
@@ -413,7 +418,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
     public List<JStatement> beginSteadyRead() {
         LinkedList<JStatement> list = new LinkedList<JStatement>();
         if (upstreamFileReader) {
-            list.addAll(fileReaderCommands.dmaCommands(SchedulingPhase.STEADY));
+            list.addAll(fileReaderCode.getCode(SchedulingPhase.STEADY));
         }
         list.add(zeroOutTail());
         return list;
@@ -428,7 +433,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
         //copy the copyDown items to the next rotation buffer
         list.addAll(copyDownStatements());
         if (upstreamFileReader) {
-            list.addAll(fileReaderCommands.waitCallsSteady());
+            list.addAll(fileReaderCode.waitCallsSteady());
         }
         //rotate to the next buffer
         list.addAll(rotateStatements());        
@@ -476,7 +481,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
         //if we have a file reader feeding this then add the decls for 
         //the dma commands we generate for it.
         if (upstreamFileReader) 
-            retval.addAll(fileReaderCommands.decls());
+            retval.addAll(fileReaderCode.decls());
         return retval;
     }   
     

@@ -331,11 +331,13 @@ public abstract class RotatingBuffer extends Channel {
         assert false;
         this.extraCount = extracount;
     }
-
+    
     protected List<JStatement> rotateStatements() {
         LinkedList<JStatement> list = new LinkedList<JStatement>();
-        list.add(Util.toStmt(currentRotName + " = " + currentRotName + "->next"));
-        list.add(Util.toStmt(currentBufName + " = " + currentRotName + "->buffer"));
+        if (rotationLength > 1) {
+            list.add(Util.toStmt(currentRotName + " = " + currentRotName + "->next"));
+            list.add(Util.toStmt(currentBufName + " = " + currentRotName + "->buffer"));
+        }
         return list;
     }
     

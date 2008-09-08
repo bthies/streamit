@@ -36,35 +36,15 @@ import at.dms.kjc.slicegraph.*;
  * @author mgordon
  *
  */
-public class OutputRotatingBufferDMA extends RotatingBuffer {
-    
-    /** map of all the output buffers from filter -> outputbuffer */
-    protected static HashMap<FilterSliceNode, OutputRotatingBufferDMA> buffers;
-    /** name of the variable that points to the rotation structure we should be transferring from */
-    public String transRotName;
-    /** name of the variable that points to the buffer we should be transferring from */
-    public String transBufName;
-    /** name of variable containing head of array offset */
-    protected String headName;
-    /** definition for head */
-    protected JVariableDefinition headDefn;
+public class OutputRotatingBufferDMA extends OutputRotatingBuffer {
     /** definition of boolean used during primepump to see if it is the first exection */
     protected JVariableDefinition firstExe;
     protected String firstExeName;
     /** the output slice node for this output buffer */
-    protected OutputSliceNode outputNode;
-    /** reference to head */
-    protected JExpression head;      
     /** the dma commands that are generated for this output buffer */
     protected OutputBufferDMATransfers dmaCommands;
     /** the address buffers that this output rotation uses as destinations for dma commands */ 
     protected HashMap<InputRotatingBuffer, DMAAddressRotation> addressBuffers;
-    /** the tile we are mapped to */
-    protected Tile tile;
-    
-    static {
-        buffers = new HashMap<FilterSliceNode, OutputRotatingBufferDMA>();
-    }
 
     /**
      * Create all the output buffers necessary for this slice graph.  Iterate over
@@ -105,29 +85,13 @@ public class OutputRotatingBufferDMA extends RotatingBuffer {
      * 
      * @param filterNode The filternode for which to create a new output buffer.
      */
-    private OutputRotatingBufferDMA(FilterSliceNode filterNode, Tile parent) {
-        super(filterNode.getEdgeToNext(), filterNode, parent);
-        outputNode = filterNode.getParent().getTail();
-        bufType = filterNode.getFilter().getOutputType();
-        buffers.put(filterNode, this);
-        headName = this.getIdent() + "head";
-        headDefn = new JVariableDefinition(null,
-                at.dms.kjc.Constants.ACC_STATIC,
-                CStdType.Integer, headName, null);
+    protected OutputRotatingBufferDMA(FilterSliceNode filterNode, Tile parent) {
+        super(filterNode, parent);
         
         firstExeName = "__first__" + this.getIdent();        
         firstExe = new JVariableDefinition(null,
                 at.dms.kjc.Constants.ACC_STATIC,
                 CStdType.Boolean, firstExeName, new JBooleanLiteral(true));
-        
-        transRotName = this.getIdent() + "_rot_trans";
-        transBufName = this.getIdent() + "_trans_buf";
-        
-        head = new JFieldAccessExpression(headName);
-        head.setType(CStdType.Integer);
-      
-        
-        tile = TileraBackend.backEndBits.getLayout().getComputeNode(filterNode);
         
         //fill the dmaaddressbuffers array
         addressBuffers = new HashMap<InputRotatingBuffer, DMAAddressRotation>();
@@ -147,7 +111,7 @@ public class OutputRotatingBufferDMA extends RotatingBuffer {
      * @return The output buffer of the filter node.
      */
     public static OutputRotatingBufferDMA getOutputBuffer(FilterSliceNode fsn) {
-        return buffers.get(fsn);
+        return (OutputRotatingBufferDMA)buffers.get(fsn);
     }
     
     /**
@@ -177,131 +141,6 @@ public class OutputRotatingBufferDMA extends RotatingBuffer {
         return addressBuffers.get(InputRotatingBuffer.getInputBuffer(input.getNextFilter()));
     }
     
-    protected void setBufferSize() {
-        FilterInfo fi = FilterInfo.getFilterInfo(filterNode);
-        
-        bufSize = Math.max(fi.totalItemsSent(SchedulingPhase.INIT),
-                fi.totalItemsSent(SchedulingPhase.STEADY));
-    }
-    
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#popMethodName()
-     */
-    public String popMethodName() {
-        assert false : "Should not call pop() method on output buffer.";
-        return "";
-    }
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#popMethod()
-     */
-    public JMethodDeclaration popMethod() {
-        assert false : "Should not call pop() method on output buffer.";
-        return null;
-    }
-    
-    
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#popManyMethodName()
-     */
-    public String popManyMethodName() {
-        assert false : "Should not call pop() method on output buffer.";
-        return "";
-    }
- 
-        /**
-     * Pop many items at once ignoring them.
-     * Default method generated here to call popMethod() repeatedly.
-     */
-    public JMethodDeclaration popManyMethod() {
-        assert false : "Should not call pop() method on output buffer.";
-        return null;
-     }
-
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#assignFromPopMethodName()
-     */
-    public String assignFromPopMethodName() {
-        assert false : "Should not call pop() method on output buffer.";
-        return "";
-    }
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#assignFromPopMethod()
-     */
-    public JMethodDeclaration assignFromPopMethod() {
-        assert false : "Should not call pop() method on output buffer.";
-        return null;
-    }
-    
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#peekMethodName()
-     */
-    public String peekMethodName() {
-        assert false : "Should not call peek() method on output buffer.";
-        return "";
-    }
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#peekMethod()
-     */
-    public JMethodDeclaration peekMethod() {
-        assert false : "Should not call peek() method on output buffer.";
-        return null;
-    }
-    
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#assignFromPeekMethodName()
-     */
-    public String assignFromPeekMethodName() {
-        assert false : "Should not call peek() method on output buffer.";
-        return "";
-    }
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#assignFromPeekMethod()
-     */
-    public JMethodDeclaration assignFromPeekMethod() {
-        assert false : "Should not call peek() method on output buffer.";
-        return null;
-    }
-    
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#pushMethodName()
-     */
-    public String pushMethodName() {
-        return "__push_" + unique_id;
-    }
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#pushMethod()
-     */
-    public JMethodDeclaration pushMethod() {
-        String valName = "__val";
-        JFormalParameter val = new JFormalParameter(
-                theEdge.getType(),
-                valName);
-        JLocalVariableExpression valRef = new JLocalVariableExpression(val);
-        JBlock body = new JBlock();
-        JMethodDeclaration retval = new JMethodDeclaration(
-                null,
-                /*at.dms.kjc.Constants.ACC_PUBLIC | at.dms.kjc.Constants.ACC_STATIC |*/ at.dms.kjc.Constants.ACC_INLINE,
-                CStdType.Void,
-                pushMethodName(),
-                new JFormalParameter[]{val},
-                CClassType.EMPTY,
-                body, null, null);
-        body.addStatement(
-        new JExpressionStatement(new JAssignmentExpression(
-                bufRef(new JPostfixExpression(at.dms.kjc.Constants.OPE_POSTINC,
-                        head)),
-                valRef)));
-        return retval;
-    }
-    
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#beginInitWrite()
-     */
-    public List<JStatement> beginInitWrite() {
-        LinkedList<JStatement> list = new LinkedList<JStatement>();
-        list.add(zeroOutHead());
-        return list;
-    }
 
     /* (non-Javadoc)
      * @see at.dms.kjc.backendSupport.ChannelI#endInitWrite()
@@ -384,20 +223,6 @@ public class OutputRotatingBufferDMA extends RotatingBuffer {
         return list;
     }
     
-    protected List<JStatement> rotateStatementsCurRot() {
-        LinkedList<JStatement> list = new LinkedList<JStatement>();
-        list.add(Util.toStmt(currentRotName + " = " + currentRotName + "->next"));
-        list.add(Util.toStmt(currentBufName + " = " + currentRotName + "->buffer"));
-        return list;
-    }
-    
-    protected List<JStatement> rotateStatementsTransRot() {
-        LinkedList<JStatement> list = new LinkedList<JStatement>();
-        list.add(Util.toStmt(transRotName + " = " + transRotName + "->next"));
-        list.add(Util.toStmt(transBufName + " = " + transRotName + "->buffer"));
-        return list;
-    }
-    
     /**
      * The rotate statements that includes the current buffer (for output of this 
      * firing) and transfer buffer.
@@ -426,34 +251,7 @@ public class OutputRotatingBufferDMA extends RotatingBuffer {
         return list;
     }
     
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#topOfWorkSteadyWrite()
-     */
-    public List<JStatement> topOfWorkSteadyWrite() {
-        return new LinkedList<JStatement>(); 
-    }
  
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#dataDeclsH()
-     */
-    public List<JStatement> dataDeclsH() {
-        return new LinkedList<JStatement>();
-    }
-    
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#dataDecls()
-     */
-    public List<JStatement> dataDecls() {
-        List<JStatement> retval = new LinkedList<JStatement>();
-        return retval;
-    }
-    
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#writeDeclsExtern()
-     */
-    public List<JStatement> writeDeclsExtern() {
-        return new LinkedList<JStatement>();
-    }   
     
     /* (non-Javadoc)
      * @see at.dms.kjc.backendSupport.ChannelI#writeDecls()
@@ -467,75 +265,4 @@ public class OutputRotatingBufferDMA extends RotatingBuffer {
         retval.addAll(dmaCommands.decls());
         return retval;
     }   
-
-    /** Create statement zeroing out head */
-    protected JStatement zeroOutHead() {
-        return new JExpressionStatement(
-                        new JAssignmentExpression(head, new JIntLiteral(0)));
-    }
-
-    
-    /**
-     * Generate the code to setup the structure of the rotating buffer 
-     * as a circular linked list.
-     */
-    protected void setupRotation() {
-        String temp = "__temp__";
-        TileCodeStore cs = parent.getComputeCode();
-        //this is the typedef we will use for this buffer rotation structure
-        String rotType = rotTypeDefPrefix + getType().toString();
-        
-        //add the declaration of the rotation buffer of the appropriate rotation type
-        parent.getComputeCode().appendTxtToGlobal(rotType + " *" + rotStructName + ";\n");
-      //add the declaration of the pointer that points to the current rotation in the rotation structure
-        parent.getComputeCode().appendTxtToGlobal(rotType + " *" + currentRotName + ";\n");
-        //add the declaration of the pointer that points to the current buffer in the current rotation
-        parent.getComputeCode().appendTxtToGlobal(bufType.toString() + " *" + currentBufName + ";\n");
-        
-        //add the declaration of the pointer that points to the transfer rotation in the rotation structure
-        parent.getComputeCode().appendTxtToGlobal(rotType + " *" + transRotName + ";\n");
-        //add the declaration of the pointer that points to the transfer buffer in the current rotation
-        parent.getComputeCode().appendTxtToGlobal(bufType.toString() + " *" + transBufName + ";\n");
-        
-        JBlock block = new JBlock();
-        
-        //create a temp var
-        if (this.rotationLength > 1)
-            block.addStatement(Util.toStmt(rotType + " *" + temp));
-        
-        //create the first entry!!
-        block.addStatement(Util.toStmt(rotStructName + " =  (" + rotType+ "*)" + "malloc(sizeof("
-                + rotType + "))"));
-        
-        //modify the first entry
-        block.addStatement(Util.toStmt(rotStructName + "->buffer = " + bufferNames[0]));
-        if (this.rotationLength == 1)  {
-            //loop the structure
-            block.addStatement(Util.toStmt(rotStructName + "->next = " + rotStructName));
-        }
-        else {
-            block.addStatement(Util.toStmt(temp + " = (" + rotType+ "*)" + "malloc(sizeof("
-                    + rotType + "))"));    
-            
-            block.addStatement(Util.toStmt(rotStructName + "->next = " + 
-                    temp));
-            
-            block.addStatement(Util.toStmt(temp + "->buffer = " + bufferNames[1]));
-            
-            for (int i = 2; i < this.rotationLength; i++) {
-                block.addStatement(Util.toStmt(temp + "->next =  (" + rotType+ "*)" + "malloc(sizeof("
-                        + rotType + "))"));
-                block.addStatement(Util.toStmt(temp + " = " + temp + "->next"));
-                block.addStatement(Util.toStmt(temp + "->buffer = " + bufferNames[i]));
-            }
-            
-            block.addStatement(Util.toStmt(temp + "->next = " + rotStructName));
-        }
-        block.addStatement(Util.toStmt(currentRotName + " = " + rotStructName));
-        block.addStatement(Util.toStmt(currentBufName + " = " + currentRotName + "->buffer"));
-        block.addStatement(Util.toStmt(transRotName + " = " + rotStructName));
-        block.addStatement(Util.toStmt(transBufName + " = " + currentRotName + "->buffer"));
-        cs.addStatementToBufferInit(block);
-    }
-    
 }

@@ -77,7 +77,7 @@ public class FilterCodeGeneration extends CodeStoreHelper {
             }
         }
         if (backEndBits.sliceHasDownstreamChannel(sliceNode.getParent())) {
-            for (JStatement stmt : OutputRotatingBuffer.getOutputBuffer(filterNode).beginInitWrite()) {
+            for (JStatement stmt : OutputRotatingBufferDMA.getOutputBuffer(filterNode).beginInitWrite()) {
                 statements.addStatement(stmt);
             }
         }
@@ -106,7 +106,7 @@ public class FilterCodeGeneration extends CodeStoreHelper {
             }
         }
         if (backEndBits.sliceHasDownstreamChannel(sliceNode.getParent())) {
-            for (JStatement stmt : OutputRotatingBuffer.getOutputBuffer(filterNode).endInitWrite()) {
+            for (JStatement stmt : OutputRotatingBufferDMA.getOutputBuffer(filterNode).endInitWrite()) {
                 statements.addStatement(stmt);
             }
         }
@@ -173,7 +173,7 @@ public class FilterCodeGeneration extends CodeStoreHelper {
             }
         }
         if (backEndBits.sliceHasDownstreamChannel(sliceNode.getParent())) {
-            for (JStatement stmt : OutputRotatingBuffer.getOutputBuffer(filterNode).beginPrimePumpWrite()) {
+            for (JStatement stmt : OutputRotatingBufferDMA.getOutputBuffer(filterNode).beginPrimePumpWrite()) {
                 statements.addStatement(stmt);
             }
         }
@@ -186,7 +186,7 @@ public class FilterCodeGeneration extends CodeStoreHelper {
             }
         }
         if (backEndBits.sliceHasDownstreamChannel(sliceNode.getParent())) {
-            for (JStatement stmt : OutputRotatingBuffer.getOutputBuffer(filterNode).endPrimePumpWrite()) {
+            for (JStatement stmt : OutputRotatingBufferDMA.getOutputBuffer(filterNode).endPrimePumpWrite()) {
                 statements.addStatement(stmt);
             }
         }
@@ -215,7 +215,7 @@ public class FilterCodeGeneration extends CodeStoreHelper {
         }
         
         if (backEndBits.sliceHasDownstreamChannel(sliceNode.getParent())) {
-            for (JStatement stmt : OutputRotatingBuffer.getOutputBuffer(filterNode).beginSteadyWrite()) {
+            for (JStatement stmt : OutputRotatingBufferDMA.getOutputBuffer(filterNode).beginSteadyWrite()) {
                 statements.addStatement(stmt);
             }
         }
@@ -231,7 +231,7 @@ public class FilterCodeGeneration extends CodeStoreHelper {
             }
         }
         if (backEndBits.sliceHasDownstreamChannel(sliceNode.getParent())) {
-            for (JStatement stmt : OutputRotatingBuffer.getOutputBuffer(filterNode).endSteadyWrite()) {
+            for (JStatement stmt : OutputRotatingBufferDMA.getOutputBuffer(filterNode).endSteadyWrite()) {
                 statements.addStatement(stmt);
             }
         }

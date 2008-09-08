@@ -36,10 +36,10 @@ import at.dms.kjc.slicegraph.*;
  * @author mgordon
  *
  */
-public class OutputRotatingBuffer extends RotatingBuffer {
+public class OutputRotatingBufferDMA extends RotatingBuffer {
     
     /** map of all the output buffers from filter -> outputbuffer */
-    protected static HashMap<FilterSliceNode, OutputRotatingBuffer> buffers;
+    protected static HashMap<FilterSliceNode, OutputRotatingBufferDMA> buffers;
     /** name of the variable that points to the rotation structure we should be transferring from */
     public String transRotName;
     /** name of the variable that points to the buffer we should be transferring from */
@@ -63,7 +63,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
     protected Tile tile;
     
     static {
-        buffers = new HashMap<FilterSliceNode, OutputRotatingBuffer>();
+        buffers = new HashMap<FilterSliceNode, OutputRotatingBufferDMA>();
     }
 
     /**
@@ -81,7 +81,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
                 Tile parent = TileraBackend.backEndBits.getLayout().getComputeNode(slice.getFirstFilter());
                 //create the new buffer, the constructor will put the buffer in the 
                 //hashmap
-                OutputRotatingBuffer buf = new OutputRotatingBuffer(slice.getFirstFilter(), parent);
+                OutputRotatingBufferDMA buf = new OutputRotatingBufferDMA(slice.getFirstFilter(), parent);
                 
                 //calculate the rotation length
                 int srcMult = schedule.getPrimePumpMult(slice);
@@ -105,7 +105,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
      * 
      * @param filterNode The filternode for which to create a new output buffer.
      */
-    private OutputRotatingBuffer(FilterSliceNode filterNode, Tile parent) {
+    private OutputRotatingBufferDMA(FilterSliceNode filterNode, Tile parent) {
         super(filterNode.getEdgeToNext(), filterNode, parent);
         outputNode = filterNode.getParent().getTail();
         bufType = filterNode.getFilter().getOutputType();
@@ -146,7 +146,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
      * @param fsn The filter node in question.
      * @return The output buffer of the filter node.
      */
-    public static OutputRotatingBuffer getOutputBuffer(FilterSliceNode fsn) {
+    public static OutputRotatingBufferDMA getOutputBuffer(FilterSliceNode fsn) {
         return buffers.get(fsn);
     }
     

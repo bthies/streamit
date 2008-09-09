@@ -82,7 +82,7 @@ public class ProcessFilterSliceNode {
             RotatingBuffer outputBuffer = null;
             
             if (backEndBits.sliceHasDownstreamChannel(filterNode.getParent())) {
-                outputBuffer = OutputRotatingBufferDMA.getOutputBuffer(filterNode);
+                outputBuffer = OutputRotatingBuffer.getOutputBuffer(filterNode);
             }
 
             filterCode = getFilterCode(filterNode,inputBuffer,outputBuffer,backEndBits);

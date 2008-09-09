@@ -87,7 +87,7 @@ public abstract class RotatingBuffer extends Channel {
      */
     public static void createBuffers(BasicSpaceTimeSchedule schedule) {
         InputRotatingBuffer.createInputBuffers(schedule);
-        OutputRotatingBufferDMA.createOutputBuffers(schedule);
+        OutputRotatingBuffer.createOutputBuffers(schedule);
         //now add the typedefs needed for the rotating buffers to structs.h
         rotTypeDefs();
         //now that all the buffers are allocated, we create a barrier on all the tiles

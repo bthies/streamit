@@ -34,7 +34,7 @@ import at.dms.kjc.slicegraph.SchedulingPhase;
 import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.spacetime.BasicSpaceTimeSchedule;
 
-public abstract class OutputRotatingBuffer extends RotatingBuffer {
+public class OutputRotatingBuffer extends RotatingBuffer {
     /** map of all the output buffers from filter -> outputbuffer */
     protected static HashMap<FilterSliceNode, OutputRotatingBuffer> buffers;
     /** name of the variable that points to the rotation structure we should be transferring from */
@@ -45,7 +45,15 @@ public abstract class OutputRotatingBuffer extends RotatingBuffer {
     protected String headName;
     /** definition for head */
     protected JVariableDefinition headDefn;
-  
+    /** definition of boolean used during primepump to see if it is the first exection */
+    protected JVariableDefinition firstExe;
+    protected String firstExeName;
+    /** the output slice node for this output buffer */
+    /** the dma commands that are generated for this output buffer */
+    protected OutputBufferDMATransfers dmaCommands;
+    /** the address buffers that this output rotation uses as destinations for dma commands */ 
+    protected HashMap<InputRotatingBuffer, SourceAddressRotation> addressBuffers;
+    
     protected OutputSliceNode outputNode;
     /** reference to head */
     protected JExpression head;      
@@ -55,7 +63,7 @@ public abstract class OutputRotatingBuffer extends RotatingBuffer {
     static {
         buffers = new HashMap<FilterSliceNode, OutputRotatingBuffer>();
     }
-
+    
     /**
      * Create all the output buffers necessary for this slice graph.  Iterate over
      * the steady-state schedule, visiting each slice and creating an output buffer
@@ -63,9 +71,31 @@ public abstract class OutputRotatingBuffer extends RotatingBuffer {
      * 
      * @param slices The steady-state schedule of slices
      */
-    public static void createOutputBuffers(BasicSpaceTimeSchedule schedule) {}
-    
-    
+    public static void createOutputBuffers(BasicSpaceTimeSchedule schedule) {
+        for (Slice slice : schedule.getScheduleList()) {
+            assert slice.getNumFilters() == 1;
+            if (!slice.getTail().noOutputs()) {
+                assert slice.getTail().totalWeights(SchedulingPhase.STEADY) > 0;
+                Tile parent = TileraBackend.backEndBits.getLayout().getComputeNode(slice.getFirstFilter());
+                //create the new buffer, the constructor will put the buffer in the 
+                //hashmap
+                OutputRotatingBuffer buf = new OutputRotatingBuffer(slice.getFirstFilter(), parent);
+                
+                //calculate the rotation length
+                int srcMult = schedule.getPrimePumpMult(slice);
+                int maxRotLength = 0;
+                for (Slice dest : slice.getTail().getDestSlices(SchedulingPhase.STEADY)) {
+                    int diff = srcMult - schedule.getPrimePumpMult(dest);
+                    assert diff >= 0;
+                    if (diff > maxRotLength)
+                        maxRotLength = diff;
+                }
+                buf.rotationLength = maxRotLength + 1;
+                buf.createInitCode(false);
+                //System.out.println("Setting output buf " + buf.getIdent() + " to " + buf.rotationLength);    
+            }
+        }
+    }
     /**
      * Create a new output buffer that is associated with the filter node.
      * 
@@ -89,6 +119,21 @@ public abstract class OutputRotatingBuffer extends RotatingBuffer {
       
         
         tile = TileraBackend.backEndBits.getLayout().getComputeNode(filterNode);
+        
+        firstExeName = "__first__" + this.getIdent();        
+        firstExe = new JVariableDefinition(null,
+                at.dms.kjc.Constants.ACC_STATIC,
+                CStdType.Boolean, firstExeName, new JBooleanLiteral(true));
+        
+        //fill the dmaaddressbuffers array
+        addressBuffers = new HashMap<InputRotatingBuffer, SourceAddressRotation>();
+        for (InterSliceEdge edge : outputNode.getDestSet(SchedulingPhase.STEADY)) {
+            InputRotatingBuffer input = InputRotatingBuffer.getInputBuffer(edge.getDest().getNextFilter());
+            addressBuffers.put(input, input.getAddressRotation(tile));               
+        }
+        
+        //generate the dma commands
+        dmaCommands = new OutputBufferDMATransfers(this);
     }
    
     /**
@@ -115,6 +160,144 @@ public abstract class OutputRotatingBuffer extends RotatingBuffer {
         return set;
     }
     
+    
+    /**
+     * Return the address rotation that this output rotation uses for the given input slice node
+     * 
+     * @param input the input slice node 
+     * @return the dma address rotation used to store the address of the 
+     * rotation associated with this input slice node
+     */
+    public SourceAddressRotation getAddressBuffer(InputSliceNode input) {
+        assert addressBuffers.containsKey(InputRotatingBuffer.getInputBuffer(input.getNextFilter()));
+        
+        return addressBuffers.get(InputRotatingBuffer.getInputBuffer(input.getNextFilter()));
+    }
+    
+
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#endInitWrite()
+     */
+    public List<JStatement> endInitWrite() {
+        LinkedList<JStatement> list = new LinkedList<JStatement>();
+        //in the init stage we use dma to send the output to the dest filter
+        //but we have to wait until the end because are not double buffering
+        //also, don't rotate anything here
+        list.addAll(dmaCommands.dmaCommands(SchedulingPhase.INIT));
+        return list;
+    }
+    
+    /**
+     *  We don't want to transfer during the first execution of the primepump
+     *  so guard the execution in an if statement.
+     */
+    public List<JStatement> beginPrimePumpWrite() {
+        LinkedList<JStatement> list = new LinkedList<JStatement>();
+                
+        list.add(zeroOutHead());
+        
+        JBlock block = new JBlock();
+        block.addAllStatements(dmaCommands.dmaCommands(SchedulingPhase.STEADY));
+        
+        
+        JIfStatement guard = new JIfStatement(null, new JLogicalComplementExpression(null, 
+                new JEmittedTextExpression(firstExeName)), 
+                block , new JBlock(), null);
+        
+        list.add(guard);
+        return list;
+    }
+    
+    public List<JStatement> endPrimePumpWrite() {
+        LinkedList<JStatement> list = new LinkedList<JStatement>();
+        
+        //the wait for dma commands, only wait if this is not the first exec
+        JBlock block1 = new JBlock();
+        block1.addAllStatements(dmaCommands.waitCallsSteady());
+        JIfStatement guard1 = new JIfStatement(null, new JLogicalComplementExpression(null, 
+                new JEmittedTextExpression(firstExeName)), 
+                block1 , new JBlock(), null);  
+        list.add(guard1);
+                
+        
+        //generate the rotate statements for this output buffer
+        list.addAll(rotateStatementsCurRot());
+        
+        JBlock block2 = new JBlock();
+        //rotate the transfer buffer only when it is not first
+        block2.addAllStatements(rotateStatementsTransRot());
+        //generate the rotation statements for the address buffers that this output
+        //buffer uses, only do this after first execution
+        for (SourceAddressRotation addrRot : addressBuffers.values()) {
+            block2.addAllStatements(addrRot.rotateStatements());
+        }
+        JIfStatement guard2 = new JIfStatement(null, new JLogicalComplementExpression(null, 
+                new JEmittedTextExpression(firstExeName)), 
+                block2, new JBlock(), null);    
+        list.add(guard2);
+        
+        //now we are done with the first execution to set firstExe to false
+        list.add(new JExpressionStatement(
+                new JAssignmentExpression(new JEmittedTextExpression(firstExeName), 
+                        new JBooleanLiteral(false))));
+        
+        return list;
+    }
+    
+    
+    
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#beginSteadyWrite()
+     */
+    public List<JStatement> beginSteadyWrite() {
+        LinkedList<JStatement> list = new LinkedList<JStatement>();
+        list.add(zeroOutHead());
+        list.addAll(dmaCommands.dmaCommands(SchedulingPhase.STEADY));
+        return list;
+    }
+    
+    /**
+     * The rotate statements that includes the current buffer (for output of this 
+     * firing) and transfer buffer.
+     */
+    protected List<JStatement> rotateStatements() {
+        LinkedList<JStatement> list = new LinkedList<JStatement>();
+        list.addAll(rotateStatementsTransRot());
+        list.addAll(rotateStatementsCurRot());
+        return list;
+    }
+
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#endSteadyWrite()
+     */
+    public List<JStatement> endSteadyWrite() {
+        LinkedList<JStatement> list = new LinkedList<JStatement>();
+        list.addAll(dmaCommands.waitCallsSteady());
+        //generate the rotate statements for this output buffer
+        list.addAll(rotateStatements());
+        
+        //generate the rotation statements for the address buffers that this output
+        //buffer uses
+        for (SourceAddressRotation addrRot : addressBuffers.values()) {
+            list.addAll(addrRot.rotateStatements());
+        }
+        return list;
+    }
+    
+ 
+    
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#writeDecls()
+     */
+    public List<JStatement> writeDecls() {
+        JStatement tailDecl = new JVariableDeclarationStatement(headDefn);
+        JStatement firstDecl = new JVariableDeclarationStatement(firstExe);
+        List<JStatement> retval = new LinkedList<JStatement>();
+        retval.add(tailDecl);
+        retval.add(firstDecl);
+        retval.addAll(dmaCommands.decls());
+        return retval;
+    }   
     
     protected void setBufferSize() {
         FilterInfo fi = FilterInfo.getFilterInfo(filterNode);
@@ -242,38 +425,6 @@ public abstract class OutputRotatingBuffer extends RotatingBuffer {
         return list;
     }
 
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#endInitWrite()
-     */
-    public List<JStatement> endInitWrite() {
-        LinkedList<JStatement> list = new LinkedList<JStatement>();
-        return list;
-    }
-    
-    /**
-     *  We don't want to transfer during the first execution of the primepump
-     *  so guard the execution in an if statement.
-     */
-    public List<JStatement> beginPrimePumpWrite() {
-        LinkedList<JStatement> list = new LinkedList<JStatement>();
-        return list;
-    }
-    
-    public List<JStatement> endPrimePumpWrite() {
-        LinkedList<JStatement> list = new LinkedList<JStatement>();
-        return list;
-    }
-    
-    
-    
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#beginSteadyWrite()
-     */
-    public List<JStatement> beginSteadyWrite() {
-        LinkedList<JStatement> list = new LinkedList<JStatement>();
-        return list;
-    }
-    
     protected List<JStatement> rotateStatementsCurRot() {
         LinkedList<JStatement> list = new LinkedList<JStatement>();
         list.add(Util.toStmt(currentRotName + " = " + currentRotName + "->next"));
@@ -288,22 +439,6 @@ public abstract class OutputRotatingBuffer extends RotatingBuffer {
         return list;
     }
     
-    /**
-     * The rotate statements that includes the current buffer (for output of this 
-     * firing) and transfer buffer.
-     */
-    protected List<JStatement> rotateStatements() {
-        LinkedList<JStatement> list = new LinkedList<JStatement>();
-        return list;
-    }
-
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#endSteadyWrite()
-     */
-    public List<JStatement> endSteadyWrite() {
-        LinkedList<JStatement> list = new LinkedList<JStatement>();
-        return list;
-    }
     
     /* (non-Javadoc)
      * @see at.dms.kjc.backendSupport.ChannelI#topOfWorkSteadyWrite()
@@ -332,14 +467,6 @@ public abstract class OutputRotatingBuffer extends RotatingBuffer {
      */
     public List<JStatement> writeDeclsExtern() {
         return new LinkedList<JStatement>();
-    }   
-    
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#writeDecls()
-     */
-    public List<JStatement> writeDecls() {
-        List<JStatement> retval = new LinkedList<JStatement>();
-        return retval;
     }   
 
     /** Create statement zeroing out head */

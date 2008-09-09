@@ -8,7 +8,7 @@ import at.dms.kjc.JStatement;
 
 public class OutputBufferDMATransfers {
     /** the output buffer that these dma commands uses as its source */
-    private OutputRotatingBufferDMA parent;
+    private OutputRotatingBuffer parent;
     /** the block of ilib_wait calls, one for each dma command generated, separated for steady 
      * because we have concurrency, for init they are in commandsInit*/
     private List<JStatement> waitCallsSteady;
@@ -21,7 +21,7 @@ public class OutputBufferDMATransfers {
     /** any declarations that are needed */
     private List<JStatement> decls;
     
-    public OutputBufferDMATransfers(OutputRotatingBufferDMA buf) {
+    public OutputBufferDMATransfers(OutputRotatingBuffer buf) {
         parent = buf;
         waitCallsSteady= new LinkedList<JStatement>();
         commandsSteady = new LinkedList<JStatement>();

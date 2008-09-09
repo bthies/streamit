@@ -10,8 +10,8 @@ public class Fissioner {
 
     // Stores mapping from slice to fizzed copies of the slice
     // Fizzed copies of slices are kept in a specific order since order matters
-    private static HashMap<Slice, Vector<Slice>> sliceToFizzedCopies =
-        new HashMap<Slice, Vector<Slice>>();
+    private static HashMap<Slice, LinkedList<Slice>> sliceToFizzedCopies =
+        new HashMap<Slice, LinkedList<Slice>>();
 
     public static boolean isFizzed(Slice slice) {
         return sliceToFizzedCopies.containsKey(slice);
@@ -26,7 +26,7 @@ public class Fissioner {
 
     public static int getFizzIndex(Slice slice) {
         if(!isFizzed(slice))
-            return 1;
+            return 0;
 
         return sliceToFizzedCopies.get(slice).indexOf(slice);
     }
@@ -40,14 +40,6 @@ public class Fissioner {
         "Can't get last FilterSliceNode from Slice";
 
         return (FilterSliceNode)slice.getTail().getPrevious();
-    }
-
-    private static Slice[] getSources(Slice slice) {
-        return slice.getHead().getSourceSlices(SchedulingPhase.STEADY).toArray(new Slice[0]);
-    }
-
-    private static Slice[] getDests(Slice slice) {
-        return slice.getTail().getDestSlices(SchedulingPhase.STEADY).toArray(new Slice[0]);
     }
 
     private static int[] toArray(LinkedList<Integer> list) {
@@ -85,7 +77,6 @@ public class Fissioner {
     }
 
     private static InterSliceEdge getEdge(Slice src, Slice dest) {
-        //return new InterSliceEdge(src.getTail(), dest.getHead());
         return FissionEdgeMemoizer.getEdge(src, dest);
     }
 
@@ -110,8 +101,8 @@ public class Fissioner {
         int sliceCopyDown = filterInfo.copyDown;
 
         // Get Slice sources and dests
-        Slice sources[] = getSources(slice);
-        Slice dests[] = getDests(slice);
+        Slice sources[] = slice.getHead().getSourceSlices(SchedulingPhase.STEADY).toArray(new Slice[0]);
+        Slice dests[] = slice.getTail().getDestSlices(SchedulingPhase.STEADY).toArray(new Slice[0]);
 
         // Check to see if Slice is a source/sink.  Don't fizz source/sink.
         if(sources.length == 0 || dests.length == 0) {
@@ -178,8 +169,8 @@ public class Fissioner {
         if(isFizzed(sources[0])) {
 
             // Make sure sources belong to the same set of fizzed Slices
-            Vector <Slice> fizzedCopies1 = sliceToFizzedCopies.get(sources[0]);
-            Vector <Slice> fizzedCopies2;
+            LinkedList <Slice> fizzedCopies1 = sliceToFizzedCopies.get(sources[0]);
+            LinkedList <Slice> fizzedCopies2;
 
             for(int x = 1 ; x < sources.length ; x++) {
                 fizzedCopies2 = sliceToFizzedCopies.get(sources[x]);
@@ -199,8 +190,8 @@ public class Fissioner {
         if(isFizzed(dests[0])) {
    
             // Make sure that dests belong to the same set of fizzed Slices
-            Vector <Slice> fizzedCopies1 = sliceToFizzedCopies.get(dests[0]);
-            Vector <Slice> fizzedCopies2;
+            LinkedList <Slice> fizzedCopies1 = sliceToFizzedCopies.get(dests[0]);
+            LinkedList <Slice> fizzedCopies2;
 
             for(int x = 1 ; x < dests.length ; x++) {
                 fizzedCopies2 = sliceToFizzedCopies.get(dests[x]);
@@ -300,9 +291,16 @@ public class Fissioner {
         // TODO: Remove debug println
         System.out.println("Slice copy down: " + sliceCopyDown);   
 
-        // Get Slice sources and destinations
-        Slice sources[] = getSources(slice);
-        Slice dests[] = getDests(slice);
+        // Get Slice sources and destinations, ordered by how they were
+        // originally fizzed
+        Slice sources[] = slice.getHead().getSourceSlices(SchedulingPhase.STEADY).toArray(new Slice[0]);
+        Slice dests[] = slice.getTail().getDestSlices(SchedulingPhase.STEADY).toArray(new Slice[0]);
+
+        if(sources.length > 1)
+            sources = sliceToFizzedCopies.get(sources[0]).toArray(new Slice[0]);
+
+        if(dests.length > 1)
+            dests = sliceToFizzedCopies.get(dests[0]).toArray(new Slice[0]);
 
         // Clear edges memoized in previous calls to fizzSlice.  This is done
         // because we don't care about most of the previously memoized edges.
@@ -1070,12 +1068,12 @@ public class Fissioner {
         // cloned Slices.  This helps remember which set of cloned Slices a
         // Slice belongs to.
 
-        Vector<Slice> cloneVector = new Vector<Slice>();
+        LinkedList<Slice> cloneList = new LinkedList<Slice>();
         for(int x = 0 ; x < fizzAmount ; x++)
-            cloneVector.add(sliceClones[x]);
+            cloneList.add(sliceClones[x]);
 
         for(int x = 0 ; x < fizzAmount ; x++)
-            sliceToFizzedCopies.put(sliceClones[x], cloneVector);
+            sliceToFizzedCopies.put(sliceClones[x], cloneList);
 
         return true;
     }

@@ -6,34 +6,15 @@ import at.dms.kjc.slicegraph.*;
 import at.dms.kjc.backendSupport.*;
 import at.dms.kjc.JStatement;
 
-public class OutputBufferDMATransfers {
-    /** the output buffer that these dma commands uses as its source */
-    private OutputRotatingBuffer parent;
-    /** the block of ilib_wait calls, one for each dma command generated, separated for steady 
-     * because we have concurrency, for init they are in commandsInit*/
-    private List<JStatement> waitCallsSteady;
-    /** the dma commands block */
-    private List<JStatement> commandsSteady;
-    /** the dma commands block */
-    private List<JStatement> commandsInit;
-    /** the output slice node */
-    private OutputSliceNode output;
-    /** any declarations that are needed */
-    private List<JStatement> decls;
-    
+public class OutputBufferDMATransfers extends OutputBufferTransfers {
+   
     public OutputBufferDMATransfers(OutputRotatingBuffer buf) {
-        parent = buf;
-        waitCallsSteady= new LinkedList<JStatement>();
-        commandsSteady = new LinkedList<JStatement>();
-        commandsInit = new LinkedList<JStatement>();
-        decls = new LinkedList<JStatement>();
-        output = parent.filterNode.getParent().getTail();
+        super(buf);
         
         checkSimple(SchedulingPhase.INIT);
         generateStatements(SchedulingPhase.INIT);
         checkSimple(SchedulingPhase.STEADY);
-        generateStatements(SchedulingPhase.STEADY);
-      
+        generateStatements(SchedulingPhase.STEADY);     
     }
 
     private void generateStatements(SchedulingPhase phase) {
@@ -90,52 +71,5 @@ public class OutputBufferDMATransfers {
                 decls.add(Util.toStmt("ilibRequest " + requestVar));
             }
         }
-    }
-
-    /**
-     * Do some checks to make sure we will generate correct code for this distribution pattern.
-     */
-    private void checkSimple(SchedulingPhase phase) {
-        assert output.singleAppearance();
-        for (int w = 0; w < output.getWeights(phase).length; w++) {
-            for (InterSliceEdge edge : output.getDests(phase)[w]) {
-                InputSliceNode input = edge.getDest();
-                //assert that we don't have a single edge appear more than once for the input slice node
-                assert input.singleAppearance();
-                
-                int inWeight = input.getWeight(edge, phase);
-                assert inWeight == output.getWeights(phase)[w];
-            }
-        }
-    }
-    
-    /**
-     * Return the list of DMA commands that will transfer the items from the
-     * output buffer to to appropriate input buffer(s)
-     * 
-     * @return the dma commands
-     */
-    public List<JStatement> dmaCommands(SchedulingPhase which) {
-        if (which == SchedulingPhase.INIT)
-            return commandsInit;
-        
-        return commandsSteady;
-    }
-    
-    /**
-     * Return declarations of variables needed by the dma commands 
-     * @return declarations of variables needed by the dma commands 
-     */
-    public List<JStatement> decls() {
-        return decls;
-    }
-    
-    /**
-     * Return the ilib_wait statements that wait for the dma commands to complete
-     * 
-     * @return the wait statements
-     */
-    public List<JStatement> waitCallsSteady() {
-        return waitCallsSteady;    
     }
 }

@@ -50,7 +50,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
     protected String firstExeName;
     /** the output slice node for this output buffer */
     /** the dma commands that are generated for this output buffer */
-    protected OutputBufferDMATransfers dmaCommands;
+    protected OutputBufferTransfers transferCommands;
     /** the address buffers that this output rotation uses as destinations for dma commands */ 
     protected HashMap<InputRotatingBuffer, SourceAddressRotation> addressBuffers;
     
@@ -133,7 +133,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
         }
         
         //generate the dma commands
-        dmaCommands = new OutputBufferDMATransfers(this);
+        transferCommands = new OutputBufferDMATransfers(this);
     }
    
     /**
@@ -183,7 +183,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
         //in the init stage we use dma to send the output to the dest filter
         //but we have to wait until the end because are not double buffering
         //also, don't rotate anything here
-        list.addAll(dmaCommands.dmaCommands(SchedulingPhase.INIT));
+        list.addAll(transferCommands.transferCommands(SchedulingPhase.INIT));
         return list;
     }
     
@@ -197,7 +197,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
         list.add(zeroOutHead());
         
         JBlock block = new JBlock();
-        block.addAllStatements(dmaCommands.dmaCommands(SchedulingPhase.STEADY));
+        block.addAllStatements(transferCommands.transferCommands(SchedulingPhase.STEADY));
         
         
         JIfStatement guard = new JIfStatement(null, new JLogicalComplementExpression(null, 
@@ -213,7 +213,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
         
         //the wait for dma commands, only wait if this is not the first exec
         JBlock block1 = new JBlock();
-        block1.addAllStatements(dmaCommands.waitCallsSteady());
+        block1.addAllStatements(transferCommands.waitCallsSteady());
         JIfStatement guard1 = new JIfStatement(null, new JLogicalComplementExpression(null, 
                 new JEmittedTextExpression(firstExeName)), 
                 block1 , new JBlock(), null);  
@@ -252,7 +252,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
     public List<JStatement> beginSteadyWrite() {
         LinkedList<JStatement> list = new LinkedList<JStatement>();
         list.add(zeroOutHead());
-        list.addAll(dmaCommands.dmaCommands(SchedulingPhase.STEADY));
+        list.addAll(transferCommands.transferCommands(SchedulingPhase.STEADY));
         return list;
     }
     
@@ -272,7 +272,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
      */
     public List<JStatement> endSteadyWrite() {
         LinkedList<JStatement> list = new LinkedList<JStatement>();
-        list.addAll(dmaCommands.waitCallsSteady());
+        list.addAll(transferCommands.waitCallsSteady());
         //generate the rotate statements for this output buffer
         list.addAll(rotateStatements());
         
@@ -295,7 +295,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
         List<JStatement> retval = new LinkedList<JStatement>();
         retval.add(tailDecl);
         retval.add(firstDecl);
-        retval.addAll(dmaCommands.decls());
+        retval.addAll(transferCommands.decls());
         return retval;
     }   
     

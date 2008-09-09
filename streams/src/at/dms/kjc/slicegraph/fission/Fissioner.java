@@ -517,18 +517,20 @@ public class Fissioner {
         // Slice clone will receive elements that it won't need.  Use prepop to
         // remove these unneeded elements.
 
-        if(!sliceClones[fizzAmount - 1].getFirstFilter().getFilter().isTwoStage()) {
-            JMethodDeclaration prework = 
-                new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
-                                       CStdType.Void, "emptyPrework",
-                                       JFormalParameter.EMPTY, CClassType.EMPTY,
-                                       new JBlock(), null, null);
-
-            sliceClones[fizzAmount - 1].getFirstFilter().getFilter().setPrework(prework);
+        if(Math.max(0, (slicePeek - slicePop) - sliceCopyDown) > 0) {
+            if(!sliceClones[fizzAmount - 1].getFirstFilter().getFilter().isTwoStage()) {
+                JMethodDeclaration prework = 
+                    new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
+                                           CStdType.Void, "emptyPrework",
+                                           JFormalParameter.EMPTY, CClassType.EMPTY,
+                                           new JBlock(), null, null);
+                
+                sliceClones[fizzAmount - 1].getFirstFilter().getFilter().setPrework(prework);
+            }
+            
+            sliceClones[fizzAmount - 1].getFirstFilter().getFilter().getPrework()[0]
+                .setPop(Math.max(0, (slicePeek - slicePop) - sliceCopyDown));
         }
-
-        sliceClones[fizzAmount - 1].getFirstFilter().getFilter().getPrework()[0]
-            .setPop(Math.max(0, (slicePeek - slicePop) - sliceCopyDown));
 
         /**********************************************************************
          *                     Setup steady-state schedule                    *

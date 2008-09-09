@@ -18,27 +18,17 @@ public class Fissioner {
     }
 
     public static int getFizzAmount(Slice slice) {
-        assert isFizzed(slice) : "Called getFizzAmount on unfizzed filter";
+        if(!isFizzed(slice))
+            return 1;
 
         return sliceToFizzedCopies.get(slice).size();
     }
 
     public static int getFizzIndex(Slice slice) {
-        assert isFizzed(slice) : "Called getFizzIndex on unfizzed Filter";
+        if(!isFizzed(slice))
+            return 1;
 
         return sliceToFizzedCopies.get(slice).indexOf(slice);
-    }
-
-    public static boolean isFirstFizzedCopy(Slice slice) {
-        assert isFizzed(slice) : "Called isFirstFizzedCopy on unfizzed filter";
-
-        return sliceToFizzedCopies.get(slice).firstElement().equals(slice);
-    }
-
-    public static boolean isLastFizzedCopy(Slice slice) {
-        assert isFizzed(slice) : "Called isLastFizzedCopy on unfizzed filter";
-
-        return sliceToFizzedCopies.get(slice).lastElement().equals(slice);
     }
 
     private static FilterSliceNode getFirstFilter(Slice slice) {
@@ -53,12 +43,10 @@ public class Fissioner {
     }
 
     private static Slice[] getSources(Slice slice) {
-      //BELOW LINE CHANGED BY MGORDON
         return slice.getHead().getSourceSlices(SchedulingPhase.STEADY).toArray(new Slice[0]);
     }
 
     private static Slice[] getDests(Slice slice) {
-      //BELOW LINE CHANGED BY MGORDON
         return slice.getTail().getDestSlices(SchedulingPhase.STEADY).toArray(new Slice[0]);
     }
 
@@ -94,6 +82,11 @@ public class Fissioner {
         }
 
         return array;
+    }
+
+    private static InterSliceEdge getEdge(Slice src, Slice dest) {
+        //return new InterSliceEdge(src.getTail(), dest.getHead());
+        return FissionEdgeMemoizer.getEdge(src, dest);
     }
 
     public static boolean canFizz(Slice slice, int fizzAmount, boolean debug) {
@@ -155,7 +148,6 @@ public class Fissioner {
 
         // Make sure that sources only push to this Slice
         for(int x = 0 ; x < sources.length ; x++) {
-            //BELOW LINE CHANGED BY MGORDON
             if(sources[x].getTail().getDestSlices(SchedulingPhase.STEADY).size() > 1) {
                 if(debug) System.out.println("Can't fizz: Sources for Slice send to other Slices");
                 return false;
@@ -164,7 +156,6 @@ public class Fissioner {
 
         // Make sure that dests only pop from this Slice
         for(int x = 0 ; x < dests.length ; x++) {
-            //BELOW LINE CHANGED BY MGORDON
             if(dests[x].getHead().getSourceSlices(SchedulingPhase.STEADY).size() > 1) {
                 if(debug) System.out.println("Can't fizz: Dests for Slice receives from other Slices");
                 return false;
@@ -289,6 +280,8 @@ public class Fissioner {
         LinkedList<Integer> weights;
 
         // Get information on Slice rates
+        FilterInfo.reset();
+
         FilterSliceNode filter = getFirstFilter(slice);
         FilterInfo filterInfo = FilterInfo.getFilterInfo(filter);
 
@@ -304,12 +297,38 @@ public class Fissioner {
         int sliceSteadyMult = filterInfo.steadyMult;
         int sliceCopyDown = filterInfo.copyDown;
 
-	// TODO: Remove debug println
-	System.out.println("Slice copy down: " + sliceCopyDown);   
+        // TODO: Remove debug println
+        System.out.println("Slice copy down: " + sliceCopyDown);   
 
         // Get Slice sources and destinations
         Slice sources[] = getSources(slice);
         Slice dests[] = getDests(slice);
+
+        // Clear edges memoized in previous calls to fizzSlice.  This is done
+        // because we don't care about most of the previously memoized edges.
+        // Edges that should be memoized will be (re)added to the memoizer in
+        // the next step.
+        FissionEdgeMemoizer.reset();
+
+        // Add edges surrounding the Slice to the edge memoizer, so that they 
+        // can be reused later in fission
+        Set<InterSliceEdge> origEdges;
+        
+        origEdges = slice.getHead().getSourceSet(SchedulingPhase.INIT);
+        for(InterSliceEdge edge : origEdges)
+            FissionEdgeMemoizer.addEdge(edge);
+
+        origEdges = slice.getHead().getSourceSet(SchedulingPhase.STEADY);
+        for(InterSliceEdge edge : origEdges)
+            FissionEdgeMemoizer.addEdge(edge);
+
+        origEdges = slice.getTail().getDestSet(SchedulingPhase.INIT);
+        for(InterSliceEdge edge : origEdges)
+            FissionEdgeMemoizer.addEdge(edge);
+
+        origEdges = slice.getTail().getDestSet(SchedulingPhase.STEADY);
+        for(InterSliceEdge edge : origEdges)
+            FissionEdgeMemoizer.addEdge(edge);
 
         // Fill array with clones of Slice, put original copy first in array
         sliceClones[0] = slice;
@@ -335,113 +354,112 @@ public class Fissioner {
         // original prework body.  The initialization multiplicity is rolled
         // into a loop around the copied work body.
 
-	if(sliceInitMult > 0) {
-	    JBlock firstWorkBody =
-		sliceClones[0].getFirstFilter().getFilter().getWork().getBody();
+        if(sliceInitMult > 0) {
+            JBlock firstWorkBody =
+                sliceClones[0].getFirstFilter().getFilter().getWork().getBody();
 	    
-	    JBlock newPreworkBody = new JBlock();
+            JBlock newPreworkBody = new JBlock();
 	    
-	    if(sliceClones[0].getFirstFilter().getFilter().getPrework() != null &&
-	       sliceClones[0].getFirstFilter().getFilter().getPrework().length > 0 &&
-	       sliceClones[0].getFirstFilter().getFilter().getPrework()[0] != null &&
-	       sliceClones[0].getFirstFilter().getFilter().getPrework()[0].getBody() != null) {
-		newPreworkBody.addStatement(sliceClones[0].getFirstFilter().getFilter().getPrework()[0].getBody());
-	    }
+            if(sliceClones[0].getFirstFilter().getFilter().getPrework() != null &&
+               sliceClones[0].getFirstFilter().getFilter().getPrework().length > 0 &&
+               sliceClones[0].getFirstFilter().getFilter().getPrework()[0] != null &&
+               sliceClones[0].getFirstFilter().getFilter().getPrework()[0].getBody() != null) {
+                newPreworkBody.addStatement(sliceClones[0].getFirstFilter().getFilter().getPrework()[0].getBody());
+            }
 
-	    JVariableDefinition initMultLoopVar =
-		new JVariableDefinition(0,
-					CStdType.Integer,
-					"initMultCount",
-					new JIntLiteral(0));
+            JVariableDefinition initMultLoopVar =
+                new JVariableDefinition(0,
+                                        CStdType.Integer,
+                                        "initMultCount",
+                                        new JIntLiteral(0));
 
-	    JVariableDeclarationStatement initMultLoopVarDecl = new JVariableDeclarationStatement(initMultLoopVar);
-	    newPreworkBody.addStatementFirst(initMultLoopVarDecl);
+            JVariableDeclarationStatement initMultLoopVarDecl = new JVariableDeclarationStatement(initMultLoopVar);
+            newPreworkBody.addStatementFirst(initMultLoopVarDecl);
 	    
-	    JRelationalExpression initMultLoopCond =
-		new JRelationalExpression(JRelationalExpression.OPE_LT,
-					  new JLocalVariableExpression(initMultLoopVar),
-					  new JIntLiteral(sliceInitMult));
+            JRelationalExpression initMultLoopCond =
+                new JRelationalExpression(JRelationalExpression.OPE_LT,
+                                          new JLocalVariableExpression(initMultLoopVar),
+                                          new JIntLiteral(sliceInitMult));
 	    
-	    JExpressionStatement initMultLoopIncr =
-		new JExpressionStatement(new JAssignmentExpression(new JLocalVariableExpression(initMultLoopVar),
-								   new JAddExpression(new JLocalVariableExpression(initMultLoopVar),
-										      new JIntLiteral(1))));
+            JExpressionStatement initMultLoopIncr =
+                new JExpressionStatement(new JAssignmentExpression(new JLocalVariableExpression(initMultLoopVar),
+                                                                   new JAddExpression(new JLocalVariableExpression(initMultLoopVar),
+                                                                                      new JIntLiteral(1))));
 	    
-	    JForStatement initMultLoop =
-		new JForStatement(null,
-				  initMultLoopCond,
-				  initMultLoopIncr,
-				  (JBlock)ObjectDeepCloner.deepCopy(firstWorkBody));
-	    newPreworkBody.addStatement(initMultLoop);
+            JForStatement initMultLoop =
+                new JForStatement(null,
+                                  initMultLoopCond,
+                                  initMultLoopIncr,
+                                  (JBlock)ObjectDeepCloner.deepCopy(firstWorkBody));
+            newPreworkBody.addStatement(initMultLoop);
 	    
-	    if(sliceClones[0].getFirstFilter().getFilter().getPrework() == null ||
-	       sliceClones[0].getFirstFilter().getFilter().getPrework().length == 0 ||
-	       sliceClones[0].getFirstFilter().getFilter().getPrework()[0] == null) {
-		JMethodDeclaration newPreworkMethod =
-		    new JMethodDeclaration(null,
-					   at.dms.kjc.Constants.ACC_PUBLIC,
-					   CStdType.Void,
-					   "Fission-generated prework",
-					   JFormalParameter.EMPTY,
-					   CClassType.EMPTY,
-					   newPreworkBody,
-					   null,
-					   null);
+            if(sliceClones[0].getFirstFilter().getFilter().getPrework() == null ||
+               sliceClones[0].getFirstFilter().getFilter().getPrework().length == 0 ||
+               sliceClones[0].getFirstFilter().getFilter().getPrework()[0] == null) {
+                JMethodDeclaration newPreworkMethod =
+                    new JMethodDeclaration(null,
+                                           at.dms.kjc.Constants.ACC_PUBLIC,
+                                           CStdType.Void,
+                                           "Fission-generated prework",
+                                           JFormalParameter.EMPTY,
+                                           CClassType.EMPTY,
+                                           newPreworkBody,
+                                           null,
+                                           null);
 
-		sliceClones[0].getFirstFilter().getFilter().setPrework(newPreworkMethod);
+                sliceClones[0].getFirstFilter().getFilter().setPrework(newPreworkMethod);
 
-		slicePrePeek = 0;
-		slicePrePush = 0;
-		slicePrePop = 0;
-	    }
-	    else {
-		sliceClones[0].getFirstFilter().getFilter().getPrework()[0].setBody(newPreworkBody);
-	    }
+                slicePrePeek = 0;
+                slicePrePush = 0;
+                slicePrePop = 0;
+            }
+            else {
+                sliceClones[0].getFirstFilter().getFilter().getPrework()[0].setBody(newPreworkBody);
+            }
 	    
-	    // For the first Slice clone, adjust prework rates to reflect that 
-	    // initialization work was moved into prework
+            // For the first Slice clone, adjust prework rates to reflect that 
+            // initialization work was moved into prework
 	    
-	    slicePrePeek = Math.max(slicePrePeek,
-				    slicePrePop + (sliceInitMult * slicePop) + (slicePeek - slicePop));
-	    slicePrePop = slicePrePop + sliceInitMult * slicePop;
-	    slicePrePush = slicePrePush + sliceInitMult * slicePush;
+            slicePrePeek = Math.max(slicePrePeek,
+                                    slicePrePop + (sliceInitMult * slicePop) + (slicePeek - slicePop));
+            slicePrePop = slicePrePop + sliceInitMult * slicePop;
+            slicePrePush = slicePrePush + sliceInitMult * slicePush;
 	    
-	    sliceClones[0].getFirstFilter().getFilter().getPrework()[0].setPeek(slicePrePeek);
-	    sliceClones[0].getFirstFilter().getFilter().getPrework()[0].setPop(slicePrePop);
-	    sliceClones[0].getFirstFilter().getFilter().getPrework()[0].setPush(slicePrePush);
+            sliceClones[0].getFirstFilter().getFilter().getPrework()[0].setPeek(slicePrePeek);
+            sliceClones[0].getFirstFilter().getFilter().getPrework()[0].setPop(slicePrePop);
+            sliceClones[0].getFirstFilter().getFilter().getPrework()[0].setPush(slicePrePush);
 	    
-	    // Since the initialization work has been moved into prework, set
-	    // the initialization multiplicity of the first Slice clone to 0
+            // Since the initialization work has been moved into prework, set
+            // the initialization multiplicity of the first Slice clone to 0
 	    
-	    sliceClones[0].getFirstFilter().getFilter().setInitMult(1);
-	}
+            sliceClones[0].getFirstFilter().getFilter().setInitMult(1);
+        }
 
         // Disable all other Slice clones in initialization.  This involves
         // disabling prework and seting initialization multiplicty to 0
 
         for(int x = 1 ; x < fizzAmount ; x++) {
-	    sliceClones[x].getFirstFilter().getFilter().setPrework(null);
+            sliceClones[x].getFirstFilter().getFilter().setPrework(null);
             sliceClones[x].getFirstFilter().getFilter().setInitMult(0);
-	}
+        }
 
         sliceInitMult = 0;
 
         // Since only the first Slice clone executes, it will be the only Slice
         // clone to receive during initialization.
         //
-        // Meanwhile, if there are multiple source Slices, it is assumed that
-        // only the first source Slice will execute during initialization.
-        // Therefore, only the first source Slice will transmit during
-        // initialization.
+        // If there are multiple source Slices, it is assumed that only the 
+        // first source Slice will execute during initialization.  Only the 
+        // first source Slice will transmit during initialization.
         //
         // Setup the splitter-joiner schedules to reflect that only the first
         // source Slice transmits and that only the first Slice clone receives.
-
+ 
         edgeSetSet = new LinkedList<LinkedList<InterSliceEdge>>();
         weights = new LinkedList<Integer>();
 	
         edgeSet = new LinkedList<InterSliceEdge>();
-        edgeSet.add(new InterSliceEdge(sources[0].getTail(), sliceClones[0].getHead()));
+        edgeSet.add(getEdge(sources[0], sliceClones[0]));
         edgeSetSet.add(edgeSet);
         weights.add(new Integer(1));
 	
@@ -464,9 +482,9 @@ public class Fissioner {
         // Since only the first Slice clone executes, it will be the only Slice
         // clone to transmit during initialization.
         //
-        // Meanwhile, if there are multiple dest Slices, it is assumed that only
-        // the first dest Slice will execute during initialization.  Therefore,
-        // only the first dest Slice will receive during initialization.
+        // If there are multiple dest Slices, it is assumed that only the first 
+        // dest Slice will execute during initialization.  Only the first dest 
+        // Slice will receive during initialization.
         //
         // Setup the splitter-joiner schedules to reflect that only the first
         // Slice clone transmits and that only the first dest Slice receives.
@@ -475,7 +493,7 @@ public class Fissioner {
         weights = new LinkedList<Integer>();
 	
         edgeSet = new LinkedList<InterSliceEdge>();
-        edgeSet.add(new InterSliceEdge(sliceClones[0].getTail(), dests[0].getHead()));
+        edgeSet.add(getEdge(sliceClones[0], dests[0]));
         edgeSetSet.add(edgeSet);
         weights.add(new Integer(1));
 	
@@ -499,15 +517,15 @@ public class Fissioner {
         // Slice clone will receive elements that it won't need.  Use prepop to
         // remove these unneeded elements.
 
-	if(!sliceClones[fizzAmount - 1].getFirstFilter().getFilter().isTwoStage()) {
-	    JMethodDeclaration prework = 
+        if(!sliceClones[fizzAmount - 1].getFirstFilter().getFilter().isTwoStage()) {
+            JMethodDeclaration prework = 
                 new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
                                        CStdType.Void, "emptyPrework",
                                        JFormalParameter.EMPTY, CClassType.EMPTY,
                                        new JBlock(), null, null);
 
-	    sliceClones[fizzAmount - 1].getFirstFilter().getFilter().setPrework(prework);
-	}
+            sliceClones[fizzAmount - 1].getFirstFilter().getFilter().setPrework(prework);
+        }
 
         sliceClones[fizzAmount - 1].getFirstFilter().getFilter().getPrework()[0]
             .setPop(Math.max(0, (slicePeek - slicePop) - sliceCopyDown));
@@ -531,29 +549,29 @@ public class Fissioner {
         if(sources.length == 1) {
             /* Only one source Slice, source Slice was not fizzed */
 
-	    // Calculate single phase in splitter schedule
-	    int numDup = slicePeek - slicePop;
-	    int numSingle = (sliceSteadyMult * slicePop) - (slicePeek - slicePop);
+            // Calculate single phase in splitter schedule
+            int numDup = slicePeek - slicePop;
+            int numSingle = (sliceSteadyMult * slicePop) - (slicePeek - slicePop);
 
             // Generate steady-state splitter schedule for source Slice
             edgeSetSet = new LinkedList<LinkedList<InterSliceEdge>>();
             weights = new LinkedList<Integer>();
 
             for(int x = 0 ; x < fizzAmount ; x++) {
-		if(numDup > 0) {
-		    edgeSet = new LinkedList<InterSliceEdge>();
-		    edgeSet.add(new InterSliceEdge(sources[0].getTail(), sliceClones[(x + fizzAmount - 1) % fizzAmount].getHead()));
-		    edgeSet.add(new InterSliceEdge(sources[0].getTail(), sliceClones[x].getHead()));
-		    edgeSetSet.add(edgeSet);
-		    weights.add(new Integer(numDup));
-		}
+                if(numDup > 0) {
+                    edgeSet = new LinkedList<InterSliceEdge>();
+                    edgeSet.add(getEdge(sources[0], sliceClones[(x + fizzAmount - 1) % fizzAmount]));
+                    edgeSet.add(getEdge(sources[0], sliceClones[x]));
+                    edgeSetSet.add(edgeSet);
+                    weights.add(new Integer(numDup));
+                }
 
-		if(numSingle > 0) {
-		    edgeSet = new LinkedList<InterSliceEdge>();
-		    edgeSet.add(new InterSliceEdge(sources[0].getTail(), sliceClones[x].getHead()));
-		    edgeSetSet.add(edgeSet);
-		    weights.add(new Integer(numSingle));
-		}
+                if(numSingle > 0) {
+                    edgeSet = new LinkedList<InterSliceEdge>();
+                    edgeSet.add(getEdge(sources[0], sliceClones[x]));
+                    edgeSetSet.add(edgeSet);
+                    weights.add(new Integer(numSingle));
+                }
             }
 
             int rotateAmount = sliceCopyDown;
@@ -571,7 +589,7 @@ public class Fissioner {
 
                     edgeSet = new LinkedList<InterSliceEdge>();
                     for(InterSliceEdge edge : edgeSetSet.getFirst())
-                        edgeSet.add(new InterSliceEdge(edge.getSrc(), edge.getDest()));
+                        edgeSet.add(edge);
 
                     weights.add(new Integer(rotateAmount));
                     edgeSetSet.add(edgeSet);
@@ -588,7 +606,7 @@ public class Fissioner {
                 edgeSet = new LinkedList<InterSliceEdge>();
                 weights = new LinkedList<Integer>();
 
-                edgeSet.add(new InterSliceEdge(sources[0].getTail(), sliceClones[x].getHead()));
+                edgeSet.add(getEdge(sources[0], sliceClones[x]));
                 weights.add(new Integer(1));
 
                 sliceClones[x].getHead().setWeights(toArray(weights));
@@ -646,55 +664,55 @@ public class Fissioner {
             }
 
             // Generate steady-state splitter schedules for source Slices
-	    // TODO: Remove debug printlns
-	    System.out.println("Generating steady-state splitter schedule for multiple source Slices");
+            // TODO: Remove debug printlns
+            System.out.println("Generating steady-state splitter schedule for multiple source Slices");
 
             for(int x = 0 ; x < fizzAmount ; x++) {
-		System.out.println("Source slice #" + x);
+                System.out.println("Source slice #" + x);
 
                 edgeSetSet = new LinkedList<LinkedList<InterSliceEdge>>();
                 weights = new LinkedList<Integer>();
 
                 if(numDup1 > 0) {
-		    System.out.println("  EdgeSet");
-		    System.out.println("    Edge: " + x + " -> " + (x + fizzAmount - 1) % fizzAmount);
-		    System.out.println("    Edge: " + x + " -> " + x);
-		    System.out.println("    Weight: " + numDup1);
+                    System.out.println("  EdgeSet");
+                    System.out.println("    Edge: " + x + " -> " + (x + fizzAmount - 1) % fizzAmount);
+                    System.out.println("    Edge: " + x + " -> " + x);
+                    System.out.println("    Weight: " + numDup1);
                     edgeSet = new LinkedList<InterSliceEdge>();
-                    edgeSet.add(new InterSliceEdge(sources[x].getTail(), sliceClones[(x + fizzAmount - 1) % fizzAmount].getHead()));
-                    edgeSet.add(new InterSliceEdge(sources[x].getTail(), sliceClones[x].getHead()));
+                    edgeSet.add(getEdge(sources[x], sliceClones[(x + fizzAmount - 1) % fizzAmount]));
+                    edgeSet.add(getEdge(sources[x], sliceClones[x]));
                     edgeSetSet.add(edgeSet);
                     weights.add(new Integer(numDup1));
                 }
 
                 if(numSingle1 > 0) {
-		    System.out.println("  EdgeSet");
-		    System.out.println("    Edge: " + x + " -> " + x);
-		    System.out.println("    Weight: " + numSingle1);
+                    System.out.println("  EdgeSet");
+                    System.out.println("    Edge: " + x + " -> " + x);
+                    System.out.println("    Weight: " + numSingle1);
                     edgeSet = new LinkedList<InterSliceEdge>();
-                    edgeSet.add(new InterSliceEdge(sources[x].getTail(), sliceClones[x].getHead()));
+                    edgeSet.add(getEdge(sources[x], sliceClones[x]));
                     edgeSetSet.add(edgeSet);
                     weights.add(new Integer(numSingle1));
                 }
 
                 if(numDup2 > 0) {
-		    System.out.println("  EdgeSet");
-		    System.out.println("    Edge: " + x + " -> " + x);
-		    System.out.println("    Edge: " + x + " -> " + (x + 1) % fizzAmount);
-		    System.out.println("    Weight: " + numDup2);
+                    System.out.println("  EdgeSet");
+                    System.out.println("    Edge: " + x + " -> " + x);
+                    System.out.println("    Edge: " + x + " -> " + (x + 1) % fizzAmount);
+                    System.out.println("    Weight: " + numDup2);
                     edgeSet = new LinkedList<InterSliceEdge>();
-                    edgeSet.add(new InterSliceEdge(sources[x].getTail(), sliceClones[x].getHead()));
-                    edgeSet.add(new InterSliceEdge(sources[x].getTail(), sliceClones[(x + 1) % fizzAmount].getHead()));
+                    edgeSet.add(getEdge(sources[x], sliceClones[x]));
+                    edgeSet.add(getEdge(sources[x], sliceClones[(x + 1) % fizzAmount]));
                     edgeSetSet.add(edgeSet);
                     weights.add(new Integer(numDup2));
                 }
 
                 if(numSingle2 > 0) {
-		    System.out.println("  EdgeSet");
-		    System.out.println("    Edge: " + x + " -> " + (x + 1) % fizzAmount);
-		    System.out.println("    Weight: " + numSingle2);
+                    System.out.println("  EdgeSet");
+                    System.out.println("    Edge: " + x + " -> " + (x + 1) % fizzAmount);
+                    System.out.println("    Weight: " + numSingle2);
                     edgeSet = new LinkedList<InterSliceEdge>();
-                    edgeSet.add(new InterSliceEdge(sources[x].getTail(), sliceClones[(x + 1) % fizzAmount].getHead()));
+                    edgeSet.add(getEdge(sources[x], sliceClones[(x + 1) % fizzAmount]));
                     edgeSetSet.add(edgeSet);
                     weights.add(new Integer(numSingle2));
                 }
@@ -707,15 +725,15 @@ public class Fissioner {
             edgeSet = new LinkedList<InterSliceEdge>();
             weights = new LinkedList<Integer>();
 
-	    if((sliceSteadyMult * slicePop) + (slicePeek - slicePop) - sliceCopyDown > 0) {
-		edgeSet.add(new InterSliceEdge(sources[0].getTail(), sliceClones[0].getHead()));
-		weights.add(new Integer((sliceSteadyMult * slicePop) + (slicePeek - slicePop) - sliceCopyDown));
-	    }
+            if((sliceSteadyMult * slicePop) + (slicePeek - slicePop) - sliceCopyDown > 0) {
+                edgeSet.add(getEdge(sources[0], sliceClones[0]));
+                weights.add(new Integer((sliceSteadyMult * slicePop) + (slicePeek - slicePop) - sliceCopyDown));
+            }
 
-	    System.out.println("Slice copy down 2: " + sliceCopyDown);
+            System.out.println("Slice copy down 2: " + sliceCopyDown);
 
             if(sliceCopyDown > 0) {
-                edgeSet.add(new InterSliceEdge(sources[fizzAmount - 1].getTail(), sliceClones[0].getHead()));
+                edgeSet.add(getEdge(sources[fizzAmount - 1], sliceClones[0]));
                 weights.add(new Integer(sliceCopyDown));
             }
 
@@ -727,14 +745,14 @@ public class Fissioner {
                 weights = new LinkedList<Integer>();
 
                 if(sliceCopyDown > 0) {
-                    edgeSet.add(new InterSliceEdge(sources[(x + fizzAmount - 1) % fizzAmount].getTail(), sliceClones[x].getHead()));
+                    edgeSet.add(getEdge(sources[(x + fizzAmount - 1) % fizzAmount], sliceClones[x]));
                     weights.add(new Integer(sliceCopyDown));
                 }
 		
-		if((sliceSteadyMult * slicePop) + (slicePeek - slicePop) - sliceCopyDown > 0) {
-		    edgeSet.add(new InterSliceEdge(sources[x].getTail(), sliceClones[x].getHead()));
-		    weights.add(new Integer((sliceSteadyMult * slicePop) + (slicePeek - slicePop) - sliceCopyDown));
-		}
+                if((sliceSteadyMult * slicePop) + (slicePeek - slicePop) - sliceCopyDown > 0) {
+                    edgeSet.add(getEdge(sources[x], sliceClones[x]));
+                    weights.add(new Integer((sliceSteadyMult * slicePop) + (slicePeek - slicePop) - sliceCopyDown));
+                }
 
                 sliceClones[x].getHead().setWeights(toArray(weights));
                 sliceClones[x].getHead().setSources(toArray(edgeSet));
@@ -767,7 +785,7 @@ public class Fissioner {
                 weights = new LinkedList<Integer>();
 
                 edgeSet = new LinkedList<InterSliceEdge>();
-                edgeSet.add(new InterSliceEdge(sliceClones[x].getTail(), dests[0].getHead()));
+                edgeSet.add(getEdge(sliceClones[x], dests[0]));
                 edgeSetSet.add(edgeSet);
                 weights.add(new Integer(1));
 		
@@ -780,7 +798,7 @@ public class Fissioner {
             weights = new LinkedList<Integer>();
 
             for(int x = 0 ; x < fizzAmount ; x++) {
-                edgeSet.add(new InterSliceEdge(sliceClones[x].getTail(), dests[0].getHead()));
+                edgeSet.add(getEdge(sliceClones[x], dests[0]));
                 weights.add(new Integer(sliceSteadyMult * slicePush));
             }
 
@@ -846,30 +864,30 @@ public class Fissioner {
 
                 if(numDup1 > 0) {
                     edgeSet = new LinkedList<InterSliceEdge>();
-                    edgeSet.add(new InterSliceEdge(sliceClones[x].getTail(), dests[(x + fizzAmount - 1) % fizzAmount].getHead()));
-                    edgeSet.add(new InterSliceEdge(sliceClones[x].getTail(), dests[x].getHead()));
+                    edgeSet.add(getEdge(sliceClones[x], dests[(x + fizzAmount - 1) % fizzAmount]));
+                    edgeSet.add(getEdge(sliceClones[x], dests[x]));
                     edgeSetSet.add(edgeSet);
                     weights.add(new Integer(numDup1));
                 }
 
                 if(numSingle1 > 0) {
                     edgeSet = new LinkedList<InterSliceEdge>();
-                    edgeSet.add(new InterSliceEdge(sliceClones[x].getTail(), dests[x].getHead()));
+                    edgeSet.add(getEdge(sliceClones[x], dests[x]));
                     edgeSetSet.add(edgeSet);
                     weights.add(new Integer(numSingle1));
                 }
 
                 if(numDup2 > 0) {
                     edgeSet = new LinkedList<InterSliceEdge>();
-                    edgeSet.add(new InterSliceEdge(sliceClones[x].getTail(), dests[x].getHead()));
-                    edgeSet.add(new InterSliceEdge(sliceClones[x].getTail(), dests[(x + 1) % fizzAmount].getHead()));
+                    edgeSet.add(getEdge(sliceClones[x], dests[x]));
+                    edgeSet.add(getEdge(sliceClones[x], dests[(x + 1) % fizzAmount]));
                     edgeSetSet.add(edgeSet);
                     weights.add(new Integer(numDup2));
                 }
 
                 if(numSingle2 > 0) {
                     edgeSet = new LinkedList<InterSliceEdge>();
-                    edgeSet.add(new InterSliceEdge(sliceClones[x].getTail(), dests[(x + 1) % fizzAmount].getHead()));
+                    edgeSet.add(getEdge(sliceClones[x], dests[(x + 1) % fizzAmount]));
                     edgeSetSet.add(edgeSet);
                     weights.add(new Integer(numSingle2));
                 }
@@ -882,11 +900,11 @@ public class Fissioner {
             edgeSet = new LinkedList<InterSliceEdge>();
             weights = new LinkedList<Integer>();
 
-            edgeSet.add(new InterSliceEdge(sliceClones[0].getTail(), dests[0].getHead()));
+            edgeSet.add(getEdge(sliceClones[0], dests[0]));
             weights.add(new Integer((destPopMult * destPop) + (destPeek - destPop) - destCopyDown));
 
             if(destCopyDown > 0) {
-                edgeSet.add(new InterSliceEdge(sliceClones[fizzAmount - 1].getTail(), dests[0].getHead()));
+                edgeSet.add(getEdge(sliceClones[fizzAmount - 1], dests[0]));
                 weights.add(new Integer(destCopyDown));
             }
 
@@ -898,11 +916,11 @@ public class Fissioner {
                 weights = new LinkedList<Integer>();
 
                 if(destCopyDown > 0) {
-                    edgeSet.add(new InterSliceEdge(sliceClones[(x + fizzAmount - 1) % fizzAmount].getTail(), dests[x].getHead()));
+                    edgeSet.add(getEdge(sliceClones[(x + fizzAmount - 1) % fizzAmount], dests[x]));
                     weights.add(new Integer(destCopyDown));
                 }
 
-                edgeSet.add(new InterSliceEdge(sliceClones[x].getTail(), dests[x].getHead()));
+                edgeSet.add(getEdge(sliceClones[x], dests[x]));
                 weights.add(new Integer((destPopMult * destPop) + (destPeek - destPop) - destCopyDown));
 
                 sliceClones[x].getHead().setWeights(toArray(weights));

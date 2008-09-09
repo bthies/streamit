@@ -45,7 +45,7 @@ public abstract class FileReaderCode {
      * Return the code that will transfer the items from the
      * output buffer to to appropriate input buffer(s)
      * 
-     * @return the dma commands
+     * @return the commands
      */
     public List<JStatement> getCode(SchedulingPhase which) {
         if (which == SchedulingPhase.INIT)

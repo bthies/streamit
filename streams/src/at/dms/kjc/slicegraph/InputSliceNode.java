@@ -331,6 +331,14 @@ public class InputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneabl
         return (sources.length == 1);
     }
     
+    /**
+     * Does sources have a single element in phase
+     *  
+     * @return true if there is a single element in sources. */
+    public boolean oneInput(SchedulingPhase phase) {
+        return getSources(phase).length == 1;
+    }
+    
     /** 
      * Is a joiner if there are at least 2 sources (even if same Edge object).
      * @return is a joiner.
@@ -344,7 +352,7 @@ public class InputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneabl
      * @return the edge, or throw AssertionError
      */
     public InterSliceEdge getSingleEdge(SchedulingPhase phase) {
-        assert oneInput() : "Calling getSingeEdge() on InputSlice with less/more than one input";
+        assert oneInput(phase) : "Calling getSingeEdge() on InputSlice with less/more than one input";
         return getSources(phase)[0];
     }
 

@@ -5,7 +5,7 @@ import at.dms.kjc.JExpressionStatement;
 import at.dms.kjc.slicegraph.*;
 
 /**
- * This class models the rotating structure that is needed when a tile uses DMA communication
+ * This class models the rotating structure that is needed when a tile uses double buffered communication
  * and rotating buffers.  A rotating structure of addresses is kept at a source tile that stores
  * the addresses of the rotating buffers of the source tile so that the dma commands can write to 
  * the appropriate location in memory in the destination's tile.
@@ -13,11 +13,11 @@ import at.dms.kjc.slicegraph.*;
  * @author mgordon
  *
  */
-public class DMAAddressRotation extends RotatingBuffer {
+public class SourceAddressRotation extends RotatingBuffer {
     /** The InputBuffer this rotation models */
     protected InputRotatingBuffer inputBuffer;
     
-    public DMAAddressRotation(Tile tile, InputRotatingBuffer buf, FilterSliceNode dest, Edge edge) {
+    public SourceAddressRotation(Tile tile, InputRotatingBuffer buf, FilterSliceNode dest, Edge edge) {
         super(edge, dest, tile);
         this.parent = tile;
         this.inputBuffer = buf;

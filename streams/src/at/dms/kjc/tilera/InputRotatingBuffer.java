@@ -26,9 +26,9 @@ public class InputRotatingBuffer extends RotatingBuffer {
     /** reference to tail */
     protected JExpression tail;
     /** all the address buffers that are on the tiles that feed this input buffer */
-    protected DMAAddressRotation[] addressBufs;
+    protected SourceAddressRotation[] addressBufs;
     /** a map from tile to address buf */
-    protected HashMap<Tile, DMAAddressRotation> addrBufMap;
+    protected HashMap<Tile, SourceAddressRotation> addrBufMap;
     /** true if what feeds this inputbuffer is a file reader */
     protected boolean upstreamFileReader;
     /** if this is fed by a file reader, then we need dma commands for it */
@@ -81,7 +81,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
      * Return the set of address buffers that are declared on tiles that feed this buffer.
      * @return the set of address buffers that are declared on tiles that feed this buffer.
      */
-    public DMAAddressRotation[] getAddressBuffers() {
+    public SourceAddressRotation[] getAddressBuffers() {
         return addressBufs;
     }
     
@@ -89,11 +89,11 @@ public class InputRotatingBuffer extends RotatingBuffer {
      * 
      */
     protected void createDMAAddressBufs() {
-       addressBufs = new DMAAddressRotation[filterNode.getParent().getHead().getSourceSlices(SchedulingPhase.STEADY).size()];
+       addressBufs = new SourceAddressRotation[filterNode.getParent().getHead().getSourceSlices(SchedulingPhase.STEADY).size()];
        int i = 0;
        for (Slice src : filterNode.getParent().getHead().getSourceSlices(SchedulingPhase.STEADY)) {
            Tile tile = TileraBackend.backEndBits.getLayout().getComputeNode(src.getFirstFilter());
-           DMAAddressRotation rot = new DMAAddressRotation(tile, this, filterNode, theEdge);
+           SourceAddressRotation rot = new SourceAddressRotation(tile, this, filterNode, theEdge);
            addressBufs[i] = rot;
            addrBufMap.put(tile, rot);
            i++;
@@ -118,7 +118,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
      * @param tile The tile
      * @return the address buffer for this input buffer on the tile
      */
-    public DMAAddressRotation getAddressRotation(Tile tile) {
+    public SourceAddressRotation getAddressRotation(Tile tile) {
         return addrBufMap.get(tile);
     }
     
@@ -163,7 +163,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
             else
                 fileReaderCode = new FileReaderRemoteReads(this);
         }
-        addrBufMap = new HashMap<Tile, DMAAddressRotation>();
+        addrBufMap = new HashMap<Tile, SourceAddressRotation>();
     }
     
     /**

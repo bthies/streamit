@@ -44,7 +44,7 @@ public class OutputRotatingBufferDMA extends OutputRotatingBuffer {
     /** the dma commands that are generated for this output buffer */
     protected OutputBufferDMATransfers dmaCommands;
     /** the address buffers that this output rotation uses as destinations for dma commands */ 
-    protected HashMap<InputRotatingBuffer, DMAAddressRotation> addressBuffers;
+    protected HashMap<InputRotatingBuffer, SourceAddressRotation> addressBuffers;
 
     /**
      * Create all the output buffers necessary for this slice graph.  Iterate over
@@ -94,7 +94,7 @@ public class OutputRotatingBufferDMA extends OutputRotatingBuffer {
                 CStdType.Boolean, firstExeName, new JBooleanLiteral(true));
         
         //fill the dmaaddressbuffers array
-        addressBuffers = new HashMap<InputRotatingBuffer, DMAAddressRotation>();
+        addressBuffers = new HashMap<InputRotatingBuffer, SourceAddressRotation>();
         for (InterSliceEdge edge : outputNode.getDestSet(SchedulingPhase.STEADY)) {
             InputRotatingBuffer input = InputRotatingBuffer.getInputBuffer(edge.getDest().getNextFilter());
             addressBuffers.put(input, input.getAddressRotation(tile));               
@@ -135,7 +135,7 @@ public class OutputRotatingBufferDMA extends OutputRotatingBuffer {
      * @return the dma address rotation used to store the address of the 
      * rotation associated with this input slice node
      */
-    public DMAAddressRotation getAddressBuffer(InputSliceNode input) {
+    public SourceAddressRotation getAddressBuffer(InputSliceNode input) {
         assert addressBuffers.containsKey(InputRotatingBuffer.getInputBuffer(input.getNextFilter()));
         
         return addressBuffers.get(InputRotatingBuffer.getInputBuffer(input.getNextFilter()));
@@ -195,7 +195,7 @@ public class OutputRotatingBufferDMA extends OutputRotatingBuffer {
         block2.addAllStatements(rotateStatementsTransRot());
         //generate the rotation statements for the address buffers that this output
         //buffer uses, only do this after first execution
-        for (DMAAddressRotation addrRot : addressBuffers.values()) {
+        for (SourceAddressRotation addrRot : addressBuffers.values()) {
             block2.addAllStatements(addrRot.rotateStatements());
         }
         JIfStatement guard2 = new JIfStatement(null, new JLogicalComplementExpression(null, 
@@ -245,7 +245,7 @@ public class OutputRotatingBufferDMA extends OutputRotatingBuffer {
         
         //generate the rotation statements for the address buffers that this output
         //buffer uses
-        for (DMAAddressRotation addrRot : addressBuffers.values()) {
+        for (SourceAddressRotation addrRot : addressBuffers.values()) {
             list.addAll(addrRot.rotateStatements());
         }
         return list;

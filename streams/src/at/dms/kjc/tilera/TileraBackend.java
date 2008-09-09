@@ -85,6 +85,8 @@ public class TileraBackend {
         //when ready
         if (at.dms.kjc.tilera.TileraBackend.scheduler.isSMD())
             new at.dms.kjc.tilera.GeneratePrimePumpScheduleSMD(schedule).schedule(slicer.getSliceGraph());
+        else 
+            new GeneratePrimePump(schedule).schedule(slicer.getSliceGraph());
 
         //Still need to generate the steady state schedule!
         schedule.setSchedule(DataFlowOrder.getTraversal(slicer.getTopSlices()));

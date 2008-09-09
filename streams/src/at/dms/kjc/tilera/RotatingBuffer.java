@@ -117,7 +117,7 @@ public abstract class RotatingBuffer extends Channel {
                 if (buf == null)
                     continue;                
                 for (int i = 0; i < buf.getAddressBuffers().length; i++) {
-                    DMAAddressRotation addr = buf.getAddressBuffers()[i];
+                    SourceAddressRotation addr = buf.getAddressBuffers()[i];
                     Tile srcTile = addr.parent;
                     //create the declaration of the buffers on the tile
                     addr.declareBuffers();

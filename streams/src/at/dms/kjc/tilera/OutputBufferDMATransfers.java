@@ -43,7 +43,7 @@ public class OutputBufferDMATransfers {
                 FilterInfo srcInfo = FilterInfo.getFilterInfo(output.getPrevFilter());
                 FilterInfo dstInfo = FilterInfo.getFilterInfo(input.getNextFilter());
                                 
-                DMAAddressRotation addrBuf = parent.getAddressBuffer(input);
+                SourceAddressRotation addrBuf = parent.getAddressBuffer(input);
                 String requestVar = addrBuf.rotStructName  + "_request";
                 int itemBytes = Util.getTypeSize(parent.getType()) * 4;
                 //make sure the input weight equals the output weight for now

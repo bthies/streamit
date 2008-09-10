@@ -1025,7 +1025,11 @@ public class Fissioner {
             sliceClones[x].getFirstFilter().getFilter().getWork().setPop(slicePop);
             sliceClones[x].getFirstFilter().getFilter().getWork().setPush(slicePush);
         }
-
+        
+        /**********************************************************************
+         *                 Perform fission hacks on Slice rates               *
+         **********************************************************************/
+        
         // Normally, Slices remember peek - pop elements between steady-state
         // iterations.  However, after fizzing, these elements no longer need to
         // be remembered between iterations.  These elements therefore need to 
@@ -1034,13 +1038,10 @@ public class Fissioner {
         // This code adds a pop statement to the end of each work body, removing
         // the unneeded peek - pop elements.  The code also adjusts the pop rate
         // to reflect that more elements are being popped.
-        //
-        // NOTE: First Slice clone will actually need to remember elements
-        //       between iterations, so this doesn't apply to first Slice clone
 
         if(slicePeek - slicePop > 0) {
             // Add pop statement to end of each work body
-            for(int x = 1 ; x < fizzAmount ; x++) {
+            for(int x = 0 ; x < fizzAmount ; x++) {
                 CType inputType = 
                     sliceClones[x].getFirstFilter().getFilter().getInputType();
                 
@@ -1056,8 +1057,28 @@ public class Fissioner {
             // Adjust pop rates since more elements are now popped
             slicePop += (slicePeek - slicePop);
 
-            for(int x = 1 ; x < fizzAmount ; x++)
+            for(int x = 0 ; x < fizzAmount ; x++)
                 sliceClones[x].getFirstFilter().getFilter().getWork().setPop(slicePop);
+        }
+
+        // This is a hack to assist code generation for the first Slice clone.
+        // The first Slice clone will remember sliceCopyDown elements between
+        // steady-state iterations, even after the pop statement added above.
+        // In order for the generated code to remember sliceCopyDown elements
+        // between steady-state iterations, the peek rate must be larger than
+        // the pop rate by sliceCopyDown.
+        //
+        // We achieve this by simply setting the peek rate to be larger than the
+        // pop rate by sliceCopyDown.  Note that at this point, after the pop
+        // statement above, the peek rate should be equal to the pop rate.  As
+        // such, we simply add sliceCopyDown to the peek rate.
+
+        if(sliceCopyDown > 0) {
+            int newPeek = 
+                sliceClones[0].getFirstFilter().getFilter().getWork().getPeekInt() +
+                sliceCopyDown;
+
+            sliceClones[0].getFirstFilter().getFilter().getWork().setPeek(newPeek);
         }
 
         /**********************************************************************

@@ -1061,17 +1061,14 @@ public class Fissioner {
                 sliceClones[x].getFirstFilter().getFilter().getWork().setPop(slicePop);
         }
 
-        // This is a hack to assist code generation for the first Slice clone.
-        // The first Slice clone will remember sliceCopyDown elements between
-        // steady-state iterations, even after the pop statement added above.
-        // In order for the generated code to remember sliceCopyDown elements
-        // between steady-state iterations, the peek rate must be larger than
-        // the pop rate by sliceCopyDown.
+        // This is a hack to maintain the meaning of the peek rate.  Normally,
+        // Slices remember peek - pop elements between steady-state iterations.
+        // The first Slice clone will now remember sliceCopyDown elements 
+        // between steady-state iterations (even after the above pop statement).
+        // Therefore, we would like to set peek - pop to equal sliceCopyDown.
         //
-        // We achieve this by simply setting the peek rate to be larger than the
-        // pop rate by sliceCopyDown.  Note that at this point, after the pop
-        // statement above, the peek rate should be equal to the pop rate.  As
-        // such, we simply add sliceCopyDown to the peek rate.
+        // At this point, peek equals pop.  Therefore, to set peek - pop to
+        // equal sliceCopyDown, we simply increment peek by sliceCopyDown.
 
         if(sliceCopyDown > 0) {
             int newPeek = 

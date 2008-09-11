@@ -266,7 +266,7 @@ public class InputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneabl
      * @param newWeights The new weights
      */
     public void setInitWeights(int[] newWeights) {
-        if (newWeights.length == 1)
+        if (newWeights != null && newWeights.length == 1)
             this.initWeights = new int[]{1};
         else 
             this.initWeights = newWeights;

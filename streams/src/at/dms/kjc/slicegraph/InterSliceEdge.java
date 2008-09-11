@@ -9,7 +9,7 @@ import at.dms.kjc.backendSupport.FilterInfo;
  * @author mgordon
  *
  */
-public class InterSliceEdge extends Edge implements at.dms.kjc.DeepCloneable {
+public class InterSliceEdge extends Edge implements at.dms.kjc.DeepCloneable, Comparable<InterSliceEdge>{
     /**
      * No argument constructor, FOR AUTOMATIC CLONING ONLY.
      */
@@ -141,6 +141,20 @@ public class InterSliceEdge extends Edge implements at.dms.kjc.DeepCloneable {
     public int primePumpItems() {
         return (int) ((double) FilterInfo.getFilterInfo(((OutputSliceNode)src).getPrevFilter())
                       .totalItemsSent(SchedulingPhase.PRIMEPUMP) * ((OutputSliceNode)src).ratio(this, SchedulingPhase.STEADY));
+    }
+    
+    /**
+     * Compare two intersliceedges based on the number of steady items
+     * 
+     * @param other the other interslice edge
+     * @return -1, 0, 1
+     */
+    public int compareTo(InterSliceEdge other) {
+        if (this.steadyItems() < other.steadyItems())
+            return -1;
+        else if (this.steadyItems() > other.steadyItems())
+            return 1;
+        return 0;
     }
 
 }

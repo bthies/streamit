@@ -2,17 +2,17 @@ package at.dms.kjc.tilera;
 
 import at.dms.kjc.slicegraph.SchedulingPhase;
 
-public class OutputBufferRemoteWritesTransfers extends OutputBufferTransfers {
+public class BufferRemoteWritesTransfers extends BufferTransfers {
     
-    public OutputBufferRemoteWritesTransfers(OutputRotatingBuffer buf) {
+    public BufferRemoteWritesTransfers(OutputRotatingBuffer buf) {
         super(buf);
         
-        checkSimple(SchedulingPhase.INIT);
         generateStatements(SchedulingPhase.INIT);
-        checkSimple(SchedulingPhase.STEADY);
+     
         generateStatements(SchedulingPhase.STEADY);     
     }
 
     private void generateStatements(SchedulingPhase phase) {
+        
     }
 }

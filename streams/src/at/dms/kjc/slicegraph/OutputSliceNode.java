@@ -123,7 +123,9 @@ public class OutputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneab
      */
     public boolean hasInitPattern() {
         assert (initWeights == null && initDests == null) || 
-            (initWeights != null && initDests != null); 
+            (initWeights != null && initDests != null) :
+                "Something wrong with init distribution in  " + getParent() + 
+                "   weights: " + initWeights + ", dests: " + initDests;
         return (initWeights != null);
     }
     

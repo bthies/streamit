@@ -30,7 +30,7 @@ public class FileReaderDMACommands extends FileReaderCode{
         FilterInfo srcInfo = FilterInfo.getFilterInfo(fileOutput.getPrevFilter());
         FilterInfo dstInfo = FilterInfo.getFilterInfo(input.getNextFilter());
                 
-        String requestVar = parent.rotStructName  + "_request";
+        String requestVar = parent.writeRotStructName  + "_request";
         int itemBytes = Util.getTypeSize(parent.getType()) * 4;
         
         //generate the dma command
@@ -38,9 +38,9 @@ public class FileReaderDMACommands extends FileReaderCode{
         //if we are in the init stage, transfer into the current buffer because we are
         //not double buffering, also, don't skip the copydown because this is the first
         //transfer
-        String dst_init = parent.currentBufName;
+        String dst_init = parent.currentWriteBufName;
         //we want to transfer into the next buffer if we are in the steady (primepump)  
-        String dst_steady = parent.currentRotName + "->next->buffer + " + 
+        String dst_steady = parent.currentWriteRotName + "->next->buffer + " + 
             (dstInfo.copyDown);
         //the stride should always be 1 in this case, but keep this here for the future
         String dst_stride_steady = "" + (itemBytes * input.totalWeights(SchedulingPhase.STEADY));

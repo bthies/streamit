@@ -9,7 +9,7 @@ import at.dms.kjc.slicegraph.InterSliceEdge;
 import at.dms.kjc.slicegraph.OutputSliceNode;
 import at.dms.kjc.slicegraph.SchedulingPhase;
 
-public abstract class OutputBufferTransfers {
+public abstract class BufferTransfers {
     /** the output buffer that these dma commands uses as its source */
     protected OutputRotatingBuffer parent;
     /** the block of ilib_wait calls, one for each dma command generated, separated for steady 
@@ -24,7 +24,7 @@ public abstract class OutputBufferTransfers {
     /** any declarations that are needed */
     protected List<JStatement> decls;
     
-    public OutputBufferTransfers(OutputRotatingBuffer buf) {
+    public BufferTransfers(OutputRotatingBuffer buf) {
         parent = buf;
         waitCallsSteady= new LinkedList<JStatement>();
         commandsSteady = new LinkedList<JStatement>();

@@ -17,8 +17,8 @@ import java.util.*;
  */
 public class InputRotatingBuffer extends RotatingBuffer {
     
-    /** map of all the input buffers from filter -> inputbuffer */
-    protected static HashMap<FilterSliceNode, InputRotatingBuffer> buffers;
+    protected FilterSliceNode localSrcFilter;
+    
     /** name of variable containing tail of array offset */
     protected String tailName;
     /** definition for tail */
@@ -31,12 +31,14 @@ public class InputRotatingBuffer extends RotatingBuffer {
     protected HashMap<Tile, SourceAddressRotation> addrBufMap;
     /** true if what feeds this inputbuffer is a file reader */
     protected boolean upstreamFileReader;
-    /** if this is fed by a file reader, then we need dma commands for it */
+    /** if this is fed by a file reader, then we need commands for it */
     protected FileReaderCode fileReaderCode;
-    
-    static {
-        buffers = new HashMap<FilterSliceNode, InputRotatingBuffer>();
-    }
+    /** the name of the rotation struct, always points to head */
+    protected String readRotStructName;
+    /** the name of the pointer to the current read rotation of this buffer */
+    protected String currentReadRotName;
+    /** the name of the pointer to the read buffer of the current rotation */
+    protected String currentReadBufName;
 
     /**
      * Create all the input buffers necessary for this slice graph.  Iterate over
@@ -55,84 +57,16 @@ public class InputRotatingBuffer extends RotatingBuffer {
                 //create the new buffer, the constructor will put the buffer in the 
                 //hashmap
                 InputRotatingBuffer buf = new InputRotatingBuffer(slice.getFirstFilter(), parent);
-                
-                //now set the rotation length
-                int destMult = schedule.getPrimePumpMult(slice);
-                //first find the max rotation length given the prime pump 
-                //mults of all the sources
-                int maxRotationLength = 0;
-                
-                for (Slice src : slice.getHead().getSourceSlices(SchedulingPhase.STEADY)) {
-                    int diff = schedule.getPrimePumpMult(src) - destMult; 
-                    assert diff >= 0;
-                    if (diff > maxRotationLength) {
-                        maxRotationLength = diff;
-                    }
-                }
-                buf.rotationLength = maxRotationLength + 1;
+                                  
+                buf.setRotationLength(schedule);
                 buf.createInitCode(true);
-                buf.createDMAAddressBufs();
-                //System.out.println("Setting input buf " + buf.getFilterNode() + " to " + buf.rotationLength);
+                buf.createAddressBufs();
+                System.out.println("Setting input buf " + buf.getFilterNode() + " to " + buf.rotationLength);
             }
         }
     }
 
-    /**
-     * Return the set of address buffers that are declared on tiles that feed this buffer.
-     * @return the set of address buffers that are declared on tiles that feed this buffer.
-     */
-    public SourceAddressRotation[] getAddressBuffers() {
-        return addressBufs;
-    }
     
-    /**
-     * 
-     */
-    protected void createDMAAddressBufs() {
-       addressBufs = new SourceAddressRotation[filterNode.getParent().getHead().getSourceSlices(SchedulingPhase.STEADY).size()];
-       int i = 0;
-       for (Slice src : filterNode.getParent().getHead().getSourceSlices(SchedulingPhase.STEADY)) {
-           Tile tile = TileraBackend.backEndBits.getLayout().getComputeNode(src.getFirstFilter());
-           SourceAddressRotation rot = new SourceAddressRotation(tile, this, filterNode, theEdge);
-           addressBufs[i] = rot;
-           addrBufMap.put(tile, rot);
-           i++;
-       }
-    }
-    
-    /**
-     * If this input buffer is fed by a file reader, then put the dma commands to prime
-     * the buffer at the end of the rotation setup.
-     */
-    protected JStatement endOfRotationSetup() {
-        JBlock block = new JBlock();
-        if (upstreamFileReader) {
-            block.addAllStatements(fileReaderCode.getCode(SchedulingPhase.INIT));
-        }
-        return block;
-    }
-    
-    /**
-     * Return the address buffer rotation for this input buffer on the tile.
-     * 
-     * @param tile The tile
-     * @return the address buffer for this input buffer on the tile
-     */
-    public SourceAddressRotation getAddressRotation(Tile tile) {
-        return addrBufMap.get(tile);
-    }
-    
-    /**
-     * Set the buffer size of this input buffer based on the max
-     * number of items it receives.
-     */
-    protected void setBufferSize() {
-        FilterInfo fi = FilterInfo.getFilterInfo(filterNode);
-        
-        bufSize = Math.max(fi.totalItemsReceived(SchedulingPhase.INIT),
-                (fi.totalItemsReceived(SchedulingPhase.STEADY) + fi.copyDown));
-    }
-        
     /**
      * Create a new input buffer that is associated with the filter node.
      * 
@@ -142,7 +76,11 @@ public class InputRotatingBuffer extends RotatingBuffer {
         super(filterNode.getEdgeToPrev(), filterNode, parent);
         bufType = filterNode.getFilter().getInputType();
         types.add(bufType);
-        buffers.put(filterNode, this);
+        inputBuffers.put(filterNode, this);
+                
+        readRotStructName = this.getIdent() + "read_rot_struct";
+        currentReadRotName =this.getIdent() + "_read_current";
+        currentReadBufName =this.getIdent() + "_read_buf";
         
         tailName = this.getIdent() + "tail";
         tailDefn = new JVariableDefinition(null,
@@ -164,31 +102,221 @@ public class InputRotatingBuffer extends RotatingBuffer {
                 fileReaderCode = new FileReaderRemoteReads(this);
         }
         addrBufMap = new HashMap<Tile, SourceAddressRotation>();
-    }
-    
-    /**
-     * Return the input buffer associated with the filter node.
-     * 
-     * @param fsn The filter node in question.
-     * @return The input buffer of the filter node.
-     */
-    public static InputRotatingBuffer getInputBuffer(FilterSliceNode fsn) {
-        return buffers.get(fsn);
-    }
-    
-    /**
-     * Return the set of all the InputBuffers that are mapped to tile t.
-     */
-    public static Set<RotatingBuffer> getBuffersOnTile(Tile t) {
-        HashSet<RotatingBuffer> set = new HashSet<RotatingBuffer>();
+        localSrcFilter = null;
         
-        for (RotatingBuffer b : buffers.values()) {
-            if (TileraBackend.backEndBits.getLayout().getComputeNode(b.getFilterNode()).equals(t))
-                set.add(b);
+        setLocalSrcFilter();
+        setBufferSize();
+        
+    }
+    
+    /**
+     * 
+     */
+    protected void setLocalSrcFilter() {
+        for (InterSliceEdge edge : filterNode.getParent().getHead().getSourceSet(SchedulingPhase.STEADY)) {
+            FilterSliceNode upstream = edge.getSrc().getPrevFilter();
+            if (TileraBackend.backEndBits.getLayout().getComputeNode(upstream) == parent) {
+                assert localSrcFilter == null : "Two upstream srcs mapped to same tile ?";
+                localSrcFilter = upstream;
+            }
+        }
+        //remember that this input buffer is the output for the src filter on the same tile
+        setOutputBuffer(localSrcFilter, this);
+    }
+    
+    /**
+     * 
+     * @param schedule
+     */
+    protected void setRotationLength(BasicSpaceTimeSchedule schedule) {
+        //now set the rotation length
+        int destMult = schedule.getPrimePumpMult(filterNode.getParent());
+        //first find the max rotation length given the prime pump 
+        //mults of all the sources
+        int maxRotationLength = 0;
+        
+        for (Slice src : filterNode.getParent().getHead().getSourceSlices(SchedulingPhase.STEADY)) {
+            int diff = schedule.getPrimePumpMult(src) - destMult; 
+            assert diff >= 0;
+            if (diff > maxRotationLength) {
+                maxRotationLength = diff;
+            }
+        }
+        rotationLength = maxRotationLength + 1;
+    }
+    
+    
+    /**
+     * Generate the code to setup the structure of the rotating buffer 
+     * as a circular linked list.
+     */
+    protected void setupRotation() {
+        String temp = "__temp__";
+        TileCodeStore cs = parent.getComputeCode();
+        //this is the typedef we will use for this buffer rotation structure
+        String rotType = rotTypeDefPrefix + getType().toString();
+     
+        JBlock block = new JBlock();
+        
+        //add the declaration of the rotation buffer of the appropriate rotation type
+        parent.getComputeCode().appendTxtToGlobal(rotType + " *" + readRotStructName + ";\n");
+        //add the declaration of the pointer that points to the current rotation in the rotation structure
+        parent.getComputeCode().appendTxtToGlobal(rotType + " *" + currentReadRotName + ";\n");
+        //add the declaration of the pointer that points to the current buffer in the current rotation
+        parent.getComputeCode().appendTxtToGlobal(bufType.toString() + " *" + currentReadBufName + ";\n");
+        
+             
+        //create a temp var
+        if (this.rotationLength > 1)
+            block.addStatement(Util.toStmt(rotType + " *" + temp));
+        
+        //create the first entry!!
+        block.addStatement(Util.toStmt(readRotStructName + " =  (" + rotType+ "*)" + "malloc(sizeof("
+                + rotType + "))"));
+        
+        //modify the first entry
+        block.addStatement(Util.toStmt(readRotStructName + "->buffer = " + bufferNames[0]));
+        if (this.rotationLength == 1) 
+            block.addStatement(Util.toStmt(readRotStructName + "->next = " + readRotStructName));
+        else {
+            block.addStatement(Util.toStmt(temp + " = (" + rotType+ "*)" + "malloc(sizeof("
+                    + rotType + "))"));    
+            
+            block.addStatement(Util.toStmt(readRotStructName + "->next = " + 
+                    temp));
+            
+            block.addStatement(Util.toStmt(temp + "->buffer = " + bufferNames[1]));
+            
+            for (int i = 2; i < this.rotationLength; i++) {
+                block.addStatement(Util.toStmt(temp + "->next =  (" + rotType+ "*)" + "malloc(sizeof("
+                        + rotType + "))"));
+                block.addStatement(Util.toStmt(temp + " = " + temp + "->next"));
+                block.addStatement(Util.toStmt(temp + "->buffer = " + bufferNames[i]));
+            }
+            
+            block.addStatement(Util.toStmt(temp + "->next = " + readRotStructName));
+        }
+        block.addStatement(Util.toStmt(currentReadRotName + " = " + readRotStructName));
+        block.addStatement(Util.toStmt(currentReadBufName + " = " + currentReadRotName + "->buffer"));
+        block.addStatement(endOfRotationSetup());
+        
+        if (hasLocalSrcFilter()) {
+            //if this has a local upstream filter, then we can set up the rotation struct for its 
+            //output
+            //add the declaration of the rotation buffer of the appropriate rotation type
+            parent.getComputeCode().appendTxtToGlobal(rotType + " *" + writeRotStructName + ";\n");
+            //add the declaration of the pointer that points to the current rotation in the rotation structure
+            parent.getComputeCode().appendTxtToGlobal(rotType + " *" + currentWriteRotName + ";\n");
+            //add the declaration of the pointer that points to the current buffer in the current rotation
+            parent.getComputeCode().appendTxtToGlobal(bufType.toString() + " *" + currentWriteBufName + ";\n");
+
+            
+            //create the first entry!!
+            block.addStatement(Util.toStmt(writeRotStructName + " =  (" + rotType+ "*)" + "malloc(sizeof("
+                    + rotType + "))"));
+            
+            //modify the first entry
+            block.addStatement(Util.toStmt(writeRotStructName + "->buffer = " + bufferNames[0]));
+            if (this.rotationLength == 1) 
+                block.addStatement(Util.toStmt(writeRotStructName + "->next = " + writeRotStructName));
+            else {
+                block.addStatement(Util.toStmt(temp + " = (" + rotType+ "*)" + "malloc(sizeof("
+                        + rotType + "))"));    
+                
+                block.addStatement(Util.toStmt(writeRotStructName + "->next = " + 
+                        temp));
+                
+                block.addStatement(Util.toStmt(temp + "->buffer = " + bufferNames[1]));
+                
+                for (int i = 2; i < this.rotationLength; i++) {
+                    block.addStatement(Util.toStmt(temp + "->next =  (" + rotType+ "*)" + "malloc(sizeof("
+                            + rotType + "))"));
+                    block.addStatement(Util.toStmt(temp + " = " + temp + "->next"));
+                    block.addStatement(Util.toStmt(temp + "->buffer = " + bufferNames[i]));
+                }
+                
+                block.addStatement(Util.toStmt(temp + "->next = " + writeRotStructName));
+            }
+            block.addStatement(Util.toStmt(currentWriteRotName + " = " + writeRotStructName));
+            block.addStatement(Util.toStmt(currentWriteBufName + " = " + currentWriteRotName + "->buffer"));
         }
         
-        return set;
+        cs.addStatementToBufferInit(block);
     }
+    
+    /**
+     * Return the set of address buffers that are declared on tiles that feed this buffer.
+     * @return the set of address buffers that are declared on tiles that feed this buffer.
+     */
+    public SourceAddressRotation[] getAddressBuffers() {
+        return addressBufs;
+    }
+    
+    /**
+     * 
+     */
+    protected void createAddressBufs() {
+       addressBufs = new SourceAddressRotation[filterNode.getParent().getHead().getSourceSlices(SchedulingPhase.STEADY).size()];
+       int i = 0;
+       for (Slice src : filterNode.getParent().getHead().getSourceSlices(SchedulingPhase.STEADY)) {
+           Tile tile = TileraBackend.backEndBits.getLayout().getComputeNode(src.getFirstFilter());
+           SourceAddressRotation rot = new SourceAddressRotation(tile, this, filterNode, theEdge);
+           addressBufs[i] = rot;
+           addrBufMap.put(tile, rot);
+           i++;
+       }
+    }
+    
+    /**
+     * If this input buffer is fed by a file reader, then put the commands to prime
+     * the buffer at the end of the rotation setup.
+     */
+    protected JStatement endOfRotationSetup() {
+        JBlock block = new JBlock();
+        if (upstreamFileReader) {
+            block.addAllStatements(fileReaderCode.getCode(SchedulingPhase.INIT));
+        }
+        return block;
+    }
+    
+    /**
+     * Return the address buffer rotation for this input buffer on the tile.
+     * 
+     * @param tile The tile
+     * @return the address buffer for this input buffer on the tile
+     */
+    public SourceAddressRotation getAddressRotation(Tile tile) {
+        return addrBufMap.get(tile);
+    }
+    
+    /**
+     * return true if this input rotating buffer has a source mapped to the same
+     * tile, if so they output for that source uses this buffer as an optimization.
+     */
+    public boolean hasLocalSrcFilter() {
+        return localSrcFilter != null;
+    }
+    
+    /**
+     * Set the buffer size of this input buffer based on the max
+     * number of items it receives.
+     */
+    protected void setBufferSize() {
+       
+        bufSize = Math.max(filterInfo.totalItemsReceived(SchedulingPhase.INIT),
+                (filterInfo.totalItemsReceived(SchedulingPhase.STEADY) + filterInfo.copyDown));
+        
+        if (hasLocalSrcFilter()) {
+            //if this filter has a local source filter, then we are using this buffer
+            //for its output also, so we have to consider the amount of output in the 
+            //buffer calculation
+            FilterInfo srcInfo = FilterInfo.getFilterInfo(localSrcFilter);
+            int output = Math.max(srcInfo.totalItemsSent(SchedulingPhase.STEADY), 
+                    srcInfo.totalItemsSent(SchedulingPhase.INIT));
+            bufSize = Math.max(bufSize, output);
+        }    
+    }
+
     
     /* (non-Javadoc)
      * @see at.dms.kjc.backendSupport.ChannelI#popMethodName()
@@ -501,14 +629,22 @@ public class InputRotatingBuffer extends RotatingBuffer {
     protected List<JStatement> copyDownStatements() {
         List<JStatement> retval = new LinkedList<JStatement>();
         //if we have items on the buffer after filter execution, we must copy them 
-        //to the next buffer, use memcpy for now
+        //to the next buffer, don't use memcopy, just generate individual statements
+        String dst = currentReadRotName + "->next->buffer";
+        String src = currentReadBufName;
+        
+        for (int i = 0; i < filterInfo.copyDown; i++) {
+            retval.add(Util.toStmt(dst + "[i] = " + src + "[" + 
+                    (i + filterInfo.totalItemsPopped(SchedulingPhase.STEADY)) +
+                    "]"));
+        }
+        /*
         if (filterInfo.copyDown > 0) {
             String size = (filterInfo.copyDown * Util.getTypeSize(bufType) * 4) + "";
-            String dst = currentRotName + "->next->buffer";
-            String src = currentBufName + " + " +
-                (Util.getTypeSize(bufType) * filterInfo.totalItemsPopped(SchedulingPhase.STEADY));
+            
             retval.add(Util.toStmt("memcpy(" + dst + ", " + src + ", " + size + ")"));
         }
+        */
         return retval;
     }
     /*

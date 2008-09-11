@@ -6,9 +6,9 @@ import at.dms.kjc.slicegraph.*;
 import at.dms.kjc.backendSupport.*;
 import at.dms.kjc.JStatement;
 
-public class OutputBufferDMATransfers extends OutputBufferTransfers {
+public class BufferDMATransfers extends BufferTransfers {
    
-    public OutputBufferDMATransfers(OutputRotatingBuffer buf) {
+    public BufferDMATransfers(OutputRotatingBuffer buf) {
         super(buf);
         
         checkSimple(SchedulingPhase.INIT);
@@ -25,14 +25,14 @@ public class OutputBufferDMATransfers extends OutputBufferTransfers {
                 FilterInfo dstInfo = FilterInfo.getFilterInfo(input.getNextFilter());
                                 
                 SourceAddressRotation addrBuf = parent.getAddressBuffer(input);
-                String requestVar = addrBuf.rotStructName  + "_request";
+                String requestVar = addrBuf.writeRotStructName  + "_request";
                 int itemBytes = Util.getTypeSize(parent.getType()) * 4;
                 //make sure the input weight equals the output weight for now
                 assert input.getWeight(edge, phase) == output.getWeight(edge, phase);
                 
                 //generate the dma command
                 //in the steady state, you want to skip the copy down for the dest
-                String dst = addrBuf.currentBufName + " + " + ((phase == SchedulingPhase.INIT ? 0 : dstInfo.copyDown) + 
+                String dst = addrBuf.currentWriteBufName + " + " + ((phase == SchedulingPhase.INIT ? 0 : dstInfo.copyDown) + 
                     input.weightBefore(edge, phase));
                 
                 String dst_stride = "" + (itemBytes * input.totalWeights(phase));
@@ -41,7 +41,7 @@ public class OutputBufferDMATransfers extends OutputBufferTransfers {
                 //the pointer to the buffer that was just written
                 //in the steady state transfer from the transfer buffer that is one behind the 
                 //current buffer we are writing (we do this because we are double buffering)
-                String src = (phase == SchedulingPhase.INIT ? parent.currentBufName : parent.transBufName) 
+                String src = (phase == SchedulingPhase.INIT ? parent.currentWriteBufName : parent.transBufName) 
                         + " + " + (output.weightBefore(edge, phase));
                                                 
                 String src_stride = "" + (itemBytes * output.totalWeights(phase));

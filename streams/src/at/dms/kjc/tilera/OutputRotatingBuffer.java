@@ -35,8 +35,6 @@ import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.spacetime.BasicSpaceTimeSchedule;
 
 public class OutputRotatingBuffer extends RotatingBuffer {
-    /** map of all the output buffers from filter -> outputbuffer */
-    protected static HashMap<FilterSliceNode, OutputRotatingBuffer> buffers;
     /** name of the variable that points to the rotation structure we should be transferring from */
     public String transRotName;
     /** name of the variable that points to the buffer we should be transferring from */
@@ -50,7 +48,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
     protected String firstExeName;
     /** the output slice node for this output buffer */
     /** the dma commands that are generated for this output buffer */
-    protected OutputBufferTransfers transferCommands;
+    protected BufferTransfers transferCommands;
     /** the address buffers that this output rotation uses as destinations for dma commands */ 
     protected HashMap<InputRotatingBuffer, SourceAddressRotation> addressBuffers;
     
@@ -59,10 +57,6 @@ public class OutputRotatingBuffer extends RotatingBuffer {
     protected JExpression head;      
     /** the tile we are mapped to */
     protected Tile tile;
-    
-    static {
-        buffers = new HashMap<FilterSliceNode, OutputRotatingBuffer>();
-    }
     
     /**
      * Create all the output buffers necessary for this slice graph.  Iterate over
@@ -77,22 +71,29 @@ public class OutputRotatingBuffer extends RotatingBuffer {
             if (!slice.getTail().noOutputs()) {
                 assert slice.getTail().totalWeights(SchedulingPhase.STEADY) > 0;
                 Tile parent = TileraBackend.backEndBits.getLayout().getComputeNode(slice.getFirstFilter());
-                //create the new buffer, the constructor will put the buffer in the 
-                //hashmap
-                OutputRotatingBuffer buf = new OutputRotatingBuffer(slice.getFirstFilter(), parent);
-                
-                //calculate the rotation length
-                int srcMult = schedule.getPrimePumpMult(slice);
-                int maxRotLength = 0;
-                for (Slice dest : slice.getTail().getDestSlices(SchedulingPhase.STEADY)) {
-                    int diff = srcMult - schedule.getPrimePumpMult(dest);
-                    assert diff >= 0;
-                    if (diff > maxRotLength)
-                        maxRotLength = diff;
+                //only create an output buffer if no downstream filter is mapped to this tile
+                //if a downstream filter is mapped to this tile, then this slice will use the inputbuffer
+                //for its output
+                boolean createBuffer = true;
+                //look to see if any downstream filters are mapped to this tile
+                for (InterSliceEdge edge : slice.getTail().getDestSet(SchedulingPhase.STEADY)) {
+                    if (parent == 
+                        TileraBackend.backEndBits.getLayout().getComputeNode(edge.getDest().getNextFilter())) {
+                        createBuffer = false;
+                        break;
+                    }
                 }
-                buf.rotationLength = maxRotLength + 1;
-                buf.createInitCode(false);
-                //System.out.println("Setting output buf " + buf.getIdent() + " to " + buf.rotationLength);    
+
+                if (createBuffer) {
+                    // create the new buffer, the constructor will put the buffer in the 
+                    //hashmap
+                    System.out.println("Had to create output buffer for " + slice);
+                    
+                    OutputRotatingBuffer buf = new OutputRotatingBuffer(slice.getFirstFilter(), parent);
+                    buf.setRotationLength(schedule);
+                    buf.createInitCode(false);
+
+                }
             }
         }
     }
@@ -105,7 +106,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
         super(filterNode.getEdgeToNext(), filterNode, parent);
         outputNode = filterNode.getParent().getTail();
         bufType = filterNode.getFilter().getOutputType();
-        buffers.put(filterNode, this);
+        setOutputBuffer(filterNode, this);
         headName = this.getIdent() + "head";
         headDefn = new JVariableDefinition(null,
                 at.dms.kjc.Constants.ACC_STATIC,
@@ -125,7 +126,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
                 at.dms.kjc.Constants.ACC_STATIC,
                 CStdType.Boolean, firstExeName, new JBooleanLiteral(true));
         
-        //fill the dmaaddressbuffers array
+        //fill the addressbuffers array
         addressBuffers = new HashMap<InputRotatingBuffer, SourceAddressRotation>();
         for (InterSliceEdge edge : outputNode.getDestSet(SchedulingPhase.STEADY)) {
             InputRotatingBuffer input = InputRotatingBuffer.getInputBuffer(edge.getDest().getNextFilter());
@@ -133,32 +134,25 @@ public class OutputRotatingBuffer extends RotatingBuffer {
         }
         
         //generate the dma commands
-        transferCommands = new OutputBufferDMATransfers(this);
+        if (TileraBackend.DMA) 
+            transferCommands = new BufferDMATransfers(this);
+        else 
+            transferCommands = new BufferRemoteWritesTransfers(this);
     }
    
-    /**
-     * Return the output buffer associated with the filter node.
-     * 
-     * @param fsn The filter node in question.
-     * @return The output buffer of the filter node.
-     */
-    public static OutputRotatingBuffer getOutputBuffer(FilterSliceNode fsn) {
-        return buffers.get(fsn);
+    public void setRotationLength(BasicSpaceTimeSchedule schedule) {
+        //calculate the rotation length
+        int srcMult = schedule.getPrimePumpMult(filterNode.getParent());
+        int maxRotLength = 0;
+        for (Slice dest : filterNode.getParent().getTail().getDestSlices(SchedulingPhase.STEADY)) {
+            int diff = srcMult - schedule.getPrimePumpMult(dest);
+            assert diff >= 0;
+            if (diff > maxRotLength)
+                maxRotLength = diff;
+        }
+        rotationLength = maxRotLength + 1;
     }
     
-    /**
-     * Return the set of all the InputBuffers that are mapped to tile t.
-     */
-    public static Set<RotatingBuffer> getBuffersOnTile(Tile t) {
-        HashSet<RotatingBuffer> set = new HashSet<RotatingBuffer>();
-        
-        for (RotatingBuffer b : buffers.values()) {
-            if (TileraBackend.backEndBits.getLayout().getComputeNode(b.getFilterNode()).equals(t))
-                set.add(b);
-        }
-        
-        return set;
-    }
     
     
     /**
@@ -427,8 +421,8 @@ public class OutputRotatingBuffer extends RotatingBuffer {
 
     protected List<JStatement> rotateStatementsCurRot() {
         LinkedList<JStatement> list = new LinkedList<JStatement>();
-        list.add(Util.toStmt(currentRotName + " = " + currentRotName + "->next"));
-        list.add(Util.toStmt(currentBufName + " = " + currentRotName + "->buffer"));
+        list.add(Util.toStmt(currentWriteRotName + " = " + currentWriteRotName + "->next"));
+        list.add(Util.toStmt(currentWriteBufName + " = " + currentWriteRotName + "->buffer"));
         return list;
     }
     
@@ -487,11 +481,11 @@ public class OutputRotatingBuffer extends RotatingBuffer {
         String rotType = rotTypeDefPrefix + getType().toString();
         
         //add the declaration of the rotation buffer of the appropriate rotation type
-        parent.getComputeCode().appendTxtToGlobal(rotType + " *" + rotStructName + ";\n");
-      //add the declaration of the pointer that points to the current rotation in the rotation structure
-        parent.getComputeCode().appendTxtToGlobal(rotType + " *" + currentRotName + ";\n");
+        parent.getComputeCode().appendTxtToGlobal(rotType + " *" + writeRotStructName + ";\n");
+        //add the declaration of the pointer that points to the current rotation in the rotation structure
+        parent.getComputeCode().appendTxtToGlobal(rotType + " *" + currentWriteRotName + ";\n");
         //add the declaration of the pointer that points to the current buffer in the current rotation
-        parent.getComputeCode().appendTxtToGlobal(bufType.toString() + " *" + currentBufName + ";\n");
+        parent.getComputeCode().appendTxtToGlobal(bufType.toString() + " *" + currentWriteBufName + ";\n");
         
         //add the declaration of the pointer that points to the transfer rotation in the rotation structure
         parent.getComputeCode().appendTxtToGlobal(rotType + " *" + transRotName + ";\n");
@@ -505,20 +499,20 @@ public class OutputRotatingBuffer extends RotatingBuffer {
             block.addStatement(Util.toStmt(rotType + " *" + temp));
         
         //create the first entry!!
-        block.addStatement(Util.toStmt(rotStructName + " =  (" + rotType+ "*)" + "malloc(sizeof("
+        block.addStatement(Util.toStmt(writeRotStructName + " =  (" + rotType+ "*)" + "malloc(sizeof("
                 + rotType + "))"));
         
         //modify the first entry
-        block.addStatement(Util.toStmt(rotStructName + "->buffer = " + bufferNames[0]));
+        block.addStatement(Util.toStmt(writeRotStructName + "->buffer = " + bufferNames[0]));
         if (this.rotationLength == 1)  {
             //loop the structure
-            block.addStatement(Util.toStmt(rotStructName + "->next = " + rotStructName));
+            block.addStatement(Util.toStmt(writeRotStructName + "->next = " + writeRotStructName));
         }
         else {
             block.addStatement(Util.toStmt(temp + " = (" + rotType+ "*)" + "malloc(sizeof("
                     + rotType + "))"));    
             
-            block.addStatement(Util.toStmt(rotStructName + "->next = " + 
+            block.addStatement(Util.toStmt(writeRotStructName + "->next = " + 
                     temp));
             
             block.addStatement(Util.toStmt(temp + "->buffer = " + bufferNames[1]));
@@ -530,12 +524,12 @@ public class OutputRotatingBuffer extends RotatingBuffer {
                 block.addStatement(Util.toStmt(temp + "->buffer = " + bufferNames[i]));
             }
             
-            block.addStatement(Util.toStmt(temp + "->next = " + rotStructName));
+            block.addStatement(Util.toStmt(temp + "->next = " + writeRotStructName));
         }
-        block.addStatement(Util.toStmt(currentRotName + " = " + rotStructName));
-        block.addStatement(Util.toStmt(currentBufName + " = " + currentRotName + "->buffer"));
-        block.addStatement(Util.toStmt(transRotName + " = " + rotStructName));
-        block.addStatement(Util.toStmt(transBufName + " = " + currentRotName + "->buffer"));
+        block.addStatement(Util.toStmt(currentWriteRotName + " = " + writeRotStructName));
+        block.addStatement(Util.toStmt(currentWriteBufName + " = " + currentWriteRotName + "->buffer"));
+        block.addStatement(Util.toStmt(transRotName + " = " + writeRotStructName));
+        block.addStatement(Util.toStmt(transBufName + " = " + currentWriteRotName + "->buffer"));
         cs.addStatementToBufferInit(block);
     }
 

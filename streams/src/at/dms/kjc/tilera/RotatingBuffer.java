@@ -10,6 +10,7 @@ import at.dms.kjc.JVariableDefinition;
 import at.dms.kjc.backendSupport.*;
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.slicegraph.*;
+
 import java.util.LinkedList;
 import at.dms.kjc.spacetime.*;
 import at.dms.kjc.*;
@@ -18,7 +19,7 @@ import java.util.Set;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-
+import java.util.HashMap;
 
 
 /**
@@ -40,11 +41,11 @@ public abstract class RotatingBuffer extends Channel {
     /** type of array: array of element type */
     protected CType bufType;
     /** the name of the rotation structure (always points to its head) */
-    protected String rotStructName;
-    /** the name of the pointer to the current rotation of this buffer */
-    protected String currentRotName;
-    /** the name of the pointer to the buffer of the current rotation */
-    protected String currentBufName;
+    protected String writeRotStructName;
+    /** the name of the pointer to the current write rotation of this buffer */
+    protected String currentWriteRotName;
+    /** the name of the pointer to the write buffer of the current rotation */
+    protected String currentWriteBufName;
     /** the filter this buffer is associated with */
     protected FilterSliceNode filterNode;
     /** the names of the individual buffers */
@@ -57,11 +58,16 @@ public abstract class RotatingBuffer extends Channel {
     protected Tile parent;
     /** the filter info object for the filter that contains this buffer */
     protected FilterInfo filterInfo;
+    protected static HashMap<FilterSliceNode, InputRotatingBuffer> inputBuffers;
+    protected static HashMap<FilterSliceNode, RotatingBuffer> outputBuffers;
     protected final String temp = "__temp__";
     
     
     static {
         types = new HashSet<CType>();
+        inputBuffers = new HashMap<FilterSliceNode, InputRotatingBuffer>();
+        outputBuffers = new HashMap<FilterSliceNode, RotatingBuffer>();
+        
     }
     
     protected RotatingBuffer(Edge edge, FilterSliceNode fsn, Tile parent) {
@@ -69,10 +75,9 @@ public abstract class RotatingBuffer extends Channel {
         this.parent = parent;
         filterNode = fsn;
         filterInfo = FilterInfo.getFilterInfo(fsn);
-        rotStructName = this.getIdent() + "_rot_struct";
-        currentRotName =this.getIdent() + "_rot_current";
-        currentBufName =this.getIdent() + "_cur_buf";
-        setBufferSize();
+        writeRotStructName = this.getIdent() + "write_rot_struct";
+        currentWriteRotName =this.getIdent() + "_write_current";
+        currentWriteBufName =this.getIdent() + "_write_buf";
     }
    
     /**
@@ -212,56 +217,7 @@ public abstract class RotatingBuffer extends Channel {
      * Generate the code to setup the structure of the rotating buffer 
      * as a circular linked list.
      */
-    protected void setupRotation() {
-        String temp = "__temp__";
-        TileCodeStore cs = parent.getComputeCode();
-        //this is the typedef we will use for this buffer rotation structure
-        String rotType = rotTypeDefPrefix + getType().toString();
-        
-        //add the declaration of the rotation buffer of the appropriate rotation type
-        parent.getComputeCode().appendTxtToGlobal(rotType + " *" + rotStructName + ";\n");
-        //add the declaration of the pointer that points to the current rotation in the rotation structure
-        parent.getComputeCode().appendTxtToGlobal(rotType + " *" + currentRotName + ";\n");
-        //add the declaration of the pointer that points to the current buffer in the current rotation
-        parent.getComputeCode().appendTxtToGlobal(bufType.toString() + " *" + currentBufName + ";\n");
-        
-        JBlock block = new JBlock();
-        
-        //create a temp var
-        if (this.rotationLength > 1)
-            block.addStatement(Util.toStmt(rotType + " *" + temp));
-        
-        //create the first entry!!
-        block.addStatement(Util.toStmt(rotStructName + " =  (" + rotType+ "*)" + "malloc(sizeof("
-                + rotType + "))"));
-        
-        //modify the first entry
-        block.addStatement(Util.toStmt(rotStructName + "->buffer = " + bufferNames[0]));
-        if (this.rotationLength == 1) 
-            block.addStatement(Util.toStmt(rotStructName + "->next = " + rotStructName));
-        else {
-            block.addStatement(Util.toStmt(temp + " = (" + rotType+ "*)" + "malloc(sizeof("
-                    + rotType + "))"));    
-            
-            block.addStatement(Util.toStmt(rotStructName + "->next = " + 
-                    temp));
-            
-            block.addStatement(Util.toStmt(temp + "->buffer = " + bufferNames[1]));
-            
-            for (int i = 2; i < this.rotationLength; i++) {
-                block.addStatement(Util.toStmt(temp + "->next =  (" + rotType+ "*)" + "malloc(sizeof("
-                        + rotType + "))"));
-                block.addStatement(Util.toStmt(temp + " = " + temp + "->next"));
-                block.addStatement(Util.toStmt(temp + "->buffer = " + bufferNames[i]));
-            }
-            
-            block.addStatement(Util.toStmt(temp + "->next = " + rotStructName));
-        }
-        block.addStatement(Util.toStmt(currentRotName + " = " + rotStructName));
-        block.addStatement(Util.toStmt(currentBufName + " = " + currentRotName + "->buffer"));
-        block.addStatement(endOfRotationSetup());
-        cs.addStatementToBufferInit(block);
-    }
+    protected abstract void setupRotation();
     
     /** 
      * The statement returned by this method will be added to the end of the rotation setup for this
@@ -303,6 +259,57 @@ public abstract class RotatingBuffer extends Channel {
         }
     }
     
+    public static void setOutputBuffer(FilterSliceNode node, RotatingBuffer buf) {
+        outputBuffers.put(node, buf);
+    }
+    
+    public static void setInputBuffer(FilterSliceNode node, InputRotatingBuffer buf) {
+        inputBuffers.put(node, buf);
+    }
+    
+    
+    /**
+     * Return the input buffer associated with the filter node.
+     * 
+     * @param fsn The filter node in question.
+     * @return The input buffer of the filter node.
+     */
+    public static InputRotatingBuffer getInputBuffer(FilterSliceNode fsn) {
+        return inputBuffers.get(fsn);
+    }
+  
+    public static RotatingBuffer getOutputBuffer(FilterSliceNode fsn) {
+        return outputBuffers.get(fsn);
+    }
+    
+    /**
+     * Return the set of all the InputBuffers that are mapped to tile t.
+     */
+    public static Set<InputRotatingBuffer> getInputBuffersOnTile(Tile t) {
+        HashSet<InputRotatingBuffer> set = new HashSet<InputRotatingBuffer>();
+        
+        for (InputRotatingBuffer b : inputBuffers.values()) {
+            if (TileraBackend.backEndBits.getLayout().getComputeNode(b.getFilterNode()).equals(t))
+                set.add(b);
+        }
+        
+        return set;
+    }
+    /**
+     * Return the set of all the InputBuffers that are mapped to tile t.
+     */
+    public static Set<RotatingBuffer> getOutputBuffersOnTile(Tile t) {
+        HashSet<RotatingBuffer> set = new HashSet<RotatingBuffer>();
+        
+        for (RotatingBuffer b : outputBuffers.values()) {
+            if (TileraBackend.backEndBits.getLayout().getComputeNode(b.getFilterNode()).equals(t))
+                set.add(b);
+        }
+        
+        return set;
+    }
+    
+    
     /** 
      * Return the filter this buffer is associated with.
      * 
@@ -335,15 +342,15 @@ public abstract class RotatingBuffer extends Channel {
     protected List<JStatement> rotateStatements() {
         LinkedList<JStatement> list = new LinkedList<JStatement>();
         if (rotationLength > 1) {
-            list.add(Util.toStmt(currentRotName + " = " + currentRotName + "->next"));
-            list.add(Util.toStmt(currentBufName + " = " + currentRotName + "->buffer"));
+            list.add(Util.toStmt(currentWriteRotName + " = " + currentWriteRotName + "->next"));
+            list.add(Util.toStmt(currentWriteBufName + " = " + currentWriteRotName + "->buffer"));
         }
         return list;
     }
     
     /** Create an array reference given an offset */   
     protected JArrayAccessExpression bufRef(JExpression offset) {
-        JFieldAccessExpression bufAccess = new JFieldAccessExpression(new JThisExpression(), currentBufName);
+        JFieldAccessExpression bufAccess = new JFieldAccessExpression(new JThisExpression(), currentWriteBufName);
         return new JArrayAccessExpression(bufAccess, offset);
     }
     

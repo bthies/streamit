@@ -468,13 +468,13 @@ public class Fissioner {
         sliceClones[0].getHead().setInitSources(toArray(edgeSet));
 
         for(int x = 1 ; x < sources.length ; x++) {
-            sources[x].getTail().setInitWeights(new int[0]);
-            sources[x].getTail().setInitDests(new InterSliceEdge[0][0]);
+            sources[x].getTail().setInitWeights(null);
+            sources[x].getTail().setInitDests(null);                                             
         }
 	
         for(int x = 1 ; x < fizzAmount ; x++) {
-            sliceClones[x].getHead().setInitWeights(new int[0]);
-            sliceClones[x].getHead().setInitSources(new InterSliceEdge[0]);
+            sliceClones[x].getHead().setInitWeights(null);
+            sliceClones[x].getHead().setInitSources(null);
         }
 
         // Since only the first Slice clone executes, it will be the only Slice
@@ -502,13 +502,13 @@ public class Fissioner {
         dests[0].getHead().setInitSources(toArray(edgeSet));
 
         for(int x = 1 ; x < fizzAmount ; x++) {
-            sliceClones[x].getTail().setInitWeights(new int[0]);
-            sliceClones[x].getTail().setDests(new InterSliceEdge[0][0]);
+            sliceClones[x].getTail().setInitWeights(null);
+            sliceClones[x].getTail().setDests(null);
         }
 	
         for(int x = 1 ; x < dests.length ; x++) {
-            dests[x].getHead().setInitWeights(new int[0]);
-            dests[x].getHead().setInitSources(new InterSliceEdge[0]);
+            dests[x].getHead().setInitWeights(null);
+            dests[x].getHead().setInitSources(null);
         }
 
         // Set prepop for the last Slice clone.  Initially in steady-state, last

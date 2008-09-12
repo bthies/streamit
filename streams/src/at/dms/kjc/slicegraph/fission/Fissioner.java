@@ -385,7 +385,7 @@ public class Fissioner {
                                                                                       new JIntLiteral(1))));
 	    
             JForStatement initMultLoop =
-                new JForStatement(null,
+                new JForStatement(new JEmptyStatement(),
                                   initMultLoopCond,
                                   initMultLoopIncr,
                                   (JBlock)ObjectDeepCloner.deepCopy(firstWorkBody));
@@ -1001,7 +1001,7 @@ public class Fissioner {
                                                                                       new JIntLiteral(1))));
 
             JForStatement steadyMultLoop =
-                new JForStatement(null,
+                new JForStatement(new JEmptyStatement(),
                                   steadyMultLoopCond,
                                   steadyMultLoopIncr,
                                   (JBlock)ObjectDeepCloner.deepCopy(origWorkBodies[x]));

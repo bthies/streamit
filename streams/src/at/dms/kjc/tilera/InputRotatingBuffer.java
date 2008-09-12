@@ -483,20 +483,6 @@ public class InputRotatingBuffer extends RotatingBuffer {
         return retval;
     }
     
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#pushMethodName()
-     */
-    public String pushMethodName() {
-        assert false : "Shouldn't call push() method on an input buffer";
-        return "";
-    }
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#pushMethod()
-     */
-    public JMethodDeclaration pushMethod() {
-        assert false : "Shouldn't call push() method on an input buffer";
-        return null;
-    }
     
     /* (non-Javadoc)
      * @see at.dms.kjc.backendSupport.ChannelI#beginInitRead()

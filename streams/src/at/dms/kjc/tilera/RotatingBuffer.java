@@ -319,10 +319,6 @@ public abstract class RotatingBuffer extends Channel {
         return filterNode;
     }
     
-    public static Set<RotatingBuffer> getBuffersOnTile(Tile t) {
-        return null;
-    }
-    
     /**
      * DO NOT USE, WE ARE NOT USING EXTRACOUNT FOR DOUBLE BUFFERING ACCOUNTING!
      */

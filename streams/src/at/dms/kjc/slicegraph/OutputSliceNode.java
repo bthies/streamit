@@ -116,7 +116,7 @@ public class OutputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneab
 
     /**
      * Return true if this output node has a different schedule for the initialization 
-     * stage.  This mean initWeights and initDests are not null.  Otherwise, return false
+     * stage.  This means initWeights and initDests are not null.  Otherwise, return false
      * meaning the init stages is the same as the steady.
      * 
      * @return 

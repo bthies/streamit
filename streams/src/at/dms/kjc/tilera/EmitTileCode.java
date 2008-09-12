@@ -220,8 +220,8 @@ public class EmitTileCode extends EmitCode {
         codegen.setDeclOnly(false);
 
         // generate code for ends of channels that connect to code on this ComputeNode
-        Set <RotatingBuffer> outputBuffers = OutputRotatingBuffer.getBuffersOnTile((Tile)n);
-        Set <RotatingBuffer> inputBuffers = InputRotatingBuffer.getBuffersOnTile((Tile)n);
+        Set <RotatingBuffer> outputBuffers = OutputRotatingBuffer.getOutputBuffersOnTile((Tile)n);
+        Set <InputRotatingBuffer> inputBuffers = InputRotatingBuffer.getInputBuffersOnTile((Tile)n);
         
         // externs
         for (RotatingBuffer c : outputBuffers) {

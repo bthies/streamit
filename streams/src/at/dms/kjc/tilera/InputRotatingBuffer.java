@@ -314,7 +314,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
             int output = Math.max(srcInfo.totalItemsSent(SchedulingPhase.STEADY), 
                     srcInfo.totalItemsSent(SchedulingPhase.INIT));
             bufSize = Math.max(bufSize, output);
-        }    
+        }
     }
 
     
@@ -620,7 +620,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
         String src = currentReadBufName;
         
         for (int i = 0; i < filterInfo.copyDown; i++) {
-            retval.add(Util.toStmt(dst + "[i] = " + src + "[" + 
+            retval.add(Util.toStmt(dst + "[" + i + "] = " + src + "[" + 
                     (i + filterInfo.totalItemsPopped(SchedulingPhase.STEADY)) +
                     "]"));
         }

@@ -91,6 +91,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
                     
                     OutputRotatingBuffer buf = new OutputRotatingBuffer(slice.getFirstFilter(), parent);
                     buf.setRotationLength(schedule);
+                    buf.setBufferSize();
                     buf.createInitCode(false);
 
                 }
@@ -298,6 +299,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
         
         bufSize = Math.max(fi.totalItemsSent(SchedulingPhase.INIT),
                 fi.totalItemsSent(SchedulingPhase.STEADY));
+      
     }
     
     /* (non-Javadoc)

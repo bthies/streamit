@@ -1,8 +1,12 @@
 package at.dms.kjc.tilera;
 
+import java.util.LinkedList;
+import java.util.List;
+
 import at.dms.kjc.JBlock;
 import at.dms.kjc.JEmittedTextExpression;
 import at.dms.kjc.JExpressionStatement;
+import at.dms.kjc.JStatement;
 import at.dms.kjc.slicegraph.*;
 
 /**
@@ -108,5 +112,15 @@ public class SourceAddressRotation extends RotatingBuffer {
         block.addStatement(Util.toStmt(currentWriteBufName + " = " + currentWriteRotName + "->buffer"));
         block.addStatement(endOfRotationSetup());
         cs.addStatementToBufferInit(block);
+    }
+    
+
+    protected List<JStatement> rotateStatements() {
+        LinkedList<JStatement> list = new LinkedList<JStatement>();
+        if (rotationLength > 1) {
+            list.add(Util.toStmt(currentWriteRotName + " = " + currentWriteRotName + "->next"));
+            list.add(Util.toStmt(currentWriteBufName + " = " + currentWriteRotName + "->buffer"));
+        }
+        return list;
     }
 }

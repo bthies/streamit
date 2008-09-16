@@ -8,7 +8,7 @@ import at.dms.kjc.JStatement;
 
 public class BufferDMATransfers extends BufferTransfers {
    
-    public BufferDMATransfers(OutputRotatingBuffer buf) {
+    public BufferDMATransfers(RotatingBuffer buf) {
         super(buf);
         
         checkSimple(SchedulingPhase.INIT);

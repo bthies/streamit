@@ -46,7 +46,18 @@ public abstract class RotatingBuffer extends Channel {
     protected String currentWriteRotName;
     /** the name of the pointer to the write buffer of the current rotation */
     protected String currentWriteBufName;
-    /** the filter this buffer is associated with */
+    /** name of the variable that points to the rotation structure we should be transferring from */
+    public String transRotName;
+    /** name of the variable that points to the buffer we should be transferring from */
+    public String transBufName;
+    /** name of variable containing head of array offset */
+    protected String writeHeadName;
+    /** definition for head */
+    protected JVariableDefinition writeHeadDefn;
+    /** definition of boolean used during primepump to see if it is the first exection */
+    protected JVariableDefinition firstExe;
+    protected String firstExeName;
+    /** the filter this buffer is associated with */   
     protected FilterSliceNode filterNode;
     /** the names of the individual buffers */
     protected String[] bufferNames;
@@ -58,6 +69,10 @@ public abstract class RotatingBuffer extends Channel {
     protected Tile parent;
     /** the filter info object for the filter that contains this buffer */
     protected FilterInfo filterInfo;
+    /** the data transfer statements that are generated for this output buffer */
+    protected BufferTransfers transferCommands;
+    /** the address buffers that this buffer rotation uses as destinations for transfers */ 
+    protected HashMap<InputRotatingBuffer, SourceAddressRotation> addressBuffers;
     protected static HashMap<FilterSliceNode, InputRotatingBuffer> inputBuffers;
     protected static HashMap<FilterSliceNode, RotatingBuffer> outputBuffers;
     protected final String temp = "__temp__";
@@ -93,6 +108,16 @@ public abstract class RotatingBuffer extends Channel {
     public static void createBuffers(BasicSpaceTimeSchedule schedule) {
         InputRotatingBuffer.createInputBuffers(schedule);
         OutputRotatingBuffer.createOutputBuffers(schedule);
+        
+        //now that all the buffers are created, create the pointers to them
+        //that live on other tiles
+        for (InputRotatingBuffer buf : inputBuffers.values()) {
+            buf.createAddressBuffers();
+        }
+        for (RotatingBuffer buf : outputBuffers.values()) {
+            buf.createAddressBuffers();
+        }
+        
         //now add the typedefs needed for the rotating buffers to structs.h
         rotTypeDefs();
         //now that all the buffers are allocated, we create a barrier on all the tiles
@@ -102,7 +127,31 @@ public abstract class RotatingBuffer extends Channel {
         communicateAddresses();
     }
     
+    public void createAddressBuffers() {
         
+    }
+    
+    public void createTransferCommands() {
+        //generate the dma commands
+        if (TileraBackend.DMA) 
+            transferCommands = new BufferDMATransfers(this);
+        else 
+            transferCommands = new BufferRemoteWritesTransfers(this);
+    }
+        
+    /**
+     * Return the address rotation that this output rotation uses for the given input slice node
+     * 
+     * @param input the input slice node 
+     * @return the dma address rotation used to store the address of the 
+     * rotation associated with this input slice node
+     */
+    public SourceAddressRotation getAddressBuffer(InputSliceNode input) {
+        assert addressBuffers.containsKey(InputRotatingBuffer.getInputBuffer(input.getNextFilter()));
+        
+        return addressBuffers.get(InputRotatingBuffer.getInputBuffer(input.getNextFilter()));
+    }
+    
     /**
      * Generate the code necessary to communicate the addresses of the shared input buffers 
      * of all input rotational structures to the sources that will write to the buffer 
@@ -212,7 +261,7 @@ public abstract class RotatingBuffer extends Channel {
                     this.getType() + "))")));
         }
     }
-    
+      
     /**
      * Generate the code to setup the structure of the rotating buffer 
      * as a circular linked list.
@@ -334,21 +383,7 @@ public abstract class RotatingBuffer extends Channel {
         assert false;
         this.extraCount = extracount;
     }
-    
-    protected List<JStatement> rotateStatements() {
-        LinkedList<JStatement> list = new LinkedList<JStatement>();
-        if (rotationLength > 1) {
-            list.add(Util.toStmt(currentWriteRotName + " = " + currentWriteRotName + "->next"));
-            list.add(Util.toStmt(currentWriteBufName + " = " + currentWriteRotName + "->buffer"));
-        }
-        return list;
-    }
-    
-    /** Create an array reference given an offset */   
-    protected JArrayAccessExpression bufRef(JExpression offset) {
-        JFieldAccessExpression bufAccess = new JFieldAccessExpression(new JThisExpression(), currentWriteBufName);
-        return new JArrayAccessExpression(bufAccess, offset);
-    }
+   
     
     /* (non-Javadoc)
      * @see at.dms.kjc.backendSupport.ChannelI#beginSteadyRead()

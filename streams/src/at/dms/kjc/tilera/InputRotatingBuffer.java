@@ -16,9 +16,10 @@ import java.util.*;
  *
  */
 public class InputRotatingBuffer extends RotatingBuffer {
-    
-    protected FilterSliceNode localSrcFilter;
-    
+    /** if this input buffer is shared as an upstream output buffer for a filter on
+     * the same tile, then this references the upstream filter.
+     */
+    protected FilterSliceNode localSrcFilter;    
     /** name of variable containing tail of array offset */
     protected String tailName;
     /** definition for tail */
@@ -39,6 +40,8 @@ public class InputRotatingBuffer extends RotatingBuffer {
     protected String currentReadRotName;
     /** the name of the pointer to the read buffer of the current rotation */
     protected String currentReadBufName;
+    /** reference to head if this input buffer is shared as an output buffer */
+    protected JExpression head;
 
     /**
      * Create all the input buffers necessary for this slice graph.  Iterate over
@@ -76,7 +79,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
         super(filterNode.getEdgeToPrev(), filterNode, parent);
         bufType = filterNode.getFilter().getInputType();
         types.add(bufType);
-        inputBuffers.put(filterNode, this);
+        setInputBuffer(filterNode, this);
                 
         readRotStructName = this.getIdent() + "read_rot_struct";
         currentReadRotName =this.getIdent() + "_read_current";
@@ -120,8 +123,47 @@ public class InputRotatingBuffer extends RotatingBuffer {
                 localSrcFilter = upstream;
             }
         }
-        //remember that this input buffer is the output for the src filter on the same tile
-        setOutputBuffer(localSrcFilter, this);
+        
+        //if we found an upstream filter mapped to the same tile
+        if (localSrcFilter != null) {
+          //remember that this input buffer is the output for the src filter on the same tile
+            setOutputBuffer(localSrcFilter, this);
+            
+            //since this is now an output buffer also, we have to generate transfer statements
+            createTransferCommands();
+            
+            //set up the head pointer for writing
+            writeHeadName = this.getIdent() + "head";
+            writeHeadDefn = new JVariableDefinition(null,
+                    at.dms.kjc.Constants.ACC_STATIC,
+                    CStdType.Integer, writeHeadName, null);
+            
+            head = new JFieldAccessExpression(writeHeadName);
+            head.setType(CStdType.Integer);
+            
+            firstExeName = "__first__" + this.getIdent();        
+            firstExe = new JVariableDefinition(null,
+                    at.dms.kjc.Constants.ACC_STATIC,
+                    CStdType.Boolean, firstExeName, new JBooleanLiteral(true));
+        }
+    }
+    public void createAddressBuffers() {
+        //do nothing for input buffers that don't act as output buffers
+        if (!hasLocalSrcFilter())
+            return;
+        
+        //fill the addressbuffers array
+        addressBuffers = new HashMap<InputRotatingBuffer, SourceAddressRotation>();
+        
+        OutputSliceNode outputNode = localSrcFilter.getParent().getTail();
+        
+        for (InterSliceEdge edge : outputNode.getDestSet(SchedulingPhase.STEADY)) {
+            if (edge.getDest() == this.filterNode.getParent().getHead())
+                continue;
+            
+            InputRotatingBuffer input = InputRotatingBuffer.getInputBuffer(edge.getDest().getNextFilter());
+            addressBuffers.put(input, input.getAddressRotation(parent));               
+        }
     }
     
     /**
@@ -253,13 +295,23 @@ public class InputRotatingBuffer extends RotatingBuffer {
     }
     
     /**
-     * 
+     * Must be callsed after setLocalSrcFilter
      */
     protected void createAddressBufs() {
-       addressBufs = new SourceAddressRotation[filterNode.getParent().getHead().getSourceSlices(SchedulingPhase.STEADY).size()];
+       int addressBufsSize = filterNode.getParent().getHead().getSourceSlices(SchedulingPhase.STEADY).size();
+       //if we are using this input buffer as an output buffer, then we don't need the address buffer
+       //for the output buffer that is used for the upstream filter that is mapped to this tile
+       if (hasLocalSrcFilter())
+           addressBufsSize--;
+       
+       addressBufs = new SourceAddressRotation[addressBufsSize];
+       
        int i = 0;
        for (Slice src : filterNode.getParent().getHead().getSourceSlices(SchedulingPhase.STEADY)) {
            Tile tile = TileraBackend.backEndBits.getLayout().getComputeNode(src.getFirstFilter());
+           if (tile == parent)
+               continue;
+           
            SourceAddressRotation rot = new SourceAddressRotation(tile, this, filterNode, theEdge);
            addressBufs[i] = rot;
            addrBufMap.put(tile, rot);
@@ -342,6 +394,12 @@ public class InputRotatingBuffer extends RotatingBuffer {
         new JReturnStatement(null,
                 bufRef(new JPostfixExpression(at.dms.kjc.Constants.OPE_POSTINC, tail)),null));
         return retval;
+    }
+    
+    /** Create an array reference given an offset */   
+    protected JArrayAccessExpression bufRef(JExpression offset) {
+        JFieldAccessExpression bufAccess = new JFieldAccessExpression(new JThisExpression(), currentWriteBufName);
+        return new JArrayAccessExpression(bufAccess, offset);
     }
     
     /* (non-Javadoc)
@@ -513,7 +571,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
             list.addAll(fileReaderCode.getCode(SchedulingPhase.STEADY));
             list.addAll(fileReaderCode.waitCallsSteady());
             list.addAll(copyDownStatements());
-            list.addAll(rotateStatements());
+            list.addAll(rotateStatementsRead());
         }
         return list;
     }
@@ -550,7 +608,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
             list.addAll(fileReaderCode.waitCallsSteady());
         }
         //rotate to the next buffer
-        list.addAll(rotateStatements());        
+        list.addAll(rotateStatementsRead());        
         return list;
     }
 
@@ -589,9 +647,9 @@ public class InputRotatingBuffer extends RotatingBuffer {
      */
     public List<JStatement> readDecls() {
         //declare the tail    
-        JStatement headDecl = new JVariableDeclarationStatement(tailDefn);
+        JStatement tailDecl = new JVariableDeclarationStatement(tailDefn);
         List<JStatement> retval = new LinkedList<JStatement>();
-        retval.add(headDecl);
+        retval.add(tailDecl);
         //if we have a file reader feeding this then add the decls for 
         //the dma commands we generate for it.
         if (upstreamFileReader) 
@@ -633,6 +691,217 @@ public class InputRotatingBuffer extends RotatingBuffer {
         */
         return retval;
     }
+    
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#endInitWrite()
+     */
+    public List<JStatement> endInitWrite() {
+        assert hasLocalSrcFilter() : "Calling write method for input buffer that does not act as output buffer.";
+        
+        LinkedList<JStatement> list = new LinkedList<JStatement>();
+        //in the init stage we use dma to send the output to the dest filter
+        //but we have to wait until the end because are not double buffering
+        //also, don't rotate anything here
+        list.addAll(transferCommands.transferCommands(SchedulingPhase.INIT));
+        return list;
+    }
+    
+    /**
+     *  We don't want to transfer during the first execution of the primepump
+     *  so guard the execution in an if statement.
+     */
+    public List<JStatement> beginPrimePumpWrite() {
+        assert hasLocalSrcFilter() : "Calling write method for input buffer that does not act as output buffer.";
+        
+        LinkedList<JStatement> list = new LinkedList<JStatement>();
+                
+        list.add(zeroOutHead());
+        
+        JBlock block = new JBlock();
+        block.addAllStatements(transferCommands.transferCommands(SchedulingPhase.STEADY));
+        
+        
+        JIfStatement guard = new JIfStatement(null, new JLogicalComplementExpression(null, 
+                new JEmittedTextExpression(firstExeName)), 
+                block , new JBlock(), null);
+        
+        list.add(guard);
+        return list;
+    }
+    
+    public List<JStatement> endPrimePumpWrite() {
+        assert hasLocalSrcFilter() : "Calling write method for input buffer that does not act as output buffer.";
+        
+        LinkedList<JStatement> list = new LinkedList<JStatement>();
+        
+        //the wait for dma commands, only wait if this is not the first exec
+        JBlock block1 = new JBlock();
+        block1.addAllStatements(transferCommands.waitCallsSteady());
+        JIfStatement guard1 = new JIfStatement(null, new JLogicalComplementExpression(null, 
+                new JEmittedTextExpression(firstExeName)), 
+                block1 , new JBlock(), null);  
+        list.add(guard1);
+                
+        
+        //generate the rotate statements for this output buffer
+        list.addAll(rotateStatementsCurRot());
+        
+        JBlock block2 = new JBlock();
+        //rotate the transfer buffer only when it is not first
+        if (TileraBackend.DMA)
+            block2.addAllStatements(rotateStatementsTransRot());
+        //generate the rotation statements for the address buffers that this output
+        //buffer uses, only do this after first execution
+        for (SourceAddressRotation addrRot : addressBuffers.values()) {
+            block2.addAllStatements(addrRot.rotateStatements());
+        }
+        JIfStatement guard2 = new JIfStatement(null, new JLogicalComplementExpression(null, 
+                new JEmittedTextExpression(firstExeName)), 
+                block2, new JBlock(), null);    
+        list.add(guard2);
+        
+        //now we are done with the first execution to set firstExe to false
+        list.add(new JExpressionStatement(
+                new JAssignmentExpression(new JEmittedTextExpression(firstExeName), 
+                        new JBooleanLiteral(false))));
+        
+        return list;
+    }
+    
+    
+    
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#beginSteadyWrite()
+     */
+    public List<JStatement> beginSteadyWrite() {
+        assert hasLocalSrcFilter() : "Calling write method for input buffer that does not act as output buffer.";
+        
+        LinkedList<JStatement> list = new LinkedList<JStatement>();
+        list.add(zeroOutHead());
+        list.addAll(transferCommands.transferCommands(SchedulingPhase.STEADY));
+        return list;
+    }
+    
+
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#endSteadyWrite()
+     */
+    public List<JStatement> endSteadyWrite() {
+        assert hasLocalSrcFilter() : "Calling write method for input buffer that does not act as output buffer.";
+        
+        LinkedList<JStatement> list = new LinkedList<JStatement>();
+        list.addAll(transferCommands.waitCallsSteady());
+        //generate the rotate statements for this output buffer
+        list.addAll(rotateStatementsWrite());
+        
+        //generate the rotation statements for the address buffers that this output
+        //buffer uses
+        for (SourceAddressRotation addrRot : addressBuffers.values()) {
+            list.addAll(addrRot.rotateStatements());
+        }
+        return list;
+    }
+    
+ 
+    
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#writeDecls()
+     */
+    public List<JStatement> writeDecls() {
+        assert hasLocalSrcFilter() : "Calling write method for input buffer that does not act as output buffer.";
+        
+        JStatement tailDecl = new JVariableDeclarationStatement(writeHeadDefn);
+        JStatement firstDecl = new JVariableDeclarationStatement(firstExe);
+        List<JStatement> retval = new LinkedList<JStatement>();
+        retval.add(tailDecl);
+        retval.add(firstDecl);
+        retval.addAll(transferCommands.decls());
+        return retval;
+    }   
+    
+    
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#pushMethodName()
+     */
+    public String pushMethodName() {
+        assert hasLocalSrcFilter() : "Calling write method for input buffer that does not act as output buffer.";
+        return "__push_" + unique_id;
+    }
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#pushMethod()
+     */
+    public JMethodDeclaration pushMethod() {
+        assert hasLocalSrcFilter() : "Calling write method for input buffer that does not act as output buffer.";
+        String valName = "__val";
+        JFormalParameter val = new JFormalParameter(
+                theEdge.getType(),
+                valName);
+        JLocalVariableExpression valRef = new JLocalVariableExpression(val);
+        JBlock body = new JBlock();
+        JMethodDeclaration retval = new JMethodDeclaration(
+                null,
+                /*at.dms.kjc.Constants.ACC_PUBLIC | at.dms.kjc.Constants.ACC_STATIC |*/ at.dms.kjc.Constants.ACC_INLINE,
+                CStdType.Void,
+                pushMethodName(),
+                new JFormalParameter[]{val},
+                CClassType.EMPTY,
+                body, null, null);
+        body.addStatement(
+        new JExpressionStatement(new JAssignmentExpression(
+                bufRef(new JPostfixExpression(at.dms.kjc.Constants.OPE_POSTINC,
+                        head)),
+                valRef)));
+        return retval;
+    }
+    
+    /* (non-Javadoc)
+     * @see at.dms.kjc.backendSupport.ChannelI#beginInitWrite()
+     */
+    public List<JStatement> beginInitWrite() {
+        assert hasLocalSrcFilter() : "Calling write method for input buffer that does not act as output buffer.";
+        LinkedList<JStatement> list = new LinkedList<JStatement>();
+        list.add(zeroOutHead());
+        return list;
+    }
+    
+    protected List<JStatement> rotateStatementsWrite() {
+        assert hasLocalSrcFilter() : "Calling write method for input buffer that does not act as output buffer.";
+        
+        LinkedList<JStatement> list = new LinkedList<JStatement>();
+        list.addAll(rotateStatementsCurRot());
+        if (TileraBackend.DMA) 
+            list.addAll(rotateStatementsTransRot());
+        return list;
+    }
+    
+
+    protected List<JStatement> rotateStatementsRead() {
+        LinkedList<JStatement> list = new LinkedList<JStatement>();
+        list.add(Util.toStmt(currentReadRotName + " = " + currentReadRotName + "->next"));
+        list.add(Util.toStmt(currentReadBufName + " = " + currentReadRotName + "->buffer"));
+        return list;
+    }
+
+    protected List<JStatement> rotateStatementsCurRot() {
+        LinkedList<JStatement> list = new LinkedList<JStatement>();
+        list.add(Util.toStmt(currentWriteRotName + " = " + currentWriteRotName + "->next"));
+        list.add(Util.toStmt(currentWriteBufName + " = " + currentWriteRotName + "->buffer"));
+        return list;
+    }
+    
+    protected List<JStatement> rotateStatementsTransRot() {
+        LinkedList<JStatement> list = new LinkedList<JStatement>();
+        list.add(Util.toStmt(transRotName + " = " + transRotName + "->next"));
+        list.add(Util.toStmt(transBufName + " = " + transRotName + "->buffer"));
+        return list;
+    }
+    
+    /** Create statement zeroing out head */
+    protected JStatement zeroOutHead() {
+        return new JExpressionStatement(
+                        new JAssignmentExpression(head, new JIntLiteral(0)));
+    }
+    
     /*
     protected List<JStatement> dmaFileReadCommands() {
         

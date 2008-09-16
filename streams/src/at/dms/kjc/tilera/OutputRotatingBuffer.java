@@ -8,6 +8,7 @@ import java.util.Set;
 
 import at.dms.kjc.CClassType;
 import at.dms.kjc.CStdType;
+import at.dms.kjc.JArrayAccessExpression;
 import at.dms.kjc.JAssignmentExpression;
 import at.dms.kjc.JBlock;
 import at.dms.kjc.JBooleanLiteral;
@@ -23,6 +24,7 @@ import at.dms.kjc.JLogicalComplementExpression;
 import at.dms.kjc.JMethodDeclaration;
 import at.dms.kjc.JPostfixExpression;
 import at.dms.kjc.JStatement;
+import at.dms.kjc.JThisExpression;
 import at.dms.kjc.JVariableDeclarationStatement;
 import at.dms.kjc.JVariableDefinition;
 import at.dms.kjc.backendSupport.FilterInfo;
@@ -35,23 +37,7 @@ import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.spacetime.BasicSpaceTimeSchedule;
 
 public class OutputRotatingBuffer extends RotatingBuffer {
-    /** name of the variable that points to the rotation structure we should be transferring from */
-    public String transRotName;
-    /** name of the variable that points to the buffer we should be transferring from */
-    public String transBufName;
-    /** name of variable containing head of array offset */
-    protected String headName;
-    /** definition for head */
-    protected JVariableDefinition headDefn;
-    /** definition of boolean used during primepump to see if it is the first exection */
-    protected JVariableDefinition firstExe;
-    protected String firstExeName;
     /** the output slice node for this output buffer */
-    /** the dma commands that are generated for this output buffer */
-    protected BufferTransfers transferCommands;
-    /** the address buffers that this output rotation uses as destinations for dma commands */ 
-    protected HashMap<InputRotatingBuffer, SourceAddressRotation> addressBuffers;
-    
     protected OutputSliceNode outputNode;
     /** reference to head */
     protected JExpression head;      
@@ -108,15 +94,15 @@ public class OutputRotatingBuffer extends RotatingBuffer {
         outputNode = filterNode.getParent().getTail();
         bufType = filterNode.getFilter().getOutputType();
         setOutputBuffer(filterNode, this);
-        headName = this.getIdent() + "head";
-        headDefn = new JVariableDefinition(null,
+        writeHeadName = this.getIdent() + "head";
+        writeHeadDefn = new JVariableDefinition(null,
                 at.dms.kjc.Constants.ACC_STATIC,
-                CStdType.Integer, headName, null);
+                CStdType.Integer, writeHeadName, null);
         
         transRotName = this.getIdent() + "_rot_trans";
         transBufName = this.getIdent() + "_trans_buf";
         
-        head = new JFieldAccessExpression(headName);
+        head = new JFieldAccessExpression(writeHeadName);
         head.setType(CStdType.Integer);
       
         
@@ -127,20 +113,24 @@ public class OutputRotatingBuffer extends RotatingBuffer {
                 at.dms.kjc.Constants.ACC_STATIC,
                 CStdType.Boolean, firstExeName, new JBooleanLiteral(true));
         
-        //fill the addressbuffers array
+        createTransferCommands();
+    }
+   
+    /** Create an array reference given an offset */   
+    protected JArrayAccessExpression bufRef(JExpression offset) {
+        JFieldAccessExpression bufAccess = new JFieldAccessExpression(new JThisExpression(), currentWriteBufName);
+        return new JArrayAccessExpression(bufAccess, offset);
+    }
+    
+    public void createAddressBuffers() {
+      //fill the addressbuffers array
         addressBuffers = new HashMap<InputRotatingBuffer, SourceAddressRotation>();
         for (InterSliceEdge edge : outputNode.getDestSet(SchedulingPhase.STEADY)) {
             InputRotatingBuffer input = InputRotatingBuffer.getInputBuffer(edge.getDest().getNextFilter());
             addressBuffers.put(input, input.getAddressRotation(tile));               
         }
-        
-        //generate the dma commands
-        if (TileraBackend.DMA) 
-            transferCommands = new BufferDMATransfers(this);
-        else 
-            transferCommands = new BufferRemoteWritesTransfers(this);
     }
-   
+    
     public void setRotationLength(BasicSpaceTimeSchedule schedule) {
         //calculate the rotation length
         int srcMult = schedule.getPrimePumpMult(filterNode.getParent());
@@ -152,21 +142,6 @@ public class OutputRotatingBuffer extends RotatingBuffer {
                 maxRotLength = diff;
         }
         rotationLength = maxRotLength + 1;
-    }
-    
-    
-    
-    /**
-     * Return the address rotation that this output rotation uses for the given input slice node
-     * 
-     * @param input the input slice node 
-     * @return the dma address rotation used to store the address of the 
-     * rotation associated with this input slice node
-     */
-    public SourceAddressRotation getAddressBuffer(InputSliceNode input) {
-        assert addressBuffers.containsKey(InputRotatingBuffer.getInputBuffer(input.getNextFilter()));
-        
-        return addressBuffers.get(InputRotatingBuffer.getInputBuffer(input.getNextFilter()));
     }
     
 
@@ -220,7 +195,8 @@ public class OutputRotatingBuffer extends RotatingBuffer {
         
         JBlock block2 = new JBlock();
         //rotate the transfer buffer only when it is not first
-        block2.addAllStatements(rotateStatementsTransRot());
+        if (TileraBackend.DMA)
+            block2.addAllStatements(rotateStatementsTransRot());
         //generate the rotation statements for the address buffers that this output
         //buffer uses, only do this after first execution
         for (SourceAddressRotation addrRot : addressBuffers.values()) {
@@ -257,10 +233,12 @@ public class OutputRotatingBuffer extends RotatingBuffer {
      */
     protected List<JStatement> rotateStatements() {
         LinkedList<JStatement> list = new LinkedList<JStatement>();
-        list.addAll(rotateStatementsTransRot());
+        if (TileraBackend.DMA)
+            list.addAll(rotateStatementsTransRot());
         list.addAll(rotateStatementsCurRot());
         return list;
     }
+        
 
     /* (non-Javadoc)
      * @see at.dms.kjc.backendSupport.ChannelI#endSteadyWrite()
@@ -285,7 +263,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
      * @see at.dms.kjc.backendSupport.ChannelI#writeDecls()
      */
     public List<JStatement> writeDecls() {
-        JStatement tailDecl = new JVariableDeclarationStatement(headDefn);
+        JStatement tailDecl = new JVariableDeclarationStatement(writeHeadDefn);
         JStatement firstDecl = new JVariableDeclarationStatement(firstExe);
         List<JStatement> retval = new LinkedList<JStatement>();
         retval.add(tailDecl);
@@ -488,11 +466,13 @@ public class OutputRotatingBuffer extends RotatingBuffer {
         parent.getComputeCode().appendTxtToGlobal(rotType + " *" + currentWriteRotName + ";\n");
         //add the declaration of the pointer that points to the current buffer in the current rotation
         parent.getComputeCode().appendTxtToGlobal(bufType.toString() + " *" + currentWriteBufName + ";\n");
-        
-        //add the declaration of the pointer that points to the transfer rotation in the rotation structure
-        parent.getComputeCode().appendTxtToGlobal(rotType + " *" + transRotName + ";\n");
-        //add the declaration of the pointer that points to the transfer buffer in the current rotation
-        parent.getComputeCode().appendTxtToGlobal(bufType.toString() + " *" + transBufName + ";\n");
+
+        if (TileraBackend.DMA) {
+            //add the declaration of the pointer that points to the transfer rotation in the rotation structure
+            parent.getComputeCode().appendTxtToGlobal(rotType + " *" + transRotName + ";\n");
+            //add the declaration of the pointer that points to the transfer buffer in the current rotation
+            parent.getComputeCode().appendTxtToGlobal(bufType.toString() + " *" + transBufName + ";\n");
+        }
         
         JBlock block = new JBlock();
         
@@ -530,8 +510,10 @@ public class OutputRotatingBuffer extends RotatingBuffer {
         }
         block.addStatement(Util.toStmt(currentWriteRotName + " = " + writeRotStructName));
         block.addStatement(Util.toStmt(currentWriteBufName + " = " + currentWriteRotName + "->buffer"));
-        block.addStatement(Util.toStmt(transRotName + " = " + writeRotStructName));
-        block.addStatement(Util.toStmt(transBufName + " = " + currentWriteRotName + "->buffer"));
+        if (TileraBackend.DMA) {
+            block.addStatement(Util.toStmt(transRotName + " = " + writeRotStructName));
+            block.addStatement(Util.toStmt(transBufName + " = " + currentWriteRotName + "->buffer"));
+        }
         cs.addStatementToBufferInit(block);
     }
 

@@ -4,7 +4,7 @@ import at.dms.kjc.slicegraph.SchedulingPhase;
 
 public class BufferRemoteWritesTransfers extends BufferTransfers {
     
-    public BufferRemoteWritesTransfers(OutputRotatingBuffer buf) {
+    public BufferRemoteWritesTransfers(RotatingBuffer buf) {
         super(buf);
         
         generateStatements(SchedulingPhase.INIT);

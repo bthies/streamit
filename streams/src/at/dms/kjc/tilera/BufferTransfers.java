@@ -11,7 +11,7 @@ import at.dms.kjc.slicegraph.SchedulingPhase;
 
 public abstract class BufferTransfers {
     /** the output buffer that these dma commands uses as its source */
-    protected OutputRotatingBuffer parent;
+    protected RotatingBuffer parent;
     /** the block of ilib_wait calls, one for each dma command generated, separated for steady 
      * because we have concurrency, for init they are in commandsInit*/
     protected List<JStatement> waitCallsSteady;
@@ -24,7 +24,7 @@ public abstract class BufferTransfers {
     /** any declarations that are needed */
     protected List<JStatement> decls;
     
-    public BufferTransfers(OutputRotatingBuffer buf) {
+    public BufferTransfers(RotatingBuffer buf) {
         parent = buf;
         waitCallsSteady= new LinkedList<JStatement>();
         commandsSteady = new LinkedList<JStatement>();

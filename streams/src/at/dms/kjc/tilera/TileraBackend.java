@@ -40,6 +40,7 @@ public class TileraBackend {
         
         //partition the slice graph based on the scheduling policy
         scheduler.run(chip.abstractSize());
+        FilterInfo.reset();
         
         scheduleSlices(graphSchedule);      
        

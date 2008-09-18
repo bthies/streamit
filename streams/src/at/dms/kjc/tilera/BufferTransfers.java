@@ -30,7 +30,14 @@ public abstract class BufferTransfers {
         commandsSteady = new LinkedList<JStatement>();
         commandsInit = new LinkedList<JStatement>();
         decls = new LinkedList<JStatement>();
-        output = parent.filterNode.getParent().getTail();
+        //if this is a shared input buffer (one we are using for output), then 
+        //the output buffer we are implementing here is the upstream output buffer
+        //on the same tile
+        if (buf instanceof InputRotatingBuffer) {
+            output = ((InputRotatingBuffer)buf).getLocalSrcFilter().getParent().getTail();
+        }
+        else
+            output = parent.filterNode.getParent().getTail();
     }
     
     /**

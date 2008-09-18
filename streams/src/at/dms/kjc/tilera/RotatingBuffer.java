@@ -110,12 +110,14 @@ public abstract class RotatingBuffer extends Channel {
         OutputRotatingBuffer.createOutputBuffers(schedule);
         
         //now that all the buffers are created, create the pointers to them
-        //that live on other tiles
+        //that live on other tiles, and create the transfer commands
         for (InputRotatingBuffer buf : inputBuffers.values()) {
             buf.createAddressBuffers();
+            buf.createTransferCommands();
         }
         for (RotatingBuffer buf : outputBuffers.values()) {
             buf.createAddressBuffers();
+            buf.createTransferCommands();
         }
         
         //now add the typedefs needed for the rotating buffers to structs.h
@@ -147,7 +149,7 @@ public abstract class RotatingBuffer extends Channel {
      * rotation associated with this input slice node
      */
     public SourceAddressRotation getAddressBuffer(InputSliceNode input) {
-        assert addressBuffers.containsKey(InputRotatingBuffer.getInputBuffer(input.getNextFilter()));
+        assert addressBuffers.containsKey(InputRotatingBuffer.getInputBuffer(input.getNextFilter())) ;
         
         return addressBuffers.get(InputRotatingBuffer.getInputBuffer(input.getNextFilter()));
     }

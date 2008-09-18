@@ -112,6 +112,10 @@ public class InputRotatingBuffer extends RotatingBuffer {
         
     }
     
+    public FilterSliceNode getLocalSrcFilter() {
+        return localSrcFilter;
+    }
+    
     /**
      * 
      */
@@ -129,9 +133,6 @@ public class InputRotatingBuffer extends RotatingBuffer {
           //remember that this input buffer is the output for the src filter on the same tile
             setOutputBuffer(localSrcFilter, this);
             
-            //since this is now an output buffer also, we have to generate transfer statements
-            createTransferCommands();
-            
             //set up the head pointer for writing
             writeHeadName = this.getIdent() + "head";
             writeHeadDefn = new JVariableDefinition(null,
@@ -147,6 +148,56 @@ public class InputRotatingBuffer extends RotatingBuffer {
                     CStdType.Boolean, firstExeName, new JBooleanLiteral(true));
         }
     }
+    
+    /**
+     * Must be called after setLocalSrcFilter.  This creates the address buffers that other tiles
+     * use when writing to this input buffer.  Each source that is mapped to a different tile than 
+     * this input buffer has an address buffer for this input buffer.
+     * 
+     */
+    protected void createAddressBufs() {
+       int addressBufsSize = filterNode.getParent().getHead().getSourceSlices(SchedulingPhase.STEADY).size();
+       //if we are using this input buffer as an output buffer, then we don't need the address buffer
+       //for the output buffer that is used for the upstream filter that is mapped to this tile
+       if (hasLocalSrcFilter())
+           addressBufsSize--;           
+       
+       addressBufs = new SourceAddressRotation[addressBufsSize];
+       
+       int i = 0;
+       for (Slice src : filterNode.getParent().getHead().getSourceSlices(SchedulingPhase.STEADY)) {
+           Tile tile = TileraBackend.backEndBits.getLayout().getComputeNode(src.getFirstFilter());
+           if (tile == parent)
+               continue;
+           
+           SourceAddressRotation rot = new SourceAddressRotation(tile, this, filterNode, theEdge);
+           addressBufs[i] = rot;
+           addrBufMap.put(tile, rot);
+           i++;
+       }
+    }
+    
+    /**
+     * If this input buffer is shared upstream as an output buffer, then 
+     * create the commands that the upstream filter will use to transfer items to 
+     * its destinations.  
+     */
+    public void createTransferCommands() {
+        if (!hasLocalSrcFilter())
+            return;
+        
+        //generate the dma commands
+        if (TileraBackend.DMA) 
+            transferCommands = new BufferDMATransfers(this);
+        else 
+            transferCommands = new BufferRemoteWritesTransfers(this);
+    }
+    
+    /**
+     * If we are using this input buffer as a shared buffer it is also an output buffer.  
+     * Thus it needs the address buffers of any destination for the upstream filter that
+     * uses the input buffer as an output buffer.
+     */
     public void createAddressBuffers() {
         //do nothing for input buffers that don't act as output buffers
         if (!hasLocalSrcFilter())
@@ -294,31 +345,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
         return addressBufs;
     }
     
-    /**
-     * Must be callsed after setLocalSrcFilter
-     */
-    protected void createAddressBufs() {
-       int addressBufsSize = filterNode.getParent().getHead().getSourceSlices(SchedulingPhase.STEADY).size();
-       //if we are using this input buffer as an output buffer, then we don't need the address buffer
-       //for the output buffer that is used for the upstream filter that is mapped to this tile
-       if (hasLocalSrcFilter())
-           addressBufsSize--;
-       
-       addressBufs = new SourceAddressRotation[addressBufsSize];
-       
-       int i = 0;
-       for (Slice src : filterNode.getParent().getHead().getSourceSlices(SchedulingPhase.STEADY)) {
-           Tile tile = TileraBackend.backEndBits.getLayout().getComputeNode(src.getFirstFilter());
-           if (tile == parent)
-               continue;
-           
-           SourceAddressRotation rot = new SourceAddressRotation(tile, this, filterNode, theEdge);
-           addressBufs[i] = rot;
-           addrBufMap.put(tile, rot);
-           i++;
-       }
-    }
-    
+ 
     /**
      * If this input buffer is fed by a file reader, then put the commands to prime
      * the buffer at the end of the rotation setup.
@@ -363,8 +390,8 @@ public class InputRotatingBuffer extends RotatingBuffer {
             //for its output also, so we have to consider the amount of output in the 
             //buffer calculation
             FilterInfo srcInfo = FilterInfo.getFilterInfo(localSrcFilter);
-            int output = Math.max(srcInfo.totalItemsSent(SchedulingPhase.STEADY), 
-                    srcInfo.totalItemsSent(SchedulingPhase.INIT));
+            int output = Math.max(srcInfo.totalItemsSent(SchedulingPhase.STEADY) + filterInfo.copyDown, 
+                    srcInfo.totalItemsSent(SchedulingPhase.INIT) + filterInfo.copyDown);
             bufSize = Math.max(bufSize, output);
         }
     }
@@ -920,10 +947,16 @@ public class InputRotatingBuffer extends RotatingBuffer {
         return list;
     }
     
-    /** Create statement zeroing out head */
+    /** Create statement that sets the head to point over the copy down elements
+     * that will eventually be written to the beginning of the input buffer
+     */
     protected JStatement zeroOutHead() {
+        assert hasLocalSrcFilter();
+        
+        FilterInfo fi = FilterInfo.getFilterInfo(localSrcFilter);
+        
         return new JExpressionStatement(
-                        new JAssignmentExpression(head, new JIntLiteral(0)));
+                        new JAssignmentExpression(head, new JIntLiteral(fi.copyDown)));
     }
     
     /*

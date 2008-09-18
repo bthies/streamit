@@ -113,7 +113,6 @@ public class OutputRotatingBuffer extends RotatingBuffer {
                 at.dms.kjc.Constants.ACC_STATIC,
                 CStdType.Boolean, firstExeName, new JBooleanLiteral(true));
         
-        createTransferCommands();
     }
    
     /** Create an array reference given an offset */   

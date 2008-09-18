@@ -164,6 +164,20 @@ public class InputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneabl
     }
     
     /**
+     * return the sum of the weights that appear before index in the joining schedule
+     */
+    public int weightBefore(int index, SchedulingPhase phase) {
+        assert index < weights.length;
+        int total = 0;
+        
+        for (int i = 0; i < index; i++) {
+            total += getWeights(phase)[i];
+        }
+ 
+        return total;
+    }
+    
+    /**
      * return the sum of the weights that appear before this edge in the joining schedule
      * 
      * @param edge the edge in question

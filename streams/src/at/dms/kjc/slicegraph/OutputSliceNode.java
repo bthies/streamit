@@ -496,6 +496,19 @@ public class OutputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneab
     }
     
     /**
+     * Return the sum of the weights before index of the weights array.
+     */
+    public int weightBefore(int index, SchedulingPhase phase) {
+        assert index < weights.length;
+        int total = 0;
+                
+        for (int i = 0; i < index; i++)
+            total += weights[i];
+        
+        return total;
+    }
+    
+    /**
      * Return the sum of weights for edges before this edge appears in the splitting schedule.
      * This output slice node must be single appearance.
      * 

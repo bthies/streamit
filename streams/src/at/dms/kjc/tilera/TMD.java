@@ -70,8 +70,12 @@ public class TMD extends Scheduler {
             assert levels[l].length  <= TileraBackend.chip.abstractSize() : "Too many filters in level for TMD layout!";
             HashSet<Tile> allocatedTiles = new HashSet<Tile>(); 
             
-            if (levels[l].length < TileraBackend.chip.abstractSize())
-                System.out.println("Warning: Level " + l + " of slice graph has fewer filters than tiles.");
+            if (levels[l].length < TileraBackend.chip.abstractSize()) {
+                //we only support full levels for right now other than predefined filters 
+                //that are not fizzed
+                assert levels[l].length == 1 && levels[l][0].getFirstFilter().isPredefined() :
+                    "Level " + l + " of slice graph has fewer filters than tiles.";
+            }
             
             for (int f = 0; f < levels[l].length; f++) {
                 Slice slice = levels[l][f];
@@ -98,6 +102,7 @@ public class TMD extends Scheduler {
             }
         }
         
+                
         if (theBest == null) {
             //could not find a tile that was allocated to an upstream input
             //just pick a tile
@@ -108,6 +113,19 @@ public class TMD extends Scheduler {
                 break;
             }
         }
+        
+        if (slice.getFirstFilter().getFilter().getInitMult() > 0) {
+            assert slice.getHead().getSources(SchedulingPhase.INIT).length <= 1;
+            if (slice.getHead().getSources(SchedulingPhase.INIT).length  == 1 && 
+                    !slice.getHead().getSources(SchedulingPhase.INIT)[0].getSrc().getPrevFilter().isPredefined()) {
+                assert theBest == getComputeNode(
+                           slice.getHead().getSources(SchedulingPhase.INIT)[0].getSrc().getPrevFilter()) :
+                               slice + " " + theBest.getTileNumber() + " ? " + slice.getHead().getSources(SchedulingPhase.INIT)[0].getSrc().getParent() + 
+                               " " + getComputeNode(
+                                       slice.getHead().getSources(SchedulingPhase.INIT)[0].getSrc().getPrevFilter()).getTileNumber();
+            }
+        }
+
         
         assert theBest != null;
         return theBest;

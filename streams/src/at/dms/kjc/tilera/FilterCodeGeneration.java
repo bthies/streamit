@@ -16,8 +16,8 @@ import at.dms.kjc.JVariableDefinition;
 import at.dms.kjc.backendSupport.CodeStoreHelper;
 import at.dms.kjc.backendSupport.FilterInfo;
 import at.dms.kjc.sir.SIRBeginMarker;
-import at.dms.kjc.slicegraph.FilterContent;
-import at.dms.kjc.slicegraph.FilterSliceNode;
+import at.dms.kjc.slicegraph.*;
+import at.dms.kjc.backendSupport.*;
 import at.dms.util.Utils;
 
 public class FilterCodeGeneration extends CodeStoreHelper {
@@ -111,7 +111,7 @@ public class FilterCodeGeneration extends CodeStoreHelper {
             }
         }
 
-        statements.addAllStatements(endSchedulingPhase());
+        statements.addAllStatements(endSchedulingPhase(SchedulingPhase.INIT));
         
         return new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
                 CStdType.Void, initStage + uniqueID, JFormalParameter.EMPTY,
@@ -190,7 +190,7 @@ public class FilterCodeGeneration extends CodeStoreHelper {
                 statements.addStatement(stmt);
             }
         }
-        statements.addAllStatements(endSchedulingPhase());
+        statements.addAllStatements(endSchedulingPhase(SchedulingPhase.PRIMEPUMP));
         //return the method
         primePumpMethod = new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
                                       CStdType.Void,
@@ -235,7 +235,7 @@ public class FilterCodeGeneration extends CodeStoreHelper {
                 statements.addStatement(stmt);
             }
         }
-        statements.addAllStatements(endSchedulingPhase());
+        statements.addAllStatements(endSchedulingPhase(SchedulingPhase.STEADY));
     
         return statements;
     }
@@ -246,11 +246,20 @@ public class FilterCodeGeneration extends CodeStoreHelper {
      * 
      * @return  The block of code to append
      */
-    protected JBlock endSchedulingPhase() {
+    protected JBlock endSchedulingPhase(SchedulingPhase phase) {
         JBlock block = new JBlock();
         
-        if (TileraBackend.scheduler.isTMD()) {
-            //block.addStatement(Util.toStmt("ilib_msg_barrier(ILIB_GROUP_SIBLINGS)"));
+        if (TileraBackend.DMA) {
+            
+        } else {
+        
+            if (TileraBackend.scheduler.isTMD()) {
+                switch (phase) {
+                    case INIT: block.addStatement(Util.toStmt("ilib_mem_fence()")); break;
+                    case PRIMEPUMP : block.addStatement(Util.toStmt("ilib_msg_barrier(ILIB_GROUP_SIBLINGS)"));break;
+                }
+                    
+            }
         }
         
         return block;

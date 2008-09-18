@@ -699,7 +699,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
         assert hasLocalSrcFilter() : "Calling write method for input buffer that does not act as output buffer.";
         
         LinkedList<JStatement> list = new LinkedList<JStatement>();
-        //in the init stage we use dma to send the output to the dest filter
+        //in the init stage for dma, we need to dma to send the output to the dest filter
         //but we have to wait until the end because are not double buffering
         //also, don't rotate anything here
         list.addAll(transferCommands.transferCommands(SchedulingPhase.INIT));
@@ -707,8 +707,8 @@ public class InputRotatingBuffer extends RotatingBuffer {
     }
     
     /**
-     *  We don't want to transfer during the first execution of the primepump
-     *  so guard the execution in an if statement.
+     *  
+     *       
      */
     public List<JStatement> beginPrimePumpWrite() {
         assert hasLocalSrcFilter() : "Calling write method for input buffer that does not act as output buffer.";
@@ -717,15 +717,22 @@ public class InputRotatingBuffer extends RotatingBuffer {
                 
         list.add(zeroOutHead());
         
-        JBlock block = new JBlock();
-        block.addAllStatements(transferCommands.transferCommands(SchedulingPhase.STEADY));
-        
-        
-        JIfStatement guard = new JIfStatement(null, new JLogicalComplementExpression(null, 
-                new JEmittedTextExpression(firstExeName)), 
-                block , new JBlock(), null);
-        
-        list.add(guard);
+        if (TileraBackend.DMA) {
+            //for dma we transfer at the beginning of the work function call
+            
+            //We don't want to transfer during the first execution of the primepump
+            //  so guard the execution in an if statement.
+
+            JBlock block = new JBlock();
+            block.addAllStatements(transferCommands.transferCommands(SchedulingPhase.STEADY));
+
+
+            JIfStatement guard = new JIfStatement(null, new JLogicalComplementExpression(null, 
+                    new JEmittedTextExpression(firstExeName)), 
+                    block , new JBlock(), null);
+
+            list.add(guard);
+        }
         return list;
     }
     
@@ -733,38 +740,49 @@ public class InputRotatingBuffer extends RotatingBuffer {
         assert hasLocalSrcFilter() : "Calling write method for input buffer that does not act as output buffer.";
         
         LinkedList<JStatement> list = new LinkedList<JStatement>();
-        
-        //the wait for dma commands, only wait if this is not the first exec
-        JBlock block1 = new JBlock();
-        block1.addAllStatements(transferCommands.waitCallsSteady());
-        JIfStatement guard1 = new JIfStatement(null, new JLogicalComplementExpression(null, 
-                new JEmittedTextExpression(firstExeName)), 
-                block1 , new JBlock(), null);  
-        list.add(guard1);
-                
-        
-        //generate the rotate statements for this output buffer
-        list.addAll(rotateStatementsCurRot());
-        
-        JBlock block2 = new JBlock();
-        //rotate the transfer buffer only when it is not first
-        if (TileraBackend.DMA)
-            block2.addAllStatements(rotateStatementsTransRot());
-        //generate the rotation statements for the address buffers that this output
-        //buffer uses, only do this after first execution
-        for (SourceAddressRotation addrRot : addressBuffers.values()) {
-            block2.addAllStatements(addrRot.rotateStatements());
+
+        if (!TileraBackend.DMA) {
+            //add the transfer commands for the data that was just computed
+            list.addAll(transferCommands.transferCommands(SchedulingPhase.STEADY));
+            //generate the rotate statements for this output buffer
+            list.addAll(rotateStatementsWrite());
+            //generate the rotate statements for the address buffers
+            for (SourceAddressRotation addrRot : addressBuffers.values()) {
+                list.addAll(addrRot.rotateStatements());
+            }
+            
+        } else { //DMA
+            //the wait for dma commands, only wait if this is not the first exec
+            JBlock block1 = new JBlock();
+            block1.addAllStatements(transferCommands.waitCallsSteady());
+            JIfStatement guard1 = new JIfStatement(null, new JLogicalComplementExpression(null, 
+                    new JEmittedTextExpression(firstExeName)), 
+                    block1 , new JBlock(), null);  
+            list.add(guard1);
+
+
+            //generate the rotate statements for this output buffer
+            list.addAll(rotateStatementsCurRot());
+
+            JBlock block2 = new JBlock();
+            //rotate the transfer buffer only when it is not first
+            if (TileraBackend.DMA)
+                block2.addAllStatements(rotateStatementsTransRot());
+            //generate the rotation statements for the address buffers that this output
+            //buffer uses, only do this after first execution
+            for (SourceAddressRotation addrRot : addressBuffers.values()) {
+                block2.addAllStatements(addrRot.rotateStatements());
+            }
+            JIfStatement guard2 = new JIfStatement(null, new JLogicalComplementExpression(null, 
+                    new JEmittedTextExpression(firstExeName)), 
+                    block2, new JBlock(), null);    
+            list.add(guard2);
+
+            //now we are done with the first execution to set firstExe to false
+            list.add(new JExpressionStatement(
+                    new JAssignmentExpression(new JEmittedTextExpression(firstExeName), 
+                            new JBooleanLiteral(false))));
         }
-        JIfStatement guard2 = new JIfStatement(null, new JLogicalComplementExpression(null, 
-                new JEmittedTextExpression(firstExeName)), 
-                block2, new JBlock(), null);    
-        list.add(guard2);
-        
-        //now we are done with the first execution to set firstExe to false
-        list.add(new JExpressionStatement(
-                new JAssignmentExpression(new JEmittedTextExpression(firstExeName), 
-                        new JBooleanLiteral(false))));
-        
         return list;
     }
     
@@ -778,7 +796,8 @@ public class InputRotatingBuffer extends RotatingBuffer {
         
         LinkedList<JStatement> list = new LinkedList<JStatement>();
         list.add(zeroOutHead());
-        list.addAll(transferCommands.transferCommands(SchedulingPhase.STEADY));
+        if (TileraBackend.DMA)
+            list.addAll(transferCommands.transferCommands(SchedulingPhase.STEADY));
         return list;
     }
     
@@ -790,7 +809,12 @@ public class InputRotatingBuffer extends RotatingBuffer {
         assert hasLocalSrcFilter() : "Calling write method for input buffer that does not act as output buffer.";
         
         LinkedList<JStatement> list = new LinkedList<JStatement>();
-        list.addAll(transferCommands.waitCallsSteady());
+        
+        if (TileraBackend.DMA) 
+            list.addAll(transferCommands.waitCallsSteady());
+        else
+            list.addAll(transferCommands.transferCommands(SchedulingPhase.STEADY));
+        
         //generate the rotate statements for this output buffer
         list.addAll(rotateStatementsWrite());
         

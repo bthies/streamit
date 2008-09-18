@@ -398,7 +398,7 @@ public class Fissioner {
                     new JMethodDeclaration(null,
                                            at.dms.kjc.Constants.ACC_PUBLIC,
                                            CStdType.Void,
-                                           "Fission-generated prework",
+                                           "Fission_generated_prework",
                                            JFormalParameter.EMPTY,
                                            CClassType.EMPTY,
                                            newPreworkBody,

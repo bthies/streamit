@@ -682,6 +682,7 @@ public class FilterContent implements SIRCodeUnit, at.dms.kjc.DeepCloneable {
 
 	    is2stage = true;
 	    prework[0] = meth;
+	    addMethod(meth);
 	}
     }
 
@@ -714,7 +715,11 @@ public class FilterContent implements SIRCodeUnit, at.dms.kjc.DeepCloneable {
      * Method exists to allow SIRCodeUnit interface but should not be called.
      */
     public void addMethod(JMethodDeclaration method) {
-        throw new AssertionError("should not call");
+        JMethodDeclaration[] newMethods = new JMethodDeclaration[methods.length + 1];
+        for (int i = 0; i < methods.length; i++)
+            newMethods[i] = methods[i];
+        newMethods[newMethods.length - 1] = method;
+        methods = newMethods;
     }
 
     /** but subclasses can add methods */

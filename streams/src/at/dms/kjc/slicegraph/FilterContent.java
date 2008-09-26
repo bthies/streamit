@@ -529,6 +529,15 @@ public class FilterContent implements SIRCodeUnit, at.dms.kjc.DeepCloneable {
     }
 
     /**
+     * Set the name of this filter to n;
+     *
+     * @param n The new name of this filter
+     */
+    public void setName(String n) {
+        name = n;
+    }
+
+    /**
      * Set the init multiplicity of this fitler to im;
      * 
      * @param im The new init multiplicity.

@@ -50,6 +50,7 @@ public class TMD extends Scheduler {
         assert node != null && tile != null;
         layoutMap.put(node, tile);
         //remember what filters each tile has mapped to it
+        //System.out.println("Settting " + node + " to tile " + tile.getTileNumber());
         tile.getComputeCode().addFilter(node.getAsFilter());
     }
     
@@ -77,13 +78,13 @@ public class TMD extends Scheduler {
                     "Level " + l + " of slice graph has fewer filters than tiles.";
                 
                setComputeNode(levels[l][0].getFirstFilter(), TileraBackend.chip.getOffChipMemory());
-            }
-            
-            for (int f = 0; f < levels[l].length; f++) {
-                Slice slice = levels[l][f];
-                Tile theTile = tileToAssign(slice, TileraBackend.chip, allocatedTiles);
-                setComputeNode(slice.getFirstFilter(), theTile);
-                allocatedTiles.add(theTile);
+            } else {
+                for (int f = 0; f < levels[l].length; f++) {
+                    Slice slice = levels[l][f];
+                    Tile theTile = tileToAssign(slice, TileraBackend.chip, allocatedTiles);
+                    setComputeNode(slice.getFirstFilter(), theTile);
+                    allocatedTiles.add(theTile);
+                }
             }
         }
     }
@@ -95,6 +96,8 @@ public class TMD extends Scheduler {
         //add the tiles to the list that are allocated to upstream inputs
         for (Edge edge : slice.getHead().getSourceSet(SchedulingPhase.STEADY)) {
             Tile upstreamTile = getComputeNode(edge.getSrc().getPrevious());
+            if (upstreamTile == TileraBackend.chip.getOffChipMemory())
+                continue;
             if (allocatedTiles.contains(upstreamTile))
                 continue;
             

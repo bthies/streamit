@@ -31,7 +31,7 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
         
         setWritingScheme();
         
-        assert !needAddressArray;
+        assert !needAddressArray : parent.filterNode;
         
         decls.add(new JVariableDeclarationStatement(writeHeadDefn));
         
@@ -60,7 +60,7 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
             }
             
         } else
-            needAddressArray = true;
+            needAddressArray = false;
     }
     
 

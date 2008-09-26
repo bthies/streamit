@@ -128,6 +128,8 @@ public class InputRotatingBuffer extends RotatingBuffer {
             }
         }
         
+        //System.out.println(filterNode + " has local source " + localSrcFilter);
+        
         //if we found an upstream filter mapped to the same tile
         if (localSrcFilter != null) {
           //remember that this input buffer is the output for the src filter on the same tile

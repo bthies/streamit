@@ -333,6 +333,11 @@ public class Fissioner {
         for(int x = 1 ; x < fizzAmount ; x++)
             sliceClones[x] = (Slice)ObjectDeepCloner.deepCopy(slice);
 
+        // Give each Slice clone a unique name
+        String origName = sliceClones[0].getFirstFilter().getFilter().getName();
+        for(int x = 0 ; x < fizzAmount ; x++)
+            sliceClones[x].getFirstFilter().getFilter().setName(origName + "_fizz" + x);
+
         /**********************************************************************
          *                   Setup initialization schedule                    *
          **********************************************************************/
@@ -398,7 +403,7 @@ public class Fissioner {
                     new JMethodDeclaration(null,
                                            at.dms.kjc.Constants.ACC_PUBLIC,
                                            CStdType.Void,
-                                           "Fission_generated_prework",
+                                           "fissionPrework",
                                            JFormalParameter.EMPTY,
                                            CClassType.EMPTY,
                                            newPreworkBody,

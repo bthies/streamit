@@ -16,8 +16,8 @@ public class ReedSolomonDecoder extends Filter {
     public static final int K = 187; // total data bytes (note that N - K = T = number of ECC bytes = 20 in our example) 
 
     public void init() {
-	input  = new Channel(Integer.TYPE, N);
-	output = new Channel(Integer.TYPE, K);
+	inputChannel= new Channel(Integer.TYPE, N);
+	outputChannel= new Channel(Integer.TYPE, K);
     }
     public void work() {
 	int i;
@@ -29,7 +29,7 @@ public class ReedSolomonDecoder extends Filter {
 	
 	/** pop the (encoded) data codeword off of the input tape **/
 	for (i=0; i<N; i++) {
-	    codeword[i] = input.popInt();
+	    codeword[i] = inputChannel.popInt();
 	}
 	
 	/** Decode the data, ending up with NPAR parity bytes **/
@@ -47,7 +47,7 @@ public class ReedSolomonDecoder extends Filter {
 	
 	/** push out the decoded message -- k is the decoded message size **/
 	for (i=0; i<K; i++) {
-	    output.pushInt(codeword[i]);
+	    outputChannel.pushInt(codeword[i]);
 	}
     }
     

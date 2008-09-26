@@ -8,8 +8,8 @@ import streamit.library.*;
 
 class UnBitifier extends Filter {
     public void init() {
-	input  = new Channel(Integer.TYPE, 8); // pops 1 "bits"
-	output = new Channel(Integer.TYPE, 1); // pushes 1 "byte"
+	inputChannel= new Channel(Integer.TYPE, 8); // pops 1 "bits"
+	outputChannel= new Channel(Integer.TYPE, 1); // pushes 1 "byte"
     }
 
     public void work() {
@@ -17,8 +17,8 @@ class UnBitifier extends Filter {
 	for (int i=0; i<8; i++) {
 	    // shift in 8 bits
 	    accum = accum << 1;
-	    accum = accum | input.popInt();
+	    accum = accum | inputChannel.popInt();
 	}
-	output.pushInt(accum);
+	outputChannel.pushInt(accum);
     }    
 }

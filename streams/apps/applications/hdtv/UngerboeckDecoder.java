@@ -46,8 +46,8 @@ class UngerboeckDecoder extends Filter
 	int i;
 	int twoToTheSymbolSize;
 
-	input  = new Channel (Integer.TYPE, DATASIZE*SYMBOLSIZE); /* pops an entire chunk of data in one go (2 * 17) [peek] */
-	output = new Channel (Integer.TYPE, DATASIZE);     /* pushs all the data (eg 17) */
+	inputChannel= new Channel (Integer.TYPE, DATASIZE*SYMBOLSIZE); /* pops an entire chunk of data in one go (2 * 17) [peek] */
+	outputChannel= new Channel (Integer.TYPE, DATASIZE);     /* pushs all the data (eg 17) */
 
 	// initialize the transition tables -- only happens once
 	initializeTables();
@@ -82,7 +82,7 @@ class UngerboeckDecoder extends Filter
 	    // grab a symbol off the input, lsb comes first on the tape
 	    symbol = new int[SYMBOLSIZE];
 	    for (j=0; j<SYMBOLSIZE; j++) {
-		symbol[SYMBOLSIZE - j - 1] = input.popInt();
+		symbol[SYMBOLSIZE - j - 1] = inputChannel.popInt();
 	    }
 	    
 	    // incremement the time value of which we are processing
@@ -114,7 +114,7 @@ class UngerboeckDecoder extends Filter
 	for (i=1; i<TABLELENGTH; i++) {
 	    // lsb is in decodedData[0]
 	    //System.out.print(decodedData[i] + " ");
-	    output.pushInt(decodedData[i]);
+	    outputChannel.pushInt(decodedData[i]);
 	}
 	//System.out.println("\n");
     }
@@ -317,7 +317,7 @@ class UngerboeckDecoder extends Filter
 	// make the table for the previous state -- this table
 	// is the inverse of the next state table. It tells you which
 	// state the encoder would have been in to transition to
-	// the current state given a particular input.
+	// the current state given a particular inputChannel.
 	// prevStateTable[currentState][input] = previous state
 	prevStateTable = new int[NUMSTATES][2];
 	prevStateTable[0][0] = 0;

@@ -70,7 +70,7 @@ class TestDataSource extends Filter {
     int[] x = new int[10];
     int i = 0;
     public void init() {
-	output = new Channel(Integer.TYPE,1);
+	outputChannel= new Channel(Integer.TYPE,1);
 	x[0] = 0;
 	x[1] = 1;
 	x[2] = 1;
@@ -84,7 +84,7 @@ class TestDataSource extends Filter {
 	
     }
     public void work() {
-	output.pushInt(this.x[this.i]);
+	outputChannel.pushInt(this.x[this.i]);
 	this.i = (this.i + 1) % 10;
     }
 }
@@ -93,10 +93,10 @@ class SimpleTestDataSource extends Filter {
     int x;
     public void init() {
 	this.x = 0;
-	output = new Channel(Integer.TYPE, 1);
+	outputChannel= new Channel(Integer.TYPE, 1);
     }
     public void work() {
-	output.pushInt(this.x);
+	outputChannel.pushInt(this.x);
 	this.x++;
     }
 }
@@ -111,10 +111,10 @@ class LimitedSimpleTestDataSource extends Filter {
     public void init(int l) {
 	this.limit = l;
 	this.x = 0;
-	output = new Channel(Integer.TYPE, 1);
+	outputChannel= new Channel(Integer.TYPE, 1);
     }
     public void work() {
-	output.pushInt(this.x);
+	outputChannel.pushInt(this.x);
 	this.x = (this.x + 1) % limit;
     }
 }
@@ -122,10 +122,10 @@ class LimitedSimpleTestDataSource extends Filter {
 
 class TestDataSink extends Filter {
     public void init() {
-	input = new Channel(Integer.TYPE,1);
+	inputChannel= new Channel(Integer.TYPE,1);
     }
     public void work() {
-	System.out.println(input.popInt());
+	System.out.println(inputChannel.popInt());
     }
 }
 
@@ -140,14 +140,14 @@ class TestDataSnooper extends Filter {
 	this.num = n;
     }
     public void init() {
-	input  = new Channel(Integer.TYPE, this.num);
-	output = new Channel(Integer.TYPE, this.num);
+	inputChannel= new Channel(Integer.TYPE, this.num);
+	outputChannel= new Channel(Integer.TYPE, this.num);
     }
     public void work() {
 	for (int i=0; i<this.num; i++) {
-	    int t = input.popInt();
+	    int t = inputChannel.popInt();
 	    System.out.println(this.label + ": " + t);
-	    output.pushInt(t);
+	    outputChannel.pushInt(t);
 	}
     }
 }	

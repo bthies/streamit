@@ -130,10 +130,10 @@ class HDTVDecodePipeline extends Pipeline {
 class DataSegmentGenerator extends Filter {
     int x=0;
     public void init() {
-	output = new Channel(Integer.TYPE, 1); // pushes 1 item per cycle
+	outputChannel= new Channel(Integer.TYPE, 1); // pushes 1 item per cycle
     }
     public void work() {
-	output.pushInt(this.x);
+	outputChannel.pushInt(this.x);
 	this.x++;
     }
 }
@@ -143,10 +143,10 @@ class DataSegmentGenerator extends Filter {
  **/
 class DataSegmentSink extends Filter {
     public void init() {
-	input = new Channel(Integer.TYPE,1); // pops 1 item per cycle
+	inputChannel= new Channel(Integer.TYPE,1); // pops 1 item per cycle
     }
     public void work() {
-	System.out.println(input.popInt());
+	System.out.println(inputChannel.popInt());
     }
 }
 
@@ -157,14 +157,14 @@ class DataSegmentSink extends Filter {
 class DataSniffer extends Filter {
     String name;
     public void init() {
-	input  = new Channel(Integer.TYPE,1);
-	output = new Channel(Integer.TYPE,1);
+	inputChannel= new Channel(Integer.TYPE,1);
+	outputChannel= new Channel(Integer.TYPE,1);
     }
     public void work() {
-	int in = input.popInt();
+	int in = inputChannel.popInt();
 	System.out.print(this.name);
 	System.out.println(in);
-	output.pushInt(in);
+	outputChannel.pushInt(in);
     }
 }	
 
@@ -177,16 +177,16 @@ class DataSniffer extends Filter {
  **/
 class IntegerSplitter extends Filter {
     public void init() {
-	input  = new Channel(Integer.TYPE, 1); // pops 1 integer
-	output = new Channel(Integer.TYPE, 4); // pushes out the 4 "bytes"
+	inputChannel= new Channel(Integer.TYPE, 1); // pops 1 integer
+	outputChannel= new Channel(Integer.TYPE, 4); // pushes out the 4 "bytes"
     }
 
     public void work() {
-	int t = input.popInt(); // pop off the integer;
-	output.pushInt((t & 0x000000FF) >> 0);
-	output.pushInt((t & 0x0000FF00) >> 8);
-	output.pushInt((t & 0x00FF0000) >> 16);
-	output.pushInt((t & 0xFF000000) >> 24);
+	int t = inputChannel.popInt(); // pop off the integer;
+	outputChannel.pushInt((t & 0x000000FF) >> 0);
+	outputChannel.pushInt((t & 0x0000FF00) >> 8);
+	outputChannel.pushInt((t & 0x00FF0000) >> 16);
+	outputChannel.pushInt((t & 0xFF000000) >> 24);
     }
     
 
@@ -198,18 +198,18 @@ class IntegerSplitter extends Filter {
  **/
 class IntegerCombiner extends Filter {
     public void init() {
-	input  = new Channel(Integer.TYPE, 4); // pops the 4 "bytes"
-	output = new Channel(Integer.TYPE, 1); // pushes 1 integer
+	inputChannel= new Channel(Integer.TYPE, 4); // pops the 4 "bytes"
+	outputChannel= new Channel(Integer.TYPE, 1); // pushes 1 integer
     }
 
     public void work() {
-	int byte1 = input.popInt();
-	int byte2 = input.popInt() << 8;
-	int byte3 = input.popInt() << 16;
-	int byte4 = input.popInt() << 24;
+	int byte1 = inputChannel.popInt();
+	int byte2 = inputChannel.popInt() << 8;
+	int byte3 = inputChannel.popInt() << 16;
+	int byte4 = inputChannel.popInt() << 24;
 
 	// push the created output on to the tape
-	output.pushInt(byte1 | byte2 | byte3 | byte4);
+	outputChannel.pushInt(byte1 | byte2 | byte3 | byte4);
     }
     
 }
@@ -228,22 +228,22 @@ class SyncGenerator extends Filter {
     final int DATA_SEGMENT_SIZE = 828;
     final int SYNC_SIZE         = 4;
     public void init() {
-	input  = new Channel(Integer.TYPE, DATA_SEGMENT_SIZE);
-	output = new Channel(Integer.TYPE, DATA_SEGMENT_SIZE + SYNC_SIZE);
+	inputChannel= new Channel(Integer.TYPE, DATA_SEGMENT_SIZE);
+	outputChannel= new Channel(Integer.TYPE, DATA_SEGMENT_SIZE + SYNC_SIZE);
     }
     public void work() {
 	// push out the sync value on to the output tape
       	// the sync, according to the a53, rev b spec
 	// is binary 1001, encoded as symbols
 	// 5 -5 -5 5
-	output.pushInt(5);
-	output.pushInt(-5);
-	output.pushInt(-5);
-	output.pushInt(5);
+	outputChannel.pushInt(5);
+	outputChannel.pushInt(-5);
+	outputChannel.pushInt(-5);
+	outputChannel.pushInt(5);
 
 	// copy the remaining 828 symbols from the input to the output
 	for (int i=0; i<DATA_SEGMENT_SIZE; i++) {
-	    output.pushInt(input.popInt());
+	    outputChannel.pushInt(inputChannel.popInt());
 	}
     }
 
@@ -258,18 +258,18 @@ class SyncRemover extends Filter {
     final int DATA_SEGMENT_SIZE = 828;
     final int SYNC_SIZE         = 4;
     public void init() {
-	input  = new Channel(Integer.TYPE, DATA_SEGMENT_SIZE + SYNC_SIZE);
-	output = new Channel(Integer.TYPE, DATA_SEGMENT_SIZE);
+	inputChannel= new Channel(Integer.TYPE, DATA_SEGMENT_SIZE + SYNC_SIZE);
+	outputChannel= new Channel(Integer.TYPE, DATA_SEGMENT_SIZE);
     }
     public void work() {
 	int i;
 	// pop off the sync
 	for (i=0; i<SYNC_SIZE;i++) {
-	    input.popInt();
+	    inputChannel.popInt();
 	}
 	// copy the rest of the data over
 	for (i=0; i<DATA_SEGMENT_SIZE; i++) {
-	    output.pushInt(input.popInt());
+	    outputChannel.pushInt(inputChannel.popInt());
 	}
     }
 }

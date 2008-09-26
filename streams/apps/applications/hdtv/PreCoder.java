@@ -1,7 +1,7 @@
 /**
  * Simple, 1/2 precoder for use in HDTV. It xors
  * the input with the previous output to give the current
- * output. Eg x = input, y = output
+ * outputChannel. Eg x = input, y = output
  * so y(t) = x(t) XOR y(t-1)
  *
  * Starts with state = 0 (or equivaletly y(-1) = 0)
@@ -20,13 +20,13 @@ class PreCoder extends Filter {
     /** last input that we saw **/
     int state;
     public void init() {
-	input = new Channel(Integer.TYPE, 1); // pops one
-	output = new Channel(Integer.TYPE, 1); // pushes one
+	inputChannel= new Channel(Integer.TYPE, 1); // pops one
+	outputChannel= new Channel(Integer.TYPE, 1); // pushes one
  	this.state = 0; // start with 0 as state
     }
     public void work() {
-	int t = input.popInt() ^ this.state; // xor input with state
-	output.pushInt(t);
+	int t = inputChannel.popInt() ^ this.state; // xor input with state
+	outputChannel.pushInt(t);
 	// update state
 	this.state = t;
     }

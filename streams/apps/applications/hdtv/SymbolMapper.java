@@ -2,15 +2,15 @@
  * Symbol Encoder -- maps sequences of 3 bits to
  * a symbol that is to be transmitted over the
  * the airwaves. Therefore it takes in 3 "bits"
- * and produces one "symbol" as output. LSB is brought in first.
+ * and produces one "symbol" as outputChannel. LSB is brought in first.
  **/
 import streamit.library.*;
 
 class SymbolMapper extends Filter {
     int[] map;
     public void init() {
-	input  = new Channel(Integer.TYPE, 3); // input three bits
-	output = new Channel(Integer.TYPE, 1); // output one symbol
+	inputChannel= new Channel(Integer.TYPE, 3); // input three bits
+	outputChannel= new Channel(Integer.TYPE, 1); // output one symbol
 	setupMap();
     }
     public void work() {
@@ -18,10 +18,10 @@ class SymbolMapper extends Filter {
 	int index = 0;
 	for (int i=0; i<3; i++) {
 	    index = index << 1;
-	    index = index | input.popInt();
+	    index = index | inputChannel.popInt();
 	}
 	// do a symbol lookup on the index
-	output.pushInt(this.map[index]);
+	outputChannel.pushInt(this.map[index]);
 	
     }
 

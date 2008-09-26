@@ -18,11 +18,11 @@ import streamit.library.*;
 class PreDecoder extends Filter {
     int state = 0; // start with state 0
     public void init() {
-	input = new Channel(Integer.TYPE, 1);
-	output= new Channel(Integer.TYPE, 1);
+	inputChannel= new Channel(Integer.TYPE, 1);
+	outputChannel= new Channel(Integer.TYPE, 1);
     }
     public void work() {
-	int y = input.popInt();
+	int y = inputChannel.popInt();
 
 	// calculate the input of the precoder given that it 
 	// produced y as an output
@@ -32,6 +32,6 @@ class PreDecoder extends Filter {
 	this.state = y;
 
 	// push out the output
-	output.pushInt(x);
+	outputChannel.pushInt(x);
     }
 }

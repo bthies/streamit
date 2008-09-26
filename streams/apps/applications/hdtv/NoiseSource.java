@@ -16,18 +16,18 @@ class NoiseSource extends Filter {
     public void init(int period) {
 	this.noisePeriod = period;
 	this.currentCount = 0;
-	input = new Channel(Integer.TYPE, 1);
-	output= new Channel(Integer.TYPE, 1);
+	inputChannel= new Channel(Integer.TYPE, 1);
+	outputChannel= new Channel(Integer.TYPE, 1);
     }
     public void work() {
-	int t = input.popInt();
+	int t = inputChannel.popInt();
 	// if we are ready to flip a bit...
 	if (this.currentCount >= this.noisePeriod) {
 	    //System.out.println("Changing bit");
 	    t = t ^ 1;
 	    this.currentCount = 0;
 	}
-	output.pushInt(t);
+	outputChannel.pushInt(t);
 	this.currentCount++;
     }
 }

@@ -23,13 +23,13 @@ class Delay extends Filter {
     public void init() {
 	// initial state of delay is 0
 	this.state = 0;
-	input = new Channel(Integer.TYPE,1);
-	output = new Channel(Integer.TYPE,1);
+	inputChannel= new Channel(Integer.TYPE,1);
+	outputChannel= new Channel(Integer.TYPE,1);
     }
     public void work() {
 	// push out the state and then update it with the input
 	// from the channel
-	output.pushInt(this.state);
-	this.state = input.popInt();
+	outputChannel.pushInt(this.state);
+	this.state = inputChannel.popInt();
     }
 }

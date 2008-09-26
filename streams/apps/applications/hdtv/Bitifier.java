@@ -8,15 +8,15 @@ import streamit.library.*;
 
 class Bitifier extends Filter {
     public void init() {
-	input  = new Channel(Integer.TYPE, 1); // pops 1 "byte"
-	output = new Channel(Integer.TYPE, 8); // pushes 8 "bits"
+	inputChannel= new Channel(Integer.TYPE, 1); // pops 1 "byte"
+	outputChannel= new Channel(Integer.TYPE, 8); // pushes 8 "bits"
     }
 
     public void work() {
-	int left = input.popInt(); // pull off the byte
+	int left = inputChannel.popInt(); // pull off the byte
 	for (int i=0; i<8; i++) {
 	    // shift out the bits one by one (msb first)
-	    output.pushInt((left & 0x80) >> 7);
+	    outputChannel.pushInt((left & 0x80) >> 7);
 	    // set up next shift
 	    left = left << 1;
 	}

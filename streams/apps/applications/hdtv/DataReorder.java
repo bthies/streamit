@@ -60,15 +60,15 @@ class DataReorder extends Filter {
 	this.direction = dir;
 	this.type = 0;
 	this.segmentCount = 0;
-	input  = new Channel(Integer.TYPE, BITS);
-	output = new Channel(Integer.TYPE, BITS);
+	inputChannel= new Channel(Integer.TYPE, BITS);
+	outputChannel= new Channel(Integer.TYPE, BITS);
     }
 
     public void work() {
 	// read in all the bits into a temp buffer
 	int[] buff = new int[BITS];
 	for (int i=0; i<BITS; i++) {
-	    buff[i] = input.popInt();
+	    buff[i] = inputChannel.popInt();
 	}
 	// now, depending on the current type of the segment
 	// copy the data back out in a particular ways
@@ -94,7 +94,7 @@ class DataReorder extends Filter {
 	// now, copy out the bits in the correct order
 	currentIndex *= 8;
 	for (int i=0; i<BITS; i++) {
-	    output.pushInt(buff[currentIndex]);
+	    outputChannel.pushInt(buff[currentIndex]);
 	    currentIndex = (currentIndex + 1) % BITS;
 	}
 

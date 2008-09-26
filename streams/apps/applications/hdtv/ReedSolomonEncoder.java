@@ -16,8 +16,8 @@ public class ReedSolomonEncoder extends Filter {
     public void init() {
 
 	this.initialize_ecc();
-	input  = new Channel(Integer.TYPE, K); // pops K data items
-	output = new Channel(Integer.TYPE, N); // pushes N items on to output
+	inputChannel= new Channel(Integer.TYPE, K); // pops K data items
+	outputChannel= new Channel(Integer.TYPE, N); // pushes N items on to output
     }
     public void work() {
 
@@ -29,7 +29,7 @@ public class ReedSolomonEncoder extends Filter {
 	
 	/** pop the data off of the input tape **/
 	for (i=0; i<K; i++) {
-	    msg[i] = (int)input.popInt();
+	    msg[i] = (int)inputChannel.popInt();
 	}
 	
 	/** Encode the data, ending up with N-K parity bytes **/
@@ -44,7 +44,7 @@ public class ReedSolomonEncoder extends Filter {
 
 	/** push out the encoded message onto the tape **/
 	for (i=0; i<N; i++) {
-	    output.pushInt(codeword[i]);
+	    outputChannel.pushInt(codeword[i]);
 	}
     }
 

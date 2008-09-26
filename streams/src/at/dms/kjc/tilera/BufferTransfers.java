@@ -3,7 +3,7 @@ package at.dms.kjc.tilera;
 import java.util.LinkedList;
 import java.util.List;
 
-import at.dms.kjc.JStatement;
+import at.dms.kjc.*;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.InterSliceEdge;
 import at.dms.kjc.slicegraph.OutputSliceNode;
@@ -69,6 +69,10 @@ public abstract class BufferTransfers {
     public List<JStatement> waitCallsSteady() {
         return waitCallsSteady;    
     }
+    
+    public abstract JStatement zeroOutHead(SchedulingPhase phase);
+    
+    public abstract JMethodDeclaration pushMethod(JFieldAccessExpression bufRef);
     
     /**
      * Do some checks to make sure we will generate correct code for this distribution pattern.

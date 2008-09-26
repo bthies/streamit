@@ -4,12 +4,29 @@ import java.util.LinkedList;
 import java.util.List;
 import at.dms.kjc.slicegraph.*;
 import at.dms.kjc.backendSupport.*;
-import at.dms.kjc.JStatement;
+import at.dms.kjc.*;
 
 public class BufferDMATransfers extends BufferTransfers {
-   
+    /** reference to head if this input buffer is shared as an output buffer */
+    protected JExpression head;
+    /** name of variable containing head of array offset */
+    protected String writeHeadName;
+    /** definition for head */
+    protected JVariableDefinition writeHeadDefn;
+        
     public BufferDMATransfers(RotatingBuffer buf) {
         super(buf);
+        
+        //set up the head pointer for writing
+        writeHeadName = buf.getIdent() + "head";
+        writeHeadDefn = new JVariableDefinition(null,
+                at.dms.kjc.Constants.ACC_STATIC,
+                CStdType.Integer, writeHeadName, null);
+        
+        head = new JFieldAccessExpression(writeHeadName);
+        head.setType(CStdType.Integer);
+        
+        decls.add(new JVariableDeclarationStatement(writeHeadDefn));
         
         checkSimple(SchedulingPhase.INIT);
         generateStatements(SchedulingPhase.INIT);
@@ -71,5 +88,33 @@ public class BufferDMATransfers extends BufferTransfers {
                 decls.add(Util.toStmt("ilibRequest " + requestVar));
             }
         }
+    }
+    
+    public JStatement zeroOutHead(SchedulingPhase phase) {
+        return new JExpressionStatement(
+                        new JAssignmentExpression(head, new JIntLiteral(0)));
+    }
+    
+    public JMethodDeclaration pushMethod(JFieldAccessExpression bufRef) {
+        String valName = "__val";
+        JFormalParameter val = new JFormalParameter(
+                parent.getType(),
+                valName);
+        JLocalVariableExpression valRef = new JLocalVariableExpression(val);
+        JBlock body = new JBlock();
+        JMethodDeclaration retval = new JMethodDeclaration(
+                null,
+                /*at.dms.kjc.Constants.ACC_PUBLIC | at.dms.kjc.Constants.ACC_STATIC |*/ at.dms.kjc.Constants.ACC_INLINE,
+                CStdType.Void,
+                parent.pushMethodName(),
+                new JFormalParameter[]{val},
+                CClassType.EMPTY,
+                body, null, null);
+        body.addStatement(
+        new JExpressionStatement(new JAssignmentExpression(
+                new JArrayAccessExpression(bufRef, new JPostfixExpression(at.dms.kjc.Constants.OPE_POSTINC,
+                        head)),
+                valRef)));
+        return retval;
     }
 }

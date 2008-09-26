@@ -164,6 +164,23 @@ public class InputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneabl
     }
     
     /**
+     * return the edge that goes from node's outputslicenode to this inputslicenode
+     * 
+     */
+    public InterSliceEdge getEdgeFrom(SchedulingPhase phase, FilterSliceNode node) {
+        assert singleAppearance();
+        
+        for (InterSliceEdge edge : getSourceSet(phase)) {
+            if (edge.getSrc().getPrevFilter() == node) {
+                return edge;
+            }
+        }
+        
+        assert false : "cannot find edge to node in getEdgeFrom() in InputSliceNode for " + phase;
+        return null;
+    }
+    
+    /**
      * return the sum of the weights that appear before index in the joining schedule
      */
     public int weightBefore(int index, SchedulingPhase phase) {

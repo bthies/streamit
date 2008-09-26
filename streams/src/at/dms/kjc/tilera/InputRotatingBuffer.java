@@ -41,7 +41,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
     /** the name of the pointer to the read buffer of the current rotation */
     protected String currentReadBufName;
     /** reference to head if this input buffer is shared as an output buffer */
-    protected JExpression head;
+    //protected JExpression head;
 
     /**
      * Create all the input buffers necessary for this slice graph.  Iterate over
@@ -132,15 +132,6 @@ public class InputRotatingBuffer extends RotatingBuffer {
         if (localSrcFilter != null) {
           //remember that this input buffer is the output for the src filter on the same tile
             setOutputBuffer(localSrcFilter, this);
-            
-            //set up the head pointer for writing
-            writeHeadName = this.getIdent() + "head";
-            writeHeadDefn = new JVariableDefinition(null,
-                    at.dms.kjc.Constants.ACC_STATIC,
-                    CStdType.Integer, writeHeadName, null);
-            
-            head = new JFieldAccessExpression(writeHeadName);
-            head.setType(CStdType.Integer);
             
             firstExeName = "__first__" + this.getIdent();        
             firstExe = new JVariableDefinition(null,
@@ -419,13 +410,20 @@ public class InputRotatingBuffer extends RotatingBuffer {
                 body, null, null);
         body.addStatement(
         new JReturnStatement(null,
-                bufRef(new JPostfixExpression(at.dms.kjc.Constants.OPE_POSTINC, tail)),null));
+                readBufRef(new JPostfixExpression(at.dms.kjc.Constants.OPE_POSTINC, tail)),null));
         return retval;
     }
     
     /** Create an array reference given an offset */   
-    protected JArrayAccessExpression bufRef(JExpression offset) {
-        JFieldAccessExpression bufAccess = new JFieldAccessExpression(new JThisExpression(), currentWriteBufName);
+    protected JFieldAccessExpression writeBufRef() {
+        assert hasLocalSrcFilter();
+        return new JFieldAccessExpression(new JThisExpression(), currentWriteBufName);
+    }
+    
+    
+    /** Create an array reference given an offset */   
+    protected JArrayAccessExpression readBufRef(JExpression offset) {
+        JFieldAccessExpression bufAccess = new JFieldAccessExpression(new JThisExpression(), currentReadBufName);
         return new JArrayAccessExpression(bufAccess, offset);
     }
     
@@ -528,7 +526,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
                 body, null, null);
         body.addStatement(
                 new JReturnStatement(null,
-                        bufRef(new JAddExpression(tail, offsetRef)),null));
+                        readBufRef(new JAddExpression(tail, offsetRef)),null));
         return retval;
     }
 
@@ -742,7 +740,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
         
         LinkedList<JStatement> list = new LinkedList<JStatement>();
                 
-        list.add(zeroOutHead());
+        list.add(transferCommands.zeroOutHead(SchedulingPhase.PRIMEPUMP));
         
         if (TileraBackend.DMA) {
             //for dma we transfer at the beginning of the work function call
@@ -822,7 +820,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
         assert hasLocalSrcFilter() : "Calling write method for input buffer that does not act as output buffer.";
         
         LinkedList<JStatement> list = new LinkedList<JStatement>();
-        list.add(zeroOutHead());
+        list.add(transferCommands.zeroOutHead(SchedulingPhase.STEADY));
         if (TileraBackend.DMA)
             list.addAll(transferCommands.transferCommands(SchedulingPhase.STEADY));
         return list;
@@ -861,10 +859,8 @@ public class InputRotatingBuffer extends RotatingBuffer {
     public List<JStatement> writeDecls() {
         assert hasLocalSrcFilter() : "Calling write method for input buffer that does not act as output buffer.";
         
-        JStatement tailDecl = new JVariableDeclarationStatement(writeHeadDefn);
         JStatement firstDecl = new JVariableDeclarationStatement(firstExe);
         List<JStatement> retval = new LinkedList<JStatement>();
-        retval.add(tailDecl);
         retval.add(firstDecl);
         retval.addAll(transferCommands.decls());
         return retval;
@@ -883,26 +879,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
      */
     public JMethodDeclaration pushMethod() {
         assert hasLocalSrcFilter() : "Calling write method for input buffer that does not act as output buffer.";
-        String valName = "__val";
-        JFormalParameter val = new JFormalParameter(
-                theEdge.getType(),
-                valName);
-        JLocalVariableExpression valRef = new JLocalVariableExpression(val);
-        JBlock body = new JBlock();
-        JMethodDeclaration retval = new JMethodDeclaration(
-                null,
-                /*at.dms.kjc.Constants.ACC_PUBLIC | at.dms.kjc.Constants.ACC_STATIC |*/ at.dms.kjc.Constants.ACC_INLINE,
-                CStdType.Void,
-                pushMethodName(),
-                new JFormalParameter[]{val},
-                CClassType.EMPTY,
-                body, null, null);
-        body.addStatement(
-        new JExpressionStatement(new JAssignmentExpression(
-                bufRef(new JPostfixExpression(at.dms.kjc.Constants.OPE_POSTINC,
-                        head)),
-                valRef)));
-        return retval;
+        return transferCommands.pushMethod(writeBufRef());
     }
     
     /* (non-Javadoc)
@@ -911,7 +888,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
     public List<JStatement> beginInitWrite() {
         assert hasLocalSrcFilter() : "Calling write method for input buffer that does not act as output buffer.";
         LinkedList<JStatement> list = new LinkedList<JStatement>();
-        list.add(zeroOutHead());
+        list.add(transferCommands.zeroOutHead(SchedulingPhase.INIT));
         return list;
     }
     
@@ -945,18 +922,6 @@ public class InputRotatingBuffer extends RotatingBuffer {
         list.add(Util.toStmt(transRotName + " = " + transRotName + "->next"));
         list.add(Util.toStmt(transBufName + " = " + transRotName + "->buffer"));
         return list;
-    }
-    
-    /** Create statement that sets the head to point over the copy down elements
-     * that will eventually be written to the beginning of the input buffer
-     */
-    protected JStatement zeroOutHead() {
-        assert hasLocalSrcFilter();
-        
-        FilterInfo fi = FilterInfo.getFilterInfo(localSrcFilter);
-        
-        return new JExpressionStatement(
-                        new JAssignmentExpression(head, new JIntLiteral(fi.copyDown)));
     }
     
     /*

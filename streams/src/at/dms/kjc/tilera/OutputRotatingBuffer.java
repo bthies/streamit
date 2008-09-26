@@ -38,9 +38,7 @@ import at.dms.kjc.spacetime.BasicSpaceTimeSchedule;
 
 public class OutputRotatingBuffer extends RotatingBuffer {
     /** the output slice node for this output buffer */
-    protected OutputSliceNode outputNode;
-    /** reference to head */
-    protected JExpression head;      
+    protected OutputSliceNode outputNode;    
     /** the tile we are mapped to */
     protected Tile tile;
     
@@ -94,18 +92,10 @@ public class OutputRotatingBuffer extends RotatingBuffer {
         outputNode = filterNode.getParent().getTail();
         bufType = filterNode.getFilter().getOutputType();
         setOutputBuffer(filterNode, this);
-        writeHeadName = this.getIdent() + "head";
-        writeHeadDefn = new JVariableDefinition(null,
-                at.dms.kjc.Constants.ACC_STATIC,
-                CStdType.Integer, writeHeadName, null);
-        
+       
         transRotName = this.getIdent() + "_rot_trans";
         transBufName = this.getIdent() + "_trans_buf";
-        
-        head = new JFieldAccessExpression(writeHeadName);
-        head.setType(CStdType.Integer);
-      
-        
+              
         tile = TileraBackend.backEndBits.getLayout().getComputeNode(filterNode);
         
         firstExeName = "__first__" + this.getIdent();        
@@ -116,9 +106,9 @@ public class OutputRotatingBuffer extends RotatingBuffer {
     }
    
     /** Create an array reference given an offset */   
-    protected JArrayAccessExpression bufRef(JExpression offset) {
-        JFieldAccessExpression bufAccess = new JFieldAccessExpression(new JThisExpression(), currentWriteBufName);
-        return new JArrayAccessExpression(bufAccess, offset);
+    protected JFieldAccessExpression bufRef() {
+        return new JFieldAccessExpression(new JThisExpression(), currentWriteBufName);
+     
     }
     
     public void createAddressBuffers() {
@@ -163,7 +153,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
     public List<JStatement> beginPrimePumpWrite() {
         LinkedList<JStatement> list = new LinkedList<JStatement>();
                 
-        list.add(zeroOutHead());
+        list.add(transferCommands.zeroOutHead(SchedulingPhase.PRIMEPUMP));
         
         JBlock block = new JBlock();
         if (TileraBackend.DMA) {
@@ -235,7 +225,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
      */
     public List<JStatement> beginSteadyWrite() {
         LinkedList<JStatement> list = new LinkedList<JStatement>();
-        list.add(zeroOutHead());
+        list.add(transferCommands.zeroOutHead(SchedulingPhase.STEADY));
         if (TileraBackend.DMA)
             list.addAll(transferCommands.transferCommands(SchedulingPhase.STEADY));
         return list;
@@ -282,10 +272,8 @@ public class OutputRotatingBuffer extends RotatingBuffer {
      * @see at.dms.kjc.backendSupport.ChannelI#writeDecls()
      */
     public List<JStatement> writeDecls() {
-        JStatement tailDecl = new JVariableDeclarationStatement(writeHeadDefn);
         JStatement firstDecl = new JVariableDeclarationStatement(firstExe);
         List<JStatement> retval = new LinkedList<JStatement>();
-        retval.add(tailDecl);
         retval.add(firstDecl);
         retval.addAll(transferCommands.decls());
         return retval;
@@ -387,26 +375,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
      * @see at.dms.kjc.backendSupport.ChannelI#pushMethod()
      */
     public JMethodDeclaration pushMethod() {
-        String valName = "__val";
-        JFormalParameter val = new JFormalParameter(
-                theEdge.getType(),
-                valName);
-        JLocalVariableExpression valRef = new JLocalVariableExpression(val);
-        JBlock body = new JBlock();
-        JMethodDeclaration retval = new JMethodDeclaration(
-                null,
-                /*at.dms.kjc.Constants.ACC_PUBLIC | at.dms.kjc.Constants.ACC_STATIC |*/ at.dms.kjc.Constants.ACC_INLINE,
-                CStdType.Void,
-                pushMethodName(),
-                new JFormalParameter[]{val},
-                CClassType.EMPTY,
-                body, null, null);
-        body.addStatement(
-        new JExpressionStatement(new JAssignmentExpression(
-                bufRef(new JPostfixExpression(at.dms.kjc.Constants.OPE_POSTINC,
-                        head)),
-                valRef)));
-        return retval;
+        return transferCommands.pushMethod(bufRef());
     }
     
     /* (non-Javadoc)
@@ -414,7 +383,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
      */
     public List<JStatement> beginInitWrite() {
         LinkedList<JStatement> list = new LinkedList<JStatement>();
-        list.add(zeroOutHead());
+        list.add(transferCommands.zeroOutHead(SchedulingPhase.INIT));
         return list;
     }
 
@@ -462,13 +431,6 @@ public class OutputRotatingBuffer extends RotatingBuffer {
         return new LinkedList<JStatement>();
     }   
 
-    /** Create statement zeroing out head */
-    protected JStatement zeroOutHead() {
-        return new JExpressionStatement(
-                        new JAssignmentExpression(head, new JIntLiteral(0)));
-    }
-
-    
     /**
      * Generate the code to setup the structure of the rotating buffer 
      * as a circular linked list.

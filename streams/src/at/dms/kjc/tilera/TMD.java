@@ -75,6 +75,8 @@ public class TMD extends Scheduler {
                 //that are not fizzed
                 assert levels[l].length == 1 && levels[l][0].getFirstFilter().isPredefined() :
                     "Level " + l + " of slice graph has fewer filters than tiles.";
+                
+               setComputeNode(levels[l][0].getFirstFilter(), TileraBackend.chip.getOffChipMemory());
             }
             
             for (int f = 0; f < levels[l].length; f++) {

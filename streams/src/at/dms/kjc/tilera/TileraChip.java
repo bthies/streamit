@@ -10,6 +10,7 @@ public class TileraChip implements ComputeNodesI<TileCodeStore> {
     protected int gXSize;
     protected int gYSize;
     protected Tile[][] tiles;
+    protected OffChipMemory offChipMemory;
     
     /**
      * Data structures for a <b>xSize</b> x <b>ySize</b> Tile64 chip.
@@ -28,10 +29,15 @@ public class TileraChip implements ComputeNodesI<TileCodeStore> {
                 tiles[x][y] = new Tile(x, y, this);             
             }
         }
+        offChipMemory = new OffChipMemory(-1, -1, this);
     }
     
     public TileraChip() {
         this(8, 8);
+    }
+    
+    public OffChipMemory getOffChipMemory() {
+        return offChipMemory;
     }
     
     public LinkedList<Tile> getTiles() {

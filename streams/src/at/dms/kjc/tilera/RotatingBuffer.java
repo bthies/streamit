@@ -50,11 +50,7 @@ public abstract class RotatingBuffer extends Channel {
     public String transRotName;
     /** name of the variable that points to the buffer we should be transferring from */
     public String transBufName;
-    /** name of variable containing head of array offset */
-    protected String writeHeadName;
-    /** definition for head */
-    protected JVariableDefinition writeHeadDefn;
-    /** definition of boolean used during primepump to see if it is the first exection */
+    /** definition of boolean used during primepump to see if it is the first execution */
     protected JVariableDefinition firstExe;
     protected String firstExeName;
     /** the filter this buffer is associated with */   

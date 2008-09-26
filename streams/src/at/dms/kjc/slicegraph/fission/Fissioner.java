@@ -123,6 +123,12 @@ public class Fissioner {
             return false;
         }
 
+        // Check to make sure that Slice is stateless
+        if(MutableStateExtractor.hasMutableState(slice.getFirstFilter().getFilter())) {
+            if(debug) System.out.println("Can't fizz: Slice is not stateless!!");
+            return false;
+        }
+
         // Check to see if FilterSliceNode contains a linear filter.  At the
         // moment, we can't fizz linear filters
         if(filter.getFilter().isLinear()) {

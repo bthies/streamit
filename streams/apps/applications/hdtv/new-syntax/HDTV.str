@@ -1,0 +1,236 @@
+/**
+ * Example HDTV decoder application. Eventually this
+ * application might be able to take a trace from the
+ * airwaves and output an MPEG2 video stream.
+ **/
+void->void pipeline HDTV {
+    //int NUM_TRELLIS_ENCODERS = 12;
+    int NUM_TRELLIS_ENCODERS = 12;
+    //int INTERLEAVE_DEPTH = 52;
+    int INTERLEAVE_DEPTH = 5;
+
+    // add a data source
+    add DataSegmentGenerator();
+	
+    // add an encoder
+    add HDTVEncodePipeline(INTERLEAVE_DEPTH, NUM_TRELLIS_ENCODERS);
+
+    // add a decoder
+    add HDTVDecodePipeline(INTERLEAVE_DEPTH, NUM_TRELLIS_ENCODERS);
+
+    // print what comes out of the decoder
+    add DataSegmentSink();
+}
+
+int->int pipeline HDTVEncodePipeline(int INTERLEAVE_DEPTH, int NUM_TRELLIS_ENCODERS) {
+	// -- data is integers in integers--
+
+	// split integers into "bytes"
+	add IntegerSplitter();
+
+	// -- data is bytes in integers--
+	
+	// encode using reed-solomon encoder
+	add ReedSolomonEncoder();
+
+	// -- data is bytes in integers--
+	
+	// convolutionally interleave
+	add ConvolutionalInterleaver(INTERLEAVE_DEPTH);
+	
+	// -- data is bytes in integers--
+	
+	// interleave and trellis encode
+	add TrellisEncoderPipeline(NUM_TRELLIS_ENCODERS);
+
+	// -- data is bits in integers--
+
+	// reorder the bits
+	add DataReorder(1); // 1 means reorder
+
+	// -- data is bits in integers--
+
+	// insert some noise
+	//add NoiseSource(1000);
+	
+	// create our symbols to transmit over the noisy channel
+	add SymbolMapper();
+
+	// -- data is 8 level symbols in integers--
+	// add the four symbol sync to the symbols
+	add SyncGenerator();
+
+	// -- data is 8 level symbols in integers--	
+}
+
+
+int->int pipeline HDTVDecodePipeline(int INTERLEAVE_DEPTH, int NUM_TRELLIS_ENCODERS) {
+	// -- data is 8 level symbols in integers--
+
+	// remove the sync field from the symbols that come
+	// in over the channel
+	add SyncRemover();
+	
+	// -- data is 8 level symbols in integers--	
+
+	// decode symbols received over the channel
+	add SymbolUnMapper();
+
+	// -- data is bits in integers--
+
+	// un-reorder the bits
+	add DataReorder(2); // 1 means un-reorder
+
+	// -- data is bits in integers--
+
+	// trellis decode and de-interleave
+	add TrellisDecoderPipeline(NUM_TRELLIS_ENCODERS);
+
+	// -- data is bytes in integers--
+	
+	// convolutionally deinterleave and decode
+	add ConvolutionalDeinterleaver(INTERLEAVE_DEPTH);
+
+	// -- data is bytes in integers--
+
+	// decode (and correct errors with reed solomon
+	add ReedSolomonDecoder();
+
+	// -- data is bytes in integers--
+	
+	// recombine "bytes" back into integers
+	add IntegerCombiner();
+
+	// -- data is integers in integers--
+}
+
+
+/**
+ * Data source for sample application
+ **/
+void->int filter DataSegmentGenerator {
+    int x=0;
+    work push 1 {
+	push(x);
+	x++;
+    }
+}
+
+/**
+ * Data sink for sample app (prints out data).
+ **/
+int->void filter DataSegmentSink {
+    work pop 1 {
+        println(pop());
+    }
+}
+
+
+/**
+ * Prints data on the way by.
+ **/
+int->int filter DataSniffer {
+    work push 1 pop 1{
+	int in = pop();
+	println(in);
+	push(in);
+    }
+}
+
+
+/**
+ * Splits in incoming integer into 4 outgoing bytes.
+ * The first byte pushed is the least significant.
+ **/
+int->int filter IntegerSplitter {
+    work push 4 pop 1 {
+	int t = pop(); // pop off the integer;
+	push((t & 0x000000FF) >> 0);
+	push((t & 0x0000FF00) >> 8);
+	push((t & 0x00FF0000) >> 16);
+	push((t & 0xFF000000) >> 24);
+    }
+}
+
+/**
+ * Reassembles integers from bytes that have
+ * been split with an IntegerSplitter.
+ **/
+int->int filter IntegerCombiner {
+    work pop 4 push 1 {
+	int byte1 = pop();
+	int byte2 = pop() << 8;
+	int byte3 = pop() << 16;
+	int byte4 = pop() << 24;
+
+	// push the created output on to the tape
+	push(byte1 | byte2 | byte3 | byte4);
+    }
+}
+
+/**
+ * Adds a Sync field (I do not know what this contains at the present)
+ * on the front of a data segment.
+ *
+ * 828 8-level-symbols are transmitted per data segment, and attached
+ * to the front of those 828 symbols are 4 binary sync levels, for a
+ * grand total of 832 symbols sent over the channel per data segment.
+ **/
+int->int filter SyncGenerator {
+    int DATA_SEGMENT_SIZE = 828;
+    int SYNC_SIZE         = 4;
+
+    work pop DATA_SEGMENT_SIZE push DATA_SEGMENT_SIZE + SYNC_SIZE {
+	// push out the sync value on to the output tape
+      	// the sync, according to the a53, rev b spec
+	// is binary 1001, encoded as symbols
+	// 5 -5 -5 5
+	push(5);
+	push(-5);
+	push(-5);
+	push(5);
+
+	// copy the remaining 828 symbols from the input to the output
+	for (int i=0; i<DATA_SEGMENT_SIZE; i++) {
+	    push(pop());
+	}
+    }
+}
+
+
+/**
+ * Removes a Sync field (I do not know what this contains at the present)
+ * the front of a data segment. Totally ignores the sync data
+ **/
+int->int filter SyncRemover {
+    int DATA_SEGMENT_SIZE = 828;
+    int SYNC_SIZE         = 4;
+
+    work push DATA_SEGMENT_SIZE pop DATA_SEGMENT_SIZE + SYNC_SIZE {
+	int i;
+	// pop off the sync
+	for (i=0; i<SYNC_SIZE;i++) {
+	    pop();
+	}
+	// copy the rest of the data over
+	for (i=0; i<DATA_SEGMENT_SIZE; i++) {
+	    push(pop());
+	}
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,24 @@
+/**
+ * Simple, 1/2 precoder for use in HDTV. It xors
+ * the input with the previous output to give the current
+ * outputChannel. Eg x = input, y = output
+ * so y(t) = x(t) XOR y(t-1)
+ *
+ * Starts with state = 0 (or equivaletly y(-1) = 0)
+ *
+ * x2 ---->XOR-------> y2 ---------------------> z2
+ *          ^      | 
+ *          |      |
+ *          |--D<--| (state)
+ *
+ **/
+int->int filter PreCoder {
+    /** last input that we saw **/
+    int state = 0;
+    work push 1 pop 1 {
+	int t = pop() ^ state; // xor input with state
+	push(t);
+	// update state
+	state = t;
+    }
+}

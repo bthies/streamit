@@ -1,0 +1,21 @@
+/** Trellis Interleave/Encoder pipeline **/
+int->int splitjoin TrellisEncoderPipeline(int numTrellis) {
+    // this is a consequence of encoding an 8 bit byte
+    // with an 2/3 convolutional code, resulting in
+    // 8 * 3/2 = 12 bits being produced
+    int NUM_ENCODED_BITS_IN_BYTE = 12;
+
+    split roundrobin;
+    for (int i=0; i<numTrellis; i++) {
+        add TrellisEncoderPipelineElement();
+    }
+    join roundrobin(NUM_ENCODED_BITS_IN_BYTE);
+}
+
+int->int pipeline TrellisEncoderPipelineElement {
+    // split the "bytes" that are coming into the trellis encoder
+    // into "bits" that will be interleaved
+    add Bitifier();
+    // perform the actual trellis encoding
+    add TrellisEncoder();
+}

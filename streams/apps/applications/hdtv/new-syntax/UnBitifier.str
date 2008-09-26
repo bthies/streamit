@@ -1,0 +1,17 @@
+/**
+ * UnBitifier -- converts a stream of bits (masquarading as integers)
+ * into byte (also masquarading as an integer).
+ * In digital systems, this is also a shift register
+ * (MSB is shifted in first).
+ **/
+int->int filter UnBitifier {
+    work pop 8 push 1 {
+	int accum = 0;
+	for (int i=0; i<8; i++) {
+	    // shift in 8 bits
+	    accum = accum << 1;
+	    accum = accum | pop();
+	}
+	push(accum);
+    }
+}

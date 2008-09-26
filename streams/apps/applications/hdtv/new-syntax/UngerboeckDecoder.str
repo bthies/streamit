@@ -1,0 +1,24 @@
+/*
+ * Simple Trellis decoder. Uses the ideas
+ * from http://pw1.netcom.com/~chip.f/viterbi/algrthms2.html
+ * This decoder decodes a different Convolutional Code than the one
+ * presented in the web page, but the idea is the same.
+ *
+ * This decoder inputs several two bit symbols and decodes
+ * it into 1 bit of data. Note that the decoder needs
+ * to process several input symbols before producing output symbols.
+ *
+ * See the HDTV writeup for a more detailed description
+ * and example worked through
+ **/
+int->int filter UngerboeckDecoder {
+    int SYMBOLSIZE = 2;
+    int DATASIZE = 5;
+    
+    // this filer is stateful in the .java version, so emulate that
+    int x = 0;
+
+    work pop DATASIZE*SYMBOLSIZE push DATASIZE {
+        push(x++);
+    }
+}

@@ -1,0 +1,33 @@
+/**
+ * Symbol Encoder -- maps sequences of 3 bits to
+ * a symbol that is to be transmitted over the
+ * the airwaves. Therefore it takes in 3 "bits"
+ * and produces one "symbol" as outputChannel. LSB is brought in first.
+ **/
+int->int filter SymbolMapper {
+    int[8] map;
+    init {
+	setupMap();
+    }
+    work pop 3 push 1 {
+	// shift in the bits (msb is first)
+	int index = 0;
+	for (int i=0; i<3; i++) {
+	    index = index << 1;
+	    index = index | pop();
+	}
+	// do a symbol lookup on the index
+	push(map[index]);
+    }
+
+    void setupMap() {
+	map[0] = -7;
+	map[1] = -5;
+	map[2] = -3;
+	map[3] = -1;
+	map[4] = 1;
+	map[5] = 3;
+	map[6] = 5;
+	map[7] = 7;
+    }
+}

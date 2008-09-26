@@ -700,9 +700,9 @@ float->float splitjoin diff_matrix_interleave(int n) {
 
 float->float filter f_substitutions(int n) {
 
-  float[n] s; float temp_count, temp_l, temp_b;
-
   work push n pop n*n + n {
+
+    float[n] s; float temp_count, temp_l, temp_b;
 
     for(int i=0; i<n; i++) {
       temp_count = 0.0;
@@ -782,10 +782,10 @@ complex->complex splitjoin diff_matrix_interleave_c(int n) {
 
 complex->complex filter f_substitutions_c(int n) {
 
-  complex[n] s; complex temp_count, temp_l, temp_b;
 
   work push n pop n*n + n {
 
+    complex[n] s; complex temp_count, temp_l, temp_b;
     for(int i=0; i<n; i++) {
       temp_count.real = 0.0;
       temp_count.imag = 0.0;
@@ -889,10 +889,8 @@ complex->complex filter convert_to_square_rows(int m, int n) {
 
 float->float filter divide_by_constant(int len) {
 
-  float val;
-
   work push len pop len+1 {
-    val = pop();
+    float val = pop();
 
     for(int i=0; i<len; i++) 
       push(pop()/val);
@@ -907,9 +905,8 @@ float->float filter divide_by_constant(int len) {
 
 complex->complex filter divide_by_constant_c(int len) {
 
-  complex val;
-
   work push len pop len+1 {
+    complex val;
     val = pop();
 
     for(int i=0; i<len; i++) {
@@ -945,9 +942,9 @@ float->float filter multiply_by_constant(int len) {
 
 complex->complex filter multiply_by_constant_c(int len) {
 
-  complex val;
-
   work push len pop len+1 {
+    complex val;
+
     val = pop();
 
     for(int i=0; i<len; i++) {
@@ -1301,17 +1298,16 @@ complex->complex pipeline normalizeComplex(int len) {
 
 complex->complex filter complex_conjugate(int len) {
 
-  complex in, out;
+    work push len pop len {
+        complex in, out;
 
-  work push len pop len {
-
-    for(int i=0; i<len; i++) {
-      in = pop();
-      out.real = in.real;
-      out.imag = -in.imag;
-      push(out);
+        for(int i=0; i<len; i++) {
+            in = pop();
+            out.real = in.real;
+            out.imag = -in.imag;
+            push(out);
+        }
     }
-  }
 }
 
 
@@ -1335,10 +1331,10 @@ complex->complex pipeline Hermatian(int x, int y) {
 
 complex->complex filter clean_up_zeros(int len) {
 
-  float threshold = 0.000001;
-  complex in, out;
-
   work push len pop len {
+
+    float threshold = 0.000001;
+    complex in, out;
 
     for(int i=0; i<len; i++) {
       in = pop();
@@ -1364,10 +1360,9 @@ complex->complex filter clean_up_zeros(int len) {
 
 float->float filter clean_up_zeros_f(int len) {
 
-  float threshold = 0.000001;
-  float temp;
-
   work push len pop len {
+    float threshold = 0.000001;
+    float temp;
 
     for(int i=0; i<len; i++) {
       temp = pop();

@@ -117,9 +117,9 @@ complex->complex splitjoin get_norm_and_iden(int len) {
 
 complex->complex filter addnorm(int len) {
  
-  complex norm_val, first, new_first;
-
   work push len pop len+1 {
+
+    complex norm_val, first, new_first;
 
     norm_val = pop();
     first = pop();

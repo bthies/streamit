@@ -108,6 +108,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
         localSrcFilter = null;
         
         setLocalSrcFilter();
+        assert !(upstreamFileReader && hasLocalSrcFilter());
         setBufferSize();
         
     }
@@ -590,7 +591,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
      */
     public List<JStatement> endInitRead() {
         LinkedList<JStatement> list = new LinkedList<JStatement>(); 
-        //we need to refill the buffer it is filled by a file reader,
+        //we need to refill the buffer if it is filled by a file reader,
         //remember that we are rotating the file input buffer even in the init
         //that is why we use the steady commands in the init, the init commands 
         //are used during the setupRotation stage
@@ -805,7 +806,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
                     block2, new JBlock(), null);    
             list.add(guard2);
 
-            //now we are done with the first execution to set firstExe to false
+            //now we are done with the first execution so set firstExe to false
             list.add(new JExpressionStatement(
                     new JAssignmentExpression(new JEmittedTextExpression(firstExeName), 
                             new JBooleanLiteral(false))));

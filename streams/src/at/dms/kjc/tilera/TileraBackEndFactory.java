@@ -99,7 +99,7 @@ public class TileraBackEndFactory extends BackEndFactory<TileraChip, Tile, TileC
     @Override
     public void processFilterSliceNode(FilterSliceNode filter,
             SchedulingPhase whichPhase, TileraChip chip) {
-        //System.out.println("Processing: " + filter + " on tile " + layout.getComputeNode(filter).getTileNumber() + "(" + whichPhase + ")");
+        System.out.println("Processing: " + filter + " on tile " + layout.getComputeNode(filter).getTileNumber() + "(" + whichPhase + ")");
         if (filter.isPredefined()) {
             if (filter.isFileInput())
                 (new ProcessFileReader(filter, whichPhase, this)).processFileReader();

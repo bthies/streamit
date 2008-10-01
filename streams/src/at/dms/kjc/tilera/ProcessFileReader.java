@@ -4,6 +4,7 @@ import at.dms.kjc.slicegraph.*;
 import at.dms.kjc.backendSupport.*;
 import java.io.File;
 import at.dms.kjc.JBlock;
+import java.util.HashMap;
 
 public class ProcessFileReader {
     
@@ -12,14 +13,20 @@ public class ProcessFileReader {
     protected TileraBackEndFactory factory;
     protected TileCodeStore codeStore;
     protected FileInputContent fileInput;
+    protected static HashMap<FilterSliceNode, Tile> allocatingTiles;
+    protected Tile allocatingTile;
+    
+    static {
+        allocatingTiles = new HashMap<FilterSliceNode, Tile>();
+    }
     
     public ProcessFileReader (FilterSliceNode filter, SchedulingPhase phase, TileraBackEndFactory factory) {
         this.filterNode = filter;
         this.fileInput = (FileInputContent)filter.getFilter();
         this.phase = phase;
         this.factory = factory;
-        //the file reader should be mapped to tile 0 by the the layout algorithm
-        codeStore = TileraBackend.backEndBits.getLayout().getComputeNode(filter).getComputeCode();
+        this.allocatingTile = nextAllocatingTile();
+        codeStore = allocatingTile.getComputeCode();
     }
      
     public void processFileReader() {
@@ -68,6 +75,22 @@ public class ProcessFileReader {
             
             codeStore.addStatementFirstToBufferInit(block);
         }
+    }
+    
+    /**
+     * @return The tile we should allocate this file reader on.  Remember that 
+     * the file reader is allocated to off-chip memory.  We just cycle through the tiles
+     * if there is more than one file reader, one reader per tile.
+     */
+    private Tile nextAllocatingTile() {
+        for (Tile tile : TileraBackend.chip.getAbstractTiles()) {
+            if (!allocatingTiles.containsValue(tile)) {
+                allocatingTiles.put(filterNode, tile);
+                return tile;
+            }
+        }
+        assert false : "Too many file readers for this chip (one per tile)!";
+        return null;
     }
     
     private long getFileSizeBytes() {

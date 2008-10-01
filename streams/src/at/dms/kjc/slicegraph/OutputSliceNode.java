@@ -279,6 +279,19 @@ public class OutputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneab
     }
     
     /**
+     * Return true if the weight duplicates to edge during the scheduling phase.
+     */
+    public boolean weightDuplicatesTo(int weight, InterSliceEdge edge, SchedulingPhase phase) {
+        InterSliceEdge[][] dests = getDests(phase);
+        
+        for (int d = 0; d < dests[weight].length; d++) {
+            if (dests[weight][d] == edge)
+                return true;
+        }
+        return false;
+    }
+    
+    /**
      * Return a list of the edges with each edge appearing once
      * and ordered by the order in which each edge appears in the
      * split pattern.

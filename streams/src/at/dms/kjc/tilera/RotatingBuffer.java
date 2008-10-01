@@ -171,6 +171,10 @@ public abstract class RotatingBuffer extends Channel {
                 for (int i = 0; i < buf.getAddressBuffers().length; i++) {
                     SourceAddressRotation addr = buf.getAddressBuffers()[i];
                     Tile srcTile = addr.parent;
+                    //we might have a file reader as a source, if so, don't send the addresses to it
+                    if (!srcTile.isComputeTile())
+                        continue;
+                    
                     //create the declaration of the buffers on the tile
                     addr.declareBuffers();
                     for (int b = 0; b < buf.rotationLength; b++) {

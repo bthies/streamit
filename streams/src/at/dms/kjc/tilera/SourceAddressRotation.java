@@ -12,7 +12,7 @@ import at.dms.kjc.slicegraph.*;
 /**
  * This class models the rotating structure that is needed when a tile uses double buffered communication
  * and rotating buffers.  A rotating structure of addresses is kept at a source tile that stores
- * the addresses of the rotating buffers of the source tile so that the dma commands can write to 
+ * the addresses of the rotating buffers of the source tile so that we can write to 
  * the appropriate location in memory in the destination's tile.
  * 
  * @author mgordon

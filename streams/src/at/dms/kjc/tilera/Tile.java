@@ -56,6 +56,15 @@ public class Tile extends ComputeNode<TileCodeStore> {
         return X;
     }
 
+    /** 
+     * @return true if this tile is a compute tile, or false otherwise (e.g., it is
+     * off-chip memory which is crappily a subclass of tile now).
+     */
+    public boolean isComputeTile() {
+       return (X >= 0 && X < tile64Chip.gXSize &&
+                Y >= 0 && Y < tile64Chip.gYSize);          
+    }
+    
     /**
      * Return the y coordinate.
      * @return the y coordinate.

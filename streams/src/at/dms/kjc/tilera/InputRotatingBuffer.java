@@ -32,14 +32,18 @@ public class InputRotatingBuffer extends RotatingBuffer {
     protected HashMap<Tile, SourceAddressRotation> addrBufMap;
     /** true if what feeds this inputbuffer is a file reader */
     protected boolean upstreamFileReader;
-    /** if this is fed by a file reader, then we need commands for it */
-    protected FileReaderCode fileReaderCode;
     /** the name of the rotation struct, always points to head */
     protected String readRotStructName;
     /** the name of the pointer to the current read rotation of this buffer */
     protected String currentReadRotName;
     /** the name of the pointer to the read buffer of the current rotation */
     protected String currentReadBufName;
+    /** the name of the pointer to the current rotation of this buffer that the file reader should
+     * read into*/
+    protected String currentFileReaderRotName;
+    /** the name of the pointer to the read buffer of the current rotation that the file reader should
+     * read into */
+    protected String currentFileReaderBufName;
     /** reference to head if this input buffer is shared as an output buffer */
     //protected JExpression head;
 
@@ -84,6 +88,8 @@ public class InputRotatingBuffer extends RotatingBuffer {
         readRotStructName = this.getIdent() + "read_rot_struct";
         currentReadRotName =this.getIdent() + "_read_current";
         currentReadBufName =this.getIdent() + "_read_buf";
+        currentFileReaderRotName =this.getIdent() + "_fr_current";
+        currentFileReaderBufName =this.getIdent() + "_fr_buf";
         
         tailName = this.getIdent() + "tail";
         tailDefn = new JVariableDefinition(null,
@@ -99,10 +105,6 @@ public class InputRotatingBuffer extends RotatingBuffer {
             System.out.println(filterNode);
             assert filterNode.getParent().getHead().getWidth(SchedulingPhase.INIT) <= 1 &&
             filterNode.getParent().getHead().getWidth(SchedulingPhase.STEADY) <= 1;
-            if (TileraBackend.DMA)
-                fileReaderCode = new FileReaderDMACommands(this);
-            else
-                fileReaderCode = new FileReaderRemoteReads(this);
         }
         addrBufMap = new HashMap<Tile, SourceAddressRotation>();
         localSrcFilter = null;
@@ -251,8 +253,16 @@ public class InputRotatingBuffer extends RotatingBuffer {
         parent.getComputeCode().appendTxtToGlobal(rotType + " *" + currentReadRotName + ";\n");
         //add the declaration of the pointer that points to the current buffer in the current rotation
         parent.getComputeCode().appendTxtToGlobal(bufType.toString() + " *" + currentReadBufName + ";\n");
-        
-             
+
+        if (upstreamFileReader) {
+            //add the declaration of the pointer that points to current in the rotation structure that the file
+            //reader should write into
+            parent.getComputeCode().appendTxtToGlobal(rotType + " *" + currentFileReaderRotName + ";\n");
+            //add the declaration of the pointer that points to the current buffer in the current rotation that
+            //the file reader should write into
+            parent.getComputeCode().appendTxtToGlobal(bufType.toString() + " *" + currentFileReaderBufName + ";\n");
+        }
+
         //create a temp var
         if (this.rotationLength > 1)
             block.addStatement(Util.toStmt(rotType + " *" + temp));
@@ -285,6 +295,10 @@ public class InputRotatingBuffer extends RotatingBuffer {
         }
         block.addStatement(Util.toStmt(currentReadRotName + " = " + readRotStructName));
         block.addStatement(Util.toStmt(currentReadBufName + " = " + currentReadRotName + "->buffer"));
+        if (upstreamFileReader) {
+            block.addStatement(Util.toStmt(currentFileReaderRotName + " = " + readRotStructName));
+            block.addStatement(Util.toStmt(currentFileReaderBufName + " = " + currentReadRotName + "->buffer"));
+        }
         block.addStatement(endOfRotationSetup());
         
         if (hasLocalSrcFilter()) {
@@ -337,19 +351,6 @@ public class InputRotatingBuffer extends RotatingBuffer {
      */
     public SourceAddressRotation[] getAddressBuffers() {
         return addressBufs;
-    }
-    
- 
-    /**
-     * If this input buffer is fed by a file reader, then put the commands to prime
-     * the buffer at the end of the rotation setup.
-     */
-    protected JStatement endOfRotationSetup() {
-        JBlock block = new JBlock();
-        if (upstreamFileReader) {
-            block.addAllStatements(fileReaderCode.getCode(SchedulingPhase.INIT));
-        }
-        return block;
     }
     
     /**
@@ -591,16 +592,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
      */
     public List<JStatement> endInitRead() {
         LinkedList<JStatement> list = new LinkedList<JStatement>(); 
-        //we need to refill the buffer if it is filled by a file reader,
-        //remember that we are rotating the file input buffer even in the init
-        //that is why we use the steady commands in the init, the init commands 
-        //are used during the setupRotation stage
-        if (upstreamFileReader) {
-            list.addAll(fileReaderCode.getCode(SchedulingPhase.STEADY));
-            list.addAll(fileReaderCode.waitCallsSteady());
-            list.addAll(copyDownStatements());
-            list.addAll(rotateStatementsRead());
-        }
+        list.addAll(copyDownStatements());
         return list;
     }
 
@@ -617,9 +609,6 @@ public class InputRotatingBuffer extends RotatingBuffer {
      */
     public List<JStatement> beginSteadyRead() {
         LinkedList<JStatement> list = new LinkedList<JStatement>();
-        if (upstreamFileReader) {
-            list.addAll(fileReaderCode.getCode(SchedulingPhase.STEADY));
-        }
         list.add(zeroOutTail());
         return list;
     }
@@ -632,9 +621,6 @@ public class InputRotatingBuffer extends RotatingBuffer {
         LinkedList<JStatement> list = new LinkedList<JStatement>();
         //copy the copyDown items to the next rotation buffer
         list.addAll(copyDownStatements());
-        if (upstreamFileReader) {
-            list.addAll(fileReaderCode.waitCallsSteady());
-        }
         //rotate to the next buffer
         list.addAll(rotateStatementsRead());        
         return list;
@@ -678,10 +664,6 @@ public class InputRotatingBuffer extends RotatingBuffer {
         JStatement tailDecl = new JVariableDeclarationStatement(tailDefn);
         List<JStatement> retval = new LinkedList<JStatement>();
         retval.add(tailDecl);
-        //if we have a file reader feeding this then add the decls for 
-        //the dma commands we generate for it.
-        if (upstreamFileReader) 
-            retval.addAll(fileReaderCode.decls());
         return retval;
     }   
     

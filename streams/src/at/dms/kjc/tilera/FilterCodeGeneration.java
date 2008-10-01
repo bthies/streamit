@@ -27,6 +27,8 @@ public class FilterCodeGeneration extends CodeStoreHelper {
     private static String exeIndex1Name = "__EXEINDEX__1__";
     private JVariableDefinition exeIndex1;
     private boolean exeIndex1Used;
+    /** this variable massages init mult to assume that every filter is a two stage */
+    private int initMult;
     
     private JVariableDefinition useExeIndex1() {
         if (exeIndex1Used) return exeIndex1;
@@ -51,6 +53,11 @@ public class FilterCodeGeneration extends CodeStoreHelper {
         super(node,node.getAsFilter().getFilter(),backEndBits);
         filterNode = node;
         filterInfo = FilterInfo.getFilterInfo(filterNode);
+        //assume that every filter is a two-stage and prework is called
+        initMult = filterInfo.initMult;
+        if (!filterInfo.isTwoStage()) {
+            initMult++;
+        }
     }
 
     /**
@@ -135,7 +142,6 @@ public class FilterCodeGeneration extends CodeStoreHelper {
      */
     private JStatement generateInitWorkLoop(FilterContent filter)
     {
-        FilterInfo filterInfo = FilterInfo.getFilterInfo((FilterSliceNode)sliceNode);
         JBlock block = new JBlock();
 
         //clone the work function and inline it
@@ -155,9 +161,9 @@ public class FilterCodeGeneration extends CodeStoreHelper {
         block.addStatement(workBlock);
     
         //return the for loop that executes the block init - 1
-        //times
+        //times (because the 1st execution is of prework)
         return Utils.makeForLoopFieldIndex(block, useExeIndex1(), 
-                           new JIntLiteral(filterInfo.initMult));
+                           new JIntLiteral(initMult - 1));
     }
 
     public JMethodDeclaration getPrimePumpMethod() {

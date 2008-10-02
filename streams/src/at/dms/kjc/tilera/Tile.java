@@ -72,4 +72,9 @@ public class Tile extends ComputeNode<TileCodeStore> {
     public int getY() {
         return Y;
     }
+    
+    public TileCodeStore getComputeCode() {
+        assert isComputeTile();
+        return computeCode;
+    }
 }

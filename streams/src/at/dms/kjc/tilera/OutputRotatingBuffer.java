@@ -41,6 +41,10 @@ public class OutputRotatingBuffer extends RotatingBuffer {
     protected OutputSliceNode outputNode;    
     /** the tile we are mapped to */
     protected Tile tile;
+    /** optimization: if this is true, then we can write directly to the remote input buffer
+     * when pushing and not into the local buffer.
+     */
+    protected boolean directWrite = false;
     
     /**
      * Create all the output buffers necessary for this slice graph.  Iterate over
@@ -52,6 +56,11 @@ public class OutputRotatingBuffer extends RotatingBuffer {
     public static void createOutputBuffers(BasicSpaceTimeSchedule schedule) {
         for (Slice slice : schedule.getScheduleList()) {
             assert slice.getNumFilters() == 1;
+            //don't do anything for file readers or writers,
+            //for file readers the output buffer is allocated in processfilereader
+            if (slice.getHead().getNextFilter().isPredefined())
+                continue;
+            
             if (!slice.getTail().noOutputs()) {
                 assert slice.getTail().totalWeights(SchedulingPhase.STEADY) > 0;
                 Tile parent = TileraBackend.backEndBits.getLayout().getComputeNode(slice.getFirstFilter());
@@ -71,7 +80,6 @@ public class OutputRotatingBuffer extends RotatingBuffer {
                 if (createBuffer) {
                     // create the new buffer, the constructor will put the buffer in the 
                     //hashmap
-                    System.out.println("Had to create output buffer for " + slice);
                     
                     OutputRotatingBuffer buf = new OutputRotatingBuffer(slice.getFirstFilter(), parent);
                     buf.setRotationLength(schedule);
@@ -102,6 +110,16 @@ public class OutputRotatingBuffer extends RotatingBuffer {
         firstExe = new JVariableDefinition(null,
                 at.dms.kjc.Constants.ACC_STATIC,
                 CStdType.Boolean, firstExeName, new JBooleanLiteral(true));
+        
+        //optimatization opportunity if we have single output edge and the
+        //downstream filter is mapped to another tile, very good for file writers
+        if (outputNode.oneOutput() && 
+                outputNode.getSingleEdge(SchedulingPhase.INIT) == 
+                    outputNode.getSingleEdge(SchedulingPhase.STEADY) &&
+                TileraBackend.scheduler.getComputeNode(filterNode) !=
+                    TileraBackend.scheduler.getComputeNode(outputNode.getSingleEdge(SchedulingPhase.STEADY).getDest().getNextFilter())) {
+            directWrite = true;
+        }
         
     }
    

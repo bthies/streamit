@@ -241,18 +241,24 @@ public class InputRotatingBuffer extends RotatingBuffer {
      */
     protected void setupRotation() {
         String temp = "__temp__";
-        TileCodeStore cs = parent.getComputeCode();
+        TileCodeStore cs; 
         //this is the typedef we will use for this buffer rotation structure
         String rotType = rotTypeDefPrefix + getType().toString();
-     
-        JBlock block = new JBlock();
+        //if we are setting up the rotation for a file writer we have to do it on the 
+        //allocating tile
+        if (filterNode.isFileOutput()) {
+            cs = ProcessFileWriter.getAllocatingTile(filterNode).getComputeCode();
+        } else
+            cs = parent.getComputeCode();
         
+        JBlock block = new JBlock();
+                
         //add the declaration of the rotation buffer of the appropriate rotation type
-        parent.getComputeCode().appendTxtToGlobal(rotType + " *" + readRotStructName + ";\n");
+        cs.appendTxtToGlobal(rotType + " *" + readRotStructName + ";\n");
         //add the declaration of the pointer that points to the current rotation in the rotation structure
-        parent.getComputeCode().appendTxtToGlobal(rotType + " *" + currentReadRotName + ";\n");
+        cs.appendTxtToGlobal(rotType + " *" + currentReadRotName + ";\n");
         //add the declaration of the pointer that points to the current buffer in the current rotation
-        parent.getComputeCode().appendTxtToGlobal(bufType.toString() + " *" + currentReadBufName + ";\n");
+        cs.appendTxtToGlobal(bufType.toString() + " *" + currentReadBufName + ";\n");
 
         if (upstreamFileReader) {
             //add the declaration of the pointer that points to current in the rotation structure that the file
@@ -592,7 +598,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
      */
     public List<JStatement> endInitRead() {
         LinkedList<JStatement> list = new LinkedList<JStatement>(); 
-        list.addAll(copyDownStatements());
+        list.addAll(copyDownStatements(SchedulingPhase.INIT));
         return list;
     }
 
@@ -620,7 +626,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
     public List<JStatement> endSteadyRead() {
         LinkedList<JStatement> list = new LinkedList<JStatement>();
         //copy the copyDown items to the next rotation buffer
-        list.addAll(copyDownStatements());
+        list.addAll(copyDownStatements(SchedulingPhase.STEADY));
         //rotate to the next buffer
         list.addAll(rotateStatementsRead());        
         return list;
@@ -680,7 +686,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
      * 
      * @return statements to implement the copy down
      */
-    protected List<JStatement> copyDownStatements() {
+    protected List<JStatement> copyDownStatements(SchedulingPhase phase) {
         List<JStatement> retval = new LinkedList<JStatement>();
         //if we have items on the buffer after filter execution, we must copy them 
         //to the next buffer, don't use memcopy, just generate individual statements
@@ -689,7 +695,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
         
         for (int i = 0; i < filterInfo.copyDown; i++) {
             retval.add(Util.toStmt(dst + "[" + i + "] = " + src + "[" + 
-                    (i + filterInfo.totalItemsPopped(SchedulingPhase.STEADY)) +
+                    (i + filterInfo.totalItemsPopped(phase)) +
                     "]"));
         }
         /*

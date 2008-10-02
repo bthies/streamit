@@ -247,18 +247,37 @@ public abstract class RotatingBuffer extends Channel {
      */
     protected void allocBuffers(boolean shared) {
         for (int i = 0; i < rotationLength; i++) {
-            TileCodeStore cs = this.parent.getComputeCode();
+            TileCodeStore cs;
+            
+            if (filterNode.isFileOutput()) {
+                //if we have a file writer then the code has to be put on the allocating tile 
+                //not the off chip memory!
+                cs = ProcessFileWriter.getAllocatingTile(filterNode).getComputeCode();
+            } else  //we are dealing with a regular buffer on a tile
+                cs = this.parent.getComputeCode();
+            
             
             //create the pointer to the this buffer constituent 
             cs.addStatementFirstToBufferInit(this.getType().toString() + "* " + 
                     bufferNames[i]);
             
+            //set the allocate call, if this is an output buffer then it is not shared,
+            //input buffers are shared and use malloc_shared
+            //input buffers of file output are allocated from the file write heap 
+            //which is shared and uncacheable
+            String alloc = "malloc(";
+            if (shared) {
+                if (filterNode.isFileOutput())  
+                    alloc = "ilib_mem_malloc_heap(fileWriteHeap,";
+                else
+                    alloc = "malloc_shared(";
+            }
+            
             //malloc the steady buffer
             cs.addStatementToBufferInit(new JExpressionStatement(new JEmittedTextExpression(
                     bufferNames[i] + " = (" + this.getType() + 
                     "*) " +  
-                    (shared ? "malloc_shared" : "malloc") +
-                    "(" + 
+                    alloc +
                     this.getBufferSize() + " * sizeof(" +
                     this.getType() + "))")));
         }

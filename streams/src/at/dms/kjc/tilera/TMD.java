@@ -51,7 +51,8 @@ public class TMD extends Scheduler {
         layoutMap.put(node, tile);
         //remember what filters each tile has mapped to it
         //System.out.println("Settting " + node + " to tile " + tile.getTileNumber());
-        tile.getComputeCode().addFilter(node.getAsFilter());
+        if (tile.isComputeTile())
+            tile.getComputeCode().addFilter(node.getAsFilter());
     }
     
     /**

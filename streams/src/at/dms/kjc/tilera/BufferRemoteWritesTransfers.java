@@ -90,7 +90,7 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
         //we might have to skip over some elements when we push into the buffer if this
         //is a shared buffer
         int writeOffset = getWriteOffset(phase);
-        System.out.println("Source write offset = " + writeOffset);     
+        //System.out.println("Source write offset = " + writeOffset);     
         
         List<JStatement> statements = null;
         
@@ -157,7 +157,7 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
         int[] indices = new int[outputRots * output.getWeight(edge, phase)];
         InputSliceNode input = edge.getDest();
         FilterInfo dsFilter = FilterInfo.getFilterInfo(input.getNextFilter());
-        System.out.println("Dest copyDown: "+dsFilter.copyDown);
+        //System.out.println("Dest copyDown: "+dsFilter.copyDown);
         assert indices.length %  input.getWeight(edge, phase) == 0;
         
         int inputRots = indices.length / input.getWeight(edge, phase);
@@ -169,7 +169,7 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
                     for (int item = 0; item < input.getWeights(phase)[index]; item++) {
                         indices[nextWriteIndex++] = rot * input.totalWeights(phase) +
                             input.weightBefore(index, phase) + item + dsFilter.copyDown;
-                        System.out.println("Dest index: " + indices[nextWriteIndex -1]);
+                        //System.out.println("Dest index: " + indices[nextWriteIndex -1]);
                     }
                 }
             }

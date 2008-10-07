@@ -3,6 +3,7 @@ package at.dms.kjc.tilera;
 import java.util.HashMap;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import at.dms.kjc.JBlock;
 import at.dms.kjc.JMethodDeclaration;
 import at.dms.kjc.slicegraph.*;
@@ -25,6 +26,10 @@ public class ProcessFileWriter {
         this.fileOutput = (FileOutputContent)filter.getFilter();
         this.phase = phase;
         this.factory = factory;
+    }
+    
+    public static Set<FilterSliceNode> getFileWriterFilters() {
+        return allocatingTiles.keySet();
     }
     
     /**

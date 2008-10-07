@@ -157,63 +157,79 @@ public abstract class RotatingBuffer extends Channel {
      * using DMA commands.
      */
     protected static void communicateAddresses() {
-        //the tag for the messages that we are using to send around the address
-        int tag = 0;
-        
-        for (int t = 0; t < TileraBackend.chip.abstractSize(); t++) {
-            Tile ownerTile = TileraBackend.chip.getTranslatedTile(t);
+        //handle all the filters that are mapped to compute tiles               
+        for (Tile ownerTile : TileraBackend.chip.getAbstractTiles()) {
             TileCodeStore cs = ownerTile.getComputeCode();
             
             for (FilterSliceNode filter : cs.getFilters()) {
-                InputRotatingBuffer buf = InputRotatingBuffer.getInputBuffer(filter);
-                //if this filter does not have an input buffer, then continue
-                if (buf == null)
-                    continue;                
-                for (int i = 0; i < buf.getAddressBuffers().length; i++) {
-                    SourceAddressRotation addr = buf.getAddressBuffers()[i];
-                    Tile srcTile = addr.parent;
-                    //we might have a file reader as a source, if so, don't send the addresses to it
-                    if (!srcTile.isComputeTile())
-                        continue;
-                    
-                    //create the declaration of the buffers on the tile
-                    addr.declareBuffers();
-                    for (int b = 0; b < buf.rotationLength; b++) {
-                        if (srcTile.equals(ownerTile)) {
-                            //if they are on the same tile, then just assign them directly
-                            srcTile.getComputeCode().addStatementToBufferInit(
-                                    addr.bufferNames[b] + " = " + buf.bufferNames[b]);
-                        }
-                        else {
-                        
-                            //send the address from the home tile to this source
-                            cs.addStatementToBufferInit("" +
-                                    "ilib_msg_send(ILIB_GROUP_SIBLINGS, " +
-                                    TileraBackend.chip.getTranslatedTileNumber(srcTile.getTileNumber()) + ", " +
-                                    tag + ", " +
-                                    "&" + buf.bufferNames[b] + ", " +
-                                    "sizeof (" + buf.bufType + "*))");
-
-                            //receive the addresses on the source tile
-                            srcTile.getComputeCode().addStatementToBufferInit(
-                                    "ilib_msg_receive(ILIB_GROUP_SIBLINGS, " +
-                                    TileraBackend.chip.getTranslatedTileNumber(ownerTile.getTileNumber()) + ", " +
-                                    tag + ", " +
-                                    "&" + addr.bufferNames[b] + ", " +                                
-                                    "sizeof (" + buf.bufType + "*), &status)");
-                            tag++;
-                        }
-                    }
-                    //set up the rotation structure at the source
-                    addr.setupRotation();
-                }               
+                //if we have a file writer then get the allocating tile
+                communicateAddressesForFilter(filter, ownerTile);
+                //after we are all done with sending the addresses for this tile
+                //append a barrier instruction to all of the tiles
+                TileCodeStore.addBufferInitBarrier();
             }
-            //after we are all done with sending the addresses for this tile
-            //append a barrier instruction to all of the tiles
+        }
+        
+        //now handle the file writers
+        for (FilterSliceNode fileWriter : ProcessFileWriter.getFileWriterFilters()) {
+            communicateAddressesForFilter(fileWriter, ProcessFileWriter.getAllocatingTile(fileWriter));
             TileCodeStore.addBufferInitBarrier();
         }
+        
+        //now handle the file readers
+        
     }
     
+    
+    private static void communicateAddressesForFilter(FilterSliceNode filter, Tile ownerTile) { 
+        //the tag for the messages that we are using to send around the address
+        int tag = 0;
+        TileCodeStore cs = ownerTile.getComputeCode();
+        InputRotatingBuffer buf = InputRotatingBuffer.getInputBuffer(filter);
+        //if this filter does not have an input buffer, then continue
+        if (buf == null)
+            return;               
+        for (int i = 0; i < buf.getAddressBuffers().length; i++) {
+            SourceAddressRotation addr = buf.getAddressBuffers()[i];
+            Tile srcTile = addr.parent;
+            //we might have a file reader as a source, if so, don't send the addresses to it
+            if (!srcTile.isComputeTile())
+                continue;
+
+            //create the declaration of the buffers on the tile
+            addr.declareBuffers();
+            for (int b = 0; b < buf.rotationLength; b++) {
+                if (srcTile.equals(ownerTile)) {
+                    //if they are on the same tile, then just assign them directly
+                    srcTile.getComputeCode().addStatementToBufferInit(
+                            addr.bufferNames[b] + " = " + buf.bufferNames[b]);
+                }
+                else {
+
+                    //send the address from the home tile to this source
+                    cs.addStatementToBufferInit("" +
+                            "ilib_msg_send(ILIB_GROUP_SIBLINGS, " +
+                            TileraBackend.chip.getTranslatedTileNumber(srcTile.getTileNumber()) + ", " +
+                            tag + ", " +
+                            "&" + buf.bufferNames[b] + ", " +
+                            "sizeof (" + buf.bufType + "*))");
+
+                    //receive the addresses on the source tile
+                    srcTile.getComputeCode().addStatementToBufferInit(
+                            "ilib_msg_receive(ILIB_GROUP_SIBLINGS, " +
+                            TileraBackend.chip.getTranslatedTileNumber(ownerTile.getTileNumber()) + ", " +
+                            tag + ", " +
+                            "&" + addr.bufferNames[b] + ", " +                                
+                            "sizeof (" + buf.bufType + "*), &status)");
+                    tag++;
+                }
+            }
+            //set up the rotation structure at the source
+            addr.setupRotation();
+        }               
+    }
+
+
     /**
      * Create the typedef for the rotating buffer structure, one for each type 
      * we see in the program (each channel type).

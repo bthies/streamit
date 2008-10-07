@@ -425,7 +425,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
     }
     
     /** Create an array reference given an offset */   
-    protected JFieldAccessExpression writeBufRef() {
+    public JFieldAccessExpression writeBufRef() {
         assert hasLocalSrcFilter();
         return new JFieldAccessExpression(new JThisExpression(), currentWriteBufName);
     }
@@ -870,7 +870,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
      */
     public JMethodDeclaration pushMethod() {
         assert hasLocalSrcFilter() : "Calling write method for input buffer that does not act as output buffer.";
-        return transferCommands.pushMethod(writeBufRef());
+        return transferCommands.pushMethod();
     }
     
     /* (non-Javadoc)

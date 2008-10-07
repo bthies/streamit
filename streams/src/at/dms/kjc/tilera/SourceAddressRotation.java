@@ -3,10 +3,7 @@ package at.dms.kjc.tilera;
 import java.util.LinkedList;
 import java.util.List;
 
-import at.dms.kjc.JBlock;
-import at.dms.kjc.JEmittedTextExpression;
-import at.dms.kjc.JExpressionStatement;
-import at.dms.kjc.JStatement;
+import at.dms.kjc.*;
 import at.dms.kjc.slicegraph.*;
 
 /**
@@ -122,5 +119,10 @@ public class SourceAddressRotation extends RotatingBuffer {
             list.add(Util.toStmt(currentWriteBufName + " = " + currentWriteRotName + "->buffer"));
         }
         return list;
+    }
+    
+    public JFieldAccessExpression writeBufRef() {
+        assert false;
+        return null;
     }
 }

@@ -6,6 +6,7 @@ import at.dms.kjc.JArrayAccessExpression;
 import at.dms.kjc.JExpression;
 import at.dms.kjc.JFieldAccessExpression;
 import at.dms.kjc.JStatement;
+import at.dms.kjc.JThisExpression;
 import at.dms.kjc.JVariableDefinition;
 import at.dms.kjc.backendSupport.*;
 import at.dms.kjc.common.CommonUtils;
@@ -337,6 +338,9 @@ public abstract class RotatingBuffer extends Channel {
         inputBuffers.put(node, buf);
     }
     
+    
+    /** Create an array reference given an offset */   
+    public abstract JFieldAccessExpression writeBufRef();
     
     /**
      * Return the input buffer associated with the filter node.

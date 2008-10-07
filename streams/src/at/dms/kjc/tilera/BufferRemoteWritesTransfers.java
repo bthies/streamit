@@ -1,6 +1,7 @@
 package at.dms.kjc.tilera;
 
 import at.dms.kjc.slicegraph.*;
+
 import java.util.HashMap;
 import at.dms.kjc.backendSupport.*;
 import at.dms.kjc.*;
@@ -16,6 +17,11 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
     protected JVariableDefinition writeHeadDefn;
     /** are we using an address array for writing to a shared buffer */
     boolean needAddressArray;
+    /** optimization: if this is true, then we can write directly to the remote input buffer
+     * when pushing and not into the local buffer.  This only works when the src and dest are on
+     * different tiles.
+     */
+    protected boolean directWrite = false;
     
     public BufferRemoteWritesTransfers(RotatingBuffer buf) {
         super(buf);
@@ -32,6 +38,19 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
         setWritingScheme();
         
         assert !needAddressArray : parent.filterNode;
+        
+        //optimatization opportunity if we have single output edge and the
+        //downstream filter is mapped to another tile, very good for file writers
+        if (output.oneOutput() && 
+                output.getSingleEdge(SchedulingPhase.INIT) == 
+                    output.getSingleEdge(SchedulingPhase.STEADY) &&
+                TileraBackend.scheduler.getComputeNode(parent.filterNode) !=
+                    TileraBackend.scheduler.getComputeNode(output.getSingleEdge(SchedulingPhase.STEADY).getDest().getNextFilter()) &&
+                    output.getSingleEdge(SchedulingPhase.STEADY).getDest().singleAppearance())
+        {
+            directWrite = true;
+            assert !usesSharedBuffer();
+        }
         
         decls.add(new JVariableDeclarationStatement(writeHeadDefn));
         
@@ -70,6 +89,11 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
     
     private void generateStatements(SchedulingPhase phase) {
         FilterSliceNode filter;
+        //if we are directly writing, then the push method does the remote writes,
+        //so no other remote writes are necessary
+        if (directWrite)
+            return;
+
         //if this is an input buffer shared as an output buffer, then the output
         //filter is the local src filter of this input buffer
         if (usesSharedBuffer()) {
@@ -77,9 +101,9 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
         }
         else  //otherwise it is an output buffer, so use the parent's filter
             filter = parent.filterNode;
-        
-   
-       FilterInfo fi = FilterInfo.getFilterInfo(filter);
+
+
+        FilterInfo fi = FilterInfo.getFilterInfo(filter);
             
         //no code necessary if nothing is being produced
         if (fi.totalItemsSent(phase) == 0)
@@ -204,22 +228,49 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
     public JStatement zeroOutHead(SchedulingPhase phase) {
         //if we have shared buffer, then we are using it for the output and input of filters
         //on the same tile, so we need to do special things to the head
+        int literal = 0; 
+        
         if (usesSharedBuffer()) {
             if (needAddressArray) {
                 assert false;
                 return null;
             } else {
-                
-                return new JExpressionStatement(
-                        new JAssignmentExpression(head, new JIntLiteral(getWriteOffset(phase))));
+                literal = getWriteOffset(phase);
             }
         } else {
-            return new JExpressionStatement(
-                    new JAssignmentExpression(head, new JIntLiteral(0)));
+            if (directWrite) {
+                InterSliceEdge edge = output.getSingleEdge(phase);
+                //if we are directly writing then we have to get the index into the remote
+                //buffer of start of this source
+                
+                //first make sure we actually write in this stage
+                if (edge == null || !edge.getDest().getSourceSet(phase).contains(edge)) {
+                    literal = 0;
+                }
+                else {
+                    FilterInfo destInfo = FilterInfo.getFilterInfo(edge.getDest().getNextFilter());
+                    literal = 
+                        edge.getDest().weightBefore(edge, phase) + destInfo.copyDown;
+                }
+            } else {
+                //no optimizations, just zero head so that we write to beginning of output buffer
+                literal = 0;
+            }
         }
+        return new JExpressionStatement(
+                new JAssignmentExpression(head, new JIntLiteral(literal)));
     }
     
-    public JMethodDeclaration pushMethod(JFieldAccessExpression bufRef) {
+    public JMethodDeclaration pushMethod() {
+        JExpression bufRef = null;
+        //set the buffer reference to the input buffer of the remote buffer that we are writing to
+        if (directWrite) {
+            bufRef = new JFieldAccessExpression(new JThisExpression(),  
+                parent.getAddressBuffer(output.getSingleEdge(SchedulingPhase.STEADY).getDest()).currentWriteBufName);
+        }
+        else   //not a direct write, so so the buffer ref to the write buffer of the buffer
+            bufRef = parent.writeBufRef();
+        
         String valName = "__val";
         JFormalParameter val = new JFormalParameter(
                 parent.getType(),

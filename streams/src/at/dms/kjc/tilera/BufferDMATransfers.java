@@ -95,7 +95,7 @@ public class BufferDMATransfers extends BufferTransfers {
                         new JAssignmentExpression(head, new JIntLiteral(0)));
     }
     
-    public JMethodDeclaration pushMethod(JFieldAccessExpression bufRef) {
+    public JMethodDeclaration pushMethod() {
         String valName = "__val";
         JFormalParameter val = new JFormalParameter(
                 parent.getType(),
@@ -112,7 +112,7 @@ public class BufferDMATransfers extends BufferTransfers {
                 body, null, null);
         body.addStatement(
         new JExpressionStatement(new JAssignmentExpression(
-                new JArrayAccessExpression(bufRef, new JPostfixExpression(at.dms.kjc.Constants.OPE_POSTINC,
+                new JArrayAccessExpression(parent.writeBufRef(), new JPostfixExpression(at.dms.kjc.Constants.OPE_POSTINC,
                         head)),
                 valRef)));
         return retval;

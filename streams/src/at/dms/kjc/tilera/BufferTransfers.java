@@ -72,7 +72,7 @@ public abstract class BufferTransfers {
     
     public abstract JStatement zeroOutHead(SchedulingPhase phase);
     
-    public abstract JMethodDeclaration pushMethod(JFieldAccessExpression bufRef);
+    public abstract JMethodDeclaration pushMethod();
     
     /**
      * Do some checks to make sure we will generate correct code for this distribution pattern.

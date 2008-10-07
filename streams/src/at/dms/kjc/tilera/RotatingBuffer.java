@@ -164,10 +164,10 @@ public abstract class RotatingBuffer extends Channel {
             for (FilterSliceNode filter : cs.getFilters()) {
                 //if we have a file writer then get the allocating tile
                 communicateAddressesForFilter(filter, ownerTile);
-                //after we are all done with sending the addresses for this tile
-                //append a barrier instruction to all of the tiles
-                TileCodeStore.addBufferInitBarrier();
             }
+            //after we are all done with sending the addresses for this tile
+            //append a barrier instruction to all of the tiles
+            TileCodeStore.addBufferInitBarrier();
         }
         
         //now handle the file writers

@@ -849,10 +849,13 @@ public class InputRotatingBuffer extends RotatingBuffer {
      */
     public List<JStatement> writeDecls() {
         assert hasLocalSrcFilter() : "Calling write method for input buffer that does not act as output buffer.";
-        
-        JStatement firstDecl = new JVariableDeclarationStatement(firstExe);
         List<JStatement> retval = new LinkedList<JStatement>();
-        retval.add(firstDecl);
+        
+        if (TileraBackend.DMA) {
+            JStatement firstDecl = new JVariableDeclarationStatement(firstExe);
+            retval.add(firstDecl);
+        }
+        
         retval.addAll(transferCommands.decls());
         return retval;
     }   

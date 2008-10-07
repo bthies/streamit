@@ -276,9 +276,11 @@ public class OutputRotatingBuffer extends RotatingBuffer {
      * @see at.dms.kjc.backendSupport.ChannelI#writeDecls()
      */
     public List<JStatement> writeDecls() {
-        JStatement firstDecl = new JVariableDeclarationStatement(firstExe);
         List<JStatement> retval = new LinkedList<JStatement>();
-        retval.add(firstDecl);
+        if (TileraBackend.DMA) {
+            JStatement firstDecl = new JVariableDeclarationStatement(firstExe);
+            retval.add(firstDecl);
+        }
         retval.addAll(transferCommands.decls());
         return retval;
     }   

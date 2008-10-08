@@ -54,6 +54,7 @@ public class ProcessFileWriter {
      */
     public void processFileWriter() {
         if (phase == SchedulingPhase.INIT) {
+            System.out.println("Outputs for " + filterNode + ": " + filterNode.getFilter().getSteadyMult());
             assert allocatingTiles.containsKey(filterNode);
             allocatingTile = allocatingTiles.get(filterNode);
             codeStore = allocatingTile.getComputeCode();

@@ -690,7 +690,11 @@ public class InputRotatingBuffer extends RotatingBuffer {
         List<JStatement> retval = new LinkedList<JStatement>();
         //if we have items on the buffer after filter execution, we must copy them 
         //to the next buffer, don't use memcopy, just generate individual statements
-        String dst = currentReadRotName + "->next->buffer";
+        
+        //for the init phase we copy to the same buffer because we are not rotating
+        //for the steady phase we copy to the next rotation buffer
+        String dst = 
+            (phase == SchedulingPhase.INIT ? currentReadBufName : currentReadRotName + "->next->buffer");
         String src = currentReadBufName;
         
         for (int i = 0; i < filterInfo.copyDown; i++) {

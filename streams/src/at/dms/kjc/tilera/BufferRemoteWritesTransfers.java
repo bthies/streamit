@@ -163,7 +163,8 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
                                             parent.currentWriteBufName + "[" + sourceElement + "]"));
                                 }
                                 else if (destElement > sourceElement) {
-                                    assert false : "Dest: " + dest.getDest().getNextFilter() + " " + sourceElement + " < " + destElement;
+                                    assert false : "Dest: " + dest.getDest().getNextFilter() + " " + sourceElement + " < " + 
+                                        destElement + " " + phase;
                                 }
                             } else {
                                 SourceAddressRotation addrBuf = parent.getAddressBuffer(dest.getDest());
@@ -192,7 +193,8 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
                 if (input.getSources(phase)[index] == edge) {
                     for (int item = 0; item < input.getWeights(phase)[index]; item++) {
                         indices[nextWriteIndex++] = rot * input.totalWeights(phase) +
-                            input.weightBefore(index, phase) + item + dsFilter.copyDown;
+                            input.weightBefore(index, phase) + item + 
+                            (phase == SchedulingPhase.INIT ? 0 : dsFilter.copyDown);
                         //System.out.println("Dest index: " + indices[nextWriteIndex -1]);
                     }
                 }
@@ -218,7 +220,10 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
             FilterSliceNode localSrc = ((InputRotatingBuffer)parent).getLocalSrcFilter();
             InterSliceEdge theEdge = input.getEdgeFrom(phase, localSrc);
 
-            int offset = localDest.copyDown + input.weightBefore(theEdge, phase);
+            int offset = input.weightBefore(theEdge, phase);
+            //if we are not in the init, we must skip over the dest's copy down
+            if (SchedulingPhase.INIT != phase) 
+                offset += localDest.copyDown;
 
             return offset;
         } else
@@ -250,7 +255,10 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
                 else {
                     FilterInfo destInfo = FilterInfo.getFilterInfo(edge.getDest().getNextFilter());
                     literal = 
-                        edge.getDest().weightBefore(edge, phase) + destInfo.copyDown;
+                        edge.getDest().weightBefore(edge, phase);
+                    //if we are in the init, skip copy down as well
+                    if (SchedulingPhase.INIT == phase)
+                            literal += destInfo.copyDown;
                 }
             } else {
                 //no optimizations, just zero head so that we write to beginning of output buffer

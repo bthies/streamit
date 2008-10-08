@@ -120,6 +120,7 @@ public class TMD extends Scheduler {
             }
         }
         
+        //make sure that all filters that execute in the init stage are mapped to the same tile!
         if (slice.getFirstFilter().getFilter().getInitMult() > 0) {
             assert slice.getHead().getSources(SchedulingPhase.INIT).length <= 1;
             if (slice.getHead().getSources(SchedulingPhase.INIT).length  == 1 && 

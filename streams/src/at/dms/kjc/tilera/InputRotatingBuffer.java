@@ -68,7 +68,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
                 buf.setRotationLength(schedule);
                 buf.createInitCode(true);
                 buf.createAddressBufs();
-                System.out.println("Setting input buf " + buf.getFilterNode() + " to " + buf.rotationLength);
+                //System.out.println("Setting input buf " + buf.getFilterNode() + " to " + buf.rotationLength);
             }
         }
     }
@@ -102,7 +102,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
         //we only support a single input for a filter that is feed by a file
         upstreamFileReader = filterNode.getParent().getHead().hasFileInput();
         if (upstreamFileReader) {
-            System.out.println(filterNode);
+            //System.out.println(filterNode);
             assert filterNode.getParent().getHead().getWidth(SchedulingPhase.INIT) <= 1 &&
             filterNode.getParent().getHead().getWidth(SchedulingPhase.STEADY) <= 1;
         }

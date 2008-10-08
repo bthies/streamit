@@ -295,7 +295,7 @@ public class Fissioner {
         int sliceCopyDown = filterInfo.copyDown;
 
         // TODO: Remove debug println
-        System.out.println("Slice copy down: " + sliceCopyDown);   
+        //System.out.println("Slice copy down: " + sliceCopyDown);   
 
         // Get Slice sources and destinations, ordered by how they were
         // originally fizzed
@@ -676,19 +676,19 @@ public class Fissioner {
 
             // Generate steady-state splitter schedules for source Slices
             // TODO: Remove debug printlns
-            System.out.println("Generating steady-state splitter schedule for multiple source Slices");
+            //System.out.println("Generating steady-state splitter schedule for multiple source Slices");
 
             for(int x = 0 ; x < fizzAmount ; x++) {
-                System.out.println("Source slice #" + x);
+                //System.out.println("Source slice #" + x);
 
                 edgeSetSet = new LinkedList<LinkedList<InterSliceEdge>>();
                 weights = new LinkedList<Integer>();
 
                 if(numDup1 > 0) {
-                    System.out.println("  EdgeSet");
+                    /*System.out.println("  EdgeSet");
                     System.out.println("    Edge: " + x + " -> " + (x + fizzAmount - 1) % fizzAmount);
                     System.out.println("    Edge: " + x + " -> " + x);
-                    System.out.println("    Weight: " + numDup1);
+                    System.out.println("    Weight: " + numDup1);*/
                     edgeSet = new LinkedList<InterSliceEdge>();
                     edgeSet.add(getEdge(sources[x], sliceClones[(x + fizzAmount - 1) % fizzAmount]));
                     edgeSet.add(getEdge(sources[x], sliceClones[x]));
@@ -697,9 +697,9 @@ public class Fissioner {
                 }
 
                 if(numSingle1 > 0) {
-                    System.out.println("  EdgeSet");
+                    /*System.out.println("  EdgeSet");
                     System.out.println("    Edge: " + x + " -> " + x);
-                    System.out.println("    Weight: " + numSingle1);
+                    System.out.println("    Weight: " + numSingle1);*/
                     edgeSet = new LinkedList<InterSliceEdge>();
                     edgeSet.add(getEdge(sources[x], sliceClones[x]));
                     edgeSetSet.add(edgeSet);
@@ -707,10 +707,10 @@ public class Fissioner {
                 }
 
                 if(numDup2 > 0) {
-                    System.out.println("  EdgeSet");
+                    /*System.out.println("  EdgeSet");
                     System.out.println("    Edge: " + x + " -> " + x);
                     System.out.println("    Edge: " + x + " -> " + (x + 1) % fizzAmount);
-                    System.out.println("    Weight: " + numDup2);
+                    System.out.println("    Weight: " + numDup2);*/
                     edgeSet = new LinkedList<InterSliceEdge>();
                     edgeSet.add(getEdge(sources[x], sliceClones[x]));
                     edgeSet.add(getEdge(sources[x], sliceClones[(x + 1) % fizzAmount]));
@@ -719,9 +719,9 @@ public class Fissioner {
                 }
 
                 if(numSingle2 > 0) {
-                    System.out.println("  EdgeSet");
+                    /*System.out.println("  EdgeSet");
                     System.out.println("    Edge: " + x + " -> " + (x + 1) % fizzAmount);
-                    System.out.println("    Weight: " + numSingle2);
+                    System.out.println("    Weight: " + numSingle2);*/
                     edgeSet = new LinkedList<InterSliceEdge>();
                     edgeSet.add(getEdge(sources[x], sliceClones[(x + 1) % fizzAmount]));
                     edgeSetSet.add(edgeSet);
@@ -741,7 +741,7 @@ public class Fissioner {
                 weights.add(new Integer((sliceSteadyMult * slicePop) + (slicePeek - slicePop) - sliceCopyDown));
             }
 
-            System.out.println("Slice copy down 2: " + sliceCopyDown);
+            //System.out.println("Slice copy down 2: " + sliceCopyDown);
 
             if(sliceCopyDown > 0) {
                 edgeSet.add(getEdge(sources[fizzAmount - 1], sliceClones[0]));

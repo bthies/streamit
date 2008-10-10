@@ -35,21 +35,27 @@ public class EmitTileCode extends EmitCode {
             //create the file with the main function that will initialize ilib and layout the processes
             generateMainFunction(backendBits);
             
+            //for all the tiles, add a barrier at the end of the steady state, do it here because we are done
+            //with all code gen
+            TileCodeStore.addBarrierSteady();
+            
             for (Tile tile : backendBits.getComputeNodes().getTiles()) {
                 // if no code was written to this tile's code store, then skip it
                 if (!tile.getComputeCode().shouldGenerateCode())
                     continue;
                 String outputFileName = "tile" + tile.getTileNumber() + ".c";
 
+                
+                
                 CodegenPrintWriter p = new CodegenPrintWriter(new BufferedWriter(new FileWriter(outputFileName, false)));
                 // write out C code
                 EmitTileCode codeEmitter = new EmitTileCode(backendBits);
 
-                codeEmitter.generateCHeader(p);
+                codeEmitter.generateCHeader(p, tile);
 
                 codeEmitter.emitCodeForComputeNode(tile,p);                
 
-                codeEmitter.generateMain(p);
+                codeEmitter.generateMain(p, tile);
                 p.close();               
             }
         } catch (IOException e) {
@@ -105,9 +111,70 @@ public class EmitTileCode extends EmitCode {
         p.close();
     }
     
-    public void generateCHeader(CodegenPrintWriter p) {
+    public void generateCHeader(CodegenPrintWriter p, Tile t) {
         generateIncludes(p);
         p.println("ilibStatus ignore_status;");
+        
+        //defines for static network
+        p.println("#define SN_NORTH  1 /**< North edge */");
+        p.println("#define SN_EAST   2 /**< East edge */");
+        p.println("#define SN_SOUTH  3 /**< South edge */");
+        p.println("#define SN_WEST   4 /**< West edge */");
+        p.println("#define SN_MAIN   5 /**< Main Processor */");
+
+        p.println("#define MAIN_INPUT(input) (input << 12)");
+        p.println("#define WEST_INPUT(input) (input << 9)");
+        p.println("#define SOUTH_INPUT(input) (input << 6)");
+        p.println("#define EAST_INPUT(input) (input << 3)");
+        p.println("#define NORTH_INPUT(input) (input)");
+        
+        
+    }
+    
+    public static String staticNetworkBarrierRouting(Tile tile) {
+        String code = "__insn_mtspr(SPR_SNSTATIC, (";
+        int gXSize = TileraBackend.chip.abstractXSize();
+        int gYSize = TileraBackend.chip.abstractYSize();
+        assert gXSize % 2 == 0 &&
+               gYSize % 2 == 0  : "Only even row / col sizes are supported";
+        int row = tile.getY();
+        int col = tile.getX();
+        
+        //SNAKE THE ITEMS AROUND THE CHIP IN A CIRCUIT
+        String route = "";
+        
+        if (row == 0 && col == 0) {
+            route = "MAIN_INPUT(SN_EAST) | SOUTH_INPUT(SN_MAIN)"; 
+        } else if (col % 2 == 0) {
+            if (row == 0) { //not 0,0
+                route = "MAIN_INPUT(SN_EAST) | WEST_INPUT(SN_MAIN)"; 
+            } else if (row == 1 && col > 0) {
+                route = "MAIN_INPUT(SN_WEST) | SOUTH_INPUT(SN_MAIN)"; 
+            } else if (row == gYSize -1) {
+                route = "MAIN_INPUT(SN_NORTH) | EAST_INPUT(SN_MAIN)"; 
+            } else {
+                route = "MAIN_INPUT(SN_NORTH) | SOUTH_INPUT(SN_MAIN)"; 
+            }
+        } else {
+            //odd col
+            if (row == 0 && col == gXSize -1) {
+                route = "MAIN_INPUT(SN_SOUTH) | WEST_INPUT(SN_MAIN)"; 
+            } else if (row == 0) {
+                route = "MAIN_INPUT(SN_EAST) | WEST_INPUT(SN_MAIN)"; 
+            } else if (row == 1 && col < gXSize - 1) {
+                route = "MAIN_INPUT(SN_SOUTH) | EAST_INPUT(SN_MAIN)";
+            } else if (row == gYSize - 1) {
+                route = "MAIN_INPUT(SN_WEST) | NORTH_INPUT(SN_MAIN)";
+            } else {
+                route = "MAIN_INPUT(SN_SOUTH) | NORTH_INPUT(SN_MAIN)";
+            }
+        }
+        
+        assert !route.equals("");
+        code += route + "));";
+        /*System.out.println(TileraBackend.chip.getTranslatedTileNumber(tile.getTileNumber()) +
+                " (" + row + ", " + col + ") " + route);*/
+        return code;
     }
     
     /**
@@ -298,7 +365,7 @@ public class EmitTileCode extends EmitCode {
     /**
      * Generate a "main" function for the current tile (this is used for filter code).
      */
-    public void generateMain(CodegenPrintWriter p) {
+    public void generateMain(CodegenPrintWriter p, Tile t) {
         p.println();
         p.println();
         p.println("// main() Function Here");
@@ -306,6 +373,8 @@ public class EmitTileCode extends EmitCode {
         p.println(
 "int main(int argc, char** argv) {\n");
         p.indent();
+        p.println(staticNetworkBarrierRouting(t));
+        p.println("__insn_mtspr(SPR_SNCTL, 0x2);");
         p.println("ilib_init();");
         p.println(TileCodeStore.bufferInitMethName + "();");
         p.println(

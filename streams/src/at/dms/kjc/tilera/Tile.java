@@ -30,6 +30,46 @@ public class Tile extends ComputeNode<TileCodeStore> {
         setUniqueId((Y * tile64Chip.getXSize()) + X);
     }
 
+    
+    /** 
+     * When we are snaking a circuit across the chip of all the tiles, this
+     * function returns the next tile that is on the snake path.  This is done
+     * on the abstract config. 
+     */
+    public Tile getNextSnakeTile() {
+        assert tile64Chip.abstractXSize() % 2 == 0 &&
+            tile64Chip.abstractYSize() %2 == 0;
+        
+        int row = Y, col = X;
+        
+        if (row == 0 && col == 0) {
+            return tile64Chip.getComputeNode(col, row + 1);
+        } else if (col % 2 == 0) {
+            if (row == 0) { //not 0,0
+                return tile64Chip.getComputeNode(col - 1, row);
+            } else if (row == 1 && col > 0) {
+                return tile64Chip.getComputeNode(col, row + 1);
+            } else if (row == tile64Chip.abstractYSize() -1) {
+                return tile64Chip.getComputeNode(col + 1, row);
+            } else {
+                return tile64Chip.getComputeNode(col, row + 1);
+            }
+        } else {
+            //odd col
+            if (row == 0 && col == tile64Chip.abstractXSize() -1) {
+                return tile64Chip.getComputeNode(col - 1, row);
+            } else if (row == 0) {
+                return tile64Chip.getComputeNode(col - 1, row);
+            } else if (row == 1 && col < tile64Chip.abstractXSize() - 1) {
+                return tile64Chip.getComputeNode(col + 1, row);
+            } else if (row == tile64Chip.abstractYSize() - 1) {
+                return tile64Chip.getComputeNode(col, row - 1);
+            } else {
+                return tile64Chip.getComputeNode(col, row - 1);
+            }
+        }
+    }
+    
     /**
      * Return the tile number of this tile which is an int [0, tiles), that counts 
      * the rows starting at the left...

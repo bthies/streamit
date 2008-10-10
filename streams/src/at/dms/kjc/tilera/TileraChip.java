@@ -191,6 +191,14 @@ public class TileraChip implements ComputeNodesI<TileCodeStore> {
         return KjcOptions.tilera * KjcOptions.tilera;
     }
     
+    public int abstractXSize() {
+        return KjcOptions.tilera;
+    }
+    
+    public int abstractYSize() {
+        return KjcOptions.tilera;
+    }
+    
     /**
      * Return a linked list of the tiles that we are mapping to (a subset of the 
      * 8x8 grid specified by the user)

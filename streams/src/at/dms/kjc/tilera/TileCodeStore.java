@@ -63,8 +63,40 @@ public class TileCodeStore extends ComputeCodeStore<Tile> {
      */
     public static void addBufferInitBarrier() {
         for (int t = 0; t < TileraBackend.chip.abstractSize(); t++) {
+            Tile tile = TileraBackend.chip.getTranslatedTile(t);
             TileCodeStore cs = TileraBackend.chip.getTranslatedTile(t).getComputeCode();
-            cs.addStatementToBufferInit("ilib_msg_barrier(ILIB_GROUP_SIBLINGS)");
+            cs.addStatementToBufferInit("/* Static Network Barrier */");
+            cs.addStatementToBufferInit("ilib_mem_fence()");
+            if (TileraBackend.chip.getTranslatedTile(t).getTileNumber() != 0) { 
+                
+                cs.addStatementToBufferInit("sn_receive()");
+            }
+            cs.addStatementToBufferInit("sn_send(43)");
+            cs.addStatementToBufferInit("sn_receive()");
+            if (TileraBackend.chip.getTranslatedTile(t).getTileNumber() != 1) {
+                cs.addStatementToBufferInit("sn_send(42)");
+            }
+            //cs.addStatementToBufferInit("ilib_msg_barrier(ILIB_GROUP_SIBLINGS)");
+        }
+    }
+    
+    /**
+     * Append a barrier instruction to all of the (abstract) tiles in the steady state
+     * method.
+     */
+    public static void addBarrierSteady() {
+        for (int t = 0; t < TileraBackend.chip.abstractSize(); t++) {
+            TileCodeStore cs = TileraBackend.chip.getTranslatedTile(t).getComputeCode();
+            cs.addSteadyLoopStatement(Util.toStmt("/* Static Network Barrier */"));
+            
+            if (TileraBackend.chip.getTranslatedTile(t).getTileNumber() != 0) 
+                cs.addSteadyLoopStatement(Util.toStmt("sn_receive()"));
+            cs.addSteadyLoopStatement(Util.toStmt("sn_send(43)"));
+            cs.addSteadyLoopStatement(Util.toStmt("sn_receive()"));
+            //cs.addSteadyLoopStatement(Util.toStmt("ilib_mem_fence()"));
+            if (TileraBackend.chip.getTranslatedTile(t).getTileNumber() != 1) 
+                cs.addSteadyLoopStatement(Util.toStmt("sn_send(42)"));
+            //cs.addStatementToBufferInit("ilib_msg_barrier(ILIB_GROUP_SIBLINGS)");
         }
     }
     

@@ -27,6 +27,7 @@ import java.util.HashSet;
 public class TMD extends Scheduler {
 
     private double DUP_THRESHOLD = .1;
+    private LevelizeSliceGraph lsg;
     
     public TMD() {
         super();
@@ -63,13 +64,190 @@ public class TMD extends Scheduler {
         assert graphSchedule != null : 
             "Must set the graph schedule (multiplicities) before running layout";
         
-        LevelizeSliceGraph lsg = new LevelizeSliceGraph(graphSchedule.getSlicer().getTopSlices());
+        lsg = new LevelizeSliceGraph(graphSchedule.getSlicer().getTopSlices());
+        Slice[][] levels = lsg.getLevels();
+        
+        
+        //if the fan out of any non-predefined filter is > 2 then we have to use the fallback
+        //layout algorithm and global barriers...
+        boolean fallBack = false;
+        for (int l = 0; l < levels.length; l++) {
+            if (fallBack)
+                break;
+            if (levels[l].length != TileraBackend.chip.abstractSize()  && 
+                    !(levels[l].length == 1 && levels[l][0].getFirstFilter().isPredefined())) { 
+                fallBack = true;
+                break;
+            }
+            for (int f = 0; f < levels[l].length; f++) {
+                if (levels[l][f].getFirstFilter().isPredefined())
+                    continue;
+                if (levels[l][f].getTail().getDestSet(SchedulingPhase.STEADY).size() > 2) {
+                    fallBack = true;
+                    break;
+                }
+            }
+        }
+        
+        if (fallBack)
+            fallBackLayout();
+        else 
+            neighborsLayout(levels);
+    }
+    
+    /**
+     * In this optimized layout algorithm communicating filters that are not placed on the
+     * same tile are placed on neighboring tiles.
+     */
+    private void neighborsLayout(Slice[][] levels) {
+        //we know fanout <= 2 and each level has number_of_tiles slices
+        
+        //assert that the first level only has a file reader and that we always have a
+        //file reader
+        assert levels[0].length == 1 && levels[0][0].getFirstFilter().isFileInput();
+        
+        //place each slice in a set that will be mapped to the same tile
+        Set<Set<Slice>> sameTile = createSameTileSets(levels);
+        assert sameTile.size() == TileraBackend.chip.abstractSize();
+        Tile nextToAssign = TileraBackend.chip.getComputeNode(0, 0);
+        Set<Slice> current = sameTile.iterator().next();
+        
+        while (true) {
+            assignSlicesToTile(current, nextToAssign);
+            assert sameTile.contains(current);
+            assert sameTile.remove(current);
+            
+            //now find the next slice set to assign to the snake
+            //first find a slice that has a nonlocal output
+            Slice nonLocalOutput = null;
+            for (Slice slice : current) {
+                if (slice.getTail().getDestSet(SchedulingPhase.STEADY).size() > 1) 
+                    nonLocalOutput = slice;
+                else if (slice.getTail().getDestSet(SchedulingPhase.STEADY).size() == 1) {
+                    Slice destSlice = slice.getTail().getDestSlices(SchedulingPhase.STEADY).iterator().next();
+                    if (current != getSetWithSlice(sameTile, destSlice) && 
+                            getSetWithSlice(sameTile, destSlice) != null) {
+                        nonLocalOutput = slice;
+                    }
+                }
+            }
+            
+            //nothing else to assign
+            if (sameTile.isEmpty())
+                break;
+            
+            //set the next set of slice to assign to the next tile in the snake
+            if (nonLocalOutput == null) {
+                //does not communicate with anyone, so pick any slice set to layout next
+                current = sameTile.iterator().next();
+            } else {
+                //one of the slices does communicate with a slice not of its own set
+                Set<Slice> nonLocal = null;
+                for (Slice slice : nonLocalOutput.getTail().getDestSlices(SchedulingPhase.STEADY)) {
+                    if (getSetWithSlice(sameTile, slice) != current) {
+                        nonLocal = getSetWithSlice(sameTile, slice);
+                        break;
+                    }
+                }
+                
+                assert nonLocal != null;
+                //check that all non-local slices that are communicated to from current 
+                //are in the same set
+                for (Slice slice: current) {
+                    for (Slice output : slice.getTail().getDestSlices(SchedulingPhase.STEADY)) {
+                        assert current == getSetWithSlice(sameTile, output) ||
+                            nonLocal == getSetWithSlice(sameTile, output) ||
+                            output.getFirstFilter().isFileOutput();
+                    }
+                }
+                
+                current = nonLocal;
+            }
+            
+            nextToAssign = nextToAssign.getNextSnakeTile();
+        }
+        
+        
+        
+    }
+    
+    private void assignSlicesToTile(Set<Slice> slices, Tile tile) {
+        for (Slice slice : slices) {
+            System.out.println("Assign " + slice.getFirstFilter() + " to tile " + tile.getTileNumber());
+           
+            setComputeNode(slice.getFirstFilter(), tile);
+        }
+    }
+    
+    /**
+     * 
+     */
+    private Set<Set<Slice>> createSameTileSets(Slice[][] levels) {
+        HashSet<Set<Slice>> sameTile = new HashSet<Set<Slice>>();
+        for (int l = 0; l < levels.length; l++) {
+            for (int s = 0; s < levels[l].length; s++) {
+                Slice slice = levels[l][s];
+                //assign predefined to offchip memory and don't add them to any set
+                if (slice.getFirstFilter().isPredefined()) {
+                    setComputeNode(slice.getFirstFilter(), TileraBackend.chip.getOffChipMemory());
+                } else {
+                    //find the input with the largest amount of data coming in
+                    //and put this slice in the set that the max input is in
+                    int bestInputs = -1;
+                    Set<Slice> theBest = null;;
+                    
+                    for (Edge edge : slice.getHead().getSourceSet(SchedulingPhase.STEADY)) {
+                        if (slice.getHead().getWeight(edge, SchedulingPhase.STEADY) > bestInputs) {
+                            theBest = getSetWithSlice(sameTile, edge.getSrc().getParent());
+                            bestInputs = slice.getHead().getWeight(edge, SchedulingPhase.STEADY);
+                        }
+                    }
+                    //no upstream slice is in a set
+                    if (theBest == null) {
+                        //for now assume that there is always one file reader that feeds only level 1
+                        assert l == 1;
+                        //create a new set and add it to the set of sets
+                        HashSet<Slice> newSet = new HashSet<Slice>();
+                        newSet.add(slice);
+                        sameTile.add(newSet);
+                    } else {
+                        //we should put slice in the set that is the best
+                        theBest.add(slice);
+                    }
+                }
+            }
+        }
+        return sameTile;
+    }
+    
+    /**
+     * Give a set of set of slices and slice return the set of slices that contains
+     * slice.
+     */
+    private Set<Slice> getSetWithSlice(Set<Set<Slice>> sameTile, Slice slice) {
+        Set<Slice> set = null;
+        for (Set<Slice> current : sameTile) {
+            if (current.contains(slice)) {
+                assert set == null;
+                set = current;
+            }
+        }
+        return set;
+    }
+    
+    /**
+     * This layout algorithm does not try to place communicating slices as neighbors,
+     * it is used when the fanout of any slice is greater than 2.
+     */
+    private void fallBackLayout() {
+        System.out.println("Using fall back layout algorithm because a slice has fanout > 2.  Forced to use global barrier.");
         Slice[][] levels = lsg.getLevels();
         
         System.out.println("Levels: " + levels.length);
         
         for (int l = 0; l < levels.length; l++) {
-            assert levels[l].length  <= TileraBackend.chip.abstractSize() : "Too many filters in level for TMD layout!";
+            assert levels[l].length  <= TileraBackend.chip.abstractSize() : 
+                "Too many filters in level for TMD layout!";
             HashSet<Tile> allocatedTiles = new HashSet<Tile>(); 
             
             if (levels[l].length < TileraBackend.chip.abstractSize()) {
@@ -143,6 +321,7 @@ public class TMD extends Scheduler {
      * a pipeline of stateless filters
      */
     public void run(int tiles) {
+        
         int factor = multiplicityFactor(tiles);
         System.out.println("Using fission steady multiplicty factor: " + factor);
         
@@ -166,6 +345,7 @@ public class TMD extends Scheduler {
                 assert Fissioner.fizzSlice(slice, tiles) : "Could not fiss slice: " + slice;
             }
         }
+        
     }
     
     /**

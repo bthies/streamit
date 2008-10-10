@@ -111,12 +111,13 @@ public class TMD extends Scheduler {
         assert sameTile.size() == TileraBackend.chip.abstractSize();
         Tile nextToAssign = TileraBackend.chip.getComputeNode(0, 0);
         Set<Slice> current = sameTile.iterator().next();
+        Set<Set<Slice>> done = new HashSet<Set<Slice>>();
         
         while (true) {
             assignSlicesToTile(current, nextToAssign);
-            assert sameTile.contains(current);
-            assert sameTile.remove(current);
-            
+            done.add(current);
+            assert done.contains(current);
+                        
             //now find the next slice set to assign to the snake
             //first find a slice that has a nonlocal output
             Slice nonLocalOutput = null;
@@ -133,13 +134,18 @@ public class TMD extends Scheduler {
             }
             
             //nothing else to assign
-            if (sameTile.isEmpty())
+            if (done.size() == sameTile.size())
                 break;
             
             //set the next set of slice to assign to the next tile in the snake
             if (nonLocalOutput == null) {
                 //does not communicate with anyone, so pick any slice set to layout next
-                current = sameTile.iterator().next();
+                current = null;
+                for (Set<Slice> next : sameTile) {
+                    if (!done.contains(next))
+                        current = next;
+                }
+                assert current != null;
             } else {
                 //one of the slices does communicate with a slice not of its own set
                 Set<Slice> nonLocal = null;
@@ -173,8 +179,7 @@ public class TMD extends Scheduler {
     
     private void assignSlicesToTile(Set<Slice> slices, Tile tile) {
         for (Slice slice : slices) {
-            System.out.println("Assign " + slice.getFirstFilter() + " to tile " + tile.getTileNumber());
-           
+            //System.out.println("Assign " + slice.getFirstFilter() + " to tile " + tile.getTileNumber());
             setComputeNode(slice.getFirstFilter(), tile);
         }
     }

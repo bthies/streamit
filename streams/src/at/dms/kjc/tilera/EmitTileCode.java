@@ -202,6 +202,7 @@ public class EmitTileCode extends EmitCode {
         p.println("CC = $(BIN)tile-cc");
         p.println("CFLAGS = -O3");
         p.println("SIM = $(BIN)tile-sim");
+        p.println("LDFLAGS = -static");
         p.println();
         p.println("EXECUTABLES = $(BOOT_EXE) $(TILES)");
         p.println("BOOT_EXE = main");
@@ -214,6 +215,7 @@ public class EmitTileCode extends EmitCode {
         }
         p.println();
         p.println("COMMON_ARGS = \\");
+        p.println("  --magic-os \\");
         p.println("  --config tile64 \\");
         p.println("  $(foreach exe,$(EXECUTABLES), --upload $(exe),$(exe)) \\");
         p.println("  -- $(BOOT_EXE)");

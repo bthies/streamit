@@ -17,6 +17,7 @@ import at.dms.kjc.slicegraph.fission.*;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.HashSet;
+import java.util.List;
 
 /**
  * 
@@ -343,14 +344,22 @@ public class TMD extends Scheduler {
         //FilterContents
         FilterInfo.reset();
         
+        dataParallelize(tiles);
+    }
+    
+    /**
+     * 
+     */
+    public void dataParallelize(int tiles) {
+        LinkedList<Slice> slices = DataFlowOrder.getTraversal(graphSchedule.getSlicer().getTopSlices());
+        
         //fiss each slice by the number of tiles, assume pipelines for now (no TP)
         for (Slice slice: slices) {
             if (!slice.getFirstFilter().isPredefined()) {
                 Fissioner.canFizz(slice, tiles, true);
                 assert Fissioner.fizzSlice(slice, tiles) : "Could not fiss slice: " + slice;
             }
-        }
-        
+        }        
     }
     
     /**

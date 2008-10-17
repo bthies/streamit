@@ -213,6 +213,7 @@ public class CommonPasses {
             str = FusePipelines.fusePipelinesOfStatelessStreams(str);
             StreamItDot.printGraph(str, "after-fuse-stateless.dot");
             
+            
         } else {
             // some backend other than tilera
             // for right now, we use the dup parameter to specify the type

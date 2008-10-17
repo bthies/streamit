@@ -63,9 +63,10 @@ public class TileCodeStore extends ComputeCodeStore<Tile> {
      */
     public static void addBufferInitBarrier() {
         for (int t = 0; t < TileraBackend.chip.abstractSize(); t++) {
-            Tile tile = TileraBackend.chip.getTranslatedTile(t);
+           Tile tile = TileraBackend.chip.getTranslatedTile(t);
             TileCodeStore cs = TileraBackend.chip.getTranslatedTile(t).getComputeCode();
-            cs.addStatementToBufferInit("/* Static Network Barrier */");
+           /*
+            cs.addStatementToBufferInit("// Static Network Barrier ");
             cs.addStatementToBufferInit("ilib_mem_fence()");
             if (TileraBackend.chip.getTranslatedTile(t).getTileNumber() != 0) { 
                 
@@ -75,8 +76,8 @@ public class TileCodeStore extends ComputeCodeStore<Tile> {
             cs.addStatementToBufferInit("sn_receive()");
             if (TileraBackend.chip.getTranslatedTile(t).getTileNumber() != 1) {
                 cs.addStatementToBufferInit("sn_send(42)");
-            }
-            //cs.addStatementToBufferInit("ilib_msg_barrier(ILIB_GROUP_SIBLINGS)");
+            }*/
+            cs.addStatementToBufferInit("ilib_msg_barrier(ILIB_GROUP_SIBLINGS)");
         }
     }
     
@@ -88,7 +89,11 @@ public class TileCodeStore extends ComputeCodeStore<Tile> {
         for (int t = 0; t < TileraBackend.chip.abstractSize(); t++) {
             TileCodeStore cs = TileraBackend.chip.getTranslatedTile(t).getComputeCode();
             cs.addSteadyLoopStatement(Util.toStmt("/* Static Network Barrier */"));
-            
+            String code[] = staticNetworkBarrier(cs.getParent());
+            for (String stmt : code) {
+                cs.addSteadyLoopStatement(Util.toStmt(stmt));
+            }
+            /*
             if (TileraBackend.chip.getTranslatedTile(t).getTileNumber() != 0) 
                 cs.addSteadyLoopStatement(Util.toStmt("sn_receive()"));
             cs.addSteadyLoopStatement(Util.toStmt("sn_send(43)"));
@@ -97,8 +102,67 @@ public class TileCodeStore extends ComputeCodeStore<Tile> {
             if (TileraBackend.chip.getTranslatedTile(t).getTileNumber() != 1) 
                 cs.addSteadyLoopStatement(Util.toStmt("sn_send(42)"));
             //cs.addStatementToBufferInit("ilib_msg_barrier(ILIB_GROUP_SIBLINGS)");
+             
+             */
         }
     }
+    
+    public static String[] staticNetworkBarrier(Tile tile) {
+        String dir1 = "";
+        String dir2 = "";
+        String code[] = new String[7];
+        
+        int gXSize = TileraBackend.chip.abstractXSize();
+        int gYSize = TileraBackend.chip.abstractYSize();
+        assert gXSize % 2 == 0 &&
+               gYSize % 2 == 0  : "Only even row / col sizes are supported";
+        int row = tile.getY();
+        int col = tile.getX();
+        
+        //SNAKE THE ITEMS AROUND THE CHIP IN A CIRCUIT
+                
+        if (row == 0 && col == 0) {
+            dir1 = "SOUTH"; dir2 = "EAST";
+        } else if (col % 2 == 0) {
+            if (row == 0) { //not 0,0
+                dir1 = "EAST"; dir2 = "WEST"; 
+            } else if (row == 1 && col > 0) {
+                dir1 = "WEST"; dir2 = "SOUTH";
+            } else if (row == gYSize -1) {
+                dir1 = "NORTH"; dir2 = "EAST"; 
+            } else {
+                dir1 = "NORTH"; dir2 = "SOUTH"; 
+            }
+        } else {
+            //odd col
+            if (row == 0 && col == gXSize -1) {
+                dir1 = "SOUTH"; dir2 = "WEST"; 
+            } else if (row == 0) {
+                dir1 = "EAST"; dir2 = "WEST"; 
+            } else if (row == 1 && col < gXSize - 1) {
+                dir1 = "SOUTH"; dir2 = "EAST";
+            } else if (row == gYSize - 1) {
+                dir1 = "WEST"; dir2 = "NORTH";
+            } else {
+                dir1 = "SOUTH"; dir2 = "NORTH";
+            }
+        }
+        
+
+        assert !dir1.equals("") || !dir2.equals("");
+        code[0] = "ilib_mem_fence()";
+        //code[0] = "/* nothing */";
+        code[1] = "__insn_mtspr(SPR_SNSTATIC, (MAIN_INPUT(SN_" + dir1 + ") | " + dir1 + "_INPUT(SN_MAIN)))";
+        code[2] = "__insn_mtspr(SPR_SNCTL, 0x2)";
+        code[3]= "sn_send(1); sn_receive()";
+        code[4] = "__insn_mtspr(SPR_SNSTATIC, (MAIN_INPUT(SN_" + dir2 + ") | " + dir2 + "_INPUT(SN_MAIN)))";
+        code[5] = "__insn_mtspr(SPR_SNCTL, 0x2)";
+        code[6] = "sn_send(2); sn_receive()";
+        
+        
+        return code;
+    }
+    
     
     /**
      * Return the method that initializes the rotating buffers and communicates

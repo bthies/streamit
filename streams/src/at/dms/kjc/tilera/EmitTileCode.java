@@ -202,6 +202,7 @@ public class EmitTileCode extends EmitCode {
         p.println("CC = $(BIN)tile-cc");
         p.println("CFLAGS = -O3");
         p.println("SIM = $(BIN)tile-sim");
+        p.println("MONITOR = $(BIN)tile-monitor");
         p.println("LDFLAGS = -static");
         p.println();
         p.println("EXECUTABLES = $(BOOT_EXE) $(TILES)");
@@ -220,9 +221,26 @@ public class EmitTileCode extends EmitCode {
         p.println("  $(foreach exe,$(EXECUTABLES), --upload $(exe),$(exe)) \\");
         p.println("  -- $(BOOT_EXE)");
         p.println();
+        p.println("MONITOR_ARGS = \\");
+        p.println("  --simulator \\");
+        p.println("  --image tile64 \\");
+        for (String fileName : ProcessFileReader.fileNames) {
+            p.println("  --upload " + fileName + " " + fileName + "\\");
+        }
+        p.println("  --xml-profile profile.xml \\");
+        p.println("  --config tile64 \\");
+        p.println("  $(foreach exe,$(EXECUTABLES), --upload $(exe) $(exe)) \\");
+        p.println("  -- $(BOOT_EXE)");
+        p.println();
+        
+        p.println();
         p.println("run: $(EXECUTABLES)");
         p.println("\t$(SIM) \\");
         p.println("\t$(COMMON_ARGS)");
+        p.println();
+        p.println("monitor: $(EXECUTABLES)");
+        p.println("\t$(MONITOR) \\");
+        p.println("\t$(MONITOR_ARGS)");
         p.println();
         p.println("test: $(EXECUTABLES)");
         p.println("\t$(SIM) \\");

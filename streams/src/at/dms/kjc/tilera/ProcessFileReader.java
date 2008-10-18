@@ -20,10 +20,12 @@ public class ProcessFileReader {
     protected Tile allocatingTile;
     protected OutputSliceNode fileOutput;  
     protected static HashMap<FilterSliceNode, JMethodDeclaration> PPMethods;
+    protected static HashSet<String> fileNames;
     
     static {
         allocatingTiles = new HashMap<FilterSliceNode, Tile>();
         PPMethods = new HashMap<FilterSliceNode, JMethodDeclaration>();
+        fileNames = new HashSet<String>();
     }
     
     public ProcessFileReader (FilterSliceNode filter, SchedulingPhase phase, TileraBackEndFactory factory) {
@@ -37,8 +39,10 @@ public class ProcessFileReader {
     }
      
     public void processFileReader() {
-        if (phase == SchedulingPhase.INIT)
+        if (phase == SchedulingPhase.INIT) {
+            fileNames.add(fileInput.getFileName());
             allocateAndCommunicateAddrs();
+        }
         for (InterSliceEdge edge : fileOutput.getDestSet(SchedulingPhase.STEADY)) {
             generateCode(edge.getDest().getNextFilter());
         }

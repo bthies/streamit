@@ -7,10 +7,9 @@ import at.dms.kjc.sir.SIRFilter;
 import at.dms.kjc.sir.SIRSplitJoin;
 import at.dms.kjc.sir.SIRStream;
 import at.dms.kjc.sir.lowering.fission.StatelessDuplicate;
-import at.dms.kjc.sir.lowering.partition.WorkEstimate;
-import at.dms.kjc.sir.lowering.partition.WorkList;
+import at.dms.kjc.sir.lowering.partition.*;
 import at.dms.kjc.slicegraph.*;
-
+import at.dms.kjc.*;
 import java.util.LinkedList;
 import at.dms.kjc.backendSupport.*;
 import at.dms.kjc.slicegraph.fission.*;
@@ -29,9 +28,11 @@ public class TMD extends Scheduler {
 
     private double DUP_THRESHOLD = .1;
     private LevelizeSliceGraph lsg;
+    private HashMap<Slice, Integer> fizzAmount;
     
     public TMD() {
         super();
+        fizzAmount = new HashMap<Slice, Integer>();
     }
     
     /** Get the tile for a Slice 
@@ -328,6 +329,8 @@ public class TMD extends Scheduler {
      */
     public void run(int tiles) {
         
+        calculateFizzAmounts(tiles);
+        
         int factor = multiplicityFactor(tiles);
         System.out.println("Using fission steady multiplicty factor: " + factor);
         
@@ -339,27 +342,83 @@ public class TMD extends Scheduler {
             filter.multSteadyMult(factor);
          }
         
+        //go throught and perform the fission
+        for (Slice slice : slices) {
+            if (fizzAmount.containsKey(slice) && fizzAmount.get(slice) > 1) {
+                System.out.println("Fissing " + slice.getFirstFilter() + " by " + fizzAmount.get(slice));
+                Fissioner.fizzSlice(slice, fizzAmount.get(slice));
+            }
+        }
+        
         //because we have changed the multiplicities of the FilterContents
         //we have to reset the filter info's because they cache the date of the 
         //FilterContents
         FilterInfo.reset();
         
-        dataParallelize(tiles);
+        
     }
     
     /**
      * 
      */
-    public void dataParallelize(int tiles) {
-        LinkedList<Slice> slices = DataFlowOrder.getTraversal(graphSchedule.getSlicer().getTopSlices());
+    public void calculateFizzAmounts(int totalTiles) {
+        Slice[][] origLevels = new LevelizeSliceGraph(graphSchedule.getSlicer().getTopSlices()).getLevels();
         
-        //fiss each slice by the number of tiles, assume pipelines for now (no TP)
-        for (Slice slice: slices) {
-            if (!slice.getFirstFilter().isPredefined()) {
-                Fissioner.canFizz(slice, tiles, true);
-                assert Fissioner.fizzSlice(slice, tiles) : "Could not fiss slice: " + slice;
+        //assume that level 0 has a file reader and the last level has a file writer
+        for (int l = 1; l < origLevels.length - 1; l++) {
+            //for the level, calculate the total work and create a hashmap of fsn to work
+            HashMap <FilterSliceNode, Integer> workEsts = new HashMap<FilterSliceNode, Integer>();
+            //this is the total amount of work
+            int levelTotal = 0;
+            //the total amount of stateless work
+            int slTotal = 0;
+            //tiles available, don't count stateful filters
+            int availTiles = totalTiles;
+            for (int s = 0; s < origLevels[l].length; s++) {
+               FilterSliceNode fsn = origLevels[l][s].getFirstFilter();
+               FilterContent fc = fsn.getFilter();
+               if (fsn.isPredefined())
+                   workEsts.put(fsn, 0);
+               //the work estimation is the estimate for the work function  
+               int workEst = SliceWorkEstimate.getWork(origLevels[l][s]);
+               workEsts.put(fsn, workEst);
+               levelTotal += workEst;
+               if (Fissioner.canFizz(origLevels[l][s], true)) {
+                   slTotal += workEst;
+               }
+               else {
+                   System.out.println("Cannot fiss " + fsn);
+                   availTiles--;
+               }
             }
-        }        
+               
+            //now go through the level and parallelize each filter according to the work it does in the
+            //level
+            int tilesUsed = 0;
+             
+            for (int s = 0; s < origLevels[l].length; s++) {
+                FilterSliceNode fsn = origLevels[l][s].getFirstFilter();
+                //don't parallelize file readers/writers
+                if (fsn.isPredefined())
+                    continue;
+                //if we cannot fizz this filter, do nothing
+                if (!Fissioner.canFizz(origLevels[l][s], false)) 
+                    continue;
+                
+                long fa = 
+                    Math.round((((double)workEsts.get(fsn)) / ((double)slTotal)) * ((double)availTiles));
+                
+                //System.out.println(workEsts.get(fsn) + " " + slTotal + " " + availTiles);
+                
+                fizzAmount.put(fsn.getParent(), (int)fa);
+                tilesUsed += fa;
+            }
+            
+            //assert that we use all the tiles for each level
+            assert tilesUsed == totalTiles : "Level " + l + " does not use all the tiles available for TMD!";
+        }
+        
+        
     }
     
     /**
@@ -371,43 +430,54 @@ public class TMD extends Scheduler {
      * @return the factor to multiply the steady multiplicities by
      */
     private int multiplicityFactor(int tiles) {
-        int factor = 0;
+        int maxFactor = 1;
         LinkedList<Slice> slices = DataFlowOrder.getTraversal(graphSchedule.getSlicer().getTopSlices());
-        boolean allPassed = false;
         
-        
-        while (!allPassed) {
-            factor += tiles;
-            //System.out.println("Trying Factor: " + factor);
-            allPassed = true;
-            for (Slice slice : slices) {
-                //this works only for pipelines right now, so just that we have at most
-                //one input and at most one output for the slice
-                assert slice.getHead().getSourceSet(SchedulingPhase.STEADY).size() <= 1 &&
-                    slice.getTail().getDestSet(SchedulingPhase.STEADY).size() <= 1;
-                
-                FilterInfo fi = FilterInfo.getFilterInfo(slice.getFirstFilter());
-                //nothing to do for filters with no input
-                if (fi.pop == 0)
-                    continue;
-                
+        for (Slice slice : slices) {
+            //this works only for pipelines right now, so just that we have at most
+            //one input and at most one output for the slice
+            assert slice.getHead().getSourceSet(SchedulingPhase.STEADY).size() <= 1 &&
+                slice.getTail().getDestSet(SchedulingPhase.STEADY).size() <= 1;
+         
+            if (slice.getFirstFilter().isPredefined())
+                continue;
+            
+            FilterInfo fi = FilterInfo.getFilterInfo(slice.getFirstFilter());
+            //nothing to do for filters with no input
+            if (fi.pop == 0)
+                continue;
+
+            if (fizzAmount.containsKey(slice) && fizzAmount.get(slice) > 1) {
                 //check that we have reached the threshold for duplicated items
-                if (((double)(fi.peek - fi.pop)) >= 
-                        (DUP_THRESHOLD * (((double)fi.pop) * ((double)fi.steadyMult) * 
-                                ((double)factor)/((double)tiles)))) {
-                    allPassed = false;
-                    break;
-                }
-                
-                //check that copy down is less than the
-                if (fi.copyDown >= fi.pop * fi.steadyMult * factor) {
-                    allPassed = false;
-                    break;
-                }
+                int threshFactor = (int)Math.ceil((((double)(fi.peek - fi.pop)) * fizzAmount.get(slice)) / 
+                        ((double)(DUP_THRESHOLD * (((double)fi.pop) * ((double)fi.steadyMult)))));
+
+                //this factor makes sure that copydown is less than pop*mult*factor
+                int cdFactor = (int)Math.ceil(((double)fi.copyDown) / ((double)(fi.pop * fi.steadyMult)));
+
+                int myFactor = Math.max(cdFactor, threshFactor);
+
+                if (maxFactor < myFactor)
+                    maxFactor = myFactor;
             }
         }
         
-        return factor;
+        //now find the smallest integer less than or equal to maxfactor that is 
+        //divisible by all the fissAmounts
+        boolean dividesAll = false;
+        while (!dividesAll) {
+            dividesAll = true;
+            for (Integer fa : fizzAmount.values()) {
+                if (maxFactor % fa.intValue() != 0) {
+                    dividesAll = false;
+                    break;
+                }
+            }
+            if (!dividesAll)
+                maxFactor++;
+        }
+        
+        return maxFactor;
     }
     
     /**

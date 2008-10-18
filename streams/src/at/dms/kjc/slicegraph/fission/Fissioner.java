@@ -79,8 +79,59 @@ public class Fissioner {
     private static InterSliceEdge getEdge(Slice src, Slice dest) {
         return FissionEdgeMemoizer.getEdge(src, dest);
     }
-
+    
     public static boolean canFizz(Slice slice, int fizzAmount, boolean debug) {
+        // Get information on Slice rates
+        FilterInfo.reset();
+
+        FilterSliceNode filter = getFirstFilter(slice);
+        FilterInfo filterInfo = FilterInfo.getFilterInfo(filter);
+        
+        int slicePeek = filterInfo.peek;
+        int slicePop = filterInfo.pop;
+        int slicePush = filterInfo.push;
+
+        int slicePrePeek = filterInfo.prePeek;
+        int slicePrePop = filterInfo.prePop;
+        int slicePrePush = filterInfo.prePush;
+
+        int sliceInitMult = filterInfo.initMult;
+        int sliceSteadyMult = filterInfo.steadyMult;
+        int sliceCopyDown = filterInfo.copyDown;
+
+        // Get Slice sources and dests
+        Slice sources[] = slice.getHead().getSourceSlices(SchedulingPhase.STEADY).toArray(new Slice[0]);
+        Slice dests[] = slice.getTail().getDestSlices(SchedulingPhase.STEADY).toArray(new Slice[0]);
+
+        // If sources are fizzed
+        if(isFizzed(sources[0])) {
+            // Make sure sources belong to the same set of fizzed Slices
+            LinkedList <Slice> fizzedCopies1 = sliceToFizzedCopies.get(sources[0]);
+            
+            // Make sure that sources are fizzed by fizzAmount
+            if(fizzedCopies1.size() != fizzAmount) {
+                if(debug) System.out.println("Can't fizz: Sources fizzed by a different amount");
+                return false;
+            }
+        }
+        
+        // If dests are fizzed
+        if(isFizzed(dests[0])) {
+   
+            // Make sure that dests belong to the same set of fizzed Slices
+            LinkedList <Slice> fizzedCopies1 = sliceToFizzedCopies.get(dests[0]);
+ 
+            // Make sure that dests are fizzed by fizzAmount
+            if(fizzedCopies1.size() != fizzAmount) {
+                if(debug) System.out.println("Can't fizz: Dests fizzed by different amount");
+                return false;
+            }
+        }
+        
+        return canFizz(slice, debug);
+    }
+
+    public static boolean canFizz(Slice slice, boolean debug) {
 
         // Get information on Slice rates
         FilterInfo.reset();
@@ -136,13 +187,8 @@ public class Fissioner {
             return false;
         }
 
-        // Make sure that multiplicity of single FilterSliceNode is divisible
-        // by fizzAmount
-        if(sliceSteadyMult % fizzAmount != 0) {
-            if(debug) System.out.println("Can't fizz: Multiplicity is not divisible by fizzAmount");
-            return false;
-        }
-
+   
+        
         // Make sure that sources only push to this Slice
         for(int x = 0 ; x < sources.length ; x++) {
             if(sources[x].getTail().getDestSlices(SchedulingPhase.STEADY).size() > 1) {
@@ -185,11 +231,6 @@ public class Fissioner {
                 "Slice sources do not belong to the same set of fizzed slices";
             }
 
-            // Make sure that sources are fizzed by fizzAmount
-            if(fizzedCopies1.size() != fizzAmount) {
-                if(debug) System.out.println("Can't fizz: Sources fizzed by a different amount");
-                return false;
-            }
         }
 
         // If dests are fizzed
@@ -205,12 +246,6 @@ public class Fissioner {
                 assert fizzedCopies1.equals(fizzedCopies2) :
                 "Slice dests do not belong to the same set of fizzed slices";
             }
-
-            // Make sure that dests are fizzed by fizzAmount
-            if(fizzedCopies1.size() != fizzAmount) {
-                if(debug) System.out.println("Can't fizz: Dests fizzed by different amount");
-                return false;
-            }
         }
         
         // Make sure that rates match between Slice and its sources/dests
@@ -224,12 +259,6 @@ public class Fissioner {
         assert(sliceSteadyMult * slicePush ==
                dests.length * destInfo.steadyMult * destInfo.pop) :
         "Rates between Slice and dests do not match";
-
-        // Check copyDown constraint: copyDown < mult * pop
-        if(sliceCopyDown >= sliceSteadyMult * slicePop) {
-            if(debug) System.out.println("Can't fizz: Slice does not meet copyDown constraint");
-            return false;
-        }
 
         return true;
     }
@@ -294,6 +323,13 @@ public class Fissioner {
         int sliceSteadyMult = filterInfo.steadyMult;
         int sliceCopyDown = filterInfo.copyDown;
 
+        // Make sure that multiplicity of single FilterSliceNode is divisible
+        // by fizzAmount
+        assert sliceSteadyMult % fizzAmount == 0 : "Multiplicity not divisible by fission amount";
+            
+        // Check copyDown constraint: copyDown < mult * pop
+        assert sliceCopyDown < sliceSteadyMult * slicePop : "Can't fizz: Slice does not meet copyDown constraint";
+                    
         // TODO: Remove debug println
         //System.out.println("Slice copy down: " + sliceCopyDown);   
 

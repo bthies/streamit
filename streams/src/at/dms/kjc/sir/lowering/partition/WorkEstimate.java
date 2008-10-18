@@ -236,7 +236,7 @@ public class WorkEstimate {
         }
     }
 
-    static class WorkVisitor extends SLIREmptyVisitor implements WorkConstants {
+    public static class WorkVisitor extends SLIREmptyVisitor implements WorkConstants {
         private Set<JMethodDeclaration> methodsBeingProcessed;
         
         /**
@@ -260,7 +260,7 @@ public class WorkEstimate {
             this.theFilter = theFilter;
             this.methodsBeingProcessed = methodsBeingProcessed;
         }
-
+        
         /**
          * Returns estimate of work function in <pre>filter</pre>
          */
@@ -279,7 +279,7 @@ public class WorkEstimate {
         /**
          * Returns estimate of work in <pre>node</pre> of <pre>filter</pre>, use on first call only.
          */
-        private static int getWork(SIRFilter filter, JPhylum node) {
+        public static int getWork(SIRFilter filter, JPhylum node) {
             WorkVisitor visitor = new WorkVisitor(filter);
             node.accept(visitor);
             return visitor.work;

@@ -112,34 +112,34 @@ public class InputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneabl
      * Code generation for Edges may rely on {@link OutputSliceNode#canonicalize()}
      * being run on all output nodes whose edges are combined by canonicalize.
      */
-    public void canonicalize() {
+    public void canonicalize(SchedulingPhase phase) {
         //do nothing for 0 length joiners
-        if (sources.length == 0)
+        if (getSources(phase).length == 0)
             return;
         
         LinkedList<Integer> newWeights = new LinkedList<Integer>();
         LinkedList<InterSliceEdge> newEdges = new LinkedList<InterSliceEdge>();
 
         //add the first edge and weight
-        newWeights.add(new Integer(weights[0]));
-        newEdges.add(sources[0]);
+        newWeights.add(new Integer(getWeights(phase)[0]));
+        newEdges.add(getSources(phase)[0]);
         
-        for (int i = 1; i < sources.length; i++) {
-            if (sources[i] == newEdges.get(newEdges.size() - 1)) {
+        for (int i = 1; i < getSources(phase).length; i++) {
+            if (getSources(phase)[i] == newEdges.get(newEdges.size() - 1)) {
                 //this src is equal to the last one, so add the weights together!
                 Integer newWeight = 
                     new Integer(newWeights.get(newWeights.size() - 1).intValue() + 
-                                weights[i]);
+                                getWeights(phase)[i]);
                 newWeights.remove(newWeights.size() - 1);
                 newWeights.add(newWeight);
             }
             else {
                 //not equal, start a new entry and weight
-                newEdges.add(sources[i]);
-                newWeights.add(new Integer(weights[i]));
+                newEdges.add(getSources(phase)[i]);
+                newWeights.add(new Integer(getWeights(phase)[i]));
             }
         }
-        set(newWeights, newEdges);
+        set(newWeights, newEdges, phase);
     }
     
     /** InputSliceNode is FileOutput if FilterSliceNode is FileOutput.*/
@@ -281,14 +281,18 @@ public class InputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneabl
      * @param edges The list of edges.
      */
     public void set(LinkedList<Integer> weights, 
-            LinkedList<InterSliceEdge> edges) {
+            LinkedList<InterSliceEdge> edges, SchedulingPhase phase) {
         int[] intArr = new int[weights.size()]; 
         
         for (int i = 0; i < weights.size(); i++)
             intArr[i] = weights.get(i).intValue();
-        setWeights(intArr);
-        
-        setSources(edges.toArray(new InterSliceEdge[edges.size()]));
+        if (SchedulingPhase.INIT == phase) {
+            setInitWeights(intArr);
+            setInitSources(edges.toArray(new InterSliceEdge[edges.size()]));
+        } else {
+            setWeights(intArr);
+            setSources(edges.toArray(new InterSliceEdge[edges.size()]));
+        }
     }
     
     /**
@@ -464,7 +468,7 @@ public class InputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneabl
             set.add(getSources(phase)[i]);
         return set;
     }
-
+    
     /**
      * Return a string that gives some information for this input slice node.
      * If escape is true, then escape the new lines "\\n".
@@ -473,14 +477,25 @@ public class InputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneabl
      * @return The string.
      */
     public String debugString(boolean escape) {
+        return debugString(escape, SchedulingPhase.STEADY);
+    }
+
+    /**
+     * Return a string that gives some information for this input slice node.
+     * If escape is true, then escape the new lines "\\n".
+     *  
+     * @param escape Should we escape the new lines?
+     * @return The string.
+     */
+    public String debugString(boolean escape, SchedulingPhase phase) {
         String newLine = "\n";
         if (escape)
             newLine = "\\n";
 
         StringBuffer buf = new StringBuffer();
         buf.append("***** " + this.toString() + " *****" + newLine);
-        for (int i = 0; i < sources.length; i++) {
-            buf.append("  weight " + weights[i] + ": " + sources[i].toString()
+        for (int i = 0; i < getSources(phase).length; i++) {
+            buf.append("  weight " + getWeights(phase)[i] + ": " + getSources(phase)[i].toString()
                        + newLine);
         }
         buf.append("**********" + newLine);

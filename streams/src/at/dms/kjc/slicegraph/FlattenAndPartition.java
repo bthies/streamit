@@ -122,7 +122,7 @@ public class FlattenAndPartition extends SIRSlicer {
                     }
                 }
 
-                output.set(outWeights, translatedEdges);
+                output.set(outWeights, translatedEdges, SchedulingPhase.STEADY);
             } else {
                 // no outputs
                 output.setWeights(new int[0]);
@@ -152,7 +152,7 @@ public class FlattenAndPartition extends SIRSlicer {
                                     .get(node.incoming[i].contents)).get(input));
                     inWeights.add(node.incomingWeights[i]);
                 }
-                input.set(inWeights, inEdges);
+                input.set(inWeights, inEdges, SchedulingPhase.STEADY);
             } else {
                 input.setWeights(new int[0]);
                 input.setSources(new InterSliceEdge[0]);

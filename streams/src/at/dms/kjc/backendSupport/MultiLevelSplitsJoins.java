@@ -173,8 +173,8 @@ public class MultiLevelSplitsJoins {
         
         //set the weights and sources of the new input trace nodes
         for (int i = 0; i < numNewSlices; i++) {
-            newInputs[i].set(newInputsWeights[i], newInputsSources[i]);
-            newInputs[i].canonicalize();
+            newInputs[i].set(newInputsWeights[i], newInputsSources[i], SchedulingPhase.STEADY);
+            newInputs[i].canonicalize(SchedulingPhase.STEADY);
         }
  
         //ok so now we have all the new input trace nodes, create the new traces
@@ -199,8 +199,8 @@ public class MultiLevelSplitsJoins {
             origSliceInputEdges.add(source.getTail().getSingleEdge(SchedulingPhase.STEADY));
         }
         //set the pattern of the new input trace
-        newInput.set(origSliceInputWeights, origSliceInputEdges);
-        newInput.canonicalize();
+        newInput.set(origSliceInputWeights, origSliceInputEdges, SchedulingPhase.STEADY);
+        newInput.canonicalize(SchedulingPhase.STEADY);
         //now install the new input trace node in the old trace
         newInput.setNext(slice.getHead().getNext());
         slice.getHead().getNext().setPrevious(newInput);
@@ -443,7 +443,7 @@ public class MultiLevelSplitsJoins {
             //add the port the pattern of output of the original trace
             origSliceNewEdges.add(port);
         }
-        newOutput.set(origSliceNewWeights, origSliceNewEdges);
+        newOutput.set(origSliceNewWeights, origSliceNewEdges, SchedulingPhase.STEADY);
         
         //install the new output trace node
         newOutput.setPrevious(output.getPrevious());

@@ -288,7 +288,7 @@ public class SynchRemover {
                     System.out.println(j + newEdgesMap.get(j).toString());
                     newedges.add(newEdgesMap.get(j));                    
                 }
-                parent.getTail().set(newweights, newedges);
+                parent.getTail().set(newweights, newedges, SchedulingPhase.STEADY);
             }
             
             id.getHead().setSources(new InterSliceEdge[0]);

@@ -82,7 +82,7 @@ public class OutputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneab
         assert weights.size() == dests.size();
         ident = "output" + unique++;
         //convert the weights list
-        set(weights, dests);
+        set(weights, dests, SchedulingPhase.STEADY);
     }
     
     
@@ -126,6 +126,7 @@ public class OutputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneab
             (initWeights != null && initDests != null) :
                 "Something wrong with init distribution in  " + getParent() + 
                 "   weights: " + initWeights + ", dests: " + initDests;
+        
         return (initWeights != null);
     }
     
@@ -151,18 +152,29 @@ public class OutputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneab
      * @param dests List of Lists of Edge for splitting pattern.
      */
     public void set(LinkedList<Integer> weights, 
-            LinkedList<LinkedList<InterSliceEdge>> dests) {
+            LinkedList<LinkedList<InterSliceEdge>> dests, SchedulingPhase phase) {
+        int[] newWeights;
+        InterSliceEdge[][] newDests;
+        
         if (weights.size() == 1) 
-            this.weights = new int[]{1};
+            newWeights = new int[]{1};
         else {
-            this.weights = new int[weights.size()];
+            newWeights = new int[weights.size()];
             for (int i = 0; i < weights.size(); i++)
-                this.weights[i] = weights.get(i).intValue();
+                newWeights[i] = weights.get(i).intValue();
         }
         //convert the dests list
-        this.dests = new InterSliceEdge[dests.size()][];
+        newDests = new InterSliceEdge[dests.size()][];
         for (int i = 0; i < dests.size(); i++) 
-            this.dests[i] = dests.get(i).toArray(new InterSliceEdge[0]);
+            newDests[i] = dests.get(i).toArray(new InterSliceEdge[0]);
+        
+        if (SchedulingPhase.INIT == phase) {
+            setInitWeights(newWeights);
+            setInitDests(newDests);
+        } else {
+            setWeights(newWeights);
+            setDests(newDests);
+        }
     }
         
     /** @return the weights */
@@ -235,35 +247,35 @@ public class OutputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneab
      * Code generation for Edges may rely on {@link InputSliceNode#canonicalize()}
      * being run on all input nodes whose edges are combined by canonicalize.
      */
-    public void canonicalize() {
-        if (weights.length == 0)
+    public void canonicalize(SchedulingPhase phase) {
+        if (getWeights(phase).length == 0)
             return;
         LinkedList<LinkedList<InterSliceEdge>> edges = new LinkedList<LinkedList<InterSliceEdge>>();
         LinkedList<Integer> newWeights = new LinkedList<Integer>();
         //add the first port to the new edges and weights
         LinkedList<InterSliceEdge> port = new LinkedList<InterSliceEdge>();
-        Util.add(port, dests[0]);
+        Util.add(port, getDests(phase)[0]);
         edges.add(port);
-        newWeights.add(new Integer(weights[0]));
+        newWeights.add(new Integer(getWeights(phase)[0]));
         
-        for (int i = 1; i < dests.length; i++) {
-            if (Util.setCompare(edges.get(edges.size() - 1), dests[i])) {
+        for (int i = 1; i < getDests(phase).length; i++) {
+            if (Util.setCompare(edges.get(edges.size() - 1), getDests(phase)[i])) {
                 Integer newWeight = 
                     newWeights.get(newWeights.size() - 1).intValue() + 
-                    weights[i];
+                    getWeights(phase)[i];
                 newWeights.remove(newWeights.size() - 1);
                 newWeights.add(newWeight);
             }
             else {
                 //not equal, so create a new port and add it and the weight
                 port = new LinkedList<InterSliceEdge>();
-                Util.add(port, dests[i]);
+                Util.add(port, getDests(phase)[i]);
                 edges.add(port);
-                newWeights.add(new Integer(weights[i]));
+                newWeights.add(new Integer(getWeights(phase)[i]));
             }
         }
         //set the new weights and the dests
-        set(newWeights, edges);
+        set(newWeights, edges, phase);
     }
     
     /**
@@ -391,7 +403,7 @@ public class OutputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneab
     
     public boolean oneOutput() {
         if (hasInitPattern() && 
-                ((initWeights.length > 1) || (initWeights.length == 1 && initDests[0].length > 1)))
+                ((initWeights.length != 1 || (initDests[0].length != 1))))
             return false;
         
         return (weights.length == 1 && dests[0].length == 1);
@@ -399,6 +411,7 @@ public class OutputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneab
 
     public InterSliceEdge getSingleEdge(SchedulingPhase phase) {
         assert oneOutput() : "Calling getSingleEdge() on OutputSlice with less/more than one output";
+        //System.out.println(getParent() + " " + phase);
         return getDests(phase)[0][0];
     }
 
@@ -471,17 +484,21 @@ public class OutputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneab
         return ((double) getWeight(edge, phase) / (double) totalWeights(phase));
     }
 
-    public String debugString(boolean escape) {
+    public String  debugString(boolean escape) {
+        return debugString(escape, SchedulingPhase.STEADY);
+    }
+    
+    public String debugString(boolean escape, SchedulingPhase phase) {
         String newLine = "\n";
         StringBuffer buf = new StringBuffer();
         if (escape)
             newLine = "\\n";
 
         buf.append("***** " + this.toString() + " *****" + newLine);
-        for (int i = 0; i < weights.length; i++) {
-            buf.append("* Weight = " + weights[i] + newLine);
-            for (int j = 0; j < dests[i].length; j++)
-                buf.append("  " + dests[i][j] + newLine);
+        for (int i = 0; i < getWeights(phase).length; i++) {
+            buf.append("* Weight = " + getWeights(phase)[i] + newLine);
+            for (int j = 0; j < getDests(phase)[i].length; j++)
+                buf.append("  " + getDests(phase)[i][j] + newLine);
         }
         buf.append("**********" + newLine);
         return buf.toString();

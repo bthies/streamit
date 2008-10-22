@@ -1,5 +1,7 @@
 package at.dms.kjc.slicegraph;
 
+import java.util.HashMap;
+
 import at.dms.kjc.backendSupport.FilterInfo;
 
 /**
@@ -10,6 +12,9 @@ import at.dms.kjc.backendSupport.FilterInfo;
  *
  */
 public class InterSliceEdge extends Edge implements at.dms.kjc.DeepCloneable, Comparable<InterSliceEdge>{
+    private static HashMap<EdgeDescriptor, InterSliceEdge> edges =
+        new HashMap<EdgeDescriptor, InterSliceEdge>();
+    
     /**
      * No argument constructor, FOR AUTOMATIC CLONING ONLY.
      */
@@ -24,6 +29,13 @@ public class InterSliceEdge extends Edge implements at.dms.kjc.DeepCloneable, Co
      */
     public InterSliceEdge(OutputSliceNode src, InputSliceNode dest) {
         super(src,dest);
+        
+        //make sure we did not create this edge before!
+        EdgeDescriptor edgeDscr = new EdgeDescriptor(src, dest);      
+        InterSliceEdge edge = edges.get(edgeDscr);
+        assert (edge == null) : "trying to create 2 identical edges";
+        //remember this edge
+        edges.put(edgeDscr, this);
     }
 
     /**
@@ -44,8 +56,17 @@ public class InterSliceEdge extends Edge implements at.dms.kjc.DeepCloneable, Co
         this.dest = dest;
     }
 
+    public static InterSliceEdge getEdge(OutputSliceNode src, InputSliceNode dest) {
+        EdgeDescriptor edgeDscr = new EdgeDescriptor(src, dest);      
+
+        InterSliceEdge edge = edges.get(edgeDscr);
+
+        return edge;
+    }
+    
     @Override
     public OutputSliceNode getSrc() {
+        
         return (OutputSliceNode)src;
     }
 
@@ -57,12 +78,27 @@ public class InterSliceEdge extends Edge implements at.dms.kjc.DeepCloneable, Co
     @Override
     public void setSrc(SliceNode src) {
         assert src instanceof OutputSliceNode;
+        
+        //make sure we did not create this edge before!
+        EdgeDescriptor edgeDscr = new EdgeDescriptor((OutputSliceNode)src, getDest());      
+        InterSliceEdge edge = edges.get(edgeDscr);
+        assert (edge == null) : "trying to create 2 identical edges";
+        //remember this edge
+        edges.put(edgeDscr, this);
+        
         super.setSrc(src);
     }
 
     @Override
     public void setDest(SliceNode dest) {
         assert dest instanceof InputSliceNode;
+        //make sure we did not create this edge before!
+        EdgeDescriptor edgeDscr = new EdgeDescriptor(getSrc(), (InputSliceNode)dest);      
+        InterSliceEdge edge = edges.get(edgeDscr);
+        assert (edge == null) : "trying to create 2 identical edges";
+        //remember this edge
+        edges.put(edgeDscr, this);
+        
         super.setDest(dest);
     }
     /**
@@ -156,5 +192,39 @@ public class InterSliceEdge extends Edge implements at.dms.kjc.DeepCloneable, Co
             return 1;
         return 0;
     }
+    private static class EdgeDescriptor {
+        public OutputSliceNode src;
+        public InputSliceNode dest;
 
+        public EdgeDescriptor(OutputSliceNode src, InputSliceNode dest) {
+            this.src = src;
+            this.dest = dest;
+        }
+        
+        public EdgeDescriptor(Slice src, Slice dest) {
+            this(src.getTail(), dest.getHead());
+        }
+
+        public EdgeDescriptor(InterSliceEdge edge) {
+            this(edge.getSrc(), edge.getDest());
+        }
+        
+        public boolean equals(Object obj) {
+            if(obj instanceof EdgeDescriptor) {
+                EdgeDescriptor edge = (EdgeDescriptor)obj;
+                
+                if(this.src.equals(edge.src) &&
+                   this.dest.equals(edge.dest))
+                    return true;
+                
+                return false;
+            }
+            
+            return false;
+        }
+        
+        public int hashCode() {
+            return src.hashCode() + dest.hashCode();
+        }
+    }
 }

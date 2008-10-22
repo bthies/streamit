@@ -47,11 +47,7 @@ public class TileraBackend {
         scheduler.runLayout();
         backEndBits = new TileraBackEndFactory(chip);
         backEndBits.setLayout(scheduler);
-        
-        System.out.println("Unroll/Roll");
-        DistributionUnroller.test(graphSchedule.getSlicer().getSliceGraph());
-        
-        
+                
         graphSchedule.getSlicer().dumpGraph("after_slice_partition.dot", scheduler);
         
         //create all buffers and set the rotation lengths

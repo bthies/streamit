@@ -24,29 +24,29 @@ import at.dms.kjc.spacetime.SafeFileReaderWriterPositions;
  */
 public class FilterContent implements SIRCodeUnit, at.dms.kjc.DeepCloneable {
     /** Static unique id used in new name if one FilterContent created from another. */
-    private static int unique_ID = 0; 
+    protected static int unique_ID = 0; 
     /** The unique id given to this FilterContent for use in constructing names */
     protected int my_unique_ID;
     /** Filter name */
-    private String name; 
+    protected String name; 
     /** PreWork and Work method declarations */
     protected JMethodDeclaration[] prework, steady; 
     /** Input and output types */
     protected CType inputType,outputType; 
     /** Multiplicities from scheduler */
-    private int initMult, steadyMult; 
+    protected int initMult, steadyMult; 
     /** Other method declarations */
-    private JMethodDeclaration[] methods;
+    protected JMethodDeclaration[] methods;
     /** Init function for filter */
     protected JMethodDeclaration initFunction; 
     /** Is true when two-stage filter */
-    private boolean is2stage; 
+    protected boolean is2stage; 
     /** Field declarations */  
-    private JFieldDeclaration[] fields; 
+    protected JFieldDeclaration[] fields; 
     /** For linear filters, the pop count **/
-    private int popCount;
+    protected int popCount;
     /** For linear filters, the peek count **/
-    private int peek;
+    protected int peek;
 
     /////////////////////////
     //Linear Representation

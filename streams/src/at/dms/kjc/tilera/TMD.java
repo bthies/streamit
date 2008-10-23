@@ -346,7 +346,7 @@ public class TMD extends Scheduler {
         for (Slice slice : slices) {
             if (fizzAmount.containsKey(slice) && fizzAmount.get(slice) > 1) {
                 System.out.println("Fissing " + slice.getFirstFilter() + " by " + fizzAmount.get(slice));
-                Fissioner.fizzSlice(slice, fizzAmount.get(slice));
+                PipelineFissioner.fizzSlice(slice, fizzAmount.get(slice));
             }
         }
         
@@ -383,7 +383,7 @@ public class TMD extends Scheduler {
                int workEst = SliceWorkEstimate.getWork(origLevels[l][s]);
                workEsts.put(fsn, workEst);
                levelTotal += workEst;
-               if (Fissioner.canFizz(origLevels[l][s], true)) {
+               if (PipelineFissioner.canFizz(origLevels[l][s], true)) {
                    slTotal += workEst;
                }
                else {
@@ -402,7 +402,7 @@ public class TMD extends Scheduler {
                 if (fsn.isPredefined())
                     continue;
                 //if we cannot fizz this filter, do nothing
-                if (!Fissioner.canFizz(origLevels[l][s], false)) 
+                if (!PipelineFissioner.canFizz(origLevels[l][s], false)) 
                     continue;
                 
                 long fa = 

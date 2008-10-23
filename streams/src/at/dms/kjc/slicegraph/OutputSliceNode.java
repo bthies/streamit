@@ -478,6 +478,17 @@ public class OutputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneab
         return (FilterSliceNode) getPrevious();
     }
 
+    /**
+     * Return the number of items that are sent along the <edge> in <phase>.
+     */
+    public int itemsSentOn(InterSliceEdge edge, SchedulingPhase phase) {
+        int totalItems = FilterInfo.getFilterInfo(getPrevFilter()).totalItemsSent(phase);
+        
+        double items = totalItems * ratio(edge, phase);
+        assert items == Math.floor(items);
+        return (int)(items);
+    }
+    
     public double ratio(InterSliceEdge edge, SchedulingPhase phase) {
         if (totalWeights(phase) == 0)
             return 0.0;

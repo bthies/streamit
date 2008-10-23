@@ -62,5 +62,28 @@ public class IDFilterContent extends FilterContent {
     public int getPreworkPeek() {
         return 0;
     }
-
+  
+    /**
+     * Create and return a slice with a single ID filter.
+     */
+    public static Slice createIDSlice() {
+        InputSliceNode input = new InputSliceNode();
+        OutputSliceNode output = new OutputSliceNode();
+        IDFilterContent id = new IDFilterContent();
+        FilterSliceNode filter = new FilterSliceNode(id);
+        
+        input.setNext(filter);
+        filter.setPrevious(input);
+        filter.setNext(output);
+        output.setPrevious(filter);
+        
+        Slice slice = new Slice(input);
+        
+        slice.setTail(output);
+        
+        slice.finish();
+        
+        return slice;
+    }
+    
 }

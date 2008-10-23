@@ -521,6 +521,12 @@ public class FilterContent implements SIRCodeUnit, at.dms.kjc.DeepCloneable {
         steadyMult *= mult;
     }
     
+    public int getMult(SchedulingPhase phase) {
+        if (SchedulingPhase.INIT == phase) 
+            return initMult;
+        return steadyMult;
+    }
+    
     /**
      * Returns the multiplicity of steady state schedule.
      */

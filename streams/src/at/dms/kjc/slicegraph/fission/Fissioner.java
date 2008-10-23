@@ -4,6 +4,7 @@ import java.util.LinkedList;
 
 import at.dms.kjc.CClassType;
 import at.dms.kjc.CStdType;
+import at.dms.kjc.CType;
 import at.dms.kjc.JAddExpression;
 import at.dms.kjc.JAssignmentExpression;
 import at.dms.kjc.JBlock;
@@ -19,6 +20,7 @@ import at.dms.kjc.JVariableDeclarationStatement;
 import at.dms.kjc.JVariableDefinition;
 import at.dms.kjc.ObjectDeepCloner;
 import at.dms.kjc.backendSupport.FilterInfo;
+import at.dms.kjc.sir.SIRPopExpression;
 import at.dms.kjc.slicegraph.*;
 
 public class Fissioner {
@@ -145,11 +147,40 @@ public class Fissioner {
                 createIDInputSlice() &&
                 createIDOutputSlice() &&
                 setupInitPhase() &&
+                replaceInputEdges(SchedulingPhase.INIT) && replaceInputEdges(SchedulingPhase.STEADY) &&
+                moveJoinToInputID() &&
                 synchRemoveIDs();
         
         
     }
-
+    
+    private boolean moveJoinToInputID() {
+      
+        
+        
+        return true;
+    }
+    
+    /**
+     * Query/Replace the edges to original slice with edges to the new input ID in the 
+     * outputs of the inputs.  
+     */
+    private boolean replaceInputEdges(SchedulingPhase phase) {
+        Slice[] inputs = (phase == SchedulingPhase.INIT ? inputsInit : inputsSteady);
+        
+        for (int i = 0; i < inputs.length; i++) {
+            InterSliceEdge edge = getEdge(inputs[i], idInput);
+            InterSliceEdge oldEdge = getEdge(inputs[i], slice);
+            InterSliceEdge[][] newEdges = replaceEdge(inputs[i].getTail().getDests(phase), oldEdge, edge);
+            if (SchedulingPhase.INIT == phase)
+                inputs[i].getTail().setInitDests(newEdges);
+            else
+                inputs[i].getTail().setDests(newEdges);
+        }
+        
+        return true;
+    }
+    
     private boolean setupInitPhase() {
         /*
          * The unfizzed Slice has both an initialization phase and a steady-
@@ -172,15 +203,15 @@ public class Fissioner {
         
         if(sliceInitMult > 0) {
             JBlock firstWorkBody =
-                sliceClones[0].getFirstFilter().getFilter().getWork().getBody();
+                slice.getFirstFilter().getFilter().getWork().getBody();
             
             JBlock newPreworkBody = new JBlock();
             
-            if(sliceClones[0].getFirstFilter().getFilter().getPrework() != null &&
-               sliceClones[0].getFirstFilter().getFilter().getPrework().length > 0 &&
-               sliceClones[0].getFirstFilter().getFilter().getPrework()[0] != null &&
-               sliceClones[0].getFirstFilter().getFilter().getPrework()[0].getBody() != null) {
-                newPreworkBody.addStatement(sliceClones[0].getFirstFilter().getFilter().getPrework()[0].getBody());
+            if(slice.getFirstFilter().getFilter().getPrework() != null &&
+               slice.getFirstFilter().getFilter().getPrework().length > 0 &&
+               slice.getFirstFilter().getFilter().getPrework()[0] != null &&
+               slice.getFirstFilter().getFilter().getPrework()[0].getBody() != null) {
+                newPreworkBody.addStatement(slice.getFirstFilter().getFilter().getPrework()[0].getBody());
             }
 
             JVariableDefinition initMultLoopVar =
@@ -209,9 +240,9 @@ public class Fissioner {
                                   (JBlock)ObjectDeepCloner.deepCopy(firstWorkBody));
             newPreworkBody.addStatement(initMultLoop);
             
-            if(sliceClones[0].getFirstFilter().getFilter().getPrework() == null ||
-               sliceClones[0].getFirstFilter().getFilter().getPrework().length == 0 ||
-               sliceClones[0].getFirstFilter().getFilter().getPrework()[0] == null) {
+            if(slice.getFirstFilter().getFilter().getPrework() == null ||
+               slice.getFirstFilter().getFilter().getPrework().length == 0 ||
+               slice.getFirstFilter().getFilter().getPrework()[0] == null) {
                 JMethodDeclaration newPreworkMethod =
                     new JMethodDeclaration(null,
                                            at.dms.kjc.Constants.ACC_PUBLIC,
@@ -223,7 +254,7 @@ public class Fissioner {
                                            null,
                                            null);
 
-                sliceClones[0].getFirstFilter().getFilter().setPrework(newPreworkMethod);
+                slice.getFirstFilter().getFilter().setPrework(newPreworkMethod);
 
                 newPrePeek = 0;
                 newPrePush = 0;
@@ -312,6 +343,31 @@ public class Fissioner {
         return true;
     }
     
+    private InterSliceEdge[][] replaceEdge(InterSliceEdge[][] oldEdges, 
+            InterSliceEdge oldEdge, InterSliceEdge newEdge) {
+        InterSliceEdge[][] newEdges = new InterSliceEdge[oldEdges.length][];
+        
+        for (int i = 0; i < newEdges.length; i++) {
+            newEdges[i] = replaceEdge(newEdges[i], oldEdge, newEdge);
+        }
+        
+        return newEdges;
+    }
+    
+    private InterSliceEdge[] replaceEdge(InterSliceEdge[] oldEdges, 
+            InterSliceEdge oldEdge, InterSliceEdge newEdge) {
+        InterSliceEdge[] newEdges = new InterSliceEdge[oldEdges.length];
+        
+        for (int i = 0; i < newEdges.length; i++) {
+            if (oldEdges[i] == oldEdge) 
+                newEdges[i] = newEdge;
+            else
+                newEdges[i] = oldEdges[i];
+        }
+        
+        return newEdges;
+    }
+    
     private boolean createIDInputSlice() {
         //create the ID slice
         idInput = IDFilterContent.createIDSlice();
@@ -334,6 +390,13 @@ public class Fissioner {
         assert fInfo.steadyMult * fInfo.pop == totalItemsReceived;
         idInput.getFirstFilter().getFilter().setSteadyMult(fInfo.steadyMult * fInfo.pop);
         
+        //set the join schedule for each of the clones to just receive from the ID
+        for (int i = 0; i < sliceClones.length; i++) {
+            InterSliceEdge edge = getEdge(idInput, sliceClones[i]);
+            sliceClones[i].getHead().setWeights(new int[]{1});
+            sliceClones[i].getHead().setSources(new InterSliceEdge[]{edge});
+        }
+        
         return true;
     }
 
@@ -352,6 +415,13 @@ public class Fissioner {
             items += outputsSteady[i].getHead().itemsReceivedOn(edge, SchedulingPhase.STEADY);
         }
         assert items == steadyItems;
+        
+        //set the split schedule of each of the clones to just send to the id output
+        for (int i = 0; i < sliceClones.length; i++) {
+            InterSliceEdge[] edge =  {getEdge(sliceClones[i], idOutput)};
+            sliceClones[i].getTail().setWeights(new int[]{1});
+            sliceClones[i].getTail().setDests(new InterSliceEdge[][]{edge});
+        }
         
         return true;
     }
@@ -374,14 +444,142 @@ public class Fissioner {
         
         // Fill array with clones of Slice, put original copy first in array
         sliceClones = new Slice[fizzAmount];
-        sliceClones[0] = slice;
-        for(int x = 1 ; x < fizzAmount ; x++)
+        for(int x = 0 ; x < fizzAmount ; x++)
             sliceClones[x] = (Slice)ObjectDeepCloner.deepCopy(slice);
 
         // Give each Slice clone a unique name
-        String origName = sliceClones[0].getFirstFilter().getFilter().getName();
+        String origName = slice.getFirstFilter().getFilter().getName();
         for(int x = 0 ; x < fizzAmount ; x++)
             sliceClones[x].getFirstFilter().getFilter().setName(origName + "_fizz" + x);
+        
+        // Calculate new steady-state multiplicity based upon fizzAmount.  
+        // Because work is equally shared among all Slice clones, steady-state 
+        // multiplicity is divided by fizzAmount for each Slice clone
+
+        int newSteadyMult = sliceSteadyMult / fizzAmount;
+
+        for(int x = 0 ; x < fizzAmount ; x++)
+            sliceClones[x].getFirstFilter().getFilter().setSteadyMult(newSteadyMult);
+
+
+        /**********************************************************************
+         *               Roll steady-state multiplicity into loop             *
+         **********************************************************************/
+
+        /*
+         * To assist code generation, the steady-state multiplicity is rolled
+         * into a loop around the work body of each Slice clone.  The steady-
+         * state multiplicity of each Slice clone is then set to 1.  
+         *
+         * The amount of work completed in each execution of a Slice clone stays
+         * constant through this transform.  The main benefit of this transform
+         * is that code can now be added to execute at the end of each steady-
+         * state iteration.
+         *
+         * This capability is needed in order to remove unneeded elements from
+         * each Slice clone at the end of every steady-state iteration.
+         *
+         * Unfortunately, this transform breaks the initialization multiplicity.
+         * Fortunately, the initialization multiplicity is no longer needed at
+         * this point since the initialization work has been copied into
+         * prework.
+         */
+
+        // Get the work body for each Slice
+        JBlock origWorkBodies[] = new JBlock[fizzAmount];
+
+        for(int x = 0 ; x < fizzAmount ; x++)
+            origWorkBodies[x] =
+                sliceClones[x].getFirstFilter().getFilter().getWork().getBody();
+
+        // Roll the steady-state multiplicity into a loop around the work
+        // body of each Slice.
+        for(int x = 0 ; x < fizzAmount ; x++) {
+
+            // Construct new work body
+            JBlock newWorkBody = new JBlock();
+
+            // Add declaration for for-loop counter variable
+            JVariableDefinition steadyMultLoopVar =
+                new JVariableDefinition(0, 
+                                        CStdType.Integer,
+                                        "steadyMultCount",
+                                        new JIntLiteral(0));
+
+            JVariableDeclarationStatement steadyMultLoopVarDecl = new JVariableDeclarationStatement(steadyMultLoopVar);
+            newWorkBody.addStatement(steadyMultLoopVarDecl);
+
+            // Add for-loop that wraps around existing work body
+            JRelationalExpression steadyMultLoopCond =
+                new JRelationalExpression(JRelationalExpression.OPE_LT,
+                                          new JLocalVariableExpression(steadyMultLoopVar),
+                                          new JIntLiteral(newSteadyMult));
+
+            JExpressionStatement steadyMultLoopIncr = 
+                new JExpressionStatement(new JAssignmentExpression(new JLocalVariableExpression(steadyMultLoopVar),
+                                                                   new JAddExpression(new JLocalVariableExpression(steadyMultLoopVar),
+                                                                                      new JIntLiteral(1))));
+
+            JForStatement steadyMultLoop =
+                new JForStatement(new JEmptyStatement(),
+                                  steadyMultLoopCond,
+                                  steadyMultLoopIncr,
+                                  (JBlock)ObjectDeepCloner.deepCopy(origWorkBodies[x]));
+            newWorkBody.addStatement(steadyMultLoop);
+
+            // Set new work body
+            sliceClones[x].getFirstFilter().getFilter().getWork().setBody(newWorkBody);
+        }
+
+        // Now that steady-state multiplicity has been rolled around the work
+        // bodies of the Slices, change steady-state multiplicity to 1.
+        // Recalculate new Slice rates given new steady-state multiplicity.
+            
+        int newPeek = slicePop * newSteadyMult + slicePeek - slicePop;
+        int newPop = slicePop * newSteadyMult;
+        int newPush = slicePush * newSteadyMult;
+
+        for(int x = 0 ; x < fizzAmount ; x++) {
+            sliceClones[x].getFirstFilter().getFilter().setSteadyMult(1);
+            sliceClones[x].getFirstFilter().getFilter().getWork().setPeek(newPeek);
+            sliceClones[x].getFirstFilter().getFilter().getWork().setPop(newPop);
+            sliceClones[x].getFirstFilter().getFilter().getWork().setPush(newPush);
+        }
+        
+        /**********************************************************************
+         *                 Perform fission hacks on Slice rates               *
+         **********************************************************************/
+        
+        // Normally, Slices remember peek - pop elements between steady-state
+        // iterations.  However, after fizzing, these elements no longer need to
+        // be remembered between iterations.  These elements therefore need to 
+        // be removed at the end of each steady-state iteration
+        //
+        // This code adds a pop statement to the end of each work body, removing
+        // the unneeded peek - pop elements.  The code also adjusts the pop rate
+        // to reflect that more elements are being popped.
+
+        if(newPeek -  newPop > 0) {
+            // Add pop statement to end of each work body
+            for(int x = 0 ; x < fizzAmount ; x++) {
+                CType inputType = 
+                    sliceClones[x].getFirstFilter().getFilter().getInputType();
+                
+                SIRPopExpression popExpr =
+                    new SIRPopExpression(inputType, newPeek - newPop);
+                JExpressionStatement popStmnt =
+                    new JExpressionStatement(popExpr);
+                
+                sliceClones[x].getFirstFilter().getFilter().getWork().getBody()
+                    .addStatement(popStmnt);
+            }
+
+            // Adjust pop rates since more elements are now popped
+            newPop += (newPeek - newPop);
+
+            for(int x = 0 ; x < fizzAmount ; x++)
+                sliceClones[x].getFirstFilter().getFilter().getWork().setPop(newPop);
+        }
                 
         return true;
     }

@@ -54,6 +54,17 @@ public class Fissioner {
     private int sliceCopyDown;
     /** the pop rate (also peek) of the clones) */
     private int newPop; 
+    /** the push rate of the clones (multS of slice * push of slice) */
+    private int newPush;
+    
+    /**
+     * Attempt to fiss <slice> by <fissAmount>.  Return true if the fission was successful.
+     */
+    public static boolean doit(Slice slice, int fissAmount) {
+        Fissioner fissioner = new Fissioner(slice, fissAmount);
+                
+        return canFizz(slice, false) && fissioner.fizz();
+    }
     
     /**
      * Return true if <slice> can be fissed, meaning it is stateless.  The method 
@@ -171,9 +182,70 @@ public class Fissioner {
         replaceInputEdges(SchedulingPhase.INIT); replaceInputEdges(SchedulingPhase.STEADY);
         moveJoinToInputID();
         installFissionSplitPattern();
+        installSplitJoinIDOutput();
+        replaceOutputEdges(SchedulingPhase.INIT); replaceOutputEdges(SchedulingPhase.STEADY);
         synchRemoveIDs();
         
         return true;
+    }
+    
+    /**
+     * Replace the incoming edges of <phase> for each of the outputs from the original slice
+     * so that edges that referenced the original slice now reference idOutput as their source.
+     */
+    private void replaceOutputEdges(SchedulingPhase phase) {
+        Slice[] outputs = (phase == SchedulingPhase.INIT ? inputsInit : inputsSteady);
+        
+        for (int i = 0; i < outputs.length; i++) {
+            InterSliceEdge oldEdge = getEdge(slice, outputs[i]);
+            InterSliceEdge newEdge = getEdge(idOutput, outputs[i]);
+            InterSliceEdge[] srcs = outputs[i].getHead().getSources(phase);
+            srcs = replaceEdge(srcs, oldEdge, newEdge);
+            
+            if (phase == SchedulingPhase.INIT)
+                outputs[i].getHead().setInitSources(srcs);
+            else
+                outputs[i].getHead().setSources(srcs);
+        }
+        
+    }
+    
+    /**
+     * Create the splitting and joining patterns for the output ID.  The joining pattern 
+     * is just a round-robin of the clones with weight equal to the new push rate of each.
+     * The splitting pattern is the splitting pattern of the original slice with the edges replaced
+     * to reference the output ID.
+     */
+    private void installSplitJoinIDOutput() {
+        //set the join of id output to a round robin of the clones with weight
+        //equal to their push rate
+        InterSliceEdge[] incoming = new InterSliceEdge[fizzAmount];
+        int[] inWeights = new int[fizzAmount];
+        for (int i = 0; i < fizzAmount; i++) {
+            inWeights[i] = newPush;
+            incoming[i] = getEdge(sliceClones[i], idOutput);
+        }
+        
+        //install them
+        idOutput.getHead().setWeights(inWeights);
+        idOutput.getHead().setSources(incoming);
+        
+        //set the split of idOutput to the original filter's split pattern
+        //with the src of the edges replaced with idOutput
+        InterSliceEdge[][] newDests = slice.getTail().getDests(SchedulingPhase.STEADY);
+        int newWeights[] = slice.getTail().getWeights(SchedulingPhase.STEADY).clone();
+        
+        for (int i = 0; i < outputsSteady.length; i++) {
+            InterSliceEdge oldEdge = getEdge(slice, outputsSteady[i]);
+            InterSliceEdge newEdge = getEdge(idOutput, outputsSteady[i]);
+            
+            newDests = replaceEdge(newDests, oldEdge, newEdge);
+        }
+        
+        assert newDests.length == newWeights.length;
+        
+        idOutput.getTail().setWeights(newWeights);
+        idOutput.getTail().setDests(newDests);
     }
     
     /**
@@ -406,12 +478,20 @@ public class Fissioner {
         return edge;
     }
     
+    /**
+     * Remove the generated IDs by running the synch removal pass.  
+     * After this we are done.
+     */
     private void synchRemoveIDs() {
+        FilterInfo.reset();
         FilterInfo idI = FilterInfo.getFilterInfo(idInput.getFirstFilter());
         FilterInfo idO = FilterInfo.getFilterInfo(idOutput.getFirstFilter());
         
         assert idI.copyDown == 0;
         assert idO.copyDown == 0;
+        
+        IDSliceRemoval.doit(idInput);
+        IDSliceRemoval.doit(idOutput);
     }
     
     private InterSliceEdge[][] replaceEdge(InterSliceEdge[][] oldEdges, 
@@ -590,7 +670,7 @@ public class Fissioner {
             
         int newPeek = slicePop * newSteadyMult + slicePeek - slicePop;
         newPop = slicePop * newSteadyMult;
-        int newPush = slicePush * newSteadyMult;
+        newPush = slicePush * newSteadyMult;
 
         for(int x = 0 ; x < fizzAmount ; x++) {
             sliceClones[x].getFirstFilter().getFilter().setSteadyMult(1);
@@ -635,12 +715,4 @@ public class Fissioner {
         }
     }
     
-    /**
-     * Attempt to fiss <slice> by <fissAmount>.  Return true if the fission was successful.
-     */
-    public static boolean doit(Slice slice, int fissAmount) {
-        Fissioner fissioner = new Fissioner(slice, fissAmount);
-                
-        return fissioner.fizz();
-    }
 }

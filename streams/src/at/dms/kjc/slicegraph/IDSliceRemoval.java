@@ -4,6 +4,7 @@ import java.util.LinkedList;
 import java.util.HashMap;
 import java.util.Arrays;
 import at.dms.kjc.slicegraph.fission.*;
+import at.dms.kjc.backendSupport.FilterInfo;
 
 public class IDSliceRemoval {
     private Slice idSlice;
@@ -20,7 +21,7 @@ public class IDSliceRemoval {
             "Trying to remove a non ID slice";
         
         IDSliceRemoval remover = new IDSliceRemoval(slice);
-        
+        FilterInfo.reset();
     }
     
     private IDSliceRemoval(Slice s) {

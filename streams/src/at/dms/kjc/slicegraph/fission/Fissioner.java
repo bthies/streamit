@@ -154,9 +154,24 @@ public class Fissioner {
         
     }
     
+    /**
+     * Move slice's joining schedule to the ID and replace the references to slice with idInput
+     * in the edges.
+     */
     private boolean moveJoinToInputID() {
-      
+        InterSliceEdge[] joining= slice.getHead().getSources(SchedulingPhase.STEADY);
+        InterSliceEdge[] newJoin = new InterSliceEdge[joining.length];
         
+        for (int i = 0; i < joining.length; i++) {
+            assert joining[i].getDest() == slice.getHead();
+            InterSliceEdge newEdge = getEdge(joining[i].getSrc().getParent(), idInput);
+            newJoin[i] = newEdge;
+        }
+        
+        int[] newWeights = slice.getHead().getWeights(SchedulingPhase.STEADY).clone();
+        
+        idInput.getHead().setSources(newJoin);
+        idInput.getHead().setWeights(newWeights);
         
         return true;
     }

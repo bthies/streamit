@@ -43,7 +43,8 @@ public class IDSliceRemoval {
     }
     
     private void remove(SchedulingPhase phase) {
-        assert idInput.getSources(phase).length == idOutput.getDests(phase).length;
+        assert idInput.getSources(phase).length == idOutput.getDests(phase).length : 
+            "input: " + idInput.getSources(phase).length + " output: " + idOutput.getDests(phase).length;
         InterSliceEdge[] idSources = idInput.getSources(phase);
         InterSliceEdge[][] idDests = idOutput.getDests(phase);
         

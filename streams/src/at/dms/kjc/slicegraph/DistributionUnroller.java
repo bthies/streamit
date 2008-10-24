@@ -91,6 +91,17 @@ public class DistributionUnroller {
     
     public static void unroll(InputSliceNode input) {
         FilterInfo fi = FilterInfo.getFilterInfo(input.getNextFilter());
+       
+        //unroll the init joining schedule
+        InterSliceEdge[] initSrcs = 
+            new InterSliceEdge[fi.totalItemsReceived(SchedulingPhase.INIT)];
+        unrollHelperInput(input.getSources(SchedulingPhase.INIT), 
+                input.getWeights(SchedulingPhase.INIT), 
+                initSrcs);
+        input.setInitSources(initSrcs);
+        input.setInitWeights(makeOnesArray(initSrcs.length));
+
+        
         //unroll the steady joining schedule
         if (input.getSources(SchedulingPhase.STEADY).length > 0) {
             InterSliceEdge[] srcs = 
@@ -101,22 +112,28 @@ public class DistributionUnroller {
             input.setSources(srcs);
             input.setWeights(makeOnesArray(srcs.length));
         }
-        
-        if (input.hasInitPattern()) {
-            //unroll the init joining schedule
-            InterSliceEdge[] initSrcs = 
-                new InterSliceEdge[fi.totalItemsReceived(SchedulingPhase.INIT)];
-            unrollHelperInput(input.getSources(SchedulingPhase.INIT), 
-                    input.getWeights(SchedulingPhase.INIT), 
-                    initSrcs);
-            input.setInitSources(initSrcs);
-            input.setInitWeights(makeOnesArray(initSrcs.length));
-        }
     }
     
     public static void unroll(OutputSliceNode output) {
         //unroll the steady splitting schedule
         FilterInfo fi = FilterInfo.getFilterInfo(output.getPrevFilter());
+        
+        //unroll the init splitting schedule
+        if (fi.totalItemsSent(SchedulingPhase.INIT) == 0) {
+            output.setInitDests(null);
+            output.setInitWeights(null);
+        } else {
+
+            InterSliceEdge[][] initDests = 
+                new InterSliceEdge[fi.totalItemsSent(SchedulingPhase.INIT)][];
+            unrollHelperOutput(output.getDests(SchedulingPhase.INIT),
+                    output.getWeights(SchedulingPhase.INIT),
+                    initDests);
+            output.setInitDests(initDests);
+            output.setInitWeights(makeOnesArray(initDests.length));
+        }
+
+       
         if (output.getDests(SchedulingPhase.STEADY).length > 0) {
             InterSliceEdge[][] dests = 
                 new InterSliceEdge[fi.totalItemsSent(SchedulingPhase.STEADY)][];
@@ -125,23 +142,6 @@ public class DistributionUnroller {
                     dests);
             output.setDests(dests);
             output.setWeights(makeOnesArray(dests.length));
-        }
-      
-        if (output.hasInitPattern()) {
-            //unroll the steady splitting schedule
-            if (fi.totalItemsSent(SchedulingPhase.INIT) == 0) {
-                output.setInitDests(null);
-                output.setInitWeights(null);
-            } else {
-
-                InterSliceEdge[][] initDests = 
-                    new InterSliceEdge[fi.totalItemsSent(SchedulingPhase.INIT)][];
-                unrollHelperOutput(output.getDests(SchedulingPhase.INIT),
-                        output.getWeights(SchedulingPhase.INIT),
-                        initDests);
-                output.setInitDests(initDests);
-                output.setInitWeights(makeOnesArray(initDests.length));
-            }
         }
     }
     
@@ -152,11 +152,11 @@ public class DistributionUnroller {
     }
     
     /**
-     * Fill in <unrolled> with the unrolled <target> and <weights>.
+     * Fill in <unrolled> with the unrolled <src> and <weights>.
      */
-    private static void unrollHelperInput(InterSliceEdge[] target, int weights[], 
+    private static void unrollHelperInput(InterSliceEdge[] src, int weights[], 
             InterSliceEdge[] unrolled) {
-        assert target.length == weights.length;
+        assert src.length == weights.length;
         
         int weightsSum = 0;
         for (int weight : weights) 
@@ -167,7 +167,7 @@ public class DistributionUnroller {
         
         for (int rep = 0; rep < unrolled.length / weightsSum; rep++) {
             for (int w = 0; w < weights.length; w++) {
-                InterSliceEdge obj = target[w];
+                InterSliceEdge obj = src[w];
                 for (int i = 0; i < weights[w]; i++) {
                     unrolled[index++] = obj; 
                 }                 
@@ -178,11 +178,11 @@ public class DistributionUnroller {
     }
     
     /**
-     * Fill in <unrolled> with the unrolled <target> and <weights>.
+     * Fill in <unrolled> with the unrolled <src> and <weights>.
      */
-    private static void unrollHelperOutput(InterSliceEdge[][] target, int weights[], 
+    private static void unrollHelperOutput(InterSliceEdge[][] src, int weights[], 
             InterSliceEdge[][] unrolled) {
-        assert target.length == weights.length;
+        assert src.length == weights.length;
         
         int weightsSum = 0;
         for (int weight : weights) 
@@ -193,7 +193,7 @@ public class DistributionUnroller {
         
         for (int rep = 0; rep < unrolled.length / weightsSum; rep++) {
             for (int w = 0; w < weights.length; w++) {
-                InterSliceEdge[] obj = target[w].clone();
+                InterSliceEdge[] obj = src[w].clone();
                 for (int i = 0; i < weights[w]; i++) {
                     unrolled[index++] = obj; 
                 }                 

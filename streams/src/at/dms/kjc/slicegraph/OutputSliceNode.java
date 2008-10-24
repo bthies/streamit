@@ -181,7 +181,6 @@ public class OutputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneab
     public int[] getWeights(SchedulingPhase phase) {
         if (phase == SchedulingPhase.INIT && hasInitPattern())
             return initWeights;
-        
         return weights;
     }
 
@@ -504,10 +503,10 @@ public class OutputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneab
         StringBuffer buf = new StringBuffer();
         if (escape)
             newLine = "\\n";
-
         buf.append("***** " + this.toString() + " *****" + newLine);
         for (int i = 0; i < getWeights(phase).length; i++) {
             buf.append("* Weight = " + getWeights(phase)[i] + newLine);
+            
             for (int j = 0; j < getDests(phase)[i].length; j++)
                 buf.append("  " + getDests(phase)[i][j] + newLine);
         }

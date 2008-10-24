@@ -186,14 +186,14 @@ public class FilterInfo {
                  " init Mult: " + filterC.getInitMult());
                  System.out.println("Upstream: " + upstreamInitItems + " Ratio: " + 
                  incoming.getSrc().ratio(incoming));
-                 */
+                 */                
                 initItemsRec += (int) (((double) upstreamInitItems) * incoming
                                        .getSrc().ratio(incoming, SchedulingPhase.INIT));
             }
         }
         
         initItemsNeeded = (prePeek + bottomPeek + Math.max((initFire - 2), 0) * pop);
-        assert initItemsRec >= initItemsNeeded;
+        assert initItemsRec >= initItemsNeeded : initItemsRec + " " + initItemsNeeded;
         
         int initItemsPopped = (prePop + ((initFire - 1) * pop));
         

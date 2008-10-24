@@ -44,7 +44,7 @@ public class InterSliceEdge extends Edge implements at.dms.kjc.DeepCloneable, Co
      */
     public InterSliceEdge(OutputSliceNode src) {
         super();
-        this.src = src;
+        this.src = src;        
     }
 
     /**

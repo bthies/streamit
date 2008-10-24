@@ -52,6 +52,8 @@ public class Fissioner {
     private int sliceInitMult;
     private int sliceSteadyMult;
     private int sliceCopyDown;
+    /** the pop rate (also peek) of the clones) */
+    private int newPop; 
     
     /**
      * Return true if <slice> can be fissed, meaning it is stateless.  The method 
@@ -142,23 +144,84 @@ public class Fissioner {
         }
     }
     
+    private boolean checks() {
+        // Check copyDown constraint: copyDown < mult * pop
+        if  (fInfo.copyDown < fInfo.steadyMult * fInfo.pop) { 
+            System.out.println("Can't fizz: Slice does not meet copyDown constraint");
+            return false;
+        }
+        
+        // Check copyDown constraint: copyDown < mult * pop
+        if  (fInfo.copyDown < fInfo.steadyMult * fInfo.pop) { 
+            System.out.println("Can't fizz: Slice does not meet copyDown constraint");
+            return false;
+        }
+           
+        return true;
+    }
+    
     private boolean fizz() {
-        return createFissedSlices() &&
-                createIDInputSlice() &&
-                createIDOutputSlice() &&
-                setupInitPhase() &&
-                replaceInputEdges(SchedulingPhase.INIT) && replaceInputEdges(SchedulingPhase.STEADY) &&
-                moveJoinToInputID() &&
-                synchRemoveIDs();
+        if (!checks())
+            return false;
         
+        createFissedSlices();
+        createIDInputSlice();
+        createIDOutputSlice();
+        setupInitPhase();
+        replaceInputEdges(SchedulingPhase.INIT); replaceInputEdges(SchedulingPhase.STEADY);
+        moveJoinToInputID();
+        installFissionSplitPattern();
+        synchRemoveIDs();
         
+        return true;
+    }
+    
+    /**
+     * Calculate and install the splitting pattern for the id intput to the slice clones.
+     * This is based on the number of filters we are duplicating to.  See PLDI paper for 
+     * more explanation.
+     */
+    private void installFissionSplitPattern() {
+        //calculate the fission split pattern for duplication to as most 2 slices
+        
+        InterSliceEdge[][] dests = new InterSliceEdge[2 * fizzAmount + 1][];
+        int weights[] = new int[2 * fizzAmount + 1];
+        //the duplication factor
+        int dup = slicePeek - slicePop;
+        
+        //the first weight clone's pop - copydown - dup, so just what is for this filter minus 
+        //what is already in the buffer (copydown)
+        weights[0] = newPop - sliceCopyDown - dup;
+        //the first dest is just the first filter
+        dests[0] = new InterSliceEdge[]{getEdge(idInput, sliceClones[0])};
+        //the second weight is just the duplication factor
+        weights[1] = dup;
+        //second dests are the first and second filter
+        dests[1] = new InterSliceEdge[]{getEdge(idInput, sliceClones[0]), getEdge(idInput, sliceClones[1])};
+        
+        //generate the middle dests and weights
+        for (int i = 2; i < 2 * fizzAmount; i += 2) {
+            weights[i] = newPop - dup - dup;
+            dests[i] =  new InterSliceEdge[]{getEdge(idInput, sliceClones[i/2])};
+            weights[i + 1] = dup;
+            dests[i + 1] = new InterSliceEdge[]{getEdge(idInput, sliceClones[i/2]), 
+                    getEdge(idInput, sliceClones[(i/2) + 1])};
+        }
+        
+        //now take care of the last weight and dest
+        weights[2 * fizzAmount] = sliceCopyDown - dup;
+        dests[2 * fizzAmount] = new InterSliceEdge[]{getEdge(idInput, sliceClones[0])};
+        
+        //install the weights and edges for the steady state
+        idInput.getTail().setWeights(weights);
+        idInput.getTail().setDests(dests);
     }
     
     /**
      * Move slice's joining schedule to the ID and replace the references to slice with idInput
      * in the edges.
      */
-    private boolean moveJoinToInputID() {
+    private void moveJoinToInputID() {
         InterSliceEdge[] joining= slice.getHead().getSources(SchedulingPhase.STEADY);
         InterSliceEdge[] newJoin = new InterSliceEdge[joining.length];
         
@@ -172,15 +235,13 @@ public class Fissioner {
         
         idInput.getHead().setSources(newJoin);
         idInput.getHead().setWeights(newWeights);
-        
-        return true;
     }
     
     /**
      * Query/Replace the edges to original slice with edges to the new input ID in the 
      * outputs of the inputs.  
      */
-    private boolean replaceInputEdges(SchedulingPhase phase) {
+    private void replaceInputEdges(SchedulingPhase phase) {
         Slice[] inputs = (phase == SchedulingPhase.INIT ? inputsInit : inputsSteady);
         
         for (int i = 0; i < inputs.length; i++) {
@@ -192,11 +253,10 @@ public class Fissioner {
             else
                 inputs[i].getTail().setDests(newEdges);
         }
-        
-        return true;
     }
+            
     
-    private boolean setupInitPhase() {
+    private void setupInitPhase() {
         /*
          * The unfizzed Slice has both an initialization phase and a steady-
          * state phase.  Once the Slice is fizzed, only one of the Slice clones
@@ -336,8 +396,6 @@ public class Fissioner {
             sliceClones[x].getTail().setInitWeights(null);
             sliceClones[x].getTail().setDests(null);
         }
-        
-        return true;
     }
     
     private InterSliceEdge getEdge(Slice s1, Slice s2) {
@@ -348,14 +406,12 @@ public class Fissioner {
         return edge;
     }
     
-    private boolean synchRemoveIDs() {
+    private void synchRemoveIDs() {
         FilterInfo idI = FilterInfo.getFilterInfo(idInput.getFirstFilter());
         FilterInfo idO = FilterInfo.getFilterInfo(idOutput.getFirstFilter());
         
         assert idI.copyDown == 0;
         assert idO.copyDown == 0;
-        
-        return true;
     }
     
     private InterSliceEdge[][] replaceEdge(InterSliceEdge[][] oldEdges, 
@@ -383,7 +439,7 @@ public class Fissioner {
         return newEdges;
     }
     
-    private boolean createIDInputSlice() {
+    private void createIDInputSlice() {
         //create the ID slice
         idInput = IDFilterContent.createIDSlice();
         
@@ -411,11 +467,9 @@ public class Fissioner {
             sliceClones[i].getHead().setWeights(new int[]{1});
             sliceClones[i].getHead().setSources(new InterSliceEdge[]{edge});
         }
-        
-        return true;
     }
 
-    private boolean createIDOutputSlice() {
+    private void createIDOutputSlice() {
         idOutput = IDFilterContent.createIDSlice();
         
         //set the init mult of the id
@@ -437,25 +491,9 @@ public class Fissioner {
             sliceClones[i].getTail().setWeights(new int[]{1});
             sliceClones[i].getTail().setDests(new InterSliceEdge[][]{edge});
         }
-        
-        return true;
     }
     
-    private boolean createBasicFissionSplittingPattern() {
-        // Check copyDown constraint: copyDown < mult * pop
-        if  (fInfo.copyDown < fInfo.steadyMult * fInfo.pop) { 
-            System.out.println("Can't fizz: Slice does not meet copyDown constraint");
-            return false;
-        }
-        
-        return true;
-    }
-    
-    private boolean createFissedSlices() {
-        // Make sure that multiplicity of single FilterSliceNode is divisible
-        // by fizzAmount
-        if (fInfo.steadyMult % fizzAmount != 0) 
-            return false;
+    private void createFissedSlices() {
         
         // Fill array with clones of Slice, put original copy first in array
         sliceClones = new Slice[fizzAmount];
@@ -551,7 +589,7 @@ public class Fissioner {
         // Recalculate new Slice rates given new steady-state multiplicity.
             
         int newPeek = slicePop * newSteadyMult + slicePeek - slicePop;
-        int newPop = slicePop * newSteadyMult;
+        newPop = slicePop * newSteadyMult;
         int newPush = slicePush * newSteadyMult;
 
         for(int x = 0 ; x < fizzAmount ; x++) {
@@ -595,8 +633,6 @@ public class Fissioner {
             for(int x = 0 ; x < fizzAmount ; x++)
                 sliceClones[x].getFirstFilter().getFilter().getWork().setPop(newPop);
         }
-                
-        return true;
     }
     
     /**

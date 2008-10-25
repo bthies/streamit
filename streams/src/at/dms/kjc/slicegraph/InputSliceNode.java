@@ -177,7 +177,7 @@ public class InputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneabl
             }
         }
         
-        assert false : "cannot find edge to node in getEdgeFrom() in InputSliceNode for " + phase;
+        assert false : "cannot find edge to " + node + " in getEdgeFrom() in " + this + " InputSliceNode for " + phase;
         return null;
     }
     

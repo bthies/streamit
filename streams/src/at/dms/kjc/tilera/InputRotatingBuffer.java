@@ -886,7 +886,8 @@ public class InputRotatingBuffer extends RotatingBuffer {
     public List<JStatement> beginInitWrite() {
         assert hasLocalSrcFilter() : "Calling write method for input buffer that does not act as output buffer.";
         LinkedList<JStatement> list = new LinkedList<JStatement>();
-        list.add(transferCommands.zeroOutHead(SchedulingPhase.INIT));
+        if (FilterInfo.getFilterInfo(localSrcFilter).totalItemsSent(SchedulingPhase.INIT) > 0)
+            list.add(transferCommands.zeroOutHead(SchedulingPhase.INIT));
         return list;
     }
     

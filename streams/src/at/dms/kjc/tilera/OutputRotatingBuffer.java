@@ -389,7 +389,8 @@ public class OutputRotatingBuffer extends RotatingBuffer {
      */
     public List<JStatement> beginInitWrite() {
         LinkedList<JStatement> list = new LinkedList<JStatement>();
-        list.add(transferCommands.zeroOutHead(SchedulingPhase.INIT));
+        if (FilterInfo.getFilterInfo(filterNode).totalItemsSent(SchedulingPhase.INIT) > 0)
+            list.add(transferCommands.zeroOutHead(SchedulingPhase.INIT));   
         return list;
     }
 

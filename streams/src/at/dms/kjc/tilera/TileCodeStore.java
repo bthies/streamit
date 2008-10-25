@@ -283,6 +283,11 @@ public class TileCodeStore extends ComputeCodeStore<Tile> {
         hasCode = true;
     }
     
+    public void generatePrintOutputCode() {
+        
+        
+    }
+    
     public void generateNumbersCode() {
         appendTxtToGlobal("uint32_t cycle_low;\n");
         addSteadyLoopStatement(Util.toStmt("PASS(spr_read_cycle_count_low() - cycle_low)"));

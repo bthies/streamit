@@ -29,6 +29,7 @@ public class TMD extends Scheduler {
     private double DUP_THRESHOLD = .1;
     private LevelizeSliceGraph lsg;
     private HashMap<Slice, Integer> fizzAmount;
+    public static final int FISS_COMP_COMM_THRESHOLD = 10;
     
     public TMD() {
         super();
@@ -386,9 +387,13 @@ public class TMD extends Scheduler {
                int workEst = SliceWorkEstimate.getWork(origLevels[l][s]);
                workEsts.put(fsn, workEst);
                levelTotal += workEst;
+               int commRate = fc.getPushInt() * fc.getPopInt() * fc.getMult(SchedulingPhase.STEADY);
                if (Fissioner.canFizz(origLevels[l][s], true)) {
-                   slTotal += workEst;
-               }
+                   if (workEst / commRate <= FISS_COMP_COMM_THRESHOLD) {
+                       System.out.println("Dont' fiss " + fsn + ", too much communication!");
+                   } else
+                       slTotal += workEst;
+               } 
                else {
                    System.out.println("Cannot fiss " + fsn);
                    availTiles--;
@@ -401,24 +406,29 @@ public class TMD extends Scheduler {
              
             for (int s = 0; s < origLevels[l].length; s++) {
                 FilterSliceNode fsn = origLevels[l][s].getFirstFilter();
+                FilterContent fc = fsn.getFilter();
                 //don't parallelize file readers/writers
                 if (fsn.isPredefined())
                     continue;
+                int commRate = fc.getPushInt() * fc.getPopInt() * fc.getMult(SchedulingPhase.STEADY);
                 //if we cannot fizz this filter, do nothing
-                if (!Fissioner.canFizz(origLevels[l][s], false)) 
+                if (!Fissioner.canFizz(origLevels[l][s], false) || 
+                        workEsts.get(fsn) / commRate <= FISS_COMP_COMM_THRESHOLD) 
                     continue;
                 
                 long fa = 
                     Math.round((((double)workEsts.get(fsn)) / ((double)slTotal)) * ((double)availTiles));
                 
-                //System.out.println(workEsts.get(fsn) + " " + slTotal + " " + availTiles);
+                
+                //System.out.println(workEsts.get(fsn) + " / " + slTotal + " * " + availTiles + " = " + fa);
                 
                 fizzAmount.put(fsn.getParent(), (int)fa);
                 tilesUsed += fa;
             }
             
             //assert that we use all the tiles for each level
-            assert tilesUsed == totalTiles : "Level " + l + " does not use all the tiles available for TMD!";
+            if (tilesUsed < totalTiles) 
+                System.out.println("Level " + l + " does not use all the tiles available for TMD " + tilesUsed);
         }
         
         
@@ -437,10 +447,6 @@ public class TMD extends Scheduler {
         LinkedList<Slice> slices = DataFlowOrder.getTraversal(graphSchedule.getSlicer().getTopSlices());
         
         for (Slice slice : slices) {
-            //this works only for pipelines right now, so just that we have at most
-            //one input and at most one output for the slice
-            assert slice.getHead().getSourceSet(SchedulingPhase.STEADY).size() <= 1 &&
-                slice.getTail().getDestSet(SchedulingPhase.STEADY).size() <= 1;
          
             if (slice.getFirstFilter().isPredefined())
                 continue;
@@ -451,6 +457,11 @@ public class TMD extends Scheduler {
                 continue;
 
             if (fizzAmount.containsKey(slice) && fizzAmount.get(slice) > 1) {
+              //this works only for pipelines right now, so just that we have at most
+                //one input and at most one output for the slice
+                assert slice.getHead().getSourceSet(SchedulingPhase.STEADY).size() <= 1 &&
+                    slice.getTail().getDestSet(SchedulingPhase.STEADY).size() <= 1;
+                
                 //check that we have reached the threshold for duplicated items
                 int threshFactor = (int)Math.ceil((((double)(fi.peek - fi.pop)) * fizzAmount.get(slice)) / 
                         ((double)(DUP_THRESHOLD * (((double)fi.pop) * ((double)fi.steadyMult)))));

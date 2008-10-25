@@ -178,7 +178,7 @@ public class Fissioner {
         installFissionSplitPattern();
         installSplitJoinIDOutput();
         replaceOutputEdges(SchedulingPhase.INIT); replaceOutputEdges(SchedulingPhase.STEADY);
-        debug();
+        //debug();
         synchRemoveIDs();
         
         return true;

@@ -43,7 +43,7 @@ public class IDSliceRemoval {
     }
     
     private void remove(SchedulingPhase phase) {
-        assert idInput.getSources(phase).length == idOutput.getDests(phase).length : 
+        assert idInput.getSources(phase).length == idOutput.getDests(phase).length : phase + " " +
             "input: " + idInput.getSources(phase).length + " output: " + idOutput.getDests(phase).length;
         InterSliceEdge[] idSources = idInput.getSources(phase);
         InterSliceEdge[][] idDests = idOutput.getDests(phase);
@@ -57,8 +57,9 @@ public class IDSliceRemoval {
                 dests[i] = idDests[idIndex][i].getDest();
 
             //replace the ref to the id in the inputslicenodes with the src
-            for (int i = 0; i < dests.length; i++)
+            for (int i = 0; i < dests.length; i++) {
                 replaceSrc(dests[i], src, phase);   
+            }
             
             //replace the ref to id in the outputslicenode with the dests
             replaceDest(src, dests, phase);

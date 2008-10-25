@@ -277,12 +277,15 @@ public class Fissioner {
      */
     private void installFissionSplitPattern() {
         //calculate the fission split pattern for duplication to as most 2 slices
-        
-        InterSliceEdge[][] dests = new InterSliceEdge[2 * fizzAmount + 1][];
-        int weights[] = new int[2 * fizzAmount + 1];
         //the duplication factor
         int dup = slicePeek - slicePop;
+        int extra = 1;
+        if (sliceCopyDown - dup == 0) {
+            extra = 0;
+        }
         
+        InterSliceEdge[][] dests = new InterSliceEdge[2 * fizzAmount + extra][];
+        int weights[] = new int[2 * fizzAmount + extra];
         //the first weight clone's pop - copydown - dup, so just what is for this filter minus 
         //what is already in the buffer (copydown)
         weights[0] = newPop - sliceCopyDown - dup;
@@ -302,15 +305,17 @@ public class Fissioner {
             // the second dest of the duplication has to wrap around on the last index
             int secondDest = (i/2) + 1;
             if (secondDest >= fizzAmount) 
-                secondDest = 1;
+                secondDest = 0  ;
             dests[i + 1] = new InterSliceEdge[]{getEdge(idInput, sliceClones[i/2]), 
                     getEdge(idInput, sliceClones[secondDest])};
         }
-        
-        //now take care of the last weight and dest
-        weights[2 * fizzAmount] = sliceCopyDown - dup;
-        dests[2 * fizzAmount] = new InterSliceEdge[]{getEdge(idInput, sliceClones[0])};
-        
+
+        if (extra == 1) {
+            //now take care of the last weight and dest
+            weights[2 * fizzAmount] = sliceCopyDown - dup;
+            dests[2 * fizzAmount] = new InterSliceEdge[]{getEdge(idInput, sliceClones[0])};
+        }
+
         //install the weights and edges for the steady state
         idInput.getTail().setWeights(weights);
         idInput.getTail().setDests(dests);
@@ -556,6 +561,32 @@ public class Fissioner {
         System.out.println("--- Outputs ---");
         for (int i = 0; i < outputsInit.length; i++) {
             System.out.println(outputsInit[i].getHead().debugString(false, SchedulingPhase.INIT));
+        }
+        
+        System.out.println("CopyDown: " + sliceCopyDown);
+        System.out.println("d: " + (slicePeek - slicePop));
+        System.out.println("O_clone: " + (sliceSteadyMult / fizzAmount * slicePop + (slicePeek - slicePop)));
+        
+        System.out.println("--- STEADY ---");
+        System.out.println("--- Inputs ---");
+        for (int i = 0; i < inputsSteady.length; i++) {
+            System.out.println(inputsSteady[i].getTail().debugString(false, SchedulingPhase.STEADY));
+        }
+        System.out.println("--- IDInput ---");
+        System.out.println(idInput.getHead().debugString(false, SchedulingPhase.STEADY));
+        System.out.println(idInput.getTail().debugString(false, SchedulingPhase.STEADY));
+        System.out.println("--- Clones ---");
+        for (int i = 0; i < sliceClones.length; i++) {
+            System.out.println(sliceClones[i].getHead().debugString(false, SchedulingPhase.STEADY));
+            System.out.println(sliceClones[i].getTail().debugString(false, SchedulingPhase.STEADY));
+            
+        }
+        System.out.println("--- IdOutput ---");
+        System.out.println(idOutput.getHead().debugString(false, SchedulingPhase.STEADY));
+        System.out.println(idOutput.getTail().debugString(false, SchedulingPhase.STEADY));
+        System.out.println("--- Outputs ---");
+        for (int i = 0; i < outputsSteady.length; i++) {
+            System.out.println(outputsSteady[i].getHead().debugString(false, SchedulingPhase.STEADY));
         }
     }
     

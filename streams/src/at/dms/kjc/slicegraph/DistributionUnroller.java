@@ -118,20 +118,15 @@ public class DistributionUnroller {
         //unroll the steady splitting schedule
         FilterInfo fi = FilterInfo.getFilterInfo(output.getPrevFilter());
         
-        //unroll the init splitting schedule
-        if (fi.totalItemsSent(SchedulingPhase.INIT) == 0) {
-            output.setInitDests(null);
-            output.setInitWeights(null);
-        } else {
 
-            InterSliceEdge[][] initDests = 
-                new InterSliceEdge[fi.totalItemsSent(SchedulingPhase.INIT)][];
-            unrollHelperOutput(output.getDests(SchedulingPhase.INIT),
-                    output.getWeights(SchedulingPhase.INIT),
-                    initDests);
-            output.setInitDests(initDests);
-            output.setInitWeights(makeOnesArray(initDests.length));
-        }
+        InterSliceEdge[][] initDests = 
+            new InterSliceEdge[fi.totalItemsSent(SchedulingPhase.INIT)][];
+        unrollHelperOutput(output.getDests(SchedulingPhase.INIT),
+                output.getWeights(SchedulingPhase.INIT),
+                initDests);
+        output.setInitDests(initDests);
+        output.setInitWeights(makeOnesArray(initDests.length));
+
 
        
         if (output.getDests(SchedulingPhase.STEADY).length > 0) {
@@ -161,7 +156,10 @@ public class DistributionUnroller {
         int weightsSum = 0;
         for (int weight : weights) 
             weightsSum += weight;
-                
+        
+        if (weightsSum == 0)
+            return;
+        
         assert unrolled.length % weightsSum == 0;
         int index = 0;
         
@@ -187,8 +185,12 @@ public class DistributionUnroller {
         int weightsSum = 0;
         for (int weight : weights) 
             weightsSum += weight;
-                
+
+        if (weightsSum == 0)
+            return;
+
         assert unrolled.length % weightsSum == 0;
+                
         int index = 0;
         
         for (int rep = 0; rep < unrolled.length / weightsSum; rep++) {

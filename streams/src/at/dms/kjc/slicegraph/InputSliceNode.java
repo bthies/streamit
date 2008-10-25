@@ -361,9 +361,10 @@ public class InputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneabl
      *  
      * @return true if there is a single element in sources. */
     public boolean oneInput() {
-        if (getSources(SchedulingPhase.INIT).length != 1)
+        if (getSources(SchedulingPhase.INIT).length > 1) {
             return false;
-        
+        }
+                
         return (sources.length == 1);
     }
     
@@ -503,7 +504,7 @@ public class InputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneabl
             newLine = "\\n";
 
         StringBuffer buf = new StringBuffer();
-        buf.append("***** " + this.toString() + " *****" + newLine);
+        buf.append("***** " + this.toString() + " " + phase + " *****" + newLine);
         for (int i = 0; i < getSources(phase).length; i++) {
             buf.append("  weight " + getWeights(phase)[i] + ": " + getSources(phase)[i].toString()
                        + newLine);

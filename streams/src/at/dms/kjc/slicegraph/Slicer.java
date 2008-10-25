@@ -120,6 +120,12 @@ public abstract class Slicer {
                 buf.append(slice.hashCode() + " -> " + next[j].hashCode()
                            + ";\n");
             }
+            next = getNext(slice, SchedulingPhase.INIT);
+            for (int j = 0; j < next.length; j++) {
+                assert next[j] != null;
+                buf.append(slice.hashCode() + " -> " + next[j].hashCode()
+                           + "[style=dashed,color=red];\n");
+            }
         }
 
         buf.append("}\n");
@@ -189,7 +195,8 @@ public abstract class Slicer {
             out.append("color=cornflowerblue, style=filled, ");
         
         out.append("label=\"" + slice.hashCode() + "\\n" +
-                    node.getAsInput().debugString(true));//toString());
+                node.getAsInput().debugString(true, SchedulingPhase.INIT) + "\\n" +
+                node.getAsInput().debugString(true, SchedulingPhase.STEADY));//toString());
         
         node = node.getNext();
         while (node != null ) {
@@ -208,7 +215,9 @@ public abstract class Slicer {
                 out.append("\\n *** ");
             }
             else {
-                out.append("\\n" + node.getAsOutput().debugString(true));
+                out.append("\\n" + node.getAsOutput().debugString(true, SchedulingPhase.INIT) + "\\n" +
+                        node.getAsOutput().debugString(true, SchedulingPhase.STEADY));
+               
             }
             /*else {
                 //out.append("\\n" + node.toString());

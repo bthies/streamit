@@ -484,6 +484,7 @@ public class OutputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneab
         int totalItems = FilterInfo.getFilterInfo(getPrevFilter()).totalItemsSent(phase);
         
         double items = totalItems * ratio(edge, phase);
+        
         assert items == Math.floor(items);
         return (int)(items);
     }

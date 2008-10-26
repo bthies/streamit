@@ -24,6 +24,7 @@ import at.dms.kjc.sir.SIRPopExpression;
 import at.dms.kjc.slicegraph.*;
 
 public class Fissioner {
+    private static int timesCalled;
     /** the slice we are fissing */
     private Slice slice;
     /** the amount we are fizzing slice by */
@@ -57,12 +58,16 @@ public class Fissioner {
     /** the push rate of the clones (multS of slice * push of slice) */
     private int newPush;
     
+    static {
+        timesCalled = 0;
+    }
+    
     /**
      * Attempt to fiss <slice> by <fissAmount>.  Return true if the fission was successful.
      */
     public static boolean doit(Slice slice, int fissAmount) {
         Fissioner fissioner = new Fissioner(slice, fissAmount);
-                
+        timesCalled++;
         return canFizz(slice, false) && fissioner.fizz();
     }
     
@@ -599,7 +604,7 @@ public class Fissioner {
         FilterInfo idI = FilterInfo.getFilterInfo(idInput.getFirstFilter());
         FilterInfo idO = FilterInfo.getFilterInfo(idOutput.getFirstFilter());
         
-        assert idI.copyDown == 0;
+        assert idI.copyDown == 0 : idI.copyDown;
         assert idO.copyDown == 0;
         
         IDSliceRemoval.doit(idInput);
@@ -645,7 +650,7 @@ public class Fissioner {
         //set the init mult of the id
         int items = 0;
         for (int i = 0; i < inputsInit.length; i++) {
-            InterSliceEdge edge = InterSliceEdge.getEdge(inputsSteady[i].getTail(), slice.getHead());
+            InterSliceEdge edge = InterSliceEdge.getEdge(inputsInit[i].getTail(), slice.getHead());
             items += inputsInit[i].getTail().itemsSentOn(edge, SchedulingPhase.INIT);
         }
         idInput.getFirstFilter().getFilter().setInitMult(items);

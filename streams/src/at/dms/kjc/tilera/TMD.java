@@ -77,16 +77,13 @@ public class TMD extends Scheduler {
         for (int l = 0; l < levels.length; l++) {
             if (fallBack)
                 break;
-            if (levels[l].length != TileraBackend.chip.abstractSize()  && 
-                    !(levels[l].length == 1 && levels[l][0].getFirstFilter().isPredefined())) { 
-                fallBack = true;
-                break;
-            }
+          
             for (int f = 0; f < levels[l].length; f++) {
                 if (levels[l][f].getFirstFilter().isPredefined())
                     continue;
                 if (levels[l][f].getTail().getDestSet(SchedulingPhase.STEADY).size() > 2) {
                     fallBack = true;
+                    System.out.println(levels[l][f] + " has fanout > 2!");
                     break;
                 }
             }
@@ -345,12 +342,16 @@ public class TMD extends Scheduler {
         //must reset the filter info's because we have changed the schedule
         FilterInfo.reset();
         
+        int i = 0;
         //go throught and perform the fission
         for (Slice slice : slices) {
             if (fizzAmount.containsKey(slice) && fizzAmount.get(slice) > 1) {
                 if (Fissioner.doit(slice, fizzAmount.get(slice))) {
-                    System.out.println("Fissing " + slice.getFirstFilter() + " by " + fizzAmount.get(slice));
+                    System.out.println("Fissed " + slice.getFirstFilter() + " by " + fizzAmount.get(slice));
                 }
+                TileraBackend.scheduler.graphSchedule.getSlicer().dumpGraph("fission_pass_" + i + ".dot", 
+                        null);
+                i++;
             }
         }
         

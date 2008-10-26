@@ -107,11 +107,13 @@ public class TMD extends Scheduler {
         assert levels[0].length == 1 && levels[0][0].getFirstFilter().isFileInput();
         
         //place each slice in a set that will be mapped to the same tile
+        System.out.println("Partitioning into same tile sets...");
         Set<Set<Slice>> sameTile = createSameTileSets(levels);
         assert sameTile.size() == TileraBackend.chip.abstractSize();
         Tile nextToAssign = TileraBackend.chip.getComputeNode(0, 0);
         Set<Slice> current = sameTile.iterator().next();
         Set<Set<Slice>> done = new HashSet<Set<Slice>>();
+        System.out.println("Beginning Neighbors Layout...");
         
         while (true) {
             assignSlicesToTile(current, nextToAssign);
@@ -119,7 +121,8 @@ public class TMD extends Scheduler {
             assert done.contains(current);
                         
             //now find the next slice set to assign to the snake
-            //first find a slice that has a nonlocal output
+            //first find a slice that has a nonlocal output, so we can make the set it is in
+            //neighbors with the slice we just assigned...
             Slice nonLocalOutput = null;
             for (Slice slice : current) {
                 if (slice.getTail().getDestSet(SchedulingPhase.STEADY).size() > 1) 
@@ -132,48 +135,38 @@ public class TMD extends Scheduler {
                     }
                 }
             }
-            
             //nothing else to assign
-            if (done.size() == sameTile.size())
+            if (done.size() == sameTile.size()) {
                 break;
+            }
             
+            current = null;
             //set the next set of slice to assign to the next tile in the snake
-            if (nonLocalOutput == null) {
-                //does not communicate with anyone, so pick any slice set to layout next
-                current = null;
+            //fis
+            if (nonLocalOutput != null) {
+                //one of the slices does communicate with a slice not of its own set
+                for (Slice slice : nonLocalOutput.getTail().getDestSlices(SchedulingPhase.STEADY)) {
+                    Set<Slice> set = getSetWithSlice(sameTile, slice);
+                    if (set != current && 
+                            !done.contains(set)) {
+                        current = getSetWithSlice(sameTile, slice);
+                        break;
+                    }
+                }
+            }
+            //if we didn't find a communicating set to make a neighbor, then just pick any old set of slices 
+            if (current == null) {
                 for (Set<Slice> next : sameTile) {
                     if (!done.contains(next))
                         current = next;
                 }
-                assert current != null;
-            } else {
-                //one of the slices does communicate with a slice not of its own set
-                Set<Slice> nonLocal = null;
-                for (Slice slice : nonLocalOutput.getTail().getDestSlices(SchedulingPhase.STEADY)) {
-                    if (getSetWithSlice(sameTile, slice) != current) {
-                        nonLocal = getSetWithSlice(sameTile, slice);
-                        break;
-                    }
-                }
-                
-                assert nonLocal != null;
-                //check that all non-local slices that are communicated to from current 
-                //are in the same set
-                for (Slice slice: current) {
-                    for (Slice output : slice.getTail().getDestSlices(SchedulingPhase.STEADY)) {
-                        assert current == getSetWithSlice(sameTile, output) ||
-                            nonLocal == getSetWithSlice(sameTile, output) ||
-                            output.getFirstFilter().isFileOutput();
-                    }
-                }
-                
-                current = nonLocal;
             }
-            
+
+            assert current != null;
             nextToAssign = nextToAssign.getNextSnakeTile();
         }
         
-        
+        System.out.println("End Neighbors Layout...");
         
     }
     

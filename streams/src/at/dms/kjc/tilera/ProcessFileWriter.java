@@ -9,6 +9,7 @@ import at.dms.kjc.JMethodDeclaration;
 import at.dms.kjc.slicegraph.*;
 
 public class ProcessFileWriter {
+    private static int totalOutputs = 0;
     protected FilterSliceNode filterNode;
     protected SchedulingPhase phase;
     protected TileraBackEndFactory factory;
@@ -26,6 +27,10 @@ public class ProcessFileWriter {
         this.fileOutput = (FileOutputContent)filter.getFilter();
         this.phase = phase;
         this.factory = factory;
+    }
+    
+    public static int getTotalOutputs() {
+        return totalOutputs;
     }
     
     public static Set<FilterSliceNode> getFileWriterFilters() {
@@ -54,7 +59,9 @@ public class ProcessFileWriter {
      */
     public void processFileWriter() {
         if (phase == SchedulingPhase.INIT) {
-            System.out.println("Outputs for " + filterNode + ": " + filterNode.getFilter().getSteadyMult());
+            int outputs = filterNode.getFilter().getSteadyMult();
+            System.out.println("Outputs for " + filterNode + ": " + outputs);
+            totalOutputs += outputs;
             assert allocatingTiles.containsKey(filterNode);
             allocatingTile = allocatingTiles.get(filterNode);
             codeStore = allocatingTile.getComputeCode();

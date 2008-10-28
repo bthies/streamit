@@ -254,20 +254,36 @@ public class FilterCodeGeneration extends CodeStoreHelper {
      */
     protected JBlock endSchedulingPhase(SchedulingPhase phase) {
         JBlock block = new JBlock();
-        
+
         if (TileraBackend.DMA) {
-            
-        } else {
-        
+
+        } else {        
             if (TileraBackend.scheduler.isTMD()) {
                 switch (phase) {
-                    case INIT: block.addStatement(Util.toStmt("ilib_mem_fence()")); break;
-                    case PRIMEPUMP : block.addStatement(Util.toStmt("ilib_msg_barrier(ILIB_GROUP_SIBLINGS)"));break;
+                case INIT: block.addStatement(Util.toStmt("ilib_mem_fence()")); break;
+                case PRIMEPUMP : {
+                    String group = "ILIB_GROUP_SIBLINGS";
+                    //if this filter occupies a level that does not occupy all the tiles of the 
+                    //configuration, then we call a barrier that is defined only for the tiles
+                    //that slices of the level are mapped to.
+                    if (TileraBackend.scheduler.isTMD()) {
+                        //if the level only has this slice, then we don't need to synch
+                        if (((TMD)TileraBackend.scheduler).lsg.levelSize(filterNode.getParent()) == 1)
+                            return block;
+                            
+                        if (((TMD)TileraBackend.scheduler).lsg.levelSize(filterNode.getParent()) < 
+                                TileraBackend.chip.abstractSize()) {
+                            assert false : "Not implemented!";
+                            group = EmitTileCode.GROUP_PREFIX + 
+                                ((TMD)TileraBackend.scheduler).lsg.getLevel(filterNode.getParent());
+                        }
+                    }
+                    block.addStatement(Util.toStmt("ilib_msg_barrier(" + group + ")"));
+                    break;
                 }
-                    
-            }
+                }
+            }           
         }
-        
         return block;
     }
 }

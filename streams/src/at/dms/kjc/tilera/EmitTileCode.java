@@ -23,6 +23,7 @@ import at.dms.kjc.sir.SIRCodeUnit;
 public class EmitTileCode extends EmitCode {
     
     public static final String MAIN_FILE = "main.c";
+    public static final String GROUP_PREFIX = "ILIB_GROUP_";
     
     public EmitTileCode(TileraBackEndFactory backendBits) {
         super(backendBits);
@@ -43,9 +44,7 @@ public class EmitTileCode extends EmitCode {
                 // if no code was written to this tile's code store, then skip it
                 if (!tile.getComputeCode().shouldGenerateCode())
                     continue;
-                String outputFileName = "tile" + tile.getTileNumber() + ".c";
-
-                
+                String outputFileName = "tile" + tile.getTileNumber() + ".c";            
                 
                 CodegenPrintWriter p = new CodegenPrintWriter(new BufferedWriter(new FileWriter(outputFileName, false)));
                 // write out C code
@@ -62,8 +61,6 @@ public class EmitTileCode extends EmitCode {
             throw new AssertionError("I/O error" + e);
         }
     }
-    
-    
     
     /**
      * This will generate the main function for the executable that creates the application (e.g., 
@@ -127,6 +124,9 @@ public class EmitTileCode extends EmitCode {
         p.println("#define SOUTH_INPUT(input) (input << 6)");
         p.println("#define EAST_INPUT(input) (input << 3)");
         p.println("#define NORTH_INPUT(input) (input)");
+        
+        //THE NUMBER OF SS ITERATIONS FOR EACH cycle counting block 
+        p.println("#define ITERATIONS 10");
         
         
     }
@@ -222,13 +222,9 @@ public class EmitTileCode extends EmitCode {
         p.println("  -- $(BOOT_EXE)");
         p.println();
         p.println("MONITOR_ARGS = \\");
-        p.println("  --simulator \\");
-        p.println("  --image tile64 \\");
         for (String fileName : ProcessFileReader.fileNames) {
             p.println("  --upload " + fileName + " " + fileName + "\\");
         }
-        p.println("  --xml-profile profile.xml \\");
-        p.println("  --config tile64 \\");
         p.println("  $(foreach exe,$(EXECUTABLES), --upload $(exe) $(exe)) \\");
         p.println("  -- $(BOOT_EXE)");
         p.println();
@@ -240,6 +236,15 @@ public class EmitTileCode extends EmitCode {
         p.println();
         p.println("monitor: $(EXECUTABLES)");
         p.println("\t$(MONITOR) \\");
+        p.println("\t--simulator \\");
+        p.println("\t--image tile64 \\");
+        p.println("\t--xml-profile profile.xml \\");
+        p.println("\t--config tile64 \\");
+        p.println("\t$(MONITOR_ARGS)");
+        p.println();
+        p.println("pci: $(EXECUTABLES)");
+        p.println("\t$(MONITOR) \\");
+        p.println("\t--pci \\");
         p.println("\t$(MONITOR_ARGS)");
         p.println();
         p.println("test: $(EXECUTABLES)");

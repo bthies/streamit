@@ -19,6 +19,21 @@ public class LevelizeSliceGraph {
         return levels;
     }
     
+    /**
+     * Return the level this slice occupies.
+     */
+    public int getLevel(Slice slice) {
+        return levelMap.get(slice);
+    }
+    
+    /**
+     * Return the size of the level for this slice.  The total number of tiles
+     * occupied by the level.
+     */
+    public int levelSize(Slice slice) {
+        return levels[levelMap.get(slice)].length;
+    }
+    
     private void calcLevels() {
         LinkedList<LinkedList<Slice>> levelsList = new LinkedList<LinkedList<Slice>>();
         HashSet<Slice> visited = new HashSet<Slice>();

@@ -27,7 +27,7 @@ import java.util.List;
 public class TMD extends Scheduler {
 
     private double DUP_THRESHOLD = .1;
-    private LevelizeSliceGraph lsg;
+    public LevelizeSliceGraph lsg;
     private HashMap<Slice, Integer> fizzAmount;
     public static final int FISS_COMP_COMM_THRESHOLD = 10;
     

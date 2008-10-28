@@ -5,6 +5,7 @@ import at.dms.kjc.common.ALocalVariable;
 import at.dms.kjc.*;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.List;
 import at.dms.kjc.slicegraph.*;
 
 public class TileCodeStore extends ComputeCodeStore<Tile> {
@@ -289,10 +290,44 @@ public class TileCodeStore extends ComputeCodeStore<Tile> {
     }
     
     public void generateNumbersCode() {
-        appendTxtToGlobal("uint32_t cycle_low;\n");
-        addSteadyLoopStatement(Util.toStmt("PASS(spr_read_cycle_count_low() - cycle_low)"));
-        addSteadyLoopStatement(Util.toStmt("cycle_low = spr_read_cycle_count_low()"));
-        addSteadyLoopStatement(Util.toStmt(
-                "if (spr_read_cycle_count_high() > 0) printf(\"Warning: Cycle count overflow\\n\")"));   
+        appendTxtToGlobal("uint64_t* __cycle_counts__;\n");
+        appendTxtToGlobal("int __iteration__ = 0;\n");
+        
+        appendTxtToGlobal("void __printSSCycleAvg() {\n");
+        appendTxtToGlobal("    uint64_t totalCycles = 0;\n");
+        appendTxtToGlobal("    uint64_t avgCycles;\n");
+        appendTxtToGlobal("    int i = 0;\n");
+        appendTxtToGlobal("     for (i = 0; i < ITERATIONS - 1; i++)\n"); 
+        appendTxtToGlobal("      totalCycles += __cycle_counts__[i+1] - __cycle_counts__[i];\n");
+
+        appendTxtToGlobal("    avgCycles = totalCycles / (ITERATIONS - 1);\n");
+        appendTxtToGlobal("    printf(\"Average cycles per SS for %d iterations: %llu, avg cycles per output: %llu \\n\", ITERATIONS, avgCycles" + 
+                ", (avgCycles / ((uint64_t)" +
+                ProcessFileWriter.getTotalOutputs() + ")));\n");
+        appendTxtToGlobal("    __iteration__ = 0;\n");
+
+        appendTxtToGlobal("  }\n");
+
+        addSteadyLoopStatement(Util.toStmt("__cycle_counts__[__iteration__++] = get_cycle_count()"));
+        addSteadyLoopStatement(Util.toStmt("if (__iteration__ == ITERATIONS) __printSSCycleAvg()"));
+        
+        addStatementToBufferInit("__cycle_counts__ = (uint64_t*)malloc(ITERATIONS * sizeof(uint64_t))");
+    }
+    
+    public void createExcludedProcessGroup(Slice[] level) {
+        //create the list of tiles that are used by this group
+        HashSet<Integer> tilesUsed = new HashSet<Integer>();
+        for (Slice slice : level) {
+            int absTile = 
+                TileraBackend.chip.getTranslatedTileNumber(
+                        TileraBackend.backEndBits.getLayout().getComputeNode(slice.getFirstFilter()).getTileNumber());
+            tilesUsed.add(absTile);
+        }
+        //create the list of tiles not utilized during this level
+        List<Tile> tilesToExclude = TileraBackend.chip.getAbstractTiles();
+        for (Tile t : tilesToExclude) {
+            if (tilesUsed.contains(TileraBackend.chip.getTranslatedTile(t.getTileNumber())))
+                tilesToExclude.remove(TileraBackend.chip.getTranslatedTile(t.getTileNumber()));
+        }
     }
 }

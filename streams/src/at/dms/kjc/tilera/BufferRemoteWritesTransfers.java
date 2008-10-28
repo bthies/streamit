@@ -350,7 +350,7 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
                 new JAssignmentExpression(head, new JIntLiteral(literal))));
         
         //if we are in the init we use the init address array, gets changed to steady after init
-        if (phase == SchedulingPhase.INIT)
+        if (phase == SchedulingPhase.INIT && needAddressArray)
             block.addStatement(Util.toStmt(addrArrayPointer + " = " + addrArrayInitVar));
         
         return block;

@@ -60,11 +60,10 @@ public class DistributionUnroller {
         input.canonicalize(SchedulingPhase.STEADY);
         output.canonicalize(SchedulingPhase.STEADY);
         
-        if (input.hasInitPattern())
-            input.canonicalize(SchedulingPhase.INIT);
+      
+        input.canonicalize(SchedulingPhase.INIT);
         
-        if (output.hasInitPattern()) 
-            output.canonicalize(SchedulingPhase.INIT);
+        output.canonicalize(SchedulingPhase.INIT);
         
     }
     

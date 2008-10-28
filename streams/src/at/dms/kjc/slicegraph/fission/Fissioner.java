@@ -24,7 +24,7 @@ import at.dms.kjc.sir.SIRPopExpression;
 import at.dms.kjc.slicegraph.*;
 
 public class Fissioner {
-    private static int timesCalled;
+    private static int uniqueID;
     /** the slice we are fissing */
     private Slice slice;
     /** the amount we are fizzing slice by */
@@ -57,9 +57,10 @@ public class Fissioner {
     private int newPop; 
     /** the push rate of the clones (multS of slice * push of slice) */
     private int newPush;
+    private int myID;
     
     static {
-        timesCalled = 0;
+        uniqueID = 0;
     }
     
     /**
@@ -67,7 +68,6 @@ public class Fissioner {
      */
     public static boolean doit(Slice slice, int fissAmount) {
         Fissioner fissioner = new Fissioner(slice, fissAmount);
-        timesCalled++;
         return canFizz(slice, false) && fissioner.fizz();
     }
     
@@ -115,9 +115,12 @@ public class Fissioner {
     }
 
     private Fissioner(Slice s, int d) {
+        
         // reset the filter info's just in case things have change
         FilterInfo.reset();
 
+        myID = uniqueID++;
+        
         this.slice = s;
         this.fizzAmount = d;
         this.fInfo = FilterInfo.getFilterInfo(s.getFirstFilter());
@@ -197,10 +200,6 @@ public class Fissioner {
         Slice[] outputs = (phase == SchedulingPhase.INIT ? outputsInit : outputsSteady);
         
         for (int i = 0; i < outputs.length; i++) {
-            //if we don't have an init pattern, do nothing
-            if (phase == SchedulingPhase.INIT && !outputs[i].getHead().hasInitPattern())
-                continue;
-            
             InterSliceEdge oldEdge = getEdge(slice, outputs[i]);
             InterSliceEdge newEdge = getEdge(idOutput, outputs[i]);
             InterSliceEdge[] srcs = outputs[i].getHead().getSources(phase);
@@ -254,27 +253,26 @@ public class Fissioner {
         
         idOutput.getTail().setWeights(newWeights);
         idOutput.getTail().setDests(newDests);
-        
-        if (slice.getTail().hasInitPattern()) {
-            //if the original had a separate init pattern, we have to perform the search/replace 
-            //of edges on it also
-            InterSliceEdge[][] newDestsInit = slice.getTail().getDests(SchedulingPhase.INIT);
-            int newWeightsInit[] = slice.getTail().getWeights(SchedulingPhase.INIT).clone();
-            
-            for (int i = 0; i < outputsInit.length; i++) {
-                InterSliceEdge oldEdge = getEdge(slice, outputsInit[i]);
-                InterSliceEdge newEdge = getEdge(idOutput, outputsInit[i]);
-                
-                newDestsInit = replaceEdge(newDestsInit, oldEdge, newEdge);
-            }
-            
-            assert newDestsInit.length == newWeightsInit.length;
-            
-            idOutput.getTail().setInitWeights(newWeightsInit);
-            idOutput.getTail().setInitDests(newDestsInit);
+
+
+        //if the original had a separate init pattern, we have to perform the search/replace 
+        //of edges on it also
+        InterSliceEdge[][] newDestsInit = slice.getTail().getDests(SchedulingPhase.INIT);
+        int newWeightsInit[] = slice.getTail().getWeights(SchedulingPhase.INIT).clone();
+
+        for (int i = 0; i < outputsInit.length; i++) {
+            InterSliceEdge oldEdge = getEdge(slice, outputsInit[i]);
+            InterSliceEdge newEdge = getEdge(idOutput, outputsInit[i]);
+
+            newDestsInit = replaceEdge(newDestsInit, oldEdge, newEdge);
         }
+
+        assert newDestsInit.length == newWeightsInit.length;
+
+        idOutput.getTail().setInitWeights(newWeightsInit);
+        idOutput.getTail().setInitDests(newDestsInit);
     }
-    
+
     /**
      * Calculate and install the splitting pattern for the id intput to the slice clones.
      * This is based on the number of filters we are duplicating to.  See PLDI paper for 
@@ -344,23 +342,23 @@ public class Fissioner {
         
         idInput.getHead().setSources(newJoin);
         idInput.getHead().setWeights(newWeights);
-        
-        if (slice.getHead().hasInitPattern()) {
-            //if we have an init pattern, we have to replace the edges
-            InterSliceEdge[] joinInit = slice.getHead().getSources(SchedulingPhase.INIT);
-            InterSliceEdge[] newJoinInit = new InterSliceEdge[joinInit.length];
-            
-            for (int i = 0; i < joinInit.length; i++) {
-                assert joinInit[i].getDest() == slice.getHead();
-                InterSliceEdge newEdge = getEdge(joinInit[i].getSrc().getParent(), idInput);
-                newJoinInit[i] = newEdge;
-            }
-            
-            int[] newWeightsInit = slice.getHead().getWeights(SchedulingPhase.INIT).clone();
-            
-            idInput.getHead().setInitSources(newJoinInit);
-            idInput.getHead().setInitWeights(newWeightsInit);
+
+
+        //if we have an init pattern, we have to replace the edges
+        InterSliceEdge[] joinInit = slice.getHead().getSources(SchedulingPhase.INIT);
+        InterSliceEdge[] newJoinInit = new InterSliceEdge[joinInit.length];
+
+        for (int i = 0; i < joinInit.length; i++) {
+            assert joinInit[i].getDest() == slice.getHead();
+            InterSliceEdge newEdge = getEdge(joinInit[i].getSrc().getParent(), idInput);
+            newJoinInit[i] = newEdge;
         }
+
+        int[] newWeightsInit = slice.getHead().getWeights(SchedulingPhase.INIT).clone();
+
+        idInput.getHead().setInitSources(newJoinInit);
+        idInput.getHead().setInitWeights(newWeightsInit);
+
     }
     
     /**
@@ -371,9 +369,6 @@ public class Fissioner {
         Slice[] inputs = (phase == SchedulingPhase.INIT ? inputsInit : inputsSteady);
         
         for (int i = 0; i < inputs.length; i++) {
-            //if it is init and we don't have a separate splitting pattern, then do nothing
-            if (phase == SchedulingPhase.INIT && !inputs[i].getTail().hasInitPattern())
-                continue;
 
             InterSliceEdge edge = getEdge(inputs[i], idInput);
             InterSliceEdge oldEdge = getEdge(inputs[i], slice);
@@ -459,7 +454,7 @@ public class Fissioner {
                     new JMethodDeclaration(null,
                                            at.dms.kjc.Constants.ACC_PUBLIC,
                                            CStdType.Void,
-                                           "fissionPrework",
+                                           "__fission_prework__" + myID,
                                            JFormalParameter.EMPTY,
                                            CClassType.EMPTY,
                                            newPreworkBody,

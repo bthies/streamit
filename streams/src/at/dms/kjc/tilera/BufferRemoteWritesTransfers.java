@@ -5,6 +5,7 @@ import at.dms.kjc.slicegraph.*;
 import java.util.HashMap;
 import at.dms.kjc.backendSupport.*;
 import at.dms.kjc.*;
+import java.util.LinkedList;
 
 import java.util.List;
 
@@ -22,9 +23,28 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
      * different tiles.
      */
     protected boolean directWrite = false;
+    /** the address array of addresses into the local shared buffer (src buffer) in 
+     * which to write for init
+     */
+    protected LinkedList<Integer> addressArrayInit;
+    /** the address array of addresses into the local shared buffer (src buffer) in 
+     * which to write for steady
+     */
+    protected LinkedList<Integer> addressArraySteady;
+    protected static int uniqueID = 0;
+    protected int myID;
+    /** name of the address array pointer that is used in the push method,
+     * points to either steady or init
+     */
+    protected String addrArrayPointer;
+    /** name of the var that points to the address array for the steady */
+    protected String addrArraySteadyVar;
+    /** name of the var that points to the address array for the init */
+    protected String addrArrayInitVar;
     
     public BufferRemoteWritesTransfers(RotatingBuffer buf) {
         super(buf);
+        myID = uniqueID++;
         
         //set up the head pointer for writing
         writeHeadName = buf.getIdent() + "head";
@@ -36,14 +56,9 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
         head.setType(CStdType.Integer);
         
         setWritingScheme();
-        
-        assert !needAddressArray : parent.filterNode;
-        
-        //optimatization opportunity if we have single output edge and the
-        //downstream filter is mapped to another tile, very good for file writers
-        if (output.oneOutput() && 
-                output.getSingleEdge(SchedulingPhase.INIT) == 
-                    output.getSingleEdge(SchedulingPhase.STEADY) &&
+  
+        if (output.oneOutput(SchedulingPhase.STEADY) && 
+                (output.oneOutput(SchedulingPhase.INIT) || output.noOutputs(SchedulingPhase.INIT)) &&
                 TileraBackend.scheduler.getComputeNode(parent.filterNode) !=
                     TileraBackend.scheduler.getComputeNode(output.getSingleEdge(SchedulingPhase.STEADY).getDest().getNextFilter()) &&
                     output.getSingleEdge(SchedulingPhase.STEADY).getDest().singleAppearance())
@@ -55,8 +70,13 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
         decls.add(new JVariableDeclarationStatement(writeHeadDefn));
         
         generateStatements(SchedulingPhase.INIT);
-     
-        generateStatements(SchedulingPhase.STEADY);     
+        if (needAddressArray) {
+            addAddressArrayDecls(SchedulingPhase.INIT);
+        }
+        generateStatements(SchedulingPhase.STEADY);    
+        if (needAddressArray) {  
+            addAddressArrayDecls(SchedulingPhase.STEADY);
+        }
     }
 
     /**
@@ -65,9 +85,11 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
      * determine if we have to use an address array.
      */
     private void setWritingScheme() {
-        //if we are using a shared buffer then check if 
+        //if we are using a shared buffer then check if we need an address array to write into
+        //the shared buffer
         if (usesSharedBuffer()) {
             FilterInfo localDest = FilterInfo.getFilterInfo(parent.filterNode);
+            System.out.println(parent.filterNode);
             InputSliceNode input = parent.filterNode.getParent().getHead();
             int rotations = localDest.totalItemsReceived(SchedulingPhase.STEADY) / 
                 input.totalWeights(SchedulingPhase.STEADY);
@@ -75,16 +97,51 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
             if (rotations == 1 && input.singleAppearance()) {
                 needAddressArray = false;
             } else {
+                System.out.println(((InputRotatingBuffer)parent).localSrcFilter + " needs an address array!");
                 needAddressArray = true;
+                addrArrayInitVar = "__addArray_init" + myID + "__"; 
+                addrArraySteadyVar = "__addArray_steady" + myID + "__"; 
+                addrArrayPointer = "__addArray_" + myID + "__"; 
             }
             
-        } else
+        } else {
+            System.out.println("non-local: " + parent.filterNode);
             needAddressArray = false;
+        }
     }
     
 
     public boolean usesSharedBuffer() {
         return parent instanceof InputRotatingBuffer;
+    }
+    
+    /**
+     * Add the static initializer of the address array for pushing into the input buffer of the
+     * downstream filter.
+     */
+    private void addAddressArrayDecls(SchedulingPhase phase) {
+        boolean init = (phase == SchedulingPhase.INIT); 
+        LinkedList<Integer> addressArray = (init ? addressArrayInit : addressArraySteady);
+        String varName = "__addArray_" + phase + myID + "__"; 
+        
+        if (init) {
+            varName = addrArrayInitVar;
+            decls.add(Util.toStmt("int *" + addrArrayPointer));
+        } 
+        else
+            varName = addrArraySteadyVar;
+        
+        
+        StringBuffer decl = new StringBuffer("int " + varName + "[] = {");
+        if (addressArray != null) {
+            for (int i = 0 ; i < addressArray.size(); i++) {
+                decl.append(addressArray.get(i));
+                if (i != addressArray.size() - 1)
+                    decl.append(", ");
+            }
+        }
+        decl.append("}");
+        decls.add(Util.toStmt(decl.toString()));
     }
     
     private void generateStatements(SchedulingPhase phase) {
@@ -102,10 +159,29 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
         else  //otherwise it is an output buffer, so use the parent's filter
             filter = parent.filterNode;
 
+        LinkedList<Integer> addressArray = null;
+        if (needAddressArray) {
+            addressArray = new LinkedList<Integer>(); 
+        }
 
         FilterInfo fi = FilterInfo.getFilterInfo(filter);
-            
-        //no code necessary if nothing is being produced
+
+        List<JStatement> statements = null;
+        
+        switch (phase) {
+            case INIT: statements = commandsInit; break;
+            case PRIMEPUMP: assert false; break;
+            case STEADY: statements = commandsSteady; break;
+        }
+        
+        if (needAddressArray && phase == SchedulingPhase.INIT) {
+            //during the init, we use the init address array, but after that we should use the 
+            //steady addr array, so this statement is appended to the end of the statements for the
+            //init to set the address array pointer to the steady for the rest of execution
+            statements.add(Util.toStmt(addrArrayPointer + " = " + addrArraySteadyVar));
+        }
+
+        //no further code necessary if nothing is being produced
         if (fi.totalItemsSent(phase) == 0)
             return;
         
@@ -115,15 +191,7 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
         //is a shared buffer
         int writeOffset = getWriteOffset(phase);
         //System.out.println("Source write offset = " + writeOffset);     
-        
-        List<JStatement> statements = null;
-        
-        switch (phase) {
-            case INIT: statements = commandsInit; break;
-            case PRIMEPUMP: assert false; break;
-            case STEADY: statements = commandsSteady; break;
-        }
-        
+          
         Tile sourceTile = TileraBackend.backEndBits.getLayout().getComputeNode(filter);
         
         int rotations = fi.totalItemsSent(phase) / output.totalWeights(phase);
@@ -142,7 +210,6 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
             index++;
         }
         
-        
         for (int rot = 0; rot < rotations; rot++) {
             for (int weightIndex = 0; weightIndex < output.getWeights(phase).length; weightIndex++) {
                 InterSliceEdge[] dests = output.getDests(phase)[weightIndex];
@@ -158,13 +225,19 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
                                 TileraBackend.backEndBits.getLayout().getComputeNode(dest.getDest().getNextFilter());
                             
                             if (destTile == sourceTile) {
-                                if (destElement < sourceElement) {
-                                    statements.add(Util.toStmt(parent.currentWriteBufName + "[ " + destElement + "] = " + 
-                                            parent.currentWriteBufName + "[" + sourceElement + "]"));
-                                }
-                                else if (destElement > sourceElement) {
-                                    assert false : "Dest: " + dest.getDest().getNextFilter() + " " + sourceElement + " < " + 
-                                        destElement + " " + phase;
+                                //if we need an address array then just remember the destination address
+                                if (needAddressArray) {
+                                    addressArray.add(destElement);
+                                } else {  //no address array, if the addresses are different, we need to move 
+                                    if (destElement < sourceElement) {
+                                        statements.add(Util.toStmt(parent.currentWriteBufName + "[ " + destElement + "] = " + 
+                                                parent.currentWriteBufName + "[" + sourceElement + "]"));
+                                    }  //bad!
+                                    else if (destElement > sourceElement) {
+                                        System.out.println(filter + " -> " + dest.getDest().getNextFilter());
+                                        assert false : "Dest: " + dest.getDest().getNextFilter() + " " + sourceElement + " < " + 
+                                        destElement + " " + phase + "\n";// + dest.getDest().debugString(false);
+                                    }
                                 }
                             } else {
                                 SourceAddressRotation addrBuf = parent.getAddressBuffer(dest.getDest());
@@ -175,7 +248,14 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
                 }
             }
         }
-        
+
+        if (needAddressArray) {
+            if (phase == SchedulingPhase.INIT) {
+                addressArrayInit = addressArray;
+            }
+            else
+                addressArraySteady = addressArray;
+        }
     }
     
     private int[] getDestIndices(InterSliceEdge edge, int outputRots, SchedulingPhase phase) {
@@ -211,7 +291,7 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
      * copy down and any non-local edges into the buffer
      */
     private int getWriteOffset(SchedulingPhase phase) {
-        if (usesSharedBuffer()) {
+        if (usesSharedBuffer() && !needAddressArray) {
             //no address array needed but we have to set the head to the copydown plus
             //the weights of any inputs that are not mapped to this tile that appear before
             //the local source
@@ -234,11 +314,11 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
         //if we have shared buffer, then we are using it for the output and input of filters
         //on the same tile, so we need to do special things to the head
         int literal = 0; 
-        
+        JBlock block = new JBlock();
         if (usesSharedBuffer()) {
             if (needAddressArray) {
-                assert false;
-                return null;
+                //the head is not the index into the address array, so just reset it to zero
+                literal = 0;
             } else {
                 literal = getWriteOffset(phase);
             }
@@ -265,8 +345,15 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
                 literal = 0;
             }
         }
-        return new JExpressionStatement(
-                new JAssignmentExpression(head, new JIntLiteral(literal)));
+        
+        block.addStatement(new JExpressionStatement(
+                new JAssignmentExpression(head, new JIntLiteral(literal))));
+        
+        //if we are in the init we use the init address array, gets changed to steady after init
+        if (phase == SchedulingPhase.INIT)
+            block.addStatement(Util.toStmt(addrArrayPointer + " = " + addrArrayInitVar));
+        
+        return block;
     }
     
     public JMethodDeclaration pushMethod() {
@@ -276,7 +363,7 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
             bufRef = new JFieldAccessExpression(new JThisExpression(),  
                 parent.getAddressBuffer(output.getSingleEdge(SchedulingPhase.STEADY).getDest()).currentWriteBufName);
         }
-        else   //not a direct write, so so the buffer ref to the write buffer of the buffer
+        else   //not a direct write, so the buffer ref to the write buffer of the buffer
             bufRef = parent.writeBufRef();
         
         String valName = "__val";
@@ -293,11 +380,26 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
                 new JFormalParameter[]{val},
                 CClassType.EMPTY,
                 body, null, null);
-        body.addStatement(
-        new JExpressionStatement(new JAssignmentExpression(
-                new JArrayAccessExpression(bufRef, new JPostfixExpression(at.dms.kjc.Constants.OPE_POSTINC,
-                        head)),
-                valRef)));
+        if (needAddressArray) {
+            JFieldAccessExpression addressArray = new JFieldAccessExpression(new JThisExpression(),
+                    addrArrayPointer);
+            body.addStatement(
+                    new JExpressionStatement(new JAssignmentExpression(
+                            new JArrayAccessExpression(bufRef, 
+                                    new JArrayAccessExpression(
+                                            addressArray, 
+                                            new JPostfixExpression(at.dms.kjc.Constants.OPE_POSTINC, head))),
+                                    valRef)));
+            
+        } else {
+            body.addStatement(
+                    new JExpressionStatement(new JAssignmentExpression(
+                            new JArrayAccessExpression(bufRef, new JPostfixExpression(at.dms.kjc.Constants.OPE_POSTINC,
+                                    head)),
+                                    valRef)));
+        }
         return retval;
     }
+    
+    
 }

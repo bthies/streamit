@@ -403,8 +403,7 @@ public class CommonPasses {
         }
         sliceGraph = getSlicer().partition();
         System.out.println("Traces: " + sliceGraph.length);
-        getSlicer().dumpGraph("traces.dot", null);
-        
+ 
         // Need to make slice graph, partitioner accessible.
         return sliceGraph;
     }
@@ -425,6 +424,10 @@ public class CommonPasses {
         slicer.createPredefinedContent();
         // guarantee that we are not going to hack properties of filters in the future
         FilterInfo.canUse();
+        //now we require that all input and output slice nodes have separate init distribution pattern
+        //for splitting and joining in the init stage (could be null or could be equal to steady or could be
+        //different)
+        InstallInitDistributions.doit(getSlicer().getSliceGraph());
         // fix any rate skew introduced in conversion to Slice graph.
         AddBuffering.doit(slicer,false,numCores);
         // decompose any pipelines of filters in the Slice graph.

@@ -103,6 +103,8 @@ public abstract class RotatingBuffer extends Channel {
      * @param schedule  The spacetime schedule of the application
      */
     public static void createBuffers(BasicSpaceTimeSchedule schedule) {
+        //have to create input buffers first because when we have a lack of a 
+        //shared input buffer, we create an output buffer
         InputRotatingBuffer.createInputBuffers(schedule);
         OutputRotatingBuffer.createOutputBuffers(schedule);
         
@@ -113,6 +115,8 @@ public abstract class RotatingBuffer extends Channel {
             buf.createTransferCommands();
         }
         for (RotatingBuffer buf : outputBuffers.values()) {
+            if (buf instanceof InputRotatingBuffer)
+                continue;
             buf.createAddressBuffers();
             buf.createTransferCommands();
         }

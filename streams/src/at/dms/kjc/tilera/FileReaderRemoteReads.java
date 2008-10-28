@@ -80,7 +80,8 @@ public class FileReaderRemoteReads extends FileReaderCode {
     private void checkSimple() {
         //right now just assert that the downstream filter of the file reader has only the FR
         //as input
-        assert input.oneInput();
+        assert input.oneInput(SchedulingPhase.STEADY) && 
+            (input.noInputs(SchedulingPhase.INIT) || input.oneInput(SchedulingPhase.INIT));
     }
     
 }

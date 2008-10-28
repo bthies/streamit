@@ -256,7 +256,7 @@ public class EmitTileCode extends EmitCode {
         p.println("\t$(CC) $(CFLAGS) -c $< -o $@");
 
         p.println("main: main.o");
-        p.println("\t$(CC) $(LDFLAGS) $< -lilib -o $@"); 
+        p.println("\t$(CC) $(LDFLAGS) $< -lilib -lm -o $@"); 
 
        
         for (Tile tile : backendBits.getComputeNodes().getTiles()) {
@@ -269,7 +269,7 @@ public class EmitTileCode extends EmitCode {
             p.println("\t$(CC) $(CFLAGS) -c $< -o $@");
 
             p.println(file + ": " + file  + ".o");
-            p.println("\t$(CC) $(LDFLAGS) $< -lilib -o $@"); 
+            p.println("\t$(CC) $(LDFLAGS) $< -lilib -lm -o $@"); 
         }
         
         p.println();

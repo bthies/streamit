@@ -113,23 +113,6 @@ public class OutputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneab
         weights = EMPTY_WEIGHTS;
         dests = EMPTY_DESTS;
     }
-
-    /**
-     * Return true if this output node has a different schedule for the initialization 
-     * stage.  This means initWeights and initDests are not null.  Otherwise, return false
-     * meaning the init stages is the same as the steady.
-     * 
-     * @return 
-     */
-    public boolean hasInitPattern() {
-        assert (initWeights == null && initDests == null) || 
-            (initWeights != null && initDests != null) :
-                "Something wrong with init distribution in  " + getParent() + 
-                "   weights: " + initWeights + ", dests: " + initDests;
-        
-        return (initWeights != null);
-    }
-    
     
     /** Set the weights for the steady state (and for init if this
      * node does not require a different pattern for init) */
@@ -179,7 +162,7 @@ public class OutputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneab
         
     /** @return the weights */
     public int[] getWeights(SchedulingPhase phase) {
-        if (phase == SchedulingPhase.INIT && hasInitPattern())
+        if (phase == SchedulingPhase.INIT && initWeights != null)
             return initWeights;
         return weights;
     }
@@ -199,7 +182,7 @@ public class OutputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneab
 
     /** @return dests */
     public InterSliceEdge[][] getDests(SchedulingPhase phase) {
-        if (phase == SchedulingPhase.INIT && hasInitPattern())
+        if (phase == SchedulingPhase.INIT && initDests != null)
             return initDests;
         
         return dests;
@@ -222,8 +205,8 @@ public class OutputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneab
     /** 
      * Set the initialization pattern for splitting.
      */
-    public void setInitDests(InterSliceEdge[][] dests) {
-        this.initDests = dests;
+    public void setInitDests(InterSliceEdge[][] newDests) {
+        this.initDests = newDests;
     }
 
     /** @return unique string */
@@ -390,35 +373,45 @@ public class OutputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneab
 
     /**
      * @return true if each output edge appears only once in the schedule of splitting
+     * for both init and steady
      */
     public boolean singleAppearance() {
-        if (hasInitPattern() && 
-                getDestSet(SchedulingPhase.INIT).size() != getDestList(SchedulingPhase.INIT).length)
-            return false;
-        
-        return getDestSet(SchedulingPhase.STEADY).size() == getDestList(SchedulingPhase.STEADY).length;
+        return singleAppearance(SchedulingPhase.STEADY) && singleAppearance(SchedulingPhase.INIT);
     }
     
+    /**
+     * @return true if each output edge appears only once in the schedule of splitting
+     */
+    public boolean singleAppearance(SchedulingPhase phase) {
+        return getDestSet(phase).size() == getDestList(phase).length;
+    }
     
+    /**
+     * Return true if this output has one output in the steady state and one or 0 outputs
+     * in the init stage.
+     */
+    public boolean oneOutput(SchedulingPhase phase) {
+        return (getWeights(phase).length == 1 && getDests(phase).length == 1 && getDests(phase)[0].length == 1);
+    }
+    
+    /** don't call me, only here so that the spacetime backend can compile */
     public boolean oneOutput() {
-        if (hasInitPattern() && 
-                ((initWeights.length != 1 || (initDests[0].length != 1))))
-            return false;
-        
-        return (weights.length == 1 && dests[0].length == 1);
+        assert false;
+        return false;
     }
 
     public InterSliceEdge getSingleEdge(SchedulingPhase phase) {
-        assert oneOutput() : "Calling getSingleEdge() on OutputSlice with less/more than one output";
+        assert oneOutput(phase) : "Calling getSingleEdge() on OutputSlice with less/more than one output";
         //System.out.println(getParent() + " " + phase);
         return getDests(phase)[0][0];
     }
-
+    
     public boolean noOutputs() {
-        if (hasInitPattern() && initWeights.length > 0)
-            return false;
-            
-        return weights.length == 0;
+        return noOutputs(SchedulingPhase.INIT) && noOutputs(SchedulingPhase.STEADY);
+    }
+
+    public boolean noOutputs(SchedulingPhase phase) {
+                return getWeights(phase).length == 0;
     }
     
     public boolean isDuplicateSplitter(SchedulingPhase phase) {

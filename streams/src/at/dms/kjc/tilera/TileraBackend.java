@@ -35,6 +35,8 @@ public class TileraBackend {
         // perform some standard cleanup on the slice graph.
         commonPasses.simplifySlices();
         
+        commonPasses.getSlicer().dumpGraph("traces.dot", null);
+        
         SpaceTimeScheduleAndSlicer graphSchedule = new SpaceTimeScheduleAndSlicer(commonPasses.getSlicer());
         scheduler.setGraphSchedule(graphSchedule);
         

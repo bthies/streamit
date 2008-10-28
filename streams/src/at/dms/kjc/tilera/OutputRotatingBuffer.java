@@ -64,10 +64,12 @@ public class OutputRotatingBuffer extends RotatingBuffer {
                 //if a downstream filter is mapped to this tile, then this slice will use the inputbuffer
                 //for its output
                 boolean createBuffer = true;
-                //look to see if any downstream filters are mapped to this tile
+                //look to see if one of the downstream slices is mapped to the same tile as this slice
+                //and this slice uses the downstream's input buffer as an outputbuffer, if so, we don't
+                //need an output buffer
                 for (InterSliceEdge edge : slice.getTail().getDestSet(SchedulingPhase.STEADY)) {
-                    if (parent == 
-                        TileraBackend.backEndBits.getLayout().getComputeNode(edge.getDest().getNextFilter())) {
+                    InputRotatingBuffer inBuf = InputRotatingBuffer.getInputBuffer(edge.getDest().getNextFilter());
+                    if (inBuf != null && inBuf.getLocalSrcFilter() == slice.getFirstFilter()) {
                         createBuffer = false;
                         break;
                     }

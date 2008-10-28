@@ -129,7 +129,7 @@ public class ProcessFileReader {
         codeStore.appendTxtToGlobal(fileInput.getType() + "*fileReadBuffer;\n");
         codeStore.appendTxtToGlobal("int fileReadIndex = 0;\n");
         //malloc enough from the heap to store the entire file
-        block.addStatement(Util.toStmt("fileReadBuffer = (int*)ilib_mem_malloc_heap(fileReadHeap, " + 
+        block.addStatement(Util.toStmt("fileReadBuffer = (" + fileInput.getType() +"*)ilib_mem_malloc_heap(fileReadHeap, " + 
                 fileSize + ")"));
 
         //open the file read the file into the buffer on the heap

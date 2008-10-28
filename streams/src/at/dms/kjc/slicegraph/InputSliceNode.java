@@ -100,11 +100,6 @@ public class InputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneabl
      * 
      * @return 
      */
-    public boolean hasInitPattern() {
-        assert (initWeights == null && initSources == null) || 
-            (initWeights != null && initSources != null); 
-        return (initWeights != null);
-    }
     
     /**
      * Merge neighboring edges and weights if the neighboring edges
@@ -153,15 +148,15 @@ public class InputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneabl
         return ident;
     }
 
+    public boolean singleAppearance() {
+        return singleAppearance(SchedulingPhase.STEADY) && singleAppearance(SchedulingPhase.INIT);
+    }
+    
     /**
      * @return true if each input edge appears only once in the schedule of joining
      */
-    public boolean singleAppearance() {
-        if (hasInitPattern() && 
-                getSourceSet(SchedulingPhase.INIT).size() != getSourceList(SchedulingPhase.INIT).size())
-            return false;
-        
-        return getSourceSet(SchedulingPhase.STEADY).size() == getSourceList(SchedulingPhase.STEADY).size();
+    public boolean singleAppearance(SchedulingPhase phase) {
+        return getSourceSet(phase).size() == getSourceList(phase).size();
     }
     
     /**
@@ -169,16 +164,17 @@ public class InputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneabl
      * 
      */
     public InterSliceEdge getEdgeFrom(SchedulingPhase phase, FilterSliceNode node) {
-        assert singleAppearance();
+        InterSliceEdge ret = null;
         
         for (InterSliceEdge edge : getSourceSet(phase)) {
             if (edge.getSrc().getPrevFilter() == node) {
-                return edge;
+                assert ret == null;
+                ret = edge;
             }
         }
         
-        assert false : "cannot find edge to " + node + " in getEdgeFrom() in " + this + " InputSliceNode for " + phase;
-        return null;
+        assert ret != null : "cannot find edge to " + node + " in getEdgeFrom() in " + this + " InputSliceNode for " + phase;
+        return ret;
     }
     
     /**
@@ -203,7 +199,7 @@ public class InputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneabl
      * @return the sum of the weights before edge
      */
     public int weightBefore(InterSliceEdge edge, SchedulingPhase phase) {
-        assert singleAppearance();
+        assert singleAppearance(phase);
         
         int total = 0;
         for (int i = 0; i < getWeights(phase).length; i++) {
@@ -248,7 +244,7 @@ public class InputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneabl
 
     /** @return array of edge weights */
     public int[] getWeights(SchedulingPhase phase) {
-        if (phase == SchedulingPhase.INIT && hasInitPattern())
+        if (phase == SchedulingPhase.INIT && initWeights != null)
             return initWeights;
         
         return weights;
@@ -256,7 +252,7 @@ public class InputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneabl
 
     /** @return array of edges */
     public InterSliceEdge[] getSources(SchedulingPhase phase) {
-        if (phase == SchedulingPhase.INIT && hasInitPattern())
+        if (phase == SchedulingPhase.INIT && initSources != null)
             return initSources;
         
         return sources;
@@ -355,18 +351,6 @@ public class InputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneabl
 
         return sum;
     }
-
-    /**
-     * Does sources have a single element.
-     *  
-     * @return true if there is a single element in sources. */
-    public boolean oneInput() {
-        if (getSources(SchedulingPhase.INIT).length > 1) {
-            return false;
-        }
-                
-        return (sources.length == 1);
-    }
     
     /**
      * Does sources have a single element in phase
@@ -374,6 +358,12 @@ public class InputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneabl
      * @return true if there is a single element in sources. */
     public boolean oneInput(SchedulingPhase phase) {
         return getSources(phase).length == 1;
+    }
+    
+    /** don't call me, only here so that the spacetime compiler can compile */
+    public boolean oneInput() {
+        assert false;
+        return false;
     }
     
     /** 
@@ -405,11 +395,12 @@ public class InputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneabl
      * 
      * @return
      */
+    public boolean noInputs(SchedulingPhase phase) {
+        return getSources(phase).length == 0;
+    }
+    
     public boolean noInputs() {
-        if (getSources(SchedulingPhase.INIT).length != 0)
-            return false;
-        
-        return sources.length == 0;
+        return noInputs(SchedulingPhase.INIT) && noInputs(SchedulingPhase.STEADY);
     }
 
     public int itemsReceivedOn(InterSliceEdge edge, SchedulingPhase phase) {
@@ -529,7 +520,7 @@ public class InputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneabl
      * @param newEdge The edge to install.
      */
     public void replaceEdge(InterSliceEdge oldEdge, InterSliceEdge newEdge, SchedulingPhase phase) {
-        if (phase == SchedulingPhase.INIT && hasInitPattern()) {
+        if (phase == SchedulingPhase.INIT) {
             for (int i = 0; i < initSources.length; i++) {
                 if (initSources[i] == oldEdge)
                     initSources[i] = newEdge;

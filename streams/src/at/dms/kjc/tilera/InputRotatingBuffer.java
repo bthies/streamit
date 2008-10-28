@@ -131,6 +131,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
             }
         }
         
+        
         //System.out.println(filterNode + " has local source " + localSrcFilter);
         
         //if we found an upstream filter mapped to the same tile
@@ -149,7 +150,6 @@ public class InputRotatingBuffer extends RotatingBuffer {
      * Must be called after setLocalSrcFilter.  This creates the address buffers that other tiles
      * use when writing to this input buffer.  Each source that is mapped to a different tile than 
      * this input buffer has an address buffer for this input buffer.
-     * 
      */
     protected void createAddressBufs() {
        int addressBufsSize = filterNode.getParent().getHead().getSourceSlices(SchedulingPhase.STEADY).size();
@@ -163,7 +163,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
        int i = 0;
        for (Slice src : filterNode.getParent().getHead().getSourceSlices(SchedulingPhase.STEADY)) {
            Tile tile = TileraBackend.backEndBits.getLayout().getComputeNode(src.getFirstFilter());
-           if (tile == parent)
+           if (tile == parent && hasLocalSrcFilter())
                continue;
            
            SourceAddressRotation rot = new SourceAddressRotation(tile, this, filterNode, theEdge);

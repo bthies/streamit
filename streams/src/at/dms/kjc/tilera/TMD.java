@@ -432,6 +432,7 @@ public class TMD extends Scheduler {
                 //System.out.println(workEsts.get(fsn) + " / " + slTotal + " * " + availTiles + " = " + fa);
                 
                 fizzAmount.put(fsn.getParent(), (int)fa);
+                assert fa > 0 : fsn;
                 tilesUsed += fa;
             }
             
@@ -468,8 +469,7 @@ public class TMD extends Scheduler {
             if (fizzAmount.containsKey(slice) && fizzAmount.get(slice) > 1) {
               //this works only for pipelines right now, so just that we have at most
                 //one input and at most one output for the slice
-                assert slice.getHead().getSourceSet(SchedulingPhase.STEADY).size() <= 1 &&
-                    slice.getTail().getDestSet(SchedulingPhase.STEADY).size() <= 1;
+                assert slice.getHead().getSourceSet(SchedulingPhase.STEADY).size() <= 1;
                 
                 //check that we have reached the threshold for duplicated items
                 int threshFactor = (int)Math.ceil((((double)(fi.peek - fi.pop)) * fizzAmount.get(slice)) / 

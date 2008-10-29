@@ -89,7 +89,7 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
         //the shared buffer
         if (usesSharedBuffer()) {
             FilterInfo localDest = FilterInfo.getFilterInfo(parent.filterNode);
-            System.out.println(parent.filterNode);
+            //System.out.println(parent.filterNode);
             InputSliceNode input = parent.filterNode.getParent().getHead();
             int rotations = localDest.totalItemsReceived(SchedulingPhase.STEADY) / 
                 input.totalWeights(SchedulingPhase.STEADY);
@@ -105,7 +105,7 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
             }
             
         } else {
-            System.out.println("non-local: " + parent.filterNode);
+            //System.out.println("non-local: " + parent.filterNode);
             needAddressArray = false;
         }
     }

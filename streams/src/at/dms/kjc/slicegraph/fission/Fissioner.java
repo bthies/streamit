@@ -688,12 +688,15 @@ public class Fissioner {
         //set the steadymult of the id
         int steadyItems = fInfo.totalItemsSent(SchedulingPhase.STEADY);
         idOutput.getFirstFilter().getFilter().setSteadyMult(steadyItems);
+        
+        /*
         int items = 0;
         for (int i = 0; i < outputsSteady.length; i++) {
             InterSliceEdge edge = InterSliceEdge.getEdge(slice.getTail(), outputsSteady[i].getHead());
             items += outputsSteady[i].getHead().itemsReceivedOn(edge, SchedulingPhase.STEADY);
         }
-        assert items == steadyItems;
+        assert items == steadyItems : items + " != " + steadyItems + " " + slice;
+        */
         
         //set the split schedule of each of the clones to just send to the id output
         for (int i = 0; i < sliceClones.length; i++) {

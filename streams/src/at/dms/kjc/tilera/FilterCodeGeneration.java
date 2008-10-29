@@ -19,6 +19,7 @@ import at.dms.kjc.sir.SIRBeginMarker;
 import at.dms.kjc.slicegraph.*;
 import at.dms.kjc.backendSupport.*;
 import at.dms.util.Utils;
+import at.dms.kjc.KjcOptions;
 
 public class FilterCodeGeneration extends CodeStoreHelper {
  
@@ -106,6 +107,30 @@ public class FilterCodeGeneration extends CodeStoreHelper {
 
         statements.addStatement(generateInitWorkLoop(filter));
 
+        //determine if in the init there is a file writer slice downstream 
+        //of the slice that contains this filter
+        boolean dsFileWriter = false;
+        for (InterSliceEdge edge : filterNode.getParent().getTail().getDestSet(SchedulingPhase.INIT)) {
+            if (edge.getDest().getParent().getFirstFilter().isFileOutput()) {
+                dsFileWriter = true;
+                break;
+            }
+        }
+        if (KjcOptions.numbers < 1 && dsFileWriter && filterInfo.totalItemsSent(SchedulingPhase.INIT) > 0) {
+            assert filterNode.getParent().getTail().getDestSet(SchedulingPhase.INIT).size() == 1;
+            FilterSliceNode fileW = 
+                filterNode.getParent().getTail().getDestList(SchedulingPhase.INIT)[0].getDest().getParent().getFirstFilter();
+            
+            InputRotatingBuffer buf = InputRotatingBuffer.getInputBuffer(fileW);
+            int outputs = filterInfo.totalItemsSent(SchedulingPhase.INIT);
+            String type = ((FileOutputContent)fileW.getFilter()).getType() == CStdType.Integer ? "%d" : "%f";
+            String bufferName = buf.getAddressRotation(TileraBackend.backEndBits.getLayout().getComputeNode(filterNode)).currentWriteBufName;
+            //create the loop
+            statements.addStatement(Util.toStmt(
+                    "for (int _i_ = 0; _i_ < " + outputs + "; _i_++) printf(\"" + type + "\\n\", " + bufferName +"[_i_])"));
+            
+        }
+        
         // channel code after work block
         if (backEndBits.sliceHasUpstreamChannel(sliceNode.getParent())) {
             for (JStatement stmt : InputRotatingBuffer.getInputBuffer(filterNode).endInitRead()) {
@@ -254,36 +279,6 @@ public class FilterCodeGeneration extends CodeStoreHelper {
      */
     protected JBlock endSchedulingPhase(SchedulingPhase phase) {
         JBlock block = new JBlock();
-
-        if (TileraBackend.DMA) {
-
-        } else {        
-            if (TileraBackend.scheduler.isTMD()) {
-                switch (phase) {
-                case INIT: block.addStatement(Util.toStmt("ilib_mem_fence()")); break;
-                case PRIMEPUMP : {
-                    String group = "ILIB_GROUP_SIBLINGS";
-                    //if this filter occupies a level that does not occupy all the tiles of the 
-                    //configuration, then we call a barrier that is defined only for the tiles
-                    //that slices of the level are mapped to.
-                    if (TileraBackend.scheduler.isTMD()) {
-                        //if the level only has this slice, then we don't need to synch
-                        if (((TMD)TileraBackend.scheduler).lsg.levelSize(filterNode.getParent()) == 1)
-                            return block;
-                            
-                        if (((TMD)TileraBackend.scheduler).lsg.levelSize(filterNode.getParent()) < 
-                                TileraBackend.chip.abstractSize()) {
-                            assert false : "Not implemented!";
-                            group = EmitTileCode.GROUP_PREFIX + 
-                                ((TMD)TileraBackend.scheduler).lsg.getLevel(filterNode.getParent());
-                        }
-                    }
-                    block.addStatement(Util.toStmt("ilib_msg_barrier(" + group + ")"));
-                    break;
-                }
-                }
-            }           
-        }
         return block;
     }
 }

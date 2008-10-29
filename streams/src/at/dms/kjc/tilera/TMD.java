@@ -357,6 +357,21 @@ public class TMD extends Scheduler {
     }
     
     /**
+     * Return the level that this slice occupies.
+     */
+    public int getLevel(Slice slice) {
+        return lsg.getLevel(slice);
+    }
+    
+    public int numLevels() {
+        return lsg.getLevels().length;
+    }
+    
+    public int getLevelSize(int l) {
+        return lsg.getLevels()[l].length;
+    }
+    
+    /**
      * 
      */
     public void calculateFizzAmounts(int totalTiles) {

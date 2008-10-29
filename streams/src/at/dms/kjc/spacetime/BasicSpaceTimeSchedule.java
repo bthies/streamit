@@ -105,14 +105,14 @@ public class BasicSpaceTimeSchedule {
      */
     final public void setPrimePumpSchedule(LinkedList<LinkedList<Slice>> preLoopSchedule) {
         //      convert into an array for easier access...
-        CommonUtils.println_debugging("Setting primepump schedule:");   
+        //CommonUtils.println_debugging("Setting primepump schedule:");   
         primePumpSchedule = new Slice[preLoopSchedule.size()][];
         for (int i = 0; i < preLoopSchedule.size(); i++ ) {
             LinkedList schStep = preLoopSchedule.get(i);
             primePumpSchedule[i] = new Slice[schStep.size()];
             for (int j = 0; j < schStep.size(); j++) {
                 Slice current = (Slice)schStep.get(j);
-                CommonUtils.println_debugging(current.toString());
+                //CommonUtils.println_debugging(current.toString());
                 primePumpSchedule[i][j] = current;
                 //generate the prime pump multiplicity map
                 if (!primePumpMult.containsKey(current))

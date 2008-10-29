@@ -18,7 +18,23 @@ public class ProcessFilterSliceNode {
      * print debugging info?
      */
     public static boolean debug = false;
+    /** the number of filters that we have yet to process from a level the init stage */
+    public static HashMap<Integer, Integer> levelLeftToProcessInit;
+    /** the number of filters that we have yet to process from a level the init stage */
+    public static HashMap<Integer, Integer> levelLeftToProcessPP;
     
+    static {
+        if (TileraBackend.scheduler.isTMD()) {
+            //fill the left to process maps with the number of filters in a level
+            levelLeftToProcessInit = new HashMap<Integer, Integer>();
+            levelLeftToProcessPP = new HashMap<Integer, Integer>();
+            TMD tmd = (TMD)TileraBackend.scheduler;
+            for (int i = 0; i < tmd.numLevels(); i++) {
+                levelLeftToProcessInit.put(i, tmd.getLevelSize(i));
+                levelLeftToProcessPP.put(i, tmd.getLevelSize(i));
+            }
+        }
+    }
     
     private static int uid = 0;
     public static int getUid() {
@@ -140,8 +156,22 @@ public class ProcessFilterSliceNode {
             codeStore.addInitStatement(new JExpressionStatement(null,
                     new JMethodCallExpression(null, new JThisExpression(null),
                             workAtInit.getName(), new JExpression[0]), null));
+            
         }
-
+        
+        if (TileraBackend.scheduler.isTMD()) {
+            //if we are using the tmd scheduler we have to add barriers between each 
+            //init call of different levels 
+            //so we keep a hashmap that will tell us how many more filters needs to be 
+            //processed in the level so that we only add the barrier after the last to be processed
+            //so after the entire level has executed
+            int level = ((TMD)TileraBackend.scheduler).getLevel(filterNode.getParent());
+            int leftToProcess = levelLeftToProcessInit.get(level);
+            leftToProcess--;
+            levelLeftToProcessInit.put(level, leftToProcess);
+            if (leftToProcess == 0)
+                TileCodeStore.addBarrierInit();
+        }
     }
     
     protected void additionalInitProcessing() {
@@ -167,6 +197,21 @@ public class ProcessFilterSliceNode {
 
         }
 
+        if (TileraBackend.scheduler.isTMD()) {
+            //if we are using the tmd scheduler we have to add barriers between each 
+            //init call of different levels 
+            //so we keep a hashmap that will tell us how many more filters needs to be 
+            //processed in the level so that we only add the barrier after the last to be processed
+            //so after the entire level has executed
+            int level = ((TMD)TileraBackend.scheduler).getLevel(filterNode.getParent());
+            int leftToProcess = levelLeftToProcessPP.get(level);
+            leftToProcess--;
+            levelLeftToProcessPP.put(level, leftToProcess);
+            if (leftToProcess == 0) {
+                TileCodeStore.addBarrierInit();
+                levelLeftToProcessPP.put(level, ((TMD)TileraBackend.scheduler).getLevelSize(level));
+            }
+        }
     }
     
     protected void additionalPrimePumpProcessing() {

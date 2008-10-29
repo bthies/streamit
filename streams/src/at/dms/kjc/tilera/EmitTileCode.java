@@ -13,6 +13,7 @@ import at.dms.kjc.backendSupport.ComputeNode;
 import at.dms.kjc.backendSupport.EmitCode;
 import at.dms.kjc.common.CodegenPrintWriter;
 import at.dms.kjc.sir.SIRCodeUnit;
+import at.dms.kjc.KjcOptions;
 
 /**
  * Emit c code for tiles.
@@ -126,7 +127,7 @@ public class EmitTileCode extends EmitCode {
         p.println("#define NORTH_INPUT(input) (input)");
         
         //THE NUMBER OF SS ITERATIONS FOR EACH cycle counting block 
-        p.println("#define ITERATIONS 10");
+        p.println("#define ITERATIONS " + KjcOptions.numbers);
         
         
     }
@@ -200,7 +201,7 @@ public class EmitTileCode extends EmitCode {
         p.println("endif");
         p.println();
         p.println("CC = $(BIN)tile-cc");
-        p.println("CFLAGS = -O3");
+        p.println("CFLAGS = -Os");
         p.println("SIM = $(BIN)tile-sim");
         p.println("MONITOR = $(BIN)tile-monitor");
         p.println("LDFLAGS = -static");

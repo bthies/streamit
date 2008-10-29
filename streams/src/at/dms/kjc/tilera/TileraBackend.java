@@ -58,11 +58,11 @@ public class TileraBackend {
         //now convert to Kopi code plus communication commands.  
         backEndBits.getBackEndMain().run(graphSchedule, backEndBits);
         
-        if (true) {
-            TileCodeStore.generatePrintOutputCode();
-        }
-        else
+        if (KjcOptions.numbers > 0) 
             chip.getComputeNode(0, 0).getComputeCode().generateNumbersCode();
+        else
+            TileCodeStore.generatePrintOutputCode();
+            
         
         //emit c code for all tiles
         EmitTileCode.doit(backEndBits);

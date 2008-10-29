@@ -83,6 +83,17 @@ public class TileCodeStore extends ComputeCodeStore<Tile> {
     }
     
     /**
+     * Append a barrier instruction to all of the (abstract) tiles in the init/primepump
+     * stage.
+     */
+    public static void addBarrierInit() {
+        for (int t = 0; t < TileraBackend.chip.abstractSize(); t++) {
+            TileCodeStore cs = TileraBackend.chip.getTranslatedTile(t).getComputeCode();
+             cs.addInitStatement(Util.toStmt("ilib_msg_barrier(ILIB_GROUP_SIBLINGS)"));
+         }
+    }
+    
+    /**
      * Append a barrier instruction to all of the (abstract) tiles in the steady state
      * method.
      */

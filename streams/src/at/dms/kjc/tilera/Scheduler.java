@@ -38,5 +38,7 @@ public abstract class Scheduler implements Layout<Tile> {
     
     public abstract void run(int tiles);
     
-
+    public SpaceTimeScheduleAndSlicer getGraphSchedule() {
+        return graphSchedule;
+    }
 }

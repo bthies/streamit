@@ -73,8 +73,7 @@ public abstract class RotatingBuffer extends Channel {
     protected static HashMap<FilterSliceNode, InputRotatingBuffer> inputBuffers;
     protected static HashMap<FilterSliceNode, RotatingBuffer> outputBuffers;
     protected final String temp = "__temp__";
-    
-    
+        
     static {
         types = new HashSet<CType>();
         inputBuffers = new HashMap<FilterSliceNode, InputRotatingBuffer>();

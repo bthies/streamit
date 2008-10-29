@@ -284,9 +284,52 @@ public class TileCodeStore extends ComputeCodeStore<Tile> {
         hasCode = true;
     }
     
-    public void generatePrintOutputCode() {
-        
-        
+    /** 
+     * For each of the file writers generate code to print the output for each steady state.
+     * This is somewhat limited right now, so there are lots of asserts.
+     */
+    public static void generatePrintOutputCode() {
+        Set<InputRotatingBuffer> fwb = InputRotatingBuffer.getFileWriterBuffers();
+        if (fwb.size() == 0)
+            return;
+        //for now asser that we only have one file writer
+        assert fwb.size() == 1;
+        //for each of the file writer input buffers, so for each of the file writers,
+        //find one of its sources, and add code to the source's tile to print the outputs
+        //at the end of each steady state
+        for (InputRotatingBuffer buf : fwb) {
+            FilterSliceNode fileW = buf.filterNode;
+            //find the tile of the first input to the file writer
+            Tile tile = 
+                TileraBackend.backEndBits.getLayout().
+                getComputeNode(fileW.getParent().getHead().getSources(SchedulingPhase.STEADY)[0].
+                        getSrc().getParent().getFirstFilter());
+            
+            tile.getComputeCode().addPrintOutputCode(buf);
+        }
+    }
+    
+    /**
+     * Add code to print the output written to the file writer mapped to this tile.
+     */
+    private void addPrintOutputCode(InputRotatingBuffer buf) {
+        //We print the address buffer after it has been rotated, so that it points to the section
+        //of the filewriter buffer that is about to be written to, but was written to 2 steady-states
+        //ago
+        FilterSliceNode fileW = buf.filterNode;
+        assert fileW.isFileOutput();
+        //because of this scene we need a rotation length of 2
+        assert buf.getRotationLength() == 2;
+        //make sure that each of the inputs wrote to the file writer in the primepump stage
+        for (InterSliceEdge edge : fileW.getParent().getHead().getSourceSet(SchedulingPhase.STEADY)) {
+            assert TileraBackend.scheduler.getGraphSchedule().getPrimePumpMult(edge.getSrc().getParent()) == 1;
+        }
+        int outputs = fileW.getFilter().getSteadyMult();
+        String type = ((FileOutputContent)fileW.getFilter()).getType() == CStdType.Integer ? "%d" : "%f";
+        String bufferName = buf.getAddressRotation(this.parent).currentWriteBufName;
+        //create the loop
+        addSteadyLoopStatement(Util.toStmt(
+                "for (int _i_ = 0; _i_ < " + outputs + "; _i_++) printf(\"" + type + "\\n\", " + bufferName +"[_i_])"));
     }
     
     public void generateNumbersCode() {

@@ -46,7 +46,12 @@ public class InputRotatingBuffer extends RotatingBuffer {
     protected String currentFileReaderBufName;
     /** reference to head if this input buffer is shared as an output buffer */
     //protected JExpression head;
+    protected static HashSet<InputRotatingBuffer> fileWriterBuffers;
 
+    static {
+        fileWriterBuffers = new HashSet<InputRotatingBuffer>();
+    }
+    
     /**
      * Create all the input buffers necessary for this slice graph.  Iterate over
      * the steady-state schedule, visiting each slice and creating an input buffer
@@ -234,6 +239,12 @@ public class InputRotatingBuffer extends RotatingBuffer {
         rotationLength = maxRotationLength + 1;
     }
     
+    /**
+     * return all the input buffers of the file writers of this application
+     */
+    public static Set<InputRotatingBuffer> getFileWriterBuffers() {
+        return fileWriterBuffers;
+    }
     
     /**
      * Generate the code to setup the structure of the rotating buffer 
@@ -247,6 +258,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
         //if we are setting up the rotation for a file writer we have to do it on the 
         //allocating tile
         if (filterNode.isFileOutput()) {
+            fileWriterBuffers.add(this);
             cs = ProcessFileWriter.getAllocatingTile(filterNode).getComputeCode();
         } else
             cs = parent.getComputeCode();

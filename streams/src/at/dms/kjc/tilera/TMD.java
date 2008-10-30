@@ -116,6 +116,7 @@ public class TMD extends Scheduler {
         System.out.println("Beginning Neighbors Layout...");
         
         while (true) {
+            //system.out.println("Assiging " + current + " to " + nextToAssign.getTileNumber());
             assignSlicesToTile(current, nextToAssign);
             done.add(current);
             assert done.contains(current);
@@ -183,6 +184,8 @@ public class TMD extends Scheduler {
     private Set<Set<Slice>> createSameTileSets(Slice[][] levels) {
         HashSet<Set<Slice>> sameTile = new HashSet<Set<Slice>>();
         for (int l = 0; l < levels.length; l++) {
+            //System.out.println("Level " + l + " has size " + levels[l].length);
+            LinkedList<Slice> alreadyAssigned = new LinkedList<Slice>();
             for (int s = 0; s < levels[l].length; s++) {
                 Slice slice = levels[l][s];
                 //assign predefined to offchip memory and don't add them to any set
@@ -196,10 +199,33 @@ public class TMD extends Scheduler {
                     
                     for (Edge edge : slice.getHead().getSourceSet(SchedulingPhase.STEADY)) {
                         if (slice.getHead().getWeight(edge, SchedulingPhase.STEADY) > bestInputs) {
-                            theBest = getSetWithSlice(sameTile, edge.getSrc().getParent());
+                            //the set we want to see if this slice should be added to
+                            Set<Slice> testSet = getSetWithSlice(sameTile, edge.getSrc().getParent());
+                            
+                            //if the test set is null, then we have not put the upstream slice on the chip 
+                            if (testSet == null) {
+                                continue;
+                            }
+                            
+                            //check if the best contains a slice from this level already, if so, we cannot
+                            //assign another slice so continue
+                            boolean canUse = true;
+                            for (Slice seen : alreadyAssigned) {
+                                if (testSet.contains(seen))
+                                    canUse = false;
+                            }
+                            if (!canUse)
+                                continue;
+                            
+                            //otherwise, we have not added a slice from this level to this set, so 
+                            //we can use it
+                            theBest = testSet;
                             bestInputs = slice.getHead().getWeight(edge, SchedulingPhase.STEADY);
+                            
                         }
                     }
+                    //remember that we have assigned this slice in the level
+                    alreadyAssigned.add(slice);
                     //no upstream slice is in a set
                     if (theBest == null) {
                         //for now assume that there is always one file reader that feeds only level 1
@@ -319,6 +345,9 @@ public class TMD extends Scheduler {
      * a pipeline of stateless filters
      */
     public void run(int tiles) {
+        //if we are using the SIR data parallelism pass, then don't run TMD
+        if (KjcOptions.dup == 1)
+            return;
         
         calculateFizzAmounts(tiles);
         
@@ -429,12 +458,14 @@ public class TMD extends Scheduler {
                     Math.round((((double)workEsts.get(fsn)) / ((double)slTotal)) * ((double)availTiles));
                 
                 
-                //System.out.println(workEsts.get(fsn) + " / " + slTotal + " * " + availTiles + " = " + fa);
+                System.out.println(l + ": " + workEsts.get(fsn) + " / " + slTotal + " * " + availTiles + " = " + fa);
                 
                 fizzAmount.put(fsn.getParent(), (int)fa);
                 assert fa > 0 : fsn;
                 tilesUsed += fa;
             }
+            
+            assert tilesUsed <= totalTiles : "Level " + l + " has too many slices!";
             
             //assert that we use all the tiles for each level
             if (tilesUsed < totalTiles) 

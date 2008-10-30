@@ -89,12 +89,18 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
         //the shared buffer
         if (usesSharedBuffer()) {
             FilterInfo localDest = FilterInfo.getFilterInfo(parent.filterNode);
-            //System.out.println(parent.filterNode);
+            //System.out.println("Set writing scheme: " + parent.filterNode);
             InputSliceNode input = parent.filterNode.getParent().getHead();
-            int rotations = localDest.totalItemsReceived(SchedulingPhase.STEADY) / 
+                        
+            int rotationsSteady = localDest.totalItemsReceived(SchedulingPhase.STEADY) / 
                 input.totalWeights(SchedulingPhase.STEADY);
             
-            if (rotations == 1 && input.singleAppearance()) {
+            int rotationsInit = 0;
+            if (input.totalWeights(SchedulingPhase.INIT) > 0) 
+                rotationsInit = localDest.totalItemsReceived(SchedulingPhase.INIT) / 
+                    input.totalWeights(SchedulingPhase.INIT);
+            
+            if (rotationsSteady == 1 && rotationsInit <= 1 && input.singleAppearance()) {
                 needAddressArray = false;
             } else {
                 System.out.println(((InputRotatingBuffer)parent).localSrcFilter + " needs an address array!");
@@ -105,7 +111,7 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
             }
             
         } else {
-            //System.out.println("non-local: " + parent.filterNode);
+            System.out.println("non-local: " + parent.filterNode);
             needAddressArray = false;
         }
     }

@@ -131,8 +131,10 @@ public class InputRotatingBuffer extends RotatingBuffer {
         for (InterSliceEdge edge : filterNode.getParent().getHead().getSourceSet(SchedulingPhase.STEADY)) {
             FilterSliceNode upstream = edge.getSrc().getPrevFilter();
             if (TileraBackend.backEndBits.getLayout().getComputeNode(upstream) == parent) {
+                System.out.println(upstream);
                 assert localSrcFilter == null : "Two upstream srcs mapped to same tile ?";
                 localSrcFilter = upstream;
+                
             }
         }
         

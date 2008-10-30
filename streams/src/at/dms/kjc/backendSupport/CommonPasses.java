@@ -213,6 +213,9 @@ public class CommonPasses {
             str = FusePipelines.fusePipelinesOfStatelessStreams(str);
             StreamItDot.printGraph(str, "after-fuse-stateless.dot");
             
+            if (KjcOptions.dup == 1) {
+                dup.smarterDuplicate(str, numCores);
+            }
             
         } else {
             // some backend other than tilera

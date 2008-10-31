@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.54 2007-11-15 23:41:28 rabbah Exp $
+ * $Id: Utils.java,v 1.55 2008-10-31 02:09:55 mgordon Exp $
  */
 
 package at.dms.util;
@@ -1263,7 +1263,7 @@ public abstract class Utils implements Serializable, DeepCloneable {
     
         return new JForStatement(null, init, cond, incr, body, null);
     }
-
+    
     /**
      * Returns a for loop that uses field <b>var</b> to count
      * <b>count</b> times with the body of the loop being <b>body</b>.  
@@ -1315,7 +1315,67 @@ public abstract class Utils implements Serializable, DeepCloneable {
         JStatement incr = 
             new JExpressionStatement(null, incrExpr, null);
     
-        return new JForStatement(null, init, cond, incr, body, null);
+        JForStatement jfor = new JForStatement(null, init, cond, incr, body, null);
+             
+        return jfor;
+    }
+    
+    /**
+     * Returns a for loop that uses field <b>var</b> to count
+     * <b>count</b> times with the body of the loop being <b>body</b>.  
+     * If count is non-positive, just returns empty (!not legal in the general case)
+     * 
+     * @param body The body of the for loop.  (null OK: returns empty statement)
+     * @param var The field to use as the index variable.
+     * @param count The trip count of the loop.
+     * @param shouldUnroll true if this loop should be unrolled
+     * 
+     * @return The for loop.
+     */
+    public static JStatement makeForLoopFieldIndex(JStatement body,
+            JVariableDefinition var,
+            JExpression count, boolean shouldUnroll) {
+        if (body == null)
+            return new JEmptyStatement(null, null);
+    
+        // make init statement - assign zero to <pre>var</pre>.  We need to use
+        // an expression list statement to follow the convention of
+        // other for loops and to get the codegen right.
+        JExpression initExpr[] = {
+            new JAssignmentExpression(null,
+                                      new JFieldAccessExpression(null, 
+                                                                 new JThisExpression(null),
+                                                                 var.getIdent()),
+                                      new JIntLiteral(0)) };
+        JStatement init = new JExpressionListStatement(null, initExpr, null);
+        // if count==0, just return init statement
+        if (count instanceof JIntLiteral) {
+            int intCount = ((JIntLiteral)count).intValue();
+            if (intCount<=0) {
+                // return assignment statement
+                return new JEmptyStatement(null, null);
+            }
+        }
+        // make conditional - test if <pre>var</pre> less than <pre>count</pre>
+        JExpression cond = 
+            new JRelationalExpression(null,
+                                      Constants.OPE_LT,
+                                      new JFieldAccessExpression(null, 
+                                                                 new JThisExpression(null),
+                                                                 var.getIdent()),
+                                      count);
+        JExpression incrExpr = 
+            new JPostfixExpression(null, 
+                                   Constants.OPE_POSTINC, 
+                                   new JFieldAccessExpression(null, new JThisExpression(null),
+                                                              var.getIdent()));
+        JStatement incr = 
+            new JExpressionStatement(null, incrExpr, null);
+    
+        JForStatement jfor = new JForStatement(null, init, cond, incr, body, null);
+        jfor.setUnrolled(!shouldUnroll);
+        
+        return jfor;
     }
 
     /**

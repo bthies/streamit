@@ -1,10 +1,12 @@
 package at.dms.kjc.tilera;
 
 import java.util.List;
-
+import at.dms.kjc.tilera.arrayassignment.*;
 import at.dms.kjc.JStatement;
 import at.dms.kjc.backendSupport.FilterInfo;
 import at.dms.kjc.slicegraph.*;
+
+
 
 public class FileReaderRemoteReads extends FileReaderCode {
 
@@ -18,17 +20,13 @@ public class FileReaderRemoteReads extends FileReaderCode {
     private void generateStatements(SchedulingPhase phase) {
         FilterInfo srcInfo = FilterInfo.getFilterInfo(fileOutput.getPrevFilter());
         FilterInfo dstInfo = FilterInfo.getFilterInfo(input.getNextFilter());
-        List<JStatement> statements = null;
+       
         //we are assuming that the downstream filter has only the file reader as input
-
-            
-        switch (phase) {
-        case INIT: statements = commandsInit; break;
-        default: statements = commandsSteady; break;
-        }
+        
+        ArrayAssignmentStatements aaStmts = new ArrayAssignmentStatements();
 
 
-        //if we don't receive anything then just return!
+        //if we don't receive anything, don't generate code
         if (dstInfo.totalItemsReceived(phase) > 0) {
 
             //rotations of the output for the file reader
@@ -50,16 +48,22 @@ public class FileReaderRemoteReads extends FileReaderCode {
                     if (!fileOutput.weightDuplicatesTo(weight, edge, phase))
                         continue;
                     for (int item = 0; item < fileOutput.getWeights(phase)[weight]; item++) {
-                        String dest = dst_buffer + "[" + (copyDown + destIndex++) +"]";
-                        String src = "fileReadBuffer[fileReadIndex + " + 
-                        ((rot * fileOutput.totalWeights(phase)) + fileOutput.weightBefore(weight, phase) + item) +
-                        "]";
-
-                        statements.add(Util.toStmt(dest + " = " + src));
+                        //add to the array assignment loop
+                        int dstElement = (copyDown + destIndex++);
+                        int srcIndex = ((rot * fileOutput.totalWeights(phase)) + fileOutput.weightBefore(weight, phase) + item);
+                        aaStmts.addAssignment(dst_buffer, "", dstElement, "fileReadBuffer", "fileReadIndex", srcIndex);
                     }
                 }
             }
         }
+        
+        List<JStatement> statements = null;
+        switch (phase) {
+        case INIT: statements = commandsInit; break;
+        default: statements = commandsSteady; break;
+        }
+        
+        statements.addAll(aaStmts.toCompressedJStmts());
         
         if (phase != SchedulingPhase.INIT) {
             //we must rotate the buffer when not in init

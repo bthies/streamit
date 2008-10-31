@@ -188,7 +188,7 @@ public class FilterCodeGeneration extends CodeStoreHelper {
         //return the for loop that executes the block init - 1
         //times (because the 1st execution is of prework)
         return Utils.makeForLoopFieldIndex(block, useExeIndex1(), 
-                           new JIntLiteral(initMult - 1));
+                           new JIntLiteral(initMult - 1), false);
     }
 
     public JMethodDeclaration getPrimePumpMethod() {

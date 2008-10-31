@@ -6,7 +6,7 @@ import java.util.HashMap;
 import at.dms.kjc.backendSupport.*;
 import at.dms.kjc.*;
 import java.util.LinkedList;
-
+import at.dms.kjc.tilera.arrayassignment.*;
 import java.util.List;
 
 public class BufferRemoteWritesTransfers extends BufferTransfers {
@@ -174,6 +174,8 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
 
         List<JStatement> statements = null;
         
+        ArrayAssignmentStatements aaStmts = new ArrayAssignmentStatements();
+        
         switch (phase) {
             case INIT: statements = commandsInit; break;
             case PRIMEPUMP: assert false; break;
@@ -236,8 +238,8 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
                                     addressArray.add(destElement);
                                 } else {  //no address array, if the addresses are different, we need to move 
                                     if (destElement < sourceElement) {
-                                        statements.add(Util.toStmt(parent.currentWriteBufName + "[ " + destElement + "] = " + 
-                                                parent.currentWriteBufName + "[" + sourceElement + "]"));
+                                        aaStmts.addAssignment(parent.currentWriteBufName, "", destElement, 
+                                                parent.currentWriteBufName, "", sourceElement);
                                     }  //bad!
                                     else if (destElement > sourceElement) {
                                         System.out.println(filter + " -> " + dest.getDest().getNextFilter());
@@ -247,14 +249,17 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
                                 }
                             } else {
                                 SourceAddressRotation addrBuf = parent.getAddressBuffer(dest.getDest());
-                                statements.add(Util.toStmt(addrBuf.currentWriteBufName + "[ " + destElement + "] = " + 
-                                        parent.currentWriteBufName + "[" + sourceElement + "]"));
+                                aaStmts.addAssignment(addrBuf.currentWriteBufName, "", destElement, 
+                                        parent.currentWriteBufName, "", sourceElement);
                             }
                         }
                 }
             }
         }
 
+        //add the compressed assignment statements to the appropriate stage
+        statements.addAll(aaStmts.toCompressedJStmts());
+        
         if (needAddressArray) {
             if (phase == SchedulingPhase.INIT) {
                 addressArrayInit = addressArray;

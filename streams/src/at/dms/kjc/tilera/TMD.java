@@ -321,21 +321,7 @@ public class TMD extends Scheduler {
                 break;
             }
         }
-        
-        //make sure that all filters that execute in the init stage are mapped to the same tile!
-        if (slice.getFirstFilter().getFilter().getInitMult() > 0) {
-            assert slice.getHead().getSources(SchedulingPhase.INIT).length <= 1;
-            if (slice.getHead().getSources(SchedulingPhase.INIT).length  == 1 && 
-                    !slice.getHead().getSources(SchedulingPhase.INIT)[0].getSrc().getPrevFilter().isPredefined()) {
-                assert theBest == getComputeNode(
-                           slice.getHead().getSources(SchedulingPhase.INIT)[0].getSrc().getPrevFilter()) :
-                               slice + " " + theBest.getTileNumber() + " ? " + slice.getHead().getSources(SchedulingPhase.INIT)[0].getSrc().getParent() + 
-                               " " + getComputeNode(
-                                       slice.getHead().getSources(SchedulingPhase.INIT)[0].getSrc().getPrevFilter()).getTileNumber();
-            }
-        }
 
-        
         assert theBest != null;
         return theBest;
     }

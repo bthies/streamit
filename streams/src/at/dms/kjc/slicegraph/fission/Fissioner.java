@@ -444,6 +444,8 @@ public class Fissioner {
                                   initMultLoopCond,
                                   initMultLoopIncr,
                                   (JBlock)ObjectDeepCloner.deepCopy(firstWorkBody));
+            //don't unroll
+            initMultLoop.setUnrolled(true);
             newPreworkBody.addStatement(initMultLoop);
             
             ///if slice did not have an existing prework, create it and install it at sliceClone[0]
@@ -791,6 +793,8 @@ public class Fissioner {
                                   steadyMultLoopCond,
                                   steadyMultLoopIncr,
                                   (JBlock)ObjectDeepCloner.deepCopy(origWorkBodies[x]));
+            //don't unroll
+            steadyMultLoop.setUnrolled(true);
             newWorkBody.addStatement(steadyMultLoop);
 
             // Set new work body

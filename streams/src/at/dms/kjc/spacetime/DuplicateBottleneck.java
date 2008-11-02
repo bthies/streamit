@@ -275,7 +275,7 @@ public class DuplicateBottleneck {
                 double workFraction = estimateWorkFraction(filter, averageWork);
                 System.out.println("   Filter " + filter + " has " + cousins + " cousins and does " + workFraction + " of the work.");
                 if (cousins < tiles) {
-                    int reps = (int)Math.ceil(workFraction * ((double)tiles));
+                    int reps = (int)Math.floor(workFraction * ((double)tiles));
                     reps = Math.min(tiles - cousins + 1, reps);
                    
                     System.out.println("   Calling dup with: " + reps);

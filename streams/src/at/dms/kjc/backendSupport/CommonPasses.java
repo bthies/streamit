@@ -212,7 +212,10 @@ public class CommonPasses {
             dup.percentStateless(str);
             str = FusePipelines.fusePipelinesOfStatelessStreams(str);
             StreamItDot.printGraph(str, "after-fuse-stateless.dot");
-            
+            if (!at.dms.kjc.tilera.TMD.allLevelsFit(str, KjcOptions.tilera * KjcOptions.tilera)) {
+                System.out.println("Have to fuse the graph because at least one level has too many filters...");
+                str = at.dms.kjc.tilera.TMD.SIRFusion(str, KjcOptions.tilera * KjcOptions.tilera);
+            }
             if (KjcOptions.dup == 1) {
                 dup.smarterDuplicate(str, numCores);
             }
@@ -333,7 +336,7 @@ public class CommonPasses {
               KjcOptions.frequencyreplacement || KjcOptions.redundantreplacement)) {
             // for now, do not run in combination with linear replacements
             // because some linear expressions do not have type set
-            if (! vectorizedEarly) { SimplifyPopPeekPush.simplify(str); }
+            if (! vectorizedEarly && KjcOptions.tilera <= 0) { SimplifyPopPeekPush.simplify(str); }
         } else if (KjcOptions.vectorize>0) {
             System.err.println("Linear analysis + vectorization unsupported, because 3-address\n" +
                                "code cannot infer types of some expressions created.  Can fix\n" +

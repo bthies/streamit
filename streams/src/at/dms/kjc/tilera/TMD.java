@@ -2,16 +2,15 @@ package at.dms.kjc.tilera;
 
 import java.util.HashMap;
 
-import at.dms.kjc.sir.SIRContainer;
-import at.dms.kjc.sir.SIRFilter;
-import at.dms.kjc.sir.SIRSplitJoin;
-import at.dms.kjc.sir.SIRStream;
+import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.lowering.fission.StatelessDuplicate;
 import at.dms.kjc.sir.lowering.partition.*;
 import at.dms.kjc.slicegraph.*;
 import at.dms.kjc.*;
 import java.util.LinkedList;
 import at.dms.kjc.backendSupport.*;
+import at.dms.kjc.iterator.IterFactory;
+import at.dms.kjc.iterator.SIRFilterIter;
 import at.dms.kjc.slicegraph.fission.*;
 import java.util.Set;
 import java.util.TreeSet;
@@ -228,8 +227,7 @@ public class TMD extends Scheduler {
                     alreadyAssigned.add(slice);
                     //no upstream slice is in a set
                     if (theBest == null) {
-                        //for now assume that there is always one file reader that feeds only level 1
-                        assert l == 1;
+                        System.out.println("no best: " + slice.getFirstFilter());
                         //create a new set and add it to the set of sets
                         HashSet<Slice> newSet = new HashSet<Slice>();
                         newSet.add(slice);
@@ -274,12 +272,9 @@ public class TMD extends Scheduler {
                 "Too many filters in level for TMD layout!";
             HashSet<Tile> allocatedTiles = new HashSet<Tile>(); 
             
-            if (levels[l].length < TileraBackend.chip.abstractSize()) {
+            if (levels[l].length == 1 && levels[l][0].getFirstFilter().isPredefined()) {
                 //we only support full levels for right now other than predefined filters 
                 //that are not fizzed
-                assert levels[l].length == 1 && levels[l][0].getFirstFilter().isPredefined() :
-                    "Level " + l + " of slice graph has fewer filters than tiles.";
-                
                setComputeNode(levels[l][0].getFirstFilter(), TileraBackend.chip.getOffChipMemory());
             } else {
                 for (int f = 0; f < levels[l].length; f++) {
@@ -396,6 +391,7 @@ public class TMD extends Scheduler {
         for (int l = 1; l < origLevels.length - 1; l++) {
             //for the level, calculate the total work and create a hashmap of fsn to work
             HashMap <FilterSliceNode, Integer> workEsts = new HashMap<FilterSliceNode, Integer>();
+            LinkedList<FilterSliceNode> sortedWork = new LinkedList<FilterSliceNode>();
             //this is the total amount of work
             int levelTotal = 0;
             //the total amount of stateless work
@@ -410,6 +406,16 @@ public class TMD extends Scheduler {
                //the work estimation is the estimate for the work function  
                int workEst = SliceWorkEstimate.getWork(origLevels[l][s]);
                workEsts.put(fsn, workEst);
+               //insert into the sorted list of works
+               int index = 0;
+               for (index = 0; index <= sortedWork.size(); index++) {
+                       if (index == sortedWork.size() ||
+                               workEst > workEsts.get(sortedWork.get(index))) {
+                           break;
+                       }
+               }   
+               sortedWork.add(index, fsn);
+               
                levelTotal += workEst;
                int commRate = fc.getPushInt() * fc.getPopInt() * fc.getMult(SchedulingPhase.STEADY);
                if (Fissioner.canFizz(origLevels[l][s], true)) {
@@ -428,22 +434,32 @@ public class TMD extends Scheduler {
             //level
             int tilesUsed = 0;
              
-            for (int s = 0; s < origLevels[l].length; s++) {
-                FilterSliceNode fsn = origLevels[l][s].getFirstFilter();
+            for (int f = 0; f < sortedWork.size(); f++) {
+                FilterSliceNode fsn = sortedWork.get(f);
                 FilterContent fc = fsn.getFilter();
                 //don't parallelize file readers/writers
                 if (fsn.isPredefined())
                     continue;
                 int commRate = fc.getPushInt() * fc.getPopInt() * fc.getMult(SchedulingPhase.STEADY);
                 //if we cannot fizz this filter, do nothing
-                if (!Fissioner.canFizz(origLevels[l][s], false) || 
-                        workEsts.get(fsn) / commRate <= FISS_COMP_COMM_THRESHOLD) 
+                if (!Fissioner.canFizz(fsn.getParent(), false) || 
+                        workEsts.get(fsn) / commRate <= FISS_COMP_COMM_THRESHOLD) {
+                    tilesUsed++;
                     continue;
+                }
                 
-                long fa = 
-                    Math.round((((double)workEsts.get(fsn)) / ((double)slTotal)) * ((double)availTiles));
-                
-                
+
+                double faFloat = 
+                    (((double)workEsts.get(fsn)) / ((double)slTotal)) * ((double)availTiles);
+                int fa = 0;
+                if (faFloat < 1.0) 
+                    fa = 1;
+                else {
+                    if (f < sortedWork.size()/2) 
+                        fa = (int)Math.ceil(faFloat);
+                    else 
+                        fa = (int)Math.floor(faFloat);
+                }
                 System.out.println(l + ": " + workEsts.get(fsn) + " / " + slTotal + " * " + availTiles + " = " + fa);
                 
                 fizzAmount.put(fsn.getParent(), (int)fa);
@@ -521,115 +537,94 @@ public class TMD extends Scheduler {
     }
     
     /**
-     * This is no longer used, it ran on the SIR graph and partitioned the graph based
-     * on the ASPLOS 06 TMD scheduling policy.
-     *  
-     * Use fission to create a time-multiplexed, data-parallel version of the 
-     * application. Use the cousins algorithm specifying the number of tiles, so that
-     * we duplicate each data parallel (stateless) filter a number of times taking 
-     * the task parallel work into account.  See ASPLOS 06 paper for an explanation. 
-     *  
-     * @param str The stream graph
-     * @param tiles The number of cores of the target machine
+     * Returns the number of filters in the graph.
      */
-    public void oldRun(SIRStream str, int tiles) {
-        System.out.println("Running TMD Partitioner...");
-        
-        WorkEstimate work = WorkEstimate.getWorkEstimate(str);
-        WorkList workList = work.getSortedFilterWork();
-        HashMap<SIRStream, Double> averageWork = 
-            new HashMap<SIRStream, Double>(); 
-        findAverageWork(str, work, averageWork);
-        
-        
-        int totalWork = 0;
-        for (int i = 0; i < workList.size(); i++) {
-            SIRFilter filter = workList.getFilter(i);
-            int filterWork = work.getWork(filter); 
-            System.out.println("Sorted Work " + i + ": " + filter + " work " 
-                    + filterWork + ", is fissable: " + StatelessDuplicate.isFissable(filter));
-            totalWork += filterWork;
+    public static int countFilters(SIRStream str) {
+        //Don't count identity filters
+        final int[] count = { 0 };
+        IterFactory.createFactory().createIter(str).accept(new EmptyStreamVisitor() {
+                public void visitFilter(SIRFilter self,
+                                        SIRFilterIter iter) {
+                    if (!(self instanceof SIRIdentity))
+                        count[0]++;
+                }});
+        return count[0];
+    }
+    
+    public static SIRStream SIRFusion(SIRStream str, int tiles) {
+        KjcOptions.partition_greedier = true;
+        KjcOptions.partition_dp = false;
+        while (!allLevelsFit(str, tiles)) {
+            int tilesNeeded = countFilters(str);
+            str = at.dms.kjc.sir.lowering.partition.Partitioner.doit(str,
+                    tilesNeeded - 1, false, false, true);
+            StreamItDot.printGraph(str, "tmd_sir_fusion.dot");
         }
-        
-        for (int i = workList.size() - 1; i >= 0; i--) {
-            SIRFilter filter = workList.getFilter(i);
-            System.out.println(filter + " work: " + work.getWork(filter));
-            if (!StatelessDuplicate.isFissable(filter)) {
-                System.out.println("  not fissible");
-                continue;
-            }
-            int commRate = ((int[])work.getExecutionCounts().get(filter))[0] * 
-                 (filter.getPushInt() + filter.getPopInt());
-            int filterWork = work.getWork(filter);
-            if (filterWork / commRate <= 10) {
-                System.out.println("   Comp/Comp rate too low!");
-                continue;
-            }
-          
-            int cousins = getNumCousins(filter); 
-            if (cousins == 1) {
-                System.out.println("   No cousins: dup " + tiles);    
-                StatelessDuplicate.doit(filter, tiles);
-            }
-            else {
-                // esimate work fraction of this filter vs. cousins
-                double workFraction = estimateWorkFraction(filter, averageWork);
-                System.out.println("   Filter " + filter + " has " + cousins + " cousins and does " + workFraction + " of the work.");
-                if (cousins < tiles) {
-                    int reps = (int)Math.ceil(workFraction * ((double)tiles));
-                    reps = Math.min(tiles - cousins + 1, reps);
-                   
-                    System.out.println("   Calling dup with: " + reps);
-                    if (reps > 1)
-                        StatelessDuplicate.doit(filter, reps);
-           
-                }
-                
-            }
-        }
+        KjcOptions.partition_greedier = false;
+        return str;
     }
     
     /**
-     * Estimates the percentage of work performed by 'filter' in
-     * relation to all of its cousins.  Works by ascending through
-     * stream graph hierarchy.  Whenever a splitjoin is encountered,
-     * the average work of filters on each branch is used to guide the
-     * division of work between children.  Such fractions are
-     * accumulated multiplicatively until reaching the top-level
-     * splitjoin.
+     * Check to see that all filters in the SIR graph have fewer cousins than there 
+     * are tiles of the chip.
+     * 
+     * @param str The stream graph
+     * @param tiles The number of cores of the target machine
      */
-    private double estimateWorkFraction(SIRFilter filter, HashMap<SIRStream, Double> averageWork) {
-        double fraction = 1.0;
-        SIRContainer parent = filter.getParent();
-        SIRStream child = filter;
-        while (parent != null) {
-            if (parent instanceof SIRSplitJoin) {
-                // work done by other streams
-                double otherWork = 0.0;
-                // work done by stream containing <filter>
-                double myWork = 0.0;    
-                System.out.println(parent);
-                for (int i=0; i<parent.size(); i++) {
-                    System.out.println(averageWork);
-                    SIRStream temp = parent.get(i);
-                    System.out.println(temp);
-                    Double workD = averageWork.get(temp);//parent.get(i));
-                    System.out.println(workD);
-                    double work = workD.doubleValue();
-                    if (parent.get(i)==child) {
-                        myWork = work;
-                    } else {
-                        otherWork += work;
+    public static SIRStream fuseCousins(SIRStream str, int tiles) {
+        KjcOptions.partition_greedier = true;       
+        KjcOptions.partition_dp = false;
+        WorkEstimate work = WorkEstimate.getWorkEstimate(str);
+        WorkList workList = work.getSortedFilterWork();
+               
+        for (int i = workList.size() - 1; i >= 0; i--) {
+            SIRFilter filter = workList.getFilter(i);
+                    
+            int cousins = 1;
+            
+            SIRContainer container = filter.getParent();
+            
+            while (container != null) {
+                if (container instanceof SIRSplitJoin) {
+                    cousins *= (((SIRSplitJoin)container).getParallelStreams().size());
+                    if (cousins > tiles) {
+                        at.dms.kjc.sir.lowering.partition.Partitioner.doit(container,
+                                tiles, false, false, true);
                     }
                 }
-                // accumulate the fraction of work that we do as part of this splitjoin
-                fraction *= myWork / (myWork + otherWork);
+                container = container.getParent();
             }
-            child = parent;
-            parent = parent.getParent();
         }
-        return fraction;
+        
+        KjcOptions.partition_greedier = false;
+        return str;
     }
+   
+    
+    /**
+     * Check to see that all filters in the SIR graph have fewer cousins than there 
+     * are tiles of the chip.
+     * 
+     * @param str The stream graph
+     * @param tiles The number of cores of the target machine
+     */
+    public static boolean allLevelsFit(SIRStream str, int tiles) {
+                
+        WorkEstimate work = WorkEstimate.getWorkEstimate(str);
+        WorkList workList = work.getSortedFilterWork();
+               
+        for (int i = workList.size() - 1; i >= 0; i--) {
+            SIRFilter filter = workList.getFilter(i);
+                    
+            int cousins = getNumCousins(filter); 
+            if (cousins > tiles) {
+                System.out.println(filter + " cousins: " + cousins);
+                return false;                
+            }
+        }
+        return true;
+    }
+   
     
     /**
     * Returns number of parallel streams that are at same nesting
@@ -637,7 +632,7 @@ public class TMD extends Scheduler {
     * that the splitjoin widths on the path from <filter> to the
     * top-level splitjoin are symmetric across other siblings.
     */
-   private int getNumCousins(SIRFilter filter) {
+   private static int getNumCousins(SIRFilter filter) {
        int cousins = 1;
        SIRContainer container = filter.getParent();
        while (container != null) {
@@ -649,53 +644,5 @@ public class TMD extends Scheduler {
        return cousins;
    }
    
-    /**
-     * Mutates 'averageWork' into a mapping from filters to the
-     * average amount of work for all filters deeply nested within
-     * 'str'.
-     */
-    private void findAverageWork(SIRStream str, WorkEstimate work, 
-            HashMap<SIRStream, Double> averageWork) {
-        // the total amount of fissable work per container
-        HashMap<SIRStream, Integer> sum = new HashMap<SIRStream, Integer>();
-        // the number of fissable filters per container
-        HashMap<SIRStream, Integer> count = new HashMap<SIRStream, Integer>();
-
-        findWork(str, work, count, sum, averageWork);
-    }
-
-    /**
-     * Counts the number of filters in each container and stores
-     * result in 'count'.  Also accumulates 'sum' of work in
-     * containers, as well as 'average' of work across all filters in
-     * container.
-     */
-    private void findWork(SIRStream str, WorkEstimate work, 
-                          HashMap<SIRStream, Integer> count,
-                          HashMap<SIRStream, Integer> sum,
-                          HashMap<SIRStream, Double> average) {
-        if (str instanceof SIRFilter) {
-            SIRFilter filter = (SIRFilter)str;
-            count.put(filter, 1);
-            sum.put(filter, work.getWork(filter));
-            average.put(filter, (double)work.getWork(filter));
-        } else {
-            SIRContainer cont = (SIRContainer)str;
-            int mysum = 0;
-            int mycount = 0;
-            // visit children to accumulate sum, count
-            for (int i=0; i<cont.size(); i++) {
-                SIRStream child = (SIRStream) cont.get(i);
-                findWork(child, work, count, sum, average);
-                mysum += sum.get(child);
-                mycount += count.get(child);
-            }
-            // calculate average
-            double myaverage= ((double)mysum) / ((double)mycount);
-            // store results
-            sum.put(cont, mysum);
-            count.put(cont, mycount);
-            average.put(cont, myaverage);
-        }
-    }
+   
 }

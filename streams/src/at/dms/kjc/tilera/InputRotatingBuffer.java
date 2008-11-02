@@ -6,6 +6,7 @@ import at.dms.kjc.spacetime.*;
 import at.dms.kjc.backendSupport.*;
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.*;
+import at.dms.kjc.tilera.arrayassignment.*;
 
 import java.util.*;
 
@@ -711,11 +712,14 @@ public class InputRotatingBuffer extends RotatingBuffer {
             (phase == SchedulingPhase.INIT ? currentReadBufName : currentReadRotName + "->next->buffer");
         String src = currentReadBufName;
         
+        ArrayAssignmentStatements aaStmts = new ArrayAssignmentStatements();
+        
         for (int i = 0; i < filterInfo.copyDown; i++) {
-            retval.add(Util.toStmt(dst + "[" + i + "] = " + src + "[" + 
-                    (i + filterInfo.totalItemsPopped(phase)) +
-                    "]"));
+            aaStmts.addAssignment(dst, "", i, src, "", (i + filterInfo.totalItemsPopped(phase)));
         }
+        
+        retval.addAll(aaStmts.toCompressedJStmts());
+        
         /*
         if (filterInfo.copyDown > 0) {
             String size = (filterInfo.copyDown * Util.getTypeSize(bufType) * 4) + "";

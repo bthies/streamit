@@ -371,6 +371,10 @@ backendbits.getComputeNodes().getNthComputeNode(0).getComputeCode().getMainFunct
                                         CType type,
                                         String ident,
                                         JExpression expr) {
+        if (KjcOptions.tilera > 0 && type == CStdType.Double) {
+            type = CStdType.Float;
+            self.setType(CStdType.Float);
+        }
         if ((modifiers & ACC_STATIC) != 0) {
             p.print ("static ");
             if ((modifiers & ACC_FINAL) != 0) {

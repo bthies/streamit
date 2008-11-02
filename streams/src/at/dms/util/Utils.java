@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.55 2008-10-31 02:09:55 mgordon Exp $
+ * $Id: Utils.java,v 1.56 2008-11-02 02:01:43 mgordon Exp $
  */
 
 package at.dms.util;
@@ -222,7 +222,7 @@ public abstract class Utils implements Serializable, DeepCloneable {
             }
         }
     }
-
+    
     /**
      * promote a literal type to double.
      * @param from  an integer, float, or double literal.
@@ -230,16 +230,49 @@ public abstract class Utils implements Serializable, DeepCloneable {
      */
     private static JExpression asDouble(JExpression from)
     {
+
         if (from instanceof JFloatLiteral)
             return new JDoubleLiteral(from.getTokenReference(),
-                                      from.floatValue());
+                    from.floatValue());
         if (from instanceof JIntLiteral)
             return new JDoubleLiteral(from.getTokenReference(),
-                                      from.intValue());
+                    from.intValue());
         assert from instanceof JDoubleLiteral;
         return from;
     }
+
+    /**
+     * Convert literal to a float or double
+     * 
+     * @param from  an integer, float, or double literal.
+     * @return a double or float literal.
+     */
+    private static JExpression asLiteral(JExpression from, boolean genDouble)
+    {
+        if (genDouble) {
+            if (from instanceof JFloatLiteral)
+                return new JDoubleLiteral(from.getTokenReference(),
+                        from.floatValue());
+            if (from instanceof JIntLiteral)
+                return new JDoubleLiteral(from.getTokenReference(),
+                        from.intValue());
+            assert from instanceof JDoubleLiteral;
+            return from;
+        } else {
+            //generate floats
+            if (from instanceof JDoubleLiteral)
+                return new JFloatLiteral(from.getTokenReference(),
+                        (float)from.doubleValue());
+            if (from instanceof JIntLiteral)
+                return new JFloatLiteral(from.getTokenReference(),
+                        from.intValue());
+            assert from instanceof JFloatLiteral;
+            return from;
+        }
+    }
    
+    
+    
     /**
      * Simplify an call to a math function with literal arguments.
      * Even if can't simplify, pass back something semantically 
@@ -247,7 +280,7 @@ public abstract class Utils implements Serializable, DeepCloneable {
      * @param applyMath  application of math function to simplify
      * @return an expression, possibly a literal value.
      */
-    public static JExpression simplifyMathMethod(JMethodCallExpression applyMath) {
+    public static JExpression simplifyMathMethod(JMethodCallExpression applyMath, boolean useDouble) {
         MathMethodInfo mm = MathMethodInfo.mathMethodMap.get(applyMath
                 .getIdent());
         if (mm == null) {
@@ -342,101 +375,101 @@ public abstract class Utils implements Serializable, DeepCloneable {
         case ACOS:
             assert args.length == 1;
             darg = asDouble(args[0]).doubleValue();
-            return new JDoubleLiteral(applyMath.getTokenReference(), Math
-                    .acos(darg));
+            return asLiteral(new JDoubleLiteral(applyMath.getTokenReference(), Math
+                    .acos(darg)), useDouble);
 
         case ASIN:
             assert args.length == 1;
             darg = asDouble(args[0]).doubleValue();
-            return new JDoubleLiteral(applyMath.getTokenReference(), Math
-                    .asin(darg));
+            return asLiteral(new JDoubleLiteral(applyMath.getTokenReference(), Math
+                    .asin(darg)), useDouble);
         case ATAN:
             assert args.length == 1;
             darg = asDouble(args[0]).doubleValue();
-            return new JDoubleLiteral(applyMath.getTokenReference(), Math
-                    .atan(darg));
+            return asLiteral(new JDoubleLiteral(applyMath.getTokenReference(), Math
+                    .atan(darg)), useDouble);
         case ATAN2:
             assert args.length == 2;
             darg = asDouble(args[0]).doubleValue();
             darg2 = asDouble(args[1]).doubleValue();
-            return new JDoubleLiteral(applyMath.getTokenReference(), Math
-                    .atan2(darg, darg2));
+            return asLiteral(new JDoubleLiteral(applyMath.getTokenReference(), Math
+                    .atan2(darg, darg2)), useDouble);
         case CEIL:
             assert args.length == 1;
             darg = asDouble(args[0]).doubleValue();
-            return new JDoubleLiteral(applyMath.getTokenReference(), Math
-                    .ceil(darg));
+            return asLiteral(new JDoubleLiteral(applyMath.getTokenReference(), Math
+                    .ceil(darg)), useDouble);
         case COS:
             assert args.length == 1;
             darg = asDouble(args[0]).doubleValue();
-            return new JDoubleLiteral(applyMath.getTokenReference(), Math
-                    .cos(darg));
+            return asLiteral(new JDoubleLiteral(applyMath.getTokenReference(), Math
+                    .cos(darg)), useDouble);
         case SIN:
             assert args.length == 1;
             darg = asDouble(args[0]).doubleValue();
-            return new JDoubleLiteral(applyMath.getTokenReference(), Math
-                    .sin(darg));
+            return asLiteral(new JDoubleLiteral(applyMath.getTokenReference(), Math
+                    .sin(darg)), useDouble);
         case COSH:
             assert args.length == 1;
             darg = asDouble(args[0]).doubleValue();
-            return new JDoubleLiteral(applyMath.getTokenReference(), Math
-                    .cosh(darg));
+            return asLiteral(new JDoubleLiteral(applyMath.getTokenReference(), Math
+                    .cosh(darg)), useDouble);
         case SINH:
             assert args.length == 1;
             darg = asDouble(args[0]).doubleValue();
-            return new JDoubleLiteral(applyMath.getTokenReference(), Math
-                    .sinh(darg));
+            return asLiteral(new JDoubleLiteral(applyMath.getTokenReference(), Math
+                    .sinh(darg)), useDouble);
         case EXP:
             assert args.length == 1;
             darg = asDouble(args[0]).doubleValue();
-            return new JDoubleLiteral(applyMath.getTokenReference(), Math
-                    .exp(darg));
+            return asLiteral(new JDoubleLiteral(applyMath.getTokenReference(), Math
+                    .exp(darg)), useDouble);
         case FLOOR:
             assert args.length == 1;
             darg = asDouble(args[0]).doubleValue();
-            return new JDoubleLiteral(applyMath.getTokenReference(), Math
-                    .floor(darg));
+            return asLiteral(new JDoubleLiteral(applyMath.getTokenReference(), Math
+                    .floor(darg)), useDouble);
         case LOG:
             assert args.length == 1;
             darg = asDouble(args[0]).doubleValue();
-            return new JDoubleLiteral(applyMath.getTokenReference(), Math
-                    .log(darg));
+            return asLiteral(new JDoubleLiteral(applyMath.getTokenReference(), Math
+                    .log(darg)), useDouble);
         case LOG10:
             assert args.length == 1;
             darg = asDouble(args[0]).doubleValue();
-            return new JDoubleLiteral(applyMath.getTokenReference(), Math
-                    .log10(darg));
+            return asLiteral(new JDoubleLiteral(applyMath.getTokenReference(), Math
+                    .log10(darg)), useDouble);
         case POW:
             assert args.length == 2;
             darg = asDouble(args[0]).doubleValue();
             darg2 = asDouble(args[1]).doubleValue();
-            return new JDoubleLiteral(applyMath.getTokenReference(), Math.pow(
-                    darg, darg2));
+            return asLiteral(new JDoubleLiteral(applyMath.getTokenReference(), Math.pow(
+                    darg, darg2)), useDouble);
         case ROUND:
             assert args.length == 1;
             darg = asDouble(args[0]).doubleValue();
-            return new JDoubleLiteral(applyMath.getTokenReference(), Math
-                    .round(darg));
+            return asLiteral(new JDoubleLiteral(applyMath.getTokenReference(), Math
+                    .round(darg)), useDouble);
         case RINT:
             assert args.length == 1;
             darg = asDouble(args[0]).doubleValue();
-            return new JDoubleLiteral(applyMath.getTokenReference(), Math
-                    .rint(darg));
+            return asLiteral(new JDoubleLiteral(applyMath.getTokenReference(), Math
+                    .rint(darg)), useDouble);
         case SQRT:
             assert args.length == 1;
             darg = asDouble(args[0]).doubleValue();
-            return new JDoubleLiteral(applyMath.getTokenReference(), Math
-                    .sqrt(darg));
+            return asLiteral(new JDoubleLiteral(applyMath.getTokenReference(), Math
+                    .sqrt(darg)), useDouble);
         case TAN:
             assert args.length == 1;
             darg = asDouble(args[0]).doubleValue();
-            return new JDoubleLiteral(applyMath.getTokenReference(), Math
-                    .tan(darg));
+            return asLiteral(new JDoubleLiteral(applyMath.getTokenReference(), Math
+                    .tan(darg)), useDouble);
         case TANH:
             assert args.length == 1;
             darg = asDouble(args[0]).doubleValue();
-            return new JDoubleLiteral(applyMath.getTokenReference(), Math
-                    .tanh(darg));
+            return asLiteral(new JDoubleLiteral(applyMath.getTokenReference(), Math
+                    .tanh(darg)), useDouble);
         case ABS:
             assert args.length == 1;
             if (args[0] instanceof JIntLiteral) {
@@ -444,8 +477,8 @@ public abstract class Utils implements Serializable, DeepCloneable {
                         .abs(((JIntLiteral) args[0]).intValue()));
             } else {
                 darg = asDouble(args[0]).doubleValue();
-                return new JDoubleLiteral(applyMath.getTokenReference(), Math
-                        .abs(darg));
+                return asLiteral(new JDoubleLiteral(applyMath.getTokenReference(), Math
+                        .abs(darg)), useDouble);
             }
         case MAX:
             assert args.length == 2;
@@ -457,8 +490,8 @@ public abstract class Utils implements Serializable, DeepCloneable {
             } else {
                 darg = asDouble(args[0]).doubleValue();
                 darg2 = asDouble(args[1]).doubleValue();
-                return new JDoubleLiteral(applyMath.getTokenReference(), Math
-                        .max(darg, darg2));
+                return asLiteral(new JDoubleLiteral(applyMath.getTokenReference(), Math
+                        .max(darg, darg2)), useDouble);
             }
         case MIN:
             assert args.length == 2;
@@ -470,8 +503,8 @@ public abstract class Utils implements Serializable, DeepCloneable {
             } else {
                 darg = asDouble(args[0]).doubleValue();
                 darg2 = asDouble(args[1]).doubleValue();
-                return new JDoubleLiteral(applyMath.getTokenReference(), Math
-                        .min(darg, darg2));
+                return asLiteral(new JDoubleLiteral(applyMath.getTokenReference(), Math
+                        .min(darg, darg2)), useDouble);
             }
         default:
             throw new AssertionError(mm);

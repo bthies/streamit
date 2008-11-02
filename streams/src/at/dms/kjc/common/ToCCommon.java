@@ -769,6 +769,10 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
                                             JExpression expr,
                                             CType type)
     {
+        if (KjcOptions.tilera > 0 && self.getType() == CStdType.Double) {
+            self.setType(CStdType.Float);
+            type = self.getType();
+        }
         printLParen();
         p.print("(");
         printType(type);

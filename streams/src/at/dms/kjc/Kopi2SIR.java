@@ -2138,6 +2138,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
             return createMessageStatement(self, ((JFieldAccessExpression)prefix).getType(), prefix, args);
         }       
         else {             //Not an SIR call
+            if (self.getType() == CStdType.Double && KjcOptions.tilera > 0)
+                self.setType(CStdType.Float);
             if (prefix==null) {
                 prefix = new JThisExpression();
             } else {
@@ -2617,6 +2619,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
                                      double value) 
     {
         blockStart("DoubleLiteral", self);
+        if (KjcOptions.tilera > 0) 
+            return new JFloatLiteral(self.getTokenReference(), (float)value);
         return new JDoubleLiteral(self.getTokenReference(), value);
     }
 

@@ -201,7 +201,7 @@ public class EmitTileCode extends EmitCode {
         p.println("endif");
         p.println();
         p.println("CC = $(BIN)tile-cc");
-        p.println("CFLAGS = -Os");
+        p.println("CFLAGS = -Os -OPT:Olimit=0");
         p.println("SIM = $(BIN)tile-sim");
         p.println("MONITOR = $(BIN)tile-monitor");
         p.println("LDFLAGS = -static");
@@ -297,6 +297,7 @@ public class EmitTileCode extends EmitCode {
         
         // Standard final optimization of a code unit before code emission:
         // unrolling and constant prop as allowed, DCE, array destruction into scalars.
+        System.out.println("Optimizing...");
         (new at.dms.kjc.sir.lowering.FinalUnitOptimize()).optimize(fieldsAndMethods);
         
         p.println("// code for tile " + n.getUniqueId());

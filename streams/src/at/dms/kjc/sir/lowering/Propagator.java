@@ -1473,7 +1473,11 @@ public class Propagator extends SLIRReplacingVisitor {
 
         // if java.lang.Math method, try evaluating now.
         if (at.dms.util.Utils.isMathMethod(prefix, ident)) {
-            return at.dms.util.Utils.simplifyMathMethod(self);
+            //if we are compiling to Tilera, don't use doubles
+            if (at.dms.kjc.KjcOptions.tilera > 0)
+                return at.dms.util.Utils.simplifyMathMethod(self, false);
+            else
+                return at.dms.util.Utils.simplifyMathMethod(self, true);
         }
         
         return self;

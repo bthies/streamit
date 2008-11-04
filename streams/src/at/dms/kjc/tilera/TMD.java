@@ -396,8 +396,7 @@ public class TMD extends Scheduler {
             int levelTotal = 0;
             //the total amount of stateless work
             int slTotal = 0;
-            //tiles available, don't count stateful filters
-            int availTiles = totalTiles;
+            int cannotFizz = 0;            
             for (int s = 0; s < origLevels[l].length; s++) {
                FilterSliceNode fsn = origLevels[l][s].getFirstFilter();
                FilterContent fc = fsn.getFilter();
@@ -414,26 +413,33 @@ public class TMD extends Scheduler {
                            break;
                        }
                }   
-               sortedWork.add(index, fsn);
                
                levelTotal += workEst;
                int commRate = fc.getPushInt() * fc.getPopInt() * fc.getMult(SchedulingPhase.STEADY);
                if (Fissioner.canFizz(origLevels[l][s], true)) {
                    if (workEst / commRate <= FISS_COMP_COMM_THRESHOLD) {
                        System.out.println("Dont' fiss " + fsn + ", too much communication!");
-                   } else
+                       cannotFizz++;
+                   } else {
                        slTotal += workEst;
+                       sortedWork.add(index, fsn);
+                   }
                } 
                else {
                    System.out.println("Cannot fiss " + fsn);
-                   availTiles--;
+                   cannotFizz++;
                }
             }
-               
+            
+            //tiles available, don't count stateful filters
+            int availTiles = totalTiles - cannotFizz;
+
             //now go through the level and parallelize each filter according to the work it does in the
             //level
-            int tilesUsed = 0;
-             
+            int tilesUsed = cannotFizz;
+            int maxLevelWork = 0;
+            int perfectPar = slTotal / availTiles; 
+                
             for (int f = 0; f < sortedWork.size(); f++) {
                 FilterSliceNode fsn = sortedWork.get(f);
                 FilterContent fc = fsn.getFilter();
@@ -444,30 +450,41 @@ public class TMD extends Scheduler {
                 //if we cannot fizz this filter, do nothing
                 if (!Fissioner.canFizz(fsn.getParent(), false) || 
                         workEsts.get(fsn) / commRate <= FISS_COMP_COMM_THRESHOLD) {
-                    tilesUsed++;
-                    continue;
-                }
+                    assert false;
+                } 
+                //System.out.println("Calculating fizz amount for: " + fsn + "(" + availTiles + " avail tiles)");
                 
-
                 double faFloat = 
                     (((double)workEsts.get(fsn)) / ((double)slTotal)) * ((double)availTiles);
                 int fa = 0;
                 if (faFloat < 1.0) 
                     fa = 1;
                 else {
-                    if (f < sortedWork.size()/2) 
+                    fa = (int)Math.floor(faFloat);
+                  /*  if (f < sortedWork.size() / 2) 
                         fa = (int)Math.ceil(faFloat);
                     else 
-                        fa = (int)Math.floor(faFloat);
+                        fa = (int)Math.floor(faFloat); */
                 }
-                System.out.println(l + ": " + workEsts.get(fsn) + " / " + slTotal + " * " + availTiles + " = " + fa);
-                
+                /*
+                double faFloat = (((double)workEsts.get(fsn)) / ((double)slTotal)) * ((double)availTiles);
+                int fa = (int)Math.ceil(faFloat);
+                 */
+                //System.out.println(l + ": " + workEsts.get(fsn) + " / " + slTotal + " * " + availTiles + " = " + fa);
+             
+                //availTiles -= fa;
+                int thisWork = workEsts.get(fsn) / fa;
+                if (thisWork > maxLevelWork)
+                    maxLevelWork = thisWork;
+             
                 fizzAmount.put(fsn.getParent(), (int)fa);
                 assert fa > 0 : fsn;
                 tilesUsed += fa;
             }
             
-            assert tilesUsed <= totalTiles : "Level " + l + " has too many slices!";
+            System.out.println("Level " + l + ": max work: " + maxLevelWork + ", perfect: " + perfectPar);
+            
+            assert tilesUsed <= totalTiles : "Level " + l + " has too many slices: " + tilesUsed;
             
             //assert that we use all the tiles for each level
             if (tilesUsed < totalTiles) 

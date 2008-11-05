@@ -764,4 +764,48 @@ float atan(fixed a)
   return (float)a.atan();
 }
 
+inline fixed operator*(float a, fixed b)
+{
+  return b.multiply(a);
+}
+
+inline fixed operator+(float a, fixed b)
+{
+  return b.add(a);
+}
+
+inline fixed operator-(float a, fixed b)
+{
+  return b.sub(a);
+}
+
+inline fixed operator/(float a, fixed b)
+{
+  return b.divide(a);
+}
+
+
+inline fixed operator*(int a, fixed b)
+{
+  return b.multiply(a);
+}
+
+inline fixed operator+(int a, fixed b)
+{
+  return b.add(a);
+}
+
+inline fixed operator-(int a, fixed b)
+{
+  return b.sub(a);
+}
+
+inline fixed operator/(int a, fixed b)
+{
+  return b.divide(a);
+}
+
+
+
+
 #endif // _FIXED_H

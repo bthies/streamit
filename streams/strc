@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.132 2008-05-12 19:18:28 mgordon Exp $
+# $Id: strc,v 1.133 2008-11-05 21:19:04 mgordon Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -218,7 +218,7 @@ Usage: strc [options] file.str ...
 * --newSimple         (in development)
   --simpleC           Use basic backend (not full-featured) to generate C output
   --raw n, -r n       Compile for Raw, with an n-by-n grid
-  --tilera n, -t n    Compiee for Tilera's Tile64, targeting n-by-n cores
+  --tilera n, -t n    Compile for Tilera's Tile64, targeting n-by-n cores
   --rstream, -R       Generate C-like file to be compiled by RStream compiler 
 * --standalone, -S    Use Raw backend to generate C file for uniprocessor
 * --streamit          Output of the compiler is a StreamIt program
@@ -454,6 +454,7 @@ sub get_options
 			    "sjtopipe",
 			    "space",
 			    "spacetime",
+			    "fixedpoint",
 			    "statespace!",
 			    "absarray!",
 			    "doloops!",
@@ -925,6 +926,7 @@ sub get_compiler_opts
     $opts{forceplacement} && ($copts .= " --forceplacement");
     $opts{malloczeros} && ($copts .= " --malloczeros");
     $opts{nopartition} && ($copts .= " --nopartition");
+    $opts{fixedpoint} && ($copts .= " --fixedpoint");
     $opts{steadymult} && ($copts .= " --steadymult ". $opts{steadymult});
     $opts{slicethresh} && ($copts .= " --slicethresh ". $opts{slicethresh});
     $opts{st_cyc_per_wd} && ($copts .= " --st_cyc_per_wd ". $opts{st_cyc_per_wd});

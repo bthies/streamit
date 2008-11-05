@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.107 2008-05-12 19:31:07 mgordon Exp $
+ * $Id: KjcOptions.opt,v 1.108 2008-11-05 21:18:33 mgordon Exp $
  */
 
 prefix Kjc
@@ -715,6 +715,11 @@ longname		"localstoglobals"
 	type		boolean
 	default		"false"
 	help		"Convert local variables to global variables (can avoid stack overflow)."
+
+longname		"fixedpoint"
+	type		boolean
+	default		"false"
+	help		"Convert floating point to fixed point in Tilera Backend."
 
 
 longname		"tilera"

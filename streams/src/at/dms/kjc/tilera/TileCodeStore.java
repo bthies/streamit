@@ -355,9 +355,13 @@ public class TileCodeStore extends ComputeCodeStore<Tile> {
         appendTxtToGlobal("      totalCycles += __cycle_counts__[i+1] - __cycle_counts__[i];\n");
 
         appendTxtToGlobal("    avgCycles = totalCycles / (ITERATIONS - 1);\n");
-        appendTxtToGlobal("    printf(\"Average cycles per SS for %d iterations: %llu, avg cycles per output: %llu \\n\", ITERATIONS, avgCycles" + 
-                ", (avgCycles / ((uint64_t)" +
-                ProcessFileWriter.getTotalOutputs() + ")));\n");
+        if (ProcessFileWriter.getTotalOutputs() > 0) {
+            appendTxtToGlobal("    printf(\"Average cycles per SS for %d iterations: %llu, avg cycles per output: %llu \\n\", ITERATIONS, avgCycles" + 
+                    ", (avgCycles / ((uint64_t)" +
+                        ProcessFileWriter.getTotalOutputs() + ")));\n");
+        } else {
+            appendTxtToGlobal("    printf(\"Average cycles per SS for %d iterations: %llu \\n\", ITERATIONS, avgCycles);\n");
+        }
         appendTxtToGlobal("    __iteration__ = 0;\n");
 
         appendTxtToGlobal("  }\n");

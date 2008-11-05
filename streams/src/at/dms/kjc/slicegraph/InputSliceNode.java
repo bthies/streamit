@@ -94,14 +94,6 @@ public class InputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneabl
     }
 
     /**
-     * Return true if this input node has a different schedule for the initialization 
-     * stage.  This mean initWeights and initSources are not null.  Otherwise, return false
-     * meaning the init stages is the same as the steady.
-     * 
-     * @return 
-     */
-    
-    /**
      * Merge neighboring edges and weights if the neighboring edges
      * are actually the same Edge object. 
      * This operation exists as a cleanup operation for synch removal.
@@ -157,6 +149,18 @@ public class InputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneabl
      */
     public boolean singleAppearance(SchedulingPhase phase) {
         return getSourceSet(phase).size() == getSourceList(phase).size();
+    }
+    
+    /**
+     * Return true if this input slice node has an incoming edge from <node> in <phase>.
+     */
+    public boolean hasEdgeFrom(SchedulingPhase phase, FilterSliceNode node) {
+        for (InterSliceEdge edge : getSourceSet(phase)) {
+            if (edge.getSrc().getPrevFilter() == node) {
+                return true;
+            }
+        }
+        return false;
     }
     
     /**

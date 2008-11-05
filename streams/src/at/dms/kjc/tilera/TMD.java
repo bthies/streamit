@@ -25,7 +25,7 @@ import java.util.List;
  */
 public class TMD extends Scheduler {
 
-    private double DUP_THRESHOLD = .1;
+    private double DUP_THRESHOLD = .75;
     public LevelizeSliceGraph lsg;
     private HashMap<Slice, Integer> fizzAmount;
     public static final int FISS_COMP_COMM_THRESHOLD = 10;
@@ -388,7 +388,7 @@ public class TMD extends Scheduler {
         Slice[][] origLevels = new LevelizeSliceGraph(graphSchedule.getSlicer().getTopSlices()).getLevels();
         
         //assume that level 0 has a file reader and the last level has a file writer
-        for (int l = 1; l < origLevels.length - 1; l++) {
+        for (int l = 0; l < origLevels.length; l++) {
             //for the level, calculate the total work and create a hashmap of fsn to work
             HashMap <FilterSliceNode, Integer> workEsts = new HashMap<FilterSliceNode, Integer>();
             LinkedList<FilterSliceNode> sortedWork = new LinkedList<FilterSliceNode>();
@@ -415,7 +415,7 @@ public class TMD extends Scheduler {
                }   
                
                levelTotal += workEst;
-               int commRate = fc.getPushInt() * fc.getPopInt() * fc.getMult(SchedulingPhase.STEADY);
+               int commRate = (fc.getPushInt()  + fc.getPopInt()) * fc.getMult(SchedulingPhase.STEADY);
                if (Fissioner.canFizz(origLevels[l][s], true)) {
                    if (workEst / commRate <= FISS_COMP_COMM_THRESHOLD) {
                        System.out.println("Dont' fiss " + fsn + ", too much communication!");
@@ -446,7 +446,7 @@ public class TMD extends Scheduler {
                 //don't parallelize file readers/writers
                 if (fsn.isPredefined())
                     continue;
-                int commRate = fc.getPushInt() * fc.getPopInt() * fc.getMult(SchedulingPhase.STEADY);
+                int commRate = (fc.getPushInt() + fc.getPopInt()) * fc.getMult(SchedulingPhase.STEADY);
                 //if we cannot fizz this filter, do nothing
                 if (!Fissioner.canFizz(fsn.getParent(), false) || 
                         workEsts.get(fsn) / commRate <= FISS_COMP_COMM_THRESHOLD) {

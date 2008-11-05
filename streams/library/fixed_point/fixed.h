@@ -734,34 +734,34 @@ inline fixed fixed::atan()
   return r;
 }
 
-float sin(fixed a) 
+fixed sin(fixed a) 
 {
-  return (float)a.sin();
+  return a.sin();
 }
 
-float cos(fixed a) 
+fixed cos(fixed a) 
 {
-  return (float)a.cos();
+  return a.cos();
 }
 
-float tan(fixed a) 
+fixed tan(fixed a) 
 {
-  return (float)a.tan();
+  return a.tan();
 }
 
-float asin(fixed a) 
+fixed asin(fixed a) 
 {
-  return (float)a.asin();
+  return a.asin();
 }
 
-float acos(fixed a) 
+fixed acos(fixed a) 
 {
-  return (float)a.acos();
+  return a.acos();
 }
 
-float atan(fixed a) 
+fixed atan(fixed a) 
 {
-  return (float)a.atan();
+  return a.atan();
 }
 
 inline fixed operator*(float a, fixed b)

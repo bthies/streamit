@@ -65,10 +65,10 @@ float[M]->float filter FindMedian(int K, int M) {
     }
 }
 
-float->float[M] pipeline medianFilter(int K, int M, int N) {
+float->float pipeline medianFilter(int K, int M, int N) {
     add Expander(K, M);
     add VectSorter(M);
-    add float[M]->float[M] splitjoin {
+    add float[M]->float splitjoin {
 	split roundrobin;
 	for (int i = 0; i < N; i++) add FindMedian(K, M);
 	join roundrobin;

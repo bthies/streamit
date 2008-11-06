@@ -437,7 +437,9 @@ public class TMD extends Scheduler {
             
             //tiles available, don't count stateful filters
             int availTiles = totalTiles - cannotFizz;
-
+            //can't do anything, no avail tiles
+            if (availTiles == 0)
+                continue;
             //now go through the level and parallelize each filter according to the work it does in the
             //level
             int tilesUsed = cannotFizz;

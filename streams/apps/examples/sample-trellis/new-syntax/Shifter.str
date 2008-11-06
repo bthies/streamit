@@ -1,0 +1,20 @@
+/**
+ * Simple filter which converts chars to a bit stream
+ * for input into the trellis encoder/decoder.
+ * basically, we shift out the bits (least sig first)
+ * as integers into the output stream
+ **/
+int->int filter Shifter {
+    work pop 1 push 8 {
+	int currentChar = pop();
+	int data = currentChar;
+	int i;
+
+	for (i=0; i<8; i++) {
+	    // push out the current lsb
+	    push(data & 0x1);
+	    // do a right shift
+	    data = (data >> 1);
+	}
+    }
+}

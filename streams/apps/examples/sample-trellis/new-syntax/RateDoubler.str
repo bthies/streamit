@@ -1,0 +1,8 @@
+int->int filter RateDoubler {
+    work pop 1 push 2 {
+	int temp;
+	temp = pop();
+	push(temp);
+	push(temp);
+    }
+}

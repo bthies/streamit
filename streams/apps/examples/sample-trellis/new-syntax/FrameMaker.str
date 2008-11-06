@@ -1,0 +1,16 @@
+/*
+ * Creates frames of data for the trellis encoder/decoder to work
+ */
+int->int filter FrameMaker(int FRAMESIZE) {
+    work pop FRAMESIZE-1 push FRAMESIZE {
+	int i;
+	// push all of the data, and then push a 0 to reset the encoder
+	for (i=0; i<FRAMESIZE-1;i++) {
+	    push(pop());
+	}
+	// throw on the terminating zero
+	push(0);
+    }
+}
+
+

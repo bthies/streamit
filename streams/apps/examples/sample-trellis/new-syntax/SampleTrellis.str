@@ -1,0 +1,29 @@
+/*
+ * Trellis Encoder/Decoder system that encodes/decodes blocks of 8 bytes.
+ */
+void->void pipeline SampleTrellis {
+    // frame size is size of data in frame plus one for terminating 0
+    // (actually, we only need two bits of 0 to reset the encoder, but that is ok)
+    int FRAMESIZE = 5;
+
+    add DataSource();
+    add FrameMaker(FRAMESIZE);
+    add Shifter();
+    //add BinaryPasser("original data");
+    add NoiseSource(39);
+    add RateDoubler();
+    add splitjoin {
+	split roundrobin;
+	add pipeline {
+	    add TrellisEncoder();
+	    add TrellisDecoder(FRAMESIZE * 8);
+	}
+	add Identity<int>();
+	join roundrobin;
+    }
+    add DownSample();
+    //add BinaryPasser("translated data");
+    add UnShifter();
+    add UnFrameMaker(FRAMESIZE);
+    add CharPrinter();
+}

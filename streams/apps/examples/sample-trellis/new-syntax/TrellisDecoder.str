@@ -1,0 +1,40 @@
+/*
+ * Simple Trellis decoder. Uses the ideas and algorithms
+ * from http://pw1.netcom.com/~chip.f/viterbi/algrthms2.html
+ * basically this decoder takes a two bit symbol and decodes
+ * it into 1 bit data. Note that the decoder keeps a bunch
+ * of state to accomplish this task.
+ *
+ * The main idea of the vertibi decoding algorithm is to
+ * fill out two tables (a la dynamic programming) as we trace out all possible
+ * paths in the trellis. Since a path in the trellis corresponds exactly to one input
+ * sequence, by recovering the path, we will be able to recover the input.
+ * 
+ * each table is two dimensional: states and time. Each unit of time corresponds to
+ * receiving 1 symbol (so in this case receiving 2 bits). Each cell represents something
+ * for a particular state at a particular time. The algorithm fills up both tables as
+ * time progresses. When the tables are full, it traces back through the table and finds the
+ * path that results in the fewest errors occuring.
+ *
+ * The error metric that is used is hamming distance.
+ *
+ * The first table keeps track of accumulated errors. accumulated_error[s,t] is the hamming distance
+ * between the output that the current min path to state s at time t would generate and the
+ * symbols that have been received. 
+ *
+ * The second table keeps track of the previous states, so that the min path
+ * can be reconstructed. predecessor_states[s,t] represents the state s' of the encoder
+ * in the minimum path that leads to s at time (t-1) 
+ */
+
+/* NOTE: NOT A FAITHFUL TRANSLATION OF THE JAVA */
+/* -- only to be used for getting stream graph stats -- */
+int->int filter TrellisDecoder(int DATASIZE) {
+     int SYMBOLSIZE = 2;
+    // this filer is stateful in the .java version, so emulate that
+    int x = 0;
+
+     work pop DATASIZE*SYMBOLSIZE push DATASIZE {
+         push(x++);
+     }
+}

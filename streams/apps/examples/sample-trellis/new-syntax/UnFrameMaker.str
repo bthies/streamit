@@ -1,0 +1,15 @@
+/*
+ * Strips out the zero bytes that are pushed into the stream
+ */
+int->int filter UnFrameMaker(int FRAMESIZE) {
+    work pop FRAMESIZE push FRAMESIZE-1 {
+	int i;
+	// push the data bytes, ignore the last null ending byte
+	for (i=0; i<FRAMESIZE-1;i++) {
+	    push(pop());
+	}
+	pop();
+    }
+}
+
+

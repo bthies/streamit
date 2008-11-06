@@ -1,0 +1,17 @@
+/*
+ * Data source for trellis encoder example
+ */
+void->int filter DataSource {
+    int x = 65;  // start with letter A
+
+    work push 1 {
+	//System.out.println("pushing: " + (char)x);
+	push(x);
+	x = (x + 1) % 90; // end with letter Z
+	if (x == 0) {
+	    x = 65;
+	}
+    }
+}
+
+

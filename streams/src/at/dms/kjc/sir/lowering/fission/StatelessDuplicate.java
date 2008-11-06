@@ -122,7 +122,11 @@ public class StatelessDuplicate {
             return false;
         }
     
-        //Hack to prevent fissing file writers
+      //Hack to prevent fissing file writers
+        if(filter.getIdent().startsWith("FileReader"))
+            return false;
+        
+      //Hack to prevent fissing file writers
         if(filter.getIdent().startsWith("FileWriter"))
             return false;
 

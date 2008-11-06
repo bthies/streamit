@@ -108,7 +108,7 @@ public class TMD extends Scheduler {
         //place each slice in a set that will be mapped to the same tile
         System.out.println("Partitioning into same tile sets...");
         Set<Set<Slice>> sameTile = createSameTileSets(levels);
-        assert sameTile.size() == TileraBackend.chip.abstractSize() : 
+        assert sameTile.size() <= TileraBackend.chip.abstractSize() : 
             sameTile.size() + " " + TileraBackend.chip.abstractSize();
         Tile nextToAssign = TileraBackend.chip.getComputeNode(0, 0);
         Set<Slice> current = sameTile.iterator().next();
@@ -116,7 +116,7 @@ public class TMD extends Scheduler {
         System.out.println("Beginning Neighbors Layout...");
         
         while (true) {
-            //system.out.println("Assiging " + current + " to " + nextToAssign.getTileNumber());
+            //system.out.println("Assigning " + current + " to " + nextToAssign.getTileNumber());
             assignSlicesToTile(current, nextToAssign);
             done.add(current);
             assert done.contains(current);

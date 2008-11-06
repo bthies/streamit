@@ -63,9 +63,11 @@ public class TileCodeStore extends ComputeCodeStore<Tile> {
      * method.
      */
     public static void addBufferInitBarrier() {
+        
         for (int t = 0; t < TileraBackend.chip.abstractSize(); t++) {
            Tile tile = TileraBackend.chip.getTranslatedTile(t);
             TileCodeStore cs = TileraBackend.chip.getTranslatedTile(t).getComputeCode();
+            cs.setHasCode();
            /*
             cs.addStatementToBufferInit("// Static Network Barrier ");
             cs.addStatementToBufferInit("ilib_mem_fence()");
@@ -90,6 +92,7 @@ public class TileCodeStore extends ComputeCodeStore<Tile> {
         for (int t = 0; t < TileraBackend.chip.abstractSize(); t++) {
             TileCodeStore cs = TileraBackend.chip.getTranslatedTile(t).getComputeCode();
              cs.addInitStatement(Util.toStmt("ilib_msg_barrier(ILIB_GROUP_SIBLINGS)"));
+             cs.setHasCode();
          }
     }
     
@@ -101,6 +104,7 @@ public class TileCodeStore extends ComputeCodeStore<Tile> {
         for (int t = 0; t < TileraBackend.chip.abstractSize(); t++) {
             TileCodeStore cs = TileraBackend.chip.getTranslatedTile(t).getComputeCode();
             cs.addSteadyLoopStatement(Util.toStmt("/* Static Network Barrier */"));
+            cs.setHasCode();
             String code[] = staticNetworkBarrier(cs.getParent());
             for (String stmt : code) {
                 cs.addSteadyLoopStatement(Util.toStmt(stmt));
@@ -187,6 +191,7 @@ public class TileCodeStore extends ComputeCodeStore<Tile> {
     }
     
     private void createBufferInitMethod() {
+        this.setHasCode();
         //create the method that will malloc the buffers and receive the addresses from downstream tiles
         bufferInit = new JMethodDeclaration(CStdType.Void, bufferInitMethName, new JFormalParameter[0], new JBlock());
         //create a status variable for the point to point messages and the dma commands
@@ -206,6 +211,7 @@ public class TileCodeStore extends ComputeCodeStore<Tile> {
      */
     public void appendTxtToGlobal(String str) {
         globalTxt.append(str);
+        this.setHasCode();
     }
     
     /**
@@ -224,6 +230,7 @@ public class TileCodeStore extends ComputeCodeStore<Tile> {
      */
     public void addStatementToBufferInit(JStatement stmt) {
         bufferInit.getBody().addStatement(stmt);
+        this.setHasCode();
     }
     
     /**
@@ -235,6 +242,7 @@ public class TileCodeStore extends ComputeCodeStore<Tile> {
     public void addStatementFirstToBufferInit(String txt) {
         JStatement stmt = new JExpressionStatement(new JEmittedTextExpression(txt));
         bufferInit.getBody().addStatementFirst(stmt);
+        this.setHasCode();
     }
     
     /**
@@ -245,6 +253,7 @@ public class TileCodeStore extends ComputeCodeStore<Tile> {
      */
     public void addStatementFirstToBufferInit(JStatement stmt) {
         bufferInit.getBody().addStatementFirst(stmt);
+        this.setHasCode();
     }
     
     
@@ -257,6 +266,7 @@ public class TileCodeStore extends ComputeCodeStore<Tile> {
     public void addStatementToBufferInit(String txt) {
         JStatement stmt = new JExpressionStatement(new JEmittedTextExpression(txt));
         bufferInit.getBody().addStatement(stmt);
+        this.setHasCode();
     }
     
     /**

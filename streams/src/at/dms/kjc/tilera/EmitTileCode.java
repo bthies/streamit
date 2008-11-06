@@ -41,7 +41,7 @@ public class EmitTileCode extends EmitCode {
             //with all code gen
             TileCodeStore.addBarrierSteady();
             
-            for (Tile tile : backendBits.getComputeNodes().getTiles()) {
+            for (Tile tile : TileraBackend.chip.getAbstractTiles()) {
                 // if no code was written to this tile's code store, then skip it
                 if (!tile.getComputeCode().shouldGenerateCode())
                     continue;

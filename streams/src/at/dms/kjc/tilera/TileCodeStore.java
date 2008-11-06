@@ -337,10 +337,12 @@ public class TileCodeStore extends ComputeCodeStore<Tile> {
         }
         int outputs = fileW.getFilter().getSteadyMult();
         String type = ((FileOutputContent)fileW.getFilter()).getType() == CStdType.Integer ? "%d" : "%f";
+        String cast = ((FileOutputContent)fileW.getFilter()).getType() == CStdType.Integer ? "(int)" : "(float)";
         String bufferName = buf.getAddressRotation(this.parent).currentWriteBufName;
         //create the loop
         addSteadyLoopStatement(Util.toStmt(
-                "for (int _i_ = 0; _i_ < " + outputs + "; _i_++) printf(\"" + type + "\\n\", " + bufferName +"[_i_])"));
+                "for (int _i_ = 0; _i_ < " + outputs + "; _i_++) printf(\"" + type + "\\n\", " + cast + 
+                bufferName +"[_i_])"));
     }
     
     public void generateNumbersCode() {

@@ -124,10 +124,12 @@ public class FilterCodeGeneration extends CodeStoreHelper {
             InputRotatingBuffer buf = InputRotatingBuffer.getInputBuffer(fileW);
             int outputs = filterInfo.totalItemsSent(SchedulingPhase.INIT);
             String type = ((FileOutputContent)fileW.getFilter()).getType() == CStdType.Integer ? "%d" : "%f";
+            String cast = ((FileOutputContent)fileW.getFilter()).getType() == CStdType.Integer ? "(int)" : "(float)";
             String bufferName = buf.getAddressRotation(TileraBackend.backEndBits.getLayout().getComputeNode(filterNode)).currentWriteBufName;
             //create the loop
             statements.addStatement(Util.toStmt(
-                    "for (int _i_ = 0; _i_ < " + outputs + "; _i_++) printf(\"" + type + "\\n\", " + bufferName +"[_i_])"));
+                    "for (int _i_ = 0; _i_ < " + outputs + "; _i_++) printf(\"" + type + "\\n\", " + cast + 
+                    bufferName +"[_i_])"));
             
         }
         

@@ -9,6 +9,7 @@ import java.util.*;
 import at.dms.kjc.sir.linear.*;
 import at.dms.kjc.sir.lowering.RenameAll;
 import at.dms.kjc.spacetime.SafeFileReaderWriterPositions;
+import at.dms.kjc.tilera.CFixedPointType;
 
 /**
  * Intended to reflect all the content of a filter needed by a
@@ -85,8 +86,8 @@ public class FilterContent implements SIRCodeUnit, at.dms.kjc.DeepCloneable {
         name = content.name + my_unique_ID;
         prework = content.prework;
         steady  =  content.steady;
-        inputType = content.inputType;
-        outputType = content.outputType;
+        setInputType(content.inputType);
+        setOutputType(content.outputType);
         initMult = content.initMult;
         steadyMult = content.steadyMult;
         methods = content.methods;
@@ -114,8 +115,8 @@ public class FilterContent implements SIRCodeUnit, at.dms.kjc.DeepCloneable {
         name = filter.getName();
         prework = filter.getInitPhases();
         steady = filter.getPhases();
-        inputType = filter.getInputType();
-        outputType = filter.getOutputType();
+        setInputType(filter.getInputType());
+        setOutputType(filter.getOutputType());
         methods = filter.getMethods();
         fields  =  filter.getFields();
         //paramList = filter.getParams();
@@ -150,8 +151,8 @@ public class FilterContent implements SIRCodeUnit, at.dms.kjc.DeepCloneable {
         
         my_unique_ID = unique_ID++;
         name = filter.getName();
-        inputType = filter.getInputType();
-        outputType = filter.getOutputType();
+        setInputType(filter.getInputType());
+        setOutputType(filter.getOutputType());
 
         initMult = unflat.initMult;
         steadyMult = unflat.steadyMult;
@@ -280,6 +281,15 @@ public class FilterContent implements SIRCodeUnit, at.dms.kjc.DeepCloneable {
             steadyMult = (mult * id.totalInWeights());
         }
         return steadyMult;
+    }
+    
+    public void setInputType(CType type) {
+            inputType = type; 
+    }
+    
+    
+    public void setOutputType(CType type) {
+            outputType = type;
     }
     
     /**

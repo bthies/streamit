@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CFloatType.java,v 1.6 2006-03-24 15:54:47 dimock Exp $
+ * $Id: CFloatType.java,v 1.7 2008-11-06 01:53:43 mgordon Exp $
  */
 
 package at.dms.kjc;
@@ -54,6 +54,11 @@ public class CFloatType extends CNumericType {
      * Returns a string representation of this type.
      */
     public String toString() {
+        //sorry, this is such a horrible hack, god, this is for 
+        //generated fixed point code on tilera
+        if (KjcOptions.fixedpoint)
+            return "fixed";
+        
         return "float";
     }
 

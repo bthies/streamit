@@ -66,6 +66,7 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
         decls.add(new JVariableDeclarationStatement(writeHeadDefn));
         
         generateStatements(SchedulingPhase.INIT);
+        generateStatements(SchedulingPhase.STEADY);
     }
     
     public boolean usesSharedBuffer() {
@@ -102,6 +103,7 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
     }
     
     private void generateStatements(SchedulingPhase phase) {
+     
         FilterSliceNode filter;
         //if we are directly writing, then the push method does the remote writes,
         //so no other remote writes are necessary
@@ -139,8 +141,7 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
         //we might have to skip over some elements when we push into the buffer if this
         //is a shared buffer
         int writeOffset = getWriteOffset(phase);
-        //System.out.println("Source write offset = " + writeOffset);     
-          
+       
         Tile sourceTile = TileraBackend.backEndBits.getLayout().getComputeNode(filter);
         
         int rotations = fi.totalItemsSent(phase) / output.totalWeights(phase);
@@ -175,6 +176,7 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
                                 TileraBackend.backEndBits.getLayout().getComputeNode(dest.getDest().getNextFilter());
                             //don't do anything if this dest is on the same tiles, we are sharing the buffer with the
                             //dest, and the indices are the same.
+                            
                             if (destTile == sourceTile && destElement == sourceElement && usesSharedBuffer()) 
                                 continue;
                             

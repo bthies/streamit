@@ -186,6 +186,8 @@ public class EmitTileCode extends EmitCode {
         p.println("#include <math.h>");     // in case math functions
         p.println("#include <ilib.h>");     // for ilib
         p.println("#include <stdio.h>");    // in case of FileReader / FileWriter
+        if (KjcOptions.fixedpoint)
+            p.println("#include \"fixed.h\"");
         p.println("#include \"structs.h\"");
         p.println("#include <sys/archlib.h>");
         p.println("#include <pass.h>");
@@ -200,7 +202,10 @@ public class EmitTileCode extends EmitCode {
         p.println("BIN = $(TILERA_ROOT)/bin/");
         p.println("endif");
         p.println();
-        p.println("CC = $(BIN)tile-cc");
+        if (KjcOptions.fixedpoint)
+            p.println("CC = $(BIN)tile-c++");
+        else
+            p.println("CC = $(BIN)tile-cc");
         p.println("CFLAGS = -Os -OPT:Olimit=0");
         p.println("SIM = $(BIN)tile-sim");
         p.println("MONITOR = $(BIN)tile-monitor");

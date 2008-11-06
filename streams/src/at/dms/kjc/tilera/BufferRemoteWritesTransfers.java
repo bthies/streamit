@@ -246,10 +246,12 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
      */
     private int getWriteOffset(SchedulingPhase phase) {
         if (usesSharedBuffer()) {
+            FilterInfo localDest = FilterInfo.getFilterInfo(parent.filterNode);
+            /*
             //no address array needed but we have to set the head to the copydown plus
             //the weights of any inputs that are not mapped to this tile that appear before
             //the local source
-            FilterInfo localDest = FilterInfo.getFilterInfo(parent.filterNode);
+            
             InputSliceNode input = parent.filterNode.getParent().getHead();
             FilterSliceNode localSrc = ((InputRotatingBuffer)parent).getLocalSrcFilter();
             //the local source and dest might not communicate in the init stage, if not
@@ -259,10 +261,12 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
             
             InterSliceEdge theEdge = input.getEdgeFrom(phase, localSrc);
             int offset = input.weightBefore(theEdge, phase);
+            */
+            int offset = 0;
             //if we are not in the init, we must skip over the dest's copy down
             if (SchedulingPhase.INIT != phase) 
                 offset += localDest.copyDown;
-
+            System.out.println(offset);
             return offset;
         } else
             return 0;

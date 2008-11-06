@@ -10,6 +10,7 @@ import at.dms.kjc.tilera.arrayassignment.*;
 import java.util.List;
 
 public class BufferRemoteWritesTransfers extends BufferTransfers {
+        
     /** reference to head if this input buffer is shared as an output buffer */
     protected JExpression head;
     /** name of variable containing head of array offset */
@@ -39,6 +40,9 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
     protected String addrArraySteadyVar;
     /** name of the var that points to the address array for the init */
     protected String addrArrayInitVar;
+    /** true if this buffer's dest is a file writer */
+    protected boolean fileWrite = false;
+    protected static final String FAKE_IO_VAR = "__fake_output_var__";
     
     public BufferRemoteWritesTransfers(RotatingBuffer buf) {
         super(buf);
@@ -60,7 +64,13 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
                     output.getSingleEdge(SchedulingPhase.STEADY).getDest().singleAppearance())
         {
             directWrite = true;
+            if (output.getSingleEdge(SchedulingPhase.STEADY).getDest().getNextFilter().isFileOutput()) {
+                fileWrite = true;
+                decls.add(Util.toStmt("volatile " + buf.getType().toString() + " " + FAKE_IO_VAR));
+            }
+            
             assert !usesSharedBuffer();
+            
         }
         
         decls.add(new JVariableDeclarationStatement(writeHeadDefn));
@@ -246,8 +256,8 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
             //the offset should just be zero
             if (!input.hasEdgeFrom(phase, localSrc))
                 return 0;
+            
             InterSliceEdge theEdge = input.getEdgeFrom(phase, localSrc);
-
             int offset = input.weightBefore(theEdge, phase);
             //if we are not in the init, we must skip over the dest's copy down
             if (SchedulingPhase.INIT != phase) 
@@ -294,13 +304,13 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
         
         return block;
     }
-    
+
     public JMethodDeclaration pushMethod() {
         JExpression bufRef = null;
         //set the buffer reference to the input buffer of the remote buffer that we are writing to
         if (directWrite) {
             bufRef = new JFieldAccessExpression(new JThisExpression(),  
-                parent.getAddressBuffer(output.getSingleEdge(SchedulingPhase.STEADY).getDest()).currentWriteBufName);
+                        parent.getAddressBuffer(output.getSingleEdge(SchedulingPhase.STEADY).getDest()).currentWriteBufName);
         }
         else   //not a direct write, so the buffer ref to the write buffer of the buffer
             bufRef = parent.writeBufRef();
@@ -311,6 +321,20 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
                 valName);
         JLocalVariableExpression valRef = new JLocalVariableExpression(val);
         JBlock body = new JBlock();
+
+        if (fileWrite && TileraBackend.FAKE_IO) {
+            //if we are faking the io and this writes to a file writer assign val to volatile value
+            body.addStatement(Util.toStmt(FAKE_IO_VAR + " = " + valName));
+        } else {
+            //otherwise generate buffer assignment
+            body.addStatement(
+                    new JExpressionStatement(new JAssignmentExpression(
+                            new JArrayAccessExpression(bufRef, new JPostfixExpression(at.dms.kjc.Constants.OPE_POSTINC,
+                                    head)),
+                                    valRef)));
+        }
+
+        
         JMethodDeclaration retval = new JMethodDeclaration(
                 null,
                 /*at.dms.kjc.Constants.ACC_PUBLIC | at.dms.kjc.Constants.ACC_STATIC |*/ at.dms.kjc.Constants.ACC_INLINE,
@@ -319,12 +343,8 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
                 new JFormalParameter[]{val},
                 CClassType.EMPTY,
                 body, null, null);
-        body.addStatement(
-                new JExpressionStatement(new JAssignmentExpression(
-                        new JArrayAccessExpression(bufRef, new JPostfixExpression(at.dms.kjc.Constants.OPE_POSTINC,
-                                head)),
-                                valRef)));
-
+        
+        
         return retval;
     }
     

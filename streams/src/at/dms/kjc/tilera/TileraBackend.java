@@ -7,6 +7,8 @@ import at.dms.kjc.slicegraph.*;
 import at.dms.kjc.spacetime.BasicGenerateSteadyStateSchedule;
 
 public class TileraBackend {
+    public static final boolean FAKE_IO = true;
+
     public static Scheduler scheduler;
     public static TileraChip chip;
     public static TileraBackEndFactory backEndBits;
@@ -70,7 +72,7 @@ public class TileraBackend {
         //dump structs.h file
         structs_h.writeToFile();
         
-	System.exit(0);
+        System.exit(0);
     }
     
     /** 

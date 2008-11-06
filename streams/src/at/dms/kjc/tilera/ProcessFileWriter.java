@@ -58,6 +58,10 @@ public class ProcessFileWriter {
      * on that tile the output will be written to.
      */
     public void processFileWriter() {
+        //do nothing if faking io
+        if (TileraBackend.FAKE_IO)
+            return;
+        
         if (phase == SchedulingPhase.INIT) {
             int outputs = filterNode.getFilter().getSteadyMult();
             System.out.println("Outputs for " + filterNode + ": " + outputs);

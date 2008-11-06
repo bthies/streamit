@@ -90,7 +90,7 @@ public class UnflatEdge {
      * Returns string representation of UnflatEdge.
      */
     public String toString() {
-        return src+"->"+dest+" "+super.toString();
+        return src+"->"+dest;//+" "+super.toString();
     }
 
     /*void connect(UnflatEdge newDest) {

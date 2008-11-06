@@ -230,17 +230,21 @@ public class FlattenGraph {
             if(!((SIRSplitJoin)graph).getSplitter().getType().isNull()) {
                 if(!((SIRSplitJoin)graph).getJoiner().getType().isNull()) {
                     for(int i=0;i<size;i++) {
-                        UnflatEdge[] child=flatten(((SIRSplitJoin)graph).get(i));
-                        if(weights[i]!=0) {
+                        
+                        UnflatEdge[] child = flatten(((SIRSplitJoin)graph).get(i));
+                        
+                        if (weights[i]!=0) {
                             splitterOut[i].connect(child[0]);
                         } else {
                             topLevelNodes.add(child[0].dest);
                             child[0].dest.in=null;
                         }
-                        if(weightsOut[i]!=0) {
+                        
+                        if (weightsOut[i]!=0) {
                             child[1].connect(joinerIn[i]);
                         } else
                             child[1].src.out=null;
+
                     }
                 } else {
                     for(int i=0;i<size;i++) {

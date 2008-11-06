@@ -3,18 +3,23 @@
  * the input item for the next iteration.
  */
 float->float filter DelayOne {
-    float last;
-    init { 
-        last = 0.0; 
+    prework push 1 {
+        push(0);
     }
     work pop 1 push 1 { 
-        push(last); 
-	last = pop(); 
+        push(pop());
     }
 }
 // this generates the delays in the lattice structure
 float->float splitjoin LatDel {
-    split duplicate;
+    // split duplicate
+    // originally written as duplicate by saadat, but this doesn't
+    // make sense because lower stages would do much more work than
+    // upper stages.  a round-robin gives the right behavior according
+    // to this description of lattice filters:
+    // http://www.ensc.sfu.ca/people/faculty/cavers/ENSC810/classnotes/n4p5.pdf
+    // --bill
+    split roundrobin;
     add Identity<float>();
     add DelayOne();
     join roundrobin;

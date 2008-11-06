@@ -1,9 +1,12 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #ifndef _FIXED_H
 #define _FIXED_H
+
+#define PI_FLOAT 3.1415
 
 class fixed {
 private:
@@ -14,6 +17,7 @@ public:
   fixed(void);
   fixed(int nVal);
   fixed(float nVal);
+  fixed(double nVal);
   fixed(const fixed& fixedVal);
   fixed(const volatile fixed& fixedVal);
   fixed(const fixed* fixedVal);
@@ -55,6 +59,7 @@ public:
 
   fixed floor(void);
   fixed ceil(void);
+  fixed absolute(void);
 
   fixed add(fixed b);
   fixed subtract(fixed b);
@@ -319,6 +324,11 @@ inline fixed::fixed(float floatVal)
   m_nVal = (int32_t)(floatVal * 65536.0 + (floatVal < 0 ? -0.5 : 0.5));
 }
 
+inline fixed::fixed(double floatVal)
+{
+  m_nVal = (int32_t)(floatVal * 65536.0 + (floatVal < 0 ? -0.5 : 0.5));
+}
+
 inline fixed::fixed(const fixed& fixedVal)
 {
   m_nVal = fixedVal.m_nVal;
@@ -491,6 +501,13 @@ inline fixed fixed::ceil(void)
     f.m_nVal = ((m_nVal + 0xFFFF) & ~0xFFFF);
   else
     f.m_nVal = ~(~(m_nVal + 0xFFFF) & ~0xFFFF);
+  return f;
+}
+
+inline fixed fixed::absolute(void)
+{
+  fixed f;
+  f.m_nVal = abs(this->m_nVal);
   return f;
 }
 
@@ -698,6 +715,8 @@ inline fixed fixed::asin()
   return r;
 }
 
+#if 0
+
 inline fixed fixed::atan()
 {
   fixed r;
@@ -739,6 +758,29 @@ inline fixed fixed::atan()
 
   return r;
 }
+
+#else
+
+// Atan implementation based on code at: http://dspguru.com/comp.dsp/tricks/alg/fxdatan2.htm
+// This has a max error of 0.07 rads.  It can be improved to provide 7x more
+// accuracy with a few more operations (see website).
+inline fixed fixed::atan()
+{
+   fixed coeff_1(PI_FLOAT);
+   coeff_1 = coeff_1 / 4;
+   fixed coeff_2 = coeff_1 * 3;
+
+   fixed abs_y = this->absolute();
+
+   fixed r = (1 - abs_y) / (abs_y + 1);
+   fixed angle = coeff_1 - coeff_1 * r;
+
+   if (*this < 0)
+     return(-angle);     
+   else
+     return(angle);
+}
+#endif
 
 inline fixed sin(fixed a) 
 {

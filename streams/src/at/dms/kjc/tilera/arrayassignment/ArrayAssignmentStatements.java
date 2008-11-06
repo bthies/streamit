@@ -20,7 +20,22 @@ public class ArrayAssignmentStatements {
         assignments.add(newAss);
     }
     
+    /**
+     * Sort the assignments for better compression, make sure to call this before compress.
+     */
+    public void sort() {
+        LinkedList<SingleAAStmt> singles = new LinkedList<SingleAAStmt>();
+        for (AAStatement stmt : assignments)
+            singles.add((SingleAAStmt)stmt);
+        
+        java.util.Collections.sort(singles);
+        
+        assignments = (LinkedList)singles;
+    }
+    
     public void compress() {
+        //sort the statements first!
+        sort();
         LinkedList<AAStatement> newStmts = new LinkedList<AAStatement>();
         
         //create a dummy loop that will not be added as the first loop

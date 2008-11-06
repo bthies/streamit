@@ -110,6 +110,6 @@ public class LoopedAssignments implements AAStatement {
             }
             return block;
         }
-        
     }
+
 }

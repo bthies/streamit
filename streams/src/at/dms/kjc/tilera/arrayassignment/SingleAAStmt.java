@@ -3,7 +3,7 @@ package at.dms.kjc.tilera.arrayassignment;
 import at.dms.kjc.JStatement;
 import at.dms.kjc.tilera.Util;
 
-public class SingleAAStmt implements AAStatement{
+public class SingleAAStmt implements AAStatement, Comparable<SingleAAStmt>{
     String dstBufName;
     String srcBufName;
     int dstIndex;
@@ -36,5 +36,20 @@ public class SingleAAStmt implements AAStatement{
 
         return Util.toStmt(dstBufName + "[" + dstOffset + dstIndex + "] = " + 
                 srcBufName + "[" + srcOffset + srcIndex + "]"); 
+    }
+    
+    public int compareTo(SingleAAStmt other) {
+        if (!dstBufName.equals(other.dstBufName)) 
+            return dstBufName.compareTo(other.dstBufName);
+        else if (!dstOffsetName.equals(other.dstOffsetName))
+            return dstOffsetName.compareTo(other.dstOffsetName);
+        else if (dstIndex != other.dstIndex)
+            return new Integer(dstIndex).compareTo(other.dstIndex);
+        else if (!srcBufName.equals(other.srcBufName))
+            return srcBufName.compareTo(other.srcBufName);
+        else if (!srcOffsetName.equals(other.srcOffsetName))
+            return srcOffsetName.compareTo(other.srcOffsetName);
+        
+        return new Integer(srcIndex).compareTo(other.srcIndex); 
     }
 }

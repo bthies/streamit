@@ -248,7 +248,7 @@ public class SimpleSlicer extends SIRSlicer {
                 slice.finish();
             }
         }
-        topSlicesList.toArray(topSlices);
+        topSlices = topSlicesList;
         setupIO();
         return getSliceGraph();
     }

@@ -266,7 +266,6 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
             //if we are not in the init, we must skip over the dest's copy down
             if (SchedulingPhase.INIT != phase) 
                 offset += localDest.copyDown;
-            System.out.println(offset);
             return offset;
         } else
             return 0;

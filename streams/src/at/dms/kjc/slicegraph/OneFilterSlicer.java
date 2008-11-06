@@ -120,7 +120,7 @@ public class OneFilterSlicer extends Slicer {
         }
 
 
-        topSlicesList.toArray(topSlices);
+        topSlices = topSlicesList;
         setupIO();
         
         return getSliceGraph();

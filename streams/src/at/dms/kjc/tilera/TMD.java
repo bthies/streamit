@@ -103,12 +103,13 @@ public class TMD extends Scheduler {
         
         //assert that the first level only has a file reader and that we always have a
         //file reader
-        assert levels[0].length == 1 && levels[0][0].getFirstFilter().isFileInput();
+        //assert levels[0].length == 1 && levels[0][0].getFirstFilter().isFileInput();
         
         //place each slice in a set that will be mapped to the same tile
         System.out.println("Partitioning into same tile sets...");
         Set<Set<Slice>> sameTile = createSameTileSets(levels);
-        assert sameTile.size() == TileraBackend.chip.abstractSize();
+        assert sameTile.size() == TileraBackend.chip.abstractSize() : 
+            sameTile.size() + " " + TileraBackend.chip.abstractSize();
         Tile nextToAssign = TileraBackend.chip.getComputeNode(0, 0);
         Set<Slice> current = sameTile.iterator().next();
         Set<Set<Slice>> done = new HashSet<Set<Slice>>();
@@ -345,11 +346,14 @@ public class TMD extends Scheduler {
         //must reset the filter info's because we have changed the schedule
         FilterInfo.reset();
         
+        TileraBackend.scheduler.graphSchedule.getSlicer().dumpGraph("before_fission.dot", 
+                null);
+        
         int i = 0;
         //go throught and perform the fission
         for (Slice slice : slices) {
             if (fizzAmount.containsKey(slice) && fizzAmount.get(slice) > 1) {
-                if (Fissioner.doit(slice, fizzAmount.get(slice))) {
+                if (Fissioner.doit(slice, graphSchedule.getSlicer(), fizzAmount.get(slice))) {
                     System.out.println("Fissed " + slice.getFirstFilter() + " by " + fizzAmount.get(slice));
                 }
                 TileraBackend.scheduler.graphSchedule.getSlicer().dumpGraph("fission_pass_" + i + ".dot", 

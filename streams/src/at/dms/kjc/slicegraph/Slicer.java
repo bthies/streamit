@@ -21,7 +21,7 @@ public abstract class Slicer {
 
     protected HashMap[] exeCounts;
 
-    protected Slice[] topSlices;
+    protected LinkedList<Slice> topSlices;
 
     public Slice[] io;
 
@@ -41,7 +41,7 @@ public abstract class Slicer {
         this.topFilters = topFilters;
         this.exeCounts = exeCounts;
         if (topFilters != null)
-            topSlices = new Slice[topFilters.length];
+            topSlices = new LinkedList<Slice>();
     }
 
     /**
@@ -64,15 +64,41 @@ public abstract class Slicer {
     }
     
     /**
+     * Add the slice to the list of top slices, roots of the forest.
+     */
+    public void addTopSlice(Slice slice) {
+        topSlices.add(slice);
+    }
+    
+    /**
+     * remove this slice from the list of top slices, roots of the forest.
+     */
+    public void removeTopSlice(Slice slice) {
+        assert topSlices.contains(slice);
+        topSlices.remove(slice);
+    }
+    
+    /**
      * Get all slices
      * @return All the slices of the slice graph. 
      */
     public Slice[] getSliceGraph() {
         //new slices may have been added so we need to reconstruct the graph each time
         LinkedList<Slice> sliceGraph = 
-            DataFlowOrder.getTraversal(topSlices);
+            DataFlowOrder.getTraversal(topSlices.toArray(new Slice[topSlices.size()]));
         
         return sliceGraph.toArray(new Slice[sliceGraph.size()]);
+    }
+    
+    /**
+     * Return true if the slice is a top (source) slice in the forrest
+     */
+    public boolean isTopSlice(Slice slice) {
+        for (Slice cur : topSlices) {
+            if (cur == slice)
+                return true;
+        }
+        return false;
     }
     
     /**
@@ -82,7 +108,7 @@ public abstract class Slicer {
      */
     public Slice[] getTopSlices() {
         assert topSlices != null;
-        return topSlices;
+        return topSlices.toArray(new Slice[topSlices.size()]);
     }
 
     /**
@@ -307,10 +333,11 @@ public abstract class Slicer {
             
 //        }
         // update arrays of slices with new info.
-        sliceGraph = newSliceGraph.toArray(new Slice[newSliceGraph.size()]);
-        for (int i = 0; i < topSlices.length; i++) {
-            topSlices[i] = newtopSlices.get(topSlices[i]);
-            assert topSlices[i] != null;
+        Slice[] oldTopSlices = topSlices.toArray(new Slice[topSlices.size()]);
+        topSlices = new LinkedList<Slice>();
+        for (int i = 0; i < oldTopSlices.length; i++) {
+            topSlices.add(newtopSlices.get(oldTopSlices[i]));
+            assert topSlices.get(i) != null;
         }
         for (int i = 0; i < io.length; i++) {
             io[i] = newIo.get(io[i]);

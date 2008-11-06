@@ -58,6 +58,8 @@ public class Fissioner {
     /** the push rate of the clones (multS of slice * push of slice) */
     private int newPush;
     private int myID;
+    private boolean isSourceSlice;
+    private Slicer slicer;
     
     static {
         uniqueID = 0;
@@ -66,8 +68,8 @@ public class Fissioner {
     /**
      * Attempt to fiss <slice> by <fissAmount>.  Return true if the fission was successful.
      */
-    public static boolean doit(Slice slice, int fissAmount) {
-        Fissioner fissioner = new Fissioner(slice, fissAmount);
+    public static boolean doit(Slice slice, Slicer slicer, int fissAmount) {
+        Fissioner fissioner = new Fissioner(slice, slicer, fissAmount);
         return canFizz(slice, false) && fissioner.fizz();
     }
     
@@ -114,11 +116,18 @@ public class Fissioner {
         return true;
     }
 
-    private Fissioner(Slice s, int d) {
-        
+    private Fissioner(Slice s, Slicer slicer, int d) {
+        this.slicer = slicer;
         // reset the filter info's just in case things have change
         FilterInfo.reset();
 
+        //we need to know if this is a source slice, if so add the 
+        //copies to the slicer's top slices, roots of the forrest
+        if (slicer.isTopSlice(s))
+            isSourceSlice = true;
+        else    
+            isSourceSlice = false;
+        
         myID = uniqueID++;
         
         this.slice = s;
@@ -165,7 +174,7 @@ public class Fissioner {
     
     private boolean checks() {
         // Check copyDown constraint: copyDown < mult * pop
-        if  (fInfo.copyDown >= fInfo.steadyMult * fInfo.pop) { 
+        if  (fInfo.pop > 0 && fInfo.copyDown >= fInfo.steadyMult * fInfo.pop) { 
             System.out.println("Can't fizz: Slice does not meet copyDown constraint");
             return false;
         }
@@ -715,6 +724,13 @@ public class Fissioner {
         for(int x = 0 ; x < fizzAmount ; x++)
             sliceClones[x] = (Slice)ObjectDeepCloner.deepCopy(slice);
 
+        //if this was a top slice, we need to remove it and add the clones
+        if (isSourceSlice) {
+            slicer.removeTopSlice(slice);
+            for(int x = 0 ; x < fizzAmount ; x++)
+                slicer.addTopSlice(sliceClones[x]);
+        }
+        
         // Give each Slice clone a unique name
         String origName = slice.getFirstFilter().getFilter().getName();
         for(int x = 0 ; x < fizzAmount ; x++)

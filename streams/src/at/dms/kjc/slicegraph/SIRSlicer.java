@@ -85,7 +85,7 @@ public abstract class SIRSlicer extends Slicer {
         this.lfa = lfa;
         this.work = work;
         if (topFilters != null)
-            topSlices = new Slice[topFilters.length];
+            topSlices = new LinkedList<Slice>();
         sliceBNWork = new HashMap<Slice, Integer>();
         steadyMult = KjcOptions.steadymult;
         filterStartupCost = new HashMap<FilterSliceNode, Integer>();
@@ -120,7 +120,7 @@ public abstract class SIRSlicer extends Slicer {
      */
     public Slice[] getTopSlices() {
         assert topSlices != null;
-        return topSlices;
+        return topSlices.toArray(new Slice[topSlices.size()]);
     }
 
     /**
@@ -652,11 +652,11 @@ public abstract class SIRSlicer extends Slicer {
             }
             
 //        }
-        // update arrays of slices with new info.
-        sliceGraph = newSliceGraph.toArray(new Slice[newSliceGraph.size()]);
-        for (int i = 0; i < topSlices.length; i++) {
-            topSlices[i] = newtopSlices.get(topSlices[i]);
-            assert topSlices[i] != null;
+        Slice[] oldTopSlices = topSlices.toArray(new Slice[topSlices.size()]);
+        topSlices = new LinkedList<Slice>();
+        for (int i = 0; i < oldTopSlices.length; i++) {
+            topSlices.add(newtopSlices.get(oldTopSlices[i]));
+            assert topSlices.get(i) != null;
         }
         for (int i = 0; i < io.length; i++) {
             io[i] = newIo.get(io[i]);

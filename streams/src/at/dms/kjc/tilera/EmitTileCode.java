@@ -100,7 +100,7 @@ public class EmitTileCode extends EmitCode {
             processNumber++;
         }
         
-        p.println("    if (ilib_proc_exec(" + tilesWithCompute + ", params)  != ILIB_SUCCESS)"); 
+        p.println("    if (ilib_proc_exec(" + TileraBackend.chip.abstractSize() + ", params)  != ILIB_SUCCESS)"); 
         p.println("        ilib_die(\"Failure in 'ilib_proc_exec()'.\");"); 
         
         p.println("    // This process gets replaced by the new ones, so we should never get here."); 
@@ -214,7 +214,7 @@ public class EmitTileCode extends EmitCode {
         p.println("EXECUTABLES = $(BOOT_EXE) $(TILES)");
         p.println("BOOT_EXE = main");
         p.print("TILES = ");
-        for (Tile tile : backendBits.getComputeNodes().getTiles()) {
+        for (Tile tile : TileraBackend.chip.getAbstractTiles()) {
             // if no code was written to this tile's code store, then skip it
             if (!tile.getComputeCode().shouldGenerateCode())
                 continue;
@@ -270,7 +270,7 @@ public class EmitTileCode extends EmitCode {
         p.println("\t$(CC) $(LDFLAGS) $< -lilib -lm -o $@"); 
 
        
-        for (Tile tile : backendBits.getComputeNodes().getTiles()) {
+        for (Tile tile : TileraBackend.chip.getAbstractTiles()) {
             // if no code was written to this tile's code store, then skip it
             if (!tile.getComputeCode().shouldGenerateCode())
                 continue;

@@ -146,11 +146,11 @@ public class StatelessDuplicate {
                 return false;
             }
         }
-
+        /*
         //This seems to break fission too
         if(filter.getPopInt()==0)
             return false;
-
+*/
         return true;
     }
 

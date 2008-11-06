@@ -1,0 +1,200 @@
+/**
+ *   CRCEncoder32:
+ *   CRC Encoder using a 32 bit
+ *   Generator Polynomial
+ *   NOTE:  Until finite input lengths are accepted by StreamIt,
+ *          this will not completely work as expected.
+ *   - J. Wong
+ *
+ *  (Bill translated to new syntax, converted state to peeking)
+ */
+
+int->int filter AdditionFilter {
+    work push 2 pop 2 {
+	int mInitFeedbackData = pop();
+	int mShiftRegisterInput = pop();
+        int mAdditionOutput;
+	
+	if(((mInitFeedbackData == 1) && (mShiftRegisterInput == 1)) || ((mInitFeedbackData == 0) && (mShiftRegisterInput == 0)))
+	{
+	    mAdditionOutput = 0;
+	}
+	else
+	{
+	    mAdditionOutput = 1;    
+	} 
+	push (mInitFeedbackData);
+	push (mAdditionOutput);
+    }
+}
+
+int->int filter InitialAdditionFilter {
+    work push 2 pop 2 {
+	int mFileInput = pop();
+	int mInitFeedbackData = pop();
+        int mAdditionOutput;
+	//System.err.println("File Input is " + mFileInput + " Feedback data is " + mInitFeedbackData);
+	if(((mInitFeedbackData == 1) && (mFileInput == 1)) || ((mInitFeedbackData == 0) && (mFileInput == 0))) {
+	    mAdditionOutput = 0;
+	}
+	else {
+	    mAdditionOutput = 1;    
+	} 
+	push(mAdditionOutput);
+	push(mAdditionOutput);
+    }
+
+}
+
+/*
+int->int filter ShiftRegisterFilter() {
+    int mRegisterContents;
+    
+    work push 2 pop 2 {
+	int mInitFeedbackData = pop();
+	int mDataStream = pop();
+	int mRegisterOutput = mRegisterContents;   //move datastream value into Shift Register
+// 	mRegisterContents = mDataStream;       //move original contents to output
+// 	mTerminationCounter++;
+// 	if(mTerminationCounter < EncoderInput.mInputLength + 1)
+// 	{
+// 	    System.err.println("Shift Register Contents of Filter " + mRegisterNumber + " at iteration " + mTerminationCounter + " is " + mRegisterContents);
+// 	    System.err.println("Shift Register Output of Filter " + mRegisterNumber + " at iteration " + mTerminationCounter + " is " + mRegisterOutput);
+// 	}
+	push(mInitFeedbackData);
+	push(mRegisterOutput);
+    }
+}
+*/
+
+// state eliminated in previous filter in favor of peeking
+int->int filter ShiftRegisterFilter() {
+    prework push 2 pop 1 {
+	push(pop());
+	push(0);
+    }
+    
+    work push 2 pop 2 {
+	int mRegisterContents = pop();
+	int mInitFeedbackData = pop();
+	push(mInitFeedbackData);
+	push(mRegisterContents);
+    }
+}
+
+void->int filter CrcInputFilter {
+    // int[] mdata;
+    boolean counter;
+    // EncoderInput mencodefile;
+
+    work push 1 {
+	if(!counter)
+	{
+	    counter = true;
+	    push (0);
+	}
+	else
+	{
+	    push (1);
+	}     
+    }
+}
+
+int->int filter FeedbackEndFilter {
+    work pop 2 push 1 {
+	int mInitFeedbackData = pop();
+	int mRegisterOutput = pop();
+	//System.err.println("Shift Register 3 is " + mRegisterOutput);
+	push(mRegisterOutput);
+    }
+}
+
+int->void filter IntPrinter {
+    work pop 1 {
+	println(pop());
+    }
+}
+
+int->int feedbackloop CrcFeedbackLoop {
+    enqueue(0);
+    join roundrobin();
+    body FeedbackBodyStream();
+    split duplicate;
+    loop Identity<int>();
+}
+
+int->int pipeline FeedbackBodyStream {
+    add InitialAdditionFilter();
+    add ShiftRegisterFilter();
+    add AdditionFilter();
+    add ShiftRegisterFilter();
+    add AdditionFilter(); //x^2
+    add ShiftRegisterFilter();
+    //x^3
+    add ShiftRegisterFilter();
+    add AdditionFilter(); //x^4
+    add ShiftRegisterFilter();
+    add AdditionFilter(); //x^5
+    add ShiftRegisterFilter();
+    //x^6
+    add ShiftRegisterFilter();
+    add AdditionFilter(); //x^7
+    add ShiftRegisterFilter();
+    add AdditionFilter(); //x^8
+    add ShiftRegisterFilter();
+    //x^9
+    add ShiftRegisterFilter();
+    add AdditionFilter(); //x^10
+    add ShiftRegisterFilter();
+    add AdditionFilter(); //x^11
+    add ShiftRegisterFilter();
+    add AdditionFilter(); //x^12
+    add ShiftRegisterFilter();
+    //x^13
+    add ShiftRegisterFilter();
+    //x^14
+    add ShiftRegisterFilter();
+    //x^15
+    add ShiftRegisterFilter();
+    add AdditionFilter(); //x^16
+    add ShiftRegisterFilter();
+    //x^17
+    add ShiftRegisterFilter();
+    //x^18
+    add ShiftRegisterFilter();
+    //x^19
+    add ShiftRegisterFilter();
+    //x^20
+    add ShiftRegisterFilter();
+    //x^21
+    add ShiftRegisterFilter();
+    add AdditionFilter(); //x^22
+    add ShiftRegisterFilter();
+    add AdditionFilter(); //x^23
+    add ShiftRegisterFilter();
+    //x^24
+    add ShiftRegisterFilter();
+    //x^25
+    add ShiftRegisterFilter();
+    add AdditionFilter(); //x^26
+    add ShiftRegisterFilter();
+    //x^27
+    add ShiftRegisterFilter();
+    //x^28
+    add ShiftRegisterFilter();
+    //x^29
+    add ShiftRegisterFilter();
+    //x^30
+    add ShiftRegisterFilter();
+    //x^31
+    add Identity<int>();
+
+    //add ShiftRegisterFilter(3);
+    add FeedbackEndFilter();
+}
+
+void->void pipeline CrcEncoder32Test {
+    add CrcInputFilter();
+    add CrcFeedbackLoop();
+    add IntPrinter();
+}

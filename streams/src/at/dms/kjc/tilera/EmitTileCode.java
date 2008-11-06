@@ -41,7 +41,7 @@ public class EmitTileCode extends EmitCode {
             //with all code gen
             TileCodeStore.addBarrierSteady();
             
-            for (Tile tile : TileraBackend.chip.getAbstractTiles()) {
+            for (Tile tile : backendBits.getComputeNodes().getTiles()) {
                 // if no code was written to this tile's code store, then skip it
                 if (!tile.getComputeCode().shouldGenerateCode())
                     continue;
@@ -78,7 +78,7 @@ public class EmitTileCode extends EmitCode {
         
         int tilesWithCompute = backendBits.getComputeNodes().tilesWithCompute();
         
-        p.println("    ilibProcParam params[" + tilesWithCompute + "];");
+        p.println("    ilibProcParam params[" + TileraBackend.chip.getAbstractTiles().size() + "];");
         p.println("    memset(params, 0, sizeof(params));"); 
         p.println("    //spawning application");
         int processNumber = 0;
@@ -214,7 +214,7 @@ public class EmitTileCode extends EmitCode {
         p.println("EXECUTABLES = $(BOOT_EXE) $(TILES)");
         p.println("BOOT_EXE = main");
         p.print("TILES = ");
-        for (Tile tile : TileraBackend.chip.getAbstractTiles()) {
+        for (Tile tile : backendBits.getComputeNodes().getTiles()) {
             // if no code was written to this tile's code store, then skip it
             if (!tile.getComputeCode().shouldGenerateCode())
                 continue;

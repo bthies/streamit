@@ -191,7 +191,6 @@ public class TileCodeStore extends ComputeCodeStore<Tile> {
     }
     
     private void createBufferInitMethod() {
-        this.setHasCode();
         //create the method that will malloc the buffers and receive the addresses from downstream tiles
         bufferInit = new JMethodDeclaration(CStdType.Void, bufferInitMethName, new JFormalParameter[0], new JBlock());
         //create a status variable for the point to point messages and the dma commands

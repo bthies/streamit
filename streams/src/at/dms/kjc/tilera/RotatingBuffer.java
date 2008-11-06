@@ -287,8 +287,9 @@ public abstract class RotatingBuffer extends Channel {
             //which is shared and uncacheable
             String alloc = "malloc(";
             if (shared) {
-                if (filterNode.isFileOutput())  
+                if (filterNode.isFileOutput()) {
                     alloc = "ilib_mem_malloc_heap(fileWriteHeap,";
+                }
                 else
                     alloc = "malloc_shared(";
             }

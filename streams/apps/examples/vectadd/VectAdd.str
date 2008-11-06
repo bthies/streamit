@@ -17,15 +17,10 @@ int->int filter VectAddKernel {
 /** 
  * A simple source that sends out elements from a vector repeatedly.  
  */
-void->int filter VectSource(int N, int[N] Z) {
+void->int filter VectSource(int N) {
     int idx;
-    init {
-	idx = 0;
-    }
     work push 1 {
-	push(Z[idx]);
-	idx++; 
-	if (idx >= N) idx = 0; 
+	push(idx++ % N);
     } 
 }
 
@@ -33,18 +28,10 @@ void->int filter VectSource(int N, int[N] Z) {
  * Sends out elements from the two input vectors 
  */ 
 void->int splitjoin TwoVectSource(int N) {
-    /* set up the input vectors */ 
-    int[N] A;
-    int[N] B;
-    for (int i = 0; i < N; i++) {
-	A[i] = i; 
-	B[i] = i; //N-i; 
-    }
-
     /* generate and mix the two streams */ 
-    split roundrobin;
-    add VectSource(N, A);
-    add VectSource(N, B);
+    split roundrobin(0);
+    add VectSource(N);
+    add VectSource(N);
     join roundrobin;
 } 
 
@@ -64,16 +51,16 @@ void->void pipeline VectAdd {
     int N = 10;  
 
     //OptionA: Use a single source 
-    int[2*N] I;
-    for (int i = 0; i < N; i++) {
-	I[2*i] = 2*i; 
-	I[2*i+1] = 2*i+1;  
-    }
-    add VectSource(2*N, I);
+    //int[2*N] I;
+    //for (int i = 0; i < N; i++) {
+    //	I[2*i] = 2*i; 
+    //	I[2*i+1] = 2*i+1;  
+    //}
+    //add VectSource(2*N, I);
    
     //OptionB: Use a splitjoin of two sources  
     //(the O/Ps are different in the two options) 
-    //add TwoVectSource(N);  
+    add TwoVectSource(N);  
 
     add VectAddKernel();
     add VectPrinter();

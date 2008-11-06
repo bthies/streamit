@@ -15,12 +15,13 @@ public:
   fixed(int nVal);
   fixed(float nVal);
   fixed(const fixed& fixedVal);
+  fixed(const volatile fixed& fixedVal);
   fixed(const fixed* fixedVal);
   ~fixed(void);
 
   fixed& operator=(float floatVal);
-  fixed& operator=(fixed fixedVal);
   fixed& operator=(int intVal);
+  volatile fixed& operator=(fixed fixedVal) volatile;
 
   bool equals(fixed b);
   bool operator==(float floatVal);
@@ -104,12 +105,12 @@ bool operator<(float b, fixed a);
 bool operator<(int b, fixed a);
 fixed operator-(fixed a);
 
-float sin(fixed a);
-float cos(fixed a);
-float tan(fixed a);
-float asin(fixed a);
-float acos(fixed a);
-float atan(fixed a);
+fixed sin(fixed a);
+fixed cos(fixed a);
+fixed tan(fixed a);
+fixed asin(fixed a);
+fixed acos(fixed a);
+fixed atan(fixed a);
 
 /*
   fixed absx( fixed p_Base );
@@ -328,6 +329,11 @@ inline fixed::fixed(const fixed* fixedVal)
   m_nVal = fixedVal->m_nVal;
 }
 
+inline fixed::fixed(const volatile fixed& fixedVal)
+{
+  m_nVal = fixedVal.m_nVal;
+}
+
 fixed::~fixed(void)
 {
 }
@@ -338,7 +344,7 @@ inline fixed& fixed::operator=(float floatVal)
   return *this;
 }
 
-inline fixed& fixed::operator=(fixed fixedVal)
+inline volatile fixed& fixed::operator=(fixed fixedVal) volatile
 {
   m_nVal = fixedVal.m_nVal;
   return *this;
@@ -734,34 +740,34 @@ inline fixed fixed::atan()
   return r;
 }
 
-float sin(fixed a) 
+inline fixed sin(fixed a) 
 {
-  return (float)a.sin();
+  return a.sin();
 }
 
-float cos(fixed a) 
+inline fixed cos(fixed a) 
 {
-  return (float)a.cos();
+  return a.cos();
 }
 
-float tan(fixed a) 
+inline fixed tan(fixed a) 
 {
-  return (float)a.tan();
+  return a.tan();
 }
 
-float asin(fixed a) 
+inline fixed asin(fixed a) 
 {
-  return (float)a.asin();
+  return a.asin();
 }
 
-float acos(fixed a) 
+inline fixed acos(fixed a) 
 {
-  return (float)a.acos();
+  return a.acos();
 }
 
-float atan(fixed a) 
+inline fixed atan(fixed a) 
 {
-  return (float)a.atan();
+  return a.atan();
 }
 
 inline fixed operator*(float a, fixed b)
@@ -794,8 +800,6 @@ inline fixed operator/(int a, fixed b)
 {
   return b.divide(a);
 }
-
-
 
 
 #endif // _FIXED_H

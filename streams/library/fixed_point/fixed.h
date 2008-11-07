@@ -506,8 +506,9 @@ inline fixed fixed::ceil(void)
 
 inline fixed fixed::absolute(void)
 {
-  fixed f;
-  f.m_nVal = abs(this->m_nVal);
+  fixed f(this);
+  if (f.m_nVal < 0)
+    f.m_nVal = -f.m_nVal;
   return f;
 }
 

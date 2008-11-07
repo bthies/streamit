@@ -430,7 +430,7 @@ backendbits.getComputeNodes().getNthComputeNode(0).getComputeCode().getMainFunct
                                           String ident,
                                           JExpression[] args) {
         // math functions are converted to use their floating-point counterparts;
-        if (at.dms.util.Utils.isMathMethod(prefix, ident) || !KjcOptions.fixedpoint) {
+        if (at.dms.util.Utils.isMathMethod(prefix, ident) && !KjcOptions.fixedpoint) {
             p.print(at.dms.util.Utils.cMathEquivalent(prefix, ident));
         } else {
             p.print(ident);

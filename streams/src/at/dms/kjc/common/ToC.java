@@ -587,6 +587,7 @@ public class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
      * prints a double literal
      */
     public void visitDoubleLiteral(double value) {
+        assert !KjcOptions.fixedpoint;
         p.print("((float)" + value + ")");
     }
 
@@ -594,7 +595,10 @@ public class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
      * prints a float literal
      */
     public void visitFloatLiteral(float value) {
-        p.print("((float)" + value + ")");
+        if (KjcOptions.fixedpoint && value == 0.0f) {
+            p.print("(0)");
+        } else 
+            p.print("((float)" + value + ")");
     }
 
     /**

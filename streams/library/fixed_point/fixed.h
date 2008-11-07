@@ -767,8 +767,7 @@ inline fixed fixed::atan()
 // accuracy with a few more operations (see website).
 inline fixed fixed::atan()
 {
-   fixed coeff_1(PI_FLOAT);
-   coeff_1 = coeff_1 / 4;
+   fixed coeff_1(PI_FLOAT / 4);
    fixed coeff_2 = coeff_1 * 3;
 
    fixed abs_y = this->absolute();

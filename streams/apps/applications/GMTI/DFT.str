@@ -25,7 +25,7 @@ complex->complex pipeline calc_kth_coeff(int N, int k) {
 
   add splitjoin {
     split roundrobin(N,0);
-    add iden_c(N);
+    add Identity<complex>();
     add create_unity_train(N,k);
     join roundrobin(1,1);
   }

@@ -82,7 +82,7 @@ complex->complex splitjoin interchange(int x, int y, int z) {
 
     split roundrobin(x*y);
     for(int i=0; i<z; i++)
-      add iden_c(x*y);
+      add Identity<complex>();
     join roundrobin(1);
 }
 
@@ -94,7 +94,7 @@ complex->complex splitjoin turn(int x, int y, int z, int x_factor) {
 
   split roundrobin(x*y*z);
   for(int i=0; i<x_factor; i++)
-    add iden_c(x*y);
+    add Identity<complex>();
   join roundrobin(x*y);
 }
 
@@ -141,7 +141,7 @@ void->complex pipeline createTaperMesh(int Ndop, int x, int y, int Nstag) {
   add splitjoin {
      split duplicate();
      for(int i=0; i<tot;i++)
-       add iden(1);
+       add Identity<float>();
      join roundrobin(1);
   }   
   add ConvertFloatToComplex(Ndop*tot);

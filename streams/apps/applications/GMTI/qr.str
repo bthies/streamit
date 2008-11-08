@@ -76,13 +76,13 @@ complex->complex pipeline qr_get_r(int m, int n) {
           int n3 = n2;
 
           split roundrobin(n3,0);
-          add iden_c(n3);
+          add Identity<complex>();
           add zeros_c(m3-n3);
           join roundrobin(n3,m3-n3);
         }
       }
     }
-    add iden_c(n);
+    add Identity<complex>();
     join roundrobin(1,n);
   }
 

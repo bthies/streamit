@@ -25,7 +25,7 @@ complex->float pipeline Cfar() {
   add splitjoin {
     split roundrobin(0,total);
     add zeros(sub_total);   // initialize sum as zeros
-    add iden(total);
+    add Identity<float>();
     join roundrobin(sub_total,total);
   }
 
@@ -35,7 +35,7 @@ complex->float pipeline Cfar() {
   add splitjoin {
     split roundrobin(sub_total);
     for(int i=0; i<y; i++)
-      add iden(1);
+      add Identity<float>();
     join roundrobin(1);
   }
 }
@@ -69,7 +69,7 @@ float->float pipeline get_prelim_recurs(int x, int y, int z, int G, int Ncfar, i
     add pipeline { // outputs NPslice,PrelimTarget portion from Sum,DatPow
       add splitjoin {  // outputs Sum,DatPowSlice from Sum,DatPow
         split roundrobin(x*z,x*y*z);
-        add iden(x*z);
+        add Identity<float>();
         add getCol3D(x,y,z,j-1);  // outputs DatPowSlice from DatPow
         join roundrobin(x*z,x*z);
       }
@@ -88,7 +88,7 @@ float->float pipeline get_prelim_recurs(int x, int y, int z, int G, int Ncfar, i
     add pipeline { // outputs NPslice,PrelimTarget portion from Sum,DatPow
       add splitjoin {  // outputs Sum,DatPowSlice from Sum,DatPow
         split roundrobin(x*z,x*y*z);
-        add iden(x*z);
+        add Identity<float>();
         add getCol3D(x,y,z,j-1);  // outputs DatPowSlice from DatPow
         join roundrobin(x*z,x*z);
       }
@@ -113,7 +113,7 @@ float->float pipeline new_sum(int x, int y, int z, int G, int Ncfar, int j) {
 
   add splitjoin {
     split roundrobin(sub_total,total);
-    add iden(sub_total);
+    add Identity<float>();
 
     add splitjoin {
       split duplicate(); 
@@ -196,7 +196,7 @@ float->float pipeline new_sum(int x, int y, int z, int G, int Ncfar, int j) {
       }
       }  // end of pipeline
 
-      add iden(total);
+      add Identity<float>();
       join roundrobin(sub_total,total);
     }  // end of splitjoin
 
@@ -206,7 +206,7 @@ float->float pipeline new_sum(int x, int y, int z, int G, int Ncfar, int j) {
   add splitjoin {
     split roundrobin(sub_total+sub_total,total);
     add add_consec(sub_total,2); // add old sum to the calc'd values from above
-    add iden(total);
+    add Identity<float>();
     join roundrobin(sub_total,total);
   }
 }
@@ -228,7 +228,7 @@ float->float pipeline FindTargets(int x, int z, int mu, int Td) {
       add clean_up_zeros_f(total);
       add replace_zeros(total);
     }
-    add iden(total);
+    add Identity<float>();
     join roundrobin(1); // interleave values
   }
 

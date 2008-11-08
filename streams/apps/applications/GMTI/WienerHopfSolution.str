@@ -61,7 +61,7 @@ complex->complex pipeline get_lqmatrix(int m, int n, int p) {
 
     for(int i=0; i<p; i++) {
       add Hermatian(m,m);
-      add iden_c(total);
+      add Identity<complex>();
     }
     join roundrobin(total);
   }
@@ -97,7 +97,7 @@ complex->complex pipeline norm_helper(int len) {
 
   add splitjoin {
     split roundrobin(len*len,len);
-    add iden_c(len*len);
+    add Identity<complex>();
     add divide_by_norm_sqr(len);
     join roundrobin(len*len,len);
   }
@@ -110,7 +110,7 @@ complex->complex pipeline divide_by_norm_sqr(int len) {
   add splitjoin {
     split duplicate();
     add sqr_sumComplex(len);
-    add iden_c(len);
+    add Identity<complex>();
     join roundrobin(1,len);
   }
 
@@ -143,7 +143,7 @@ complex->complex splitjoin do_forward_sub(int len, int p) {
 complex->complex splitjoin forward_sub_helper(int len) {
 
   split roundrobin(len*len, len*len + len); 
-  add iden_c(len*len);
+  add Identity<complex>();
   add forwardsubComplex(len);
   join roundrobin(len*len, len);
 }

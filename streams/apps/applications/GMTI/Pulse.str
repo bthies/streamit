@@ -39,7 +39,7 @@ complex->complex pipeline PulseCompression() {
 
   add splitjoin {
     split roundrobin(in_total,0);
-    add iden_c(Nsrg);
+    add Identity<complex>();
     add pipeline {
       add windowPulse(cf,Band,sample,cr,Npc,Nsrg);
       add repmatComplex(Npc,1,Nbm*Npri,1);  // replicate pulse for each row
@@ -70,7 +70,7 @@ complex->complex pipeline freq_conv(int x, int y) {
     add pipeline {
       add splitjoin {
         split roundrobin(x,0);
-        add iden_c(x);
+        add Identity<complex>();
         add zeros_c(fft_len-x);
         join roundrobin(x,fft_len-x);
       }
@@ -79,7 +79,7 @@ complex->complex pipeline freq_conv(int x, int y) {
     add pipeline {
       add splitjoin {
         split roundrobin(y,0);
-        add iden_c(y);
+        add Identity<complex>();
         add zeros_c(fft_len-y);
         join roundrobin(y,fft_len-y);
       }
@@ -140,7 +140,7 @@ void->complex pipeline pulse_init(float startFreq, float chirpRate, int Npc) {
        add addvalComplex2r(startFreq, 0.0, Npc);
        add mult_valComplex2r(0.0, 2*pi ,Npc);
     }
-    add iden_c(Npc);
+    add Identity<complex>();
     join roundrobin(Npc);
   }
   add TermMatrixMultComplex(Npc,1);
@@ -154,7 +154,7 @@ void->complex pipeline pulse_init(float startFreq, float chirpRate, int Npc) {
 complex->complex splitjoin pulse_init_to_pri(int pulse_len, int zero_len) {
 
   split roundrobin(pulse_len,0);
-  add iden_c(pulse_len);
+  add Identity<complex>();
   add zeros_c(zero_len);
   join roundrobin(pulse_len,zero_len);
 }
@@ -167,7 +167,7 @@ complex->complex pipeline pri_to_weights(int Nrg, float centerFreq) {
 
   add splitjoin {
     split roundrobin(Nrg,0);
-    add iden_c(Nrg);
+    add Identity<complex>();
     add pipeline {  //creates demodulate
       complex c;
       c.real = 0.0;
@@ -194,7 +194,7 @@ complex->complex pipeline weights_to_windowPulse(int win_len, int Nrg, int Npc) 
 
   add splitjoin {
     split roundrobin(Nrg,0);
-    add iden_c(Nrg);
+    add Identity<complex>();
     add create_window(win_len,Nrg);
     join roundrobin(Nrg,Nrg);
   }
@@ -247,9 +247,9 @@ void->complex pipeline create_window(int win_len, int Nrg) {
 
   add splitjoin {
     split roundrobin(rest_win,0,half_win);
-    add iden_c(rest_win);
+    add Identity<complex>();
     add zeros_c(Nrg-win_len);
-    add iden_c(half_win);
+    add Identity<complex>();
     join roundrobin(rest_win,Nrg-win_len,half_win);
   }
 }

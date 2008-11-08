@@ -67,7 +67,7 @@ complex->complex splitjoin ABhelper(float Azi, float start, float end, int N, in
 
   split duplicate();
     add get_V1_from_T1(Azi,start,end,N,Nbm,Nch);
-    add iden_c(N*Nch);
+    add Identity<complex>();
   join roundrobin(Nch*Nbm,N*Nch);
 }
 
@@ -82,7 +82,7 @@ complex->complex pipeline get_V1_from_T1(float Azi, float start, float end, int 
   add Hermatian(N,Nch);
   add splitjoin {
     split duplicate();
-    add iden_c(Nch*N);
+    add Identity<complex>();
     add mult_by_ves(Azi,start,end,N,Nbm,Nch);
     join roundrobin(Nch*N,Nch*Nbm);
   }
@@ -101,7 +101,7 @@ complex->complex pipeline mult_by_ves(float Azi, float start, float end, int N, 
 
   add splitjoin {
     split roundrobin(Nch*N,0);
-    add iden_c(Nch*N);
+    add Identity<complex>();
     add createVes(Azi,start,end,N,Nbm);
     join roundrobin(Nch*N,N*Nbm);
   }

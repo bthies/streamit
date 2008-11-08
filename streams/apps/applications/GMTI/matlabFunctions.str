@@ -102,7 +102,7 @@ float->float splitjoin transpose(int x, int y) {
   split roundrobin(1);
 
   for(int i=0; i<y; i++)
-    add iden(x);
+    add Identity<float>();
 
   join roundrobin(x);
 }
@@ -118,7 +118,7 @@ complex->complex splitjoin transposeComplex(int x, int y) {
   split roundrobin(1);
 
   for(int i=0; i<y; i++)
-    add iden_c(x);
+    add Identity<complex>();
 
   join roundrobin(x);
 
@@ -356,7 +356,7 @@ float->float splitjoin copy_row(int row_len, int copy_times) {
   
   split duplicate();
   for(int i=0; i<copy_times; i++)
-    add iden(row_len);
+    add Identity<float>();
 
   join roundrobin(row_len);
 }
@@ -398,39 +398,10 @@ complex->complex splitjoin copy_row_c(int row_len, int copy_times) {
   
   split duplicate();
   for(int i=0; i<copy_times; i++)
-    add iden_c(row_len);
+    add Identity<complex>();
 
   join roundrobin(row_len);
 }
-
-
-// outputs N inputs unchanged
-
-// input: N floats
-// output: N floats
-
-float->float filter iden(int N) {
-
-  work push N pop N {
-    for(int i=0; i<N; i++)
-      push(pop());
-  }
-}
-
-
-// outputs N complex inputs unchanged
-
-// input: N complex
-// output: N complex
-
-complex->complex filter iden_c(int N) {
-
-  work push N pop N {
-    for(int i=0; i<N; i++)
-      push(pop());
-  }
-}
-
 
 // sums N elements
 
@@ -580,7 +551,7 @@ float->float splitjoin interleave_multiple(int len, int num) {
 
   split roundrobin(len);
   for(int i=0; i<num; i++)
-    add iden(1);
+    add Identity<float>();
   join roundrobin(1);
 }
 
@@ -607,8 +578,8 @@ float->float pipeline TermMatrixMult(int m, int n) {
 float->float splitjoin interleave_terms(int total) {
 
   split roundrobin(total);
-  add iden(total);
-  add iden(total);
+  add Identity<float>();
+  add Identity<float>();
   join roundrobin(1,1);
 }
 
@@ -649,8 +620,8 @@ complex->complex splitjoin interleave_terms_c(int total) {
 
 
   split roundrobin(total);
-  add iden_c(total);
-  add iden_c(total);
+  add Identity<complex>();
+  add Identity<complex>();
   join roundrobin(1,1);
 }
 
@@ -688,8 +659,8 @@ float->float pipeline forwardsub(int n) {
 float->float splitjoin diff_matrix_interleave(int n) {
 
   split roundrobin(n*n,n);
-  add iden(n);
-  add iden(1);
+  add Identity<float>();
+  add Identity<float>();
   join roundrobin(n,1);
 }
 
@@ -770,8 +741,8 @@ complex->complex pipeline forwardsubComplex(int n) {
 complex->complex splitjoin diff_matrix_interleave_c(int n) {
 
   split roundrobin(n*n,n);
-  add iden_c(n);
-  add iden_c(1);
+  add Identity<complex>();
+  add Identity<complex>();
   join roundrobin(n,1);
 }
 
@@ -1283,7 +1254,7 @@ complex->complex pipeline normalizeComplex(int len) {
   add splitjoin {
     split roundrobin(len);
     add normComplex(len);
-    add iden_c(len);
+    add Identity<complex>();
     join roundrobin(1,len);
   }
 

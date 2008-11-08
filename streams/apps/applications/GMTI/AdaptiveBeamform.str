@@ -45,7 +45,7 @@ complex->complex splitjoin get_pieces() {
 
   split duplicate();
   add data_to_pieces();
-  add iden_c(total2);
+  add Identity<complex>();
   join roundrobin(total1,total2);
 }
 
@@ -164,7 +164,7 @@ complex->complex splitjoin separate_pieces(int N) {
   int total3 = Nbm*Nsrg*Npri;
 
   split roundrobin(total1,total2);
-  add iden_c(total1);
+  add Identity<complex>();
   add get_new_data(Nch,Nbm,Nsrg,Npri);
   join roundrobin(total1,total3);
 }
@@ -186,7 +186,7 @@ complex->complex pipeline get_new_data(int Nch, int Nbm, int Nsrg, int Npri) {
       add Hermatian(Nch,Nbm);
       add repmatComplex(Nbm,Nch,Npri,1);
     }
-    add iden_c(Nch*Nsrg);
+    add Identity<complex>();
     join roundrobin(Nbm*Nch,Nch*Nsrg);
   }
 

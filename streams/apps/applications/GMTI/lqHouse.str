@@ -27,7 +27,7 @@ complex->complex pipeline compute_L(int m, int n) {
 complex->complex splitjoin dup_to_calculate(int m, int n, int i) {
 
   split duplicate();
-  add iden_c(m*n);
+  add Identity<complex>();
   add calc_ith_housemat(m,n,i);
   join roundrobin(m*n, n*n);
 }
@@ -211,7 +211,7 @@ complex->complex pipeline get_trans_matrix(int len) {
 complex->complex splitjoin duplicate_rowComplex(int len) {
 
   split duplicate();
-  add iden_c(len);
+  add Identity<complex>();
   add complex_conjugate(len);
   join roundrobin(len);
 }

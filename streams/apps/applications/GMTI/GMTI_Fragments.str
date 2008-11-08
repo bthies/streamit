@@ -124,7 +124,7 @@ if (FRAGMENT == 1) {
     split roundrobin(T1_tot+Wabf_tot,data1_tot);
 
 // leave T1,Wabf unchanged
-    add iden_c(T1_tot+Wabf_tot);
+    add Identity<complex>();
     
 // these stages do not use T1,Wabf
     add pipeline { 

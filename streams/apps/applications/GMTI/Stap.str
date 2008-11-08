@@ -54,7 +54,7 @@ complex->complex pipeline Stap()
     add splitjoin {  // outputs A, Data(i) from Data(i);
       split duplicate();
       add data_to_A(Npc,NstapTS,Nbm,Nstag,Nsrg,alphaStap);
-      add iden_c(Dat_tot);
+      add Identity<complex>();
       join roundrobin(A_tot,Dat_tot);
     }
     add V2space_dop_to_V2_R2(Nbm,Ncnb,Nstag);  // outputs V2,R2 from V2space,dops(i)
@@ -71,7 +71,7 @@ complex->complex pipeline Stap()
 
   add splitjoin {
     split roundrobin(A_tot,Wstap_tot+Dat_tot+R2_tot);
-    add iden_c(A_tot);
+    add Identity<complex>();
     add pipeline {
       add splitjoin {
         split roundrobin(Wstap_tot+Dat_tot,R2_tot);
@@ -172,7 +172,7 @@ complex->complex pipeline data_to_A(int Npc, int NstapTS, int Nbm, int Nstag, in
 
   add splitjoin {
     split roundrobin(x*NstapTS,0);
-    add iden_c(NstapTS);
+    add Identity<complex>();
     add pipeline {
       add eye(x);
       add ConvertFloatToComplex(x*x);
@@ -198,7 +198,7 @@ complex->complex pipeline V2space_dop_to_V2_R2(int Nbm, int Ncnb, int Nstag) {
 
       add splitjoin {
         split roundrobin(1,0);
-          add iden_c(1);
+          add Identity<complex>();
           add gen_ints(1,Nstag);
         join roundrobin(1,Nstag);
       }
@@ -209,7 +209,7 @@ complex->complex pipeline V2space_dop_to_V2_R2(int Nbm, int Ncnb, int Nstag) {
       add exp_vector(Nstag);
     }
 
-    add iden_c(Nbm*Ncnb);
+    add Identity<complex>();
     join roundrobin(Nstag,Nbm*Ncnb);
   }
 
@@ -218,7 +218,7 @@ complex->complex pipeline V2space_dop_to_V2_R2(int Nbm, int Ncnb, int Nstag) {
 
   add splitjoin {
     split roundrobin(Nstag*Nbm*Ncnb);
-    add iden_c(Nstag*Nbm*Ncnb);
+    add Identity<complex>();
     add partial_2d_matrix(Nstag*Nbm,Ncnb,0,Ncnb-1,0,Ncnb-1);
     join roundrobin(Nstag*Nbm*Ncnb,Ncnb*Ncnb);
   }
@@ -241,7 +241,7 @@ complex->complex splitjoin interleave_data_V2space_dops(int N) {
   float Azi = GmtiParam_Azimuth;
 
   split roundrobin(Nbm*Nstag*(Nsrg+Npc-1)*Ndop,N*Nch+Nch*Nbm);
-  add iden_c(1);
+  add Identity<complex>();
   add interleave_V2space_dops(N,Nch,Nbm,Ncnb,Ndop,Azi);
   join roundrobin(Nbm*Nstag*(Nsrg+Npc-1),1+Nbm*Ncnb);
 }
@@ -273,14 +273,14 @@ complex->complex pipeline create_V2space(int N, int Nch, int Nbm, int Ncnb, floa
 
   add splitjoin {
      split roundrobin(Nbm*N*2,0);
-     add iden_c(Nbm*N*2);
+     add Identity<complex>();
      add createVes(Azi,-pi/180,pi/180,N,Ncnb); // creates Ves2 (N by Ncnb)
      join roundrobin(Nbm*N*2,N*Ncnb);
   }
 
   add splitjoin {
     split roundrobin(Nbm*N,Nbm*N+N*Ncnb);
-    add iden_c(Nbm*N);
+    add Identity<complex>();
     add MatrixMultComplex1(Nbm,N,Ncnb);
     join roundrobin(Nbm*N,Nbm*Ncnb);
   }

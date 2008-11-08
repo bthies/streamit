@@ -1,5 +1,6 @@
 /* This is a filter produces the Cube of a MatCub type
 */
+/* Bill: filter is not used, and cuases error, so commenting out...
 MatCub -> complex[N_bm][N_srg][N_pri] filter getCub(int N_bm, int N_srg, int N_pri) {
     init{}
     work pop 1 push 1 {
@@ -11,6 +12,7 @@ MatCub -> complex[N_bm][N_srg][N_pri] filter getCub(int N_bm, int N_srg, int N_p
 	push(Out_Arr);
     }
 }
+*/
 
 /*
 public class MatCub {

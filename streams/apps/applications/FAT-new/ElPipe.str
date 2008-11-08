@@ -7,7 +7,7 @@
 
 complex->complex pipeline ElPipe(int N_bm,int N_srg,int N_pri,int N_dop,int N_pc,complex[N_pc] h_pc) {
     add GenCub(N_bm,N_srg,N_pri);
-    add PulsComp(N_bm,N_srg,N_pri,N_pc,h_pc);
+    add PulseCmp(N_bm,N_srg,N_pri,N_pc,h_pc);
     add DopFilt(N_bm,N_srg,N_pri,N_dop);
     add DegenTetr(N_bm,N_srg,N_dop,N_pri+1-N_dop);
 }    

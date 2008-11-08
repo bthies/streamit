@@ -7,9 +7,9 @@
 // this pipline performs the first few blocks in subband analysis.
 complex[N_ch][N_rg][N_pri]->complex[N_ch][N_rg/N_dn][N_pri] pipeline SubAnalysis(int N_ch,int N_rg,int N_pri,int N_dn,int N_lp,int N_td, complex w, complex[N_lp] h_lp, complex[N_td] h_td){
     add FormChg20(N_ch,N_rg,N_pri);
-    add FreqShift(N_rg,W);
+    add FreqShift(N_rg,w);
     add arrayFIR(N_rg,N_lp,h_lp);
-    add DownSamp(N_dn);
+    add DownSamp(N_rg,N_dn);
     add arrayFIR(N_rg/N_dn,N_td,h_td);
     add FormChg21(N_ch, N_rg/N_dn, N_pri);
 }

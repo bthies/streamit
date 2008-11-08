@@ -3,7 +3,7 @@ complex[N_ch][N_rg][N_pri]->float[N_dop][N_rg][N_dop] pipeline
 	int N_fdn, int N_fup, int N_td,int N_pc,int N_ts,int G, int N_cfar,
 	float alpha,float mu,int[N_ts] T_stap,float[N_bm] a, float[N_bm] b, float[N_bm] d,
 	complex[N_fdn] h_lp,complex[N_td] h_td, complex[N_pc] h_pc,complex[N_fup] f_lp) {
-    add WideBand(N_sub,N_ch,N_rg,N_rg,N_pri,N_bm,N_dn,N_dop,N_fd,
+    add WideBand(N_sub,N_ch,N_rg,N_pri,N_bm,N_dn,N_dop,N_fdn,
 		 N_fup,N_td,N_pc,N_ts,alpha,T_stap,a,b,d,h_lp,h_td,h_pc,f_lp);
     add CFAR(N_dop,N_rg,N_dop,N_cfar,G,mu);
     add Target(N_dop,N_rg,N_dop);

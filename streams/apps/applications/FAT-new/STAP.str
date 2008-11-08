@@ -16,6 +16,8 @@ complex->complex[N_dop][N_srg][N_dop] filter STAP(int N_bm,int N_srg,int N_dop,i
     init{}
 
     work push 1 pop (N_bm*N_stag+N_bm*N_stag*N_srg*N_dop) {
+        // Bill: adding this declaration because it was used without being defined
+        complex[N_bm*N_stag] Invect;
 
 	complex[N_bm][N_srg][N_dop][N_stag] InTetr; //the incoming four dimenisional array
 	complex[N_bm*N_stag] InVect; // the incomming steering vector
@@ -48,22 +50,24 @@ complex->complex[N_dop][N_srg][N_dop] filter STAP(int N_bm,int N_srg,int N_dop,i
 	    complex [N_bm*N_stag][N_ts] R_gen; // this will be used in generating
 	    complex [N_bm*N_stag][N_ts] L    ; // the output of the LQ decomposition
 	    complex [N_bm*N_stag] w          ; // this is the w function as defined in eq 14
-	    comlex[N_bm*N_stag] u;	
+	    complex[N_bm*N_stag] u;	
 
 	    for (int j=0; j < (N_bm*N_stag); j++)
 		for (int k=0; k < N_ts; k++)
 		    R_gen[j][k]=X[T_stap[k]][i][j]/Norm_Fact;
 
-	    L=LQ.LQcalc((N_bm*N_stag),N_ts,R_gen);
+            // TODO: translate ../FAT/LQ.java to StreamIt
+	    //L=LQ.LQcalc((N_bm*N_stag),N_ts,R_gen);
 
-	    u=LQ.forw((N_bm*N_stag),L,Invect); // doing the forward and backward substitution
-	    w=LQ.back((N_bm*N_stag),L,u);      // doing the back sub
+            // TODO: translate ../FAT/LQ.java to StreamIt
+	    //u=LQ.forw((N_bm*N_stag),L,Invect); // doing the forward and backward substitution
+	    //w=LQ.back((N_bm*N_stag),L,u);      // doing the back sub
 
 	    for (int j=0; j < N_srg; j++)
-		for (int k; k < N_dop; k++){
+		for (int k=0; k < N_dop; k++){
 		    OutArr[i][j][k]=0;
 		
-		    for (int l; l < stack; l++){
+		    for (int l=0; l < stack; l++){
 			complex dummy;
 			dummy=w[l];
 			dummy.imag=-1*dummy.imag;
@@ -74,4 +78,6 @@ complex->complex[N_dop][N_srg][N_dop] filter STAP(int N_bm,int N_srg,int N_dop,i
 
 	push(OutArr);
     }
+
+    
 }

@@ -7,7 +7,7 @@ N_dop=N_pri+1-N_stg=2^N
 
 */
 
-void->void pipeline FAT_new {
+void->void pipeline FAT_test {
 
     int N_sub;
 
@@ -29,22 +29,45 @@ void->void pipeline FAT_new {
     float alpha;
     float mu;
 
-	
-    N_ch=1;
-    N_rg=1;
-    N_pri=1;
-    N_bm=1;
-    N_dn=1;
-    N_dop=1;
+    // Bill: I have no idea what reasonable values of the following
+    // parameters are.  They affect graph structure.  They were
+    // originally set to 1 or 0, but that leads to degenerate graphs
+    // (e.g., empty pipelines, 1-way splitjoins, etc.)
+    // 
+    // So, I am setting parameters according to following notes.  For
+    // parameters that affect splitjoin width, they are set as high as
+    // possible while maintaining a "reasonable" size graph.  Others
+    // are scaled up to a "realistic" value.
 
+    // Bill notes: 
+    //  - N_srg = N_rg / N_dn (controls width of splitjoin of Idents)
+    //  - another splitjoin width (around BandProc) is N_sub = N_dn
+    //  - another splitjoin width (around AnalTd) is N_ch * N_pri
+    //     --> this splitjoin is disabled because it seemed redundant
+    //  - Block45 splitjoin adds some constraint to value of params
 
-    N_fdn=1;
-    N_fup=1;
-    N_td=1;
-    N_ts=1;
-    N_pc=1;
-    G=0;
-    N_cfar=0;
+    // Note that N_srg = N_rg / N_dn should probably be greater than
+    // 1, as it controls the width of a reordering splitjoin.
+    // However, whenever I try to set it that high, I get rate
+    // mismatches in the Block45 splitjoin.  Must be possible to
+    // compensate with other parameter values.
+
+    // originally set to 1:
+    N_ch=32;
+    N_rg=4;
+    N_pri=32;
+    N_bm=32;
+    N_dn=4;
+    N_dop=32;
+    N_fdn=32;
+    N_fup=32;
+    N_td=32;
+    N_ts=32;
+    N_pc=32;
+
+    // originally set to 0:
+    G=32;
+    N_cfar=32;
 
     alpha=1;
     mu=1;	
@@ -77,7 +100,7 @@ void->void pipeline FAT_new {
     h_pc[0] = 1;
 	
     add IntSource(N_ch,N_rg,N_pri);
-    add FAT(N_sub,N_ch,N_pri,N_bm,N_dn,N_dop,N_fdn,N_fup,N_td,
+    add FAT(N_sub,N_ch,N_rg,N_pri,N_bm,N_dn,N_dop,N_fdn,N_fup,N_td,
 	    N_pc,N_ts,G,N_cfar,alpha, mu,T_stap,a,b,d,h_lp,h_td,h_pc,f_lp);
 
     add Print3d(N_dop,N_rg,N_dop);
@@ -111,7 +134,8 @@ float[N_cnb][N_rg][N_dop]-> void filter Print3d(int N_cnb, int N_rg, int N_dop){
 			// println(":");
 			println(k);
 			// println("=");
-			println(InArr[i][j][k]);
+			println(InArr[i][j][k].real);
+			println(InArr[i][j][k].imag);
 		    }
     }
 }

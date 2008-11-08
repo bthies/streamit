@@ -7,8 +7,11 @@
 complex[N_cnb][N_rg][N_dop]->float[N_cnb][N_rg][N_dop] pipeline 
     CFAR(int N_cnb,int N_rg,int N_dop,int N_cfar,int G, float mu) {
     add FormChg20(N_cnb,N_rg,N_dop);
-    for (int i=0; i < N_cnb; i++)
-	for (int j=0; j <N_dop;j++)
+    // Bill: why is there a pipeline of N_cnb*N_dop CFAR_Vect's?
+    // Was this supposed to be a splitjoin?  Commenting out the
+    // iteration for now...
+    //for (int i=0; i < N_cnb; i++)
+    // for (int j=0; j <N_dop;j++)
 	    add CFAR_Vect(N_rg,N_cfar,G,mu);
     add FormChg21Real(N_cnb,N_rg,N_dop);
 }	

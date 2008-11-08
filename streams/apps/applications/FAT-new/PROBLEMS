@@ -1,22 +1,23 @@
 -*- text -*-
 Specific Problems With the New-Syntax FAT Implementation
-$Id: PROBLEMS,v 1.2 2003-03-03 15:50:19 dmaze Exp $
+$Id: PROBLEMS,v 1.3 2008-11-08 14:04:03 thies Exp $
 
--- WideBand is a splitjoin with N_sub BandProc children.  The output
-   type of BandProc is complex[N_dop][N_rg/N_dn][N_dop], but the
-   output type of WideBand is complex[N_dop][N_rg][N_dop].  This works
-   only if N_dn exactly equals N_sub, which the comment in
-   FAT-test.str suggests should be the case; a unification step still
-   needs to happen.
+-- ../FAT/LQ.java and ../FAT/Comp.java need to be integrated here as
+   static helper functions.  Search for "TODO" in source code.
 
--- AdapBeam is a *BIG HONKING FILTER*.  It also does
-   N_bm*N_srg*N_pri+N_bm+1 pushes, where its declared push rate is 1.
-   ("Something's wrong with its pushing.")  Looking at what Block45
-   does, though, this is actually correct (save the +1), the I/O rate
-   and push at the end just need to be fixed.
+-- there are many type-mismatches between communicating filters, all
+   of which probably are due to array sizes.  Unclear if error is in
+   program or in compiler.  (Can skip these semantic checks by
+   commenting out a few lines of frontend, if you'd like to see stream
+   graph generated from library.)
 
--- FFTVect depends on (presumably our stock) FFT2, which doesn't exist
-   here.
+-- The compiler will need to support constant prop of complex numbers
+   before this goes through.
 
--- STAP is only a moderately big quacking filter.  But it also calls
-   the LQ pipe, which might want to become a filter.
+-- DownSamp filter declares pop>0 but does not call pop()
+
+-- AdapBeam does N_bm*N_srg*N_pri+N_bm+1 pushes, where its declared
+   push rate is 1.  ("Something's wrong with its pushing.")  Looking
+   at what Block45 does, though, this is actually correct (save the
+   +1), the I/O rate and push at the end just need to be fixed.
+

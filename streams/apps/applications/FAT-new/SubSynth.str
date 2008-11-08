@@ -6,8 +6,23 @@
 // this pipline performs the first few blocks in subband synthesis.
 complex[N_cnb][N_srg][N_dop]->complex[N_cnb][N_srg*N_up][N_dop] pipeline SubSynth(int N_cnb,int N_srg,int N_dop,int N_up,int N_lp, complex w, complex[N_lp] f_lp){
     add FormChg20(N_cnb,N_srg,N_dop);
-    add UpSamp(N_up);
+    add UpSamp(N_srg,N_up);
     add arrayFIR(N_srg*N_up,N_lp,f_lp);
-    add FreqShift(N_rg,W);
-    add FromChg21(N_cnb, N_srg*N_up, N_dop);
+    add FreqShift(N_srg*N_up,w);
+    add FormChg21(N_cnb, N_srg*N_up, N_dop);
+}
+
+// Bill: I wrote this filter just based on the I/O rates.  Looks like
+// it's supposed to up-sample, let's say just by duplicating each entry N_up times
+complex[N_srg]->complex[N_srg*N_up] filter UpSamp(int N_srg, int N_up) {
+    work push 1 pop 1 {
+        complex[N_srg] in = pop();
+        complex[N_srg*N_up] out;
+        for (int i=0; i<N_srg; i++) {
+            for (int j=0; j<N_up; j++) {
+                out[i*N_up+j] = in[i];
+            }
+        }
+        push(out);
+    }
 }

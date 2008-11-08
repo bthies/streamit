@@ -14,8 +14,13 @@
 
 complex[N_bm][N_srg][N_pri]->complex[N_bm][N_srg][N_dop][N_pri-N_dop+1] pipeline DopFilt(int N_bm,int N_srg,int N_pri,int N_dop) {
     add Chg40(N_bm,N_srg,N_pri,N_dop);
-    add FFTVect(N_dop);
-    add ParaFFT(N_bm,N_srg,N_dop,N_pri-N_dop+1);
+    // it seems that N_dop = 1, in which case this is no-op (and leads to error due to empty pipeline)
+    if (N_dop>1) {
+        add FFTVect(N_dop);
+    }
+    // Bill: this stream (ParaFFT) does not exist anywhere, so
+    // commenting out the call for now.
+    //add ParaFFT(N_bm,N_srg,N_dop,N_pri-N_dop+1);
     add Chg41(N_bm,N_srg,N_dop,N_pri-N_dop+1);	
 }
 
@@ -44,7 +49,7 @@ complex[N_dop]->complex[N_bm][N_srg][N_dop][N_stag] filter Chg41(int N_bm,int N_
     init{}
 
     work pop (N_bm*N_srg*N_stag) push 1 {
-	complex[N_bm][N_srg][N_dop][N_pri] OutArr;
+	complex[N_bm][N_srg][N_dop][N_stag] OutArr;
 	complex[N_dop] InArr;
 
 	for (int i=0; i < N_bm; i++)
@@ -63,7 +68,24 @@ complex[N_dop]->complex[N_bm][N_srg][N_dop][N_stag] filter Chg41(int N_bm,int N_
 // This function performs FFT over arrays.
 complex[N]->complex[N] pipeline FFTVect(int N){
     add DecompVect(N); // we are changing the vector to its elements
-    add FFT2(N);       // taking the FFT
+    // convert complex to interleaved real/imag
+    add complex->float filter {
+        work pop 1 push 2 {
+            complex x = pop();
+            push(x.real);
+            push(x.imag);
+        }
+    }
+    add FFTKernel3(N);       // taking the FFT
+    // conver interleaved real/imag to complex
+    add float->complex filter {
+        work pop 2 push 1 {
+            complex result;
+            result.real = pop();
+            result.imag = pop();
+            push(result);
+        }
+    }
     add CompVect(N);   // they are put back togeather   
 
 }
@@ -76,7 +98,7 @@ complex[N]-> complex filter DecompVect(int N){
 	complex[N] InVect;
 	InVect= pop();
 
-	for (int i ; i < N; i++)
+	for (int i=0 ; i < N; i++)
 	    push(InVect[i]);
     }
 }
@@ -90,7 +112,7 @@ complex->complex[N] filter CompVect(int N){
     work pop N push 1{
 	complex[N] OutVect;
 
-	for (int i; i< N; i++)
+	for (int i=0; i< N; i++)
 	    OutVect[i]=pop();
 
 	push(OutVect);

@@ -1,9 +1,11 @@
 // this filter performs both a FIR operation over an array	    
+// Bill: this is redundant with an arrayFIR defined elsewhere. Not included
+// in compilation.
 complex->complex filter arrayFIR(int N_arr, int N_lp, complex[N_lp] h) {
 
     init{}
 
-    work push N_arr pop N_arr peek 0 {
+    work push N_arr pop N_arr {
 	complex[N_arr] in_arr;
 
 	for (int i=0; i < N_arr; i++)

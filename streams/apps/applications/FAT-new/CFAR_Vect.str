@@ -29,7 +29,9 @@ complex[N_rg]->float[N_rg] filter CFAR_Vect(int N_rg,int N_cfar,int G, float mu)
 		Tijk=Tijk+InVect[k+l+G].real*InVect[k+l+G].real+InVect[k+l+G].imag*InVect[k+l+G].imag;
 	    }
 	 
-	    norm=InVect[k]*N_nei/Tijk;
+            // Bill: type mismatch.  Going to take magnitude of vector to fix it.
+	    //norm=InVect[k]*N_nei/Tijk;
+            norm = (InVect[k].real*InVect[k].real+InVect[k].imag*InVect[k].imag)*N_nei/Tijk;
 
 	    if (norm > mu) 
 		OutVect[k]=norm;// other wise it will be zero by default.

@@ -8,7 +8,12 @@
 complex->complex splitjoin Block45(int N_bm,int N_srg,int N_pri,int N_dop,int N_pc,complex[N_pc] h_pc) {
     split roundrobin (N_bm*N_srg*N_pri,N_bm);
     add ElPipe(N_bm,N_srg,N_pri,N_dop,N_pc,h_pc);
-    add Comp_Rep(N_stg);
+    // Bill: in degenerate case where N_srg=1, don't add empty splitjoin
+    if (N_srg > 1) {
+        add Comp_Rep(N_srg);
+    } else {
+        add Identity<complex>();
+    }
     join roundrobin(N_bm*N_srg*N_dop*(N_pri+1-N_dop),N_bm);
 }
 	

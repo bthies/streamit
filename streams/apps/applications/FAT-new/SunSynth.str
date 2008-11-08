@@ -4,12 +4,14 @@
  * sampling is done to make it of the size N_srg*N_dn=N_rg
  */
 
+/* Bill: use version in SubAnalysis.str instead.  It does not have a redundant splitjoin.
 // this pipline performs the first few blocks in subband analysis.
 complex[N_ch][N_rg][N_pri]->complex[N_ch][N_rg/N_dn][N_pri] pipeline SubAnalysis(int N_ch,int N_rg,int N_pri,int N_dn,int N_lp,int N_td, complex w, complex[N_lp] h_lp, complex[N_td] h_td){
     add FormChg20(N_ch,N_rg,N_pri);
     add ElAnal(N_ch,N_rg,N_pri,N_dn,N_lp,N_td,w,h_lp,h_td);
     add FromChg21(N_ch,N_rg/N_dn, N_pri);
 }
+*/
 								     
 // this SplitJoin gets as its input the elements of different
 // subbbands and pushes them through RnAnal
@@ -26,7 +28,7 @@ complex[N_rg]-> complex[N_rg/N_dn] splitjoin ElAnal(int N_ch,int N_rg, int N_pri
 complex[N_rg]->complex[N_rg/N_dn] pipeline AnalTd(int N_rg,int N_dn,int N_lp,int N_td,complex W, complex[N_lp] h_lp,complex[N_td] h_td) {
     add FreqShift(N_rg,W);
     add arrayFIR(N_rg,N_lp,h_lp);
-    add DownSamp(N_in, N_dn);
+    add DownSamp(N_rg, N_dn);
     add arrayFIR(N_rg/N_dn,N_td,h_td);
 }
 
@@ -43,7 +45,7 @@ complex[N]->complex[N] filter FreqShift (int N, complex w) {
 		    
     }
     
-    work push 1 pop 1 peek 0  {
+    work push 1 pop 1 {
 	complex[N] y;
 	y=pop();
 	for (int i=1; i < N; i++)
@@ -56,10 +58,11 @@ complex[N]->complex[N] filter FreqShift (int N, complex w) {
 complex[N_in]->complex[N_in/N_dn] filter DownSamp(int N_in,int N_dn) {
     init { }
 
+        // Bill: this filter doesn't contain any pop statements!
     work push 1 pop 1 {
 	int N_out= N_in/N_dn;
 	complex[N_in] in_arr;
-	complex[N_out] out_arr;
+	complex[N_in/N_dn] out_arr;
 
 	for (int i=0 ; i <N_out ;i=i++)
 	    out_arr[i]=in_arr[i*N_dn];
@@ -67,35 +70,33 @@ complex[N_in]->complex[N_in/N_dn] filter DownSamp(int N_in,int N_dn) {
     }
 }
 
-/*
 // this filter performs both a FIR operation over an array	    
 complex[N_arr]->complex[N_arr] filter arrayFIR(int N_arr, int N_lp, complex[N_lp] h){
 
-init{
-}    
+    init{
+    }    
 
-work push 1 pop 1 peek 0 {
-complex[N_arr] in_arr;
-complex[N_arr] out_arr;
+    work push 1 pop 1 peek 0 {
+        complex[N_arr] in_arr;
+        complex[N_arr] out_arr;
 
-in_arr=pop();
+        in_arr=pop();
 
-for (int i=0 ; i < N_lp  ; i++){
-out_arr[i]=0;
-for (int j=0; (j < N_lp) & ((i-j)>=0) ; j++)
-out_arr[i]=out_arr[i]+h[j]*in_arr[i-j];
-}
+        for (int i=0 ; i < N_lp  ; i++){
+            out_arr[i]=0;
+            for (int j=0; (j < N_lp) & ((i-j)>=0) ; j++)
+                out_arr[i]=out_arr[i]+h[j]*in_arr[i-j];
+        }
 		
-for (int i=N_lp ; i < N_in ; i++){
-out_arr[i]=0;
-for (int j=0; (j < N_lp) ; j++)
-out_arr[i]=out_arr[i]+h[j]*in_arr[i-j];
-}
+        for (int i=N_lp ; i < N_arr ; i++){
+            out_arr[i]=0;
+            for (int j=0; (j < N_lp) ; j++)
+                out_arr[i]=out_arr[i]+h[j]*in_arr[i-j];
+        }
 
-push(out_arr);
+        push(out_arr);
+    }
 }
-	    
-*/
 
 /*
   This filter takes a three dimentional array and extracs its columns 

@@ -18,13 +18,13 @@ complex[N_ch][N_srg][N_pri]->complex filter AdapBeam( int N_ch,int N_bm,int N_sr
 	    for (int j=0; j < N_ch ; j++)
 		V[j][i]=b[j]*exp(-d[i]-a[i]*j);
 
-	alpha= sqrt(alpha);
+	float alpha_root = sqrt(alpha);
 
 	// are the initial values zero? no they are not (from hasani)
 	for (int i=0; i < N_ch; i++)
 	    for (int j=5*N_ch ; j<6*N_ch; j++){
 		if (i==j) {
-		    A_ext[i][j]=alpha;
+		    A_ext[i][j]=alpha_root;
 		}
 		else A_ext[i][j]=0;
 	    }
@@ -44,7 +44,9 @@ complex[N_ch][N_srg][N_pri]->complex filter AdapBeam( int N_ch,int N_bm,int N_sr
 
 	float sum;
 	float [N_ch][N_ch] L;
-	CubVect Vstap_Ocub(N_ch,N_bm,N_srg,N_pri);
+	//CubVect Vstap_Ocub(N_ch,N_bm,N_srg,N_pri);
+        // BILL sanitization:
+        complex[N_bm][N_srg][N_pri] Vstap_Ocub;
     
 	// these dummy variables are used for matrix multipication 
 	complex dummy1;
@@ -56,7 +58,8 @@ complex[N_ch][N_srg][N_pri]->complex filter AdapBeam( int N_ch,int N_bm,int N_sr
 	    for (int j=0; j < 5*N_ch; j++)
 		A_ext[i][j]=InCube[i][j][1]/csqrt(5*N_ch);
 
-	L=LQ.comp(N_ch,6*N_ch,A_ext);
+        // TODO: translate ../FAT/LQ.java to StreamIt
+	//L=LQ.comp(N_ch,6*N_ch,A_ext);
 
 	// this loop calculates the beam correction matrix using Wiener-Hopf Formula
 	for (int i=0; i < N_bm; i++){ 
@@ -64,13 +67,15 @@ complex[N_ch][N_srg][N_pri]->complex filter AdapBeam( int N_ch,int N_bm,int N_sr
 	    for (int j=0; j < N_ch; j++)
 		u[j]=V[j][i];
 	    
-	    u=LQ.forw(N_ch,L,u);
+            // TODO: translate ../FAT/LQ.java to StreamIt
+	    //u=LQ.forw(N_ch,L,u);
 	    sum=0;
 	    	    
 	    for (int j=0;j < N_ch; j++)
 		sum=sum+u[j].real*u[j].real+u[j].imag*u[j].imag;
 
-	    u=LQ.back(N_ch,L,u);
+            // TODO: translate ../FAT/LQ.java to StreamIt
+	    //u=LQ.back(N_ch,L,u);
 
 	    for (int j=0; j < N_ch;j++)
 		W[j][i]=u[j]/sum;
@@ -80,11 +85,11 @@ complex[N_ch][N_srg][N_pri]->complex filter AdapBeam( int N_ch,int N_bm,int N_sr
 	for (int i=0; i < N_pri; i++)
 	    for (int j=0; j < N_srg; j++)
 		for (int k=0; k < N_bm; k++){
-		    Vstap_Ocub.Cube[k][j][i]=0;
+		    Vstap_Ocub[k][j][i]=0;
 		    for (int l=0; l < N_ch; l++){
 			dummy1=W[l][k];
 			dummy1.imag= -1*dummy1.imag;
-			Vstap_Ocub.Cube[k][j][i]+=dummy1*InCube[l][j][i];
+			Vstap_Ocub[k][j][i]+=dummy1*InCube[l][j][i];
 		    }
 		}
 
@@ -92,7 +97,7 @@ complex[N_ch][N_srg][N_pri]->complex filter AdapBeam( int N_ch,int N_bm,int N_sr
 	for (int i=0; i < N_bm; i++)
 	    for (int j=0; j < N_srg; j++)
 		for (int k=0; k< N_pri; k++)
-		    push(Vstap_Ocub.Cube[i][j][k]);
+		    push(Vstap_Ocub[i][j][k]);
 	
 
 	// From this part on, I will be generating the v_stap that
@@ -114,8 +119,10 @@ complex[N_ch][N_srg][N_pri]->complex filter AdapBeam( int N_ch,int N_bm,int N_sr
 	for (int i=0; i < N_bm; i++)
 	    push(v_stap[i]);
 
-	Vstap_Ocub.Vect=v_stap;
+        // Bill: the Vstap_Ocub.Vect variable is never used.  So commenting out.
+	//Vstap_Ocub.Vect=v_stap;
 
-	push(W_Ocub);
+        // Bill: pushing an undefined variable, so comment out.
+	//push(W_Ocub);
     }
 }

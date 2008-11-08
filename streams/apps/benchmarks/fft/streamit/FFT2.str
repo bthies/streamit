@@ -144,6 +144,16 @@ float->float splitjoin FFTKernel2(int n) {
 }
 
 
+// same as FFTKernel2 but does not have explicit 2-way splitjoin around entire program
+float->float pipeline FFTKernel3(int n) {
+    add pipeline {
+      add FFTReorder(n);
+      for(int j=2; j<=n; j*=2)
+        add CombineDFT(j);
+    }
+}
+
+
 void->float filter FFTTestSource(int N) {
 
   work push 2*N pop 0 {

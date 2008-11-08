@@ -52,7 +52,7 @@ public class ChannelConnectFilter extends Filter
         assert out.getType ().getName ().equals (in.getType ().getName ()):
             "Mismatched tape types.  Source output is " +
             in.getType().getName() + ", but sink input is " +
-            out.getType().getName();
+            out.getType().getName() + "(Source is " + in.source + ", sink is " + out.sink;
 
         inputChannel = in;
         outputChannel = out;

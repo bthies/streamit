@@ -1,3 +1,6 @@
+// NOTE: the computation in this filter appears to be stateless.  //
+// However, some variables are kept as fields to decrease the overhead of
+// passing structures as parameters.  --Bill
 Vertex->TriangleSetupInfo filter TriangleSetup( int screenWidth, int screenHeight )
 {
     Vertex v0;

@@ -2,7 +2,6 @@
 TriangleSetupInfo->Fragment filter Rasterizer( int offset, int numUnits, int screenWidth, int screenHeight )
 {
     int numColumns;
-    TriangleSetupInfo tsi;
 
     init
 	{
@@ -17,7 +16,7 @@ TriangleSetupInfo->Fragment filter Rasterizer( int offset, int numUnits, int scr
 
     work pop 1 push *
 	{
-	    tsi = pop();
+            TriangleSetupInfo tsi = pop();
 
 	    // given an x coordinate:
 	    // x / numUnits = group number

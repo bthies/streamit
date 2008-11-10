@@ -191,7 +191,7 @@ public class EmitTileCode extends EmitCode {
         p.println("#include \"structs.h\"");
         p.println("#include <sys/archlib.h>");
         if (KjcOptions.profile)
-            p.println("#include <sys/profile.h>");
+            p.println("#include <sys/profiler.h>");
         p.println("#include <pass.h>");
         p.newLine();
         p.newLine();

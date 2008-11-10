@@ -12,9 +12,11 @@ import at.dms.kjc.JFormalParameter;
 import at.dms.kjc.JMethodCallExpression;
 import at.dms.kjc.JMethodDeclaration;
 import at.dms.kjc.JStatement;
+import at.dms.kjc.KjcOptions;
 import at.dms.kjc.JThisExpression;
 import at.dms.kjc.JWhileStatement;
 import at.dms.kjc.sir.SIRCodeUnit;
+import at.dms.kjc.JEmittedTextExpression;
 //import at.dms.kjc.slicegraph.SliceNode;
 import at.dms.kjc.common.ALocalVariable;
 
@@ -155,7 +157,14 @@ public class ComputeCodeStore<ComputeNodeType extends ComputeNode<?>> implements
      * you should override this method.
      */
     protected void addSteadyLoop() {
-        // add it to the while statement
+        //enable the profiler right before the steady loop on tilera
+        if (KjcOptions.tilera > 0 && KjcOptions.profile) {
+            mainMethod.addStatement(new JExpressionStatement(
+                    new JEmittedTextExpression("profiler_enable()")));
+            mainMethod.addStatement(new JExpressionStatement(
+                    new JEmittedTextExpression("profiler_clear()")));
+        }
+        //add it to the while statement
         mainMethod.addStatement(new JWhileStatement(null, new JBooleanLiteral(
                 null, true), steadyLoop, null));
     }

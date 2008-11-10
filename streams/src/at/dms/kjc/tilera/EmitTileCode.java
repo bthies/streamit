@@ -190,6 +190,8 @@ public class EmitTileCode extends EmitCode {
             p.println("#include \"fixed.h\"");
         p.println("#include \"structs.h\"");
         p.println("#include <sys/archlib.h>");
+        if (KjcOptions.profile)
+            p.println("#include <sys/profile.h>");
         p.println("#include <pass.h>");
         p.newLine();
         p.newLine();
@@ -224,6 +226,8 @@ public class EmitTileCode extends EmitCode {
         p.println("COMMON_ARGS = \\");
         p.println("  --magic-os \\");
         p.println("  --config tile64 \\");
+        if (KjcOptions.profile) 
+            p.println("  --xml-profile profile.xml \\");
         p.println("  $(foreach exe,$(EXECUTABLES), --upload $(exe),$(exe)) \\");
         p.println("  -- $(BOOT_EXE)");
         p.println();
@@ -405,6 +409,8 @@ public class EmitTileCode extends EmitCode {
         p.println(
 "int main(int argc, char** argv) {\n");
         p.indent();
+        if (KjcOptions.profile)
+            p.println("profiler_disable()");
         p.println(staticNetworkBarrierRouting(t));
         p.println("__insn_mtspr(SPR_SNCTL, 0x2);");
         p.println("ilib_init();");

@@ -386,7 +386,13 @@ public class CommonPasses {
         
         setSlicer(null);
         if (KjcOptions.tilera > 1) {
-            setSlicer(new OneFilterSlicer(topNodes, executionCounts));
+            if (!KjcOptions.nopartition)
+                setSlicer(new OneFilterSlicer(topNodes, executionCounts));
+            else {
+                setSlicer(new FlattenAndPartition(topNodes,
+                        executionCounts, lfa, getWorkEstimate(), numCores));
+                ((FlattenAndPartition)getSlicer()).flatten(str, executionCounts);
+            }
         }
         else {
             if (KjcOptions.autoparams) {

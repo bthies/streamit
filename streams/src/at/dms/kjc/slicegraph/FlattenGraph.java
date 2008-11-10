@@ -230,12 +230,15 @@ public class FlattenGraph {
             if(!((SIRSplitJoin)graph).getSplitter().getType().isNull()) {
                 if(!((SIRSplitJoin)graph).getJoiner().getType().isNull()) {
                     for(int i=0;i<size;i++) {
-                        
+                        System.out.println("Flatten call");
                         UnflatEdge[] child = flatten(((SIRSplitJoin)graph).get(i));
+                        System.out.println("Flatten return");
                         
                         if (weights[i]!=0) {
                             splitterOut[i].connect(child[0]);
                         } else {
+                            System.out.println(child);
+                            System.out.println(child[0]);
                             topLevelNodes.add(child[0].dest);
                             child[0].dest.in=null;
                         }

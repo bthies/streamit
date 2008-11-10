@@ -58,7 +58,7 @@ public class FlattenAndPartition extends SIRSlicer {
 
         flattenInternal(fg.top);
 
-        System.out.println("Slices: " + sliceList.size());
+        //System.out.println("Slices: " + sliceList.size());
         //sliceGraph = sliceList.toArray(new Slice[sliceList.size()]);
         io = ioList.toArray(new Slice[ioList.size()]);
     }
@@ -69,7 +69,7 @@ public class FlattenAndPartition extends SIRSlicer {
 
         while (dataFlow.hasNext()) {
             FlatNode node = dataFlow.next();
-            System.out.println(node);
+            //System.out.println(node);
             InputSliceNode input = sliceNodes.inputNodes.get(node.contents);
             OutputSliceNode output = sliceNodes.outputNodes.get(node.contents);
             FilterSliceNode filterNode = sliceNodes.filterNodes
@@ -87,7 +87,7 @@ public class FlattenAndPartition extends SIRSlicer {
             output.setParent(slice);
             filterNode.setParent(slice);
 
-            System.out.println("  outputs: " + node.ways);
+            //System.out.println("  outputs: " + node.ways);
             if (node.ways != 0) {
                 assert node.ways == node.getEdges().length
                         && node.ways == node.weights.length;
@@ -137,7 +137,7 @@ public class FlattenAndPartition extends SIRSlicer {
             }
             
             // set up the joining, the edges should exist already from upstream
-            System.out.println("  inputs: " + node.inputs);
+            //System.out.println("  inputs: " + node.inputs);
             if (node.inputs != 0) {
                 assert node.inputs == node.incoming.length
                         && node.inputs == node.incomingWeights.length;
@@ -179,14 +179,17 @@ public class FlattenAndPartition extends SIRSlicer {
 
             if (node.contents instanceof SIRFileReader
                     || node.contents instanceof SIRFileWriter) {
-                System.out.println("Found io " + node.contents);
+                //System.out.println("Found io " + node.contents);
                 ioList.add(slice);
             }
-                
+
             if (topSlice == null)
                 topSlice = slice;
             sliceList.add(slice);
         }
+        topSlices = new LinkedList<Slice>();
+        topSlices.add(topSlice); 
+        System.out.println(topSlices);
     }
 }
 
@@ -212,7 +215,7 @@ class SIRToSliceNodes implements FlatVisitor {
     }
 
     public void visitNode(FlatNode node) {
-        System.out.println("Creating SliceNodes: " + node);
+        //System.out.println("Creating SliceNodes: " + node);
         OutputSliceNode output = new OutputSliceNode();
         InputSliceNode input = new InputSliceNode();
         FilterContent content;
@@ -245,14 +248,19 @@ class SIRToSliceNodes implements FlatVisitor {
             mult = node.getTotalIncomingWeights();
 
         }
+        
         if (exeCounts[0].containsKey(node.contents))
             content.setInitMult(mult
                     * ((int[]) exeCounts[0].get(node.contents))[0]);
         else
             content.setInitMult(0);
+        
 
-        content.setSteadyMult(mult
-                * ((int[]) exeCounts[1].get(node.contents))[0]);
+        if (exeCounts[1].containsKey(node.contents)) {
+            content.setSteadyMult(mult
+                    * ((int[]) exeCounts[1].get(node.contents))[0]);
+        } else
+            content.setInitMult(0);
 
         FilterSliceNode filterNode = new FilterSliceNode(content);
         if (node.isSplitter() || node.isJoiner())

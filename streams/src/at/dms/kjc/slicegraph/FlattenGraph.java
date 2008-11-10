@@ -227,8 +227,10 @@ public class FlattenGraph {
                 }
             } else if(!((SIRSplitJoin)graph).getJoiner().getType().isNull())
                 Utils.fail("Unknown Join Type: "+((SIRSplitJoin)graph).getJoiner().getType());
+            
             if(!((SIRSplitJoin)graph).getSplitter().getType().isNull()) {
                 if(!((SIRSplitJoin)graph).getJoiner().getType().isNull()) {
+                    System.out.println(size);
                     for(int i=0;i<size;i++) {
                         System.out.println("Flatten call");
                         UnflatEdge[] child = flatten(((SIRSplitJoin)graph).get(i));
@@ -236,9 +238,7 @@ public class FlattenGraph {
                         
                         if (weights[i]!=0) {
                             splitterOut[i].connect(child[0]);
-                        } else {
-                            System.out.println(child);
-                            System.out.println(child[0]);
+                        } else if (child != null && child[0] != null) {
                             topLevelNodes.add(child[0].dest);
                             child[0].dest.in=null;
                         }

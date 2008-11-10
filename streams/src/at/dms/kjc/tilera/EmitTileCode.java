@@ -410,7 +410,7 @@ public class EmitTileCode extends EmitCode {
 "int main(int argc, char** argv) {\n");
         p.indent();
         if (KjcOptions.profile)
-            p.println("profiler_disable()");
+            p.println("profiler_disable();");
         p.println(staticNetworkBarrierRouting(t));
         p.println("__insn_mtspr(SPR_SNCTL, 0x2);");
         p.println("ilib_init();");

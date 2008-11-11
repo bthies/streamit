@@ -3,7 +3,7 @@
  * M frequency bands. It then performs some processing on them (the exact
  * processing is yet to be determined, and then reconstructs them.
  **/
-void->void pipeline FilterBank6 {
+void->void pipeline FilterBank3 {
     //    add DataSource();
     //add FileReader<float>("../input/input");
     add FilterBankPipeline(8);
@@ -39,7 +39,7 @@ void->float pipeline ProcessingPipeline(int M, int i) {
   /* analysis pipeline */
   add pipeline {
     /* take the subband from i*pi/M to (i+1)*pi/M */
-    add BandPassFilter(1, (i*pi/M), ((i+1)*pi/M), 128);
+    add BandPassFilter(1, (i*pi/M), ((i+1)*pi/M), 64);
     /* decimate by M */
     add Compressor(M);
   };
@@ -52,7 +52,7 @@ void->float pipeline ProcessingPipeline(int M, int i) {
     /* upsample by M */
     add Expander(M);
     /* synthesize (eg interpolate) */
-    add BandStopFilter(M, (i*pi/M), ((i+1)*pi/M), 128);
+    add BandStopFilter(M, (i*pi/M), ((i+1)*pi/M), 64);
   };
 }
 

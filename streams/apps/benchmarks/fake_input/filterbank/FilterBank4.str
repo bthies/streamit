@@ -3,10 +3,10 @@
  * M frequency bands. It then performs some processing on them (the exact
  * processing is yet to be determined, and then reconstructs them.
  **/
-void->void pipeline FilterBank6 {
+void->void pipeline FilterBank4 {
     //    add DataSource();
     //add FileReader<float>("../input/input");
-    add FilterBankPipeline(8);
+    add FilterBankPipeline(2);
     add FileWriter<float>("FilterBank.out");
 }
 

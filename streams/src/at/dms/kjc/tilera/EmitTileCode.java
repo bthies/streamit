@@ -136,6 +136,10 @@ public class EmitTileCode extends EmitCode {
         String code = "__insn_mtspr(SPR_SNSTATIC, (";
         int gXSize = TileraBackend.chip.abstractXSize();
         int gYSize = TileraBackend.chip.abstractYSize();
+        
+        if (gXSize == 1 && gYSize == 1)
+            return "";
+        
         assert gXSize % 2 == 0 &&
                gYSize % 2 == 0  : "Only even row / col sizes are supported";
         int row = tile.getY();

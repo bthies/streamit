@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.108 2008-11-05 21:18:33 mgordon Exp $
+ * $Id: KjcOptions.opt,v 1.109 2008-11-11 20:13:52 mgordon Exp $
  */
 
 prefix Kjc
@@ -721,6 +721,11 @@ longname		"fixedpoint"
 	default		"false"
 	help		"Convert floating point to fixed point in Tilera Backend."
 
+longname 		"dupthresh"
+	type 		int
+	default		"10"
+	requireArgument
+	help 		"What percentage of data is duplicated for slice fission."
 
 longname		"tilera"
 	shortcut	"t"
@@ -728,6 +733,8 @@ longname		"tilera"
 	default		"-1"
 	requireArgument
 	help		"Uses the experimental Tilera (Tile64) backend with <n> cores"
+
+
 
 
  longname		"partitioner" 

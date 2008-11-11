@@ -25,7 +25,7 @@ import java.util.List;
  */
 public class TMD extends Scheduler {
 
-    private double DUP_THRESHOLD = .75;
+    private double DUP_THRESHOLD;
     public LevelizeSliceGraph lsg;
     private HashMap<Slice, Integer> fizzAmount;
     public static final int FISS_COMP_COMM_THRESHOLD = 10;
@@ -33,6 +33,7 @@ public class TMD extends Scheduler {
     public TMD() {
         super();
         fizzAmount = new HashMap<Slice, Integer>();
+        DUP_THRESHOLD = ((double)KjcOptions.dupthresh) / 100.0;
     }
     
     /** Get the tile for a Slice 

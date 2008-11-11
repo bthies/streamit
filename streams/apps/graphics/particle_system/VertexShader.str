@@ -1,0 +1,166 @@
+// Takes a Vertex in and "shades" it
+
+Vertex->Vertex filter VertexShader( int id )
+{
+    Vertex[6] vertices;
+
+    Matrix4f modelView;
+    Matrix4f projection;
+
+    float worldX;
+    float worldY;
+    float worldZ;
+    float worldW;
+
+    float eyeX;
+    float eyeY;
+    float eyeZ;
+    float eyeW;
+
+    float clipX;
+    float clipY;
+    float clipZ;
+    float clipW;
+
+    init
+	{
+	    // modelview matrix, identity for now
+	    modelView.m[0] = 1;
+	    modelView.m[1] = 0;
+	    modelView.m[2] = 0;
+	    modelView.m[3] = 0;
+
+	    modelView.m[4] = 0;
+	    modelView.m[5] = 1;
+	    modelView.m[6] = 0;
+	    modelView.m[7] = 0;
+
+	    modelView.m[8] = 0;
+	    modelView.m[9] = 0;
+	    modelView.m[10] = 1;
+	    modelView.m[11] = 0;
+
+	    modelView.m[12] = 0;
+	    modelView.m[13] = 0;
+	    modelView.m[14] = -5;
+	    modelView.m[15] = 1;
+
+	    // normal matrix is just top-left 3x3 ^-T, doesn't matter which order you do it in
+
+	    // nominal projection matrix
+	    // fov = 50 degrees, 1:1 aspect ratio, near = 1, far = 10
+	    // gluPerspective( 50, 1, 1, 10 );
+	    projection.m[0] = 2.144507;
+	    projection.m[1] = 0;
+	    projection.m[2] = 0;
+	    projection.m[3] = 0;
+
+	    projection.m[4] = 0;
+	    projection.m[5] = 2.144507;
+	    projection.m[6] = 0;
+	    projection.m[7] = 0;
+
+	    projection.m[8] = 0;
+	    projection.m[9] = 0;
+	    projection.m[10] = -1.022222;
+	    projection.m[11] = -1;
+
+	    projection.m[12] = 0;
+	    projection.m[13] = 0;
+	    projection.m[14] = -2.022222;
+	    projection.m[15] = 0;
+	}
+
+    void tesselate()
+	{
+	    vertices[3].position.x = ( vertices[0].position.x + vertices[1].position.x ) / 2.0;
+	    vertices[3].position.y = ( vertices[0].position.y + vertices[1].position.y ) / 2.0;
+	    vertices[3].position.z = ( vertices[0].position.z + vertices[1].position.z ) / 2.0;
+	    vertices[3].position.w = 1;
+	    
+	    vertices[3].color.r = ( vertices[0].color.r + vertices[1].color.r ) / 2.0;
+	    vertices[3].color.g = ( vertices[0].color.g + vertices[1].color.g ) / 2.0;
+	    vertices[3].color.b = ( vertices[0].color.b + vertices[1].color.b ) / 2.0;
+	   
+	    vertices[4].position.x = ( vertices[1].position.x + vertices[2].position.x ) / 2.0;
+	    vertices[4].position.y = ( vertices[1].position.y + vertices[2].position.y ) / 2.0;
+	    vertices[4].position.z = ( vertices[1].position.z + vertices[2].position.z ) / 2.0;
+	    vertices[4].position.w = 1;
+	    
+	    vertices[4].color.r = ( vertices[1].color.r + vertices[2].color.r ) / 2.0;
+	    vertices[4].color.g = ( vertices[1].color.g + vertices[2].color.g ) / 2.0;
+	    vertices[4].color.b = ( vertices[1].color.b + vertices[2].color.b ) / 2.0;
+	   
+	    vertices[5].position.x = ( vertices[0].position.x + vertices[2].position.x ) / 2.0;
+	    vertices[5].position.y = ( vertices[0].position.y + vertices[2].position.y ) / 2.0;
+	    vertices[5].position.z = ( vertices[0].position.z + vertices[2].position.z ) / 2.0;
+	    vertices[5].position.w = 1;
+	    
+	    vertices[5].color.r = ( vertices[0].color.r + vertices[2].color.r ) / 2.0;
+	    vertices[5].color.g = ( vertices[0].color.g + vertices[2].color.g ) / 2.0;
+	    vertices[5].color.b = ( vertices[0].color.b + vertices[2].color.b ) / 2.0;
+	}
+
+    void transform()
+	{
+	    for( int i = 0; i < 6; ++i )
+		{
+		    worldX = vertices[i].position.x;
+		    worldY = vertices[i].position.y;
+		    worldZ = vertices[i].position.z;
+		    worldW = vertices[i].position.w;
+
+		    computeEyeSpace();
+		    computeClipSpace();
+
+		    vertices[i].position.x = clipX;
+		    vertices[i].position.y = clipY;
+		    vertices[i].position.z = clipZ;
+		    vertices[i].position.w = clipW;
+		}
+	}
+
+    void computeEyeSpace()
+	{
+	    eyeX = modelView.m[0] * worldX + modelView.m[4] * worldY + modelView.m[8]  * worldZ + modelView.m[12] * worldW;
+	    eyeY = modelView.m[1] * worldX + modelView.m[5] * worldY + modelView.m[9]  * worldZ + modelView.m[13] * worldW;
+	    eyeZ = modelView.m[2] * worldX + modelView.m[6] * worldY + modelView.m[10] * worldZ + modelView.m[14] * worldW;
+	    eyeW = modelView.m[3] * worldX + modelView.m[7] * worldY + modelView.m[11] * worldZ + modelView.m[15] * worldW;
+	}
+
+    void computeClipSpace()
+	{
+	    clipX = projection.m[0] * eyeX + projection.m[4] * eyeY + projection.m[8]  * eyeZ + projection.m[12] * eyeW;
+	    clipY = projection.m[1] * eyeX + projection.m[5] * eyeY + projection.m[9]  * eyeZ + projection.m[13] * eyeW;
+	    clipZ = projection.m[2] * eyeX + projection.m[6] * eyeY + projection.m[10] * eyeZ + projection.m[14] * eyeW;
+	    clipW = projection.m[3] * eyeX + projection.m[7] * eyeY + projection.m[11] * eyeZ + projection.m[15] * eyeW;
+	}
+
+    // uniform tesselation
+    // one triangle in, 4 triangles out
+    work pop 3 push 12
+	{
+	    vertices[0] = pop();
+	    vertices[1] = pop();
+	    vertices[2] = pop();
+
+	    tesselate();
+	    transform();
+
+	    push( vertices[0] );
+	    push( vertices[3] );
+	    push( vertices[4] );
+	    
+	    push( vertices[3] );
+	    push( vertices[1] );
+	    push( vertices[4] );
+
+	    push( vertices[0] );
+	    push( vertices[4] );
+	    push( vertices[5] );
+
+	    push( vertices[5] );
+	    push( vertices[4] );
+	    push( vertices[2] );
+	}
+}

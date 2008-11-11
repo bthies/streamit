@@ -1,0 +1,283 @@
+void->int filter Input
+{
+    work push 1
+	{
+	    push( 1 );
+	}
+}
+
+int->void filter PoissonDOF( int width, int height, int lowWidth, int lowHeight )
+{
+
+    float[360000] sourceRed = init_array_1D_float( "Pass1_input_red.arr", 360000 );
+    float[360000] sourceGreen = init_array_1D_float( "Pass1_input_green.arr", 360000 );
+    float[360000] sourceBlue = init_array_1D_float( "Pass1_input_blue.arr", 360000 );
+    float[360000] sourceBlurriness = init_array_1D_float( "Pass3_input_blurriness.arr", 360000 );
+
+    float[22500] sourceRedLow = init_array_1D_float( "Pass3_input_low_red.arr", 22500 );
+    float[22500] sourceGreenLow = init_array_1D_float( "Pass3_input_low_green.arr", 22500 );
+    float[22500] sourceBlueLow = init_array_1D_float( "Pass3_input_low_blue.arr", 22500 );
+
+    float[360000] outputRed;
+    float[360000] outputGreen;
+    float[360000] outputBlue;
+
+    float maxCoCRadius;
+    float radiusScale;
+
+    float[8] poissonX = { -0.45, -0.9, -0.85, -0.2, 0.4, 0.55, 0.33, 0.8 };
+    float[8] poissonY = { 0.04, 0.4, -0.3, -0.6, 0.34, -0.2, -0.58, 0.3 };
+
+    init
+	{
+	    maxCoCRadius = 5.0;
+	    radiusScale = 0.25;
+	}
+
+    float getRedHigh( float x, float y )
+	{
+	    int x0 = ( int )x;
+	    int x1 = x0 + 1;
+	    int y0 = ( int )y;
+	    int y1 = y0 + 1;
+
+	    float red00 = sourceRed[ y0 * width + x0 ];
+	    float red01 = sourceRed[ y1 * width + x0 ];
+	    float red10 = sourceRed[ y0 * width + x1 ];
+	    float red11 = sourceRed[ y1 * width + x1 ];
+
+	    float fracX = x - x0;
+	    float fracY = y - y0;
+
+	    float redTop = red00 + fracX * ( red10 - red00 );
+	    float redBot = red01 + fracX * ( red11 - red01 );
+
+	    return( redTop + fracY * ( redBot - redTop ) );
+	}
+
+    float getGreenHigh( float x, float y )
+	{
+	    int x0 = ( int )x;
+	    int x1 = x0 + 1;
+	    int y0 = ( int )y;
+	    int y1 = y0 + 1;
+
+	    float green00 = sourceGreen[ y0 * width + x0 ];
+	    float green01 = sourceGreen[ y1 * width + x0 ];
+	    float green10 = sourceGreen[ y0 * width + x1 ];
+	    float green11 = sourceGreen[ y1 * width + x1 ];
+
+	    float fracX = x - x0;
+	    float fracY = y - y0;
+
+	    float greenTop = green00 + fracX * ( green10 - green00 );
+	    float greenBot = green01 + fracX * ( green11 - green01 );
+
+	    return( greenTop + fracY * ( greenBot - greenTop ) );
+	}
+
+    float getBlueHigh( float x, float y )
+	{
+	    int x0 = ( int )x;
+	    int x1 = x0 + 1;
+	    int y0 = ( int )y;
+	    int y1 = y0 + 1;
+
+	    float blue00 = sourceBlue[ y0 * width + x0 ];
+	    float blue01 = sourceBlue[ y1 * width + x0 ];
+	    float blue10 = sourceBlue[ y0 * width + x1 ];
+	    float blue11 = sourceBlue[ y1 * width + x1 ];
+
+	    float fracX = x - x0;
+	    float fracY = y - y0;
+
+	    float blueTop = blue00 + fracX * ( blue10 - blue00 );
+	    float blueBot = blue01 + fracX * ( blue11 - blue01 );
+
+	    return( blueTop + fracY * ( blueBot - blueTop ) );
+	}
+
+    float getRedLow( float x, float y )
+	{
+	    int x0 = ( int )x;
+	    int x1 = x0 + 1;
+	    int y0 = ( int )y;
+	    int y1 = y0 + 1;
+
+	    float red00 = sourceRedLow[ y0 * lowWidth + x0 ];
+	    float red01 = sourceRedLow[ y1 * lowWidth + x0 ];
+	    float red10 = sourceRedLow[ y0 * lowWidth + x1 ];
+	    float red11 = sourceRedLow[ y1 * lowWidth + x1 ];
+
+	    float fracX = x - x0;
+	    float fracY = y - y0;
+
+	    float redTop = red00 + fracX * ( red10 - red00 );
+	    float redBot = red01 + fracX * ( red11 - red01 );
+
+	    return( redTop + fracY * ( redBot - redTop ) );
+	}
+
+    float getGreenLow( float x, float y )
+	{
+	    int x0 = ( int )x;
+	    int x1 = x0 + 1;
+	    int y0 = ( int )y;
+	    int y1 = y0 + 1;
+
+	    float green00 = sourceGreenLow[ y0 * lowWidth + x0 ];
+	    float green01 = sourceGreenLow[ y1 * lowWidth + x0 ];
+	    float green10 = sourceGreenLow[ y0 * lowWidth + x1 ];
+	    float green11 = sourceGreenLow[ y1 * lowWidth + x1 ];
+
+	    float fracX = x - x0;
+	    float fracY = y - y0;
+
+	    float greenTop = green00 + fracX * ( green10 - green00 );
+	    float greenBot = green01 + fracX * ( green11 - green01 );
+
+	    return( greenTop + fracY * ( greenBot - greenTop ) );
+	}
+
+    float getBlueLow( float x, float y )
+	{
+	    int x0 = ( int )x;
+	    int x1 = x0 + 1;
+	    int y0 = ( int )y;
+	    int y1 = y0 + 1;
+
+	    float blue00 = sourceBlueLow[ y0 * lowWidth + x0 ];
+	    float blue01 = sourceBlueLow[ y1 * lowWidth + x0 ];
+	    float blue10 = sourceBlueLow[ y0 * lowWidth + x1 ];
+	    float blue11 = sourceBlueLow[ y1 * lowWidth + x1 ];
+
+	    float fracX = x - x0;
+	    float fracY = y - y0;
+
+	    float blueTop = blue00 + fracX * ( blue10 - blue00 );
+	    float blueBot = blue01 + fracX * ( blue11 - blue01 );
+
+	    return( blueTop + fracY * ( blueBot - blueTop ) );
+	}
+
+    work pop 1
+	{
+	    pop();
+	    
+	    // for each pixel of OUTPUT (center region)
+	    for( int y = 11; y < height - 11; ++y )
+		{
+		    for( int x = 11; x < width - 11; ++x )
+			{
+			    // fetch center tap
+			    float red = sourceRed[ y * width + x ];
+			    float green = sourceGreen[ y * width + x ];
+			    float blue = sourceBlue[ y * width + x ];
+			    float blurriness = sourceBlurriness[ y * width + x ];
+			    float radiusHigh = blurriness * maxCoCRadius;
+			    float radiusLow = blurriness * radiusScale;
+
+			    float redAccum = 0;
+			    float greenAccum = 0;
+			    float blueAccum = 0;
+
+			    float xx = x / 4.0;
+			    float yy = y / 4.0;
+
+			    float coordLowX;
+			    float coordLowY;
+			    float coordHighX;
+			    float coordHighY;			    
+			    
+			    float redTapLow;
+			    float greenTapLow;
+			    float blueTapLow;
+
+			    float redTapHigh;
+			    float greenTapHigh;
+			    float blueTapHigh;
+
+			    float redTapBlurred;
+			    float greenTapBlurred;
+			    float blueTapBlurred;
+
+			    // print( "x = " + x );
+			    // print( "y = " + y );
+
+			    for( int k = 0; k < 8; ++k )
+				{
+				    // coordLowX = xx + ( poissonX[k] * radiusLow );
+				    // coordLowY = yy + ( poissonY[k] * radiusLow );
+				    coordHighX = x + ( poissonX[k] * radiusHigh );
+				    coordHighY = y + ( poissonY[k] * radiusHigh );
+				    coordLowX = coordHighX / 4.0;
+				    coordLowY = coordHighY / 4.0;
+				   
+				    /*
+				    print( "k = " + k );
+				    print( "coordLowX = " + coordLowX );
+				    print( "coordLowY = " + coordLowY );
+				    print( "coordHighX = " + coordHighX );
+				    print( "coordHighY = " + coordHighY );
+				    */
+
+				    redTapLow = getRedLow( coordLowX, coordLowY );
+				    greenTapLow = getGreenLow( coordLowX, coordLowY );
+				    blueTapLow = getBlueLow( coordLowX, coordLowY );
+
+				    redTapHigh = getRedHigh( coordHighX, coordHighY );
+				    greenTapHigh = getGreenHigh( coordHighX, coordHighY );
+				    blueTapHigh = getBlueHigh( coordHighX, coordHighY );
+
+				    redTapBlurred = redTapHigh + blurriness * ( redTapLow - redTapHigh );
+				    greenTapBlurred = greenTapHigh + blurriness * ( greenTapLow - greenTapHigh );
+				    blueTapBlurred = blueTapHigh + blurriness * ( blueTapLow - blueTapHigh );
+
+				    /*
+				    redAccum = redAccum + redTapBlurred;
+				    greenAccum = greenAccum + greenTapBlurred;
+				    blueAccum = blueAccum + blueTapBlurred;
+				    */
+
+				    redAccum = redAccum + ( redTapLow + redTapHigh ) / 2.0;
+				    greenAccum = greenAccum + ( greenTapLow + greenTapHigh ) / 2.0;
+				    blueAccum = blueAccum + ( blueTapLow + blueTapHigh ) / 2.0;
+				}
+
+			    outputRed[ y * width + x ] = redAccum * 0.125;
+			    outputGreen[ y * width + x ] = greenAccum * 0.125;
+			    outputBlue[ y * width + x ] = blueAccum * 0.125;
+			}
+		}
+
+	    for( int y = 0; y < height; ++y )
+		{
+		    for( int x = 0; x < width; ++x )
+			{
+			    int index = y * width + x;
+			    print( "x = " + x );
+			    print( "y = " + y );
+			    print( "r = " + outputRed[ index ] );
+			    print( "g = " + outputGreen[ index ] );
+			    print( "b = " + outputBlue[ index ] );
+			}
+		}
+	}
+}
+
+
+
+int->void splitjoin Distrib
+{
+    split duplicate;
+
+    add PoissonDOF( 600, 600, 150, 150 );
+
+    join roundrobin( 0 );
+}
+
+void->void pipeline Pass3_PoissonDOF
+{
+    add Input();
+    add Distrib();
+}

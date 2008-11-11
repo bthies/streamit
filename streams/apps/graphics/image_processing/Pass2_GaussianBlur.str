@@ -1,0 +1,92 @@
+void->int filter Input
+{
+    work push 1
+	{
+	    push( 1 );
+	}
+}
+
+int->void filter GaussianBlurrer( int id, int width, int height )
+{
+    float[22500] oldRed = init_array_1D_float( "Pass2_input_red.arr", 22500 );
+    float[22500] oldGreen = init_array_1D_float( "Pass2_input_green.arr", 22500 );
+    float[22500] oldBlue = init_array_1D_float( "Pass2_input_blue.arr", 22500 );
+
+    float[22500] newRed;
+    float[22500] newGreen;
+    float[22500] newBlue;
+
+    float[9] kernel = { 0, 0.125, 0, 0.125, 0.5, 0.125, 0, 0.125, 0 };
+    // float[9] kernel = { 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125 };
+    int[9] offsetX = { -1, 0, 1, -1, 0, 1, -1, 0, 1 };
+    int[9] offsetY = { 1, 1, 1, 0, 0, 0, -1, -1, -1 };
+
+    work pop 1
+	{
+	    pop();
+	    
+	    // for each pixel of OUTPUT (center region)
+	    for( int y = 1; y < height - 1; ++y )
+		{
+		    for( int x = 1; x < width - 1; ++x )
+			{
+			    float accumR = 0;
+			    float accumG = 0;
+			    float accumB = 0;
+
+			    // accumulate with kernel
+			    for( int k = 0; k < 9; ++k )
+				{
+				    float kernelVal = kernel[k];
+				    int xx = x + offsetX[k];
+				    int yy = y + offsetY[k];
+				    
+				    int sourceIndex = yy * width + xx;
+				    accumR = accumR + kernelVal * oldRed[ sourceIndex ];
+				    accumG = accumG + kernelVal * oldGreen[ sourceIndex ];
+				    accumB = accumB + kernelVal * oldBlue[ sourceIndex ];
+				}
+
+			    int targetIndex = y * width + x;
+			    newRed[ targetIndex ] = accumR;
+			    newGreen[ targetIndex ] = accumG;
+			    newBlue[ targetIndex ] = accumB;
+			}
+		}
+
+	    for( int y = 0; y < height; ++y )
+		{
+		    for( int x = 0; x < width; ++x )
+			{
+			    int index = y * width + x;
+			    print( "x = " + x );
+			    print( "y = " + y );
+			    /*
+			    print( "r = " + oldRed[ index ] );
+			    print( "g = " + oldGreen[ index ] );
+			    print( "b = " + oldBlue[ index ] );
+			    */
+			    print( "r = " + newRed[ index ] );
+			    print( "g = " + newGreen[ index ] );
+			    print( "b = " + newBlue[ index ] );
+			}
+		}
+	}
+}
+
+
+
+int->void splitjoin Distrib
+{
+    split duplicate;
+
+    add GaussianBlurrer( 0, 150, 150 );
+
+    join roundrobin( 0 );
+}
+
+void->void pipeline Pass2_GaussianBlur
+{
+    add Input();
+    add Distrib();
+}

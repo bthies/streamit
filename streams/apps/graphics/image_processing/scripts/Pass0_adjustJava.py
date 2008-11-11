@@ -70,10 +70,10 @@ def adjust_raster_ops_constructor():
                             int xx = __param__param_offset + x * __param__param_numUnits;
                             System.out.println( "x = " + xx );
                             System.out.println( "y = " + y );
-                            int color = rgb[ x * __param__param_screenHeight + y ];
-                            System.out.println( "r = " + ( ( color >> 16 ) & 0xff ) / 255.0 );
-                            System.out.println( "g = " + ( ( color >> 8 ) & 0xff ) / 255.0 );
-                            System.out.println( "b = " + ( ( color ) & 0xff ) / 255.0 );
+                            System.out.println( "r = " + red[ y * width + x ] );
+                            System.out.println( "g = " + green[ y * width + x ] );
+                            System.out.println( "b = " + blue[ y * width + x ] );
+                            System.out.println( "eyeZ = " + eyeZBuffer[ y * width + x ] );
                             }
                             }
                             }

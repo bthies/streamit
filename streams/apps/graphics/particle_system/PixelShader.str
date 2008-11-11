@@ -1,0 +1,18 @@
+Fragment->Raster filter PixelShader( int id )
+{
+    work pop 1 push 1
+	{
+	    Fragment f = pop();
+
+	    Raster r;
+	    r.x = f.x;
+	    r.y = f.y;
+	    r.z = f.z;
+
+	    r.r = f.r;
+	    r.g = f.g;
+	    r.b = f.b;
+
+	    push( r );
+	}
+}

@@ -1,0 +1,69 @@
+PixelShaderBInfo->Raster filter PixelShaderB( int id )
+{
+    float shininess;
+
+    float max( float x, float y )
+	{
+	    if( x > y )
+		{
+		    return x;
+		}
+	    else
+		{
+		    return y;
+		}
+	}
+
+    init
+	{
+	    shininess = 20.0;
+	}
+
+    work pop 1 push 1
+	{
+	    PixelShaderBInfo p = pop();
+
+	    // diffuse contribution
+	    float lDotN = p.nx * p.lx + p.ny * p.ly + p.nz * p.lz;
+	    lDotN = max( 0.0, lDotN );
+
+	    // compute reflection vector
+	    float reflectVectorX = 2.0 * lDotN * p.nx - p.lx;
+	    float reflectVectorY = 2.0 * lDotN * p.ny - p.ly;
+	    float reflectVectorZ = 2.0 * lDotN * p.nz - p.lz;
+
+	    float reflectVectorNorm = sqrt( reflectVectorX * reflectVectorX + reflectVectorY * reflectVectorY + reflectVectorZ * reflectVectorZ );
+	    reflectVectorX /= reflectVectorNorm;
+	    reflectVectorY /= reflectVectorNorm;
+	    reflectVectorZ /= reflectVectorNorm;
+
+	    // specular contribution
+	    float rDotV = p.vx * reflectVectorX + p.vy * reflectVectorY + p.vz * reflectVectorZ;
+	    float iSpecular = pow( rDotV, shininess );
+	    iSpecular = max( 0.0, iSpecular );
+
+	    Raster r;
+	    r.x = p.x;
+	    r.y = p.y;
+	    r.z = p.z;
+
+	    r.r = p.r * lDotN + iSpecular;
+	    r.g = p.g * lDotN + iSpecular;
+	    r.b = p.b * lDotN + iSpecular;
+	   
+	    if( r.r > 1.0 )
+		{
+		    r.r = 1.0;
+		}
+	    if( r.g > 1.0 )
+		{
+		    r.g = 1.0;
+		}
+	    if( r.b > 1.0 )
+		{
+		    r.b = 1.0;
+		}
+
+	    push( r );
+	}
+}

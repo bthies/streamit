@@ -1,0 +1,62 @@
+Fragment->PixelShaderBInfo filter PixelShader( int id )
+{
+    Vector3f lightPosition;
+    Vector3f eyePosition;
+
+    PixelShaderBInfo psbi;
+
+    init
+	{
+	    lightPosition.x = -0.75;
+	    lightPosition.y = 0;
+	    lightPosition.z = 1.0;
+
+	    eyePosition.x = 0;
+	    eyePosition.y = 0;
+	    eyePosition.z = 5;
+	}
+
+    work pop 1 push 1
+	{
+	    Fragment f = pop();
+
+	    psbi.x = f.x;
+	    psbi.y = f.y;
+	    psbi.z = f.z;
+	   
+	    psbi.r = f.r;
+	    psbi.g = f.g;
+	    psbi.b = f.b;
+
+	    // compute light vector
+	    Vector3f lightVector;
+	    psbi.lx = lightPosition.x - f.texCoord0.x;
+	    psbi.ly = lightPosition.y - f.texCoord0.y;
+	    psbi.lz = lightPosition.z - f.texCoord0.z;
+
+	    // normalize light vector
+	    float lvNorm = sqrt( psbi.lx * psbi.lx + psbi.ly * psbi.ly + psbi.lz * psbi.lz );
+	    psbi.lx /= lvNorm;
+	    psbi.ly /= lvNorm;
+	    psbi.lz /= lvNorm;
+
+	    // compute view vector
+	    psbi.vx = eyePosition.x - f.texCoord0.x;
+	    psbi.vy = eyePosition.y - f.texCoord0.y;
+	    psbi.vz = eyePosition.z - f.texCoord0.z;
+
+	    // normalize view vector
+	    float vvNorm = sqrt( psbi.vx * psbi.vx + psbi.vy * psbi.vy + psbi.vz * psbi.vz );
+	    psbi.vx /= vvNorm;
+	    psbi.vy /= vvNorm;
+	    psbi.vz /= vvNorm;
+
+	    // normalize normal
+	    float normalNorm = sqrt( f.nx * f.nx + f.ny * f.ny + f.nz * f.nz );
+	    psbi.nx = f.nx / normalNorm;
+	    psbi.ny = f.ny / normalNorm;
+	    psbi.nz = f.nz / normalNorm;
+
+	    push( psbi );
+	}
+}

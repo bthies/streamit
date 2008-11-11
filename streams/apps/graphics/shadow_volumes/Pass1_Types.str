@@ -1,0 +1,68 @@
+struct Vector3f
+{
+        float x;
+        float y;
+        float z;
+}
+
+struct Vector4f
+{
+        float x;
+        float y;
+        float z;
+        float w;
+}
+
+struct Vertex
+{
+	Vector4f position;
+}
+
+struct Fragment
+{
+    int x;
+    int y;
+    float z;
+
+    int isFrontFacing;
+}
+
+struct TriangleSetupInfo
+{
+    // screen bounding box
+    int minX;
+    int minY;
+    int maxX;
+    int maxY;
+
+    // triangle edge equations
+    Vector3f edge01;
+    Vector3f edge12;
+    Vector3f edge20;
+
+    // Special interpolants
+    Vector3f wInterp;
+    Vector3f zInterp;
+
+    // Front facing
+    int isFrontFacing;
+}
+
+struct Matrix3f
+{
+        float[9] m;
+}
+
+struct Matrix4f
+{
+        float[16] m;
+}
+
+struct BoundingBox2i
+{
+        int minX;
+        int maxX;
+
+        int minY;
+        int maxY;
+}

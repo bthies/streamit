@@ -1,0 +1,78 @@
+void->int filter Input
+{
+    work push 1
+	{
+	    push( 1 );
+	}
+}
+
+// requires oldWidth divides factor and oldHeight divides factor
+int->void filter DownSampler( int id, int oldWidth, int oldHeight, int factor )
+{
+    float[360000] oldRed = init_array_1D_float( "Pass1_input_red.arr", 360000 );
+    float[360000] oldGreen = init_array_1D_float( "Pass1_input_green.arr", 360000 );
+    float[360000] oldBlue = init_array_1D_float( "Pass1_input_blue.arr", 360000 );
+
+    float[22500] newRed;
+    float[22500] newGreen;
+    float[22500] newBlue;
+
+    int newWidth;
+    int newHeight;
+
+    init
+	{
+	    newWidth = oldWidth / factor;
+	    newHeight = oldWidth / factor;
+	}
+
+    work pop 1
+	{
+	    pop();
+
+	    for( int y = 0; y < newHeight; ++y )
+		{
+		    int oldY = y * factor;
+		    for( int x = 0; x < newWidth; ++x )
+			{
+			    int oldX = x * factor;
+			    int oldIndex = oldY * oldWidth + oldX;
+			    int newIndex = y * newWidth + x;
+
+			    newRed[ newIndex ] = oldRed[ oldIndex ];
+			    newGreen[ newIndex ] = oldGreen[ oldIndex ];
+			    newBlue[ newIndex ] = oldBlue[ oldIndex ];
+			}
+		}
+
+	    for( int y = 0; y < newHeight; ++y )
+		{
+		    for( int x = 0; x < newWidth; ++x )
+			{
+			    int newIndex = y * newWidth + x;
+			    print( "x = " + x );
+			    print( "y = " + y );
+			    print( "r = " + newRed[ newIndex ] );
+			    print( "g = " + newGreen[ newIndex ] );
+			    print( "b = " + newBlue[ newIndex ] );
+			}
+		}
+	}
+}
+
+
+
+int->void splitjoin Distrib
+{
+    split duplicate;
+    
+    add DownSampler( 0, 600, 600, 4 );
+
+    join roundrobin( 0 );
+}
+
+void->void pipeline Pass1_Downsampling
+{
+    add Input();
+    add Distrib();
+}

@@ -1,0 +1,113 @@
+Fragment->Raster filter PixelShader( int id )
+{
+    Vector3f lightPosition;
+    Vector3f eyePosition;
+    float shininess;
+
+    init
+	{
+	    lightPosition.x = -0.75;
+	    lightPosition.y = 0;
+	    lightPosition.z = 1.0;
+
+	    eyePosition.x = 0;
+	    eyePosition.y = 0;
+	    eyePosition.z = 5;
+
+	    shininess = 20.0;
+	}
+
+    float max( float x, float y )
+	{
+	    if( x > y )
+		{
+		    return x;
+		}
+	    else
+		{
+		    return y;
+		}
+	}
+
+    work pop 1 push 1
+	{
+	    Fragment f = pop();
+
+	    // compute light vector
+	    Vector3f lightVector;
+	    lightVector.x = lightPosition.x - f.texCoord0.x;
+	    lightVector.y = lightPosition.y - f.texCoord0.y;
+	    lightVector.z = lightPosition.z - f.texCoord0.z;
+
+	    // normalize light vector
+	    float lvNorm = sqrt( lightVector.x * lightVector.x + lightVector.y * lightVector.y + lightVector.z * lightVector.z );
+	    lightVector.x /= lvNorm;
+	    lightVector.y /= lvNorm;
+	    lightVector.z /= lvNorm;
+
+	    // compute view vector
+	    Vector3f viewVector;
+	    viewVector.x = eyePosition.x - f.texCoord0.x;
+	    viewVector.y = eyePosition.y - f.texCoord0.y;
+	    viewVector.z = eyePosition.z - f.texCoord0.z;
+
+	    // normalize view vector
+	    float vvNorm = sqrt( viewVector.x * viewVector.x + viewVector.y * viewVector.y + viewVector.z * viewVector.z );
+	    viewVector.x /= vvNorm;
+	    viewVector.y /= vvNorm;
+	    viewVector.z /= vvNorm;
+
+	    // normalize normal
+	    float normalNorm = sqrt( f.nx * f.nx + f.ny * f.ny + f.nz * f.nz );
+	
+	    f.nx /= normalNorm;
+	    f.ny /= normalNorm;
+	    f.nz /= normalNorm;
+
+	    // diffuse contribution
+	    float lDotN = f.nx * lightVector.x + f.ny * lightVector.y + f.nz * lightVector.z;
+	    lDotN = max( 0.0, lDotN );
+
+	    // specular contribution
+
+	    // compute reflection vector
+	    Vector3f reflectVector;
+	    reflectVector.x = 2.0 * lDotN * f.nx - lightVector.x;
+	    reflectVector.y = 2.0 * lDotN * f.ny - lightVector.y;
+	    reflectVector.z = 2.0 * lDotN * f.nz - lightVector.z;
+	    
+	    // normalize reflection vector
+	    float rvNorm = sqrt( reflectVector.x * reflectVector.x + reflectVector.y * reflectVector.y + reflectVector.z * reflectVector.z );
+	    reflectVector.x /= rvNorm;
+	    reflectVector.y /= rvNorm;
+	    reflectVector.z /= rvNorm;
+
+	    float rDotV = viewVector.x * reflectVector.x + viewVector.y * reflectVector.y + viewVector.z * reflectVector.z;
+	    float iSpecular = pow( rDotV, shininess );
+	    iSpecular = max( 0.0, iSpecular );
+
+	    Raster r;
+	    r.x = f.x;
+	    r.y = f.y;
+	    r.z = f.z;
+
+	    r.r = f.r * lDotN + iSpecular;
+	    r.g = f.g * lDotN + iSpecular;
+	    r.b = f.b * lDotN + iSpecular;
+	   
+	    if( r.r > 1.0 )
+		{
+		    r.r = 1.0;
+		}
+	    if( r.g > 1.0 )
+		{
+		    r.g = 1.0;
+		}
+	    if( r.b > 1.0 )
+		{
+		    r.b = 1.0;
+		}
+
+	    push( r );
+	}
+}

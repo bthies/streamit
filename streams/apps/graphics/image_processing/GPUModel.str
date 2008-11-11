@@ -1,0 +1,899 @@
+
+
+
+// ############### Types.str ###############
+struct Vector3f
+{
+        float x;
+        float y;
+        float z;
+}
+
+struct Vector4f
+{
+        float x;
+        float y;
+        float z;
+        float w;
+}
+
+struct Color3f
+{
+	float r;
+	float g;
+	float b;
+}
+
+struct Vertex
+{
+	Vector4f position;
+	Vector3f normal;
+	Color3f color;
+
+	Vector4f texCoord0;
+	Vector4f texCoord1;
+}
+
+struct Fragment
+{
+    int x;
+    int y;
+    float z;
+
+    float nx;
+    float ny;
+    float nz;
+
+    // TODO: float --> int, maybe just 1 32-bit rgba
+    float r;
+    float g;
+    float b;
+
+    Vector4f texCoord0;
+}
+
+struct Raster
+{
+    int x;
+    int y;
+    float z;
+
+    float r;
+    float g;
+    float b;
+}
+
+struct TriangleSetupInfo
+{
+    // screen bounding box
+    int minX;
+    int minY;
+    int maxX;
+    int maxY;
+
+    // triangle edge equations
+    Vector3f edge01;
+    Vector3f edge12;
+    Vector3f edge20;
+
+    // Special interpolants
+    Vector3f wInterp;
+    Vector3f zInterp;
+
+    // Other interpolants
+    Vector3f nxInterp;
+    Vector3f nyInterp;
+    Vector3f nzInterp;
+
+    Vector3f rInterp;
+    Vector3f gInterp;
+    Vector3f bInterp;
+
+    Vector3f t0sInterp;
+    Vector3f t0tInterp;
+    Vector3f t0pInterp;
+    Vector3f t0qInterp;
+}
+
+struct Matrix3f
+{
+        float[9] m;
+}
+
+struct Matrix4f
+{
+        float[16] m;
+}
+
+struct BoundingBox2i
+{
+        int minX;
+        int maxX;
+
+        int minY;
+        int maxY;
+}
+
+
+
+// ############### TopLevelPipeline.str ###############
+TriangleSetupInfo->void pipeline PixelPipeline( int offset, int numRasterizers,
+						int screenWidth, int screenHeight )
+{
+    add Rasterizer( offset, numRasterizers, screenWidth, screenHeight );
+    add PixelShader( offset );
+    add RasterOps( offset, numRasterizers, screenWidth, screenHeight );
+}
+
+TriangleSetupInfo->void splitjoin BackendSplit
+{
+    split duplicate;
+
+    add PixelPipeline( 0, 15, 600, 600 );
+    add PixelPipeline( 1, 15, 600, 600 );
+    add PixelPipeline( 2, 15, 600, 600 );
+    add PixelPipeline( 3, 15, 600, 600 );
+    add PixelPipeline( 4, 15, 600, 600 );
+    add PixelPipeline( 5, 15, 600, 600 );
+    add PixelPipeline( 6, 15, 600, 600 );
+    add PixelPipeline( 7, 15, 600, 600 );
+    add PixelPipeline( 8, 15, 600, 600 );
+    add PixelPipeline( 9, 15, 600, 600 );
+    add PixelPipeline( 10, 15, 600, 600 );
+    add PixelPipeline( 11, 15, 600, 600 );
+    add PixelPipeline( 12, 15, 600, 600 );
+    add PixelPipeline( 13, 15, 600, 600 );
+    add PixelPipeline( 14, 15, 600, 600 );
+
+    join roundrobin( 0 );
+}
+
+void->void pipeline GPUModel
+{
+    add FileReader< float >( "my_sphere.bin" );
+    add Input( 1458 );
+    add VertexShader( 0 );
+    add TriangleSetup( 600, 600 );
+    add BackendSplit();
+}
+
+
+
+// ############### Input.str ###############
+float->Vertex filter Input( int vertexDataSize )
+{
+    int i;
+
+    work pop 3 push 1
+	{
+	    Vertex v;
+
+	    v.position.x = pop();
+	    v.position.y = pop();
+	    v.position.z = pop();
+	    v.position.w = 1.0;
+
+	    print( "i = " + i );
+
+	    v.normal.x = v.position.x;
+	    v.normal.y = v.position.y;
+	    v.normal.z = v.position.z;
+
+	    v.color.r = 1.0;
+	    v.color.g = 0.0;
+	    v.color.b = 0.0;
+
+	    i = i + 3;
+	    push( v );
+	}
+}
+
+
+
+// ############### VertexShader.str ###############
+// Takes a Vertex in and "shades" it
+
+Vertex->Vertex filter VertexShader( int id )
+{
+    Matrix4f modelView;
+    Matrix4f projection;
+
+    float worldX;
+    float worldY;
+    float worldZ;
+    float worldW;
+
+    float worldNX;
+    float worldNY;
+    float worldNZ;
+
+    float eyeX;
+    float eyeY;
+    float eyeZ;
+    float eyeW;
+
+    float clipX;
+    float clipY;
+    float clipZ;
+    float clipW;
+
+    float inR;
+    float inG;
+    float inB;
+
+    init
+	{
+	    // modelview matrix, identity for now
+	    modelView.m[0] = 1;
+	    modelView.m[1] = 0;
+	    modelView.m[2] = 0;
+	    modelView.m[3] = 0;
+
+	    modelView.m[4] = 0;
+	    modelView.m[5] = 1;
+	    modelView.m[6] = 0;
+	    modelView.m[7] = 0;
+
+	    modelView.m[8] = 0;
+	    modelView.m[9] = 0;
+	    modelView.m[10] = 1;
+	    modelView.m[11] = 0;
+
+	    modelView.m[12] = 0;
+	    modelView.m[13] = 0;
+	    modelView.m[14] = -5;
+	    modelView.m[15] = 1;
+
+	    // normal matrix is just top-left 3x3 ^-T, doesn't matter which order you do it in
+
+	    // nominal projection matrix
+	    // fov = 50 degrees, 1:1 aspect ratio, near = 1, far = 10
+	    // gluPerspective( 50, 1, 1, 10 );
+	    projection.m[0] = 2.144507;
+	    projection.m[1] = 0;
+	    projection.m[2] = 0;
+	    projection.m[3] = 0;
+
+	    projection.m[4] = 0;
+	    projection.m[5] = 2.144507;
+	    projection.m[6] = 0;
+	    projection.m[7] = 0;
+
+	    projection.m[8] = 0;
+	    projection.m[9] = 0;
+	    projection.m[10] = -1.022222;
+	    projection.m[11] = -1;
+
+	    projection.m[12] = 0;
+	    projection.m[13] = 0;
+	    projection.m[14] = -2.022222;
+	    projection.m[15] = 0;
+	}
+
+    void computeEyeSpace()
+	{
+	    eyeX = modelView.m[0] * worldX + modelView.m[4] * worldY + modelView.m[8]  * worldZ + modelView.m[12] * worldW;
+	    eyeY = modelView.m[1] * worldX + modelView.m[5] * worldY + modelView.m[9]  * worldZ + modelView.m[13] * worldW;
+	    eyeZ = modelView.m[2] * worldX + modelView.m[6] * worldY + modelView.m[10] * worldZ + modelView.m[14] * worldW;
+	    eyeW = modelView.m[3] * worldX + modelView.m[7] * worldY + modelView.m[11] * worldZ + modelView.m[15] * worldW;
+	}
+
+    void computeClipSpace()
+	{
+	    clipX = projection.m[0] * eyeX + projection.m[4] * eyeY + projection.m[8]  * eyeZ + projection.m[12] * eyeW;
+	    clipY = projection.m[1] * eyeX + projection.m[5] * eyeY + projection.m[9]  * eyeZ + projection.m[13] * eyeW;
+	    clipZ = projection.m[2] * eyeX + projection.m[6] * eyeY + projection.m[10] * eyeZ + projection.m[14] * eyeW;
+	    clipW = projection.m[3] * eyeX + projection.m[7] * eyeY + projection.m[11] * eyeZ + projection.m[15] * eyeW;
+	}
+
+    // work pop 10 push 7
+    work pop 1 push 1
+	{
+	    Vertex vIn = pop();
+
+	    worldX = vIn.position.x;
+	    worldY = vIn.position.y;
+	    worldZ = vIn.position.z;
+	    worldW = vIn.position.w;
+
+	    // "ftransform()"
+	    computeEyeSpace();
+	    computeClipSpace();
+
+	    Vertex vOut;
+
+	    vOut.position.x = clipX;
+	    vOut.position.y = clipY;
+	    vOut.position.z = clipZ;
+	    vOut.position.w = clipW;
+
+	    // TODO: compute inverse transpose, but for now, just I
+	    vOut.normal.x = vIn.normal.x;
+	    vOut.normal.y = vIn.normal.y;
+	    vOut.normal.z = vIn.normal.z;
+
+	    vOut.color.r = vIn.color.r;
+	    vOut.color.g = vIn.color.g;
+	    vOut.color.b = vIn.color.b;
+
+	    // custom code
+	    vOut.texCoord0.x = vIn.position.x;
+	    vOut.texCoord0.y = vIn.position.y;
+	    vOut.texCoord0.z = vIn.position.z;
+
+	    push( vOut );
+	}
+}
+
+
+
+// ############### TriangleSetup.str ###############
+// TODO: figure out how to do triangle setup for splitting/joining
+
+// float->float filter TriangleSetup( int screenWidth, int screenHeight )
+Vertex->TriangleSetupInfo filter TriangleSetup( int screenWidth, int screenHeight )
+{
+    Vertex v0;
+    Vertex v1;
+    Vertex v2;
+
+    TriangleSetupInfo tsi;
+
+    Vector3f[3] ndcSpace;
+    Vector3f[3] screenSpace;
+
+    Matrix3f vertexMatrix;
+    Matrix3f vertexMatrixInverse;
+
+    void normalizeW()
+	{
+	    ndcSpace[0].x = v0.position.x / v0.position.w;
+	    ndcSpace[0].y = v0.position.y / v0.position.w;
+	    ndcSpace[0].z = v0.position.z / v0.position.w;
+
+	    ndcSpace[1].x = v1.position.x / v1.position.w;
+	    ndcSpace[1].y = v1.position.y / v1.position.w;
+	    ndcSpace[1].z = v1.position.z / v1.position.w;
+
+	    ndcSpace[2].x = v2.position.x / v2.position.w;
+	    ndcSpace[2].y = v2.position.y / v2.position.w;
+	    ndcSpace[2].z = v2.position.z / v2.position.w;
+	}
+
+    void viewport()
+	{
+	    screenSpace[0].x = screenWidth * ( ndcSpace[0].x + 1.0 ) / 2.0;
+	    screenSpace[0].y = screenHeight * ( ndcSpace[0].y + 1.0 ) / 2.0;
+	    // shift z range from [-1..1] to [0..1]
+	    screenSpace[0].z = ( ndcSpace[0].z + 1.0 ) / 2.0;
+
+	    screenSpace[1].x = screenWidth * ( ndcSpace[1].x + 1.0 ) / 2.0;
+	    screenSpace[1].y = screenHeight * ( ndcSpace[1].y + 1.0 ) / 2.0;
+	    // shift z range from [-1..1] to [0..1]
+	    screenSpace[1].z = ( ndcSpace[1].z + 1.0 ) / 2.0;
+
+	    screenSpace[2].x = screenWidth * ( ndcSpace[2].x + 1.0 ) / 2.0;
+	    screenSpace[2].y = screenHeight * ( ndcSpace[2].y + 1.0 ) / 2.0;
+	    // shift z range from [-1..1] to [0..1]
+	    screenSpace[2].z = ( ndcSpace[2].z + 1.0 ) / 2.0;
+	}
+
+    void computeScreenBoundingBox()
+	{
+	    int v0x, v0y, v1x, v1y, v2x, v2y;
+	    int temp;
+
+	    v0x = ( int )( screenSpace[0].x );
+	    v0y = ( int )( screenSpace[0].y );
+	    v1x = ( int )( screenSpace[1].x );
+	    v1y = ( int )( screenSpace[1].y );
+	    v2x = ( int )( screenSpace[2].x );
+	    v2y = ( int )( screenSpace[2].y );
+
+	    // sort vertices into top to bottom, left to right order
+
+	    // x max
+	    if( v0x > v1x )
+		{
+		    temp = v0x;
+		}
+	    else
+		{
+		    temp = v1x;
+		}
+
+	    if( v2x > temp )
+		{
+		    temp = v2x;
+		}
+
+	    tsi.maxX = temp + 1;
+
+	    if( v0y > v1y )
+		{
+		    temp = v0y;
+		}
+	    else
+		{
+		    temp = v1y;
+		}
+
+	    if( v2y > temp )
+		{
+		    temp = v2y;
+		}
+
+	    tsi.maxY = temp + 1;
+
+	    // x min
+	    if( v0x < v1x )
+		{
+		    temp = v0x;
+		}
+	    else
+		{
+		    temp = v1x;
+		}
+
+	    if( v2x < temp )
+		{
+		    temp = v2x;
+		}
+
+	    tsi.minX = temp;
+
+	    // y min
+	    if( v0y < v1y )
+		{
+		    temp = v0y;
+		}
+	    else
+		{
+		    temp = v1y;
+		}
+
+	    if( v2y < temp )
+		{
+		    temp = v2y;
+		}
+
+	    tsi.minY = temp;
+
+	    if( tsi.minX < 0 )
+		{
+		    tsi.minX = 0;
+		}
+	    if( tsi.maxX > ( screenWidth - 1 ) )
+		{
+		    tsi.maxX = screenWidth - 1;
+		}
+
+	    if( tsi.minY < 0 )
+		{
+		    tsi.minY = 0;
+		}
+	    if( tsi.maxY > ( screenHeight - 1 ) )
+		{
+		    tsi.maxY = screenHeight - 1;
+		}
+	}
+
+    void computeVertexMatrix()
+	{
+	    vertexMatrix.m[0] = v0.position.x;
+	    vertexMatrix.m[3] = v0.position.y;
+	    vertexMatrix.m[6] = v0.position.w;
+
+	    vertexMatrix.m[1] = v1.position.x;
+	    vertexMatrix.m[4] = v1.position.y;
+	    vertexMatrix.m[7] = v1.position.w;
+
+	    vertexMatrix.m[2] = v2.position.x;
+	    vertexMatrix.m[5] = v2.position.y;
+	    vertexMatrix.m[8] = v2.position.w;
+	}
+
+    void computeVertexMatrixInverse()
+	{
+	    // TODO: if d == 0, don't render, or something
+	    float d;
+
+	    d = ( vertexMatrix.m[0] * vertexMatrix.m[4] * vertexMatrix.m[8] - vertexMatrix.m[0] * vertexMatrix.m[5] * vertexMatrix.m[7] - vertexMatrix.m[3] * vertexMatrix.m[1] * vertexMatrix.m[8] + vertexMatrix.m[3] * vertexMatrix.m[2] * vertexMatrix.m[7] + vertexMatrix.m[6] * vertexMatrix.m[1] * vertexMatrix.m[5] - vertexMatrix.m[6] * vertexMatrix.m[2] * vertexMatrix.m[4] );
+
+	    vertexMatrixInverse.m[0] = ( vertexMatrix.m[4] * vertexMatrix.m[8] - vertexMatrix.m[5] * vertexMatrix.m[7] ) / d;
+	    vertexMatrixInverse.m[3] = -( vertexMatrix.m[3] * vertexMatrix.m[8] - vertexMatrix.m[5] * vertexMatrix.m[6] ) / d;
+	    vertexMatrixInverse.m[6] = -(-vertexMatrix.m[3] * vertexMatrix.m[7] + vertexMatrix.m[4] * vertexMatrix.m[6] ) / d;
+	    vertexMatrixInverse.m[1] = -( vertexMatrix.m[1] * vertexMatrix.m[8] - vertexMatrix.m[2] * vertexMatrix.m[7] ) / d;
+	    vertexMatrixInverse.m[4] = ( vertexMatrix.m[0] * vertexMatrix.m[8] - vertexMatrix.m[2] * vertexMatrix.m[6] ) / d;
+	    vertexMatrixInverse.m[7] = -( vertexMatrix.m[0] * vertexMatrix.m[7] - vertexMatrix.m[1] * vertexMatrix.m[6] ) / d;
+	    vertexMatrixInverse.m[2] = -(-vertexMatrix.m[1] * vertexMatrix.m[5] + vertexMatrix.m[2] * vertexMatrix.m[4] ) / d;
+	    vertexMatrixInverse.m[5] = -( vertexMatrix.m[0] * vertexMatrix.m[5] - vertexMatrix.m[2] * vertexMatrix.m[3] ) / d;
+	    vertexMatrixInverse.m[8] = ( vertexMatrix.m[0] * vertexMatrix.m[4] - vertexMatrix.m[1] * vertexMatrix.m[3] ) / d;
+	}
+
+    void computeEdgeEquations()
+	{
+	    // edge01 = vertexMatrixInverse * [0 0 1]^T
+	    tsi.edge01.x = vertexMatrixInverse.m[6];
+	    tsi.edge01.y = vertexMatrixInverse.m[7];
+	    tsi.edge01.z = vertexMatrixInverse.m[8];
+
+	    // edge12 = vertexMatrixInverse * [1 0 0]^T
+	    tsi.edge12.x = vertexMatrixInverse.m[0];
+	    tsi.edge12.y = vertexMatrixInverse.m[1];
+	    tsi.edge12.z = vertexMatrixInverse.m[2];
+
+	    // edge20 = vertexMatrixInverse * [0 1 0]^T
+	    tsi.edge20.x = vertexMatrixInverse.m[3];
+	    tsi.edge20.y = vertexMatrixInverse.m[4];
+	    tsi.edge20.z = vertexMatrixInverse.m[5];
+	}
+
+    void computeWInterp()
+	{
+	    // w coefficients = vertexMatrixInverse * [ 1 1 1 ]^T
+	    tsi.wInterp.x = vertexMatrixInverse.m[0] + vertexMatrixInverse.m[3] + vertexMatrixInverse.m[6];
+	    tsi.wInterp.y = vertexMatrixInverse.m[1] + vertexMatrixInverse.m[4] + vertexMatrixInverse.m[7];
+	    tsi.wInterp.z = vertexMatrixInverse.m[2] + vertexMatrixInverse.m[5] + vertexMatrixInverse.m[8];
+	}
+
+
+    void computeZInterp()
+	{
+	    tsi.zInterp.x = vertexMatrixInverse.m[0] * screenSpace[0].z + vertexMatrixInverse.m[3] * screenSpace[1].z + vertexMatrixInverse.m[6]  * screenSpace[2].z;
+	    tsi.zInterp.y = vertexMatrixInverse.m[1] * screenSpace[0].z + vertexMatrixInverse.m[4] * screenSpace[1].z + vertexMatrixInverse.m[7]  * screenSpace[2].z;
+	    tsi.zInterp.z = vertexMatrixInverse.m[2] * screenSpace[0].z + vertexMatrixInverse.m[5] * screenSpace[1].z + vertexMatrixInverse.m[8] * screenSpace[2].z;
+	}
+
+    // would really like to return a vector3f
+    float computeInterpolantX( float u0, float u1, float u2 )
+	{
+	    return vertexMatrixInverse.m[0] * u0 + vertexMatrixInverse.m[3] * u1 + vertexMatrixInverse.m[6] * u2;
+	}
+
+    float computeInterpolantY( float u0, float u1, float u2 )
+	{
+	    return vertexMatrixInverse.m[1] * u0 + vertexMatrixInverse.m[4] * u1 + vertexMatrixInverse.m[7] * u2;
+	}
+
+    float computeInterpolantZ( float u0, float u1, float u2 )
+	{
+	    return vertexMatrixInverse.m[2] * u0 + vertexMatrixInverse.m[5] * u1 + vertexMatrixInverse.m[8] * u2;
+	}
+
+    void computeNormalInterp()
+	{
+	    // nx
+	    tsi.nxInterp.x = computeInterpolantX( v0.normal.x, v1.normal.x, v2.normal.x );
+	    tsi.nxInterp.y = computeInterpolantY( v0.normal.x, v1.normal.x, v2.normal.x );
+	    tsi.nxInterp.z = computeInterpolantZ( v0.normal.x, v1.normal.x, v2.normal.x );
+
+	    // ny
+	    tsi.nyInterp.x = computeInterpolantX( v0.normal.y, v1.normal.y, v2.normal.y );
+	    tsi.nyInterp.y = computeInterpolantY( v0.normal.y, v1.normal.y, v2.normal.y );
+	    tsi.nyInterp.z = computeInterpolantZ( v0.normal.y, v1.normal.y, v2.normal.y );
+
+	    // nz
+	    tsi.nzInterp.x = computeInterpolantX( v0.normal.z, v1.normal.z, v2.normal.z );
+	    tsi.nzInterp.y = computeInterpolantY( v0.normal.z, v1.normal.z, v2.normal.z );
+	    tsi.nzInterp.z = computeInterpolantZ( v0.normal.z, v1.normal.z, v2.normal.z );
+	}
+
+    void computeColorInterp()
+	{
+	    // red
+	    tsi.rInterp.x = computeInterpolantX( v0.color.r, v1.color.r, v2.color.r );
+	    tsi.rInterp.y = computeInterpolantY( v0.color.r, v1.color.r, v2.color.r );
+	    tsi.rInterp.z = computeInterpolantZ( v0.color.r, v1.color.r, v2.color.r );
+
+	    // green
+	    tsi.gInterp.x = computeInterpolantX( v0.color.g, v1.color.g, v2.color.g );
+	    tsi.gInterp.y = computeInterpolantY( v0.color.g, v1.color.g, v2.color.g );
+	    tsi.gInterp.z = computeInterpolantZ( v0.color.g, v1.color.g, v2.color.g );
+
+	    // blue
+	    tsi.bInterp.x = computeInterpolantX( v0.color.b, v1.color.b, v2.color.b );
+	    tsi.bInterp.y = computeInterpolantY( v0.color.b, v1.color.b, v2.color.b );
+	    tsi.bInterp.z = computeInterpolantZ( v0.color.b, v1.color.b, v2.color.b );
+	}
+
+    void computeTextureInterp()
+	{
+	    // t0.s
+	    tsi.t0sInterp.x = computeInterpolantX( v0.texCoord0.x, v1.texCoord0.x, v2.texCoord0.x );
+	    tsi.t0sInterp.y = computeInterpolantY( v0.texCoord0.x, v1.texCoord0.x, v2.texCoord0.x );
+	    tsi.t0sInterp.z = computeInterpolantZ( v0.texCoord0.x, v1.texCoord0.x, v2.texCoord0.x );
+
+	    // t0.t
+	    tsi.t0tInterp.x = computeInterpolantX( v0.texCoord0.y, v1.texCoord0.y, v2.texCoord0.y );
+	    tsi.t0tInterp.y = computeInterpolantY( v0.texCoord0.y, v1.texCoord0.y, v2.texCoord0.y );
+	    tsi.t0tInterp.z = computeInterpolantZ( v0.texCoord0.y, v1.texCoord0.y, v2.texCoord0.y );
+
+	    // t0.p
+	    tsi.t0pInterp.x = computeInterpolantX( v0.texCoord0.z, v1.texCoord0.z, v2.texCoord0.z );
+	    tsi.t0pInterp.y = computeInterpolantY( v0.texCoord0.z, v1.texCoord0.z, v2.texCoord0.z );
+	    tsi.t0pInterp.z = computeInterpolantZ( v0.texCoord0.z, v1.texCoord0.z, v2.texCoord0.z );
+
+	    // t0.q
+	    tsi.t0qInterp.x = computeInterpolantX( v0.texCoord0.w, v1.texCoord0.w, v2.texCoord0.w );
+	    tsi.t0qInterp.y = computeInterpolantY( v0.texCoord0.w, v1.texCoord0.w, v2.texCoord0.w );
+	    tsi.t0qInterp.z = computeInterpolantZ( v0.texCoord0.w, v1.texCoord0.w, v2.texCoord0.w );
+	}
+
+    //	work pop 21 push 28
+    work pop 3 push 1
+	{
+	    v0 = pop();
+	    v1 = pop();
+	    v2 = pop();
+
+	    computeVertexMatrix();
+	    computeVertexMatrixInverse();
+
+	    normalizeW(); // clip space --> ndc space
+	    viewport(); // ndc space --> screen space
+
+	    computeScreenBoundingBox();
+	    computeEdgeEquations();
+
+	    // special interpolants
+	    computeWInterp();
+	    computeZInterp();
+
+	    // other interpolants
+	    computeNormalInterp();
+	    computeColorInterp();
+	    computeTextureInterp();
+
+	    // push out
+	    push( tsi );
+	}
+}
+
+
+
+// ############### Rasterizer.str ###############
+// offset = rasterizer number (0, 1, 2, ... numUnits - 1)
+// float->void filter Rasterizer( int id, int offset, int numUnits, int screenWidth, int screenHeight )
+TriangleSetupInfo->Fragment filter Rasterizer( int offset, int numUnits, int screenWidth, int screenHeight )
+{
+    int numColumns;
+    TriangleSetupInfo tsi;
+
+    init
+	{
+	    numColumns = screenWidth / numUnits;
+	}
+
+    // TODO: would like to pass in a struct
+    float interpolate( float interpX, float interpY, float interpZ,
+		       float ndcX, float ndcY, float w )
+	{
+	    return( ( interpX * ndcX + interpY * ndcY + interpZ ) * w );
+	}
+
+    work pop 1 push *
+	{
+	    tsi = pop();
+
+	    // given an x coordinate:
+	    // x / numUnits = group number
+	    // x % numUnits = offset within group
+	    // group number * numUnits = start of group
+
+	    int groupNumber = tsi.minX / numUnits;
+	    int startOfGroup = groupNumber * numUnits;
+	    int xStart = startOfGroup + offset;
+	    if( xStart < tsi.minX )
+		{
+		    xStart = xStart + numUnits;
+		}
+
+	    for( int y = tsi.minY; y <= tsi.maxY; ++y )
+		{
+		    // for( int x = offset; x < tsi.maxX; x = x + numUnits )
+		    for( int x = xStart; x < tsi.maxX; x = x + numUnits )
+			{
+			    // compute NDC coordinates for current pixel position
+			    float ndcX = ( float )( x ) * 2.0 / ( float )screenWidth - 1.0;
+			    float ndcY = ( float )( y ) * 2.0 / ( float )screenHeight - 1.0;
+
+			    // interpolate w
+			    float w = 1.0 / ( tsi.wInterp.x * ndcX + tsi.wInterp.y * ndcY + tsi.wInterp.z );
+
+			    float inside01 = interpolate( tsi.edge01.x, tsi.edge01.y, tsi.edge01.z, ndcX, ndcY, w );
+			    float inside12 = interpolate( tsi.edge12.x, tsi.edge12.y, tsi.edge12.z, ndcX, ndcY, w );
+			    float inside20 = interpolate( tsi.edge20.x, tsi.edge20.y, tsi.edge20.z, ndcX, ndcY, w );
+			    if( inside01 >= 0 && inside12 >= 0 && inside20 >= 0 )
+				{
+				    print( "point inside!" );
+				    // interpolate z
+				    float z = interpolate( tsi.zInterp.x, tsi.zInterp.y, tsi.zInterp.z, ndcX, ndcY, w );
+				    if( z >= 0 )
+					{
+					    Fragment f;
+					    f.x = x;
+					    f.y = y;
+					    f.z = z;
+
+					    f.nx = interpolate( tsi.nxInterp.x, tsi.nxInterp.y, tsi.nxInterp.z, ndcX, ndcY, w );
+					    f.ny = interpolate( tsi.nyInterp.x, tsi.nyInterp.y, tsi.nyInterp.z, ndcX, ndcY, w );
+					    f.nz = interpolate( tsi.nzInterp.x, tsi.nzInterp.y, tsi.nzInterp.z, ndcX, ndcY, w );
+
+					    f.r = interpolate( tsi.rInterp.x, tsi.rInterp.y, tsi.rInterp.z, ndcX, ndcY, w );
+					    f.g = interpolate( tsi.gInterp.x, tsi.gInterp.y, tsi.gInterp.z, ndcX, ndcY, w );
+					    f.b = interpolate( tsi.bInterp.x, tsi.bInterp.y, tsi.bInterp.z, ndcX, ndcY, w );
+
+					    f.texCoord0.x = interpolate( tsi.t0sInterp.x, tsi.t0sInterp.y, tsi.t0sInterp.z, ndcX, ndcY, w );
+					    f.texCoord0.y = interpolate( tsi.t0tInterp.x, tsi.t0tInterp.y, tsi.t0tInterp.z, ndcX, ndcY, w );
+					    f.texCoord0.z = interpolate( tsi.t0pInterp.x, tsi.t0pInterp.y, tsi.t0pInterp.z, ndcX, ndcY, w );
+					    f.texCoord0.w = interpolate( tsi.t0qInterp.x, tsi.t0qInterp.y, tsi.t0qInterp.z, ndcX, ndcY, w );
+
+					    // push fragment
+					    push( f );
+					}
+				}
+			}
+		}
+	}
+}
+
+
+
+// ############### PixelShader.str ###############
+Fragment->Raster filter PixelShader( int id )
+{
+    Vector3f lightPosition;
+    Vector3f eyePosition;
+    float shininess;
+
+    init
+	{
+	    lightPosition.x = -0.75;
+	    lightPosition.y = 0;
+	    lightPosition.z = 1.0;
+
+	    eyePosition.x = 0;
+	    eyePosition.y = 0;
+	    eyePosition.z = 5;
+
+	    shininess = 20.0;
+	}
+
+    float max( float x, float y )
+	{
+	    if( x > y )
+		{
+		    return x;
+		}
+	    else
+		{
+		    return y;
+		}
+	}
+
+    work pop 1 push 1
+	{
+	    Fragment f = pop();
+
+	    // compute light vector
+	    Vector3f lightVector;
+	    lightVector.x = lightPosition.x - f.texCoord0.x;
+	    lightVector.y = lightPosition.y - f.texCoord0.y;
+	    lightVector.z = lightPosition.z - f.texCoord0.z;
+
+	    // normalize light vector
+	    float lvNorm = sqrt( lightVector.x * lightVector.x + lightVector.y * lightVector.y + lightVector.z * lightVector.z );
+	    lightVector.x /= lvNorm;
+	    lightVector.y /= lvNorm;
+	    lightVector.z /= lvNorm;
+
+	    // compute view vector
+	    Vector3f viewVector;
+	    viewVector.x = eyePosition.x - f.texCoord0.x;
+	    viewVector.y = eyePosition.y - f.texCoord0.y;
+	    viewVector.z = eyePosition.z - f.texCoord0.z;
+
+	    // normalize view vector
+	    float vvNorm = sqrt( viewVector.x * viewVector.x + viewVector.y * viewVector.y + viewVector.z * viewVector.z );
+	    viewVector.x /= vvNorm;
+	    viewVector.y /= vvNorm;
+	    viewVector.z /= vvNorm;
+
+	    // normalize normal
+	    float normalNorm = sqrt( f.nx * f.nx + f.ny * f.ny + f.nz * f.nz );
+
+	    f.nx /= normalNorm;
+	    f.ny /= normalNorm;
+	    f.nz /= normalNorm;
+
+	    // diffuse contribution
+	    float lDotN = f.nx * lightVector.x + f.ny * lightVector.y + f.nz * lightVector.z;
+	    lDotN = max( 0.0, lDotN );
+
+	    // specular contribution
+
+	    // compute reflection vector
+	    Vector3f reflectVector;
+	    reflectVector.x = 2.0 * lDotN * f.nx - lightVector.x;
+	    reflectVector.y = 2.0 * lDotN * f.ny - lightVector.y;
+	    reflectVector.z = 2.0 * lDotN * f.nz - lightVector.z;
+
+	    // normalize reflection vector
+	    float rvNorm = sqrt( reflectVector.x * reflectVector.x + reflectVector.y * reflectVector.y + reflectVector.z * reflectVector.z );
+	    reflectVector.x /= rvNorm;
+	    reflectVector.y /= rvNorm;
+	    reflectVector.z /= rvNorm;
+
+	    float rDotV = viewVector.x * reflectVector.x + viewVector.y * reflectVector.y + viewVector.z * reflectVector.z;
+	    float iSpecular = pow( rDotV, shininess );
+	    iSpecular = max( 0.0, iSpecular );
+
+	    Raster r;
+	    r.x = f.x;
+	    r.y = f.y;
+	    r.z = f.z;
+
+	    r.r = f.r * lDotN + iSpecular;
+	    r.g = f.g * lDotN + iSpecular;
+	    r.b = f.b * lDotN + iSpecular;
+
+	    if( r.r > 1.0 )
+		{
+		    r.r = 1.0;
+		}
+	    if( r.g > 1.0 )
+		{
+		    r.g = 1.0;
+		}
+	    if( r.b > 1.0 )
+		{
+		    r.b = 1.0;
+		}
+
+	    push( r );
+	}
+}
+
+
+
+// ############### RasterOps.str ###############
+Raster->void filter RasterOps( int offset, int numUnits,
+	int screenWidth, int screenHeight )
+{
+    float[ ( screenWidth / numUnits ) * screenHeight ] red;
+    float[ ( screenWidth / numUnits ) * screenHeight ] green;
+    float[ ( screenWidth / numUnits ) * screenHeight ] blue;
+
+    float[ ( screenWidth / numUnits ) * screenHeight ] zBuffer;
+
+    int width;
+
+    init
+	{
+	    width = screenWidth / numUnits;
+
+	    for( int i = 0; i < width * screenHeight; ++i )
+		{
+		    zBuffer[i] = 1.1;
+		}
+	}
+
+    work pop 1
+	{
+	    Raster r = pop();
+
+	    r.x = r.x / numUnits;
+
+	    int index = r.y * width + r.x;
+
+	    if( r.z < zBuffer[ index ] )
+		{
+		    red[ index ] = r.r;
+		    green[ index ] = r.g;
+		    blue[ index ] = r.b;
+
+		    zBuffer[ index ] = r.z;
+		}
+	}
+}

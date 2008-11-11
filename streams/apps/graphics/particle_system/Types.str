@@ -1,0 +1,90 @@
+struct Vector3f
+{
+        float x;
+        float y;
+        float z;
+}
+
+struct Vector4f
+{
+        float x;
+        float y;
+        float z;
+        float w;
+}
+
+struct Color3f
+{
+	float r;
+	float g;
+	float b;
+}
+
+struct Vertex
+{
+	Vector4f position;
+	Color3f color;
+}
+
+struct Fragment
+{
+    int x;
+    int y;
+    float z;
+
+    float r;
+    float g;
+    float b;
+}
+
+struct Raster
+{
+    int x;
+    int y;
+    float z;
+
+    float r;
+    float g;
+    float b;
+}
+
+struct TriangleSetupInfo
+{
+    // screen bounding box
+    int minX;
+    int minY;
+    int maxX;
+    int maxY;
+
+    // triangle edge equations
+    Vector3f edge01;
+    Vector3f edge12;
+    Vector3f edge20;
+
+    // Special interpolants
+    Vector3f wInterp;
+    Vector3f zInterp;
+
+    Vector3f rInterp;
+    Vector3f gInterp;
+    Vector3f bInterp;
+}
+
+struct Matrix3f
+{
+        float[9] m;
+}
+
+struct Matrix4f
+{
+        float[16] m;
+}
+
+struct BoundingBox2i
+{
+        int minX;
+        int maxX;
+
+        int minY;
+        int maxY;
+}

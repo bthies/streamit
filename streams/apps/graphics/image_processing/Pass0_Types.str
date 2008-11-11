@@ -1,0 +1,110 @@
+struct Vector3f
+{
+        float x;
+        float y;
+        float z;
+}
+
+struct Vector4f
+{
+        float x;
+        float y;
+        float z;
+        float w;
+}
+
+struct Color3f
+{
+	float r;
+	float g;
+	float b;
+}
+
+struct Vertex
+{
+	Vector4f position;
+	Vector3f normal;
+	Color3f color;
+
+	Vector4f texCoord0;
+}
+
+struct Fragment
+{
+    int x;
+    int y;
+    float z;
+
+    float nx;
+    float ny;
+    float nz;
+
+    // TODO: float --> int, maybe just 1 32-bit rgba
+    float r;
+    float g;
+    float b;
+
+    Vector4f texCoord0;
+}
+
+struct Raster
+{
+    int x;
+    int y;
+    float z;
+
+    float r;
+    float g;
+    float b;
+}
+
+struct TriangleSetupInfo
+{
+    // screen bounding box
+    int minX;
+    int minY;
+    int maxX;
+    int maxY;
+
+    // triangle edge equations
+    Vector3f edge01;
+    Vector3f edge12;
+    Vector3f edge20;
+
+    // Special interpolants
+    Vector3f wInterp;
+    Vector3f zInterp;
+
+    // Other interpolants
+    Vector3f nxInterp;
+    Vector3f nyInterp;
+    Vector3f nzInterp;
+
+    Vector3f rInterp;
+    Vector3f gInterp;
+    Vector3f bInterp;
+
+    Vector3f t0sInterp;
+    Vector3f t0tInterp;
+    Vector3f t0pInterp;
+    Vector3f t0qInterp;
+}
+
+struct Matrix3f
+{
+        float[9] m;
+}
+
+struct Matrix4f
+{
+        float[16] m;
+}
+
+struct BoundingBox2i
+{
+        int minX;
+        int maxX;
+
+        int minY;
+        int maxY;
+}

@@ -1,0 +1,278 @@
+// TODO: figure out how to do triangle setup for splitting/joining
+
+// float->float filter TriangleSetup( int screenWidth, int screenHeight )
+Vertex->TriangleSetupInfo filter TriangleSetup( int screenWidth, int screenHeight )
+{
+    Vertex v0;
+    Vertex v1;
+    Vertex v2;
+
+    TriangleSetupInfo tsi;
+
+    Vector3f[3] ndcSpace;
+    Vector3f[3] screenSpace;
+
+    Matrix3f vertexMatrix;
+    Matrix3f vertexMatrixInverse;
+
+    void normalizeW()
+	{
+	    ndcSpace[0].x = v0.position.x / v0.position.w;
+	    ndcSpace[0].y = v0.position.y / v0.position.w;
+	    ndcSpace[0].z = v0.position.z / v0.position.w;
+
+	    ndcSpace[1].x = v1.position.x / v1.position.w;
+	    ndcSpace[1].y = v1.position.y / v1.position.w;
+	    ndcSpace[1].z = v1.position.z / v1.position.w;
+
+	    ndcSpace[2].x = v2.position.x / v2.position.w;
+	    ndcSpace[2].y = v2.position.y / v2.position.w;
+	    ndcSpace[2].z = v2.position.z / v2.position.w;
+	}
+
+    void viewport()
+	{
+	    screenSpace[0].x = screenWidth * ( ndcSpace[0].x + 1.0 ) / 2.0;
+	    screenSpace[0].y = screenHeight * ( ndcSpace[0].y + 1.0 ) / 2.0;
+	    // shift z range from [-1..1] to [0..1]
+	    screenSpace[0].z = ( ndcSpace[0].z + 1.0 ) / 2.0;
+
+	    screenSpace[1].x = screenWidth * ( ndcSpace[1].x + 1.0 ) / 2.0;
+	    screenSpace[1].y = screenHeight * ( ndcSpace[1].y + 1.0 ) / 2.0;
+	    // shift z range from [-1..1] to [0..1]
+	    screenSpace[1].z = ( ndcSpace[1].z + 1.0 ) / 2.0;
+
+	    screenSpace[2].x = screenWidth * ( ndcSpace[2].x + 1.0 ) / 2.0;
+	    screenSpace[2].y = screenHeight * ( ndcSpace[2].y + 1.0 ) / 2.0;
+	    // shift z range from [-1..1] to [0..1]
+	    screenSpace[2].z = ( ndcSpace[2].z + 1.0 ) / 2.0;
+	}
+
+    void computeScreenBoundingBox()
+	{
+	    int v0x, v0y, v1x, v1y, v2x, v2y;
+	    int temp;
+
+	    v0x = ( int )( screenSpace[0].x );
+	    v0y = ( int )( screenSpace[0].y );
+	    v1x = ( int )( screenSpace[1].x );
+	    v1y = ( int )( screenSpace[1].y );
+	    v2x = ( int )( screenSpace[2].x );
+	    v2y = ( int )( screenSpace[2].y );
+
+	    // sort vertices into top to bottom, left to right order
+
+	    // x max
+	    if( v0x > v1x )
+		{
+		    temp = v0x;
+		}
+	    else
+		{
+		    temp = v1x;
+		}
+
+	    if( v2x > temp )
+		{
+		    temp = v2x;
+		}
+
+	    tsi.maxX = temp + 1;
+
+	    if( v0y > v1y )
+		{
+		    temp = v0y;
+		}
+	    else
+		{
+		    temp = v1y;
+		}
+
+	    if( v2y > temp )
+		{
+		    temp = v2y;
+		}
+
+	    tsi.maxY = temp + 1;
+
+	    // x min
+	    if( v0x < v1x )
+		{
+		    temp = v0x;
+		}
+	    else
+		{
+		    temp = v1x;
+		}
+
+	    if( v2x < temp )
+		{
+		    temp = v2x;
+		}
+
+	    tsi.minX = temp;
+
+	    // y min
+	    if( v0y < v1y )
+		{
+		    temp = v0y;
+		}
+	    else
+		{
+		    temp = v1y;
+		}
+
+	    if( v2y < temp )
+		{
+		    temp = v2y;
+		}
+
+	    tsi.minY = temp;
+
+	    if( tsi.minX < 0 )
+		{
+		    tsi.minX = 0;
+		}
+	    if( tsi.maxX > ( screenWidth - 1 ) )
+		{
+		    tsi.maxX = screenWidth - 1;
+		}
+
+	    if( tsi.minY < 0 )
+		{
+		    tsi.minY = 0;
+		}
+	    if( tsi.maxY > ( screenHeight - 1 ) )
+		{
+		    tsi.maxY = screenHeight - 1;
+		}	  
+	}
+
+    void computeVertexMatrix()
+	{
+	    vertexMatrix.m[0] = v0.position.x;
+	    vertexMatrix.m[3] = v0.position.y;
+	    vertexMatrix.m[6] = v0.position.w;
+
+	    vertexMatrix.m[1] = v1.position.x;
+	    vertexMatrix.m[4] = v1.position.y;
+	    vertexMatrix.m[7] = v1.position.w;
+
+	    vertexMatrix.m[2] = v2.position.x;
+	    vertexMatrix.m[5] = v2.position.y;
+	    vertexMatrix.m[8] = v2.position.w;
+	}
+
+    void computeVertexMatrixInverse()
+	{
+	    // TODO: if d == 0, don't render, or something
+	    float d;
+
+	    d = ( vertexMatrix.m[0] * vertexMatrix.m[4] * vertexMatrix.m[8] - vertexMatrix.m[0] * vertexMatrix.m[5] * vertexMatrix.m[7] - vertexMatrix.m[3] * vertexMatrix.m[1] * vertexMatrix.m[8] + vertexMatrix.m[3] * vertexMatrix.m[2] * vertexMatrix.m[7] + vertexMatrix.m[6] * vertexMatrix.m[1] * vertexMatrix.m[5] - vertexMatrix.m[6] * vertexMatrix.m[2] * vertexMatrix.m[4] );
+
+	    vertexMatrixInverse.m[0] = ( vertexMatrix.m[4] * vertexMatrix.m[8] - vertexMatrix.m[5] * vertexMatrix.m[7] ) / d;
+	    vertexMatrixInverse.m[3] = -( vertexMatrix.m[3] * vertexMatrix.m[8] - vertexMatrix.m[5] * vertexMatrix.m[6] ) / d;
+	    vertexMatrixInverse.m[6] = -(-vertexMatrix.m[3] * vertexMatrix.m[7] + vertexMatrix.m[4] * vertexMatrix.m[6] ) / d;
+	    vertexMatrixInverse.m[1] = -( vertexMatrix.m[1] * vertexMatrix.m[8] - vertexMatrix.m[2] * vertexMatrix.m[7] ) / d;
+	    vertexMatrixInverse.m[4] = ( vertexMatrix.m[0] * vertexMatrix.m[8] - vertexMatrix.m[2] * vertexMatrix.m[6] ) / d;
+	    vertexMatrixInverse.m[7] = -( vertexMatrix.m[0] * vertexMatrix.m[7] - vertexMatrix.m[1] * vertexMatrix.m[6] ) / d;
+	    vertexMatrixInverse.m[2] = -(-vertexMatrix.m[1] * vertexMatrix.m[5] + vertexMatrix.m[2] * vertexMatrix.m[4] ) / d;
+	    vertexMatrixInverse.m[5] = -( vertexMatrix.m[0] * vertexMatrix.m[5] - vertexMatrix.m[2] * vertexMatrix.m[3] ) / d;
+	    vertexMatrixInverse.m[8] = ( vertexMatrix.m[0] * vertexMatrix.m[4] - vertexMatrix.m[1] * vertexMatrix.m[3] ) / d;
+	}
+
+    void computeEdgeEquations()
+	{
+	    // edge01 = vertexMatrixInverse * [0 0 1]^T
+	    tsi.edge01.x = vertexMatrixInverse.m[6];
+	    tsi.edge01.y = vertexMatrixInverse.m[7];
+	    tsi.edge01.z = vertexMatrixInverse.m[8];
+
+	    // edge12 = vertexMatrixInverse * [1 0 0]^T
+	    tsi.edge12.x = vertexMatrixInverse.m[0];
+	    tsi.edge12.y = vertexMatrixInverse.m[1];
+	    tsi.edge12.z = vertexMatrixInverse.m[2];
+
+	    // edge20 = vertexMatrixInverse * [0 1 0]^T
+	    tsi.edge20.x = vertexMatrixInverse.m[3];
+	    tsi.edge20.y = vertexMatrixInverse.m[4];
+	    tsi.edge20.z = vertexMatrixInverse.m[5];
+	}
+
+    void computeWInterp()
+	{
+	    // w coefficients = vertexMatrixInverse * [ 1 1 1 ]^T
+	    tsi.wInterp.x = vertexMatrixInverse.m[0] + vertexMatrixInverse.m[3] + vertexMatrixInverse.m[6];
+	    tsi.wInterp.y = vertexMatrixInverse.m[1] + vertexMatrixInverse.m[4] + vertexMatrixInverse.m[7];
+	    tsi.wInterp.z = vertexMatrixInverse.m[2] + vertexMatrixInverse.m[5] + vertexMatrixInverse.m[8];
+	}
+
+
+    void computeZInterp()
+	{
+	    tsi.zInterp.x = vertexMatrixInverse.m[0] * screenSpace[0].z + vertexMatrixInverse.m[3] * screenSpace[1].z + vertexMatrixInverse.m[6]  * screenSpace[2].z;
+	    tsi.zInterp.y = vertexMatrixInverse.m[1] * screenSpace[0].z + vertexMatrixInverse.m[4] * screenSpace[1].z + vertexMatrixInverse.m[7]  * screenSpace[2].z;
+	    tsi.zInterp.z = vertexMatrixInverse.m[2] * screenSpace[0].z + vertexMatrixInverse.m[5] * screenSpace[1].z + vertexMatrixInverse.m[8] * screenSpace[2].z;
+	}
+
+    // would really like to return a vector3f
+    float computeInterpolantX( float u0, float u1, float u2 )
+	{
+	    return vertexMatrixInverse.m[0] * u0 + vertexMatrixInverse.m[3] * u1 + vertexMatrixInverse.m[6] * u2;
+	}
+
+    float computeInterpolantY( float u0, float u1, float u2 )
+	{
+	    return vertexMatrixInverse.m[1] * u0 + vertexMatrixInverse.m[4] * u1 + vertexMatrixInverse.m[7] * u2;
+	}
+
+    float computeInterpolantZ( float u0, float u1, float u2 )
+	{
+	    return vertexMatrixInverse.m[2] * u0 + vertexMatrixInverse.m[5] * u1 + vertexMatrixInverse.m[8] * u2;
+	}
+
+    void computeColorInterp()
+	{
+	    // red
+	    tsi.rInterp.x = computeInterpolantX( v0.color.r, v1.color.r, v2.color.r );
+	    tsi.rInterp.y = computeInterpolantY( v0.color.r, v1.color.r, v2.color.r );
+	    tsi.rInterp.z = computeInterpolantZ( v0.color.r, v1.color.r, v2.color.r );
+
+	    // green
+	    tsi.gInterp.x = computeInterpolantX( v0.color.g, v1.color.g, v2.color.g );
+	    tsi.gInterp.y = computeInterpolantY( v0.color.g, v1.color.g, v2.color.g );
+	    tsi.gInterp.z = computeInterpolantZ( v0.color.g, v1.color.g, v2.color.g );
+
+	    // blue
+	    tsi.bInterp.x = computeInterpolantX( v0.color.b, v1.color.b, v2.color.b );
+	    tsi.bInterp.y = computeInterpolantY( v0.color.b, v1.color.b, v2.color.b );
+	    tsi.bInterp.z = computeInterpolantZ( v0.color.b, v1.color.b, v2.color.b );
+	}
+
+    //	work pop 21 push 28
+    work pop 3 push 1
+	{
+	    v0 = pop();
+	    v1 = pop();
+	    v2 = pop();
+
+	    computeVertexMatrix();
+	    computeVertexMatrixInverse();
+	   
+	    normalizeW(); // clip space --> ndc space
+	    viewport(); // ndc space --> screen space
+
+	    computeScreenBoundingBox();
+	    computeEdgeEquations();
+
+	    // special interpolants
+	    computeWInterp();
+	    computeZInterp();
+
+	    // other interpolants
+	    computeColorInterp();	  
+
+	    // push out
+	    push( tsi );
+	}
+}

@@ -1,0 +1,27 @@
+float->Vertex filter Input( int vertexDataSize )
+{
+    int i;
+
+    work pop 3 push 1
+	{
+	    Vertex v;
+
+	    v.position.x = pop();
+	    v.position.y = pop();
+	    v.position.z = pop();
+	    v.position.w = 1.0;
+
+	    print( "i = " + i );
+	    
+	    v.normal.x = v.position.x;
+	    v.normal.y = v.position.y;
+	    v.normal.z = v.position.z;
+
+	    v.color.r = 1.0;
+	    v.color.g = 0.0;
+	    v.color.b = 0.0;
+
+	    i = i + 3;
+	    push( v );
+	}
+}

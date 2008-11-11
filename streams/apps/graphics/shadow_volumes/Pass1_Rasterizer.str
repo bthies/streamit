@@ -1,0 +1,69 @@
+TriangleSetupInfo->Fragment filter Rasterizer( int offset, int numUnits, int screenWidth, int screenHeight )
+{
+    int numColumns;
+    TriangleSetupInfo tsi;
+
+    init
+	{
+	    numColumns = screenWidth / numUnits;
+	}
+
+    // TODO: would like to pass in a struct
+    float interpolate( float interpX, float interpY, float interpZ,
+		       float ndcX, float ndcY, float w )
+	{
+	    return( ( interpX * ndcX + interpY * ndcY + interpZ ) * w );
+	}
+
+    work pop 1 push *
+	{
+	    tsi = pop();
+
+	    // given an x coordinate:
+	    // x / numUnits = group number
+	    // x % numUnits = offset within group
+	    // group number * numUnits = start of group
+
+	    int groupNumber = tsi.minX / numUnits;
+	    int startOfGroup = groupNumber * numUnits;
+	    int xStart = startOfGroup + offset;
+	    if( xStart < tsi.minX )
+		{
+		    xStart = xStart + numUnits;
+		}
+
+	    for( int y = tsi.minY; y <= tsi.maxY; ++y )
+		{
+		    // for( int x = offset; x < tsi.maxX; x = x + numUnits )
+		    for( int x = xStart; x < tsi.maxX; x = x + numUnits )
+			{
+			    // compute NDC coordinates for current pixel position
+			    float ndcX = ( float )( x ) * 2.0 / ( float )screenWidth - 1.0;
+			    float ndcY = ( float )( y ) * 2.0 / ( float )screenHeight - 1.0;
+
+			    // interpolate w
+			    float w = 1.0 / ( tsi.wInterp.x * ndcX + tsi.wInterp.y * ndcY + tsi.wInterp.z );
+
+			    float inside01 = interpolate( tsi.edge01.x, tsi.edge01.y, tsi.edge01.z, ndcX, ndcY, w );
+			    float inside12 = interpolate( tsi.edge12.x, tsi.edge12.y, tsi.edge12.z, ndcX, ndcY, w );
+			    float inside20 = interpolate( tsi.edge20.x, tsi.edge20.y, tsi.edge20.z, ndcX, ndcY, w );
+			    if( inside01 >= 0 && inside12 >= 0 && inside20 >= 0 )
+				{
+				    // interpolate z
+				    float z = interpolate( tsi.zInterp.x, tsi.zInterp.y, tsi.zInterp.z, ndcX, ndcY, w );
+				    if( z >= 0 )
+					{
+					    Fragment f;
+					    f.x = x;
+					    f.y = y;
+					    f.z = z;
+					    f.isFrontFacing = tsi.isFrontFacing;
+
+					    // push fragment
+					    push( f );
+					}
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,83 @@
+// offset = rasterizer number (0, 1, 2, ... numUnits - 1)
+// float->void filter Rasterizer( int id, int offset, int numUnits, int screenWidth, int screenHeight )
+TriangleSetupInfo->Fragment filter Rasterizer( int offset, int numUnits, int screenWidth, int screenHeight )
+{
+    int numColumns;
+    TriangleSetupInfo tsi;
+
+    init
+	{
+	    numColumns = screenWidth / numUnits;
+	}
+
+    // TODO: would like to pass in a struct
+    float interpolate( float interpX, float interpY, float interpZ,
+		       float ndcX, float ndcY, float w )
+	{
+	    return( ( interpX * ndcX + interpY * ndcY + interpZ ) * w );
+	}
+
+    work pop 1 push *
+	{
+	    tsi = pop();
+
+	    // given an x coordinate:
+	    // x / numUnits = group number
+	    // x % numUnits = offset within group
+	    // group number * numUnits = start of group
+
+	    int groupNumber = tsi.minX / numUnits;
+	    int startOfGroup = groupNumber * numUnits;
+	    int xStart = startOfGroup + offset;
+	    if( xStart < tsi.minX )
+		{
+		    xStart = xStart + numUnits;
+		}
+
+	    for( int y = tsi.minY; y <= tsi.maxY; ++y )
+		{
+		    // for( int x = offset; x < tsi.maxX; x = x + numUnits )
+		    for( int x = xStart; x < tsi.maxX; x = x + numUnits )
+			{
+			    // compute NDC coordinates for current pixel position
+			    float ndcX = ( float )( x ) * 2.0 / ( float )screenWidth - 1.0;
+			    float ndcY = ( float )( y ) * 2.0 / ( float )screenHeight - 1.0;
+
+			    // interpolate w
+			    float w = 1.0 / ( tsi.wInterp.x * ndcX + tsi.wInterp.y * ndcY + tsi.wInterp.z );
+
+			    float inside01 = interpolate( tsi.edge01.x, tsi.edge01.y, tsi.edge01.z, ndcX, ndcY, w );
+			    float inside12 = interpolate( tsi.edge12.x, tsi.edge12.y, tsi.edge12.z, ndcX, ndcY, w );
+			    float inside20 = interpolate( tsi.edge20.x, tsi.edge20.y, tsi.edge20.z, ndcX, ndcY, w );
+			    if( inside01 >= 0 && inside12 >= 0 && inside20 >= 0 )
+				{
+				    // interpolate z
+				    float z = interpolate( tsi.zInterp.x, tsi.zInterp.y, tsi.zInterp.z, ndcX, ndcY, w );
+				    if( z >= 0 )
+					{
+					    Fragment f;
+					    f.x = x;
+					    f.y = y;
+					    f.z = z;
+
+					    f.nx = interpolate( tsi.nxInterp.x, tsi.nxInterp.y, tsi.nxInterp.z, ndcX, ndcY, w );
+					    f.ny = interpolate( tsi.nyInterp.x, tsi.nyInterp.y, tsi.nyInterp.z, ndcX, ndcY, w );
+					    f.nz = interpolate( tsi.nzInterp.x, tsi.nzInterp.y, tsi.nzInterp.z, ndcX, ndcY, w );
+
+					    f.r = interpolate( tsi.rInterp.x, tsi.rInterp.y, tsi.rInterp.z, ndcX, ndcY, w );
+					    f.g = interpolate( tsi.gInterp.x, tsi.gInterp.y, tsi.gInterp.z, ndcX, ndcY, w );
+					    f.b = interpolate( tsi.bInterp.x, tsi.bInterp.y, tsi.bInterp.z, ndcX, ndcY, w );
+
+					    f.texCoord0.x = interpolate( tsi.t0sInterp.x, tsi.t0sInterp.y, tsi.t0sInterp.z, ndcX, ndcY, w );
+					    f.texCoord0.y = interpolate( tsi.t0tInterp.x, tsi.t0tInterp.y, tsi.t0tInterp.z, ndcX, ndcY, w );
+					    f.texCoord0.z = interpolate( tsi.t0pInterp.x, tsi.t0pInterp.y, tsi.t0pInterp.z, ndcX, ndcY, w );
+					    f.texCoord0.w = interpolate( tsi.t0qInterp.x, tsi.t0qInterp.y, tsi.t0qInterp.z, ndcX, ndcY, w );
+
+					    // push fragment
+					    push( f );
+					}
+				}
+			}
+		}
+	}
+}

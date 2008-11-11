@@ -1,0 +1,49 @@
+Fragment->void filter RasterOps( int offset, int numUnits,
+	int screenWidth, int screenHeight )
+{
+    int width;
+
+    // TODO: break it up!
+    float[ 360000 ] zBuffer = init_array_1D_float( "Pass0.zBuffer.xy.arr", 360000 );
+    int[ 360000 ] stencilBuffer = init_array_1D_int( "Pass1.sBuffer.xy.arr", ( 360000 ) );
+    /*
+      float[ ( screenWidth / numUnits ) * screenHeight ] zBuffer = init_array_1D_float( "Pass0.zBuffer.xy.arr", ( screenWidth / numUnits ) * screenHeight );
+      int[ ( screenWidth / numUnits ) * screenHeight ] stencilBuffer = init_array_1D_int( "Pass1.sBuffer.xy.arr", ( screenWidth / numUnits ) * screenHeight );
+    */
+
+    float[ ( screenWidth / numUnits ) * screenHeight ] red;
+    float[ ( screenWidth / numUnits ) * screenHeight ] green;
+    float[ ( screenWidth / numUnits ) * screenHeight ] blue;
+    
+    // int[ ( screenWidth / numUnits ) * screenHeight ] stencilBuffer;
+
+    init
+	{
+	    width = screenWidth / numUnits;
+	}    
+
+    work pop 1
+	{
+	    Fragment f = pop();
+	
+	    f.x = f.x / numUnits;	    
+	    int index = f.y * width + f.x;
+	
+	
+	    if( f.z <= zBuffer[ index ] )
+		{
+		    if( stencilBuffer[ index ] == 0 )
+			{
+			    red[ index ] = 1.0;
+			    green[ index ] = 0.0;
+			    blue[ index ] = 0.0;
+			}
+		    else
+			{
+			    red[ index ] = 0.2;
+			    green[ index ] = 0.2;
+			    blue[ index ] = 0.2;
+			}
+		}
+	}
+}

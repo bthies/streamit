@@ -1,0 +1,51 @@
+TriangleSetupInfo->void pipeline PixelPipeline( int offset, int numRasterizers,
+						int screenWidth, int screenHeight )
+{
+    add Rasterizer( offset, numRasterizers, screenWidth, screenHeight );
+    add PixelShader( offset );
+    add PixelShaderB( offset );
+    add RasterOps( offset, numRasterizers, screenWidth, screenHeight );
+}
+
+// float->float splitjoin FrontendSplitJoin
+Vertex->Vertex splitjoin FrontendSplitJoin
+{
+    split roundrobin;
+
+    add VertexShader( 0 );
+
+    join roundrobin;
+}
+
+TriangleSetupInfo->void splitjoin BackendSplit
+{
+    split duplicate;
+
+    add PixelPipeline( 0, 15, 600, 600 );
+    add PixelPipeline( 1, 15, 600, 600 );
+    add PixelPipeline( 2, 15, 600, 600 );
+    add PixelPipeline( 3, 15, 600, 600 );
+    add PixelPipeline( 4, 15, 600, 600 );
+    add PixelPipeline( 5, 15, 600, 600 );
+    add PixelPipeline( 6, 15, 600, 600 );
+    add PixelPipeline( 7, 15, 600, 600 );
+    add PixelPipeline( 8, 15, 600, 600 );
+    add PixelPipeline( 9, 15, 600, 600 );
+    add PixelPipeline( 10, 15, 600, 600 );
+    add PixelPipeline( 11, 15, 600, 600 );
+    add PixelPipeline( 12, 15, 600, 600 );
+    add PixelPipeline( 13, 15, 600, 600 );
+    add PixelPipeline( 14, 15, 600, 600 );
+
+    join roundrobin( 0 );
+}
+
+void->void pipeline GPUModel
+{
+    add FileReader< float >( "my_sphere.bin" );
+    add Input( 1458 );
+    add VertexShader( 0 );
+    // add FrontendSplitJoin();
+    add TriangleSetup( 600, 600 );
+    add BackendSplit();
+}

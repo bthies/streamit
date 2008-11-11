@@ -1,0 +1,30 @@
+Fragment->void filter RasterOps( int offset, int numUnits,
+	int screenWidth, int screenHeight )
+{
+    float[ ( screenWidth / numUnits ) * screenHeight ] zBuffer;
+
+    int width;
+
+    init
+	{
+	    width = screenWidth / numUnits;
+
+	    for( int i = 0; i < width * screenHeight; ++i )
+		{
+		    zBuffer[i] = 1.1;
+		}
+	}
+
+    work pop 1
+	{
+	    Fragment r = pop();
+	
+	    r.x = r.x / numUnits;	    
+	    int index = r.y * width + r.x;
+	    
+	    if( r.z < zBuffer[ index ] )
+		{
+		    zBuffer[ index ] = r.z;
+		}
+	}
+}

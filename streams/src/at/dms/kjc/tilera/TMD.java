@@ -229,7 +229,7 @@ public class TMD extends Scheduler {
                     alreadyAssigned.add(slice);
                     //no upstream slice is in a set
                     if (theBest == null) {
-                        System.out.println("no best: " + slice.getFirstFilter());
+                        //System.out.println("no best: " + slice.getFirstFilter());
                         //create a new set and add it to the set of sets
                         HashSet<Slice> newSet = new HashSet<Slice>();
                         newSet.add(slice);

@@ -1,0 +1,18 @@
+###standard condor headers for CSAIL###
+
+# preserve your environment variables
+GetEnv = True
+
+# use the plain nothing special universe
+Universe = vanilla
+
+# only send email if there's an error 
+Notification = Error
+
+# Allows you to run on different "filesystem domains" 
+#by copying the files around if needed
+should_transfer_files = IF_NEEDED
+WhenToTransferOutput = ON_EXIT
+
+###END HEADER###
+

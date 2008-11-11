@@ -1,0 +1,20 @@
+#!/usr/bin/perl
+
+use Getopt::Std;
+
+%options = ();
+getopts("i:", \%options);
+
+(-e $options{i}) || die("File does not exist!");
+
+open (FILE, $options{i});
+
+while (<FILE>) {
+  chomp;
+  #Average cycles per SS for 10 iterations: 16169374, avg cycles per output: 12030 
+
+  if (/Average cycles per SS for (\d+) iterations: (\d+), avg cycles per output: (\d+)/) {
+    print "$1;$2;$3\n";
+  }
+}
+

@@ -374,6 +374,7 @@ public class TileCodeStore extends ComputeCodeStore<Tile> {
             appendTxtToGlobal("    printf(\"Average cycles per SS for %d iterations: %llu \\n\", ITERATIONS, avgCycles);\n");
         }
         appendTxtToGlobal("    __iteration__ = 0;\n");
+        appendTxtToGlobal("    ilib_abort();\n");
 
         appendTxtToGlobal("  }\n");
 

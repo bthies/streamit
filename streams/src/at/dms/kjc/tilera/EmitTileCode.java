@@ -271,7 +271,7 @@ public class EmitTileCode extends EmitCode {
         p.println("clean:");
         p.println("\trm -f *.o $(EXECUTABLES)");
         p.println();
-        p.println("main.o: main.c");
+        p.println("main.o: main.c fixed");
         p.println("\t$(CC) $(CFLAGS) -c $< -o $@");
 
         p.println("main: main.o");
@@ -284,13 +284,19 @@ public class EmitTileCode extends EmitCode {
                 continue;
             p.println();
             String file = "tile" + tile.getTileNumber();
-            p.println(file + ".o: " + file + ".c");
+            String fixed = (KjcOptions.fixedpoint ? " fixed" : "");
+            p.println(file + ".o: " + file + ".c" + fixed);
             p.println("\t$(CC) $(CFLAGS) -c $< -o $@");
 
             p.println(file + ": " + file  + ".o");
             p.println("\t$(CC) $(LDFLAGS) $< -lilib -lm -o $@"); 
         }
         
+        if (KjcOptions.fixedpoint) {
+          p.println();
+          p.println("fixed: $(STREAMIT_HOME)/library/fixed_point/fixed.h");
+          p.println("\tcp $(STREAMIT_HOME)/library/fixed_point/fixed.h .");
+        }
         p.println();
         p.println(" .PHONY: run test build clean");
         p.close();

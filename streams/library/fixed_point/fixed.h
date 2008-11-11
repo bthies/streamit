@@ -547,16 +547,14 @@ inline fixed fixed::multiply(fixed b)
   r2 = __insn_mulhl_su(r0, r1);
 	r2 = __insn_mulhla_su(r2, r1, r0);
 	r4 = __insn_mulll_uu(r0, r1);
-
   r4 = __insn_srai(r4, 16);
   r3 = __insn_mulhh_ss(r0, r1);
-
   r3 = __insn_shli(r3, 16);
   r2 = __insn_add(r2, r4);
-
   r0 = __insn_add(r2, r3);
 
-  fixed a(r0);
+  fixed a;
+  a.m_nVal = r0;
 
   /*
   long long lx = m_nVal;

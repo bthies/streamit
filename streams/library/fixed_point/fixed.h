@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <vec_ops.h>
 
 #ifndef _FIXED_H
 #define _FIXED_H
@@ -538,11 +539,32 @@ inline fixed fixed::operator-(fixed b)
 
 inline fixed fixed::multiply(fixed b)
 {
-  fixed a;
+  int32_t r0, r1, r2, r3, r4;
+
+  r0 = m_nVal;
+  r1 = b.m_nVal;
+
+  r2 = __insn_mulhl_su(r0, r1);
+	r2 = __insn_mulhla_su(r2, r1, r0);
+	r4 = __insn_mulll_uu(r0, r1);
+
+  r4 = __insn_srai(r4, 16);
+  r3 = __insn_mulhh_ss(r0, r1);
+
+  r3 = __insn_shli(r3, 16);
+  r2 = __insn_add(r2, r4);
+
+  r0 = __insn_add(r2, r3);
+
+  fixed a(r0);
+
+  /*
   long long lx = m_nVal;
   long long ly = b.m_nVal;
   long long lres = (lx * ly);
   a.m_nVal = lres >> 16;
+  */
+
   return a;
 }
 
@@ -767,13 +789,11 @@ inline fixed fixed::atan()
 // accuracy with a few more operations (see website).
 inline fixed fixed::atan()
 {
-   fixed coeff_1(PI_FLOAT / 4);
-   fixed coeff_2 = coeff_1 * 3;
+   fixed coeff(-PI_FLOAT / 2);
 
    fixed abs_y = this->absolute();
-
    fixed r = (1 - abs_y) / (abs_y + 1);
-   fixed angle = coeff_1 - coeff_1 * r;
+   fixed angle = coeff * r;
 
    if (*this < 0)
      return(-angle);     

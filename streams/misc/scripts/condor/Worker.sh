@@ -3,7 +3,7 @@
 # Check for correct usage
 if [ $# -ne 4 ]; then
     echo "usage:"
-    echo -e "    ./Worker.sh tilera_size compiler_options benchmark aggregate_file"
+    echo "   Worker.sh tilera_size compiler_options benchmark aggregate_file"
     exit 1
 fi
 
@@ -20,6 +20,13 @@ benchmark_name=${benchmark_file%.str}
 aggregate_file=${4}
 
 # Check environment variables
+echo "Host: $HOSTNAME"
+echo "\$STREAMIT_HOME: ${STREAMIT_HOME}"
+echo "\$TILERA_HOME: ${TILERA_HOME}"
+echo "\$JAVA_HOME: ${JAVA_HOME}"
+echo "\$PATH: ${PATH}"
+echo
+
 if [ -z "$STREAMIT_HOME" ]; then
     echo '$STREAMIT_HOME must be defined'
     exit 1
@@ -35,13 +42,6 @@ if [ -z "$JAVA_HOME" ]; then
     exit 1
 fi
 
-echo "Host: $HOSTNAME"
-echo "\$STREAMIT_HOME: ${STREAMIT_HOME}"
-echo "\$TILERA_HOME: ${TILERA_HOME}"
-echo "\$JAVA_HOME: ${JAVA_HOME}"
-echo "\$PATH: ${PATH}"
-echo
-
 # Check that benchmark exists
 if [ ! -f ${benchmark} ]; then
     echo "Benchmark \"${benchmark}\" does not exist"
@@ -50,6 +50,7 @@ fi
 
 # Copy benchmark to current directory
 cp ${benchmark} .
+
 #cp -rf ${benchmark_dir}/* .
 
 # Compile benchmark and execute

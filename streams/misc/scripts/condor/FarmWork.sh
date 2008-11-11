@@ -1,11 +1,50 @@
 #!/bin/bash
 
-# Check for correct usage
-if [ $# -ne 4 ]; then
-    echo "usage:"
-    echo -e "    ./FarmWork lower_tile_size upper_tile_size compiler_options benchmark_file"
+print_usage() {
+    echo
+    echo "Usage:"
+    echo
+    echo "   FarmWork [-u] [-s N] [-e N] [-o options] [-w work_dir] benchmark_file"
+    echo
+    echo "Options:"
+    echo "   -u : Update StreamIt compiler"
+    echo "   -s : Start Tilera size         (default = 1)"
+    echo "   -e : End Tilera size           (default = 8)"
+    echo "   -o : StreamIt compiler options (default = \"\")"
+    echo "   -w : Work directory to use     (default = `pwd`/work)"
+    echo
+    echo "   benchmark_file : File containing list of all benchmarks to run"
+    echo
+}
+
+# Parse arguments
+update_compiler=0
+start_size=1
+end_size=8
+compile_options=""
+work_dir="`pwd`/work"
+benchmark_file=""
+
+while getopts ":us:e:o:w:" opt; do
+    case $opt in
+	u  ) update_compiler=1 ;;
+	s  ) start_size=$OPTARG ;;
+	e  ) end_size=$OPTARG ;;
+	o  ) compile_options=$OPTARG ;;
+	w  ) work_dir=$OPTARG ;;
+	\? ) print_usage
+	     exit 1 ;;
+    esac
+done
+
+shift $(($OPTIND - 1))
+
+if [ -z "$@" ]; then
+    print_usage
     exit 1
 fi
+
+benchmark_file=$1
 
 # Check environment variables
 if [ -z "$TILERA_HOME" ]; then
@@ -16,10 +55,6 @@ fi
 if [ -z "$STREAMIT_HOME" ]; then
     echo '$STREAMIT_HOME must be defined'
     exit 1
-fi
-
-if [ -z "$WORK_DIR" ]; then
-    export WORK_DIR=`pwd`/work
 fi
 
 # Check that necessary files for farming exist
@@ -34,14 +69,26 @@ if [ ! -f "condor_config.header" ]; then
 fi
 
 # Check that benchmark files exists
-if [ ! -f "$4" ]; then
+if [ ! -f ${benchmark_file} ]; then
    echo "benchmarks file does not exist"
    exit 1
 fi
 
+# Update StreamIt compiler
+if [ ${update_compiler} -eq 1 ]; then
+    cwd=`pwd`
+
+    cd ${STREAMIT_HOME}
+    cvs update
+    cd src
+    make
+
+    cd ${cwd}
+fi
+
 # Read benchmark file into benchmark array
 current=0
-for i in $(cat $4); do
+for i in $(cat ${benchmark_file}); do
     i=$(eval echo $i)
     if [ -f "$i" ]; then  
 	benchmarks[$current]=$i
@@ -53,7 +100,7 @@ done
 
 # Set up sizes array to hold Tilera sizes we want to simulate
 current=0
-for ((low=$1;$low<=$2;low+=2)); do
+for ((low=${start_size};$low<=${end_size};low+=2)); do
     sizes[$current]=$low
     current=$current+1
 
@@ -63,8 +110,8 @@ for ((low=$1;$low<=$2;low+=2)); do
 done
 
 # Check if aggregate results file already exists.  If so, remove it
-if [ -f "${WORK_DIR}/aggregate_results" ]; then
-    rm ${WORK_DIR}/aggregate_results
+if [ -f "${work_dir}/aggregate_results" ]; then
+    rm ${work_dir}/aggregate_results
 fi
 
 # Construct Condor configuration file
@@ -86,7 +133,7 @@ for benchmark in "${benchmarks[@]}"; do
     benchmark_name=${benchmark_file%.str}
 
     for size in "${sizes[@]}"; do
-	worker_dir=${WORK_DIR}/${benchmark_name}_${3// /}_${size}
+	worker_dir=${work_dir}/${benchmark_name}_${3// /}_${size}
 
 	# Construct worker directory and copy in parse_results executable
 	if [ -d "$worker_dir" ]; then
@@ -97,7 +144,7 @@ for benchmark in "${benchmarks[@]}"; do
 	cp parse_results ${worker_dir}
 
 	# Worker-specific Condor options
-	echo "Arguments = ${size} '${3}' ${benchmark} ${WORK_DIR}/aggregate_results" >> condor_config
+	echo "Arguments = ${size} '${3}' ${benchmark} ${work_dir}/aggregate_results" >> condor_config
 	echo "InitialDir = ${worker_dir}" >> condor_config
 	echo "queue" >> condor_config
 	echo >> condor_config
@@ -105,4 +152,4 @@ for benchmark in "${benchmarks[@]}"; do
 done
 
 # Submit jobs to Condor using constructed configuration file
-#condor_submit condor_config
+condor_submit condor_config

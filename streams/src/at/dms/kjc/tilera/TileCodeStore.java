@@ -171,14 +171,14 @@ public class TileCodeStore extends ComputeCodeStore<Tile> {
         System.out.println(TileraBackend.chip.getTranslatedTileNumber(tile.getTileNumber()) + " " + dir1 + ", " + dir2);
 
         assert !dir1.equals("") || !dir2.equals("");
-        code[0] = "uint64_t cycle; cycle = get_cycle_count(); ilib_mem_fence()";
+        code[0] = "ilib_mem_fence()";
         //code[0] = "/* nothing */";
         code[1] = "__insn_mtspr(SPR_SNSTATIC, (MAIN_INPUT(SN_" + dir1 + ") | " + dir1 + "_INPUT(SN_MAIN)))";
         code[2] = "__insn_mtspr(SPR_SNCTL, 0x2)";
         code[3]= "sn_send(1); sn_receive()";
         code[4] = "__insn_mtspr(SPR_SNSTATIC, (MAIN_INPUT(SN_" + dir2 + ") | " + dir2 + "_INPUT(SN_MAIN)))";
         code[5] = "__insn_mtspr(SPR_SNCTL, 0x2)";
-        code[6] = "sn_send(2); sn_receive(); PASS(cycle);";
+        code[6] = "sn_send(2); sn_receive()";
         
         
         return code;

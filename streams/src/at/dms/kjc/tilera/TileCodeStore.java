@@ -141,11 +141,13 @@ public class TileCodeStore extends ComputeCodeStore<Tile> {
             dir1 = "SOUTH"; dir2 = "EAST";
         } else if (col % 2 == 0) {
             if (row == 0) { //not 0,0
-                dir1 = "EAST"; dir2 = "WEST"; 
+                dir1 = "WEST"; dir2 = "EAST"; 
             } else if (row == 1 && col > 0) {
                 dir1 = "WEST"; dir2 = "SOUTH";
             } else if (row == gYSize -1) {
                 dir1 = "NORTH"; dir2 = "EAST"; 
+            } else if (row % 2 == 0) {
+                dir1 = "SOUTH"; dir2 = "NORTH"; 
             } else {
                 dir1 = "NORTH"; dir2 = "SOUTH"; 
             }
@@ -156,14 +158,17 @@ public class TileCodeStore extends ComputeCodeStore<Tile> {
             } else if (row == 0) {
                 dir1 = "EAST"; dir2 = "WEST"; 
             } else if (row == 1 && col < gXSize - 1) {
-                dir1 = "SOUTH"; dir2 = "EAST";
+                dir1 = "EAST"; dir2 = "SOUTH";
             } else if (row == gYSize - 1) {
-                dir1 = "WEST"; dir2 = "NORTH";
-            } else {
+                dir1 = "NORTH"; dir2 = "WEST";
+            } else if (row % 2 == 0 ) {
                 dir1 = "SOUTH"; dir2 = "NORTH";
+            } else {
+                dir1 = "NORTH"; dir2 = "SOUTH";
             }
         }
         
+        System.out.println(TileraBackend.chip.getTranslatedTileNumber(tile.getTileNumber()) + " " + dir1 + ", " + dir2);
 
         assert !dir1.equals("") || !dir2.equals("");
         code[0] = "ilib_mem_fence()";

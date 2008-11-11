@@ -105,10 +105,15 @@ public class TileCodeStore extends ComputeCodeStore<Tile> {
             TileCodeStore cs = TileraBackend.chip.getTranslatedTile(t).getComputeCode();
             cs.addSteadyLoopStatement(Util.toStmt("/* Static Network Barrier */"));
             cs.setHasCode();
+            /*
             String code[] = staticNetworkBarrier(cs.getParent());
             for (String stmt : code) {
                 cs.addSteadyLoopStatement(Util.toStmt(stmt));
             }
+            */
+            
+            cs.addSteadyLoopStatement(Util.toStmt("ilib_msg_barrier(ILIB_GROUP_SIBLINGS)"));
+            
             /*
             if (TileraBackend.chip.getTranslatedTile(t).getTileNumber() != 0) 
                 cs.addSteadyLoopStatement(Util.toStmt("sn_receive()"));

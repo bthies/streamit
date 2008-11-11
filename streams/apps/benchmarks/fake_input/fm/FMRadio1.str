@@ -119,7 +119,7 @@ float->void filter FloatPrinter {
   }
 }
 
-float->float pipeline FMRadioCore {
+void->float pipeline FMRadioCore {
     float samplingRate = 250000000; // 250 MHz sampling rate is sensible
     float cutoffFrequency = 108000000; //guess... doesn't FM freq max at 108 Mhz? 
     int numberOfTaps = 64;
@@ -129,7 +129,7 @@ float->float pipeline FMRadioCore {
     // determine where equalizer cuts.  Note that <eqBands> is the
     // number of CUTS; there are <eqBands>-1 bands, with parameters
     // held in slots 1..<eqBands> of associated arrays.
-    int eqBands = 11;
+    int eqBands = 5;
     float[eqBands] eqCutoff;
     float[eqBands] eqGain;
     float low = 55;
@@ -149,16 +149,51 @@ float->float pipeline FMRadioCore {
     }
     
     //decimate 4 samples after outputting 1
-    add LowPassFilter(samplingRate, cutoffFrequency, numberOfTaps, 4);
+    add LowPassFilterSource(samplingRate, cutoffFrequency, numberOfTaps, 4);
     add FMDemodulator(samplingRate, maxAmplitude, bandwidth);
     add Equalizer(samplingRate, eqBands, eqCutoff, eqGain, numberOfTaps);
 }
 
 
-void->void pipeline FMRadio {
+
+void->float filter LowPassFilterSource(float rate, float cutoff, int taps, int decimation) {
+  float[taps] coeff;
+  init {
+    int i;
+    float m = taps - 1;
+    float w = 2 * pi * cutoff / rate;
+    for (i = 0; i < taps; i++) {
+      if (i - m/2 == 0)
+        coeff[i] = w/pi;
+      else
+        coeff[i] = sin(w*(i-m/2)) / pi / (i-m/2) *
+          (0.54 - 0.46 * cos(2*pi*i/m));
+    }
+  }
+	
+  float fake_peek(int f) {
+	return 1.0f;
+  }
+
+  void fake_pop(){}  
+
+  work push 1 {
+    float sum = 0;
+    for (int i = 0; i < taps; i++)
+      sum += fake_peek(i) * coeff[i];
+    push(sum);
+    for (int i=0; i<decimation; i++)
+	fake_pop();
+    fake_pop();
+  }
+}
+
+
+
+void->void pipeline FMRadio1 {
 
     //  add FloatOneSource();
-    add FileReader<float>("../input/input");
+    //add FileReader<float>("../input/input");
     add FMRadioCore();
-    add FileWriter<float>("FMRadio.out");
+    add FileWriter<float>("FMRadio1.out");
 }

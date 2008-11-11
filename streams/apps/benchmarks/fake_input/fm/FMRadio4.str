@@ -79,6 +79,82 @@ float->float filter LowPassFilter(float rate, float cutoff, int taps, int decima
   }
 }
 
+
+float->float filter FMDemodulator(float sampRate, float max, float bandwidth) {
+  float mGain;
+
+  init {
+    mGain = max*(sampRate/(bandwidth*pi));
+  }
+
+  work push 1 pop 1 peek 2 {
+    float temp = 0;
+    //may have to switch to complex?
+    temp = (float)(peek(0) * peek(1));
+    //if using complex, use atan2
+    temp = (float)(mGain * atan(temp));
+
+    pop();
+    push(temp);
+  }
+}
+
+
+void->float filter FloatOneSource {
+  float x;
+
+  init {
+    x = 0;
+  }
+
+  work push 1 pop 0 {
+    push(x++);
+  }
+}
+
+
+float->void filter FloatPrinter {
+  work push 0 pop 1 {
+    println(pop());
+  }
+}
+
+void->float pipeline FMRadioCore {
+    float samplingRate = 250000000; // 250 MHz sampling rate is sensible
+    float cutoffFrequency = 108000000; //guess... doesn't FM freq max at 108 Mhz? 
+    int numberOfTaps = 128;
+    float maxAmplitude = 27000;
+    float bandwidth = 10000;
+    
+    // determine where equalizer cuts.  Note that <eqBands> is the
+    // number of CUTS; there are <eqBands>-1 bands, with parameters
+    // held in slots 1..<eqBands> of associated arrays.
+    int eqBands = 5;
+    float[eqBands] eqCutoff;
+    float[eqBands] eqGain;
+    float low = 55;
+    float high = 1760;
+
+    for (int i=0; i<eqBands; i++) {
+	// have exponentially spaced cutoffs
+	eqCutoff[i] = (float)exp(i*(log(high)-log(low))/(eqBands-1) + log(low));
+    }
+
+    // first gain doesn't really correspond to a band
+    eqGain[0] = 0;
+    for (int i=1; i<eqBands; i++) {
+	// the gain grows linearly towards the center bands
+	float val = (((float)(i-1))-(((float)(eqBands-2))/2.0)) / 5.0;
+	eqGain[i] = val > 0 ? 2.0-val : 2.0+val;
+    }
+    
+    //decimate 4 samples after outputting 1
+    add LowPassFilterSource(samplingRate, cutoffFrequency, numberOfTaps, 4);
+    add FMDemodulator(samplingRate, maxAmplitude, bandwidth);
+    add Equalizer(samplingRate, eqBands, eqCutoff, eqGain, numberOfTaps);
+}
+
+
 void->float filter LowPassFilterSource(float rate, float cutoff, int taps, int decimation) {
   float[taps] coeff;
   init {
@@ -112,88 +188,10 @@ void->float filter LowPassFilterSource(float rate, float cutoff, int taps, int d
 }
 
 
-float->float filter FMDemodulator(float sampRate, float max, float bandwidth) {
-  float mGain;
 
-  init {
-    mGain = max*(sampRate/(bandwidth*pi));
-  }
+void->void pipeline FMRadio4 {
 
-  work push 1 pop 1 peek 2 {
-    float temp = 0;
-    //may have to switch to complex?
-    temp = (float)(peek(0) * peek(1));
-    //if using complex, use atan2
-    temp = (float)(mGain * atan(temp));
-	
-    pop();
-    push(temp);
-  }
-}
-
-
-void->float filter FloatOneSource {
-
-  work push 1 pop 0 {
-    push(1.0f);
-  }
-}
-
-
-float->void filter FloatPrinter {
-  work push 0 pop 1 {
-    println(pop());
-  }
-}
-
-void->float pipeline FMRadioCore {
-    float samplingRate = 250000000; // 250 MHz sampling rate is sensible
-    float cutoffFrequency = 108000000; //guess... doesn't FM freq max at 108 Mhz? 
-    int numberOfTaps = 64;
-    float maxAmplitude = 27000;
-    float bandwidth = 10000;
-    
-    // determine where equalizer cuts.  Note that <eqBands> is the
-    // number of CUTS; there are <eqBands>-1 bands, with parameters
-    // held in slots 1..<eqBands> of associated arrays.
-    int eqBands = 9;
-    float[eqBands] eqCutoff;
-    float[eqBands] eqGain;
-    float low = 55;
-    float high = 1760;
-
-    for (int i=0; i<eqBands; i++) {
-	// have exponentially spaced cutoffs
-	eqCutoff[i] = (float)exp(i*(log(high)-log(low))/(eqBands-1) + log(low));
-    }
-
-    // first gain doesn't really correspond to a band
-    eqGain[0] = 0;
-    for (int i=1; i<eqBands; i++) {
-	// the gain grows linearly towards the center bands
-	float val = (((float)(i-1))-(((float)(eqBands-2))/2.0)) / 5.0;
-	eqGain[i] = val > 0 ? 2.0-val : 2.0+val;
-    }
-    
-    //decimate 4 samples after outputting 1
-    add LowPassFilterSource(samplingRate, cutoffFrequency, numberOfTaps, 4);
-    add FMDemodulator(samplingRate, maxAmplitude, bandwidth);
-    add Equalizer(samplingRate, eqBands, eqCutoff, eqGain, numberOfTaps);
-}
-
-float->void filter FloatSink() 
-{
-    work pop 1 
-    {
-	pop();
-    }
-}
-
-
-void->void pipeline FMRadio3NoIO {
-
-    //add FloatOneSource();
-    //add FileReader<float>("../input/input");
+    //  add FloatOneSource();
     add FMRadioCore();
-    add FileWriter<float>("FMRadio3.out");
+    add FileWriter<float>("FMRadio4.out");
 }

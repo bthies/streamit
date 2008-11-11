@@ -16,14 +16,14 @@
  * value is either the pitch if the sound was voiced or 0 if the
  * sound was unvoiced.
  **/
-void->void pipeline ChannelVocoder6 {
+void->void pipeline ChannelVocoder11 {
 //    add DataSource();
-    //add FileReader<float>("../input/input");
+//    add FileReader<float>("../input/input");
     // low pass filter to filter out high freq noise
-    add LowPassFilterSource(1, (2*pi*5000)/8000, 128); 
+    add LowPassFilterSource(1, (2*pi*5000)/8000, 64); 
     add MainSplitjoin();
     //add FloatPrinter();
-    add FileWriter<float>("ChannelVocoder6.out");
+    add FileWriter<float>("ChannelVocoder11.out");
 }
 
 float->float filter Nothing {
@@ -37,12 +37,12 @@ float->float filter Nothing {
 float->float splitjoin MainSplitjoin {
   int PITCH_WINDOW = 100; // the number of samples to base the pitch detection on
   int DECIMATION   = 50; // decimation factor
-  int NUM_FILTERS  = 12; //18;
+  int NUM_FILTERS  = 24; //18;
   
   split duplicate;
   add PitchDetector(PITCH_WINDOW, DECIMATION);
   add VocoderFilterBank(NUM_FILTERS, DECIMATION);
-  join roundrobin(1,12); // can't be NUM_FILTERS b/c const prop didn't work
+  join roundrobin(1,24); // can't be NUM_FILTERS b/c const prop didn't work
 }
 
 
@@ -104,7 +104,7 @@ float->float splitjoin VocoderFilterBank(int N, int decimation) {
  **/
 float->float pipeline FilterDecimate(int i, int decimation) {
   //add VocoderBandPassFilter(i, 64); // 64 tap filter
-  add BandPassFilter(2, 400*i, 400*(i+1), 128); 
+  add BandPassFilter(2, 400*i, 400*(i+1), 64); 
   add Compressor(decimation);
 
 

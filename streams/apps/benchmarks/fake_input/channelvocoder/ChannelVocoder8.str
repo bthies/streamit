@@ -16,14 +16,14 @@
  * value is either the pitch if the sound was voiced or 0 if the
  * sound was unvoiced.
  **/
-void->void pipeline ChannelVocoder8 {
+void->void pipeline ChannelVocoder5 {
 //    add DataSource();
 //    add FileReader<float>("../input/input");
     // low pass filter to filter out high freq noise
     add LowPassFilterSource(1, (2*pi*5000)/8000, 128); 
     add MainSplitjoin();
     //add FloatPrinter();
-    add FileWriter<float>("ChannelVocoder8.out");
+    add FileWriter<float>("ChannelVocoder5.out");
 }
 
 float->float filter Nothing {
@@ -37,12 +37,12 @@ float->float filter Nothing {
 float->float splitjoin MainSplitjoin {
   int PITCH_WINDOW = 100; // the number of samples to base the pitch detection on
   int DECIMATION   = 50; // decimation factor
-  int NUM_FILTERS  = 16; //18;
+  int NUM_FILTERS  = 8; //18;
   
   split duplicate;
   add PitchDetector(PITCH_WINDOW, DECIMATION);
   add VocoderFilterBank(NUM_FILTERS, DECIMATION);
-  join roundrobin(1,16); // can't be NUM_FILTERS b/c const prop didn't work
+  join roundrobin(1,8); // can't be NUM_FILTERS b/c const prop didn't work
 }
 
 
@@ -357,6 +357,7 @@ float->float filter LowPassFilter(float g, float cutoffFreq, int N) {
     pop();
   }
 }
+
 /** 
  * Simple FIR low pass filter with gain=g, wc=cutoffFreq(in radians) and N samples.
  * Eg:

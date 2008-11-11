@@ -37,6 +37,8 @@ while getopts ":us:e:o:w:" opt; do
     esac
 done
 
+echo ${compile_options}
+
 shift $(($OPTIND - 1))
 
 if [ -z "$@" ]; then
@@ -68,7 +70,7 @@ if [ ! -f "condor_config.header" ]; then
     exit 1
 fi
 
-# Check that benchmark files exists
+# Check that benchmark file exists
 if [ ! -f ${benchmark_file} ]; then
    echo "benchmarks file does not exist"
    exit 1
@@ -133,7 +135,7 @@ for benchmark in "${benchmarks[@]}"; do
     benchmark_name=${benchmark_file%.str}
 
     for size in "${sizes[@]}"; do
-	worker_dir=${work_dir}/${benchmark_name}_${3// /}_${size}
+	worker_dir=${work_dir}/${benchmark_name}_${compile_options// /}_${size}
 
 	# Construct worker directory and copy in parse_results executable
 	if [ -d "$worker_dir" ]; then
@@ -144,7 +146,7 @@ for benchmark in "${benchmarks[@]}"; do
 	cp parse_results ${worker_dir}
 
 	# Worker-specific Condor options
-	echo "Arguments = ${size} '${3}' ${benchmark} ${work_dir}/aggregate_results" >> condor_config
+	echo "Arguments = ${size} '${compile_options}' ${benchmark} ${work_dir}/aggregate_results" >> condor_config
 	echo "InitialDir = ${worker_dir}" >> condor_config
 	echo "queue" >> condor_config
 	echo >> condor_config

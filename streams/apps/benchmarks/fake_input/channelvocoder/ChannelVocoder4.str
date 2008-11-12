@@ -16,7 +16,7 @@
  * value is either the pitch if the sound was voiced or 0 if the
  * sound was unvoiced.
  **/
-void->void pipeline ChannelVocoder7 {
+void->void pipeline ChannelVocoder4 {
 //    add DataSource();
 //    add FileReader<float>("../input/input");
     // low pass filter to filter out high freq noise

@@ -402,7 +402,8 @@ public class TMD extends Scheduler {
      */
     public void calculateFizzAmounts(int totalTiles) {
         Slice[][] origLevels = new LevelizeSliceGraph(graphSchedule.getSlicer().getTopSlices()).getLevels();
-        
+        int peekingWork = 0;
+        int totalWork = 0;
         //assume that level 0 has a file reader and the last level has a file writer
         for (int l = 0; l < origLevels.length; l++) {
             //for the level, calculate the total work and create a hashmap of fsn to work
@@ -420,6 +421,9 @@ public class TMD extends Scheduler {
                    workEsts.put(fsn, 0);
                //the work estimation is the estimate for the work function  
                int workEst = SliceWorkEstimate.getWork(origLevels[l][s]);
+               totalWork += workEst;
+               if (fc.getPeekInt() > fc.getPopInt())
+                   peekingWork += workEst;
                workEsts.put(fsn, workEst);
                //insert into the sorted list of works
                int index = 0;
@@ -509,7 +513,8 @@ public class TMD extends Scheduler {
                 System.out.println("Level " + l + " does not use all the tiles available for TMD " + tilesUsed);
         }
         
-        
+        System.out.println("Total work (slicegraph): " + totalWork);
+        System.out.println("Total work in peeking filters (slicegraph): " + peekingWork);
     }
     
     /**
@@ -571,6 +576,28 @@ public class TMD extends Scheduler {
         return maxFactor;
     }
     
+    
+
+    /**
+     * Returns the amount peeking work and total work in array.
+     */
+    public static int[] totalWork(SIRStream str) {
+        WorkEstimate workEst = WorkEstimate.getWorkEstimate(str);
+        WorkList wl = workEst.getSortedFilterWork();
+        int totalWork = 0;
+        int peekingWork = 0;
+        for (int i = 0; i < wl.size(); i++) {
+            totalWork += wl.getWork(i);
+            SIRFilter filter = wl.getFilter(i);
+            if (filter.getPeekInt() > filter.getPopInt()) {
+                peekingWork += wl.getWork(i);
+            }
+        }
+        
+        return new int[]{peekingWork, totalWork};
+    }
+    
+
     /**
      * Returns the number of peeking filters in the graph.
      */

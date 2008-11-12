@@ -173,7 +173,8 @@ public class CommonPasses {
         double CCRatioOrig = CompCommRatio.ratio(str, WorkEstimate.getWorkEstimate(str),
                 SIRScheduler.getExecutionCounts(str)[1]);
         System.out.println("Comp/Comm Ratio of original SIR graph: " + CCRatioOrig);
-        
+        int[] workStats = at.dms.kjc.tilera.TMD.totalWork(str);
+        System.out.println("SIR Peeking Work: " + workStats[0] + ",  SIR Total Work: " + workStats[1]);
         if (KjcOptions.fusion || KjcOptions.dup >= 1 || KjcOptions.noswpipe) {
             // if we are about to fuse filters, we should perform
             // any vectorization now, since vectorization can not work inside

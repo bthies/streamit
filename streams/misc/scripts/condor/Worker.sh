@@ -1,23 +1,29 @@
 #!/bin/bash
 
+# Display arguments
+
+echo "Arguments:"
+echo $@
+echo
+
 # Check for correct usage
-if [ $# -ne 4 ]; then
-    echo "usage:"
-    echo "   Worker.sh tilera_size compiler_options benchmark aggregate_file"
+if [ $# -lt 4 ]; then
+    echo "Usage:"
+    echo "   Worker.sh tilera_size benchmark aggregate_file compiler_options"
     exit 1
 fi
 
 numproc=${1}
 
-options=${2#\'}
-options=${options%\'}
-
-benchmark=${3}
+benchmark=${2}
 benchmark_dir=`dirname $benchmark`
 benchmark_file=${benchmark##/*/}
 benchmark_name=${benchmark_file%.str}
 
-aggregate_file=${4}
+aggregate_file=${3}
+
+shift $((3))
+options=$@
 
 # Check environment variables
 echo "Host: $HOSTNAME"

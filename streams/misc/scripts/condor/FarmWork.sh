@@ -37,8 +37,6 @@ while getopts ":us:e:o:w:" opt; do
     esac
 done
 
-echo ${compile_options}
-
 shift $(($OPTIND - 1))
 
 if [ -z "$@" ]; then
@@ -146,7 +144,7 @@ for benchmark in "${benchmarks[@]}"; do
 	cp parse_results ${worker_dir}
 
 	# Worker-specific Condor options
-	echo "Arguments = ${size} '${compile_options}' ${benchmark} ${work_dir}/aggregate_results" >> condor_config
+	echo "Arguments = ${size} ${benchmark} ${work_dir}/aggregate_results ${compile_options}" >> condor_config
 	echo "InitialDir = ${worker_dir}" >> condor_config
 	echo "queue" >> condor_config
 	echo >> condor_config

@@ -112,19 +112,17 @@ public class TileCodeStore extends ComputeCodeStore<Tile> {
             }
             */
             
-            cs.addSteadyLoopStatement(Util.toStmt("ilib_msg_barrier(ILIB_GROUP_SIBLINGS)"));
+            //cs.addSteadyLoopStatement(Util.toStmt("ilib_msg_barrier(ILIB_GROUP_SIBLINGS)"));
             
-            /*
+            cs.addSteadyLoopStatement(Util.toStmt("ilib_mem_fence()"));
             if (TileraBackend.chip.getTranslatedTile(t).getTileNumber() != 0) 
                 cs.addSteadyLoopStatement(Util.toStmt("sn_receive()"));
             cs.addSteadyLoopStatement(Util.toStmt("sn_send(43)"));
             cs.addSteadyLoopStatement(Util.toStmt("sn_receive()"));
-            //cs.addSteadyLoopStatement(Util.toStmt("ilib_mem_fence()"));
             if (TileraBackend.chip.getTranslatedTile(t).getTileNumber() != 1) 
                 cs.addSteadyLoopStatement(Util.toStmt("sn_send(42)"));
+            
             //cs.addStatementToBufferInit("ilib_msg_barrier(ILIB_GROUP_SIBLINGS)");
-             
-             */
         }
     }
     

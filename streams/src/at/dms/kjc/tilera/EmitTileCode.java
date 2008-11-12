@@ -271,7 +271,7 @@ public class EmitTileCode extends EmitCode {
         p.println("clean:");
         p.println("\trm -f *.o $(EXECUTABLES)");
         p.println();
-        p.println("main.o: main.c fixed");
+        p.println("main.o: main.c" + (KjcOptions.fixedpoint ? " fixed" : ""));
         p.println("\t$(CC) $(CFLAGS) -c $< -o $@");
 
         p.println("main: main.o");

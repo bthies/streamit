@@ -63,6 +63,9 @@ public class TileCodeStore extends ComputeCodeStore<Tile> {
      * method.
      */
     public static void addBufferInitBarrier() {
+      //don't do anything for the 1x1 case
+        if (TileraBackend.chip.abstractSize() == 1)
+            return;
         
         for (int t = 0; t < TileraBackend.chip.abstractSize(); t++) {
            Tile tile = TileraBackend.chip.getTranslatedTile(t);
@@ -89,6 +92,10 @@ public class TileCodeStore extends ComputeCodeStore<Tile> {
      * stage.
      */
     public static void addBarrierInit() {
+      //don't do anything for the 1x1 case
+        if (TileraBackend.chip.abstractSize() == 1)
+            return;
+        
         for (int t = 0; t < TileraBackend.chip.abstractSize(); t++) {
             TileCodeStore cs = TileraBackend.chip.getTranslatedTile(t).getComputeCode();
              cs.addInitStatement(Util.toStmt("ilib_msg_barrier(ILIB_GROUP_SIBLINGS)"));
@@ -101,6 +108,10 @@ public class TileCodeStore extends ComputeCodeStore<Tile> {
      * method.
      */
     public static void addBarrierSteady() {
+      //don't do anything for the 1x1 case
+        if (TileraBackend.chip.abstractSize() == 1)
+            return;
+        
         for (int t = 0; t < TileraBackend.chip.abstractSize(); t++) {
             TileCodeStore cs = TileraBackend.chip.getTranslatedTile(t).getComputeCode();
             cs.addSteadyLoopStatement(Util.toStmt("/* Static Network Barrier */"));

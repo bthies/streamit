@@ -81,7 +81,7 @@ if [ ${update_compiler} -eq 1 ]; then
     cwd=`pwd`
 
     cd ${STREAMIT_HOME}
-    cvs update
+    cvs update -d
     cd src
     make
 

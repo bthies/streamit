@@ -55,10 +55,12 @@ public class OneFilterSlicer extends Slicer {
                             // be the dest
                             edge = new InterSliceEdge((InputSliceNode) node);
                             edges.put(unflatEdge, edge);
-                        } else
+                        } else {
                             // we've seen this edge before, set the dest to this
                             // node
-                            edge.setDest((InputSliceNode) node);
+                            if (edge.getDest() != node)
+                                edge.setDest((InputSliceNode) node);
+                        }
                         inEdges[i] = edge;
                     }
                     slice = new Slice((InputSliceNode) node);

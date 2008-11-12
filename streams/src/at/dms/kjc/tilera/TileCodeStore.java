@@ -105,6 +105,17 @@ public class TileCodeStore extends ComputeCodeStore<Tile> {
             TileCodeStore cs = TileraBackend.chip.getTranslatedTile(t).getComputeCode();
             cs.addSteadyLoopStatement(Util.toStmt("/* Static Network Barrier */"));
             cs.setHasCode();
+            if (TileraBackend.scheduler.isTMD() && ((TMD)TileraBackend.scheduler).fallBackLayout)
+                cs.addSteadyLoopStatement(Util.toStmt("ilib_msg_barrier(ILIB_GROUP_SIBLINGS)"));
+            else {
+                cs.addSteadyLoopStatement(Util.toStmt("ilib_mem_fence()"));
+                if (TileraBackend.chip.getTranslatedTile(t).getTileNumber() != 0) 
+                    cs.addSteadyLoopStatement(Util.toStmt("sn_receive()"));
+                cs.addSteadyLoopStatement(Util.toStmt("sn_send(43)"));
+                if (TileraBackend.chip.getTranslatedTile(t).getTileNumber() == 0) 
+                    cs.addSteadyLoopStatement(Util.toStmt("sn_receive()"));
+            }
+
             /*
             String code[] = staticNetworkBarrier(cs.getParent());
             for (String stmt : code) {
@@ -122,14 +133,7 @@ public class TileCodeStore extends ComputeCodeStore<Tile> {
             if (TileraBackend.chip.getTranslatedTile(t).getTileNumber() != 1) 
                 cs.addSteadyLoopStatement(Util.toStmt("sn_send(42)"));
             */
-            
-            cs.addSteadyLoopStatement(Util.toStmt("ilib_mem_fence()"));
-            if (TileraBackend.chip.getTranslatedTile(t).getTileNumber() != 0) 
-                cs.addSteadyLoopStatement(Util.toStmt("sn_receive()"));
-            cs.addSteadyLoopStatement(Util.toStmt("sn_send(43)"));
-            if (TileraBackend.chip.getTranslatedTile(t).getTileNumber() == 0) 
-                cs.addSteadyLoopStatement(Util.toStmt("sn_receive()"));
-            
+                        
             //cs.addStatementToBufferInit("ilib_msg_barrier(ILIB_GROUP_SIBLINGS)");
         }
     }

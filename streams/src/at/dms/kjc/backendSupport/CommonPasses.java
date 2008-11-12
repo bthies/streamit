@@ -208,10 +208,14 @@ public class CommonPasses {
         if (KjcOptions.tilera != -1) {
             //running the tilera backend
             
+            System.out.println("SIR Filters: " + at.dms.kjc.tilera.TMD.countFilters(str));
+            System.out.println("SIR Peeking Filters: " + at.dms.kjc.tilera.TMD.countPeekingFilters(str));
+            
             DuplicateBottleneck dup = new DuplicateBottleneck();
             dup.percentStateless(str);
             str = FusePipelines.fusePipelinesOfStatelessStreams(str);
             StreamItDot.printGraph(str, "after-fuse-stateless.dot");
+            
             if (!at.dms.kjc.tilera.TMD.allLevelsFit(str, KjcOptions.tilera * KjcOptions.tilera)) {
                 System.out.println("Have to fuse the graph because at least one level has too many filters...");
                 str = at.dms.kjc.tilera.TMD.SIRFusion(str, KjcOptions.tilera * KjcOptions.tilera);

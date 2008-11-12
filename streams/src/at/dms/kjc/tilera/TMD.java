@@ -29,6 +29,10 @@ public class TMD extends Scheduler {
     public LevelizeSliceGraph lsg;
     private HashMap<Slice, Integer> fizzAmount;
     public static final int FISS_COMP_COMM_THRESHOLD = 10;
+    /** if true, then we have slices with fanout greater than 2 and we do not 
+     * hava a layout where communicating slices are neighbors, boo
+     */
+    public boolean fallBackLayout;
     
     public TMD() {
         super();
@@ -73,23 +77,25 @@ public class TMD extends Scheduler {
         
         //if the fan out of any non-predefined filter is > 2 then we have to use the fallback
         //layout algorithm and global barriers...
-        boolean fallBack = false;
+        int maxFanout = 0;
+        fallBackLayout = false;
         for (int l = 0; l < levels.length; l++) {
-            if (fallBack)
-                break;
-          
             for (int f = 0; f < levels[l].length; f++) {
                 if (levels[l][f].getFirstFilter().isPredefined())
                     continue;
-                if (levels[l][f].getTail().getDestSet(SchedulingPhase.STEADY).size() > 2) {
-                    fallBack = true;
-                    System.out.println(levels[l][f] + " has fanout > 2!");
-                    break;
+                if (levels[l][f].getTail().getDestSet(SchedulingPhase.STEADY).size() > maxFanout) {
+                    maxFanout = levels[l][f].getTail().getDestSet(SchedulingPhase.STEADY).size();
+                    if (maxFanout > 2) {
+                        fallBackLayout = true;
+                        System.out.println(levels[l][f] + " has fanout > 2!");
+                    }
                 }
             }
         }
         
-        if (fallBack)
+        System.out.println("Max slice fanout: " + maxFanout);
+
+        if (fallBackLayout)
             fallBackLayout();
         else 
             neighborsLayout(levels);
@@ -350,18 +356,23 @@ public class TMD extends Scheduler {
         TileraBackend.scheduler.graphSchedule.getSlicer().dumpGraph("before_fission.dot", 
                 null);
         
+        int maxFission = 0;
         int i = 0;
         //go throught and perform the fission
         for (Slice slice : slices) {
             if (fizzAmount.containsKey(slice) && fizzAmount.get(slice) > 1) {
                 if (Fissioner.doit(slice, graphSchedule.getSlicer(), fizzAmount.get(slice))) {
                     System.out.println("Fissed " + slice.getFirstFilter() + " by " + fizzAmount.get(slice));
+                    if (fizzAmount.get(slice) > maxFission)
+                        maxFission = fizzAmount.get(slice);
                 }
                 TileraBackend.scheduler.graphSchedule.getSlicer().dumpGraph("fission_pass_" + i + ".dot", 
                         null);
                 i++;
             }
         }
+        
+        System.out.println("Max fission amount: " + maxFission);
         
         //because we have changed the multiplicities of the FilterContents
         //we have to reset the filter info's because they cache the date of the 
@@ -558,6 +569,21 @@ public class TMD extends Scheduler {
         }
         
         return maxFactor;
+    }
+    
+    /**
+     * Returns the number of peeking filters in the graph.
+     */
+    public static int countPeekingFilters(SIRStream str) {
+        //Don't count identity filters
+        final int[] count = { 0 };
+        IterFactory.createFactory().createIter(str).accept(new EmptyStreamVisitor() {
+                public void visitFilter(SIRFilter self,
+                                        SIRFilterIter iter) {
+                    if (self.getPeekInt() > self.getPopInt())
+                        count[0]++;
+                }});
+        return count[0];
     }
     
     /**

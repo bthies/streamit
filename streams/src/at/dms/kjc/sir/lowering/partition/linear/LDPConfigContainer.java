@@ -264,8 +264,8 @@ abstract class LDPConfigContainer extends LDPConfig {
 
         case LinearPartitioner.COLLAPSE_FREQ: {
             if (!lfa.hasLinearRepresentation(str) || !LEETFrequencyReplacer.canReplace(str, lfa) || KjcOptions.nolinearcollapse 
-                // currently don't support frequency implementation on raw
-                || KjcOptions.raw!=-1) {
+                // currently don't support frequency implementation on raw or tilera
+                || KjcOptions.raw!=-1 || KjcOptions.tilera!=-1) {
                 cost = Long.MAX_VALUE;
             } else {
                 // otherwise, return freq costn

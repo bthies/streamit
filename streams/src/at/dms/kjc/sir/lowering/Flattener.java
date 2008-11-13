@@ -286,8 +286,14 @@ public class Flattener {
         if (printStatus) { System.err.println("done."); }
     }
 
+    // the linear analyzer last calculated via a call to
+    // doLinearAnalysis.  Should really be returned as a second return
+    // value from doLinearAnalysis, but that would require changes in
+    // several places...
+    public static LinearAnalyzer lfa = null;
     /**
-     * Returns new value of <str>.
+     * Returns new value of <str>.  Also stores the linear filter
+     * analyzer used, if any, in the lfa variable.
      */
     public static SIRStream doLinearAnalysis(SIRStream str) {
 
@@ -307,9 +313,9 @@ public class Flattener {
             // run the linear analysis and stores the information garnered in the lfa
             System.err.println("Running linear analysis... ");
             // only refactor linear children if we're NOT doing the linear partitioner
-            LinearAnalyzer lfa = LinearAnalyzer.findLinearFilters(str,
-                                                                  KjcOptions.debug,
-                                                                  !KjcOptions.linearpartition);
+            lfa = LinearAnalyzer.findLinearFilters(str,
+                                                   KjcOptions.debug,
+                                                   !KjcOptions.linearpartition);
             System.err.println("done with linear analysis.");
 
             // now, print out the graph using the LinearPrinter which colors the graph

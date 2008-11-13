@@ -265,17 +265,13 @@ public class CommonPasses {
             
         }
         
-        
-       
-       
-        
+        // this must run before vertical fission
+        str = Flattener.doLinearAnalysis(str);
+        str = Flattener.doStateSpaceAnalysis(str);
+        LinearAnalyzer lfa = Flattener.lfa;
+            
         // vertical fission requested.
         if (KjcOptions.fission > 1) {
-            // First transform for linear or statespace
-            // representations.
-            str = Flattener.doLinearAnalysis(str);
-            str = Flattener.doStateSpaceAnalysis(str);
-
             System.out.println("Running Vertical Fission...");
             FissionReplacer.doit(str, KjcOptions.fission);
             Lifter.lift(str);
@@ -310,28 +306,6 @@ public class CommonPasses {
         // This must be run now, later pass rely on distinct names.
         RenameAll.renameOverAllFilters(str);
         
-        // Linear Analysis
-        LinearAnalyzer lfa = null;
-        if (KjcOptions.linearanalysis || KjcOptions.linearpartition) {
-            System.out.print("Running linear analysis...");
-            lfa = LinearAnalyzer.findLinearFilters(str, KjcOptions.debug, true);
-            System.out.println("Done");
-            LinearDot.printGraph(str, "linear.dot", lfa);
-            LinearDotSimple.printGraph(str, "linear-simple.dot", lfa, null);
-            // IterFactory.createFactory().createIter(str).accept(new
-            // LinearPreprocessor(lfa));
-
-            // if we are supposed to transform the graph
-            // by replacing work functions with their linear forms, do so now
-            if (KjcOptions.linearreplacement) {
-                System.err.print("Running linear replacement...");
-                LinearDirectReplacer.doReplace(lfa, str);
-                System.err.println("done.");
-                // print out the stream graph after linear replacement
-                LinearDot.printGraph(str, "linear-replace.dot", lfa);
-            }
-        }
-
         // Raise all pushes, pops, peeks to statement level
         // (several phases above introduce new peeks, pops, pushes
         //  including but not limited to doLinearAnalysis)

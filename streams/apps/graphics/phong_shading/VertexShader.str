@@ -5,29 +5,6 @@ Vertex->Vertex filter VertexShader( int id )
     Matrix4f modelView;
     Matrix4f projection;
 
-    float worldX;
-    float worldY;
-    float worldZ;
-    float worldW;
-
-    float worldNX;
-    float worldNY;
-    float worldNZ;
-
-    float eyeX;
-    float eyeY;
-    float eyeZ;
-    float eyeW;
-
-    float clipX;
-    float clipY;
-    float clipZ;
-    float clipW;
-
-    float inR;
-    float inG;
-    float inB;
-
     init
 	{
 	    // modelview matrix, identity for now
@@ -77,35 +54,31 @@ Vertex->Vertex filter VertexShader( int id )
 	    projection.m[15] = 0;
 	}
 
-    void computeEyeSpace()
-	{
-	    eyeX = modelView.m[0] * worldX + modelView.m[4] * worldY + modelView.m[8]  * worldZ + modelView.m[12] * worldW;
-	    eyeY = modelView.m[1] * worldX + modelView.m[5] * worldY + modelView.m[9]  * worldZ + modelView.m[13] * worldW;
-	    eyeZ = modelView.m[2] * worldX + modelView.m[6] * worldY + modelView.m[10] * worldZ + modelView.m[14] * worldW;
-	    eyeW = modelView.m[3] * worldX + modelView.m[7] * worldY + modelView.m[11] * worldZ + modelView.m[15] * worldW;
-	}
-
-    void computeClipSpace()
-	{
-	    clipX = projection.m[0] * eyeX + projection.m[4] * eyeY + projection.m[8]  * eyeZ + projection.m[12] * eyeW;
-	    clipY = projection.m[1] * eyeX + projection.m[5] * eyeY + projection.m[9]  * eyeZ + projection.m[13] * eyeW;
-	    clipZ = projection.m[2] * eyeX + projection.m[6] * eyeY + projection.m[10] * eyeZ + projection.m[14] * eyeW;
-	    clipW = projection.m[3] * eyeX + projection.m[7] * eyeY + projection.m[11] * eyeZ + projection.m[15] * eyeW;
-	}
-
     // work pop 10 push 7
     work pop 1 push 1
 	{
 	    Vertex vIn = pop();
 
-	    worldX = vIn.position.x;
-	    worldY = vIn.position.y;
-	    worldZ = vIn.position.z;
-	    worldW = vIn.position.w;
+	    float worldX = vIn.position.x;
+	    float worldY = vIn.position.y;
+	    float worldZ = vIn.position.z;
+	    float worldW = vIn.position.w;
 
 	    // "ftransform()"
-	    computeEyeSpace();
-	    computeClipSpace();
+
+	    //computeEyeSpace();
+            // inlined to avoid having multiple return values:
+	    float eyeX = modelView.m[0] * worldX + modelView.m[4] * worldY + modelView.m[8]  * worldZ + modelView.m[12] * worldW;
+	    float eyeY = modelView.m[1] * worldX + modelView.m[5] * worldY + modelView.m[9]  * worldZ + modelView.m[13] * worldW;
+	    float eyeZ = modelView.m[2] * worldX + modelView.m[6] * worldY + modelView.m[10] * worldZ + modelView.m[14] * worldW;
+	    float eyeW = modelView.m[3] * worldX + modelView.m[7] * worldY + modelView.m[11] * worldZ + modelView.m[15] * worldW;
+
+	    //computeClipSpace();
+            // inlined to avoid having multiple return values:
+	    float clipX = projection.m[0] * eyeX + projection.m[4] * eyeY + projection.m[8]  * eyeZ + projection.m[12] * eyeW;
+	    float clipY = projection.m[1] * eyeX + projection.m[5] * eyeY + projection.m[9]  * eyeZ + projection.m[13] * eyeW;
+	    float clipZ = projection.m[2] * eyeX + projection.m[6] * eyeY + projection.m[10] * eyeZ + projection.m[14] * eyeW;
+	    float clipW = projection.m[3] * eyeX + projection.m[7] * eyeY + projection.m[11] * eyeZ + projection.m[15] * eyeW;
 
 	    Vertex vOut;
 

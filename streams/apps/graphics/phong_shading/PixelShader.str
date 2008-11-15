@@ -3,6 +3,8 @@ Fragment->PixelShaderBInfo filter PixelShader( int id )
     Vector3f lightPosition;
     Vector3f eyePosition;
 
+    // this is a field rather than a local to avoid overhead of
+    // initializing fields upon every invocation of work
     PixelShaderBInfo psbi;
 
     init

@@ -3,6 +3,9 @@
 TriangleSetupInfo->Fragment filter Rasterizer( int offset, int numUnits, int screenWidth, int screenHeight )
 {
     int numColumns;
+
+    // this is a field rather than a local to avoid overhead of
+    // initializing fields upon every invocation of work
     TriangleSetupInfo tsi;
 
     init

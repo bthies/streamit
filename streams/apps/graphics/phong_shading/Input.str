@@ -1,6 +1,6 @@
 float->Vertex filter Input( int vertexDataSize )
 {
-    int i;
+    //int i;
 
     work pop 3 push 1
 	{
@@ -11,7 +11,7 @@ float->Vertex filter Input( int vertexDataSize )
 	    v.position.z = pop();
 	    v.position.w = 1.0;
 
-	    print( "i = " + i );
+	    //print( "i = " + i );
 	    
 	    v.normal.x = v.position.x;
 	    v.normal.y = v.position.y;
@@ -21,7 +21,7 @@ float->Vertex filter Input( int vertexDataSize )
 	    v.color.g = 0.0;
 	    v.color.b = 0.0;
 
-	    i = i + 3;
+	    //i = i + 3;
 	    push( v );
 	}
 }

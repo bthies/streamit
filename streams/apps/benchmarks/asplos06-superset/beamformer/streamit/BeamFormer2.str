@@ -55,7 +55,7 @@ void->void pipeline BeamFormer2 {
 		 
 		 
 		 
-		add Detector(i, numPostDec2, targetBeam, targetSamplePostDec, cfarThreshold);
+		//add Detector(i, numPostDec2, targetBeam, targetSamplePostDec, cfarThreshold);
 	    }
 	}
 

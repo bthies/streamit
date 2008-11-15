@@ -71,7 +71,9 @@ void->void pipeline TemplateBeamFormer {
 		// with a more sophisticated detector, we need
 		// someplace to store the data until we can find
 		// the targets...
-		add Detector(i, numPostDec2, targetBeam, targetSamplePostDec, cfarThreshold);
+#ifndef SERIALIZED
+		add FloatPrinter();
+#endif
 	    }
 	}
 #ifdef SERIALIZED

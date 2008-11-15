@@ -1,0 +1,114 @@
+/*
+void->float pipeline DopplerFilter(int n)
+{
+//  add Source();
+//  add VideoPipe(n);
+  add DataSplitter(n);
+}*/
+
+void->float filter Source
+{
+  float realvalue;
+  float imagvalue;
+  init
+  {
+    realvalue = 1;
+    imagvalue = 10;
+  }
+  work push 2
+  {
+    push(realvalue);
+    push(imagvalue);
+    realvalue+=0.5;
+    imagvalue+=0.5;
+    if(realvalue > 8.5)
+    {
+      realvalue = 1;
+      imagvalue = 10;
+    }
+    
+  }
+}
+
+//float->float splitjoin DataSplitter(int n)
+float->float splitjoin DopplerFilter(int n)
+{
+  split roundrobin(2);
+  add VideoPipe(n);
+  add VideoPipe(n);
+  join roundrobin(2);
+}  
+
+float->float pipeline VideoPipe(int n)
+{
+  add WeightCalc(n);
+  add FFTKernel2(n);
+}
+
+// filter name: WeightCalc
+// arguments: int n: number of columns in the fft
+// description: calculates an array of weights and multiplies the real values of the stream with these
+// input: real and imaginary float numbers from the generated radar stream
+// output: real and imaginary float numbers multiplied with the calculated weight
+float->float filter WeightCalc(int n)
+{
+  float[n] window;
+  int windowPos;
+     
+  // Calculation of the weights
+  init
+  {
+      float normValue = 0.0;
+    for(int i=0; i<n; i++)
+    {
+      window[i] = sin(pi*(i+0.5)/n);
+      window[i] = window[i] * window[i];
+      normValue += window[i] * window[i];
+    }
+    
+    normValue = sqrt(normValue);
+    
+    for(int i=0; i<n; i++)
+    {
+      window[i] = window[i] / normValue;
+    }
+  }
+  
+  // the input stream is multiplied with the weights
+  work push 2 pop 2
+  {
+    
+    push(pop() * window[windowPos]);
+    push(pop() * window[windowPos]);
+    
+    windowPos++;
+    if(windowPos >= n)
+    {
+      windowPos = 0;
+    }
+  }
+}
+
+float->complex filter Float2Complex
+{
+  complex c;
+  
+  work push 1 pop 2
+  {
+    c.real = pop();
+    c.imag = pop();
+    push(c);
+  }
+}
+
+complex->float filter Complex2Float
+{
+  complex c;
+  
+  work push 2 pop 1
+  {
+    c = pop();
+    push(c.real);
+    push(c.imag);
+  }
+}

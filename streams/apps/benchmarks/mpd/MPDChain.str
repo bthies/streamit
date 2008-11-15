@@ -1,0 +1,38 @@
+
+void->void pipeline MPDChain
+{
+  //No of points in FFT
+  int cols = 32;
+  //No of rows of indata
+  int rows = 104;
+  
+  //Binary file with indata generated from matlab
+  add FileReader<float>("video.bin");
+  
+  add DopplerFilter(cols);
+  add CTurnComplex(rows, cols);
+  add PulseCompression(rows, cols);
+  add CFARPipe(rows, cols);
+//  add Stump();
+  add Printer();
+//  add FileWriter<float>("result.bin");
+}
+
+float->void filter Printer
+{
+  work push 0 pop 2
+  {
+    print(pop());
+    print(pop());
+  } 
+}
+
+float->void filter Stump()
+{
+  work push 0 pop 2
+  {
+    pop();
+    pop();
+  } 
+}
+

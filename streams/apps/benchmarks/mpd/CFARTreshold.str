@@ -1,0 +1,169 @@
+float->float pipeline CFARTreshPipe()
+{
+  add CFARTreshSplitter();
+  add CFARTreshFilter();
+}
+
+float->float splitjoin CFARTreshSplitter()
+{
+  split roundrobin(1);
+  add CFARPusher();
+  add CFARTreshGofPipe();
+  join roundrobin(1);
+}
+
+float->float filter CFARTreshFilter()
+{
+  work pop 2 push 1
+  {
+    float noiseDb = pop();
+    float gofDb = pop() - noiseDb;
+    
+    if(gofDb > 0)
+    {
+      push(noiseDb + 15 + gofDb);
+    }
+    else
+    {
+      push(noiseDb + 15);
+    }
+  }
+}
+
+float->float pipeline CFARTreshGofPipe()
+{
+  add CFARTreshReorganize(104);
+  add CFARTreshCumSumFilter(139);
+  add CFARTreshSubFilter(139);
+  add CFARTreshMaxFilter(123);
+}
+
+float->float filter CFARTreshReorganize(int rows)
+{
+  work pop rows push rows+35 peek rows
+  {
+    push(0);
+    
+    for(int i=2; i<19; i++)
+    {
+      push(peek(i));
+    }
+    
+    for(int j=0; j<85; j++)
+    {
+      push(pop());
+    }
+    
+    for(int k=0; k<19; k++)
+    {
+      push(peek(k));
+    }
+    
+    for(int l=0; l<17; l++)
+    {
+      push(pop());
+    }
+    
+    pop();
+    pop();
+  }
+}
+
+float->float filter CFARTreshCumSumFilter(int rows)
+{
+  float cumSum;
+  int counter;
+  
+  init
+  {
+    cumSum = 0;
+    counter = 0;
+  }
+  work pop 1 push 1
+  {
+    cumSum+= pop();
+    counter++;
+    push(cumSum);
+    
+    if(counter >= rows)
+    {
+      cumSum = 0;
+      counter = 0;
+    }
+  }
+}
+
+float->float filter CFARTreshSubFilter(int rows)
+{
+  work pop rows push rows-16 peek rows //16=gof_n_rs
+  {
+    for(int i=0; i<rows-16; i++)
+    {
+      float peekTemp = peek(16);
+      push((peekTemp - pop()) / 16 );
+    }
+    
+    for(int j=0; j<16; j++)
+    {
+      pop();
+    }
+  }
+}
+
+float->float filter CFARTreshMaxFilter(int rows)
+{
+  work pop rows push rows-19 peek rows //19=delta in cfar_gof
+  {
+    for(int i=0; i<rows-19; i++)
+    {
+      float peekTemp = peek(19);
+      float popTemp = pop();
+      if(peekTemp > popTemp)
+      {
+        push(peekTemp);
+      }
+      else
+      {
+        push(popTemp);
+      }
+    }
+    
+    for(int j=0; j<19; j++)
+    {
+      pop();
+    }
+  }
+}
+
+/*
+sum_gof_db          = cfar_gof(sum_db, gof_n_rs, gof_n_guard, 1) - (sum_noise_db + gof_delta_db) ;
+sum_thr_db          = sum_noise_db + s_t0_db + (sum_gof_db > 0) .* sum_gof_db;
+
+                                  16  1   1
+function output = cfar_gof(input, n, gf, step)
+  
+  % extra = number of range bins zero filled 
+  % one is needed for the subtraction in the calculation of average values
+  extra = 1;
+ 
+  % take care of first and last range bins
+  pad                = n+gf;
+  [in_rows, in_cols] = size(input);
+  temp               = zeros(in_rows+2*pad+extra, in_cols);
+
+  temp(1+extra            :extra+pad          , :) = input(1+step+gf:step+gf+pad, :);
+  temp(1+extra+pad        :extra+in_rows+pad  , :) = input;
+  temp(1+extra+in_rows+pad:extra+in_rows+2*pad, :) = input(1+in_rows-step-gf-pad:in_rows-step-gf, :);
+ 
+  % get the average values
+  t_rows = size(temp,1);
+  temp0 = cumsum(temp);
+  temp1  = (temp0(1+n:t_rows,:) - temp0(1:t_rows-n,:))./n;
+ 
+  % take gratest of early and late average
+  t1_rows = t_rows - n; 123
+  delta = n + gf + step + gf; 19
+  output = max(temp1(1:step:t1_rows-delta,:) , temp1(1+delta:step:t1_rows,:));
+
+  % ************************************************************
+*/

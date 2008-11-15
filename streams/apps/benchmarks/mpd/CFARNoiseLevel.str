@@ -1,0 +1,83 @@
+float->float pipeline CFARNoiseLevelPipe(int cols)
+{
+  add CFARNoiseLevelSplitter(cols);
+  add CFARNoiseLevelGuardFirst(cols);
+}
+
+float->float filter CFARNoiseLevelGuardFirst(int cols)
+{
+  
+  work pop 2 push 104*cols*2
+  {
+    float sumNoise = pop();
+    float guardNoise = pop();
+    
+    for(int i=0; i<104*cols; i++)
+    {
+      push(guardNoise);
+      push(sumNoise);
+    }
+  }
+}
+    
+float->float splitjoin CFARNoiseLevelSplitter(int cols)
+{
+  split roundrobin(1,1);
+  add CFARNoiseLevelCalcPipe(cols);
+  add CFARNoiseLevelCalcPipe(cols);
+  join roundrobin();
+}
+
+
+float->float pipeline CFARNoiseLevelCalcPipe(int cols)
+{
+  add CFARNoiseLevelMeanCalc(cols, 104);
+  add CFARNoiseLevelMeanCalcGather(cols, 12);
+}
+
+float->float filter CFARNoiseLevelMeanCalc(int cols, int rows)
+{
+  int column;
+  
+  work pop rows push 1
+  {
+    float sum = 0;
+    if(column<6 || column>=cols-6)
+    {
+      for(int i=0; i<rows; i++)
+      {
+        pop();
+      }
+      push(0);
+    }
+    else
+    {
+      for(int i=0; i<rows; i++)
+      {
+        sum += pop();
+      }
+      push(sum/rows);
+    }
+    
+    column++;
+    if(column >= cols)
+    {
+      column = 0;
+    }
+  }
+}
+
+float->float filter CFARNoiseLevelMeanCalcGather(int cols, int notUsed)
+{
+  
+  work pop cols push 1
+  {
+    float sum = 0;
+    for(int i=0; i<cols; i++)
+    {
+      sum += pop();
+    }
+    push(sum/(cols-notUsed));
+  }
+}
+

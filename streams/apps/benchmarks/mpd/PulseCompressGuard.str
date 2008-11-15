@@ -1,0 +1,167 @@
+float->float splitjoin GuardSplitter(int cols)
+{
+  split roundrobin(0,2);
+  add PulsePipe(cols);
+  add GuardFFTPipe();
+//  add DataPipe(cols);
+  join roundrobin(2);
+}
+
+void->float pipeline PulsePipe(int cols)
+{
+  add ValueCreator();
+  add FFTKernel2(128);
+  add GuardConj();
+  //  add PulseRepeater(cols); //Could redo this so we don't have to run the FFT all the time
+}
+
+float->float pipeline GuardIFFTPipe()
+{
+  add IFFTKernel2(128);
+  add GuardRemovePadded();
+}
+
+float->float filter GuardRemovePadded()
+{
+  work pop 256 push 208
+  {
+    for(int i=0; i<208; i++)
+    {
+      push(pop());
+    }
+    
+    for(int i=208; i<256; i++)
+    {
+      pop();
+    }
+  }
+}
+
+float->float pipeline GuardFFTPipe()
+{
+  add GuardDataPadder();
+  add FFTKernel2(128);
+}
+
+float->float filter GuardDataPadder()
+{
+  work pop 208 push 256
+  {
+    for(int i=0; i<10; i++)
+    {
+      push(0);
+    }
+    
+    for(int i=10; i<218; i++)
+    {
+      push(pop());
+    }
+    for(int i=218; i<256; i++)
+    {
+      push(0);
+    }
+  }
+}
+
+float->float filter GuardMultiplier()
+{
+  
+  work pop 4 push 2
+  {
+    float pulseReal = pop();
+    float pulseImag = pop();
+    float dataReal = pop();
+    float dataImag = pop();
+    
+    push(pulseReal*dataReal - pulseImag*dataImag);
+    push(pulseReal*dataImag + pulseImag*dataReal);
+  }
+}
+
+void->float filter ValueCreator()
+{
+  float nRsPulse;
+  float[11] weight;
+  int noOfTaps;
+  float[11] weightNoReal;
+  float[11] weightNoImag;
+  float weightNoExp;
+  float lastReal;
+  float lastImag;
+  float real;
+  float imag;
+  float normValue;
+  float tempReal;
+  float nFFT;
+  int pushCounter;
+  
+  init
+  {
+    lastReal = 0;
+    lastImag = 0;
+    real = 0;
+    imag = 0;
+    nRsPulse = 11;
+    noOfTaps = 11;
+    normValue = 0;
+    nFFT = 128;
+    pushCounter = 0;
+    
+    for(int i=noOfTaps; i>0; i--)
+    {
+      weight[noOfTaps-i] = sin(pi*(i-0.5)/nRsPulse);
+      weight[noOfTaps-i] = weight[noOfTaps-i] * weight[noOfTaps-i];
+      normValue += weight[noOfTaps-i] * weight[noOfTaps-i];
+    }
+    
+    normValue = sqrt(normValue);
+    
+    for(int i=0; i<noOfTaps; i++)
+    {
+      weight[i] = weight[i] / normValue;
+      
+      weightNoReal[i] = 0;
+      weightNoImag[i] = i+1 - nRsPulse/2 - 0.5;
+      weightNoImag[i] = -2*pi*(weightNoImag[i] * weightNoImag[i]) / (2*nRsPulse);
+      weightNoExp = exp(weightNoReal[i]); //This should be unnecessary because it should equal 1
+      weightNoReal[i] = weightNoExp * cos(weightNoImag[i]);
+      weightNoImag[i] = weightNoExp * sin(weightNoImag[i]);
+      
+      weightNoReal[i] = weight[i] * weightNoReal[i];
+      weightNoImag[i] = weight[i] * weightNoImag[i];
+//      weightNoImag[i] = weightNoImag[i] * -1;
+    }
+
+    
+  }
+  work pop 0 push 2
+  {
+    
+    if(pushCounter < 11)
+    {
+      push(weightNoReal[pushCounter]);
+      push(weightNoImag[pushCounter]);
+    }
+    else
+    {
+      push(0);
+      push(0);
+    }
+    
+    pushCounter++;
+    if(pushCounter >= 128)
+    {
+      pushCounter = 0;
+    }
+  }
+}
+
+float->float filter GuardConj()
+{
+  work pop 2 push 2
+  {
+    push(pop());
+    push(pop() * -1);
+  }
+}
+

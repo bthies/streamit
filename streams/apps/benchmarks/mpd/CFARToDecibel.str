@@ -1,0 +1,11 @@
+float->float filter CFARToDecibelFilter()
+{
+  work pop 2 push 1
+  {
+      complex video;
+      video.real = pop();
+      video.imag = pop();
+      float videoOut = 20 * log(abs(video));
+      push(videoOut);
+  }
+}

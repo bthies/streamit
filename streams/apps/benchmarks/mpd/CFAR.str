@@ -1,0 +1,160 @@
+float->float pipeline CFARPipe(int rows, int cols)
+{
+  add CFARToDecibelFilter();
+  add CFARNoiseSplitter(cols);
+  
+  add CFARTreshLMaxSplitter(cols);
+  add CFARDelayToLMax(rows);
+  add CFARDetectPipe(rows, cols);
+}
+
+float->float filter CFARDelayToLMax(int rows)
+{
+  float[rows] guardNoise;
+  float[rows] thresh;
+  float[rows] sumDb;
+  float[rows] guardDb;
+  int popPos;
+  int pushPos;
+  
+  init
+  {
+    popPos = 0;
+    pushPos = 1;
+  }
+  
+  work pop 5 push 5
+  {
+    guardNoise[popPos] = pop();
+    push(guardNoise[pushPos]);
+    thresh[popPos] = pop();
+    push(thresh[pushPos]);
+    push(pop());
+    sumDb[popPos] = pop();
+    push(sumDb[pushPos]);
+    guardDb[popPos] = pop();
+    push(guardDb[pushPos]);
+    
+    popPos++;
+    pushPos++;
+    
+    if(popPos >= rows)
+    {
+      popPos = 0;
+    }
+    if(pushPos >= rows)
+    {
+      pushPos = 0;
+    }
+  }
+}
+
+float->float splitjoin CFARNoiseSplitter(int cols)
+{
+  split duplicate;
+  add CFARNoiseLevelPipe(cols);
+  add CFARPusher();
+  join roundrobin(2);
+}
+
+float->float splitjoin CFARTreshLMaxSplitter(int cols)
+{
+  split roundrobin(1, 3);
+  add CFARPusher();
+  add CFARTreshLMaxReplicatePipe(cols);
+  join roundrobin(1,4);
+}
+
+//Not used any more because result filter isn't implemented
+float->float splitjoin CFARDetectSplitter(int rows, int cols)
+{
+  split roundrobin(5,1);
+  add CFARDetectPipe(rows, cols);
+  add CFARPusher();
+  join roundrobin(1);
+}
+
+float->float pipeline CFARTreshLMaxReplicatePipe(int cols)
+{
+  add CFARSumReplicateFilter();
+  add CFARTreshLMaxSubSplitter(cols);
+}
+
+float->float filter CFARSumReplicateFilter()
+{
+  work pop 3 push 5
+  {
+    push(pop());
+    float sumDb = pop();
+    push(sumDb);
+    push(sumDb);
+    push(sumDb);
+    push(pop());
+  }
+}
+
+float->float splitjoin CFARTreshLMaxSubSplitter(int cols)
+{
+  split roundrobin(2,1,2);
+  add CFARTreshPipe();
+  add CFARLMaxPipe(cols);
+  add CFARPusher();
+//  add CFARGuardReplicateFilter();
+  join roundrobin(1,1,2);
+}
+
+//Not used any more because no sum is sent to result
+float->float filter CFARGuardReplicateFilter()
+{
+  float sumDb;
+  
+  work pop 2 push 3
+  {
+    sumDb = pop();
+    push(sumDb);
+    push(pop());
+    push(sumDb);
+  }
+}
+
+float->float filter ExtractSumDb()
+{
+  work pop 2 push 1
+  {
+    push(pop());
+    pop();
+  }
+}
+
+float->float filter ExtractSumComp()
+{
+  work pop 4 push 2
+  {
+    push(pop());
+    push(pop());
+    pop();
+    pop();
+  }
+}
+
+float->float filter CFARPusher()
+{
+  work pop 1 push 1
+  {
+    push(pop());
+  }
+}
+
+float->float filter CFARPrinter()
+{
+  float temp;
+  
+  work push 1 pop 1
+  {
+//    push(pop());
+    temp = pop();
+    print(temp);
+    push(temp);
+  } 
+}
+

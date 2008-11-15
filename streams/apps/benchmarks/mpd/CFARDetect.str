@@ -1,0 +1,124 @@
+float->float pipeline CFARDetectPipe(int rows, int cols)
+{
+  add CFARDetectRearrange();
+  add CFARDetectPipeSplitter();
+  add CFARDetectFilter(rows, cols);
+}
+
+float->float splitjoin CFARDetectPipeSplitter()
+{
+  split roundrobin(2,2,1);
+  add CFARDetectSum();
+  add CFARDetectGuard();
+  add CFARPusher();
+  join roundrobin(1);
+}
+
+float->float filter CFARDetectRearrange()
+{
+  
+  work pop 5 push 5
+  {
+    float guardNoise = pop();
+    float sumThresh = pop();
+    float sumLMax = pop();
+    float sumDb = pop();
+    float guardDb = pop();
+    
+    push(sumDb);
+    push(sumThresh);
+    push(guardDb);
+    push(guardNoise);
+    push(sumLMax);
+  }
+}
+
+float->float filter CFARDetectSum()
+{
+  work pop 2 push 1
+  {
+    float sumDb = pop();
+    float sumThresh = pop();
+    
+    if(sumDb > sumThresh)
+    {
+      push(1);
+    }
+    else
+    {
+      push(0);
+    }
+  }
+}
+
+float->float filter CFARDetectGuard()
+{
+  work pop 2 push 1
+  {
+    float guardDb = pop();
+    float guardNoise = pop();
+    
+    if(guardDb > guardNoise+15)
+    {
+      push(1);
+    }
+    else
+    {
+      push(0);
+    }
+  }
+}
+
+float->float filter CFARDetectFilter(int rows, int cols)
+{
+  int currentCol;
+  int currentRow;
+  float sumLMax;
+  float sumDet;
+  float guardDet;
+  
+  init
+  {
+    currentCol = 0;
+    currentRow = 0;
+  }
+  
+  work pop 3 push 1
+  {
+    if(currentCol < 6 || currentCol >= cols-6)
+    {
+      pop();
+      pop();
+      pop();
+      push(0);
+    }
+    else
+    {
+      sumDet = pop();
+      guardDet = pop();
+      sumLMax = pop();
+      
+      if(sumLMax == 1 && sumDet == 1 && guardDet == 0)
+      {
+        push(1);
+      }
+      else
+      {
+        push(0);
+      }
+    }
+    currentRow++;
+    if(currentRow >= rows)
+    {
+      currentRow = 0;
+      
+      currentCol++;
+      if(currentCol >= cols)
+      {
+        currentCol = 0;
+      }
+    }
+  }
+}
+
+  

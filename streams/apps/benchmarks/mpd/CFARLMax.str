@@ -1,0 +1,173 @@
+float->float pipeline CFARLMaxPipe(int n)
+{
+  add LMaxCalc(n, 104);
+//  add LMaxPop(n, 104);
+}
+
+float->float filter LMaxPop(int n, int nRows)
+{
+  work pop (n+1)*nRows push (n+1)*nRows
+  {
+    for(int i=0; i<nRows; i++)
+    {
+      pop();
+    }
+    
+    for(int j=0; j<nRows*n; j++)
+    {
+      push(pop());
+    }
+    
+    for(int i=0; i<nRows; i++)
+    {
+      push(0);
+    }
+  }
+}
+
+float->float filter LMaxCalc(int n, int nRows)
+{
+  float[nRows][3] dataMatrix;
+  float[nRows+2] dataMaxRow;
+  int rowIsLMax;
+  int currentCol;
+  int lMaxCol;
+  float maxValue;
+  int colPos;
+  int colToChange;
+  
+  init
+  {
+    currentCol = 0;
+    colPos = 0;
+    lMaxCol = 2;
+    maxValue = -85;
+    
+  }
+  
+  work pop nRows push nRows
+  {
+    
+    maxValue = -85;
+    
+    for(int i=0; i<nRows; i++)
+    {
+      dataMatrix[i][currentCol] = pop();
+    }
+    
+    for(int i=0; i<nRows+2; i++)
+    {
+      dataMaxRow[i] = -85;
+    }
+    
+    if(colPos == 0)
+    {
+      for(int row=0; row<nRows; row++)
+      {
+        for(int col=0; col<3; col++)
+        {
+          dataMatrix[row][col] = -85;
+        }
+      }
+    }  
+    else if(colPos == n)
+    {
+      for(int changeRow=0; changeRow<nRows; changeRow++)
+      {
+        dataMatrix[changeRow][currentCol] = -85;
+      }
+    }
+    
+    for(int row=0; row<nRows; row++)
+    {
+      for(int col=0; col<3; col++)
+      {
+        if(dataMatrix[row][col] > dataMaxRow[row+1])
+        {
+          dataMaxRow[row+1] = dataMatrix[row][col];
+        }
+      }
+    }
+    
+    if(colPos == 0)
+    {
+      for(int i=0; i<nRows; i++)
+      {
+        push(0);
+      }
+    }
+    else
+    {
+      for(int lMaxRow=0; lMaxRow<nRows; lMaxRow++)
+      {
+        rowIsLMax = 1;
+        for(int row=lMaxRow; row<lMaxRow+3; row++)
+        {
+          
+          if(dataMaxRow[row] > dataMatrix[lMaxRow][lMaxCol])
+          {
+            rowIsLMax = 0;
+          }
+        }
+        
+        push(rowIsLMax);
+      }
+    }
+    
+    if(lMaxCol >=2)
+    {
+      lMaxCol = 0;
+    }
+    else
+    {
+      lMaxCol++;
+    }
+    
+    if(currentCol >=2)
+    {
+      currentCol = 0;
+    }
+    else
+    {
+      currentCol++;
+    }
+    
+    if(colPos >= n)
+    {
+      colPos = 0;
+    }
+    else
+    {
+      colPos++;
+    }
+  }
+}
+
+// Saves one row to stream[] and pushes values to a new stream 012,123,234...
+float->float filter CopyRearrange(int n)
+{
+  float[n+2] stream;
+  
+  init
+  {
+    stream[0] = -85;
+    stream[n+1] = -85;
+  }
+  
+  work pop n push n*3
+  {
+    for(int i=1; i<n+1; i++)
+    {
+      stream[i] = pop();
+    }
+    
+    for(int i=0; i<n; i++)
+    {
+      push(stream[i]);
+      push(stream[i+1]);
+      push(stream[i+2]);
+    }
+  }
+}
+
+

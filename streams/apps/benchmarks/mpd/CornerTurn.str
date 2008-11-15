@@ -1,0 +1,19 @@
+float->float splitjoin CTurnComplex(int rows, int cols)
+{
+  split roundrobin(4);
+  for(int i=0; i<cols; i++)
+  {
+    add Identity<float>();
+  }
+  join roundrobin(4*rows);
+}
+
+float->float splitjoin CTurn(int rows, int cols)
+{
+  split roundrobin(1);
+  for(int i=0; i<cols; i++)
+  {
+    add Identity<float>();
+  }
+  join roundrobin(rows);
+}

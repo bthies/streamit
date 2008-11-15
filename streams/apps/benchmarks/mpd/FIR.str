@@ -1,0 +1,141 @@
+float->float pipeline SumFIRFilter(int rows)
+{
+    add FIRReset(rows);
+    add FIRZeroAdder();
+    for (int i = 11; i > 0; i--)
+        add SingleMultiply(i);
+    add FIRCleanUp();
+    add FIRResetClean(rows);
+}
+
+float->float filter FIRReset(int rows)
+{
+    work pop rows*2 push rows*2+20
+        {
+            for(int i=0; i<rows; i++)
+                {
+                    push(pop());
+                    push(pop());
+                }
+    
+            for(int j=0; j<20; j++)
+                {
+                    push(0);
+                }
+        }
+}
+
+float->float filter FIRResetClean(int rows)
+{
+    work pop rows*2+20 push rows*2
+        {
+            for(int i=0; i<rows; i++)
+                {
+                    push(pop());
+                    push(pop());
+                }
+    
+            for(int j=0; j<20; j++)
+                {
+                    pop();
+                }
+        }
+}
+
+float->float filter FIRZeroAdder()
+{
+    work pop 1 push 2 
+        { 
+            push(0); 
+            push(pop()); 
+        }
+}
+
+// Pops 24 because the matlab version deletes the first 5 and the StreamIt gives one trashvalue.
+// Multiply this with four because of the complex numbers and added zeros to the stream.
+float->float filter FIRCleanUp()
+{
+    prework pop 24
+        {
+            for(int i=0; i<24;i++)
+                {
+                    pop();
+                }
+        }
+    work pop 2 push 1 
+        { 
+            push(pop()); 
+            pop(); 
+        }
+}
+
+float->float filter SingleMultiply(int wPos)
+{
+    float weightNoReal;
+    float weightNoImag;
+    float weightNoExp;
+
+    // these are state:
+    float lastReal;
+    float lastImag;
+  
+    init
+        {
+            float real = 0;
+            float imag = 0;
+            float nRsPulse = 11;
+            int noOfTaps = 11;
+            float normValue = 0;
+            float[11] weight;
+    
+            //Put in our real weights here
+            for(int i=noOfTaps; i>0; i--)
+                {
+                    weight[noOfTaps-i] = sin(pi*(i-0.5)/nRsPulse);
+                    weight[noOfTaps-i] = weight[noOfTaps-i] * weight[noOfTaps-i];
+                    normValue += weight[noOfTaps-i] * weight[noOfTaps-i];
+                }
+    
+            normValue = sqrt(normValue);
+    
+            for(int i=0; i<noOfTaps; i++)
+                {
+                    weight[i] = weight[i] / normValue;
+                }
+    
+            weightNoReal = 0;
+            weightNoImag = wPos - nRsPulse/2 - 0.5;
+            weightNoImag = -2*pi*(weightNoImag * weightNoImag) / (2*nRsPulse);
+            weightNoExp = exp(weightNoReal); //This should be unnecessary because it should equal 1
+            weightNoReal = weightNoExp * cos(weightNoImag);
+            weightNoImag = weightNoExp * sin(weightNoImag);
+
+            weightNoReal = weight[wPos-1] * weightNoReal;
+            weightNoImag = weight[wPos-1] * weightNoImag;
+            weightNoImag = weightNoImag * -1;
+    
+        }
+
+        // Bill: changed original to be stateless
+    prework push 4 pop 1 peek 3 {
+        push(peek(0));
+        push(0.0);
+        push(peek(2));
+        push(0.0);
+        pop();
+    }
+  
+    work pop 4 push 4 peek 6 {
+        push(peek(3) + peek(0)*weightNoReal - peek(2)*weightNoImag);
+        push(peek(0));
+            
+        push(peek(5) + peek(0)*weightNoImag + peek(2)*weightNoReal);
+        push(peek(2));
+            
+        for (int i=0; i<4; i++) {
+            pop();
+        }
+    }
+}
+
+       

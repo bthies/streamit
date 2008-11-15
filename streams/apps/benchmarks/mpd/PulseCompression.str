@@ -1,0 +1,14 @@
+float->float splitjoin PulseCompression(int rows, int cols)
+{
+  split roundrobin(2);
+  add SumFIRFilter(rows);
+  add GuardPipe(cols);
+  join roundrobin(2);
+}
+
+float->float pipeline GuardPipe(int cols)
+{
+  add GuardSplitter(cols);
+  add GuardMultiplier();
+  add GuardIFFTPipe();
+}

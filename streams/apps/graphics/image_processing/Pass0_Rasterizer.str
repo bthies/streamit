@@ -15,7 +15,7 @@ TriangleSetupInfo->Fragment filter Rasterizer( int offset, int numUnits, int scr
 	    return( ( interpX * ndcX + interpY * ndcY + interpZ ) * w );
 	}
 
-    work pop 1 push *
+    work pop 1 push 1
 	{
 	    tsi = pop();
 

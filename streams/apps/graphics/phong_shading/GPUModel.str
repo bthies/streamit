@@ -33,9 +33,10 @@ TriangleSetupInfo->void splitjoin BackendSplit
     add PixelPipeline( 9, 15, 600, 600 );
     add PixelPipeline( 10, 15, 600, 600 );
     add PixelPipeline( 11, 15, 600, 600 );
-    add PixelPipeline( 12, 15, 600, 600 );
-    add PixelPipeline( 13, 15, 600, 600 );
-    add PixelPipeline( 14, 15, 600, 600 );
+    // Bill: commenting out after jiawen's checkin since there were only 12 pipelines in paper...
+    //add PixelPipeline( 12, 15, 600, 600 );
+    //add PixelPipeline( 13, 15, 600, 600 );
+    //add PixelPipeline( 14, 15, 600, 600 );
 
     join roundrobin( 0 );
 }

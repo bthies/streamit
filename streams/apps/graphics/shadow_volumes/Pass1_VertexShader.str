@@ -24,6 +24,10 @@ Vertex->Vertex filter VertexShader( int id )
     float clipZ;
     float clipW;
 
+    // not actual state, but avoids structure-initialization overhead
+    // to put as fields rather than locals
+    Vertex vIn, vOut;
+
     init
 	{
 	    // modelview matrix, identity for now
@@ -91,7 +95,7 @@ Vertex->Vertex filter VertexShader( int id )
 
     work pop 1 push 1
 	{
-	    Vertex vIn = pop();
+	    vIn = pop();
 
 	    worldX = vIn.position.x;
 	    worldY = vIn.position.y;
@@ -101,8 +105,6 @@ Vertex->Vertex filter VertexShader( int id )
 	    // "ftransform()"
 	    computeEyeSpace();
 	    computeClipSpace();
-
-	    Vertex vOut;
 
 	    vOut.position.x = clipX;
 	    vOut.position.y = clipY;

@@ -5,6 +5,10 @@ Vertex->Vertex filter VertexShader( int id )
     Matrix4f modelView;
     Matrix4f projection;
 
+    // not actual state, but avoids structure-initialization overhead
+    // to put as fields rather than locals
+    Vertex vIn, vOut;
+
     init
 	{
 	    // modelview matrix, identity for now
@@ -57,7 +61,7 @@ Vertex->Vertex filter VertexShader( int id )
     // work pop 10 push 7
     work pop 1 push 1
 	{
-	    Vertex vIn = pop();
+	    vIn = pop();
 
 	    float worldX = vIn.position.x;
 	    float worldY = vIn.position.y;
@@ -79,8 +83,6 @@ Vertex->Vertex filter VertexShader( int id )
 	    float clipY = projection.m[1] * eyeX + projection.m[5] * eyeY + projection.m[9]  * eyeZ + projection.m[13] * eyeW;
 	    float clipZ = projection.m[2] * eyeX + projection.m[6] * eyeY + projection.m[10] * eyeZ + projection.m[14] * eyeW;
 	    float clipW = projection.m[3] * eyeX + projection.m[7] * eyeY + projection.m[11] * eyeZ + projection.m[15] * eyeW;
-
-	    Vertex vOut;
 
 	    vOut.position.x = clipX;
 	    vOut.position.y = clipY;

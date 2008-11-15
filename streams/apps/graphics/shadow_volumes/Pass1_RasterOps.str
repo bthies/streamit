@@ -9,6 +9,10 @@ Fragment->void filter RasterOps( int offset, int numUnits,
 
     int width;
 
+    // not actual state, just avoids overhaed of initializing
+    // structure on every invocation of the filter
+    Fragment f;
+
     init
 	{
 	    width = screenWidth / numUnits;
@@ -16,7 +20,7 @@ Fragment->void filter RasterOps( int offset, int numUnits,
 
     work pop 1
 	{
-	    Fragment f = pop();
+	    f = pop();
 	
 	    f.x = f.x / numUnits;	    
 	    int index = f.y * width + f.x;

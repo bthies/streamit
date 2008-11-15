@@ -30,3 +30,9 @@ However, the compiler detects lots of false state, because many local
 variables (that are structures) were moved to filter fields in order
 to reduce the overhead of initializing them to zero on every
 invocation of work.
+
+ORIGINAL SOURCE
+---------------
+
+If something is missing or wrong in CVS, see Jiawen's working
+directories at /home/streamit/graphics-apps on CAG.

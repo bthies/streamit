@@ -5,6 +5,11 @@ Raster->void filter RasterOps( int offset, int numUnits, int screenWidth, int sc
 
     int width;
 
+    // this is not actual state, but having it here improves
+    // efficiency because if it is a local variable then it is
+    // initailized to zero on every firing
+    Raster r;
+
     init
 	{
 	    width = screenWidth / numUnits;
@@ -17,7 +22,7 @@ Raster->void filter RasterOps( int offset, int numUnits, int screenWidth, int sc
 
     work pop 1
 	{
-	    Raster r = pop();
+	    r = pop();
 
 	    r.x = r.x / numUnits;
 

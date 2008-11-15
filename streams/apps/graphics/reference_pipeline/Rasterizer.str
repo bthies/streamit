@@ -3,6 +3,11 @@ TriangleSetupInfo->Fragment filter Rasterizer( int offset, int numUnits, int scr
 {
     int numColumns;
 
+    // this is not actual state, but having it here improves
+    // efficiency because if it is a local variable then it is
+    // initailized to zero on every firing
+    TriangleSetupInfo tsi;
+
     init
 	{
 	    numColumns = screenWidth / numUnits;
@@ -16,7 +21,7 @@ TriangleSetupInfo->Fragment filter Rasterizer( int offset, int numUnits, int scr
 
     work pop 1 push *
 	{
-            TriangleSetupInfo tsi = pop();
+            tsi = pop();
 
 	    // given an x coordinate:
 	    // x / numUnits = group number

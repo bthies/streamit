@@ -4,6 +4,11 @@ Fragment->Raster filter PixelShader( int id )
     Vector3f eyePosition;
     float shininess;
 
+    // this is not actual state, but having it here improves
+    // efficiency because if it is a local variable then it is
+    // initailized to zero on every firing
+    Fragment f;
+
     init
 	{
 	    lightPosition.x = -0.75;
@@ -31,7 +36,7 @@ Fragment->Raster filter PixelShader( int id )
 
     work pop 1 push 1
 	{
-	    Fragment f = pop();
+	    f = pop();
 
 	    // compute light vector
 	    Vector3f lightVector;

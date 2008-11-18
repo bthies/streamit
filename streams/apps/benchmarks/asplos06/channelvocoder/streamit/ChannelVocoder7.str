@@ -26,13 +26,6 @@ void->void pipeline ChannelVocoder7 {
     add FileWriter<float>("ChannelVocoder7.out");
 }
 
-float->float filter Nothing {
-    work push 1 pop 1 
-	{
-	    push(pop());
-	}
-}
-
 /** This class is just a wrapper so that we don't have anonymous inner classes. **/
 float->float splitjoin MainSplitjoin {
   int PITCH_WINDOW = 100; // the number of samples to base the pitch detection on

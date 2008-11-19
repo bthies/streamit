@@ -639,7 +639,7 @@ float->float pipeline PhaseStuff(int n_len, int m_len, int DFTLen_red, int newLe
 	}
 	if(newLen != DFTLen)
 	    add Duplicator(DFTLen_red, newLen_red);
-	else 
+    } else {
 	    add Identity<float>;
     }
 }

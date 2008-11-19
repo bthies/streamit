@@ -1,3 +1,91 @@
+void->void pipeline VocoderTopLevel() {
+
+    int DFT_LENGTH_NOM = 28;
+    int DFT_LENGTH = DFT_LENGTH_NOM/2 + 1;
+    /*
+    FREQUENCY_FACTOR_ARGS[0] = 1.0;
+    FREQUENCY_FACTOR_ARGS[1] = 1.0;
+    FREQUENCY_FACTOR_ARGS[2] = 1.0;
+    FREQUENCY_FACTOR_ARGS[3] = 1.8;
+    FREQUENCY_FACTOR_ARGS[4] = 0.6;
+    */
+    float FREQUENCY_FACTOR = 0.6;
+    /*
+    GLOTTAL_EXPANSION_ARGS[0] = 1.0;
+    GLOTTAL_EXPANSION_ARGS[0] = 1.0;
+    GLOTTAL_EXPANSION_ARGS[0] = 1.0;
+    GLOTTAL_EXPANSION_ARGS[0] = 1.2;
+    GLOTTAL_EXPANSION_ARGS[0] = 1.0/1.2;
+    */
+    float GLOTTAL_EXPANSION = 1/1.2;
+    int NEW_LENGTH = (int)(DFT_LENGTH * GLOTTAL_EXPANSION / FREQUENCY_FACTOR);
+    /*
+    DFT_LENGTH_REDUCED_ARGS[0] = 1;
+    DFT_LENGTH_REDUCED_ARGS[1] = 1;
+    DFT_LENGTH_REDUCED_ARGS[2] = 1;
+    DFT_LENGTH_REDUCED_ARGS[3] = 3;
+    DFT_LENGTH_REDUCED_ARGS[4] = 3;
+    */
+    int DFT_LENGTH_REDUCED = 3;
+    /*
+    NEW_LENGTH_REDUCED_ARGS[0] = 1;
+    NEW_LENGTH_REDUCED_ARGS[1] = 1;
+    NEW_LENGTH_REDUCED_ARGS[2] = 1;
+    NEW_LENGTH_REDUCED_ARGS[3] = 2;
+    NEW_LENGTH_REDUCED_ARGS[4] = 4;
+    */
+    int NEW_LENGTH_REDUCED = 4;
+    /*
+    SPEED_FACTOR_ARGS[0] = 1.0;
+    SPEED_FACTOR_ARGS[1] = 2.0;
+    SPEED_FACTOR_ARGS[2] = 0.5;
+    SPEED_FACTOR_ARGS[3] = 1.0;
+    SPEED_FACTOR_ARGS[4] = 1.0;
+    */
+    float SPEED_FACTOR = 1.0;
+    /*
+    n_LENGTH_ARGS[0] = 1;
+    n_LENGTH_ARGS[1] = 1;
+    n_LENGTH_ARGS[2] = 2;
+    n_LENGTH_ARGS[3] = 1;
+    n_LENGTH_ARGS[4] = 1;
+    */
+    int n_LENGTH = 1;
+    /*
+    m_LENGTH_ARGS[0] = 1.0; 
+    m_LENGTH_ARGS[0] = 2.0; 
+    m_LENGTH_ARGS[0] = 1.0; 
+    m_LENGTH_ARGS[0] = 1.0; 
+    m_LENGTH_ARGS[0] = 1.0; 
+    */
+    int m_LENGTH = 1;
+
+    add StepSource(100);
+    add IntToFloat();
+
+    add Delay(DFT_LENGTH_NOM);
+
+    add FilterBank(DFT_LENGTH_NOM);
+    add RectangularToPolar();
+
+    add float->float splitjoin {
+      split roundrobin();
+      add MagnitudeStuff(DFT_LENGTH_REDUCED,NEW_LENGTH_REDUCED,m_LENGTH,n_LENGTH,DFT_LENGTH,NEW_LENGTH,SPEED_FACTOR);
+      add PhaseStuff(n_LENGTH,m_LENGTH,DFT_LENGTH_REDUCED,NEW_LENGTH_REDUCED,DFT_LENGTH,NEW_LENGTH,FREQUENCY_FACTOR,SPEED_FACTOR);
+      join roundrobin();
+
+    }
+
+    add PolarToRectangular();
+    add SumReals(NEW_LENGTH);
+
+    add InvDelay((DFT_LENGTH - 2) * m_LENGTH / n_LENGTH);
+
+    add FloatToShort();
+    add ShortPrinter();
+    add ShortVoid();
+
+}
 
 float->float filter FIRSmoothingFilter(int DFTLen) {
 
@@ -672,97 +760,6 @@ void->int filter StepSource(int length) {
         x -= 1;
     }
 }
-
-
-void->void pipeline VocoderTopLevel() {
-
-    int DFT_LENGTH_NOM = 28;
-    int DFT_LENGTH = DFT_LENGTH_NOM/2 + 1;
-    /*
-    FREQUENCY_FACTOR_ARGS[0] = 1.0;
-    FREQUENCY_FACTOR_ARGS[1] = 1.0;
-    FREQUENCY_FACTOR_ARGS[2] = 1.0;
-    FREQUENCY_FACTOR_ARGS[3] = 1.8;
-    FREQUENCY_FACTOR_ARGS[4] = 0.6;
-    */
-    float FREQUENCY_FACTOR = 0.6;
-    /*
-    GLOTTAL_EXPANSION_ARGS[0] = 1.0;
-    GLOTTAL_EXPANSION_ARGS[0] = 1.0;
-    GLOTTAL_EXPANSION_ARGS[0] = 1.0;
-    GLOTTAL_EXPANSION_ARGS[0] = 1.2;
-    GLOTTAL_EXPANSION_ARGS[0] = 1.0/1.2;
-    */
-    float GLOTTAL_EXPANSION = 1/1.2;
-    int NEW_LENGTH = (int)(DFT_LENGTH * GLOTTAL_EXPANSION / FREQUENCY_FACTOR);
-    /*
-    DFT_LENGTH_REDUCED_ARGS[0] = 1;
-    DFT_LENGTH_REDUCED_ARGS[1] = 1;
-    DFT_LENGTH_REDUCED_ARGS[2] = 1;
-    DFT_LENGTH_REDUCED_ARGS[3] = 3;
-    DFT_LENGTH_REDUCED_ARGS[4] = 3;
-    */
-    int DFT_LENGTH_REDUCED = 3;
-    /*
-    NEW_LENGTH_REDUCED_ARGS[0] = 1;
-    NEW_LENGTH_REDUCED_ARGS[1] = 1;
-    NEW_LENGTH_REDUCED_ARGS[2] = 1;
-    NEW_LENGTH_REDUCED_ARGS[3] = 2;
-    NEW_LENGTH_REDUCED_ARGS[4] = 4;
-    */
-    int NEW_LENGTH_REDUCED = 4;
-    /*
-    SPEED_FACTOR_ARGS[0] = 1.0;
-    SPEED_FACTOR_ARGS[1] = 2.0;
-    SPEED_FACTOR_ARGS[2] = 0.5;
-    SPEED_FACTOR_ARGS[3] = 1.0;
-    SPEED_FACTOR_ARGS[4] = 1.0;
-    */
-    float SPEED_FACTOR = 1.0;
-    /*
-    n_LENGTH_ARGS[0] = 1;
-    n_LENGTH_ARGS[1] = 1;
-    n_LENGTH_ARGS[2] = 2;
-    n_LENGTH_ARGS[3] = 1;
-    n_LENGTH_ARGS[4] = 1;
-    */
-    int n_LENGTH = 1;
-    /*
-    m_LENGTH_ARGS[0] = 1.0; 
-    m_LENGTH_ARGS[0] = 2.0; 
-    m_LENGTH_ARGS[0] = 1.0; 
-    m_LENGTH_ARGS[0] = 1.0; 
-    m_LENGTH_ARGS[0] = 1.0; 
-    */
-    int m_LENGTH = 1;
-
-    add StepSource(100);
-    add IntToFloat();
-
-    add Delay(DFT_LENGTH_NOM);
-
-    add FilterBank(DFT_LENGTH_NOM);
-    add RectangularToPolar();
-
-    add float->float splitjoin {
-      split roundrobin();
-      add MagnitudeStuff(DFT_LENGTH_REDUCED,NEW_LENGTH_REDUCED,m_LENGTH,n_LENGTH,DFT_LENGTH,NEW_LENGTH,SPEED_FACTOR);
-      add PhaseStuff(n_LENGTH,m_LENGTH,DFT_LENGTH_REDUCED,NEW_LENGTH_REDUCED,DFT_LENGTH,NEW_LENGTH,FREQUENCY_FACTOR,SPEED_FACTOR);
-      join roundrobin();
-
-    }
-
-    add PolarToRectangular();
-    add SumReals(NEW_LENGTH);
-
-    add InvDelay((DFT_LENGTH - 2) * m_LENGTH / n_LENGTH);
-
-    add FloatToShort();
-    add ShortPrinter();
-    add ShortVoid();
-
-}
-
 
 float->float filter print_pop() {
 

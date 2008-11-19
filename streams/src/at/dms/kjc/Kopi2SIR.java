@@ -103,6 +103,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
     // for methods that have I/O rate declarations, maps method name to push, pop, peek rate
     // String -> JExpression
     private HashMap<String, JExpression> methodToPushRate, methodToPopRate, methodToPeekRate;
+
+    // Number of filters encountered
+    public static int numFilters = 0;
     
     //Uncomment the println for debugging
     private void printMe(String str) {
@@ -307,6 +310,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
         }
         if (TYPE.equals("Filter") || TYPE.equals("StreamItFilter")) {
             SIRFilter current;
+            numFilters++;
             if (hasMethod(clazz, "prework")) {
                 // this is a two-stage filter
                 current = new SIRTwoStageFilter();

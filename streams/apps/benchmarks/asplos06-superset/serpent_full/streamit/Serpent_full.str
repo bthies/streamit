@@ -447,7 +447,7 @@ int->int pipeline R(int vector, int round)
     add int->int splitjoin {
         split roundrobin(NBITS, 0);
         add Identity<int>;
-        add slowKeySchedule(vector, round);
+        add KeySchedule(vector, round);
         join roundrobin(1);
     }
 

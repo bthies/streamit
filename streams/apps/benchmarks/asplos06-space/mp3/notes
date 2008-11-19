@@ -1,9 +1,0 @@
-From mp3decoder/MP3.str
-
-Input file is large: and is not kept checked in.
-The code finds the input in /home/streamit/compiler-static/mp3/Blur.float.raw
-The output file would also be large if we let it.  The file ../output/MP3.out
-is the result of -library -i 100 -- nowhere near the output from processing the
-entire input file.
-
-MP3 is not parameterized for different sizes.  It has 180 filters.

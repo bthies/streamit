@@ -14,51 +14,94 @@ import at.dms.kjc.sir.lowering.SIRScheduler;
  **/
 public class PartitionDot extends StreamItDot {
     private String prefixLabel;
+    private static boolean steadyIO = false; // if true, marks steady-state I/O rates (multiplicity * push or pop)
     private boolean simple; // if true, then use simple labels for filters (no numbers)
     private boolean markStateful; // if true, then indicate which filters are stateful
     private boolean markIO; // if true, marks pop and push rates in filters
     private boolean markVectorizable; // if true, marks vectorizable filters.
     private HashMap[] execCounts; // schedule for stream (only used if markIO is true)
     private HashMap<SIROperator, Object> partitions;
-    // randomized order of color table so that like colors do not end up next to each other.
-    private static final String[] color_table = {"white",
-                                                 "crimson",
-                                                 "darkorchid",
-                                                 "brown",
-                                                 "gold",
-                                                 "deeppink",
-                                                 "darkorange",
-                                                 "darkseagreen",
-                                                 "blue",
-                                                 "darkgreen",
-                                                 "cadetblue",
-                                                 "antiquewhite",
-                                                 "darkkhaki",
-                                                 "aliceblue",
-                                                 "dodgerblue",
-                                                 "darkgoldenrod",
-                                                 "chartreuse",
-                                                 "aquamarine",
-                                                 "firebrick",
-                                                 "deepskyblue",
-                                                 "blueviolet",
-                                                 "darkturquoise",
-                                                 "darksalmon",
-                                                 "blue",
-                                                 "bisque",
-                                                 "dimgray",
-                                                 "forestgreen",
-                                                 "darkslateblue",
-                                                 "darkviolet",
-                                                 "goldenrod",
-                                                 "gainsboro",
-                                                 "darkolivegreen",
-                                                 "burlywood",
-                                                 "chocolate",
-                                                 "ghostwhite",
-                                                 "cyan",
-                                                 "coral",
-                                                 "darkslategray"};
+    // color managemet:
+    private HashMap<Long, String> colorMap = new HashMap(); // maps from a partition value to a color for that partition
+    // for some reason, I can only get DOT colors to work in HSV.  Take the middle 9 points of an 11-point brewer scale:
+    // http://www.personal.psu.edu/cab38/ColorBrewer/ColorBrewer.html
+    private static final String[] color_table = {"\"0.59166,0.61,0.7\"",
+                                                 "\"0.55833,0.44,0.81\"",
+                                                 "\"0.53888,0.26,0.91\"",
+                                                 "\"0.53333,0.09,0.97\"",
+                                                 "\"0.51694,0.24,1\"",
+                                                 "\"0.11666,0.43,0.99\"",
+                                                 "\"0.07777,0.61,0.99\"",
+                                                 "\"0.03888,0.72,0.95\"",
+                                                 "\"0.00555,0.81,0.84\""};
+
+        /* ad-hoc gradient:
+        "white",
+        "lightsalmon",
+        "coral",
+        "tomato",
+        "darkorange",
+        "orange",
+        "orangered",
+        "crimson",
+        "red"};
+        */
+
+        /* pastel colors:
+           "lightgrey",
+           "lightskyblue",
+           "navajowhite",
+           "darkseagreen",
+           "plum",
+           "lightsteelblue",
+           "sandybrown",
+           "lightsalmon",
+           "pink",
+           "aquamarine",
+           "peachpuff",
+           "lightskyblue"};
+        */
+
+    /* darker colors:
+    "white",
+    "crimson",
+    "darkorchid",
+    "brown",
+    "gold",
+    "deeppink",
+    "darkorange",
+    "darkseagreen",
+    "blue",
+    "darkgreen",
+    "cadetblue",
+    "antiquewhite",
+    "darkkhaki",
+    "aliceblue",
+    "dodgerblue",
+    "darkgoldenrod",
+    "chartreuse",
+    "aquamarine",
+    "firebrick",
+    "deepskyblue",
+    "blueviolet",
+    "darkturquoise",
+    "darksalmon",
+    "blue",
+    "bisque",
+    "dimgray",
+    "forestgreen",
+    "darkslateblue",
+    "darkviolet",
+    "goldenrod",
+    "gainsboro",
+    "darkolivegreen",
+    "burlywood",
+    "chocolate",
+    "ghostwhite",
+    "cyan",
+    "coral",
+    "darkslategray"};
+    */
 
     /**
      * PrefixLabel is a prefix for each node.
@@ -81,6 +124,34 @@ public class PartitionDot extends StreamItDot {
         if (markIO) {
             execCounts = SIRScheduler.getExecutionCounts(str);
         }
+        mapColors(partitions);
+    }
+
+    // builds a sorted array of the unique values of the partitions,
+    // assuming they are integral.  Useful for adding gradient
+    // shading, like hotter colors for more work.
+    private void mapColors(HashMap<SIROperator, Object> partitions) {
+        Set keySet = partitions.keySet();
+        Set valueSet = new HashSet();
+        for (Iterator it = keySet.iterator(); it.hasNext(); ) {
+            Object next = it.next();
+            // we go to a string and then back to a number as a
+            // general way of representing what the partition info
+            // might be (e.g., a WorkInfo)
+            valueSet.add(Long.valueOf(""+partitions.get(next)));
+        }
+        // sort the value set
+        Long[] values = (Long[])valueSet.toArray(new Long[0]);
+        Arrays.sort(values);
+        // map each value to the scaled part of the color array
+        for (int i=0; i<values.length; i++) {
+            colorMap.put(values[i],
+                         // map colors based on annotation RANK:
+                         //color_table[((int)Math.floor((double)i/(double)values.length*(double)color_table.length))]);
+                         // map colors based on annotation VALUE:
+                         color_table[((int)Math.floor((double)values[i].longValue()/((double)values[values.length-1].longValue()+1.0)*(double)color_table.length))]);
+
+        }
     }
 
     /**
@@ -88,14 +159,15 @@ public class PartitionDot extends StreamItDot {
      * for the partitioning labeling.
      */
     private String makePartitionLabel(SIROperator op, String origLabel) {
-        int partition;
+        // calculate the color this node will have
+        String color;
         try {
-            partition = Integer.valueOf(""+partitions.get(op)).intValue();
+            color = colorMap.get(Long.valueOf(""+partitions.get(op)).longValue());
         } catch (NumberFormatException e) {
-            partition = -1;
+            color = "white";
         }
-        int offset = (partition + 1) % color_table.length;
-        if (offset < 0) { offset = color_table.length + offset; }
+        //int offset = (partition + 1) % color_table.length;
+        //if (offset < 0) { offset = color_table.length + offset; }
 
         // label for any mutable state
         String stateLabel = "";
@@ -108,9 +180,15 @@ public class PartitionDot extends StreamItDot {
         String ioLabel = "";
         if (markIO && (op instanceof SIRFilter)) {
             SIRFilter filter = (SIRFilter)op;
-            ioLabel = "\\nI/O: " + 
-                filter.getPopForSchedule(execCounts) + "->" + 
-                filter.getPushForSchedule(execCounts);
+            if (steadyIO) {
+                ioLabel = "\\nI/O: " + 
+                    filter.getPopForSchedule(execCounts) + "->" + 
+                    filter.getPushForSchedule(execCounts);
+            } else {
+                ioLabel = "\\nI/O: " + 
+                    filter.getPopInt() + "->" + 
+                    filter.getPushInt();
+            }
             // indicate peeking prominently
             if (filter.getPeekInt() > filter.getPopInt()) {
                 ioLabel += "\\n*** PEEKS " + (filter.getPeekInt() - filter.getPopInt()) + " AHEAD ***";
@@ -128,9 +206,17 @@ public class PartitionDot extends StreamItDot {
                 }
             }
         }
+
+        // label for work, patition, etc.
+        String attribute_label;
+        if (op instanceof SIRFilter || partitions.get(op)!=null) {
+            attribute_label = prefixLabel + partitions.get(op);
+        } else {
+            // don't label splitters/joiners with null attribute (e.g, for all work estimates)
+            attribute_label = "";
+        }
         
-        return origLabel + prefixLabel + partitions.get(op) + ioLabel + stateLabel + vecLabel + 
-            "\" color=\"" + color_table[offset] + "\" style=\"filled";
+        return origLabel + attribute_label + ioLabel + stateLabel + vecLabel + "\" color=" + color + " style=\"filled";
     }
 
     /* visit a filter */
@@ -145,7 +231,7 @@ public class PartitionDot extends StreamItDot {
             "Not assigned to tile: " + self.getName();
         return new NamePair(makeLabelledNode(makePartitionLabel(self, 
                                                                 simple ?
-                                                                self.getIdent() :
+                                                                self.getCleanIdent() :
                                                                 self.getName())));
     }
 
@@ -154,7 +240,7 @@ public class PartitionDot extends StreamItDot {
                                 SIRSplitType type,
                                 JExpression[] expWeights)
     {
-        String label = type.toString();
+        String label = self.getCleanIdent();
         // try to add weights to label
         try {
             int[] weights = self.getWeights();
@@ -176,7 +262,7 @@ public class PartitionDot extends StreamItDot {
                               SIRJoinType type,
                               JExpression[] expWeights)
     {
-        String label = type.toString();
+        String label = self.getCleanIdent();
         // try to add weights to label
         try {
             int[] weights = self.getWeights();
@@ -200,12 +286,19 @@ public class PartitionDot extends StreamItDot {
         if (partitions.containsKey(self)) {
             String tile = "" + partitions.get(self);
             return "subgraph cluster_" + getName() + " {" + 
-                "\n label=\"" + self.getName() + "\\n tile=" + tile + "\";\n";
+                "\n label=\"" + self.getCleanIdent() + "\\n tile=" + tile + "\";\n";
+        } else if (self.getCleanIdent().toLowerCase().startsWith("anonymous")) {
+            // do not outline or label subgraphs for anonymous
+            // streams.  they just clutter things.
+            return "subgraph cluster_" + getName() + " {\n" +
+                "color = white;\n" + 
+                "label = \"\";\n";
         } else {
             // return no label for containers spread over multiple
             // tiles
             return "subgraph cluster_" + getName() + " {" + 
-                "\n label=\"" + self.getName() + "\";\n";
+                "\n color = black\n" +
+                "\n label=\"" + self.getCleanIdent() + "\";\n";
         }
     }
 
@@ -273,6 +366,7 @@ public class PartitionDot extends StreamItDot {
                                                new PrintStream(out), partitions, prefixLabel,
                                                simple, markStateful, markIO);
             dot.print("digraph streamit {\n");
+            dot.print("size=\"6.5,9\"\n");
             str.accept(dot);
             dot.print("}\n");
             out.flush();

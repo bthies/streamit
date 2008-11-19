@@ -33,7 +33,7 @@ public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout<R
     private BufferDRAMAssignment assignBuffers;
     private SIRSlicer slicer;
     private Router router;
-    private int[] tileCosts;
+    private long[] tileCosts;
     private Random rand;
     private StreamlinedDuplicate duplicate;
     
@@ -132,9 +132,9 @@ public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout<R
             
             
             
-            int oldBin1Weight = tileCosts[bin1];
-            int oldBin2Weight = tileCosts[bin2];
-            int oldMaxBinWeight = maxBinWeight();
+            long oldBin1Weight = tileCosts[bin1];
+            long oldBin2Weight = tileCosts[bin2];
+            long oldMaxBinWeight = maxBinWeight();
             
             //System.out.println("Bin1: " + tileCosts[bin1]);
             //System.out.println("Bin2: " + tileCosts[bin2]);
@@ -144,7 +144,7 @@ public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout<R
             //System.out.println("Work2: " + filter2 + " " + 
                     //partitioner.getFilterWorkSteadyMult(filter2));
             
-            int oldSum = tileCosts[bin1] + tileCosts[bin2];
+            long oldSum = tileCosts[bin1] + tileCosts[bin2];
             //check if we should swap the assignment
       
             tileCosts[bin1] -= slicer.getFilterWorkSteadyMult(filter1); 
@@ -179,8 +179,8 @@ public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout<R
         assignment.put(filter2, chip.getTile(bin1));
     }
     
-    private int maxBinWeight() {
-        int maxBinWeight = -1;
+    private long maxBinWeight() {
+        long maxBinWeight = -1;
         //find max bin
         for (int i = 0; i < chip.getTotalTiles(); i++)
             if (tileCosts[i] > maxBinWeight) {
@@ -243,7 +243,7 @@ public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout<R
     
     private void duplicateLayout() {
         System.out.println("Reconstructing Streamlined Duplicate Packing...");
-        tileCosts = new int[16]; 
+        tileCosts = new long[16]; 
         for (int t = 0; t < chip.getTotalTiles(); t++) {
             for (int i = 0; i < duplicate.getFilterOnTile(t).size(); i++) {
                 SIRFilter filter = duplicate.getFilterOnTile(t).get(i);
@@ -270,8 +270,8 @@ public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout<R
         
     }
     
-    private int minIndex(int[] arr) {
-        int min = Integer.MAX_VALUE;
+    private int minIndex(long[] arr) {
+        long min = Long.MAX_VALUE;
         int minIndex = -1;
         for (int i = 0; i < arr.length; i++) {
             if (arr[i] < min) {

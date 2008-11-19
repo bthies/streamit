@@ -25,9 +25,9 @@ public class GranularityAdjust {
         GreedyBinPacking binPacker = new GreedyBinPacking(str, numCores, work);
         binPacker.pack();
         //get the max bin weight for the packing
-        int oldWork = binPacker.maxBinWeight();
+        long oldWork = binPacker.maxBinWeight();
         //the work of the new partitioning
-        int newWork = 0;
+        long newWork = 0;
         //the percentage change
         double workChange;
         

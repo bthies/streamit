@@ -77,7 +77,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
     /**
      * Bottleneck in current run.
      */
-    private int bottleneck;
+    private long bottleneck;
     
     /**
      * Map from stream structures to DPConfig's.
@@ -359,7 +359,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
         // current estimate of result
         int bestTiles = N;
         // current minimum load in top N partitions
-        int bestLoad = Integer.MIN_VALUE;
+        long bestLoad = Long.MIN_VALUE;
 
         for (int tiles=N; tiles<numTiles; tiles++) {
             // build up list of partitions 
@@ -389,7 +389,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
             });
 
             // get N'th biggest load
-            int nthLoad = partitions.get(partitions.size()-N).getWork();
+            long nthLoad = partitions.get(partitions.size()-N).getWork();
             /* debug print
             System.err.println("\nWith " + tiles + " threads, bottleneck = " + nthLoad);
             for (int i=0; i<partitions.size(); i++) {
@@ -512,7 +512,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
         return this.noHorizFuse;
     }
     
-    public int getBottleneck() {
+    public long getBottleneck() {
         return this.bottleneck;
     }
 

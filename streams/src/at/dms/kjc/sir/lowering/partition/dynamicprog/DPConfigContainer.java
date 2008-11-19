@@ -17,20 +17,20 @@ abstract class DPConfigContainer extends DPConfig {
      * configuration; <b>j</b> is zero otherwise.  If this corresponds to a
      * filter's config, then A is null.
      */
-    private int[][][][][][] A;
+    private long[][][][][][] A;
     /**
      * Holds the minimal SUM of the costs of the children.  This is
      * used as a tiebreaker if two different tracebacks have the same
      * A value.
      */
-    private int[][][][][][] B;
+    private long[][][][][][] B;
     /**
      * Holds the maximum instruction code size associated with the
      * minimum cost configuration.  When instruction code caching is
      * enabled, this is used as a threshold to consider what
      * configurations are allowable.
      */
-    private int[][][][][][] I;
+    private long[][][][][][] I;
 
     /**
      * Value to initialize A, B with.
@@ -74,11 +74,11 @@ abstract class DPConfigContainer extends DPConfig {
             maxWidth = Math.max(maxWidth, width[i]);
         }
         // for simplicity, allocate the bounding box for A
-        this.A = new int[maxWidth][maxWidth][height][height][partitioner.getNumTiles()+1][2];
+        this.A = new long[maxWidth][maxWidth][height][height][partitioner.getNumTiles()+1][2];
         initArray(A);
-        this.B = new int[maxWidth][maxWidth][height][height][partitioner.getNumTiles()+1][2];
+        this.B = new long[maxWidth][maxWidth][height][height][partitioner.getNumTiles()+1][2];
         initArray(B);
-        this.I = new int[maxWidth][maxWidth][height][height][partitioner.getNumTiles()+1][2];
+        this.I = new long[maxWidth][maxWidth][height][height][partitioner.getNumTiles()+1][2];
         initArray(I);
         this.uniform = new boolean[height];
         initUniform();
@@ -86,7 +86,7 @@ abstract class DPConfigContainer extends DPConfig {
         initWidth();
     }
 
-    private void initArray(int[][][][][][] arr) {
+    private void initArray(long[][][][][][] arr) {
         for (int i1=0; i1<arr.length; i1++) {
             for (int i2=0; i2<arr[0].length; i2++) {
                 for (int i3=0; i3<arr[0][0].length; i3++) {
@@ -126,7 +126,7 @@ abstract class DPConfigContainer extends DPConfig {
         WorkEstimate work = partitioner.getWorkEstimate();
         for (int i=0; i<uniform.length; i++) {
             SIRStream child1 = childConfig(0, i).getStream();
-            int work1=0;
+            long work1=0;
             // right now work estimate is stupid and only gets filter
             // works... should be extended to deal with containers and
             // pre-defined filters as well.
@@ -196,10 +196,10 @@ abstract class DPConfigContainer extends DPConfig {
                 for (int x1=0; x1<rectWidth; x1++) {
                     for (int x2=0; x2<rectWidth; x2++) {
                         // my rectangle
-                        int rect1=workFor(x1,x2,y1,y2);
+                        long rect1=workFor(x1,x2,y1,y2);
                         if (rect1==-1) { continue; }
                         // rectangle to left
-                        int rect3=workFor(x1-1,x2-1,y1,y2);
+                        long rect3=workFor(x1-1,x2-1,y1,y2);
                         if (rect1==rect3) {
                             A[x1][x2][y1][y2] = A[x1-1][x2-1][y1][y2];
                             //System.err.println("For " + cont.getName() + ", aliasing (" + x1 + ", " + y1 + ")->(" + x2 + ", " + y2 + ") left");
@@ -207,7 +207,7 @@ abstract class DPConfigContainer extends DPConfig {
                             continue;
                         }
                         // rectangle above
-                        int rect2=workFor(x1,x2,y1-1,y2-1);
+                        long rect2=workFor(x1,x2,y1-1,y2-1);
                         if (rect1==rect3) {
                             A[x1][x2][y1][y2] = A[x1][x2][y1-1][y2-1];
                             //System.err.println("For " + cont.getName() + ", aliasing (" + x1 + ", " + y1 + ")->(" + x2 + ", " + y2 + ") up");
@@ -223,16 +223,16 @@ abstract class DPConfigContainer extends DPConfig {
     /**
      * Return work for rectangle in range; return -1 if undefined.
      */
-    private int workFor(int x1, int x2, int y1, int y2) {
+    private long workFor(int x1, int x2, int y1, int y2) {
         // check bounds
         if (x1<0 || y1<0 || x2<0 || y2<0 || x2<x1 || y2<y1 || x2>width[y1]-1 ) {
             return -1;
         }
         // do sum
-        int sum = 0;
+        long sum = 0;
         for (int x=x1; x<=x2; x++) {
             for (int y=y1; y<=y2; y++) {
-                int s = workFor(childConfig(x, y).getStream());
+                long s = workFor(childConfig(x, y).getStream());
                 // quit if we ever hit undefined
                 if (s==-1) {
                     return -1;
@@ -248,7 +248,7 @@ abstract class DPConfigContainer extends DPConfig {
      * Right now work estimate doesn't recognize some things like
      * predefined filters and containers, so wrap it like this.
      */
-    private int workFor(SIRStream str) {
+    private long workFor(SIRStream str) {
         try {
             return partitioner.getWorkEstimate().getWork((SIRFilter)str);
         } catch (RuntimeException e) {
@@ -365,7 +365,7 @@ abstract class DPConfigContainer extends DPConfig {
                 }
             }
             if (!fusable && numFilters>1) {
-                DPCost cost = new DPCost(Integer.MAX_VALUE/2, Integer.MAX_VALUE/2, partitioner.ICODE_THRESHOLD+1);
+                DPCost cost = new DPCost(Long.MAX_VALUE/2, Long.MAX_VALUE/2, partitioner.ICODE_THRESHOLD+1);
 
                 A[x1][x2][y1][y2][tileLimit][nextToJoiner] = cost.getMaxCost();
                 B[x1][x2][y1][y2][tileLimit][nextToJoiner] = cost.getSumCost();
@@ -394,9 +394,9 @@ abstract class DPConfigContainer extends DPConfig {
             // test for perfect rectangular
             boolean rectangular = sameWidth[y1][y2];
 
-            int max = 0;
-            int sum = 0;
-            int iCode = 0;
+            long max = 0;
+            long sum = 0;
+            long iCode = 0;
             if (x1==x2 || !rectangular) { // case #1
                 int yPivot;
                 if (x1==x2) {
@@ -501,17 +501,17 @@ abstract class DPConfigContainer extends DPConfig {
         // argument for children will be true (1), and 2) A tile is
         // used by the joiner.  We represent #2 by tilesAvail, the
         // number of tailes available after the joiner is taken.
-        int minCost = Integer.MAX_VALUE;
-        int minSum = Integer.MAX_VALUE;
-        int minICode = 0; // the max iCode size of the lowest-cost config
+        long minCost = Long.MAX_VALUE;
+        long minSum = Long.MAX_VALUE;
+        long minICode = 0; // the max iCode size of the lowest-cost config
         if (tryVertical) {
             for (int xPivot=x1; xPivot<x2; xPivot++) {
                 for (int tPivot=1; tPivot<tilesAvail; tPivot++) {
                     DPCost cost1 = get(x1, xPivot, y1, y2, tPivot, 1);
                     DPCost cost2 = get(xPivot+1, x2, y1, y2, tilesAvail-tPivot, 1);
-                    int cost = Math.max(cost1.getMaxCost(), cost2.getMaxCost());
-                    int sum = cost1.getSumCost() + cost2.getSumCost();
-                    int iCode = Math.max(cost1.getICodeSize(), cost2.getICodeSize());
+                    long cost = Math.max(cost1.getMaxCost(), cost2.getMaxCost());
+                    long sum = cost1.getSumCost() + cost2.getSumCost();
+                    long iCode = Math.max(cost1.getICodeSize(), cost2.getICodeSize());
                     if (cost < minCost || (cost==minCost && sum < minSum)) {
                         //System.err.println("possible vertical cut at x=" + xPivot + " from y=" + y1 + " to y=" + y2 + " in " + cont.getName());
                         minCost = cost;
@@ -531,9 +531,9 @@ abstract class DPConfigContainer extends DPConfig {
             for (int tPivot=1; tPivot<tileLimit; tPivot++) {
                 DPCost cost1 = get(x1, x2, y1, yPivot, tPivot, 0);
                 DPCost cost2 = get(x1, x2, yPivot+1, y2, tileLimit-tPivot, nextToJoiner);
-                int cost = Math.max(cost1.getMaxCost(), cost2.getMaxCost());
-                int sum = cost1.getSumCost() + cost2.getSumCost();
-                int iCode = Math.max(cost1.getICodeSize(), cost2.getICodeSize());
+                long cost = Math.max(cost1.getMaxCost(), cost2.getMaxCost());
+                long sum = cost1.getSumCost() + cost2.getSumCost();
+                long iCode = Math.max(cost1.getICodeSize(), cost2.getICodeSize());
                 if (cost < minCost || (cost==minCost && sum < minSum)) {
                     //System.err.println("possible horizontal cut at y=" + yPivot + " from x=" + x1 + " to x=" + x2 + " in " + cont.getName());
                     minCost = cost;
@@ -543,7 +543,7 @@ abstract class DPConfigContainer extends DPConfig {
             }
         }
 
-        assert minCost!=Integer.MAX_VALUE:
+        assert minCost!=Long.MAX_VALUE:
             "Failed to make cut on container: " + cont.getName();
 
         A[x1][x2][y1][y2][tileLimit][nextToJoiner] = minCost;
@@ -559,9 +559,9 @@ abstract class DPConfigContainer extends DPConfig {
      * and the extra cost due to icode (it's organized this way to
      * make it easier to deal with overflow conditions.)
      */
-    private int getICodeCost(int cost, int iCode) {
+    private long getICodeCost(long cost, long iCode) {
         if (iCode > partitioner.ICODE_THRESHOLD) {
-            return Integer.MAX_VALUE/2-1;
+            return Long.MAX_VALUE/2-1;
         } else {
             return cost;
         }
@@ -703,9 +703,9 @@ abstract class DPConfigContainer extends DPConfig {
                 for (int tPivot=1; tPivot<tilesAvail; tPivot++) {
                     DPCost cost1 = get(x1, xPivot, y1, y2, tPivot, 1);
                     DPCost cost2 = get(xPivot+1, x2, y1, y2, tilesAvail-tPivot, 1);
-                    int cost = Math.max(cost1.getMaxCost(), cost2.getMaxCost());
-                    int sum = cost1.getSumCost() + cost2.getSumCost();
-                    int iCode = Math.max(cost1.getICodeSize(), cost2.getICodeSize());
+                    long cost = Math.max(cost1.getMaxCost(), cost2.getMaxCost());
+                    long sum = cost1.getSumCost() + cost2.getSumCost();
+                    long iCode = Math.max(cost1.getICodeSize(), cost2.getICodeSize());
                     if (cost==A[x1][x2][y1][y2][tileLimit][nextToJoiner] &&
                         sum ==B[x1][x2][y1][y2][tileLimit][nextToJoiner] &&
                         iCode ==I[x1][x2][y1][y2][tileLimit][nextToJoiner]) {
@@ -758,9 +758,9 @@ abstract class DPConfigContainer extends DPConfig {
                 DPCost cost1 = get(x1, x2, y1, yPivot, tPivot, 0);
                 DPCost cost2 = get(x1, x2, yPivot+1, y2, tileLimit-tPivot, nextToJoiner);
                 // in this case the cost is the sum since we have a pipeline
-                int cost = Math.max(cost1.getMaxCost(), cost2.getMaxCost());
-                int sum = cost1.getSumCost() + cost2.getSumCost();
-                int iCode = Math.max(cost1.getICodeSize(), cost2.getICodeSize());
+                long cost = Math.max(cost1.getMaxCost(), cost2.getMaxCost());
+                long sum = cost1.getSumCost() + cost2.getSumCost();
+                long iCode = Math.max(cost1.getICodeSize(), cost2.getICodeSize());
                 if (cost==A[x1][x2][y1][y2][tileLimit][nextToJoiner] &&
                     sum ==B[x1][x2][y1][y2][tileLimit][nextToJoiner] &&
                     iCode ==I[x1][x2][y1][y2][tileLimit][nextToJoiner]) {

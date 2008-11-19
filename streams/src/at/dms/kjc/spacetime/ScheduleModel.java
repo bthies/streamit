@@ -37,15 +37,15 @@ public class ScheduleModel {
     private RawChip rawChip;
     private SpaceTimeSchedule spaceTime;
     /** array of total work estimation for each tile including blocking*/
-    private int[] tileCosts;
+    private long[] tileCosts;
     /** Map of filter to start time on the tile they are assigned */
-    private HashMap<FilterSliceNode, Integer> startTime;
+    private HashMap<FilterSliceNode, Long> startTime;
     /** Map if filter to end time on the tile they are assigned */
-    private HashMap<FilterSliceNode, Integer> endTime;
+    private HashMap<FilterSliceNode, Long> endTime;
     /** the tile with the most work */
     private int bottleNeckTile;
     /** the amount of work for the bottleneck tile */
-    private int bottleNeckCost;
+    private long bottleNeckCost;
     
     public ScheduleModel(SpaceTimeSchedule spaceTime, Layout layout, 
             LinkedList<Slice> scheduleOrder) {
@@ -53,8 +53,8 @@ public class ScheduleModel {
         this.spaceTime = spaceTime;
         this.rawChip = spaceTime.getRawChip();
         this.scheduleOrder = scheduleOrder;
-        startTime = new HashMap<FilterSliceNode, Integer>();
-        endTime = new HashMap<FilterSliceNode, Integer>(); 
+        startTime = new HashMap<FilterSliceNode, Long>();
+        endTime = new HashMap<FilterSliceNode, Long>(); 
     }
     
     /** 
@@ -64,7 +64,7 @@ public class ScheduleModel {
      * @return the array that stores the estimation of the work 
      * performed by each tile.
      */
-    public int[] getTileCosts() {
+    public long[] getTileCosts() {
         assert tileCosts != null;
         
         return tileCosts;
@@ -103,7 +103,7 @@ public class ScheduleModel {
      * @return the work estimate for the entire SS of the tile
      * that performs the most work. 
      */
-    public int getBottleNeckCost() {
+    public long getBottleNeckCost() {
         return bottleNeckCost;
     }
     
@@ -151,7 +151,7 @@ public class ScheduleModel {
      */
     public void createModel(boolean debug) {
         //debug = true;
-        tileCosts = new int[rawChip.getTotalTiles()];
+        tileCosts = new long[rawChip.getTotalTiles()];
         Iterator<Slice> slices = scheduleOrder.iterator();
         
         while (slices.hasNext()) {
@@ -161,8 +161,8 @@ public class ScheduleModel {
             if (slice.getHead().getNextFilter().isPredefined()) 
                 continue;
         
-            int prevStart = 0;
-            int prevEnd = 0;
+            long prevStart = 0;
+            long prevEnd = 0;
           
             if (debug)
                 System.out.println("Scheduling: " + slice);
@@ -181,7 +181,7 @@ public class ScheduleModel {
                 //the current filter can start at the max of when the last filter
                 //has produced enough data for the current to start and when its
                 //tile is avail
-                int currentStart =  Math.max(tileCosts[tile.getTileNumber()], 
+                long currentStart =  Math.max(tileCosts[tile.getTileNumber()], 
                         prevStart + spaceTime.getSIRSlicer().getFilterStartupCost(current));
                 
                 if (debug)
@@ -192,7 +192,7 @@ public class ScheduleModel {
                 //start plus the current occupancy and the previous end plus one iteration
                 //of the current, this is because the have to give the current enough
                 //cycles after the last filter completes to complete one iteration
-                int tileAvail = 
+                long tileAvail = 
                     Math.max(spaceTime.getSIRSlicer().getFilterOccupancy(current) +
                             currentStart, 
                             prevEnd + spaceTime.getSIRSlicer().getWorkEstOneFiring(current));
@@ -209,10 +209,10 @@ public class ScheduleModel {
                             "start: " + currentStart + ", tile avail: " + tileAvail);
                 
                 //remember the start time and end time
-                startTime.put(current, new Integer(currentStart));
+                startTime.put(current, new Long(currentStart));
                 //we will over write the end time below for filters 
                 //downstream of bottleneck (the last guy)
-                endTime.put(current, new Integer(tileAvail));
+                endTime.put(current, new Long(tileAvail));
 
                 assert tileAvail >= prevEnd : "Impossible state reached in schedule model " + 
                   tileAvail + " should be >= " + prevEnd;
@@ -251,11 +251,11 @@ public class ScheduleModel {
                 System.out.println("Setting bottleneck finish: " + bottleNeck + " " + 
                         tileCosts[bottleNeckTile.getTileNumber()]);
             
-            int nextFinish = tileCosts[bottleNeckTile.getTileNumber()];
-            int next1Iter = spaceTime.getSIRSlicer().getWorkEstOneFiring(bottleNeck);
+            long nextFinish = tileCosts[bottleNeckTile.getTileNumber()];
+            long next1Iter = spaceTime.getSIRSlicer().getWorkEstOneFiring(bottleNeck);
             SliceNode current = bottleNeck.getPrevious();
             //record the end time for the bottleneck filter
-            endTime.put(bottleNeck, new Integer(nextFinish));
+            endTime.put(bottleNeck, new Long(nextFinish));
             
             //traverse backwards and set the finish times of the traces...
             while (current.isFilterSlice()) {
@@ -268,7 +268,7 @@ public class ScheduleModel {
                 
                 nextFinish = tileCosts[tile.getTileNumber()];
                 //record the end time of this filter on the tile
-                endTime.put(current.getAsFilter(), new Integer(nextFinish));
+                endTime.put(current.getAsFilter(), new Long(nextFinish));
                 //get ready for next iteration
                 next1Iter = spaceTime.getSIRSlicer().getWorkEstOneFiring(current.getAsFilter());
                 current = current.getPrevious();
@@ -286,7 +286,7 @@ public class ScheduleModel {
                 //        tileCosts[tile.getTileNumber()]);
                 prevFinish = tileCosts[tile.getTileNumber()];
                 //record the end time of this filter on the tile
-                endTime.put(current.getAsFilter(), new Integer(prevFinish));
+                endTime.put(current.getAsFilter(), new Long(prevFinish));
                 current = current.getNext();
             }
             */
@@ -322,19 +322,19 @@ public class ScheduleModel {
     * @return placement cost
     */
    public void createModelNoSWPipe() {
-       int tileCosts[] = new int[rawChip.getTotalTiles()];
+       long tileCosts[] = new long[rawChip.getTotalTiles()];
        
        Iterator<Slice> slices = scheduleOrder.iterator();
        //HashMap<FilterSliceNode, Double> endTime = new HashMap<FilterSliceNode, Double>();
        while (slices.hasNext()) {
            Slice slice = slices.next();
            RawTile tile = layout.getComputeNode(slice.getHead().getNextFilter());
-           int traceWork = spaceTime.getSIRSlicer().getSliceBNWork(slice); 
-           int myStart = 0;
+           long traceWork = spaceTime.getSIRSlicer().getSliceBNWork(slice); 
+           long myStart = 0;
            //now find the start time
            
            //find the max end times of all the traces that this trace depends on
-           int maxDepStartTime = 0;
+           long maxDepStartTime = 0;
            InputSliceNode input = slice.getHead();
            Iterator<InterSliceEdge> inEdges = input.getSourceSet(SchedulingPhase.STEADY).iterator();
            while (inEdges.hasNext()) {
@@ -349,7 +349,7 @@ public class ScheduleModel {
                    maxDepStartTime = endTime.get(upStream);
            }
            
-           myStart = (int)Math.max(maxDepStartTime, tileCosts[tile.getTileNumber()]);
+           myStart = (long)Math.max(maxDepStartTime, tileCosts[tile.getTileNumber()]);
            
            //add the start time to the trace work (one filter)!
            tileCosts[tile.getTileNumber()] = myStart + traceWork;

@@ -1,25 +1,25 @@
 package at.dms.kjc.sir.lowering.partition.dynamicprog;
 
 class DPCost {
-    private final int maxCost;
-    private final int sumCost;
-    private final int iCodeSize;
+    private final long maxCost;
+    private final long sumCost;
+    private final long iCodeSize;
 
-    public DPCost(int maxCost, int sumCost, int iCodeSize) {
+    public DPCost(long maxCost, long sumCost, long iCodeSize) {
         this.maxCost = maxCost;
         this.sumCost = sumCost;
         this.iCodeSize = iCodeSize;
     }
 
-    public int getMaxCost() {
+    public long getMaxCost() {
         return maxCost;
     }
 
-    public int getSumCost() {
+    public long getSumCost() {
         return sumCost;
     }
 
-    public int getICodeSize() {
+    public long getICodeSize() {
         return iCodeSize;
     }
 }

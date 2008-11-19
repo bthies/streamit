@@ -12,10 +12,10 @@ import at.dms.util.Utils;
  *
  */
 public class SmarterRouter implements Router {
-    private int[] tileCosts;
+    private long[] tileCosts;
     private RawChip rawChip;
     
-    public SmarterRouter(int[] tileCosts, RawChip chip) {
+    public SmarterRouter(long[] tileCosts, RawChip chip) {
         this.tileCosts = tileCosts;
         this.rawChip = chip;
     }

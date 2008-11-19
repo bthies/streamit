@@ -32,7 +32,7 @@ public class RecordingStreamVisitor extends EmptyStreamVisitor {
     /**
      * Returns work estimate for <op>, if available.
      */
-    private int getWork(SIROperator op) {
+    private long getWork(SIROperator op) {
         if (op instanceof SIRFilter && work!=null) {
             return work.getWork((SIRFilter)op);
         } else {

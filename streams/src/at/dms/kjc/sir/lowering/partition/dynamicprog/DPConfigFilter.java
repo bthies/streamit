@@ -34,9 +34,9 @@ class DPConfigFilter extends DPConfig {
             nextToJoiner = 1;
         }
 
-        int workCount = partitioner.getWorkEstimate().getWork(filter);
+        long workCount = partitioner.getWorkEstimate().getWork(filter);
         // return decreased work if we're fissable
-        int cost;
+        long cost;
         if (tilesForFission(tileLimit, nextToJoiner)>1 && isFissable 
             // don't currently support fission on cluster backend
             // because it requires mix of transforming and no

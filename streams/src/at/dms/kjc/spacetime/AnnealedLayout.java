@@ -182,7 +182,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout<RawTile
      * Print some statistics to the screen for the layout.
      */
     public void printLayoutStats() {
-        int[] tileCosts = getTileWorks(false);
+        long[] tileCosts = getTileWorks(false);
         
         System.out.println("Placement cost: " + placementCost(true));
         
@@ -220,10 +220,10 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout<RawTile
      *
      */
     private void swapAssignmentCommPhase() {
-        int oldMaxWork = maxTileWork(getTileWorks(false));
+        long oldMaxWork = maxTileWork(getTileWorks(false));
         HashMap oldAssign = (HashMap)assignment.clone();
         
-        int newMaxWork = 0;
+        long newMaxWork = 0;
         Slice slice = null;
         int attempts = 0;
         while (true) {
@@ -505,10 +505,10 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout<RawTile
      */
     public double placementCost(boolean debug) {
         double cost;
-        int[] tileCosts = getTileWorks(false);
+        long[] tileCosts = getTileWorks(false);
 //      find the max
         
-        int max = 0;
+        long max = 0;
         int maxTile = -1;
         for (int i = 0; i < tileCosts.length; i++) {
             if (tileCosts[i] > max) {
@@ -603,7 +603,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout<RawTile
         return cost;
     }    
     
-    private double commCost(int[] tileCosts, ComputeNode tile) {
+    private double commCost(long[] tileCosts, ComputeNode tile) {
         Slice[] slices = slicer.getSliceGraph();
         
         assignBuffers.run(spaceTime, this);
@@ -659,9 +659,9 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout<RawTile
             }
         }
         //return the comm cost
-        int max = 0; 
+        long max = 0; 
         for (int i = 0; i < rawChip.getTotalTiles(); i++) {
-            int cost = commCosts.get(rawChip.getTile(i)) + tileCosts[i];
+            long cost = commCosts.get(rawChip.getTile(i)) + tileCosts[i];
             if (cost > max)
                 max = cost;
         }
@@ -676,7 +676,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout<RawTile
      * between software pipelined steady states.
      */
     
-    private int reorgCrossRoutes(int[] tileCosts) {
+    private int reorgCrossRoutes(long[] tileCosts) {
         Slice[] slices = slicer.getSliceGraph();
         int crossed = 0;
         
@@ -917,10 +917,10 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout<RawTile
      * @return The maximum amount of work that is performed on a tile.
      *
      */
-    private int maxTileWork(int[] tileCosts) {
+    private long maxTileWork(long[] tileCosts) {
         
         //find the max
-        int max = 0;
+        long max = 0;
         
         for (int i = 0; i < tileCosts.length; i++) {
             if (tileCosts[i] > max) {
@@ -945,13 +945,13 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout<RawTile
      *
      * @return An array that contains the amount of work indexed by tile number.
      */
-    private int[] getTileWorks(boolean bias) {
+    private long[] getTileWorks(boolean bias) {
         ScheduleModel model = new ScheduleModel(spaceTime, this, 
                 scheduleOrder);
         
         model.createModel();
         
-        int[] tileCosts = model.getTileCosts();
+        long[] tileCosts = model.getTileCosts();
         
         if (bias)
             return biasCosts(tileCosts);
@@ -977,11 +977,11 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout<RawTile
      * 
      * @return A new biased array.
      */
-    private int[] biasCosts(int[] tileCosts) {
-        int maxWork = maxTileWork(tileCosts);
+    private long[] biasCosts(long[] tileCosts) {
+        long maxWork = maxTileWork(tileCosts);
         for (int i = 0; i < tileCosts.length; i++) {
             if (tileCosts[i] < maxWork) 
-                tileCosts[i] = (int)((double)tileCosts[i] * 1.20);
+                tileCosts[i] = (long)((double)tileCosts[i] * 1.20);
         }
             
         return tileCosts;
@@ -1041,7 +1041,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout<RawTile
      * 
      * @return The standard deviation of the values in <pre>vals</pre>.
      */
-    public static double standardDeviation(int[] vals) {
+    public static double standardDeviation(long[] vals) {
         double squaredSum = 0.0;
         double sum = 0.0;
         

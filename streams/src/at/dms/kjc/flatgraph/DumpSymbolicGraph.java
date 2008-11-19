@@ -134,7 +134,7 @@ public class DumpSymbolicGraph implements FlatVisitor
             String name = filter.getIdent();
             boolean stateful = StatelessDuplicate.hasMutableState(filter);
             int sizeOfMutableState =  StatelessDuplicate.sizeOfMutableState(filter);
-            int work = WorkEstimate.getWorkEstimate(filter).getWork(filter);
+            long work = WorkEstimate.getWorkEstimate(filter).getWork(filter);
             int codeSize = CodeEstimate.estimateCode(filter);
             // the amount read or written to a file
             int input = 0, output = 0;

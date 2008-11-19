@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.130 2008-01-30 00:38:02 thies Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.131 2008-11-19 16:14:36 thies Exp $
 package at.dms.kjc.cluster; 
 
 import at.dms.kjc.flatgraph.FlatNode;
@@ -109,7 +109,7 @@ public class ClusterBackend {
         // if (debugPrint)
         //    System.out.println("Cluster Backend SIRGlobal: "+global);
 
-        System.out.println("Entry to Cluster Backend"
+        System.err.println("Entry to Cluster Backend"
                            + ((KjcOptions.standalone && KjcOptions.cluster == 1) ? " (uniprocessor)": ""));
         // System.out.println("  --cluster parameter is: "+KjcOptions.cluster);
         // if (debugPrint)
@@ -226,8 +226,13 @@ public class ClusterBackend {
 
         SIRPortal.findMessageStatements(str);
 
-        // canonicalize stream graph, reorganizing some splits and joins
-        Lifter.liftAggressiveSync(str);
+        // when gathering statistics, don't do this because it removes
+        // pipelines that are semantically meaningful in the resulting
+        // stream graph
+        if (!KjcOptions.stats) {
+            // canonicalize stream graph, reorganizing some splits and joins
+            Lifter.liftAggressiveSync(str);
+        }
 
         // Unroll and propagate maximally within each (not phased) filter.
         // Initially justified as necessary for IncreaseFilterMult which is

@@ -9,11 +9,11 @@ import at.dms.kjc.sir.*;
 
 public class WorkEstimatesMap implements FlatVisitor 
 {
-    HashMap<FlatNode, Integer> estimates;
+    HashMap<FlatNode, Long> estimates;
 
     public WorkEstimatesMap (FlatNode top) 
     {
-        estimates = new HashMap<FlatNode, Integer>();
+        estimates = new HashMap<FlatNode, Long>();
         top.accept(this, null, true);
     }
     
@@ -22,18 +22,18 @@ public class WorkEstimatesMap implements FlatVisitor
     
         if (node.isFilter())
             estimates.put(node,
-                          new Integer
+                          new Long
                           (WorkEstimate.getWorkEstimate((SIRFilter)node.contents).
                            getWork((SIRFilter)node.contents)));
         else if (node.isJoiner())
-            estimates.put(node, new Integer(1));
+            estimates.put(node, new Long(1));
     }
 
-    public int getEstimate(FlatNode node) 
+    public long getEstimate(FlatNode node) 
     {
         if (!estimates.containsKey(node))
             Utils.fail("Node " + node.contents.getName() + " not in map.");
-        return estimates.get(node).intValue();
+        return estimates.get(node).longValue();
     }
     
 }

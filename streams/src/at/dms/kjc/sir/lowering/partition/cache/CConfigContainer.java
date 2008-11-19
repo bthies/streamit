@@ -222,13 +222,13 @@ abstract class CConfigContainer extends CConfig {
         // if one of children is unfusable filter (e.g., FileWriter),
         // then return infinite cost
         if (unfusableFilter(x1, x2)) {
-            return new CCost(Integer.MAX_VALUE/2-1);
+            return new CCost(Long.MAX_VALUE/2-1);
         }
     
         // check if this is a split join!
 
         if (this instanceof CConfigSplitJoin && (x1>0 || x2<cont.size()-1)) {
-            return new CCost(Integer.MAX_VALUE/2-1);
+            return new CCost(Long.MAX_VALUE/2-1);
         }
         
         if (this instanceof CConfigSplitJoin) {

@@ -165,6 +165,10 @@ public abstract class SIROperator implements Finalizable, Serializable, DeepClon
      * Returns an identifier for this which is NOT unique.  This will
      * return the same string for a given type of filter that was
      * added to the stream graph.
+     *
+     * Update: now that the renamer runs by default on most backends,
+     * this invariant has been universally violated.  Call
+     * getCleanName() to get an approximation of the original type.
      */
     public abstract String getIdent();
 
@@ -176,6 +180,35 @@ public abstract class SIROperator implements Finalizable, Serializable, DeepClon
     public String getName() {
         return getIdent() + "_" + Namer.getUniqueNumber(this);
     }
+
+    /**
+     * Returns a "clean" name for this, by filtering out numbers and
+     * underscores from the end of the name.  Suitable for output on
+     * dot graphs.
+     */
+    public String getCleanIdent() {
+        String str = getIdent();
+        if (str.startsWith("AnonFilter")) {
+            return "Anonymous";
+        }
+        if (str.startsWith("WEIGHTED_ROUND_ROBIN")) {
+            return "roundrobin";
+        }
+        if (str.startsWith("ROUND_ROBIN")) {
+            return "roundrobin";
+        }
+        if (str.startsWith("DUPLICATE")) {
+            return "duplicate";
+        }
+        int pos = str.length()-1;
+        while (pos>0 && 
+               ((str.charAt(pos)>='0' && str.charAt(pos)<= '9') ||
+                (str.charAt(pos)=='_'))) {
+            pos--;
+        }
+        return str.substring(0, pos+1);
+    }
+    
 
     /**
      * Returns the name of this, truncated to 'n' characters.  If the

@@ -19,14 +19,14 @@ public class PartitionRecord {
      * The amount of work in this partition (might not be derivable
      * from <contents> because of fission transforms, etc.)
      */
-    private int work;
+    private long work;
 
     public PartitionRecord() {
         this.contents = new LinkedList<SIROperator>();
         this.work = 0;
     }
 
-    public int getWork() {
+    public long getWork() {
         return work;
     }
 
@@ -34,7 +34,7 @@ public class PartitionRecord {
      * Add operator <pre>op</pre> with work amount <pre>k</pre> to this partition.
      * Requires that this does not already contain <pre>op</pre>.
      */
-    public void add(SIROperator op, int k) {
+    public void add(SIROperator op, long k) {
         assert !this.contains(op);
         contents.add(op);
         work += k;

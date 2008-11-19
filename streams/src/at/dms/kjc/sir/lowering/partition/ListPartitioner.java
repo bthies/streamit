@@ -127,8 +127,8 @@ public abstract class ListPartitioner {
             Object o2 = nodes.get(first2+i);
             // compare types
             if (o1 instanceof SIRFilter && o2 instanceof SIRFilter) {
-                int work1 = work.getWork((SIRFilter)o1);
-                int work2 = work.getWork((SIRFilter)o2);
+                long work1 = work.getWork((SIRFilter)o1);
+                long work2 = work.getWork((SIRFilter)o2);
                 if (work1!=work2) {
                     /*
                       System.err.println("  failed because " + o1 + " has work " + work1 + 

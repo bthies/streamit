@@ -9,28 +9,28 @@ import at.dms.kjc.sir.*;
 
 public class WorkEstimatesMap implements FlatVisitor 
 {
-    private HashMap<FlatNode, Integer> estimates;
+    private HashMap<FlatNode, Long> estimates;
     private SpdStreamGraph streamGraph;
 
     public WorkEstimatesMap(SpdStreamGraph sg) 
     {
         streamGraph = sg;
-        estimates = new HashMap<FlatNode, Integer>();
+        estimates = new HashMap<FlatNode, Long>();
     }
     
     public void addEstimate(FlatNode node) 
     {
         if (node.isFilter())
             estimates.put(node,
-                          new Integer
+                          new Long
                           (WorkEstimate.getWorkEstimate((SIRFilter)node.contents).
                            getWork((SIRFilter)node.contents))
                           );
         else if (node.isJoiner()) {
             //just mult by 3 to account for d-cache access
             estimates.put(node, 
-                          new Integer(node.getTotalIncomingWeights() * 3));
-            //estimates.put(node, new Integer(1));    
+                          new Long(node.getTotalIncomingWeights() * 3));
+            //estimates.put(node, new Long(1));    
         }   
     }
     
@@ -38,7 +38,7 @@ public class WorkEstimatesMap implements FlatVisitor
     public WorkEstimatesMap(SpdStreamGraph sg, FlatNode top) 
     {
         sg = streamGraph;
-        estimates = new HashMap<FlatNode, Integer>();
+        estimates = new HashMap<FlatNode, Long>();
         top.accept(this, null, true);
     }
     

@@ -173,7 +173,7 @@ public class CommonPasses {
         double CCRatioOrig = CompCommRatio.ratio(str, WorkEstimate.getWorkEstimate(str),
                 SIRScheduler.getExecutionCounts(str)[1]);
         System.out.println("Comp/Comm Ratio of original SIR graph: " + CCRatioOrig);
-        int[] workStats = at.dms.kjc.tilera.TMD.totalWork(str);
+        long[] workStats = at.dms.kjc.tilera.TMD.totalWork(str);
         System.out.println("SIR Peeking Work: " + workStats[0] + ",  SIR Total Work: " + workStats[1]);
         if (KjcOptions.fusion || KjcOptions.dup >= 1 || KjcOptions.noswpipe) {
             // if we are about to fuse filters, we should perform
@@ -200,7 +200,7 @@ public class CommonPasses {
         WorkList workList = work.getSortedFilterWork();
         for (int i = 0; i < workList.size(); i++) {
             SIRFilter filter = workList.getFilter(i);
-            int filterWork = work.getWork(filter); 
+            long filterWork = work.getWork(filter); 
             System.out.println("Sorted Work " + i + ": " + filter + " work " 
                     + filterWork + ", is fissable: " + StatelessDuplicate.isFissable(filter));
         }

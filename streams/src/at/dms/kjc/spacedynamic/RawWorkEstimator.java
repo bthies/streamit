@@ -30,7 +30,7 @@ public class RawWorkEstimator extends EmptyStreamVisitor
      * Given a filter, run the work function on raw
      * and return the number of cycles for the work function
      **/
-    public static int estimateWork(SIRFilter oldFilter)
+    public static long estimateWork(SIRFilter oldFilter)
     {
         // if we have an identity filter, just return 0 since these
         // aren't mapped onto Raw
@@ -49,7 +49,7 @@ public class RawWorkEstimator extends EmptyStreamVisitor
         RawChip oldRawChip = SpaceDynamicBackend.rawChip;
         SpaceDynamicBackend.rawChip = new RawChip(4, 4);
         
-        int work = 0;
+        long work = 0;
         //clone the Filter and create a dummy pipeline with just this
         //new cloned filter
 

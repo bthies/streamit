@@ -57,7 +57,7 @@ public class SliceWorkEstimate extends SLIREmptyVisitor implements
     /**
      * An estimate of the amount of work found by this filter.
      */
-    private int work;
+    private long work;
     
     private Slice slice;
     
@@ -78,7 +78,7 @@ public class SliceWorkEstimate extends SLIREmptyVisitor implements
      * Returns estimate of work function in <pre>filter</pre> multiplied by the steady-state
      * multiplicity.
      */
-    public static int getWork(Slice slice) {
+    public static long getWork(Slice slice) {
         // if no work function (e.g., identity filters?) return 0
         if (slice.getFirstFilter().isPredefined()) {
             return 0;
@@ -96,7 +96,7 @@ public class SliceWorkEstimate extends SLIREmptyVisitor implements
     /**
      * Returns estimate of work in <pre>node</pre> of <pre>filter</pre>, use on first call only.
      */
-    private static int getWork(Slice slice, JPhylum node) {
+    private static long getWork(Slice slice, JPhylum node) {
         SliceWorkEstimate visitor = new SliceWorkEstimate(slice);
         node.accept(visitor);
         return visitor.work;
@@ -105,7 +105,7 @@ public class SliceWorkEstimate extends SLIREmptyVisitor implements
     /**
      * Returns estimate of work in <pre>node</pre> of <pre>filter</pre>, use on internal calls.
      */
-    private static int getWork(Slice slice, JPhylum node, Set<JMethodDeclaration> methodsBeingProcessed ) {
+    private static long getWork(Slice slice, JPhylum node, Set<JMethodDeclaration> methodsBeingProcessed ) {
         SliceWorkEstimate visitor = new SliceWorkEstimate(slice, methodsBeingProcessed);
         node.accept(visitor);
         return visitor.work;
@@ -189,9 +189,9 @@ public class SliceWorkEstimate extends SLIREmptyVisitor implements
                                     JStatement body) {
         //System.err.println("WARNING:  Estimating work in loop, assume N=" +
         //LOOP_COUNT);
-        int oldWork = work;
+        long oldWork = work;
         super.visitWhileStatement(self, cond, body);
-        int newWork = work;
+        long newWork = work;
         work = oldWork + LOOP_COUNT * (newWork - oldWork);
     }
 
@@ -227,8 +227,8 @@ public class SliceWorkEstimate extends SLIREmptyVisitor implements
 
         // get the work in the then and else clauses and average
         // them...
-        int thenWork = SliceWorkEstimate.getWork(slice, thenClause, methodsBeingProcessed);
-        int elseWork;
+        long thenWork = SliceWorkEstimate.getWork(slice, thenClause, methodsBeingProcessed);
+        long elseWork;
         if (elseClause != null) {
             elseWork = SliceWorkEstimate.getWork(slice, elseClause, methodsBeingProcessed);
         } else {
@@ -256,7 +256,7 @@ public class SliceWorkEstimate extends SLIREmptyVisitor implements
             //LOOP_COUNT);
             loopCount = LOOP_COUNT;
         }
-        int oldWork = work;
+        long oldWork = work;
         if (cond != null) {
             cond.accept(this);
         }
@@ -264,7 +264,7 @@ public class SliceWorkEstimate extends SLIREmptyVisitor implements
             incr.accept(this);
         }
         body.accept(this);
-        int newWork = work;
+        long newWork = work;
         work = oldWork + loopCount * (newWork - oldWork);
     }
 
@@ -276,9 +276,9 @@ public class SliceWorkEstimate extends SLIREmptyVisitor implements
                                  JStatement body) {
         //System.err.println("WARNING:  Estimating work in loop, assume N=" +
         //LOOP_COUNT);
-        int oldWork = work;
+        long oldWork = work;
         super.visitDoStatement(self, cond, body);
-        int newWork = work;
+        long newWork = work;
         work = oldWork + LOOP_COUNT * (newWork - oldWork);
     }
 

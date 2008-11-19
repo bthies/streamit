@@ -93,8 +93,8 @@ class CConfigSplitJoin extends CConfigContainer {
 
         if (fusion_info != null) return fusion_info; // check if we have precomputed
 
-        int work = 0;
-        int work_no_penalty = 0;
+        long work = 0;
+        long work_no_penalty = 0;
     
         int code = 0;
         int data = 0;

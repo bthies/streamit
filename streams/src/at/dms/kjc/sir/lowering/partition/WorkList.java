@@ -19,7 +19,7 @@ public class WorkList extends java.util.LinkedList {
     /**
      * Gets total work at position <pre>i</pre>.
      */
-    public int getWork(int i) {
+    public long getWork(int i) {
         return ((WorkInfo)((Map.Entry)super.get(i)).getValue()).getTotalWork();
     }
 

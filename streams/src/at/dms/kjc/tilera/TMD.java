@@ -402,25 +402,25 @@ public class TMD extends Scheduler {
      */
     public void calculateFizzAmounts(int totalTiles) {
         Slice[][] origLevels = new LevelizeSliceGraph(graphSchedule.getSlicer().getTopSlices()).getLevels();
-        int peekingWork = 0;
-        int totalWork = 0;
+        long peekingWork = 0;
+        long totalWork = 0;
         //assume that level 0 has a file reader and the last level has a file writer
         for (int l = 0; l < origLevels.length; l++) {
             //for the level, calculate the total work and create a hashmap of fsn to work
-            HashMap <FilterSliceNode, Integer> workEsts = new HashMap<FilterSliceNode, Integer>();
+            HashMap <FilterSliceNode, Long> workEsts = new HashMap<FilterSliceNode, Long>();
             LinkedList<FilterSliceNode> sortedWork = new LinkedList<FilterSliceNode>();
             //this is the total amount of work
-            int levelTotal = 0;
+            long levelTotal = 0;
             //the total amount of stateless work
-            int slTotal = 0;
+            long slTotal = 0;
             int cannotFizz = 0;            
             for (int s = 0; s < origLevels[l].length; s++) {
                FilterSliceNode fsn = origLevels[l][s].getFirstFilter();
                FilterContent fc = fsn.getFilter();
                if (fsn.isPredefined())
-                   workEsts.put(fsn, 0);
+                   workEsts.put(fsn, (long)0);
                //the work estimation is the estimate for the work function  
-               int workEst = SliceWorkEstimate.getWork(origLevels[l][s]);
+               long workEst = SliceWorkEstimate.getWork(origLevels[l][s]);
                totalWork += workEst;
                if (fc.getPeekInt() > fc.getPopInt())
                    peekingWork += workEst;
@@ -459,8 +459,8 @@ public class TMD extends Scheduler {
             //now go through the level and parallelize each filter according to the work it does in the
             //level
             int tilesUsed = cannotFizz;
-            int maxLevelWork = 0;
-            int perfectPar = slTotal / availTiles; 
+            long maxLevelWork = 0;
+            long perfectPar = slTotal / availTiles; 
                 
             for (int f = 0; f < sortedWork.size(); f++) {
                 FilterSliceNode fsn = sortedWork.get(f);
@@ -495,7 +495,7 @@ public class TMD extends Scheduler {
                 //System.out.println(l + ": " + workEsts.get(fsn) + " / " + slTotal + " * " + availTiles + " = " + fa);
              
                 //availTiles -= fa;
-                int thisWork = workEsts.get(fsn) / fa;
+                long thisWork = workEsts.get(fsn) / fa;
                 if (thisWork > maxLevelWork)
                     maxLevelWork = thisWork;
              
@@ -581,11 +581,11 @@ public class TMD extends Scheduler {
     /**
      * Returns the amount peeking work and total work in array.
      */
-    public static int[] totalWork(SIRStream str) {
+    public static long[] totalWork(SIRStream str) {
         WorkEstimate workEst = WorkEstimate.getWorkEstimate(str);
         WorkList wl = workEst.getSortedFilterWork();
-        int totalWork = 0;
-        int peekingWork = 0;
+        long totalWork = 0;
+        long peekingWork = 0;
         for (int i = 0; i < wl.size(); i++) {
             totalWork += wl.getWork(i);
             SIRFilter filter = wl.getFilter(i);
@@ -594,7 +594,7 @@ public class TMD extends Scheduler {
             }
         }
         
-        return new int[]{peekingWork, totalWork};
+        return new long[]{peekingWork, totalWork};
     }
     
 

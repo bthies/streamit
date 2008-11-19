@@ -106,7 +106,7 @@ public class GreedyPartitioner {
             // make raw flattener for latest version of stream graph
             GraphFlattener flattener = new GraphFlattener(str);
             // get work at <pos>
-            int work = sorted.getWork(pos);
+            long work = sorted.getWork(pos);
             // make a list of candidates that have the same amount of work
             LinkedList<SIRFilter> candidates = new LinkedList<SIRFilter>();
             //System.out.println("Trying:"+pos+" "+sorted.getFilter(pos));
@@ -270,13 +270,13 @@ public class GreedyPartitioner {
                 
                             Lifter.eliminatePipe((SIRPipeline)cont);
                         } else {
-                            int best=Integer.MAX_VALUE;
+                            long best=Long.MAX_VALUE;
                             int index=0;
                             SIRStream cur=cont.get(0);
                             for(int j=0;j<cont.size()-1;j++) {
                                 SIRStream next=cont.get(j+1);
                                 if((cur instanceof SIRFilter)&&(next instanceof SIRFilter)) {
-                                    int newWork=work.getWork((SIRFilter)cont.get(j))+work.getWork((SIRFilter)cont.get(j+1));
+                                    long newWork=work.getWork((SIRFilter)cont.get(j))+work.getWork((SIRFilter)cont.get(j+1));
                                     if(newWork<best) {
                                         best=newWork;
                                         index=j;
@@ -284,7 +284,7 @@ public class GreedyPartitioner {
                                 }
                                 cur=next;
                             }
-                            if(best!=Integer.MAX_VALUE) {
+                            if(best!=Long.MAX_VALUE) {
                                 elim = FusePipe.fuseTwo((SIRPipeline)cont, index);
                             }
                         }

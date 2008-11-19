@@ -26,8 +26,8 @@ public class GreedyLayout implements Layout<RawTile> {
     private RawChip chip;
     private int numBins;
     private LinkedList<FilterSliceNode>[] bins;
-    private int[] binWeight;
-    private int maxBinWeight;
+    private long[] binWeight;
+    private long maxBinWeight;
     private int[] searchOrder; 
     private int totalWork;
     
@@ -45,7 +45,7 @@ public class GreedyLayout implements Layout<RawTile> {
         this.numBins = chip.getTotalTiles();
      
         bins = new LinkedList[numBins];
-        binWeight = new int[numBins];
+        binWeight = new long[numBins];
         for (int i = 0; i < numBins; i++) {
             bins[i] = new LinkedList<FilterSliceNode>();
             binWeight[i] = 0;
@@ -166,7 +166,7 @@ public class GreedyLayout implements Layout<RawTile> {
     }
     
     private int findMinBin() {
-        int minWeight = Integer.MAX_VALUE;
+        long minWeight = Long.MAX_VALUE;
         int minBin = -1;
         for (int i = 0; i < numBins; i++) {
             int index = searchOrder[i]; 
@@ -178,11 +178,11 @@ public class GreedyLayout implements Layout<RawTile> {
         return minBin;
     }
     
-    public int[] getBinWeights() {
+    public long[] getBinWeights() {
         return binWeight;
     }
     
-    public int maxBinWeight() {
+    public long maxBinWeight() {
         return maxBinWeight;
     }
 }

@@ -32,7 +32,7 @@ public class RawWorkEstimator extends EmptyStreamVisitor
      * Given a filter, run the work function on raw
      * and return the number of cycles for the work function
      **/
-    public static int estimateWork(SIRFilter oldFilter)
+    public static long estimateWork(SIRFilter oldFilter)
     {
         // if we have an identity filter, just return 0 since these
         // aren't mapped onto Raw
@@ -51,7 +51,7 @@ public class RawWorkEstimator extends EmptyStreamVisitor
         RawBackend.rawColumns = 4;
         RawBackend.rawRows = 4;
 
-        int work = 0;
+        long work = 0;
         //clone the Filter and create a dummy pipeline with just this
         //new cloned filter
         SIRFilter filter = (SIRFilter)ObjectDeepCloner.deepCopy(oldFilter);
@@ -239,7 +239,7 @@ public class RawWorkEstimator extends EmptyStreamVisitor
 
     //read the results of the simulation 
     //the output file is in an easy format
-    private static int readCycleCount(String dir) throws Exception
+    private static long readCycleCount(String dir) throws Exception
     {
         FileReader fr = new FileReader(dir + File.separator + 
                                        "work_est.out");
@@ -250,7 +250,7 @@ public class RawWorkEstimator extends EmptyStreamVisitor
             value = value + current;
         }
     
-        return (new Integer(value)).intValue();
+        return (new Long(value)).longValue();
     }
     
     public static void test(SIRStream stream) 

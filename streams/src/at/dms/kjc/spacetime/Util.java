@@ -247,6 +247,37 @@ public class Util {
     }
     
     /**
+     * @param array
+     * @return The median element of <pre>array</pre>.
+     */
+    public static long median(long[] array) {
+        long[] sortMe = (long[])array.clone();
+        Arrays.sort(sortMe);
+        return sortMe[sortMe.length / 2];
+    }
+    
+    /**
+     * 
+     * @param array
+     * @return The mean of the elements of <pre>array</pre>.
+     */
+    public static double mean(long[] array) {
+        return (double)sum(array) / (double)array.length;
+    }
+    
+    /**
+     * @param array
+     * @return the sum of the elements of array.
+     */
+    public static long sum(long[] array) {
+        long sum = 0;
+        for (int i = 0; i < array.length; i++) {
+            sum += array[i];
+        }
+        return sum;
+    }
+    
+    /**
      * 
      * @param dynamic
      * @param tapeType

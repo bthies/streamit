@@ -31,7 +31,7 @@ public class SimpleSlicer extends SIRSlicer {
     public SimpleSlicer(UnflatFilter[] topFilters, HashMap[] exeCounts,
                              LinearAnalyzer lfa, WorkEstimate work, int maxPartitions) {
         super(topFilters, exeCounts, lfa, work, maxPartitions);
-        workEstimation = new HashMap<FilterContent, Integer>();
+        workEstimation = new HashMap<FilterContent, Long>();
         TRASHOLD = (double)KjcOptions.slicethresh / (double)100.0;
         System.out.println("Slice Work Threshold: " + TRASHOLD + "(" + KjcOptions.slicethresh + ")");
     }
@@ -59,8 +59,8 @@ public class SimpleSlicer extends SIRSlicer {
                 // the filter content for the new filter
                 FilterContent filterContent = getFilterContent(unflatFilter);
                 // remember the work estimation based on the filter content
-                int workEstimate = getWorkEstimate(unflatFilter);
-                workEstimation.put(filterContent, new Integer(workEstimate));
+                long workEstimate = getWorkEstimate(unflatFilter);
+                workEstimation.put(filterContent, new Long(workEstimate));
 
                 SliceNode node;
                 Slice slice;
@@ -120,7 +120,7 @@ public class SimpleSlicer extends SIRSlicer {
                                 filterNode.setPrevious(node);
                                 node = filterNode;
                                 // Dummy work estimate for now
-                                workEstimation.put(fissedContent, new Integer(
+                                workEstimation.put(fissedContent, new Long(
                                                                               workEstimate / times));
                             }
                         } else {
@@ -155,7 +155,7 @@ public class SimpleSlicer extends SIRSlicer {
 
                 slices.add(slice);
 
-                int bottleNeckWork = getWorkEstimate(unflatFilter);
+                long bottleNeckWork = getWorkEstimate(unflatFilter);
                 // try to add more filters to the slice...
                 while (continueSlice(unflatFilter, filterContent.isLinear(),
                                      bottleNeckWork, ++filtersInSlice)) { // tell continue
@@ -166,7 +166,7 @@ public class SimpleSlicer extends SIRSlicer {
                     FilterContent dsContent = getFilterContent(downstream);
 
                     // remember the work estimation based on the filter content
-                    workEstimation.put(dsContent, new Integer(
+                    workEstimation.put(dsContent, new Long(
                                                               getWorkEstimate(downstream)));
                     if (getWorkEstimate(downstream) > bottleNeckWork)
                         bottleNeckWork = getWorkEstimate(downstream);
@@ -195,7 +195,7 @@ public class SimpleSlicer extends SIRSlicer {
                                 node = filterNode;
                                 unflatFilter = downstream;
                                 // Dummy work estimate for now
-                                workEstimation.put(fissedContent, new Integer(
+                                workEstimation.put(fissedContent, new Long(
                                                                               workEstimate / times));
                             }
                         } else if (!(downstream.filter instanceof SIRPredefinedFilter)) {
@@ -216,7 +216,7 @@ public class SimpleSlicer extends SIRSlicer {
                     }
                 }
 
-                sliceBNWork.put(slice, new Integer(bottleNeckWork));
+                sliceBNWork.put(slice, new Long(bottleNeckWork));
 
                 // we are finished the current slice, create the outputslicenode
                 if (unflatFilter.out != null && unflatFilter.out.length > 0) {
@@ -278,7 +278,7 @@ public class SimpleSlicer extends SIRSlicer {
      * are building
      */
     private boolean continueSlice(UnflatFilter unflatFilter, boolean isLinear,
-                                  int bottleNeckWork, int newTotalFilters) {
+                                  long bottleNeckWork, int newTotalFilters) {
         //always start a new slice if we only want one filter slices...
         //System.out.println("Continue Slice: " + unflatFilter.filter);
         if (ONE_FILTER_SLICES)
@@ -323,7 +323,7 @@ public class SimpleSlicer extends SIRSlicer {
             }
 
             // check the work estimation
-            int destEst = getWorkEstimate(dest);
+            long destEst = getWorkEstimate(dest);
             double ratio = (bottleNeckWork > destEst) ? 
                     (double) destEst / (double) bottleNeckWork : 
                     (double) bottleNeckWork / (double) destEst;
@@ -347,14 +347,14 @@ public class SimpleSlicer extends SIRSlicer {
     // get the work estimation for a filter and multiple it by the
     // number of times a filter executes in the steady-state
     // return 0 for linear filters or predefined filters
-    private int getWorkEstimate(UnflatFilter unflat) {
+    private long getWorkEstimate(UnflatFilter unflat) {
         if (unflat.isLinear())
             // return 0;
             return unflat.array.length * 10;
         return getWorkEstimate(unflat.filter);
     }
 
-    private int getWorkEstimate(SIRFilter filter) {
+    private long getWorkEstimate(SIRFilter filter) {
         //System.out.println(filter);
         if (filter.getIdent().startsWith("generatedIdFilter") && 
                 genIdWorks.containsKey(filter))

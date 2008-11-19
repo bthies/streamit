@@ -28,7 +28,7 @@ class CConfigFilter extends CConfig {
         this.filter = filter;
     
         //estimate work, code size and data size
-        int work_estimate = partitioner.getWorkEstimate().getWork(filter);
+        long work_estimate = partitioner.getWorkEstimate().getWork(filter);
         int code_size = getICodeSize();
         int data_size = DataEstimate.estimateDWS(filter);
         int input = DataEstimate.getTypeSize(filter.getInputType());

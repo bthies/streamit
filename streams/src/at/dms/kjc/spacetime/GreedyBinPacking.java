@@ -19,15 +19,15 @@ public class GreedyBinPacking {
     private SIRStream str;
     private WorkEstimate workEstimates;
     private LinkedList<SIRFilter>[] bins;
-    private int[] binWeight;
-    private int maxBinWeight;
+    private long[] binWeight;
+    private long maxBinWeight;
     
     public GreedyBinPacking(SIRStream str, int numBins, WorkEstimate workEstimates) {
         this.str = str;
         this.numBins = numBins;
         this.workEstimates = workEstimates;
         bins = new LinkedList[numBins];
-        binWeight = new int[numBins];
+        binWeight = new long[numBins];
         for (int i = 0; i < numBins; i++) {
             bins[i] = new LinkedList<SIRFilter>();
             binWeight[i] = 0;
@@ -109,7 +109,7 @@ public class GreedyBinPacking {
     }
     
     private int findMinBin() {
-        int minWeight = Integer.MAX_VALUE;
+        long minWeight = Long.MAX_VALUE;
         int minBin = -1;
         for (int i = 0; i < numBins; i++) 
             if (binWeight[i] < minWeight) {
@@ -119,8 +119,8 @@ public class GreedyBinPacking {
         return minBin;
     }
     
-    public int maxBinWeight() {
-        int maxBinWeight = 0;
+    public long maxBinWeight() {
+        long maxBinWeight = 0;
         for (int i = 0; i < numBins; i++)
             if (binWeight[i] > maxBinWeight)
                 maxBinWeight = binWeight[i];

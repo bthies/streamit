@@ -3,8 +3,8 @@ package at.dms.kjc.sir.lowering.partition.cache;
 
 class FusionInfo {
 
-    private int work_estimate;
-    private int work_estimate_no_penalty;
+    private long work_estimate;
+    private long work_estimate_no_penalty;
     
     private int code_size;
     private int data_size;
@@ -16,7 +16,7 @@ class FusionInfo {
     private int input_size;
     private int output_size;
 
-    FusionInfo(int work_estimate, int work_estimate_no_penalty, int code_size, int data_size, int pop, int peek, int push, int input_size, int output_size) {
+    FusionInfo(long work_estimate, long work_estimate_no_penalty, int code_size, int data_size, int pop, int peek, int push, int input_size, int output_size) {
         this.work_estimate = work_estimate;
         this.work_estimate_no_penalty = work_estimate_no_penalty;
         this.code_size = code_size;
@@ -29,7 +29,7 @@ class FusionInfo {
     }
 
     CCost getCost() {
-        int cost = work_estimate;
+        long cost = work_estimate;
 
         // ICode > (L1 Instruction Cache) / 0.8 
 
@@ -51,11 +51,11 @@ class FusionInfo {
         work_estimate += amount;
     }
 
-    int getWorkEstimate() {
+    long getWorkEstimate() {
         return work_estimate;
     }
 
-    int getWorkEstimateNoPenalty() {
+    long getWorkEstimateNoPenalty() {
         return work_estimate_no_penalty;
     }
 

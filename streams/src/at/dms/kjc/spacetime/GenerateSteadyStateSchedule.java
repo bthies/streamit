@@ -21,9 +21,9 @@ import at.dms.kjc.slicegraph.SliceNode;
  */
 public class GenerateSteadyStateSchedule {
     //the current time of the discrete time simulation of the steady-state
-    private int currentTime;
+    private long currentTime;
     //the time at which a tile will be idle
-    private int[] tileAvail;    
+    private long[] tileAvail;    
     //the spacetime schedule object where we record the schedule
     private SpaceTimeSchedule spaceTime;
     private RawChip rawChip;
@@ -43,7 +43,7 @@ public class GenerateSteadyStateSchedule {
         spaceTime = sts;
         rawChip = spaceTime.getRawChip();
         schedule = new LinkedList<Slice>();
-        tileAvail = new int[rawChip.getTotalTiles()];
+        tileAvail = new long[rawChip.getTotalTiles()];
         for (int i = 0; i < rawChip.getTotalTiles(); i++) {
             tileAvail[i] = 0;
         }
@@ -104,7 +104,7 @@ public class GenerateSteadyStateSchedule {
      * Advance the current simulation time to the minimum avail time of all the tiles. 
      */
     private void advanceCurrentTime() {
-        int newMin = 0;
+        long newMin = 0;
         // set newMin to max of tileavail times
         for (int i = 0; i < tileAvail.length; i++)
             if (newMin < tileAvail[i])

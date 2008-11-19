@@ -38,7 +38,7 @@ public class AdaptivePartitioner extends SIRSlicer {
      * This hashmap store the filters work plus any blocking that is
      * caused by the pipeline imbalance of the slice.
      */  
-    private HashMap<UnflatFilter, Integer> unflatOccupancy;
+    private HashMap<UnflatFilter, Long> unflatOccupancy;
     
     /**
      * The estimate of the amount of parallelism in the data-reorganization 
@@ -59,9 +59,9 @@ public class AdaptivePartitioner extends SIRSlicer {
             LinearAnalyzer lfa, WorkEstimate work, int maxPartitions,
             at.dms.kjc.spacetime.GreedyBinPacking greedyBinPacking) {
         super(topFilters, exeCounts, lfa, work, maxPartitions);
-        workEstimation = new HashMap<FilterContent, Integer>();
+        workEstimation = new HashMap<FilterContent, Long>();
         
-        unflatOccupancy = new HashMap<UnflatFilter, Integer>();
+        unflatOccupancy = new HashMap<UnflatFilter, Long>();
         
         double cpThreshold = 0.90;
         criticalPath = greedyBinPacking.getCriticalpath(cpThreshold);
@@ -86,7 +86,7 @@ public class AdaptivePartitioner extends SIRSlicer {
             new ScheduleModel(spaceTime, layout, spaceTime.getScheduleList());
         model.createModel();
         
-        int spaceTimeCriticalPath = 0, spaceCriticalPath = 0;
+        long spaceTimeCriticalPath = 0, spaceCriticalPath = 0;
         
         int interSliceCommCost = 0;
         
@@ -164,8 +164,8 @@ public class AdaptivePartitioner extends SIRSlicer {
                 // the filter content for the new filter
                 FilterContent filterContent = getFilterContent(unflatFilter);
                 // remember the work estimation based on the filter content
-                int workEstimate = getWorkEstimate(unflatFilter);
-                workEstimation.put(filterContent, new Integer(workEstimate));
+                long workEstimate = getWorkEstimate(unflatFilter);
+                workEstimation.put(filterContent, new Long(workEstimate));
 
                 SliceNode node;
                 Slice slice;
@@ -225,7 +225,7 @@ public class AdaptivePartitioner extends SIRSlicer {
                                 filterNode.setPrevious(node);
                                 node = filterNode;
                                 // Dummy work estimate for now
-                                workEstimation.put(fissedContent, new Integer(
+                                workEstimation.put(fissedContent, new Long(
                                         workEstimate / times));
                             }
                         } else {
@@ -263,7 +263,7 @@ public class AdaptivePartitioner extends SIRSlicer {
                 
                 LinkedList<UnflatFilter> sliceSoFar = new LinkedList<UnflatFilter>();
                 sliceSoFar.add(unflatFilter);
-                int bottleNeckWork = getWorkEstimate(unflatFilter);
+                long bottleNeckWork = getWorkEstimate(unflatFilter);
                 unflatOccupancy.put(unflatFilter, bottleNeckWork * KjcOptions.steadymult);
                 
                 // try to add more filters to the slice...
@@ -276,7 +276,7 @@ public class AdaptivePartitioner extends SIRSlicer {
                     FilterContent dsContent = getFilterContent(downstream);
 
                     // remember the work estimation based on the filter content
-                    workEstimation.put(dsContent, new Integer(
+                    workEstimation.put(dsContent, new Long(
                             getWorkEstimate(downstream)));
                     if (getWorkEstimate(downstream) > bottleNeckWork)
                         bottleNeckWork = getWorkEstimate(downstream);                
@@ -306,7 +306,7 @@ public class AdaptivePartitioner extends SIRSlicer {
                                 node = filterNode;
                                 unflatFilter = downstream;
                                 // Dummy work estimate for now
-                                workEstimation.put(fissedContent, new Integer(
+                                workEstimation.put(fissedContent, new Long(
                                         workEstimate / times));
                             }
                         } else if (!(downstream.filter instanceof SIRPredefinedFilter)) {
@@ -327,7 +327,7 @@ public class AdaptivePartitioner extends SIRSlicer {
                     }
                 }
 
-                sliceBNWork.put(slice, new Integer(bottleNeckWork));
+                sliceBNWork.put(slice, new Long(bottleNeckWork));
 
                 // we are finished the current slice, create the outputslicenode
                 if (unflatFilter.out != null && unflatFilter.out.length > 0) {
@@ -439,8 +439,8 @@ public class AdaptivePartitioner extends SIRSlicer {
                 return false;
             }
             
-            int steadyCommCost = steadyCommCost(unflatFilter, dest);
-            int wastedCycles = wastedCycles(dest, sliceSoFar);
+            long steadyCommCost = steadyCommCost(unflatFilter, dest);
+            long wastedCycles = wastedCycles(dest, sliceSoFar);
             System.out.println("Add " + dest.filter + "? " + 
                     criticalPath.contains(dest.filter) +
                     " Comm Cost: " +
@@ -457,10 +457,10 @@ public class AdaptivePartitioner extends SIRSlicer {
         return false;
     }
     
-    private int wastedCycles(UnflatFilter filter, LinkedList<UnflatFilter>sliceSoFar) {
+    private long wastedCycles(UnflatFilter filter, LinkedList<UnflatFilter>sliceSoFar) {
         UnflatFilter prevFilter = sliceSoFar.get(sliceSoFar.size() - 1);
-        int filterWorkEst = getWorkEstimate(filter.filter) * KjcOptions.steadymult;
-        int proposedOccupancy = occupancyForward(filter, prevFilter);
+        long filterWorkEst = getWorkEstimate(filter.filter) * KjcOptions.steadymult;
+        long proposedOccupancy = occupancyForward(filter, prevFilter);
         
         
         if (proposedOccupancy >= filterWorkEst) {
@@ -471,15 +471,15 @@ public class AdaptivePartitioner extends SIRSlicer {
             unflatOccupancy.put(filter, proposedOccupancy);
             //and the wasted work from the addition of this 
             //filter to the pipeline is just the new filter's wasted cycles!
-            return unflatOccupancy.get(filter).intValue() - (
+            return unflatOccupancy.get(filter).longValue() - (
                     getWorkEstimate(filter.filter) * KjcOptions.steadymult);
         }
         else {
             //harder case, this filter does more work then what's in the 
             //slice so far, so calculate the *additional* wasted work from 
             //adding this slice
-            int newWastedWork = 0;
-            int oldWastedWork = 0;
+            long newWastedWork = 0;
+            long oldWastedWork = 0;
             
             unflatOccupancy.put(filter, filterWorkEst);
             
@@ -489,12 +489,12 @@ public class AdaptivePartitioner extends SIRSlicer {
             //add the filter temporary to the slice list to make the calculation easier
             sliceSoFar.add(filter);
             for (int i = sliceSoFar.size() - 2; i >= 0; i--) {
-                int currentWork = getWorkEstimate(sliceSoFar.get(i));
-                oldWastedWork += (unflatOccupancy.get(sliceSoFar.get(i)).intValue() -
+                long currentWork = getWorkEstimate(sliceSoFar.get(i));
+                oldWastedWork += (unflatOccupancy.get(sliceSoFar.get(i)).longValue() -
                         currentWork);
                 
                
-                int currentOcc = 
+                long currentOcc = 
                     occupancyBackward(sliceSoFar.get(i), sliceSoFar.get(i+1));
                 //make sure the newly calculated occupancy is at least as great as before
                 //and remember it!
@@ -511,8 +511,8 @@ public class AdaptivePartitioner extends SIRSlicer {
         }
     }
     
-    private int occupancyForward(UnflatFilter filter, UnflatFilter upstream) {
-        int occ = 
+    private long occupancyForward(UnflatFilter filter, UnflatFilter upstream) {
+        long occ = 
             unflatOccupancy.get(upstream).intValue() - 
             startupCost(filter, upstream) + 
             workEstOneFiring(filter);
@@ -526,8 +526,8 @@ public class AdaptivePartitioner extends SIRSlicer {
         return occ;
     }
     
-    private int occupancyBackward(UnflatFilter filter, UnflatFilter downstream) {
-        int occ = 
+    private long occupancyBackward(UnflatFilter filter, UnflatFilter downstream) {
+        long occ = 
             unflatOccupancy.get(downstream).intValue() + 
             startupCost(downstream, filter) - 
             workEstOneFiring(downstream);
@@ -539,7 +539,7 @@ public class AdaptivePartitioner extends SIRSlicer {
         return occ;
     }
     
-    private int workEstOneFiring(UnflatFilter filter) {
+    private long workEstOneFiring(UnflatFilter filter) {
         return getWorkEstimate(filter.filter) / ((int[])exeCounts[1].get(filter.filter))[0];
     }
     
@@ -548,7 +548,7 @@ public class AdaptivePartitioner extends SIRSlicer {
             upstream.filter.getPushInt();
         double myPop = filter.filter.getPopInt();
         
-        int prevWorkEstOneFiring = getWorkEstimate(upstream.filter) / 
+        long prevWorkEstOneFiring = getWorkEstimate(upstream.filter) / 
              ((int[])exeCounts[1].get(upstream.filter))[0];
         
         //how long it will take me to fire the first time 
@@ -577,14 +577,14 @@ public class AdaptivePartitioner extends SIRSlicer {
     // get the work estimation for a filter and multiple it by the
     // number of times a filter executes in the steady-state
     // return 0 for linear filters or predefined filters
-    private int getWorkEstimate(UnflatFilter unflat) {
+    private long getWorkEstimate(UnflatFilter unflat) {
         if (unflat.isLinear())
             // return 0;
             return unflat.array.length * 10;
         return getWorkEstimate(unflat.filter);
     }
 
-    private int getWorkEstimate(SIRFilter filter) {
+    private long getWorkEstimate(SIRFilter filter) {
         if (filter.getIdent().startsWith("generatedIdFilter") && 
                 genIdWorks.containsKey(filter))
             return genIdWorks.get(filter).intValue();

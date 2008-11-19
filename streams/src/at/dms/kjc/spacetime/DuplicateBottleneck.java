@@ -28,7 +28,7 @@ import at.dms.kjc.*;
  */
 public class DuplicateBottleneck {
     
-    private Vector<Integer> sortedWorkEsts;
+    private Vector<Long> sortedWorkEsts;
     private Vector<SIRFilter> sortedFilters;
     
     public DuplicateBottleneck() {
@@ -52,9 +52,9 @@ public class DuplicateBottleneck {
         GreedyBinPacking binPacker = new GreedyBinPacking(str, numCores, work);
         binPacker.pack();
         //get the max bin weight for the packing
-        int oldWork = binPacker.maxBinWeight();
+        long oldWork = binPacker.maxBinWeight();
         //the work of the new partitioning
-        int newWork = 0;
+        long newWork = 0;
         int oldOutputsPerSteady = Util.outputsPerSteady(str, work.getExecutionCounts());
         int newOutputsPerSteady = 0;
         //the percentage change
@@ -65,7 +65,7 @@ public class DuplicateBottleneck {
             //StreamItDot.printGraph(oldStr, "oldstr.dot");
             WorkList workList = work.getSortedFilterWork();
             SIRFilter bigDup = null;
-            int bigDupWork = 0;
+            long bigDupWork = 0;
             for (int i = workList.size() - 1; i >= 0; i--) {
                 if (StatelessDuplicate.isFissable(workList.getFilter(i))) {
                     bigDup = workList.getFilter(i);
@@ -195,7 +195,7 @@ public class DuplicateBottleneck {
             StatelessDuplicate.doit(filter, reps);
             //for right now just duplicate ever filter, don't worry about comp/comm
             /*  
-            int filterWork = work.getWork(filter);
+            long filterWork = work.getWork(filter);
             int commRate = ((int[])work.getExecutionCounts().get(filter))[0] * 
                 (filter.getPushInt() + filter.getPopInt());
             
@@ -241,10 +241,10 @@ public class DuplicateBottleneck {
         findAverageWork(str, work, averageWork);
         
         
-        int totalWork = 0;
+        long totalWork = 0;
         for (int i = 0; i < workList.size(); i++) {
             SIRFilter filter = workList.getFilter(i);
-            int filterWork = work.getWork(filter); 
+            long filterWork = work.getWork(filter); 
             System.out.println("Sorted Work " + i + ": " + filter + " work " 
                     + filterWork + ", is fissable: " + StatelessDuplicate.isFissable(filter));
             totalWork += filterWork;
@@ -257,9 +257,9 @@ public class DuplicateBottleneck {
                 System.out.println("  not fissible");
                 continue;
             }
-            int commRate = ((int[])work.getExecutionCounts().get(filter))[0] * 
+            long commRate = ((long[])work.getExecutionCounts().get(filter))[0] * 
                  (filter.getPushInt() + filter.getPopInt());
-            int filterWork = work.getWork(filter);
+            long filterWork = work.getWork(filter);
             if (filterWork / commRate <= 10) {
                 System.out.println("   Comp/Comp rate too low!");
                 continue;
@@ -300,20 +300,20 @@ public class DuplicateBottleneck {
      * @param str The stream graph
      */
     public void percentStateless(SIRStream str) {
-        sortedWorkEsts = new Vector<Integer>();
+        sortedWorkEsts = new Vector<Long>();
         sortedFilters = new Vector<SIRFilter>();
         //get the work estimate
         WorkEstimate work = WorkEstimate.getWorkEstimate(str);
         //find the ordering of filters
         walkSTR(str, work);
         
-        int totalWork = 0;
-        int statefulWork = 0; 
+        long totalWork = 0;
+        long statefulWork = 0; 
         
         for (int i = 0; i < sortedFilters.size(); i++) {
-            totalWork += sortedWorkEsts.get(i).intValue();
+            totalWork += sortedWorkEsts.get(i).longValue();
             if (StatelessDuplicate.hasMutableState(sortedFilters.get(i)))
-                    statefulWork += sortedWorkEsts.get(i).intValue();
+                    statefulWork += sortedWorkEsts.get(i).longValue();
         }
         System.out.println(" stateful work / total work = " + 
                 (((double)statefulWork)) / (((double)totalWork)));
@@ -333,22 +333,22 @@ public class DuplicateBottleneck {
         WorkEstimate work = WorkEstimate.getWorkEstimate(str);
         WorkList workList = work.getSortedFilterWork();
                 //find the total work
-        int totalWork = 0;
+        long totalWork = 0;
         for (int i = 0; i < workList.size(); i++) {
             SIRFilter filter = workList.getFilter(i);
-            int filterWork = work.getWork(filter); 
+            long filterWork = work.getWork(filter); 
             System.out.println("Sorted Work " + i + ": " + filter + " work " 
                     + filterWork + ", is fissable: " + StatelessDuplicate.isFissable(filter));
             totalWork += filterWork;
         }
         //find the ideal work distribution
-        int idealWork = totalWork / numCores;
+        long idealWork = totalWork / numCores;
         boolean change = false;
         System.out.println("Ideal Work: " + idealWork);
         
         for (int i = workList.size() - 1; i >= 0; i--) {
             SIRFilter filter = workList.getFilter(i);
-            int filterWork = work.getWork(filter);
+            long filterWork = work.getWork(filter);
             if (!StatelessDuplicate.isFissable(filter))
                 continue;
             System.out.println("Analyzing " + filter + " work = " + filterWork);
@@ -399,12 +399,12 @@ public class DuplicateBottleneck {
         WorkEstimate work = WorkEstimate.getWorkEstimate(str);
         //find the ordering of filters
         WorkList sortedFilters = work.getSortedFilterWork();
-        int totalWork = 0;
+        long totalWork = 0;
         for (int i = 0; i < sortedFilters.size(); i++) {
             totalWork += sortedFilters.getWork(i);
         }
         
-        int idealWork = totalWork / SpaceTimeBackend.getRawChip().getTotalTiles();
+        long idealWork = totalWork / SpaceTimeBackend.getRawChip().getTotalTiles();
         
         System.out.println("Ideal Work: " + idealWork);
         
@@ -491,10 +491,10 @@ public class DuplicateBottleneck {
         if (str instanceof SIRFilter) {
             SIRFilter filter = (SIRFilter)str; 
             int i;
-            int workEst = work.getWork(filter);
+            long workEst = work.getWork(filter);
             //find the right place to add this to
             for (i = 0; i < sortedFilters.size(); i++) {
-                if (workEst > sortedWorkEsts.get(i).intValue())
+                if (workEst > sortedWorkEsts.get(i).longValue())
                     break;
             }
             sortedFilters.add(i, filter);
@@ -510,7 +510,7 @@ public class DuplicateBottleneck {
     private void findAverageWork(SIRStream str, WorkEstimate work, 
             HashMap<SIRStream, Double> averageWork) {
         // the total amount of fissable work per container
-        HashMap<SIRStream, Integer> sum = new HashMap<SIRStream, Integer>();
+        HashMap<SIRStream, Long> sum = new HashMap<SIRStream, Long>();
         // the number of fissable filters per container
         HashMap<SIRStream, Integer> count = new HashMap<SIRStream, Integer>();
 
@@ -525,7 +525,7 @@ public class DuplicateBottleneck {
      */
     private void findWork(SIRStream str, WorkEstimate work, 
                           HashMap<SIRStream, Integer> count,
-                          HashMap<SIRStream, Integer> sum,
+                          HashMap<SIRStream, Long> sum,
                           HashMap<SIRStream, Double> average) {
         if (str instanceof SIRFilter) {
             SIRFilter filter = (SIRFilter)str;
@@ -534,7 +534,7 @@ public class DuplicateBottleneck {
             average.put(filter, (double)work.getWork(filter));
         } else {
             SIRContainer cont = (SIRContainer)str;
-            int mysum = 0;
+            long mysum = 0;
             int mycount = 0;
             // visit children to accumulate sum, count
             for (int i=0; i<cont.size(); i++) {

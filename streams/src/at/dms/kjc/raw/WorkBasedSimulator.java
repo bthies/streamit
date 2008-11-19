@@ -609,7 +609,7 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
     
     
     //get the work estimation for a filter or joiner, a joiner defaults to 1 work cycle
-    private int getWorkEstimate(FlatNode node)
+    private long getWorkEstimate(FlatNode node)
     {
         if (node.isFilter() || node.isJoiner())
             return workEstimatesMap.getEstimate(node);

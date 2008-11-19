@@ -66,8 +66,8 @@ public class WorkEstimate {
         TreeMap<SIROperator, Object> treeMap = new TreeMap<SIROperator, Object>(new Comparator() {
                 public int compare(Object o1, Object o2) {
                     // assume these are map.entry's
-                    int work1 = ((WorkInfo)map.get(o1)).getTotalWork();
-                    int work2 = ((WorkInfo)map.get(o2)).getTotalWork();
+                    long work1 = ((WorkInfo)map.get(o1)).getTotalWork();
+                    long work2 = ((WorkInfo)map.get(o2)).getTotalWork();
                     if(o1==o2)
                         return 0;
                     else if (work1 < work2)
@@ -113,7 +113,7 @@ public class WorkEstimate {
             // get its parent
             SIRContainer parent = filter.getParent();
             // get work
-            int work = ((WorkInfo)entry.getValue()).getTotalWork();
+            long work = ((WorkInfo)entry.getValue()).getTotalWork();
             if(parent instanceof SIRSplitJoin) {
                 // Account for using semiFuse of SplitJoins.  For the
                 // greedy partitioner, the real work cost of the
@@ -139,7 +139,7 @@ public class WorkEstimate {
      * Returns the work estimate for filter <pre>obj</pre>.  Requires that
      * <pre>obj</pre> was present in the original graph used to construct this.
      */
-    public int getWork(SIRFilter obj) {
+    public long getWork(SIRFilter obj) {
         assert workMap.containsKey(obj): "Don't have work for " + obj;
         return ((WorkInfo)workMap.get(obj)).getTotalWork();
     }
@@ -180,7 +180,7 @@ public class WorkEstimate {
         WorkList sorted = getSortedFilterWork();
         System.err.println("  Work Estimates:");
         // first sum the total work
-        int totalWork = 0;
+        long totalWork = 0;
         for (int i=sorted.size()-1; i>=0; i--) {
             totalWork += sorted.getWork(i);
         }
@@ -218,8 +218,8 @@ public class WorkEstimate {
             SIROperator obj = (SIROperator)it.next();
             if (obj instanceof SIRFilter) {
                 int reps = ((int[])executionCounts.get(obj))[0];
-                //int work = RawWorkEstimator.estimateWork((SIRFilter)obj);
-                int workEstimate;
+                //long work = RawWorkEstimator.estimateWork((SIRFilter)obj);
+                long workEstimate;
                 
                 if (UNROLL_FOR_WORK_EST) {
                     SIRFilter newFilter = (SIRFilter)ObjectDeepCloner.deepCopy((SIRStream)obj); 
@@ -242,7 +242,7 @@ public class WorkEstimate {
         /**
          * An estimate of the amount of work found by this filter.
          */
-        private int work;
+        private long work;
 
         /**
          * The filter we're looking at.
@@ -264,7 +264,7 @@ public class WorkEstimate {
         /**
          * Returns estimate of work function in <pre>filter</pre>
          */
-        public static int getWork(SIRFilter filter) {
+        public static long getWork(SIRFilter filter) {
             // if no work function (e.g., identity filters?) return 0
             if (!filter.needsWork () && !(filter instanceof SIRIdentity)) {
                 return 0;
@@ -279,7 +279,7 @@ public class WorkEstimate {
         /**
          * Returns estimate of work in <pre>node</pre> of <pre>filter</pre>, use on first call only.
          */
-        public static int getWork(SIRFilter filter, JPhylum node) {
+        public static long getWork(SIRFilter filter, JPhylum node) {
             WorkVisitor visitor = new WorkVisitor(filter);
             node.accept(visitor);
             return visitor.work;
@@ -288,7 +288,7 @@ public class WorkEstimate {
         /**
          * Returns estimate of work in <pre>node</pre> of <pre>filter</pre>, use on internal calls.
          */
-        private static int getWork(SIRFilter filter, JPhylum node, Set<JMethodDeclaration> methodsBeingProcessed ) {
+        private static long getWork(SIRFilter filter, JPhylum node, Set<JMethodDeclaration> methodsBeingProcessed ) {
             WorkVisitor visitor = new WorkVisitor(filter, methodsBeingProcessed);
             node.accept(visitor);
             return visitor.work;
@@ -370,11 +370,10 @@ public class WorkEstimate {
         public void visitWhileStatement(JWhileStatement self,
                                         JExpression cond,
                                         JStatement body) {
-            //System.err.println("WARNING:  Estimating work in loop, assume N=" +
-            //LOOP_COUNT);
-            int oldWork = work;
+            System.err.println("WARNING:  Estimating work in while loop, assume N=" + LOOP_COUNT + " (in " + theFilter.getIdent() + ")");
+            long oldWork = work;
             super.visitWhileStatement(self, cond, body);
-            int newWork = work;
+            long newWork = work;
             work = oldWork + LOOP_COUNT * (newWork - oldWork);
         }
 
@@ -410,8 +409,8 @@ public class WorkEstimate {
 
             // get the work in the then and else clauses and average
             // them...
-            int thenWork = WorkVisitor.getWork(theFilter, thenClause, methodsBeingProcessed);
-            int elseWork;
+            long thenWork = WorkVisitor.getWork(theFilter, thenClause, methodsBeingProcessed);
+            long elseWork;
             if (elseClause != null) {
                 elseWork = WorkVisitor.getWork(theFilter, elseClause, methodsBeingProcessed);
             } else {
@@ -435,11 +434,10 @@ public class WorkEstimate {
             // try to determine how many times the loop executes
             int loopCount = Unroller.getNumExecutions(init, cond, incr, body);
             if (loopCount==-1) {
-                //System.err.println("WARNING:  Estimating work in loop, assume N=" +
-                //LOOP_COUNT);
+                System.err.println("WARNING:  Estimating work in for loop, assume N=" + LOOP_COUNT + " (in filter " + theFilter.getIdent() + ")");
                 loopCount = LOOP_COUNT;
             }
-            int oldWork = work;
+            long oldWork = work;
             if (cond != null) {
                 cond.accept(this);
             }
@@ -447,7 +445,7 @@ public class WorkEstimate {
                 incr.accept(this);
             }
             body.accept(this);
-            int newWork = work;
+            long newWork = work;
             work = oldWork + loopCount * (newWork - oldWork);
         }
 
@@ -457,11 +455,10 @@ public class WorkEstimate {
         public void visitDoStatement(JDoStatement self,
                                      JExpression cond,
                                      JStatement body) {
-            //System.err.println("WARNING:  Estimating work in loop, assume N=" +
-            //LOOP_COUNT);
-            int oldWork = work;
+            System.err.println("WARNING:  Estimating work in do loop, assume N=" + LOOP_COUNT + " (in filter " + theFilter.getIdent() + ")");
+            long oldWork = work;
             super.visitDoStatement(self, cond, body);
-            int newWork = work;
+            long newWork = work;
             work = oldWork + LOOP_COUNT * (newWork - oldWork);
         }
 

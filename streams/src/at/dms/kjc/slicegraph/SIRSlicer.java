@@ -29,8 +29,8 @@ import at.dms.kjc.sir.lowering.partition.WorkEstimate;
  * 
  */
 public abstract class SIRSlicer extends Slicer {
-    // Slice->Integer for bottleNeck work estimation
-    protected HashMap<Slice, Integer> sliceBNWork;
+    // Slice->Long for bottleNeck work estimation
+    protected HashMap<Slice, Long> sliceBNWork;
 
     /** The startup cost of a filter when starting a slice */
     protected HashMap<FilterSliceNode, Integer> filterStartupCost;
@@ -55,10 +55,10 @@ public abstract class SIRSlicer extends Slicer {
      * This hashmap store the filters work plus any blocking that is
      * caused by the pipeline imbalance of the slice.
      */  
-    protected HashMap<FilterSliceNode, Integer> filterOccupancy;
+    protected HashMap<FilterSliceNode, Long> filterOccupancy;
     
 //  filtercontent -> work estimation
-    protected HashMap<FilterContent, Integer> workEstimation;
+    protected HashMap<FilterContent, Long> workEstimation;
 
     protected int steadyMult;
     
@@ -86,11 +86,11 @@ public abstract class SIRSlicer extends Slicer {
         this.work = work;
         if (topFilters != null)
             topSlices = new LinkedList<Slice>();
-        sliceBNWork = new HashMap<Slice, Integer>();
+        sliceBNWork = new HashMap<Slice, Long>();
         steadyMult = KjcOptions.steadymult;
         filterStartupCost = new HashMap<FilterSliceNode, Integer>();
         bottleNeckFilter = new HashMap<Slice, FilterSliceNode>();
-        filterOccupancy = new HashMap<FilterSliceNode, Integer>();
+        filterOccupancy = new HashMap<FilterSliceNode, Long>();
         genIdWorks = new HashMap<SIRFilter, Integer>();
         sirToContent = new HashMap<SIRFilter, FilterContent>();
     }
@@ -173,7 +173,7 @@ public abstract class SIRSlicer extends Slicer {
      */
     public void addFilterToSlice(FilterSliceNode node, 
             Slice slice) {
-        int workEst = workEst(node);
+        long workEst = workEst(node);
         
         //add the node to the work estimation
         if (!workEstimation.containsKey(node.getFilter()))
@@ -205,8 +205,8 @@ public abstract class SIRSlicer extends Slicer {
                     //multiple the estimated cost of on item by the number
                     //of items that passes through it (determined by the schedule mult).
                     workEstimation.put(filter.getFilter(), 
-                            MultiLevelSplitsJoins.IDENTITY_WORK *
-                            filter.getFilter().getSteadyMult());
+                            (long)(MultiLevelSplitsJoins.IDENTITY_WORK *
+                                   filter.getFilter().getSteadyMult()));
                 }
                 
                 //remember that that the only filter, the id, is the bottleneck..
@@ -229,8 +229,8 @@ public abstract class SIRSlicer extends Slicer {
      * @return The work estimation for the filter slice node for one steady-state
      * mult of the filter.
      */
-    public int getFilterWork(FilterSliceNode node) {
-        return workEstimation.get(node.getFilter()).intValue();
+    public long getFilterWork(FilterSliceNode node) {
+        return workEstimation.get(node.getFilter()).longValue();
     }
 
     
@@ -239,7 +239,7 @@ public abstract class SIRSlicer extends Slicer {
      * @return The work estimation for the filter for one steady-state 
      * multiplied by the steady-state multiplier
      */
-    public int getFilterWorkSteadyMult(FilterSliceNode node)  {
+    public long getFilterWorkSteadyMult(FilterSliceNode node)  {
         return getFilterWork(node)  * steadyMult;
     }
 
@@ -248,18 +248,18 @@ public abstract class SIRSlicer extends Slicer {
      * @return The work estimation for the slice (the estimation for the filter that does the
      * most work for one steady-state mult of the filter multipled by the steady state multiplier.
      */
-    public int getSliceBNWork(Slice slice) {
+    public long getSliceBNWork(Slice slice) {
         assert sliceBNWork.containsKey(slice);
-        return sliceBNWork.get(slice).intValue() * steadyMult;
+        return sliceBNWork.get(slice).longValue() * steadyMult;
     }
     
     /**
      * This hashmap store the filters work plus any blocking that is
      * caused by the pipeline imbalance of the slice. 
      */
-    public int getFilterOccupancy(FilterSliceNode filter) {
+    public long getFilterOccupancy(FilterSliceNode filter) {
         assert filterOccupancy.containsKey(filter);
-        return filterOccupancy.get(filter).intValue();
+        return filterOccupancy.get(filter).longValue();
     }
      
     
@@ -289,7 +289,7 @@ public abstract class SIRSlicer extends Slicer {
             //    bottleNeckFilter.get(slice);
             
             SliceNode prev = slice.getHead().getNextFilter();
-            int prevWork = getFilterWorkSteadyMult((FilterSliceNode)prev);
+            long prevWork = getFilterWorkSteadyMult((FilterSliceNode)prev);
             
             //set the first filter
             filterOccupancy.put((FilterSliceNode)prev, prevWork);
@@ -301,12 +301,12 @@ public abstract class SIRSlicer extends Slicer {
             SliceNode current = prev.getNext();
             
             while (current.isFilterSlice()) {
-                int occ = 
-                    filterOccupancy.get((FilterSliceNode)prev).intValue() - 
-                    filterStartupCost.get((FilterSliceNode)current).intValue() + 
+                long occ = 
+                    filterOccupancy.get((FilterSliceNode)prev).longValue() - 
+                    filterStartupCost.get((FilterSliceNode)current).longValue() + 
                     getWorkEstOneFiring((FilterSliceNode)current);
                 
-                CommonUtils.println_debugging(filterOccupancy.get((FilterSliceNode)prev).intValue() + " - " +  
+                CommonUtils.println_debugging(filterOccupancy.get((FilterSliceNode)prev).longValue() + " - " +  
                     filterStartupCost.get((FilterSliceNode)current).intValue() + " + " +  
                     getWorkEstOneFiring((FilterSliceNode)current));
                 
@@ -338,9 +338,9 @@ public abstract class SIRSlicer extends Slicer {
             current = next.getPrevious();
             
             while (current.isFilterSlice()) {
-                int occ = 
-                    filterOccupancy.get((FilterSliceNode)next).intValue() + 
-                    filterStartupCost.get((FilterSliceNode)next).intValue() - 
+                long occ = 
+                    filterOccupancy.get((FilterSliceNode)next).longValue() + 
+                    filterStartupCost.get((FilterSliceNode)next).longValue() - 
                     getWorkEstOneFiring((FilterSliceNode)next);
                 
                 assert occ > 0;
@@ -348,7 +348,7 @@ public abstract class SIRSlicer extends Slicer {
                 //use the backward occupancy
                 if (occ > getFilterOccupancy((FilterSliceNode)current)) {
                     CommonUtils.println_debugging("Setting occupancy (back) for " + current + " " + occ);   
-                    filterOccupancy.put((FilterSliceNode)current, new Integer(occ));
+                    filterOccupancy.put((FilterSliceNode)current, new Long(occ));
                 }
                 next = current;
                 current = current.getPrevious();
@@ -379,7 +379,7 @@ public abstract class SIRSlicer extends Slicer {
     private void calcStartupCost() {
         Slice[] slices = getSliceGraph();
         for (int i = 0; i < slices.length; i++) {
-            int maxWork;
+            long maxWork;
             FilterSliceNode maxFilter;
             //get the first filter
             FilterSliceNode node = slices[i].getHead().getNextFilter();
@@ -548,9 +548,9 @@ public abstract class SIRSlicer extends Slicer {
         return out.toString();
     }
     
-    protected int getWorkEstimate(FilterContent fc) {
+    protected long getWorkEstimate(FilterContent fc) {
         assert workEstimation.containsKey(fc);
-        return workEstimation.get(fc).intValue();
+        return workEstimation.get(fc).longValue();
     }
 
 
@@ -561,7 +561,7 @@ public abstract class SIRSlicer extends Slicer {
      * @param node
      * @return 
      */
-    public int getWorkEstOneFiring(FilterSliceNode node) {
+    public long getWorkEstOneFiring(FilterSliceNode node) {
         return (getFilterWork(node) / (node.getFilter().getSteadyMult() / steadyMult));
     }
     
@@ -664,10 +664,10 @@ public abstract class SIRSlicer extends Slicer {
         }
         // update bottleNeckFilter, sliceBNWork.
         bottleNeckFilter = new HashMap<Slice, FilterSliceNode>();
-        sliceBNWork = new HashMap<Slice, Integer>();
+        sliceBNWork = new HashMap<Slice, Long>();
         for (Slice s : sliceGraph) {
             SimpleSlice ss = (SimpleSlice)s;
-            int workEst = workEst(ss.getBody());
+            long workEst = workEst(ss.getBody());
             sliceBNWork.put(ss, workEst);
             bottleNeckFilter.put(ss,ss.getBody());
         }

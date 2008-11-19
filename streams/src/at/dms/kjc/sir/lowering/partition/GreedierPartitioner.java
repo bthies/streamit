@@ -60,8 +60,8 @@ public class GreedierPartitioner {
                 public int compare(Object o1,Object o2) {
                     if(o1==o2)
                         return 0;
-                    int work1=((Pair)o1).work;
-                    int work2=((Pair)o2).work;
+                    long work1=((Pair)o1).work;
+                    long work2=((Pair)o2).work;
                     if(work1==work2) {
                         /*if(o1.hashCode()<o2.hashCode())
                           return -1;
@@ -84,12 +84,15 @@ public class GreedierPartitioner {
                           return -1;
                           else
                           return 1;*/
-                    } else
-                        return work1-work2;
-                    /*else if(work1<work2)
-                      return -1;
-                      else
-                      return 1;*/
+                    } else {
+                        if (work1-work2>0) {
+                            return 1;
+                        } else if (work1-work2<0) {
+                            return -1;
+                        } else {
+                            return 0;
+                        }
+                    }
                 }
             });
 	//Setup full list of nodes ordered by work
@@ -97,8 +100,8 @@ public class GreedierPartitioner {
                 public int compare(Object o1,Object o2) {
                     if(o1==o2)
                         return 0;
-                    int work1=((Node)o1).work;
-                    int work2=((Node)o2).work;
+                    long work1=((Node)o1).work;
+                    long work2=((Node)o2).work;
                     if(work1==work2)
                         if(o1.hashCode()<o2.hashCode())
                             return -1;
@@ -202,7 +205,7 @@ public class GreedierPartitioner {
         }
 
         Pair smallest=(Pair)pairs.firstKey(); //Get smallest pair
-        int work=smallest.work;
+        long work=smallest.work;
         ArrayList<Pair> temp=new ArrayList<Pair>();
 	/* There may be several filters with smallest work though. If
 	 * there are prefer the ones near the top of the container.
@@ -214,7 +217,7 @@ public class GreedierPartitioner {
             temp.add(smallest); //Save smallest
             pairs.remove(smallest); //Remove smallest so next smallest can be reached
             Pair newPair=(Pair)pairs.firstKey();
-            int newWork=newPair.work;
+            long newWork=newPair.work;
             if(newWork==work) { //There are several filters with smallest work
                 cont=true;
                 SIRContainer parent1=smallest.n1.filter.getParent();
@@ -403,7 +406,7 @@ public class GreedierPartitioner {
 	/**
 	 * The work estimate for this filter.
 	 */
-        int work;
+        long work;
 	/**
 	 * Pointer to prev Node.
 	 */
@@ -430,7 +433,7 @@ public class GreedierPartitioner {
 	 * @param filter The filter this Node represents.
 	 * @param work The work estimate of this Node.
 	 */
-        public Node(SIRFilter filter,int work) {
+        public Node(SIRFilter filter,long work) {
             this.filter=filter;
             this.work=work;
         }
@@ -460,7 +463,7 @@ public class GreedierPartitioner {
 	/**
 	 * Work estimate of Pair (sum of work from Nodes)
 	 */
-        int work;
+        long work;
 	/**
 	 * Construct Pair.
 	 * @param n1 First node in Pair.

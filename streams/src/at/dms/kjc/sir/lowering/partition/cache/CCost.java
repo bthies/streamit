@@ -5,13 +5,13 @@ class CCost {
      * The cost of a single fused partition or a set of partitions
      * including various fusion overheads.
      */
-    private final int cost;
+    private final long cost;
 
-    public CCost(int cost) {
+    public CCost(long cost) {
         this.cost = cost;
     }
 
-    public int getCost() {
+    public long getCost() {
         return cost;
     }
 
@@ -20,7 +20,7 @@ class CCost {
      * everything.
      */
     public static CCost MAX_VALUE() {
-        return new CCost(Integer.MAX_VALUE/2-1);
+        return new CCost(Long.MAX_VALUE/2-1);
     }
 
     /**
@@ -36,11 +36,11 @@ class CCost {
      * partitions, either in a splitjoin or pipeline).
      */
     public static CCost combine(CCost cost1, CCost cost2) {
-        int cost = cost1.getCost() + cost2.getCost();
+        long cost = cost1.getCost() + cost2.getCost();
 
         // keep within range so that we can add again
-        if (cost > Integer.MAX_VALUE/2-1) {
-            cost = Integer.MAX_VALUE/2-1;
+        if (cost > Long.MAX_VALUE/2-1) {
+            cost = Long.MAX_VALUE/2-1;
         }
 
         return new CCost(cost);
@@ -61,7 +61,7 @@ class CCost {
       // if iCode threshold is exceeded, then bump up the other
       // costs.
       if (iCode > CachePartitioner.ICODE_THRESHOLD) {
-      cost = Integer.MAX_VALUE/2-1;
+      cost = Long.MAX_VALUE/2-1;
       }
 
       return new CCost(cost, iCode);

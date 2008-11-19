@@ -10,7 +10,7 @@ public class PartitionUtil {
      * Prints work summaries to the screen.
      */
     public static void printTileWork(LinkedList<PartitionRecord> partitions, int numTiles) {
-        int maxWork = getMaxWork(partitions);
+        long maxWork = getMaxWork(partitions);
         double totalUtil = getTotalUtilization(partitions, numTiles);
         for (int i=0; i<partitions.size(); i++) {
             PartitionRecord pr = partitions.get(i);
@@ -25,8 +25,8 @@ public class PartitionUtil {
     /**
      * Gets max work out of <pre>partitions</pre>.
      */
-    public static int getMaxWork(LinkedList<PartitionRecord> partitions) {
-        int maxWork = -1;
+    public static long getMaxWork(LinkedList<PartitionRecord> partitions) {
+        long maxWork = -1;
         for (int tile=0; tile<partitions.size(); tile++) {
             PartitionRecord pr = partitions.get(tile);
             if (pr.getWork()>maxWork) {
@@ -44,7 +44,7 @@ public class PartitionUtil {
      */
     private static double getTotalUtilization(LinkedList<PartitionRecord> partitions, int numTiles) {
         double totalUtil = 0;
-        int maxWork = getMaxWork(partitions);
+        long maxWork = getMaxWork(partitions);
         for (int i=0; i<partitions.size(); i++) {
             PartitionRecord pr = partitions.get(i);
             double util = ((double)pr.getWork()) / ((double)maxWork);

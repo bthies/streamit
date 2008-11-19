@@ -38,7 +38,7 @@ public class GenerateWorkEst {
             steady_counts = ClusterBackend.steadyExecutionCounts.get(node).intValue();
         } catch (NullPointerException e) {}
         
-	    int w = 0;
+	    long w = 0;
 
 	    if (oper instanceof SIRFilter) {
 		WorkEstimate w_est = WorkEstimate.getWorkEstimate((SIRFilter)oper);

@@ -37,7 +37,7 @@ public class FlattenAndPartition extends SIRSlicer {
     public FlattenAndPartition(UnflatFilter[] topFilters, HashMap[] exeCounts,
             LinearAnalyzer lfa, WorkEstimate work, int maxPartitions) {
         super(topFilters, exeCounts, lfa, work, maxPartitions);
-        workEstimation = new HashMap<FilterContent, Integer>();
+        workEstimation = new HashMap<FilterContent, Long>();
     }
 
     public Slice[] partition() {
@@ -164,7 +164,7 @@ public class FlattenAndPartition extends SIRSlicer {
             }
             
             // set up the work hashmaps
-            int workEst = 0;
+            long workEst = 0;
             if (sliceNodes.generatedIds.contains(filterNode)) {
                 workEst = 3 * filterNode.getFilter().getSteadyMult();
             } else {

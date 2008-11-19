@@ -29,7 +29,7 @@ import java.util.*;
  * semantic errors.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SemanticChecker.java,v 1.39 2007-11-14 13:14:14 rabbah Exp $
+ * @version $Id: SemanticChecker.java,v 1.40 2008-11-19 10:25:23 thies Exp $
  */
 public class SemanticChecker
 {
@@ -1277,6 +1277,8 @@ public class SemanticChecker
                 private boolean canPop, canPush;
                 private boolean hasPop, hasPush;
                 private StreamSpec spec;
+                // the function we are currently visiting, if any
+                private Function func;
                 
                 public Object visitStreamSpec(StreamSpec ss)
                 {
@@ -1296,12 +1298,14 @@ public class SemanticChecker
 
                 public Object visitFuncWork(FuncWork func)
                 {
+                    this.func = func;
                     checkFunction(func);
                     return super.visitFuncWork(func);
                 }
 
                 public Object visitFunction(Function func)
                 {
+                    this.func = func;
                     // only need to check I/O properties for functions that do I/O
                     if (func.doesIO()) checkFunction(func);
                     return super.visitFunction(func);
@@ -1378,7 +1382,9 @@ public class SemanticChecker
 
                 public Object visitExprPeek(ExprPeek expr)
                 {
-                    if (!canPop)
+                    if (!canPop &&
+                        // do allow peeking without popping from prework functions
+                        func.getCls() != Function.FUNC_PREWORK )
                         report(expr,
                                "peeking not allowed in functions with " +
                                "zero pop rate");

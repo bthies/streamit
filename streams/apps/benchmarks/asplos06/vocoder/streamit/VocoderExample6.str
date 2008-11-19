@@ -605,17 +605,16 @@ float->float filter PhaseUnwrapper() {
 
 float->float filter FirstDifference() {
 
-  float prev;
+    prework push 1 peek 1 {
+        push(peek(0));
+    }
 
-  init {
-      prev = 0.0;
-  }
-
-  work push 1 pop 1 {
-    push(peek(0) - prev);
-    prev = pop();
+    work push 1 pop 1 peek 2 {
+        push(peek(1) - peek(0));
+        pop();
   }
 }
+
 
 
 float->float pipeline InnerPhaseStuff(int n_len, int m_len, float c, float speed) {
@@ -652,20 +651,18 @@ float->float pipeline PhaseStuff(int n_len, int m_len, int DFTLen_red, int newLe
 
 
 float->float filter Delay(int N) {
-    float[N] delay;
 
-    init {
-	for(int i=0; i<N; i++)
-	    delay[i] = 0.0;
+    prework push N {
+        for (int i=0; i<N; i++) {
+            push(0.0);
+        }
     }
 
     work push 1 pop 1 {
-	push(delay[0]);
-	for(int i=0; i<N-1; i++)
-	    delay[i] = delay[i+1];
-	delay[N-1] = pop();
+        push(pop());
     }
 }
+
 
 
 float->float filter InvDelay(int N) {

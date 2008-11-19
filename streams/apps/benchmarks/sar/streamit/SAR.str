@@ -351,13 +351,10 @@ complex->complex filter convolutionInterpolation(int n,
     float kxs = (float) is * dkx;
     float[nx] KX;
 
-    int[m]      icKX;
-    int[I][m]   ikx;
-    float[I][m] nKX;
-    float[I][m] SINC;
-    float[I][m] HAM;
-
-    complex[nx][m] F;
+    // replacing with scalar icKX_j, which satisfies only def/use
+    //int[m]      icKX;
+    // replacing with scalar nKX_l_j, which satisfies def/use pattern
+    //float[I][m] nKX;
 
     init {
         for (int i = 0; i < n; i++) {
@@ -386,17 +383,22 @@ complex->complex filter convolutionInterpolation(int n,
     }
     
     work push nx*m pop n*m {
+        complex[nx][m] F;
+        int[I][m]   ikx;
+        float[I][m] SINC;
+        float[I][m] HAM;
+
         for (int i = 0; i < n; i++) {
             for (int l = 0; l < I; l++) {
                 for (int j = 0; j < m; j++) {
-                    icKX[j] = (int) round((kx[i][j] - KX[0]) / dkx) + 1;
+                    int icKX_j = (int) round((kx[i][j] - KX[0]) / dkx) + 1;
                     
-                    ikx[l][j] = icKX[j] + (l - is);
+                    ikx[l][j] = icKX_j + (l - is);
                     ikx[l][j] = ikx[l][j] + (nx * j);
                     
-                    nKX[l][j] = KX[(ikx[l][j] - 1) % nx];
+                    float nKX_l_j = KX[(ikx[l][j] - 1) % nx];
                     
-                    float x = (nKX[l][j] - kx[i][j]) / dkx;
+                    float x = (nKX_l_j - kx[i][j]) / dkx;
                     if (x == 0) {
                         SINC[l][j] = 1;
                     }
@@ -404,7 +406,7 @@ complex->complex filter convolutionInterpolation(int n,
                         SINC[l][j] = sin(PI * x) / (PI * x);
                     }
                     
-                    HAM[l][j] = 0.54 + (0.46 * cos((PI / kxs) * (nKX[l][j] - kx[i][j])));
+                    HAM[l][j] = 0.54 + (0.46 * cos((PI / kxs) * (nKX_l_j - kx[i][j])));
                 }
             }
    

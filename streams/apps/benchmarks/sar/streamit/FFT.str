@@ -67,12 +67,13 @@ complex->complex filter FFT1Dshift(int rows)
     }
     
     work push rows pop rows {
+        int r = rows_mid;
         for (int i = 0; i < rows; i++) {
-            complex t = peek(rows_mid);
+            complex t = peek(r);
             push(t);
             
-            if (++rows_mid == rows) {
-                rows_mid = 0;
+            if (++r == rows) {
+                r = 0;
             }
         }
         
@@ -104,18 +105,20 @@ complex->complex filter FFT2Dshift(int rows, int cols)
      
     work push rows*cols pop rows*cols {
         complex[rows][cols] temp;
+        int r = rows_mid;
+        int c = cols_mid;
 
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
-                temp[rows_mid][cols_mid] = pop();
+                temp[r][c] = pop();
                 
-                if (++cols_mid == cols) {
-                    cols_mid = 0;
+                if (++c == cols) {
+                    c = 0;
                 }
             }
             
-            if (++rows_mid == rows) {
-                rows_mid = 0;
+            if (++r == rows) {
+                r = 0;
             }
         }
         

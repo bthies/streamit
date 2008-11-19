@@ -107,10 +107,9 @@ float->float splitjoin DelMat(int Q, int N) {
     split duplicate();
     add Identity<float>;
     for(int i=1; i<N; i++)
-        add DelayPipeline(i*Q);
+        add Delay(i*Q);
     join roundrobin();
 }
-
 
 // generates the matrix consisting of the convolution of h and c. reads h column wise as in [1]
 float->float splitjoin ConvMat(int K, int W, int Q, int N, float[Q][K] C) {
@@ -214,26 +213,16 @@ float->float filter backs(int N){
 }
 
 
-float->float pipeline DelayPipeline(int delay) {
+float->float filter Delay(int N) {
 
-    for(int i=0; i<delay; i++)
-        add Delay();
-}
-
-
-/** Character Unit delay **/
-float->float filter Delay() {
-
-    float state;
-
-    init {
-        state = 0.0;
+    prework push N {
+        for (int i=0; i<N; i++) {
+            push(0);
+        }
     }
 
     work push 1 pop 1 {
-
-        push(state);
-        state = pop();
+        push(pop());
     }
 }
 
@@ -550,11 +539,15 @@ void->void pipeline dcalc {
     int N;
     int Q;
     int W;
-    float[2][2] h;
-    float[2][2] C;
+  
+    // Bill: I don't know what valid settings of these parameters are.
+    // Previously they were all set to 2, but that leads to a small
+    // graph.  Increasing them slightly to lead to more balanced graph.
+    float[2][8] h; // [W][K]
+    float[2][8] C; // [Q][K]
     float[6] r;
-    K=2;
-    N=2;
+    K=8;
+    N=4;
     Q=2;
     W=2;
 	

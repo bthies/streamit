@@ -46,9 +46,9 @@ public class ParallelizationGathering {
         static boolean commcost;
 	static boolean syncremoval;
 	/** Mapping from streams to work estimates. **/
-	static HashMap<SIRFilter, Integer> filterWorkEstimates;
+	static HashMap<SIRFilter, Long> filterWorkEstimates;
 	static HashMap<SIRFilter, Integer> filterCommunicationCosts;
-	static HashMap<SIRFilter, Integer> filterTimesFizzed;
+	static HashMap<SIRFilter, Long> filterTimesFizzed;
 	static Vector statelessFilters;
 	static MutableInt numFilters;
 	static SIRFilter lastFizzedFilter;
@@ -64,8 +64,8 @@ public class ParallelizationGathering {
 	static boolean synccost;
 
 	public ParallelWork() {
-	    filterWorkEstimates = new HashMap<SIRFilter, Integer>();
-	    filterTimesFizzed = new HashMap<SIRFilter, Integer>();
+	    filterWorkEstimates = new HashMap<SIRFilter, Long>();
+	    filterTimesFizzed = new HashMap<SIRFilter, Long>();
 	    filterCommunicationCosts = new HashMap<SIRFilter, Integer>();
 	    statelessFilters = new Vector();
 	    numFilters = new MutableInt();
@@ -116,7 +116,7 @@ public class ParallelizationGathering {
 		for(int i = 2; i < numprocessors + 1; i++)
 		{		
 		    //sync implementation
-		    filterWorkEstimates = new HashMap<SIRFilter, Integer>();
+		    filterWorkEstimates = new HashMap<SIRFilter, Long>();
 		    filterCommunicationCosts = new HashMap<SIRFilter, Integer>();
 		    statelessFilters = new Vector();
 		    GraphFlattener flatGraph = new GraphFlattener(copiedStr);
@@ -181,7 +181,7 @@ public class ParallelizationGathering {
 	    //copiedStr = (SIRStream) ObjectDeepCloner.deepCopy(originalStream);
 	    //System.err.println("next fizzed filter is " + nextFizzedFilter.getName());	    
 	    int oldfizzfactor = filterTimesFizzed.get(nextFizzedFilter).intValue();
-	    filterTimesFizzed.put(nextFizzedFilter, new Integer(oldfizzfactor + 1));
+	    filterTimesFizzed.put(nextFizzedFilter, new Long(oldfizzfactor + 1));
 	    Iterator<SIRFilter> filtersToFizz = filterTimesFizzed.keySet().iterator();
 
 	    //System.err.println("next fizzed filter is " + nextFizzedFilter.getName() 
@@ -227,7 +227,7 @@ public class ParallelizationGathering {
 	public static SIRFilter getHighestWorkFilterSync(int numprocessors)
 	{
 	    SIRFilter maxFilter = null;
-	    int maxwork = Integer.MIN_VALUE;
+	    long maxwork = Long.MIN_VALUE;
 	    Iterator<SIRFilter> sirFilters = filterWorkEstimates.keySet().iterator();
 	    int maxcomm = 0;
 	    int maxcomp = 0;
@@ -311,10 +311,10 @@ public class ParallelizationGathering {
 		costsSync.write("Processors; Computation Cost; Communication Cost; Overall Cost; \n");
 		for(int i = 0; i < computationCosts.length; i++)
 		{
-		    Integer compCost = new Integer(computationCosts[i]);
+		    Long compCost = new Long(computationCosts[i]);
 		    Integer commCost = new Integer(communicationCosts[i]);
-		    int totalcost = compCost.intValue() + commCost.intValue();
-		    Integer totalCost = new Integer(totalcost);
+		    long totalcost = compCost.intValue() + commCost.intValue();
+		    Long totalCost = new Long(totalcost);
 		    compSync.write(compCost.toString());
 		    compSync.write(";");
 		    commSync.write(commCost.toString());
@@ -383,13 +383,13 @@ public class ParallelizationGathering {
 		int oldfizzfactor = filterTimesFizzed.get(maxFilter).intValue();
 
 		//System.err.println("highest filter is " + maxFilter.toString());
-		Integer maxWork = filterWorkEstimates.get(maxFilter);
-		int mwork = maxWork.intValue();
-		int totalwork = mwork * oldfizzfactor;
+		Long maxWork = filterWorkEstimates.get(maxFilter);
+		long mwork = maxWork.intValue();
+		long totalwork = mwork * oldfizzfactor;
 		
-		int newwork = totalwork / (oldfizzfactor + 1);  //simulate the fizzing
-		filterTimesFizzed.put(maxFilter, new Integer(oldfizzfactor + 1));
-		filterWorkEstimates.put(maxFilter, new Integer(newwork));
+		long newwork = totalwork / (oldfizzfactor + 1);  //simulate the fizzing
+		filterTimesFizzed.put(maxFilter, new Long(oldfizzfactor + 1));
+		filterWorkEstimates.put(maxFilter, new Long(newwork));
 		//System.err.println("Highest work filter is " + maxFilter.getName() + " from " + mwork + " to " + newwork);
 	    }
 	    //else
@@ -405,15 +405,15 @@ public class ParallelizationGathering {
 	public static SIRFilter getHighestWorkFilter()
 	{
 	    SIRFilter maxFilter = null;
-	    int maxwork = Integer.MIN_VALUE;
+	    long maxwork = Long.MIN_VALUE;
 	    Iterator<SIRFilter> sirFilters = filterWorkEstimates.keySet().iterator();
 
 	    while(sirFilters.hasNext())
 	    {
 		SIRFilter currentFilter = sirFilters.next();
-		int currentcompcost = filterWorkEstimates.get(currentFilter).intValue();
+		long currentcompcost = filterWorkEstimates.get(currentFilter).intValue();
 		int currentcomcost = filterCommunicationCosts.get(currentFilter).intValue();
-		int currentwork = currentcompcost + currentcomcost;
+		long currentwork = currentcompcost + currentcomcost;
 
 		if(currentwork >= maxwork)
 		{
@@ -435,18 +435,18 @@ public class ParallelizationGathering {
 
 	public static SIRFilter getOptimalFizzFilter()
 	{
-	    int worksavings = Integer.MIN_VALUE;
+	    long worksavings = Long.MIN_VALUE;
 	    SIRFilter optFilter = null;
 	    Iterator<SIRFilter> sirFilters = filterWorkEstimates.keySet().iterator();
 	    while(sirFilters.hasNext())
 	    {
 		SIRFilter currentFilter = sirFilters.next();
-		Integer currentWork = filterWorkEstimates.get(currentFilter);
-		int work = currentWork.intValue();
-		int fizzfactor = filterTimesFizzed.get(currentFilter).intValue();
-		int totalwork = work * fizzfactor;
-		int nwork = totalwork / (fizzfactor + 1);
-		int currentsavings = work - nwork;
+		Long currentWork = filterWorkEstimates.get(currentFilter);
+		long work = currentWork.longValue();
+		long fizzfactor = filterTimesFizzed.get(currentFilter).longValue();
+		long totalwork = work * fizzfactor;
+		long nwork = totalwork / (fizzfactor + 1);
+		long currentsavings = work - nwork;
 
 		if(currentsavings >= worksavings)
 		{
@@ -468,21 +468,21 @@ public class ParallelizationGathering {
 	{
 	    int fancost = 10;
 
-	    int worksavings = Integer.MIN_VALUE;
+	    long worksavings = Long.MIN_VALUE;
 	    SIRFilter optFilter = null;
 	    Iterator<SIRFilter> sirFilters = filterWorkEstimates.keySet().iterator();
 	    while(sirFilters.hasNext())
 	    {
 		SIRFilter currentFilter = sirFilters.next();
-		Integer currentWork = filterWorkEstimates.get(currentFilter);
-		int work = currentWork.intValue();
-		int fizzfactor = filterTimesFizzed.get(currentFilter).intValue();
-		int totalwork = work * fizzfactor;
-		int cfanwork = fancost - (fancost/fizzfactor);
+		Long currentWork = filterWorkEstimates.get(currentFilter);
+		long work = currentWork.intValue();
+		long fizzfactor = filterTimesFizzed.get(currentFilter).longValue();
+		long totalwork = work * fizzfactor;
+		long cfanwork = fancost - (fancost/fizzfactor);
 		
-		int nwork = totalwork / (fizzfactor + 1);
-		int nfanwork = fancost - (fancost/(fizzfactor + 1));
-		int currentsavings = cfanwork + work - (nwork + nfanwork);	
+		long nwork = totalwork / (fizzfactor + 1);
+		long nfanwork = fancost - (fancost/(fizzfactor + 1));
+		long currentsavings = cfanwork + work - (nwork + nfanwork);	
 
 		if(currentsavings >= worksavings)
 		{	
@@ -508,8 +508,8 @@ public class ParallelizationGathering {
 	/** Mapping from streams to work estimates. **/
 	static HashMap<SIRStream, SIRStream> newToOrigGraph;
 	static HashMap<SIRFilter, SIRFilter> fizzedFiltersToOriginal;
-	static HashMap<SIRFilter, Integer> filterWorkEstimates;
-	static HashMap<SIRFilter, Integer> filterTimesFizzed;
+	static HashMap<SIRFilter, Long> filterWorkEstimates;
+	static HashMap<SIRFilter, Long> filterTimesFizzed;
 	static HashMap<SIRFilter, Integer> filterCommunicationCosts;
 	static MutableInt numFilters;
 	static int currentfilters;
@@ -520,7 +520,7 @@ public class ParallelizationGathering {
 
 	public ParallelVisitor
 	    (GraphFlattener graph, WorkEstimate wrk, HashMap<SIRStream, SIRStream> newormap, HashMap<SIRFilter, SIRFilter> filtermapping, 
-	     HashMap<SIRFilter, Integer> filters, HashMap<SIRFilter, Integer> comcosts, HashMap<SIRFilter, Integer> timesfizzed, HashMap[] execcounts, MutableInt num)
+	     HashMap<SIRFilter, Long> filters, HashMap<SIRFilter, Integer> comcosts, HashMap<SIRFilter, Long> timesfizzed, HashMap[] execcounts, MutableInt num)
 	{
 	    flatGraph = graph;
 	    work = wrk;
@@ -549,7 +549,7 @@ public class ParallelizationGathering {
 	NumberGathering execNumbers = new NumberGathering();
 	execNumbers.doit(flatGraph.getFlatNode(self), executionCounts);
 	int printsperexec = execNumbers.printsPerSteady;
-	int workestimate = work.getWork(self);
+	long workestimate = work.getWork(self);
 	//System.err.println("Initial work of " + self.getName() + " is " + workestimate);
 	int numreps = work.getReps(self);  
 	//System.err.println("Self is " + numreps);
@@ -557,9 +557,9 @@ public class ParallelizationGathering {
 
 	//from Bill:  work.getWork already incorporates numreps!
 	if(printsperexec > 0)
-	    filterWorkEstimates.put(self, new Integer(workestimate /printsperexec));
+	    filterWorkEstimates.put(self, new Long(workestimate /printsperexec));
 	else
-	    filterWorkEstimates.put(self, new Integer(workestimate));
+	    filterWorkEstimates.put(self, new Long(workestimate));
 	//System.err.println("Putting fizzfactor of 1 from filter " + self.getName());
 	//filterTimesFizzed.put(self, new Integer(1));
 
@@ -626,21 +626,21 @@ public class ParallelizationGathering {
 
     static class ParallelSyncVisitor extends EmptyStreamVisitor {
 
-	static HashMap<SIRFilter, Integer> filterWorkEstimates;
+	static HashMap<SIRFilter, Long> filterWorkEstimates;
 	static HashMap<SIRFilter, Integer> filterCommunicationCosts;
 	static HashMap[] executionCounts;
 	static GraphFlattener flatGraph;
 	//static int printsperexec;
 	static WorkEstimate work;
 	//static Vector splittersVisited;
-	static HashMap<SIRFilter, Integer> filterTimesFizzed;
+	static HashMap<SIRFilter, Long> filterTimesFizzed;
 	static HashMap<SIRFilter, SIRFilter> fizzedFiltersToOriginal;
 	static HashMap<SIRStream, SIRStream> newToOrigGraph;
 	boolean synccost;
 
 	public ParallelSyncVisitor(GraphFlattener flat, WorkEstimate wrk,
-				   HashMap[] execcounts, HashMap<SIRFilter, Integer> workcosts, HashMap<SIRFilter, Integer> comcosts, 
-				   HashMap<SIRFilter, SIRFilter> fizzedtooriginal, HashMap<SIRFilter, Integer> timesfizzed, 
+				   HashMap[] execcounts, HashMap<SIRFilter, Long> workcosts, HashMap<SIRFilter, Integer> comcosts, 
+				   HashMap<SIRFilter, SIRFilter> fizzedtooriginal, HashMap<SIRFilter, Long> timesfizzed, 
 				   HashMap<SIRStream, SIRStream> tooriggraph, boolean scost)
 	{
 	    //splittersVisited = new Vector();
@@ -674,13 +674,13 @@ public class ParallelizationGathering {
 	    //System.err.println("visiting filter " + self.getName());
 	    int costperitem = 3; //can be varied
 	    //final WorkEstimate work = WorkEstimate.getWorkEstimate(self);
-	    int workestimate = work.getWork(self);
+	    long workestimate = work.getWork(self);
 	    //System.err.println("Work of " + self.getName() + " is " + workestimate);
 	    int numreps = work.getReps(self);
 	    if(printsperexec > 0)
-		filterWorkEstimates.put(self, new Integer(workestimate /printsperexec));
+		filterWorkEstimates.put(self, new Long(workestimate /printsperexec));
 	    else
-		filterWorkEstimates.put(self, new Integer(workestimate));
+		filterWorkEstimates.put(self, new Long(workestimate));
 
 	    //add initial comm cost for all filters, based on their push/pop/peek rates
 	    int numpop = self.getPopInt();
@@ -840,16 +840,16 @@ public class ParallelizationGathering {
 
     static class BasicVisitor extends EmptyStreamVisitor
     {
-	static HashMap<SIRFilter, Integer> filterTimesFizzed;
+	static HashMap<SIRFilter, Long> filterTimesFizzed;
 
-	public BasicVisitor(HashMap<SIRFilter, Integer> fizzmapping)
+	public BasicVisitor(HashMap<SIRFilter, Long> fizzmapping)
 	{
 	    filterTimesFizzed = fizzmapping;
 	}
 
 	public void visitFilter(SIRFilter self, SIRFilterIter iter)
 	{
-	    filterTimesFizzed.put(self, new Integer(1));
+	    filterTimesFizzed.put(self, new Long(1));
 	}
 
     }//class BasicVisitor
@@ -863,17 +863,17 @@ public class ParallelizationGathering {
     static class NoSyncVisitor extends EmptyStreamVisitor {
 	
 	static MutableInt numFilters;
-	static HashMap<SIRFilter, Integer> filterWorkEstimates;
+	static HashMap<SIRFilter, Long> filterWorkEstimates;
 	static HashMap<SIRFilter, Integer> filterCommunicationCosts;
-	static HashMap<SIRFilter, Integer> filterTimesFizzed;
+	static HashMap<SIRFilter, Long> filterTimesFizzed;
 	static WorkEstimate work;
 	static GraphFlattener flatGraph;
 	static HashMap[] executionCounts;
 	
 
 	public NoSyncVisitor
-	    (WorkEstimate wrk, HashMap<SIRFilter, Integer> filterwork, HashMap<SIRFilter, Integer> filtercomm, 
-	     HashMap<SIRFilter, Integer> fizzmapping, HashMap[] execcounts, 
+	    (WorkEstimate wrk, HashMap<SIRFilter, Long> filterwork, HashMap<SIRFilter, Integer> filtercomm, 
+	     HashMap<SIRFilter, Long> fizzmapping, HashMap[] execcounts, 
 	     GraphFlattener graph, MutableInt nfilts)
 	{
 	    numFilters = nfilts;
@@ -887,7 +887,7 @@ public class ParallelizationGathering {
 
 	public void visitFilter(SIRFilter self, SIRFilterIter iter) 
 	{
-	    filterTimesFizzed.put(self, new Integer(1));
+	    filterTimesFizzed.put(self, new Long(1));
 
 	    NumberGathering execNumbers = new NumberGathering();
 	    execNumbers.doit(flatGraph.getFlatNode(self), executionCounts);
@@ -895,12 +895,12 @@ public class ParallelizationGathering {
 	    //System.err.println("prints per exec in filter is " + printsperexec);
 	    //System.err.println("visiting filter " + self.getName());
 	    int costperitem = 3; //can be varied
-	    int workestimate = work.getWork(self);
+	    long workestimate = work.getWork(self);
 	    int numreps = work.getReps(self);
 	    if(printsperexec > 0)
-		filterWorkEstimates.put(self, new Integer(workestimate /printsperexec));
+		filterWorkEstimates.put(self, new Long(workestimate /printsperexec));
 	    else
-		filterWorkEstimates.put(self, new Integer(workestimate));
+		filterWorkEstimates.put(self, new Long(workestimate));
 
 	    //add initial comm cost for all filters, based on their push/pop/peek rates
 	    int numpop = self.getPopInt();

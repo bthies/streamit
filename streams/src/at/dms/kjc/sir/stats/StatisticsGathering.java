@@ -16,8 +16,9 @@ public class StatisticsGathering {
      * Gather statistics for <str>.
      */
     public static void doit(SIRStream str) {
+        BasicStats.doit(str);
 	// count push statements
-	new CountStatements().doit(str);
+	//new CountStatements().doit(str);
     }
 
     /**

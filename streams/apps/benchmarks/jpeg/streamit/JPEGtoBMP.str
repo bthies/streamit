@@ -24,7 +24,24 @@ int->int splitjoin BlockDescrambler {
     join roundrobin(640*3);
 }
 
-int->int splitjoin FlipVertically {
+int->int filter FlipVertically {
+    work push 640*480*3 pop 640*480*3 {
+        int dataWidth = 640*3;
+        for (int i=479*dataWidth; i>=0; i-=dataWidth) {
+            for (int j=0; j<dataWidth; j+=3) {
+                push(peek(i+j+2));
+                push(peek(i+j+1));
+                push(peek(i+j));
+            }
+        }
+        for (int i=0; i<640*480*3; i++) {
+            pop();
+        }
+    }
+}
+
+// fine-grained version of above filter
+int->int splitjoin FlipVerticallyFine {
     split roundrobin(3);
     for (int i = 0; i < 640; i++) {
        add ReversePixelOrder(480*3);
@@ -544,7 +561,7 @@ int->int filter JPEGByteStream_Creator {
 	// Actually we have no idea how much we are popping, or pushing
 	// Right now this is coded to only run once.
         // See the Parser for reasons for pop/push rates
-	work pop [192, 230400,*] push [48,100000,*] {
+        work pop [192, 230400,*] push [48,100000,*] {
 		if (!ran) {
 			println("Reencoding JPEG...");
 			ran = true;
@@ -1014,7 +1031,7 @@ int->int filter JPEGByteStream_Parser {
     // Average pop rate is pretty arbitrary - I assume the average JPEG is 100KBytes.
     // Average push rate is also pretty arbitrary - I assume the average JPEG is 320x240x3 = 
     work pop [48,100000,*] push [192,230400,*] {
-    	if (!ran) {
+        if (!ran) {
     	    println("Processing JPEG...");
     	    ran = true;
 	    // First comes the SOI Marker and the JFIF Header

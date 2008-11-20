@@ -279,7 +279,7 @@ int->int splitjoin BlockDCDifferenceDecoder {
    Output: The first integer input is output unchanged. Each subsequent 
 		   value output is the difference between the input and the previous
 		   input. Repeats every 64 integers. */
-int->int feedbackloop IntegerDifferenceEncoder{
+int->int feedbackloop IntegerDifferenceEncoder_FL {
   join roundrobin;
   body int->int filter {
     work pop 2 push 2 {
@@ -293,18 +293,29 @@ int->int feedbackloop IntegerDifferenceEncoder{
   enqueue 0;
 }
 
-/* Performs the reverse operation as IntegerDifferenceEncoder */
-int->int feedbackloop IntegerDifferenceDecoder {
-  join roundrobin;
-  body int->int filter {
-    work pop 2 push 1 {
-      push(peek(0) + peek(1));
-      pop(); pop();
+/* Input: A series of integers.
+   Output: The first integer input is output unchanged. Each subsequent 
+           value output is the difference between the input and the previous
+           input. */
+int->int filter IntegerDifferenceEncoder {
+    prework push 1 peek 1 {
+        push(peek(0));
     }
-  }
-  loop Identity<int>;
-  split duplicate;
-  enqueue 0;
+    work pop 1 peek 2 push 1 {
+        push(peek(1)-peek(0));
+        pop();
+    }
+}
+
+/* Performs the reverse operation as BlockDCDifferenceEncoder */
+int->int filter IntegerDifferenceDecoder {
+    prework push 1 peek 1 {
+        push(peek(0));
+    }
+    work pop 1 peek 2 push 1 {
+        push(peek(1)+peek(0));
+        pop();
+    }
 }
 
 /* Input: A sequence of 64 integers representing an 8x8 block.

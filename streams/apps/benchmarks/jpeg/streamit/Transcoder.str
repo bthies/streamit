@@ -311,37 +311,28 @@ int->int feedbackloop IntegerDifferenceEncoder_FL{
     enqueue 0;
 }
 
-/* RMR { version of the above difference encoder that does not use a loop */
-int->int filter IntegerDifferenceEncoder{
-    int state = 0;
-
-    work peek 1 pop 1 push 1 {
-	  push(peek(0) - state);
-	  state = pop();
+/* Input: A series of integers.
+   Output: The first integer input is output unchanged. Each subsequent 
+           value output is the difference between the input and the previous
+           input. */
+int->int filter IntegerDifferenceEncoder {
+    prework push 1 peek 1 {
+        push(peek(0));
+    }
+    work pop 1 peek 2 push 1 {
+        push(peek(1)-peek(0));
+        pop();
     }
 }
 
-/* Performs the reverse operation as IntegerDifferenceEncoder */
-int->int feedbackloop IntegerDifferenceDecoder_FL {
-    join roundrobin;
-    body int->int filter {
-	  work pop 2 push 1 {
-		push(peek(0) + peek(1));
-		pop(); pop();
-	  }
-    }
-    loop Identity<int>;
-    split duplicate;
-    enqueue 0;
-}
-
-/* RMR { version of the above difference decoder that does not use a loop */
+/* Performs the reverse operation as BlockDCDifferenceEncoder */
 int->int filter IntegerDifferenceDecoder {
-    int state = 0;
-
-    work peek 1 pop 1 push 1 {
-	  state += pop();
-	  push(state);
+    prework push 1 peek 1 {
+        push(peek(0));
+    }
+    work pop 1 peek 2 push 1 {
+        push(peek(1)+peek(0));
+        pop();
     }
 }
 

@@ -93,23 +93,17 @@ float->float pipeline Bank(int N, int L, float[L] H, float[L] F)
   add FirFilter(L, F);
 }
 
+
 float->float filter Delay_N(int N)
 {
-  float[N] state;
-  int place_holder;
-
-  init {
-    for (int i = 0; i < N; i++)
-      state[i] = 0;
-    place_holder = 0;
-  }
+    prework push N {
+        for (int i=0; i<N; i++) {
+            push(0);
+        }
+    }
 
   work pop 1 push 1 {
-    push(state[place_holder]);
-    state[place_holder] = pop();
-    place_holder++;
-    if (place_holder == N)
-      place_holder = 0;
+      push(0);
   }
 }
 

@@ -62,33 +62,6 @@ int gsm_sub(int a, int b)
 	}
 }
 
-int gsm_mult(int a, int b)
-{
-    int temp =  a *  b / gsm_exp(2,15);
-    if (temp >= 32767)
-	{
-	    return 32767;
-	}
-    else
-	{
-	    if (temp <= -32768)
-		{
-		    return -32768;
-		}
-	    else
-		{
-		    return  temp;
-		}
-	}       
-}
-
-int gsm_mult_r(int a, int b)
-{
-    int temp = ( a *  b) + 16384;
-    int answer =  (temp / gsm_exp(2,15));
-    return answer;
-}
-
 int gsm_abs(int a)
 {
     int answer;
@@ -125,24 +98,3 @@ int gsm_abs(int a)
 	}
     return answer;
 }
-
-
-int gsm_exp(int num, int power)
-{
-	int ans = 1;
-	for(int i = 0; i < power;i++)
-	{
-		ans = ans * num;
-	}
-	
-	return ans;
-}
-
-
-//}
-
-
-
-
-
-

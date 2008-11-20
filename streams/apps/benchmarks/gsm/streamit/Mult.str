@@ -1,0 +1,49 @@
+int gsm_mult(int a, int b)
+{
+    int temp =  a *  b / gsm_exp_15(2);
+    if (temp >= 32767)
+	{
+	    return 32767;
+	}
+    else
+	{
+	    if (temp <= -32768)
+		{
+		    return -32768;
+		}
+	    else
+		{
+		    return  temp;
+		}
+	}       
+}
+
+int gsm_mult_r(int a, int b)
+{
+    int temp = ( a *  b) + 16384;
+    int answer =  (temp / gsm_exp_15(2));
+    return answer;
+}
+
+// have a different function to raise to the 15th power to improve work estimate
+int gsm_exp_15(int num)
+{
+	int ans = 1;
+	for(int i = 0; i < 15;i++)
+	{
+		ans = ans * num;
+	}
+	
+	return ans;
+}
+
+int gsm_exp(int num, int power)
+{
+	int ans = 1;
+	for(int i = 0; i < power;i++)
+	{
+		ans = ans * num;
+	}
+	
+	return ans;
+}

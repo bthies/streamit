@@ -98,17 +98,6 @@ float->float pipeline FFT_Kernel(int n)
     }
 }
 
-
-// we  need this  now  since  the cluster  backend  doesn't deal  with
-// identities
-float->float filter Float_Identity()
-{ 
-    work pop 1 push 1 {
-	  push(pop());
-    }
-}
-
-
 void->float filter Read_From_AtoD(int N)
 {
     work pop 0 push N {
@@ -120,11 +109,16 @@ void->float filter Read_From_AtoD(int N)
 }
 
 
-float->float filter RFtoIF(int N, float _start_freq, float _current_freq)
+float->float filter RFtoIF(int N, float _start_freq, float _current_freq, 
+                           int channels, float channel_bandwidth)
 {
     float[N] weights;
     int  size, count;
     int  iter;
+    // maintain position (index) of each detector.  This used to be
+    // state in the detectors, but since this filter is stateful
+    // anyway, the state can be moved here
+    int[8] frequency_index;
 
     init {
 	  set_frequency(_current_freq);
@@ -141,13 +135,22 @@ float->float filter RFtoIF(int N, float _start_freq, float _current_freq)
 	  }
     }
 
-    handler set_frequency(float _freq) {
+    handler set_frequency_from_detector(int source) {
+        float _freq = _start_freq + frequency_index[source] * channel_bandwidth;
+        frequency_index[source]++;
+        if (frequency_index[source]==channels) {
+            frequency_index[source] = 0;
+        }
+        set_frequency(_freq);
+    }
+
+    void set_frequency(float _freq) {
         //println(iter);
-	  count  = 0;
-	  size   = (int) ((_start_freq / _freq) * N);
-	  for (int i = 0; i < size; i++) {
-		weights[i] = (float) sin(i * pi / size);
-	  }
+        count  = 0;
+        size   = (int) ((_start_freq / _freq) * N);
+        for (int i = 0; i < size; i++) {
+            weights[i] = (float) sin(i * pi / size);
+        }
     }
 }
 
@@ -208,34 +211,25 @@ float->float splitjoin Check_Freq_Hop(int N, float start_freq, int channels,
 
     for (int i = 1; i <= 7; i++) {
 	  if (i == 1 || i == 4 || i == 7) {
-              add Float_Identity();
+              add Identity<float>();
 	  } else {
-              add float->float filter {
-                  int frequency_index;
-                  float [channels] hops;
-                  
-                  init {
-                      frequency_index = 0;
-                      for (int i = 0; i < channels; i++) {
-                          hops[i] = start_freq + (i * channel_bandwidth);
-                      }
-                  }
-                  
-                  work pop 1 push 1 {
-                      float val = pop();
-                      if (val > hop_threshold) {
-                          teleport.set_frequency(hops[frequency_index++]) [6 : 6];
-                          if (frequency_index >= channels) frequency_index = 0;
-                      }
-                      push(val);
-                  }
-              }
+              add Detect(start_freq, channels, channel_bandwidth, hop_threshold, teleport, i);
 	  }
     }
     
     join roundrobin(N / 4 - 2, 1, 1, N / 2, 1, 1, N / 4 - 2);
 }
 
+float->float filter Detect(float start_freq, int channels, float channel_bandwidth, float hop_threshold, portal<RFtoIF> teleport, int pos) {
+                  
+    work pop 1 push 1 {
+        float val = pop();
+        if (val > hop_threshold) {
+            teleport.set_frequency_from_detector(pos) [6 : 6];
+        }
+        push(val);
+    }
+}
 
 float->void filter __Output_Filter__
 {
@@ -263,7 +257,7 @@ void->void pipeline FHR
 
     add Read_From_AtoD(N);
 
-    add RFtoIF(N, START_FREQ, START_FREQ) to teleport;
+    add RFtoIF(N, START_FREQ, START_FREQ, CHANNELS, CHANNEL_BAND) to teleport;
 
     add FFT_Kernel(N);
 

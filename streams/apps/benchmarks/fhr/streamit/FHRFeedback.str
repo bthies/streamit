@@ -120,11 +120,17 @@ void->float filter Read_From_AtoD(int N)
 }
 
 
-float->float filter RFtoIF(int N, float _start_freq, float _current_freq)
+float->float filter RFtoIF(int N, float _start_freq, float _current_freq, 
+                           int channels, float channel_bandwidth)
 {
     float[N] weights;
     int  size, count;
     int iter;
+
+    // maintain position (index) of each detector.  This used to be
+    // state in the detectors, but since this filter is stateful
+    // anyway, the state can be moved here
+    int[8] frequency_index;
 
     init {
 	  set_frequency(_current_freq);
@@ -144,14 +150,23 @@ float->float filter RFtoIF(int N, float _start_freq, float _current_freq)
 	
 	for (int i=0; i<N; i++) {
 	  // check for freqhop from around feedbackloop
-	  float freqHop = pop();
-	  if (freqHop!=0) {
-	      set_frequency(freqHop);
+	  int detector = (int)pop();
+	  if (detector!=0) {
+	      set_frequency_from_detector(detector);
 	  }
 	}
     }
 
-    handler set_frequency(float _freq) {
+    handler set_frequency_from_detector(int source) {
+        float _freq = _start_freq + frequency_index[source] * channel_bandwidth;
+        frequency_index[source]++;
+        if (frequency_index[source]==channels) {
+            frequency_index[source] = 0;
+        }
+        set_frequency(_freq);
+    }
+
+    void set_frequency(float _freq) {
         //println(iter);
 	  count  = 0;
 	  size   = (int) ((_start_freq / _freq) * N);
@@ -174,7 +189,6 @@ float->float filter Magnitude()
 	  return (float) sqrt(real*real + imag*imag);
     }
 }
-
 
 float->float filter Inject_Hop(int N, float hop_threshold)
 {
@@ -205,7 +219,6 @@ float->float filter Inject_Hop(int N, float hop_threshold)
     }
 }
 
-
 float->float splitjoin Check_Freq_Hop(int N, int channels, float start_freq, float channel_bandwidth, float hop_threshold)
 {
     // of N incoming values,  one of the data items in
@@ -223,31 +236,24 @@ float->float splitjoin Check_Freq_Hop(int N, int channels, float start_freq, flo
 		    }
 	      }
 	  } else {
-              add float->float filter {
-                  int frequency_index;
-                  float [channels] hops;
-                  
-                  init {
-                      frequency_index = 0;
-                      for (int i = 0; i < channels; i++) {
-                          hops[i] = start_freq + (i * channel_bandwidth);
-                      }
-                  }
-                  work pop 1 push 2 {
-                      float val = pop();
-                      push(val);
-                      if (val > hop_threshold) {
-                          push(hops[frequency_index++]);
-                          if (frequency_index >= channels) frequency_index = 0;
-                      } else {
-                          push(0);
-                      }
-                  }
-              }
+              add Detect(start_freq, channels, channel_bandwidth, hop_threshold, i);
           }
     }
 
     join roundrobin(2*(N / 4 - 2), 2, 2, 2*(N / 2), 2, 2, 2*(N / 4 - 2));
+}
+
+float->float filter Detect(float start_freq, int channels, float channel_bandwidth, float hop_threshold, int pos) {
+                  
+    work pop 1 push 2 {
+        float val = pop();
+        push(val);
+        if (val > hop_threshold) {
+            push(pos);
+        } else {
+            push(0);
+        }
+    }
 }
 
 
@@ -278,7 +284,7 @@ void->void pipeline FHRFeedback
     add float->float feedbackloop {
 	join roundrobin(2*N,N);
 	body pipeline {
-	    add RFtoIF(N, START_FREQ, START_FREQ);
+            add RFtoIF(N, START_FREQ, START_FREQ, CHANNELS, CHANNEL_BAND);
 	    add FFT_Kernel(N);
 	    add Magnitude();
 	    add Inject_Hop(N, HOP_THRESHOLD);

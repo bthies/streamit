@@ -11,10 +11,7 @@
 
 int -> int filter RPEDecodeFilter {
 
-    int[13] mXmc;    
     int[8] FAC;
-    int[13] xmp;
-    int[40] ep;
 
     #include "Helper.str"
 
@@ -35,7 +32,10 @@ int -> int filter RPEDecodeFilter {
     work push 40 pop 15 {
 	int i, k, xmaxc, mc, exp, mant, temp, temp1, temp2, temp3;
 	int ep_length = 40;
-
+        int[13] mXmc;    
+        int[13] xmp;
+        int[40] ep;
+    
 	for (i = 0; i < 13; i++)
 	    {
 		mXmc[i] = pop();
@@ -107,11 +107,6 @@ int -> int filter RPEDecodeFilter {
 	 *  values.
 	 */
 	//output!
-
-	for(k = 0; k < 40; k++)
-	    {
-		ep[k] = 0;
-	    }
 	for(i = 0; i < 12; i++)
 	    {
 		//System.out.//println("accessing " + (mc+(3*i)));
@@ -130,7 +125,7 @@ int -> int filter RPEDecodeFilter {
 int->int filter LTPFilter {
 
     int[4] QLB;
-    int[160] drp;
+    // this looks like actual state (--bft)
     int nrp;
 
 #include "Helper.str"
@@ -154,6 +149,7 @@ int->int filter LTPFilter {
 	int i, nr, brp, drpp;
 	int mBcr = pop();  //mLtpGain
 	int mNcr = pop();  //mLtpOffset
+        int[160] drp;
 	//do it!
 	for (i = 0; i < 160; i++)
 	    {
@@ -181,21 +177,17 @@ int->int filter LTPFilter {
 
 int->int filter AdditionUpdateFilter {
  
-    int[40] ep;
-    int[160] drp;
-
 #include "Helper.str"
 
-    init { 
-	int i;		
-	for (i = 0; i < 160; i++)
-	    {
-		drp[i] = 0;   //initial conditions
-	    }
-    	}	
+    prework push 40 {
+        for (int i=0; i<40; i++) { 
+            push(0);
+        }
+    }
 
-    work push 160 pop 41 {
+    work push 40 pop 41 {
 	
+        int[40] ep;
 	int i, j, k, drpp;
 	//get inputs:
 	for (i = 0; i < 40; i++)
@@ -204,20 +196,39 @@ int->int filter AdditionUpdateFilter {
 	    }
 	drpp = pop();
 
-	for (j = 121; j < 160; j++)  //add part!
+        push(0);
+	for (j = 0; j < 39; j++)  //add part!
 	    {
-		drp[j] = gsm_add(ep[j - 121], drpp);
-	    }
-	for (k = 0; k < 120; k++)    //update part!
-	    {
-		drp[k] = drp[k + 40];
-	    }
-	
-	for (i = 0; i < 160; i++)  //output!
-	    {
-		push(drp[i]);
+		push(gsm_add(ep[j], drpp));
 	    }
 	//System.err.//println("Got to Addition Update Filter!");
+    }
+}
+
+// Preserving the sliding-window duplication that was originally
+// folded into AdditionUpdateFilter (--bft)
+int->int filter AdditionUpdateDuplication {
+    prework push 80 {
+        for (int i=0; i<80; i++) {
+            push(0);
+        }
+    }
+    work push 4*40 pop 40 peek 80 {
+        for (int i=40; i<80; i++) {
+            push(peek(i));
+        }
+        for (int i=40; i<80; i++) {
+            push(peek(i));
+        }
+        for (int i=0; i<40; i++) {
+            push(peek(i));
+        }
+        for (int i=40; i<80; i++) {
+            push(peek(i));
+        }
+        for (int i=0; i<40; i++) {
+            pop();
+        }
     }
 }
 
@@ -361,15 +372,15 @@ int->int filter IntegerTermReorder {
 
 #include "Helper.str"
  
-int[40] mdrp;
-int[8] mrrp;
-
    init { }
 
     work push 360 pop 48 {
 	 int val;
         int i, j;
         
+        int[40] mdrp;
+        int[8] mrrp;
+
         // Read in mdrp and mrrp:
         for (j = 0; j < 40; j++)
             mdrp[j] = pop();
@@ -391,7 +402,7 @@ int->int filter IntegerTermSynthCalc {
 
 #include "Helper.str"
 
-int[8] mrrp;
+    // looks like this is actual state? --bft
 int[9] v;
 
     init { 
@@ -402,6 +413,7 @@ int[9] v;
     work push 1 pop 9 {
 	int i;
         int sri;
+        int[8] mrrp;
         
         for (i = 0; i < 8; i++)
             mrrp[i] = pop();
@@ -429,44 +441,45 @@ int->int filter LARInputFilter {
 #include "Helper.str"
 #include "DecoderInput.str"
 
-int[260] mdata;
-int[260] single_frame;
-boolean donepushing;
+    //boolean donepushing;
 
 
-    init {
-	donepushing = false;
-	}	
+    //init {
+    //donepushing = false;
+    //}	
 
     work push 8 pop 260 {
 	int i, j, k;
+        int[260] mdata;
+        int[260] single_frame;
+
 	//int frame_index = 0;
 	for (i = 0; i < 260; i++)
 	    {
 		mdata[i] = pop();
 	    }
 
-	if (donepushing)
-	    {
+	//if (donepushing)
+        //{
 		//AssertedClass.SERROR("Done Pushing at LARInputFilter!");
-	    }
+        //}
 	//for (j = 0; j < 584; j++)  //only pushing one in for now, should be 0 to 584
 	//   {
-		for (k = 0; k < 260; k++)
-		    {
-			single_frame[k] = mdata[k];
-		    }
-		getParameters(single_frame);
-		//frame_index += 260;
+        for (k = 0; k < 260; k++)
+            {
+                single_frame[k] = mdata[k];
+            }
+        getParameters(single_frame);
+        //frame_index += 260;
 	  
 	
-		//now, push the stuff on!
-		for (i = 0; i < 8; i++)
-		    {
-			push(mLarParameters[i]);
-		    }
-		donepushing = true;
-		//    }
+        //now, push the stuff on!
+        for (i = 0; i < 8; i++)
+            {
+                push(mLarParameters[i]);
+            }
+        //donepushing = true;
+        //    }
 	//System.err.//println("LARinputFilter gooo!");
 
     }
@@ -476,6 +489,7 @@ int->int filter PostProcessingFilter {
 
 #include "Helper.str"
 
+    // looks like actual state (--bft)
 int msr;    
 
     init {
@@ -503,50 +517,50 @@ int msr;
     }
 }
 
-
 int->int filter LTPInputFilter {
 
-int[260] mdata;
-int[260] single_frame;
-boolean donepushing;
+    //boolean donepushing;
 
 #include "Helper.str"
 #include "DecoderInput.str"
 
-    init {
-	donepushing = false;
-	}
+    //init {
+    //donepushing = false;
+    //}
 
     work push 8 pop 260 {
 	int i, j, k;
+        int[260] mdata;
+        int[260] single_frame;
+
 	//int frame_index = 0;
 	for (i = 0; i < 260; i++)
 	    {
 		mdata[i] = pop();
 	    }
 
-	if (donepushing)
-	    {
+	//if (donepushing)
+        //{
 		//AssertedClass.SERROR("Done Pushing at LTPInputFilter!");
-	    }
+        //}
 	//for (j = 0; j < 584; j++)  //only pushing one in for now, should be 0 to 584
 	//  {
-		for (k = 0; k < 260; k++)
-		    {
-			single_frame[k] = mdata[k];
-		    }
-		getParameters(single_frame);
-		//frame_index += 260;
+        for (k = 0; k < 260; k++)
+            {
+                single_frame[k] = mdata[k];
+            }
+        getParameters(single_frame);
+        //frame_index += 260;
 	  	  
 	  
-		//now, push the stuff on!
-		for (i = 0; i < 4; i++)
-		    {
-			push(mLtpGain[i]);
-			push(mLtpOffset[i]);
-		    }
-		//  }
-	donepushing = true;
+        //now, push the stuff on!
+        for (i = 0; i < 4; i++)
+            {
+                push(mLtpGain[i]);
+                push(mLtpOffset[i]);
+            }
+        //  }
+	//donepushing = true;
 	//System.err.//println("LTP Input filter gooooo!");
     }
 }	
@@ -584,19 +598,15 @@ add LTPFilter();
 int->int feedbackloop DecoderFeedback {
 
 join roundrobin(40,1);
-body StupidStream();
+body pipeline {
+    add AdditionUpdateFilter();
+    add AdditionUpdateDuplication();
+}
 loop LTPLoopStream();
 split duplicate;
 enqueue 0;
 
 }
-
-
-int->int pipeline StupidStream {
-
-add AdditionUpdateFilter();
-}
-
 
 int->int splitjoin LARInputSplitJoin {
 
@@ -609,19 +619,19 @@ join roundrobin(160, 8);
 
 int->int filter RPEInputFilter {
 
-int[260] mdata;
-int[260] single_frame;
-boolean donepushing;
+    //boolean donepushing;
 
 #include "Helper.str"
 #include "DecoderInput.str"
 
-    init {
-	donepushing = false;
-	}
+    //    init {
+    //	donepushing = false;
+    //    }
 
     work push 60 pop 260 {
 	int i, j, k, a;
+        int[260] mdata;
+        int[260] single_frame;
 	//int frame_index = 0;
 	//System.err.//println("I get here!!!");
 	for (i = 0; i < 260; i++)
@@ -630,33 +640,33 @@ boolean donepushing;
 		
 	    }
 
-	if (donepushing)
-	    {
+	//if (donepushing)
+        //  {
 		//AssertedClass.SERROR("Done Pushing at RPEInputFilter!");
-	    }
+	//  }
 
 	//for (j = 0; j < 584; j++)  //only pushing one in for now, should be 0 to 584
 	//  {
-		for (k = 0; k < 260; k++)
-		    {
-			single_frame[k] = mdata[k];
-		    }
-		getParameters(single_frame);
-		//frame_index += 260;
+        for (k = 0; k < 260; k++)
+            {
+                single_frame[k] = mdata[k];
+            }
+        getParameters(single_frame);
+        //frame_index += 260;
 	  
 	  
-		//now, push the stuff on!
-		for (i = 0; i < 4; i++)
-		    {
-			for (a = 0; a < 13; a++)
-			    {
-				push(mSequence[i+4*a]);
-			    }
-			push(mRpeMagnitude[i]);
-			push(mRpeGridPosition[i]);
-		    }
-		donepushing = true;
-		//  }
+        //now, push the stuff on!
+        for (i = 0; i < 4; i++)
+            {
+                for (a = 0; a < 13; a++)
+                    {
+                        push(mSequence[i+4*a]);
+                    }
+                push(mRpeMagnitude[i]);
+                push(mRpeGridPosition[i]);
+            }
+        //donepushing = true;
+        //  }
 	//System.err.//println("RPE Input Filter yeah!");
     }
 }
@@ -664,12 +674,9 @@ boolean donepushing;
 
 int->int filter HoldFilter {
 
-int[160] mDrp;
-
-    init { }
-
     work push 40 pop 160 {
  	int i, j;
+        int[160] mDrp;
 	for (i = 0; i < 160; i++)
 	    {
 		mDrp[i] = pop();

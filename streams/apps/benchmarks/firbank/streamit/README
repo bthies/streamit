@@ -1,3 +1,11 @@
+NOTE: This benchmark was replaced by TDE.  If this is of any interest,
+it is because the FIRBank and FIRBankPipeline changed from
+column-major to row-major ordering, eliminating the need for a
+transpose.  Also, FIRBank has explicit data parallelism.  Finally,
+there is matlab reference code for this benchmark (which might also
+apply to TDE).  If you ware looking for the most up-to-date and
+realistic benchmark, use TDE instead.
+
 *** NOTE *** -- Outputs will not verify unless real coefficients are
 used (see program text).
 

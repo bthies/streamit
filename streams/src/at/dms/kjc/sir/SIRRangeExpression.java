@@ -151,8 +151,9 @@ public class SIRRangeExpression extends JExpression {
             maxStr = max.toString();
         }
         String result = "[" + minStr + "," + aveStr + "," + maxStr + "]";
-        // simplify repeated dynamic tokens
-        result = Utils.replaceAll(result, "*,*", "*");
+        // simplify repeated dynamic token
+        result = Utils.replaceAll(result, ",*,*]", ",*]");
+        result = Utils.replaceAll(result, "[*,*,", "[*,");
         if (result.equals("[*,*]")) {
             result = "*";
         }

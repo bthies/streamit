@@ -32,26 +32,29 @@ float->float filter Subtracter {
 float->float pipeline Equalizer(float rate, int bands, float[bands] cutoffs,
                                 float[bands] gains, int taps) {
   add EqSplit(rate, bands, cutoffs, gains, taps);
-  add float->float filter {
+  add Adder(bands);
+}
+  float->float filter Adder(int bands) {
     work pop bands-1 push 1 {
       float sum = 0;
       for (int i = 0; i < bands-1; i++)
         sum += pop();
       push(sum);
     }
-  };
-}
+  }
 float->float splitjoin EqSplit(float rate, int bands, float[bands] cutoffs,
                                float[bands] gains, int taps) {
   split duplicate;
   for (int i = 1; i < bands; i++)
     add pipeline {
       add BandPassFilter(rate, cutoffs[i-1], cutoffs[i], taps);
-      add float->float filter {
-        work pop 1 push 1 { push(pop() * gains[i]); }
-      };
+      add Amplify(gains[i]);
     };
   join roundrobin;
+}
+
+float->float filter Amplify (float gain) {
+  work pop 1 push 1 { push(pop() * gain); }
 }
 
 float->float filter LowPassFilter(float rate, float cutoff, int taps, int decimation) {

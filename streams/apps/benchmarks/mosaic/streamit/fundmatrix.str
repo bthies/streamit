@@ -69,55 +69,56 @@ featureListPair->featureListPair pipeline makeFundMatrixExit()
 featureListPair->featureListPair filter sendNumberOfInliers(portal <svd3> numberOfInliers, 
 														portal <extractVColCorrespondingToSmallSingValExit> numberOfInliers2,
 														portal <makeConstraintMatrixExit> numberOfInliers3){
-	int z;
-	featureListPair feat;
 	work pop 1 push 1{
-		feat = pop();
-		
-		z = feat.bestScore;
-		numberOfInliers.setVal(z);
-		numberOfInliers2.setVal(z);
-		numberOfInliers3.setVal(z);									
-		
-		push(feat);
+            featureListPair feat;
+            int z;
+            feat = pop();
+            
+            z = feat.bestScore;
+            numberOfInliers.setVal(z);
+            numberOfInliers2.setVal(z);
+            numberOfInliers3.setVal(z);									
+            
+            push(feat);
 	}
 }
 
 float->float filter extractVColCorrespondingToSmallSingVal(int z){	
-	float smallestSingVal, tempy;		
-	int smallestSingValIndex;
-	work pop (z*9 + 9 + 81) push 9 {
-		
-		for(int i = 0; i<z*9; i++){pop();}
-		smallestSingValIndex = 0;
-		smallestSingVal = 1000;
-		//figure out the smallest singular value index in w
-		for(int i = 0;i < 9; i++){
-			tempy = pop();
-			if(tempy<smallestSingVal/*&& tempy>(float)(1.0/100000)*/){
-				smallestSingValIndex = i;
-				smallestSingVal = tempy;													 	
-			}
-		}
-		//take that index and that will be the column of V you extract
-		for(int i = 0; i < 81;i++){
-			if(i>=smallestSingValIndex*9 && i<(smallestSingValIndex+1)*9){
-				push(pop());
-			}
-			else {
-			pop();
-			}
-		}
-	}
+    work pop (z*9 + 9 + 81) push 9 {
+        float smallestSingVal, tempy;		
+        int smallestSingValIndex;
+        
+        for(int i = 0; i<z*9; i++){pop();}
+        smallestSingValIndex = 0;
+        smallestSingVal = 1000;
+        //figure out the smallest singular value index in w
+        for(int i = 0;i < 9; i++){
+            tempy = pop();
+            if(tempy<smallestSingVal/*&& tempy>(float)(1.0/100000)*/){
+                smallestSingValIndex = i;
+                smallestSingVal = tempy;													 	
+            }
+        }
+        //take that index and that will be the column of V you extract
+        for(int i = 0; i < 81;i++){
+            if(i>=smallestSingValIndex*9 && i<(smallestSingValIndex+1)*9){
+                push(pop());
+            }
+            else {
+                pop();
+            }
+        }
+    }
 }
 
 float->float filter extractVColCorrespondingToSmallSingValExit(){	
-	float smallestSingVal, tempy;		
-	int smallestSingValIndex;
+    // actual state
 	int z;
         //	work pop (z*9 + 9 + 81) push 9 {
         work pop * push 9 { // by bill to push through compiler
-		
+            float smallestSingVal, tempy;		
+            int smallestSingValIndex;
+            
 		for(int i = 0; i<z*9; i++){pop();}
 		smallestSingValIndex = 0;
 		smallestSingVal = 1000;
@@ -145,10 +146,10 @@ float->float filter extractVColCorrespondingToSmallSingValExit(){
 }
 
 featureListPair->featureListPair filter denormalizeF(){
-	float t0,t1,t2,t3,t4,t5,t6,t7,t8;
-	featureListPair feat;
 	
 	work pop 1 push 1{
+            float t0,t1,t2,t3,t4,t5,t6,t7,t8;
+            featureListPair feat;
 		feat = pop();
 		//first find T2'*F
 		/*println("F prenormalized");
@@ -210,11 +211,11 @@ featureListPair->featureListPair filter denormalizeF(){
 	}
 }
 featureListPair->featureListPair filter denormalizeFExit(){
-	float t0,t1,t2,t3,t4,t5,t6,t7,t8;
-	featureListPair feat;
 	
 	work pop 1 push 1{
-		feat = pop();
+            float t0,t1,t2,t3,t4,t5,t6,t7,t8;
+            featureListPair feat;
+            feat = pop();
 		
 		t0 = feat.frame2scaleInd*feat.tempF[0][0];
 		t1 = feat.frame2scaleInd*feat.tempF[1][0];
@@ -263,22 +264,22 @@ featureListPair->featureListPair filter denormalizeFExit(){
 	
 featureListPair->featureListPair filter normalizeInliers()
 {	
-	featureListPair feat;
-	
-	float runningSumX1;
-	float runningSumY1;
-	float runningSumX2;
-	float runningSumY2;
-	float runningSumDist1;
-	float runningSumDist2;
-		
-	float muX1, muX2;
-	float muY1, muY2;
-	float stDevFactor1, stDevFactor2;
-	
-	int Z;
-	
 	work pop 1 push 1{
+            featureListPair feat;
+            
+            float runningSumX1;
+            float runningSumY1;
+            float runningSumX2;
+            float runningSumY2;
+            float runningSumDist1;
+            float runningSumDist2;
+            
+            float muX1, muX2;
+            float muY1, muY2;
+            float stDevFactor1, stDevFactor2;
+            
+            int Z;
+
 		feat = pop();
 		Z = feat.bestScore;
 		runningSumX1 = 0;
@@ -344,20 +345,20 @@ featureListPair->featureListPair filter normalizeInliers()
 
 featureListPair->featureListPair filter normalizeIndices(int z)
 {	
-	featureListPair feat;
-	
-	float runningSumX1;
-	float runningSumY1;
-	float runningSumX2;
-	float runningSumY2;
-	float runningSumDist1;
-	float runningSumDist2;
-		
-	float muX1, muX2;
-	float muY1, muY2;
-	float stDevFactor1, stDevFactor2;
-		
 	work pop 1 push 1{
+            featureListPair feat;
+            
+            float runningSumX1;
+            float runningSumY1;
+            float runningSumX2;
+            float runningSumY2;
+            float runningSumDist1;
+            float runningSumDist2;
+            
+            float muX1, muX2;
+            float muY1, muY2;
+            float stDevFactor1, stDevFactor2;
+            
 		feat = pop();
 		
 		//bestFeaturesAndNormData pushedData;
@@ -428,10 +429,10 @@ float->featureListPair pipeline newF(){
 	add splitjoin{
 		split roundrobin(12,9);
 		add float->float filter {				
-			float d1;
-			float d2;
 			work pop 12 peek 12 push 9{
-				d1 = peek(9);
+                            float d1;
+                            float d2;
+                            d1 = peek(9);
 				d2 = peek(10);
 				push(d1*peek(0));
 				push(d1*peek(1));
@@ -452,9 +453,9 @@ float->featureListPair pipeline newF(){
 	//U*D come in first, then V'
 
 	add float->featureListPair filter{
-		featureListPair feat;
 		work pop 18 peek 18 push 1{
 		
+                    featureListPair feat;
 			feat.tempF[0][0] = (peek(0)*peek(9) + peek(3)*peek(10) + peek(6)*peek(11));
 			feat.tempF[1][0] = (peek(1)*peek(9) + peek(4)*peek(10) + peek(7)*peek(11));
 			feat.tempF[2][0] = (peek(2)*peek(9) + peek(5)*peek(10) + peek(8)*peek(11));
@@ -473,944 +474,943 @@ float->featureListPair pipeline newF(){
 }
 	
 featureListPair->float filter makeConstraintMatrix(int z){	
-	
-
-	featureListPair temp;
+    work pop 1 push z*9{
 	normArray[40] feat1;
 	normArray[40] feat2;
 	int length;
-		work pop 1 push z*9{
-			temp = pop();
-			length = z;
-			if(z == -1)
-			{
-				feat1 = temp.nInliers1;
-				feat2 = temp.nInliers2;
-				length = temp.bestScore;
-			}
-			else {
-				for(int i = 0; i < 8; i++){
-					feat1[i] = temp.nI1[i];
-					feat2[i] = temp.nI2[i];
-				}
-				length = z;
-			}
+        featureListPair temp;
+        temp = pop();
+        length = z;
+        if(z == -1)
+            {
+                feat1 = temp.nInliers1;
+                feat2 = temp.nInliers2;
+                length = temp.bestScore;
+            }
+        else {
+            // changing 8 to z because the two are
+            // equal currently, and it seems this loop
+            // should be to z
+            //for(int i = 0; i < 8; i++){
+            for(int i = 0; i < z; i++){
+                feat1[i] = temp.nI1[i];
+                feat2[i] = temp.nI2[i];
+            }
+            length = z;
+        }
 			
-			for(int i=0; i<length; i++){	
-				push(feat2[i].x*feat1[i].x);			
-			}
-			for(int i=0; i<length; i++){	
-				push(feat2[i].x*feat1[i].y);			
-			}
-			for(int i=0; i<length; i++){	
-				push(feat2[i].x);			
-			}
-			for(int i=0; i<length; i++){	
-				push(feat2[i].y*feat1[i].x);			
-			}
-			for(int i=0; i<length; i++){	
-				push(feat2[i].y*feat1[i].y);			
-			}
-			for(int i=0; i<length; i++){	
-				push(feat2[i].y);			
-			}
-			for(int i=0; i<length; i++){	
-				push(feat1[i].x);			
-			}
-			for(int i=0; i<length; i++){	
-				push(feat1[i].y);			
-			}
-			for(int i=0; i<length; i++){	
-				push(1);			
-			}			
-		}
+        for(int i=0; i<length; i++){	
+            push(feat2[i].x*feat1[i].x);			
+        }
+        for(int i=0; i<length; i++){	
+            push(feat2[i].x*feat1[i].y);			
+        }
+        for(int i=0; i<length; i++){	
+            push(feat2[i].x);			
+        }
+        for(int i=0; i<length; i++){	
+            push(feat2[i].y*feat1[i].x);			
+        }
+        for(int i=0; i<length; i++){	
+            push(feat2[i].y*feat1[i].y);			
+        }
+        for(int i=0; i<length; i++){	
+            push(feat2[i].y);			
+        }
+        for(int i=0; i<length; i++){	
+            push(feat1[i].x);			
+        }
+        for(int i=0; i<length; i++){	
+            push(feat1[i].y);			
+        }
+        for(int i=0; i<length; i++){	
+            push(1);			
+        }			
+    }
 	
 }
 
 featureListPair->float filter makeConstraintMatrixExit(){	
-	
 
+    // actual state
+    int z;
+    //		work pop 1 push z*9{
+    work pop 1 push *{ // by bill to push through compiler
 	featureListPair temp;
 	normArray[40] feat1;
 	normArray[40] feat2;
-	
-	int z;
-        //		work pop 1 push z*9{
-		work pop 1 push *{ // by bill to push through compiler
-			temp = pop();
+        temp = pop();
 			
-			feat1 = temp.nInliers1;
-			feat2 = temp.nInliers2;
+        feat1 = temp.nInliers1;
+        feat2 = temp.nInliers2;
 			
-			for(int i=0; i<z; i++){	
-				push(feat2[i].x*feat1[i].x);			
-			}
-			for(int i=0; i<z; i++){	
-				push(feat2[i].x*feat1[i].y);			
-			}
-			for(int i=0; i<z; i++){	
-				push(feat2[i].x);			
-			}
-			for(int i=0; i<z; i++){	
-				push(feat2[i].y*feat1[i].x);			
-			}
-			for(int i=0; i<z; i++){	
-				push(feat2[i].y*feat1[i].y);			
-			}
-			for(int i=0; i<z; i++){	
-				push(feat2[i].y);			
-			}
-			for(int i=0; i<z; i++){	
-				push(feat1[i].x);			
-			}
-			for(int i=0; i<z; i++){	
-				push(feat1[i].y);			
-			}
-			for(int i=0; i<z; i++){	
-				push(1);			
-			}			
-		}
-		handler setVal(int numInliers){
-			z = numInliers;		
-		}
+        for(int i=0; i<z; i++){	
+            push(feat2[i].x*feat1[i].x);			
+        }
+        for(int i=0; i<z; i++){	
+            push(feat2[i].x*feat1[i].y);			
+        }
+        for(int i=0; i<z; i++){	
+            push(feat2[i].x);			
+        }
+        for(int i=0; i<z; i++){	
+            push(feat2[i].y*feat1[i].x);			
+        }
+        for(int i=0; i<z; i++){	
+            push(feat2[i].y*feat1[i].y);			
+        }
+        for(int i=0; i<z; i++){	
+            push(feat2[i].y);			
+        }
+        for(int i=0; i<z; i++){	
+            push(feat1[i].x);			
+        }
+        for(int i=0; i<z; i++){	
+            push(feat1[i].y);			
+        }
+        for(int i=0; i<z; i++){	
+            push(1);			
+        }			
+    }
+    handler setVal(int numInliers){
+        z = numInliers;		
+    }
 	
 }
 
 float->float filter svd1(int aheight, int awidth){
-	//svd code taken from the online version of the book 'numerical recipes in c', the part on 
-	//singular value decomposition.
-	/*Given a matrix a[1..m][1..n], this routine computes its singular value decomposition, A =
-		U*W*V T. Thematrix U replaces a on output. The diagonal matrix of singular values W is output
-		as a vector w[1..n]. ThematrixV (not the transpose V T ) is output as v[1..n][1..n].
-	*/
+    //svd code taken from the online version of the book 'numerical recipes in c', the part on 
+    //singular value decomposition.
+    /*Given a matrix a[1..m][1..n], this routine computes its singular value decomposition, A =
+      U*W*V T. Thematrix U replaces a on output. The diagonal matrix of singular values W is output
+      as a vector w[1..n]. ThematrixV (not the transpose V T ) is output as v[1..n][1..n].
+    */
 	
-	int flag,i,its,j,jj,k,l,nm,imintemp;
-	float anorm,c,f,g,h,s,scale,x,y,z,sgn;
+    work pop aheight*awidth push (aheight*awidth + awidth + awidth*awidth){
 
-
-	//int m = myHeight, n = 9;
-	int m = aheight;
-	int n = awidth;
+        int flag,i,its,j,jj,k,l,nm,imintemp;
+        float anorm,c,f,g,h,s,scale,x,y,z,sgn;
+        
+        //int m = myHeight, n = 9;
+        int m = aheight;
+        int n = awidth;
 	
-	float[9][10] a;
-	float [10] w;
-	float [10][10] v;
-	float[10] rv1 ;//rv1=vector(1,n);
-
+        float[9][10] a;
+        float [10] w;
+        float [10][10] v;
+        float[10] rv1 ;//rv1=vector(1,n);
 	
-	work pop m*n push (m*n + n + n*n){
-	
-	for(int i=1; i<=n; i++){
-		for(int j=1; j<=m ;j++){
-				a[j][i]= pop();
-		}
+	for(i=1; i<=n; i++){
+            for(j=1; j<=m ;j++){
+                a[j][i]= pop();
+            }
 	}
 	
 
 	anorm=0.0; //Householder reduction to bidiagonal form.
 	scale = anorm; g = scale;
 	for (i=1;i<=n;i++) {
-		l=i+1;
-		rv1[i]=scale*g;
-		scale=0.0;
-		s = scale; g = s;
-		if (i <= m) {
-			for (k=i;k<=m;k++) scale += abs(a[k][i]);
-			if (scale>muP || scale<muN) {
-				for (k=i;k<=m;k++) {
-					a[k][i] /= scale;
-					s += a[k][i]*a[k][i];
-				}
-				f=a[i][i];
+            l=i+1;
+            rv1[i]=scale*g;
+            scale=0.0;
+            s = scale; g = s;
+            if (i <= m) {
+                for (k=i;k<=m;k++) scale += abs(a[k][i]);
+                if (scale>muP || scale<muN) {
+                    for (k=i;k<=m;k++) {
+                        a[k][i] /= scale;
+                        s += a[k][i]*a[k][i];
+                    }
+                    f=a[i][i];
 				
-				//line below replaced the original: g = -SIGN(sqrt(s),f);
-				if(f>=0) g = -abs(sqrt(s)); else g = abs(sqrt(s));
+                    //line below replaced the original: g = -SIGN(sqrt(s),f);
+                    if(f>=0) g = -abs(sqrt(s)); else g = abs(sqrt(s));
 
-				h=f*g-s;
-				a[i][i]=f-g;
-				for (j=l;j<=n;j++) {s=0.0;
-					for (k=i;k<=m;k++) s += a[k][i]*a[k][j];
-					f=s/h;
-					for (k=i;k<=m;k++) a[k][j] += f*a[k][i];
-				}
-				for (k=i;k<=m;k++) a[k][i] *= scale;
-			}
-		}
-		w[i]=scale*g;
-		scale=0.0;
-		s = scale; g = s;
-		if (i <= m && i != n) {
-			for (k=l;k<=n;k++) scale += abs(a[i][k]);
-			if (scale>muP || scale<muN) {
+                    h=f*g-s;
+                    a[i][i]=f-g;
+                    for (j=l;j<=n;j++) {s=0.0;
+                    for (k=i;k<=m;k++) s += a[k][i]*a[k][j];
+                    f=s/h;
+                    for (k=i;k<=m;k++) a[k][j] += f*a[k][i];
+                    }
+                    for (k=i;k<=m;k++) a[k][i] *= scale;
+                }
+            }
+            w[i]=scale*g;
+            scale=0.0;
+            s = scale; g = s;
+            if (i <= m && i != n) {
+                for (k=l;k<=n;k++) scale += abs(a[i][k]);
+                if (scale>muP || scale<muN) {
 			
-			for (k=l;k<=n;k++) {
-				a[i][k] /= scale;
-				s += a[i][k]*a[i][k];
-			}
-			f=a[i][l];
-			// replaced this: g = -SIGN(sqrt(s),f); with the following line
-			if(f>=0) g = -abs(sqrt(s)); else g = abs(sqrt(s));
-			h=f*g-s;
-			a[i][l]=f-g;
-			for (k=l;k<=n;k++) rv1[k]=a[i][k]/h;
-			for (j=l;j<=m;j++) { s=0.0;
-				for (k=l;k<=n;k++) s += a[j][k]*a[i][k];
-				for (k=l;k<=n;k++) a[j][k] += s*rv1[k];
-			}
-			for (k=l;k<=n;k++) a[i][k] *= scale;
-			}
-		}
-		if((abs(w[i]) + abs(rv1[i]))>anorm) anorm = (abs(w[i]) + abs(rv1[i]));
-		//anorm=FMAX(anorm,(abs(w[i])+abs(rv1[i])));
+                    for (k=l;k<=n;k++) {
+                        a[i][k] /= scale;
+                        s += a[i][k]*a[i][k];
+                    }
+                    f=a[i][l];
+                    // replaced this: g = -SIGN(sqrt(s),f); with the following line
+                    if(f>=0) g = -abs(sqrt(s)); else g = abs(sqrt(s));
+                    h=f*g-s;
+                    a[i][l]=f-g;
+                    for (k=l;k<=n;k++) rv1[k]=a[i][k]/h;
+                    for (j=l;j<=m;j++) { s=0.0;
+                    for (k=l;k<=n;k++) s += a[j][k]*a[i][k];
+                    for (k=l;k<=n;k++) a[j][k] += s*rv1[k];
+                    }
+                    for (k=l;k<=n;k++) a[i][k] *= scale;
+                }
+            }
+            if((abs(w[i]) + abs(rv1[i]))>anorm) anorm = (abs(w[i]) + abs(rv1[i]));
+            //anorm=FMAX(anorm,(abs(w[i])+abs(rv1[i])));
 	}
 	for (i=n;i>=1;i--) { //Accumulation of right-hand transformations.
-		if (i < n) {
-			if (g>muP || g<muN) {
-				for (j=l;j<=n;j++) //Double division to avoid possible underflow.
-				v[j][i]=(a[i][j]/a[i][l])/g;
-				for (j=l;j<=n;j++) {s=0.0;
-					for (k=l;k<=n;k++) s += a[i][k]*v[k][j];
-					for (k=l;k<=n;k++) v[k][j] += s*v[k][i];
-				}
-			}
-			for (j=l;j<=n;j++) {v[i][j]=0.0;
-								v[j][i]=0.0;}
-		}
-		v[i][i]=1.0;
-		g=rv1[i];
-		l=i;
+            if (i < n) {
+                if (g>muP || g<muN) {
+                    for (j=l;j<=n;j++) //Double division to avoid possible underflow.
+                        v[j][i]=(a[i][j]/a[i][l])/g;
+                    for (j=l;j<=n;j++) {s=0.0;
+                    for (k=l;k<=n;k++) s += a[i][k]*v[k][j];
+                    for (k=l;k<=n;k++) v[k][j] += s*v[k][i];
+                    }
+                }
+                for (j=l;j<=n;j++) {v[i][j]=0.0;
+                v[j][i]=0.0;}
+            }
+            v[i][i]=1.0;
+            g=rv1[i];
+            l=i;
 	}
 	if(m<n) imintemp = m; else imintemp = n;
 	for (i=imintemp;i>=1;i--) { //Accumulation of left-hand transformations.
-		l=i+1;
-		g=w[i];
-		for (j=l;j<=n;j++) a[i][j]=0.0;
-		if (g>muP || g<muN) {
-			g=1.0/g;
-			for (j=l;j<=n;j++) {s=0.0;
-				for (k=l;k<=m;k++) s += a[k][i]*a[k][j];
-				f=(s/a[i][i])*g;
-				for (k=i;k<=m;k++) a[k][j] += f*a[k][i];
-			}
-			for (j=i;j<=m;j++) a[j][i] *= g;
-		} else for (j=i;j<=m;j++) a[j][i]=0.0;
-		++a[i][i];
+            l=i+1;
+            g=w[i];
+            for (j=l;j<=n;j++) a[i][j]=0.0;
+            if (g>muP || g<muN) {
+                g=1.0/g;
+                for (j=l;j<=n;j++) {s=0.0;
+                for (k=l;k<=m;k++) s += a[k][i]*a[k][j];
+                f=(s/a[i][i])*g;
+                for (k=i;k<=m;k++) a[k][j] += f*a[k][i];
+                }
+                for (j=i;j<=m;j++) a[j][i] *= g;
+            } else for (j=i;j<=m;j++) a[j][i]=0.0;
+            ++a[i][i];
 	}
 	for (k=n;k>=1;k--) { //Diagonalization of the bidiagonal form: Loop over
-						 //singular values, and over
-		 for (its=1;its<=30;its++) { //allowed iterations.
-			flag=1;
-			for (l=k;l>=1;l--) { //Test for splitting.
-				nm=l-1; 	// Note that rv1[1] is always zero.
-				if ((float)(abs(rv1[l])+anorm) == anorm) {
-					flag=0;
-					break;
-				}
-				if ((float)(abs(w[nm])+anorm) == anorm) break;
-			}
-			if (flag>muP || flag<muN) {
-				c=0.0; //Cancellation of rv1[l], if l > 1.
-				s=1.0;
-				for (i=l;i<=k;i++) {
-					f=s*rv1[i];
-					rv1[i]=c*rv1[i];
-					if ((float)(abs(f)+anorm) == anorm) break;
-					g=w[i];
-					//substituted below for h=pythag(f,g);
-					h = sqrt(f*f + g*g);
-					w[i]=h;
-					h=1.0/h;
-					c=g*h;
-					s = -f*h;
-					for (j=1;j<=m;j++) {
-						y=a[j][nm];
-						z=a[j][i];
-						a[j][nm]=y*c+z*s;
-						a[j][i]=z*c-y*s;
-					}
-				}
-			}
-			z=w[k];
-			if (l == k) { //Convergence.
-				if (z < 0.0) { //Singular value is made nonnegative.
-					w[k] = -z;
-					for (j=1;j<=n;j++) v[j][k] = -v[j][k];
-				}
-				break;
-			}
-			if (its == 30) println("no convergence in 30 svdcmp iterations");
-			x=w[l]; //Shift from bottom 2-by-2 minor.
-			nm=k-1;
-			y=w[nm];
-			g=rv1[nm];
-			h=rv1[k];
-			f=((y-z)*(y+z)+(g-h)*(g+h))/(2.0*h*y);
-			//	substituting the pythagorean function for g=pythag(f,1.0);
-			g = sqrt(f*f + 1);
-			// another replacement for SIGN (...)
-			if(f>=0) sgn = abs(g); else sgn = -abs(g);
-			f=((x-z)*(x+z)+h*((y/(f+sgn))-h))/x;
-			s=1.0; //Next QR transformation:
-			c=s;
-			for (j=l;j<=nm;j++) {
-				i=j+1;
-				g=rv1[i];
-				y=w[i];
-				h=s*g;
-				g=c*g;
-				//substituting the pythagorean function for z=pythag(f,h);
-				z = sqrt(f*f + h*h);
+            //singular values, and over
+            for (its=1;its<=30;its++) { //allowed iterations.
+                flag=1;
+                for (l=k;l>=1;l--) { //Test for splitting.
+                    nm=l-1; 	// Note that rv1[1] is always zero.
+                    if ((float)(abs(rv1[l])+anorm) == anorm) {
+                        flag=0;
+                        break;
+                    }
+                    if ((float)(abs(w[nm])+anorm) == anorm) break;
+                }
+                if (flag>muP || flag<muN) {
+                    c=0.0; //Cancellation of rv1[l], if l > 1.
+                    s=1.0;
+                    for (i=l;i<=k;i++) {
+                        f=s*rv1[i];
+                        rv1[i]=c*rv1[i];
+                        if ((float)(abs(f)+anorm) == anorm) break;
+                        g=w[i];
+                        //substituted below for h=pythag(f,g);
+                        h = sqrt(f*f + g*g);
+                        w[i]=h;
+                        h=1.0/h;
+                        c=g*h;
+                        s = -f*h;
+                        for (j=1;j<=m;j++) {
+                            y=a[j][nm];
+                            z=a[j][i];
+                            a[j][nm]=y*c+z*s;
+                            a[j][i]=z*c-y*s;
+                        }
+                    }
+                }
+                z=w[k];
+                if (l == k) { //Convergence.
+                    if (z < 0.0) { //Singular value is made nonnegative.
+                        w[k] = -z;
+                        for (j=1;j<=n;j++) v[j][k] = -v[j][k];
+                    }
+                    break;
+                }
+                if (its == 30) println("no convergence in 30 svdcmp iterations");
+                x=w[l]; //Shift from bottom 2-by-2 minor.
+                nm=k-1;
+                y=w[nm];
+                g=rv1[nm];
+                h=rv1[k];
+                f=((y-z)*(y+z)+(g-h)*(g+h))/(2.0*h*y);
+                //	substituting the pythagorean function for g=pythag(f,1.0);
+                g = sqrt(f*f + 1);
+                // another replacement for SIGN (...)
+                if(f>=0) sgn = abs(g); else sgn = -abs(g);
+                f=((x-z)*(x+z)+h*((y/(f+sgn))-h))/x;
+                s=1.0; //Next QR transformation:
+                c=s;
+                for (j=l;j<=nm;j++) {
+                    i=j+1;
+                    g=rv1[i];
+                    y=w[i];
+                    h=s*g;
+                    g=c*g;
+                    //substituting the pythagorean function for z=pythag(f,h);
+                    z = sqrt(f*f + h*h);
 		
-				rv1[j]=z;
-				c=f/z;
-				s=h/z;
-				f=x*c+g*s;
-				g = g*c-x*s;
-				h=y*s;
-				y *= c;
-				for (jj=1;jj<=n;jj++) {
-					x=v[jj][j];
-					z=v[jj][i];
-					v[jj][j]=x*c+z*s;
-					v[jj][i]=z*c-x*s;
-				}
-				//	substituting the pythagorean function for z=pythag(f,h);
-				z = sqrt(f*f + h*h);
-				w[j]=z; //Rotation can be arbitrary if z = 0.
-				if (z>muP || z<muN) {
-					z=1.0/z;
-					c=f*z;
-					s=h*z;
-				}
-				f=c*g+s*y;
-				x=c*y-s*g;
-				for (jj=1;jj<=m;jj++) {
-					y=a[jj][j];
-					z=a[jj][i];
-					a[jj][j]=y*c+z*s;
-					a[jj][i]=z*c-y*s;
-				}
-			}
-			rv1[l]=0.0;
-			rv1[k]=f;
-			w[k]=x;
-		 }
+                    rv1[j]=z;
+                    c=f/z;
+                    s=h/z;
+                    f=x*c+g*s;
+                    g = g*c-x*s;
+                    h=y*s;
+                    y *= c;
+                    for (jj=1;jj<=n;jj++) {
+                        x=v[jj][j];
+                        z=v[jj][i];
+                        v[jj][j]=x*c+z*s;
+                        v[jj][i]=z*c-x*s;
+                    }
+                    //	substituting the pythagorean function for z=pythag(f,h);
+                    z = sqrt(f*f + h*h);
+                    w[j]=z; //Rotation can be arbitrary if z = 0.
+                    if (z>muP || z<muN) {
+                        z=1.0/z;
+                        c=f*z;
+                        s=h*z;
+                    }
+                    f=c*g+s*y;
+                    x=c*y-s*g;
+                    for (jj=1;jj<=m;jj++) {
+                        y=a[jj][j];
+                        z=a[jj][i];
+                        a[jj][j]=y*c+z*s;
+                        a[jj][i]=z*c-y*s;
+                    }
+                }
+                rv1[l]=0.0;
+                rv1[k]=f;
+                w[k]=x;
+            }
 	}
 	//println("u1:");
-	for(int i=1; i<=n; i++){
-		for(int j=1; j<=m ;j++){
-				push(a[j][i]);
-	//		println(a[j][i]);
-		}
+	for(i=1; i<=n; i++){
+            for(j=1; j<=m ;j++){
+                push(a[j][i]);
+                //		println(a[j][i]);
+            }
 	}
 	//println("w1:");
-	for(int i=1; i<=n ;i++){
-		push(w[i]);
-		//println(w[i]);
+	for(i=1; i<=n ;i++){
+            push(w[i]);
+            //println(w[i]);
 	}
 	//println("v1:");
-	for(int i=1; i<=n; i++){
-		for(int j=1; j<=n ;j++){
-				push(v[j][i]);
-			//println(v[j][i]);
-		}
+	for(i=1; i<=n; i++){
+            for(j=1; j<=n ;j++){
+                push(v[j][i]);
+                //println(v[j][i]);
+            }
 	}
-	}
+    }
 }
 
 float->float filter svd2(){//(int aheight, int awidth){
-	//svd code taken from the online version of the book 'numerical recipes in c', the part on 
-	//singular value decomposition.
-	/*Given a matrix a[1..m][1..n], this routine computes its singular value decomposition, A =
-		U*W*V T. Thematrix U replaces a on output. The diagonal matrix of singular values W is output
-		as a vector w[1..n]. ThematrixV (not the transpose V T ) is output as v[1..n][1..n].
-	*/
+    //svd code taken from the online version of the book 'numerical recipes in c', the part on 
+    //singular value decomposition.
+    /*Given a matrix a[1..m][1..n], this routine computes its singular value decomposition, A =
+      U*W*V T. Thematrix U replaces a on output. The diagonal matrix of singular values W is output
+      as a vector w[1..n]. ThematrixV (not the transpose V T ) is output as v[1..n][1..n].
+    */
 	
-	int flag,i,its,j,jj,k,l,nm,imintemp;
-	float anorm,c,f,g,h,s,scale,x,y,z,sgn;
-	int m=3, n=3;
-	/*m = aheight;
-	n = awidth;*/
-	float[4][4] a; 
-	float [4] w;
-	float [4][4] v;
-	float [4][4] tempa;
-	float [4][4] tempv;
-	float[4] tempw;
-	float[4] rv1;//rv1=vector(1,n);
+    work pop 3*3 push (3*3 + 3 + 3*3){
+        int flag,i,its,j,jj,k,l,nm,imintemp;
+        float anorm,c,f,g,h,s,scale,x,y,z,sgn;
+        int m=3, n=3;
+        /*m = aheight;
+          n = awidth;*/
+        float[4][4] a; 
+        float [4] w;
+        float [4][4] v;
+        float [4][4] tempa;
+        float [4][4] tempv;
+        float[4] tempw;
+        float[4] rv1;//rv1=vector(1,n);
 
-	work pop m*n push (m*n + n + n*n){
-		//println("svd2 input");
-	for(int i=1; i<=n; i++){
-		for(int j=1; j<=m ;j++){
-				a[j][i] = pop();
-				//println(a[j][i]);
-		}
+        //println("svd2 input");
+	for(i=1; i<=n; i++){
+            for(j=1; j<=m ;j++){
+                a[j][i] = pop();
+                //println(a[j][i]);
+            }
 	}
 	anorm=0.0; //Householder reduction to bidiagonal form.
-		scale = anorm; g = scale;
-		for (i=1;i<=n;i++) {
-			l=i+1;
-			rv1[i]=scale*g;
-			scale=0.0;
-			s = scale; g = s;
-			if (i <= m) {
-				for (k=i;k<=m;k++) scale += abs(a[k][i]);
-				if (scale>muP || scale<muN) {
-					for (k=i;k<=m;k++) {
-						a[k][i] /= scale;
-						s += a[k][i]*a[k][i];
-					}
-					f=a[i][i];
+        scale = anorm; g = scale;
+        for (i=1;i<=n;i++) {
+            l=i+1;
+            rv1[i]=scale*g;
+            scale=0.0;
+            s = scale; g = s;
+            if (i <= m) {
+                for (k=i;k<=m;k++) scale += abs(a[k][i]);
+                if (scale>muP || scale<muN) {
+                    for (k=i;k<=m;k++) {
+                        a[k][i] /= scale;
+                        s += a[k][i]*a[k][i];
+                    }
+                    f=a[i][i];
 				
-					//line below replaced the original: g = -SIGN(sqrt(s),f);
-					if(f>=0) g = -abs(sqrt(s)); else g = abs(sqrt(s));
+                    //line below replaced the original: g = -SIGN(sqrt(s),f);
+                    if(f>=0) g = -abs(sqrt(s)); else g = abs(sqrt(s));
 					
-					h=f*g-s;
-					a[i][i]=f-g;
-					for (j=l;j<=n;j++) {s=0.0;
-						for (k=i;k<=m;k++) s += a[k][i]*a[k][j];
-						f=s/h;
-						for (k=i;k<=m;k++) a[k][j] += f*a[k][i];
-					}
-					for (k=i;k<=m;k++) a[k][i] *= scale;
-				}
-			}
-			w[i]=scale*g;
-			scale=0.0;
-			s = scale; g = s;
-			if (i <= m && i != n) {
-				for (k=l;k<=n;k++) scale += abs(a[i][k]);
-				if (scale>muP || scale<muN) {
+                    h=f*g-s;
+                    a[i][i]=f-g;
+                    for (j=l;j<=n;j++) {s=0.0;
+                    for (k=i;k<=m;k++) s += a[k][i]*a[k][j];
+                    f=s/h;
+                    for (k=i;k<=m;k++) a[k][j] += f*a[k][i];
+                    }
+                    for (k=i;k<=m;k++) a[k][i] *= scale;
+                }
+            }
+            w[i]=scale*g;
+            scale=0.0;
+            s = scale; g = s;
+            if (i <= m && i != n) {
+                for (k=l;k<=n;k++) scale += abs(a[i][k]);
+                if (scale>muP || scale<muN) {
 			
-				for (k=l;k<=n;k++) {
-					a[i][k] /= scale;
-					s += a[i][k]*a[i][k];
-				}
-				f=a[i][l];
-				// replaced this: g = -SIGN(sqrt(s),f); with the following line
-				if(f>=0) g = -abs(sqrt(s)); else g = abs(sqrt(s));
-				h=f*g-s;
-				a[i][l]=f-g;
-				for (k=l;k<=n;k++) rv1[k]=a[i][k]/h;
-				for (j=l;j<=m;j++) { s=0.0;
-					for (k=l;k<=n;k++) s += a[j][k]*a[i][k];
-					for (k=l;k<=n;k++) a[j][k] += s*rv1[k];
-				}
-				for (k=l;k<=n;k++) a[i][k] *= scale;
-				}
-			}
-			if((abs(w[i]) + abs(rv1[i]))>anorm) anorm = (abs(w[i]) + abs(rv1[i]));
-			//anorm=FMAX(anorm,(abs(w[i])+abs(rv1[i])));
-		}
-		for (i=n;i>=1;i--) { //Accumulation of right-hand transformations.
-			if (i < n) {
-				if (g>muP || g<muN) {
-					for (j=l;j<=n;j++) //Double division to avoid possible underflow.
-					v[j][i]=(a[i][j]/a[i][l])/g;
-					for (j=l;j<=n;j++) {s=0.0;
-						for (k=l;k<=n;k++) s += a[i][k]*v[k][j];
-						for (k=l;k<=n;k++) v[k][j] += s*v[k][i];
-					}
-				}
-				for (j=l;j<=n;j++) {v[i][j]=0.0;
-									v[j][i]=0.0;}
-			}
-			v[i][i]=1.0;
-			g=rv1[i];
-			l=i;
-		}
-		if(m<n) imintemp = m; else imintemp = n;
-		for (i=imintemp;i>=1;i--) { //Accumulation of left-hand transformations.
-			l=i+1;
-			g=w[i];
-			for (j=l;j<=n;j++) a[i][j]=0.0;
-			if (g>muP || g<muN) {
-				g=1.0/g;
-				for (j=l;j<=n;j++) {s=0.0;
-					for (k=l;k<=m;k++) s += a[k][i]*a[k][j];
-					f=(s/a[i][i])*g;
-					for (k=i;k<=m;k++) a[k][j] += f*a[k][i];
-				}
-				for (j=i;j<=m;j++) a[j][i] *= g;
-			} else for (j=i;j<=m;j++) a[j][i]=0.0;
-			++a[i][i];
-		}
-		for (k=n;k>=1;k--) { //Diagonalization of the bidiagonal form: Loop over
-							 //singular values, and over
-			 for (its=1;its<=30;its++) { //allowed iterations.
-				flag=1;
-				for (l=k;l>=1;l--) { //Test for splitting.
-					nm=l-1; 	// Note that rv1[1] is always zero.
-					if ((float)(abs(rv1[l])+anorm) == anorm) {
-						flag=0;
-						break;
-					}
-					if ((float)(abs(w[nm])+anorm) == anorm) break;
-				}
-				if (flag>muP || flag<muN) {
-					c=0.0; //Cancellation of rv1[l], if l > 1.
-					s=1.0;
-					for (i=l;i<=k;i++) {
-						f=s*rv1[i];
-						rv1[i]=c*rv1[i];
-						if ((float)(abs(f)+anorm) == anorm) break;
-						g=w[i];
-						//substituted below for h=pythag(f,g);
-						h = sqrt(f*f + g*g);
-						w[i]=h;
-						h=1.0/h;
-						c=g*h;
-						s = -f*h;
-						for (j=1;j<=m;j++) {
-							y=a[j][nm];
-							z=a[j][i];
-							a[j][nm]=y*c+z*s;
-							a[j][i]=z*c-y*s;
-						}
-					}
-				}
-				z=w[k];
-				if (l == k) { //Convergence.
-					if (z < 0.0) { //Singular value is made nonnegative.
-						w[k] = -z;
-						for (j=1;j<=n;j++) v[j][k] = -v[j][k];
-					}
-					break;
-				}
-				if (its == 30) println("no convergence in 30 svdcmp iterations");
-				x=w[l]; //Shift from bottom 2-by-2 minor.
-				nm=k-1;
-				y=w[nm];
-				g=rv1[nm];
-				h=rv1[k];
-				f=((y-z)*(y+z)+(g-h)*(g+h))/(2.0*h*y);
-				//	substituting the pythagorean function for g=pythag(f,1.0);
-				g = sqrt(f*f + 1);
-				// another replacement for SIGN (...)
-				if(f>=0) sgn = abs(g); else sgn = -abs(g);
-				f=((x-z)*(x+z)+h*((y/(f+sgn))-h))/x;
-				s=1.0; //Next QR transformation:
-				c=s;
-				for (j=l;j<=nm;j++) {
-					i=j+1;
-					g=rv1[i];
-					y=w[i];
-					h=s*g;
-					g=c*g;
-					//substituting the pythagorean function for z=pythag(f,h);
-					z = sqrt(f*f + h*h);
-					rv1[j]=z;
-					c=f/z;
-					s=h/z;
-					f=x*c+g*s;
-					g = g*c-x*s;
-					h=y*s;
-					y *= c;
-					for (jj=1;jj<=n;jj++) {
-						x=v[jj][j];
-						z=v[jj][i];
-						v[jj][j]=x*c+z*s;
-						v[jj][i]=z*c-x*s;
-					}
-					//	substituting the pythagorean function for z=pythag(f,h);
-					z = sqrt(f*f + h*h);
-					w[j]=z; //Rotation can be arbitrary if z = 0.
-					if (z>muP || z<muN) {
-						z=1.0/z;
-						c=f*z;
-						s=h*z;
-					}
-					f=c*g+s*y;
-					x=c*y-s*g;
-					for (jj=1;jj<=m;jj++) {
-						y=a[jj][j];
-						z=a[jj][i];
-						a[jj][j]=y*c+z*s;
-						a[jj][i]=z*c-y*s;
-					}
-				}
-				rv1[l]=0.0;
-				rv1[k]=f;
-				w[k]=x;
-			 }
-		}
+                    for (k=l;k<=n;k++) {
+                        a[i][k] /= scale;
+                        s += a[i][k]*a[i][k];
+                    }
+                    f=a[i][l];
+                    // replaced this: g = -SIGN(sqrt(s),f); with the following line
+                    if(f>=0) g = -abs(sqrt(s)); else g = abs(sqrt(s));
+                    h=f*g-s;
+                    a[i][l]=f-g;
+                    for (k=l;k<=n;k++) rv1[k]=a[i][k]/h;
+                    for (j=l;j<=m;j++) { s=0.0;
+                    for (k=l;k<=n;k++) s += a[j][k]*a[i][k];
+                    for (k=l;k<=n;k++) a[j][k] += s*rv1[k];
+                    }
+                    for (k=l;k<=n;k++) a[i][k] *= scale;
+                }
+            }
+            if((abs(w[i]) + abs(rv1[i]))>anorm) anorm = (abs(w[i]) + abs(rv1[i]));
+            //anorm=FMAX(anorm,(abs(w[i])+abs(rv1[i])));
+        }
+        for (i=n;i>=1;i--) { //Accumulation of right-hand transformations.
+            if (i < n) {
+                if (g>muP || g<muN) {
+                    for (j=l;j<=n;j++) //Double division to avoid possible underflow.
+                        v[j][i]=(a[i][j]/a[i][l])/g;
+                    for (j=l;j<=n;j++) {s=0.0;
+                    for (k=l;k<=n;k++) s += a[i][k]*v[k][j];
+                    for (k=l;k<=n;k++) v[k][j] += s*v[k][i];
+                    }
+                }
+                for (j=l;j<=n;j++) {v[i][j]=0.0;
+                v[j][i]=0.0;}
+            }
+            v[i][i]=1.0;
+            g=rv1[i];
+            l=i;
+        }
+        if(m<n) imintemp = m; else imintemp = n;
+        for (i=imintemp;i>=1;i--) { //Accumulation of left-hand transformations.
+            l=i+1;
+            g=w[i];
+            for (j=l;j<=n;j++) a[i][j]=0.0;
+            if (g>muP || g<muN) {
+                g=1.0/g;
+                for (j=l;j<=n;j++) {s=0.0;
+                for (k=l;k<=m;k++) s += a[k][i]*a[k][j];
+                f=(s/a[i][i])*g;
+                for (k=i;k<=m;k++) a[k][j] += f*a[k][i];
+                }
+                for (j=i;j<=m;j++) a[j][i] *= g;
+            } else for (j=i;j<=m;j++) a[j][i]=0.0;
+            ++a[i][i];
+        }
+        for (k=n;k>=1;k--) { //Diagonalization of the bidiagonal form: Loop over
+            //singular values, and over
+            for (its=1;its<=30;its++) { //allowed iterations.
+                flag=1;
+                for (l=k;l>=1;l--) { //Test for splitting.
+                    nm=l-1; 	// Note that rv1[1] is always zero.
+                    if ((float)(abs(rv1[l])+anorm) == anorm) {
+                        flag=0;
+                        break;
+                    }
+                    if ((float)(abs(w[nm])+anorm) == anorm) break;
+                }
+                if (flag>muP || flag<muN) {
+                    c=0.0; //Cancellation of rv1[l], if l > 1.
+                    s=1.0;
+                    for (i=l;i<=k;i++) {
+                        f=s*rv1[i];
+                        rv1[i]=c*rv1[i];
+                        if ((float)(abs(f)+anorm) == anorm) break;
+                        g=w[i];
+                        //substituted below for h=pythag(f,g);
+                        h = sqrt(f*f + g*g);
+                        w[i]=h;
+                        h=1.0/h;
+                        c=g*h;
+                        s = -f*h;
+                        for (j=1;j<=m;j++) {
+                            y=a[j][nm];
+                            z=a[j][i];
+                            a[j][nm]=y*c+z*s;
+                            a[j][i]=z*c-y*s;
+                        }
+                    }
+                }
+                z=w[k];
+                if (l == k) { //Convergence.
+                    if (z < 0.0) { //Singular value is made nonnegative.
+                        w[k] = -z;
+                        for (j=1;j<=n;j++) v[j][k] = -v[j][k];
+                    }
+                    break;
+                }
+                if (its == 30) println("no convergence in 30 svdcmp iterations");
+                x=w[l]; //Shift from bottom 2-by-2 minor.
+                nm=k-1;
+                y=w[nm];
+                g=rv1[nm];
+                h=rv1[k];
+                f=((y-z)*(y+z)+(g-h)*(g+h))/(2.0*h*y);
+                //	substituting the pythagorean function for g=pythag(f,1.0);
+                g = sqrt(f*f + 1);
+                // another replacement for SIGN (...)
+                if(f>=0) sgn = abs(g); else sgn = -abs(g);
+                f=((x-z)*(x+z)+h*((y/(f+sgn))-h))/x;
+                s=1.0; //Next QR transformation:
+                c=s;
+                for (j=l;j<=nm;j++) {
+                    i=j+1;
+                    g=rv1[i];
+                    y=w[i];
+                    h=s*g;
+                    g=c*g;
+                    //substituting the pythagorean function for z=pythag(f,h);
+                    z = sqrt(f*f + h*h);
+                    rv1[j]=z;
+                    c=f/z;
+                    s=h/z;
+                    f=x*c+g*s;
+                    g = g*c-x*s;
+                    h=y*s;
+                    y *= c;
+                    for (jj=1;jj<=n;jj++) {
+                        x=v[jj][j];
+                        z=v[jj][i];
+                        v[jj][j]=x*c+z*s;
+                        v[jj][i]=z*c-x*s;
+                    }
+                    //	substituting the pythagorean function for z=pythag(f,h);
+                    z = sqrt(f*f + h*h);
+                    w[j]=z; //Rotation can be arbitrary if z = 0.
+                    if (z>muP || z<muN) {
+                        z=1.0/z;
+                        c=f*z;
+                        s=h*z;
+                    }
+                    f=c*g+s*y;
+                    x=c*y-s*g;
+                    for (jj=1;jj<=m;jj++) {
+                        y=a[jj][j];
+                        z=a[jj][i];
+                        a[jj][j]=y*c+z*s;
+                        a[jj][i]=z*c-y*s;
+                    }
+                }
+                rv1[l]=0.0;
+                rv1[k]=f;
+                w[k]=x;
+            }
+        }
 	//println("c: " + c + "\tf: " + f + "\tg: " + g + "\th: " + h + "\ts: " + s + "\tscale: " + scale + "\tx: " + x + "\ty: " + y + "\tz: " + z);
 	//now reorder the columns so that w has values that decrease (with increasing index) and the same
 	//switches should be made for U (a) and V as well
 	
 	//Transpose the i and v matrices
-	for(int i = 1; i<=3; i++){
-			for(int j = 1; j<=3; j++){
-				tempa[j][i] = a[j][i];
-				tempv[j][i] = v[j][i];		
-			}
-			tempw[i] = w[i];		
-		}
-		for(int i = 1; i<=3; i++){
-			for(int j = 1; j<=3; j++){
-				a[j][i] = tempa[i][j];
-				v[j][i] = tempv[i][j];
-			}				
-		}
-		for(int i = 1; i<=3; i++){
-			for(int j = 1; j<=3; j++){
-					tempa[j][i] = a[j][i];
-					tempv[j][i] = v[j][i];
-			}				
-		}
+	for(i = 1; i<=3; i++){
+            for(j = 1; j<=3; j++){
+                tempa[j][i] = a[j][i];
+                tempv[j][i] = v[j][i];		
+            }
+            tempw[i] = w[i];		
+        }
+        for(i = 1; i<=3; i++){
+            for(j = 1; j<=3; j++){
+                a[j][i] = tempa[i][j];
+                v[j][i] = tempv[i][j];
+            }				
+        }
+        for(i = 1; i<=3; i++){
+            for(j = 1; j<=3; j++){
+                tempa[j][i] = a[j][i];
+                tempv[j][i] = v[j][i];
+            }				
+        }
 	
-		if(w[1]>=w[2] && w[2]>=w[3]){}
-		else {
-			if(w[1]>=w[3] && w[3]>=w[2]){
+        if(w[1]>=w[2] && w[2]>=w[3]){}
+        else {
+            if(w[1]>=w[3] && w[3]>=w[2]){
 			
-				w[3] = w[2];
-				w[2] = tempw[3];
-				a[3] = a[2];
-				a[2] = tempa[3];
-				v[3] = v[2];
-				v[2] = tempv[3];
-			}
-			else {
-				if(w[2]>=w[1] && w[1]>=w[3]){
+                w[3] = w[2];
+                w[2] = tempw[3];
+                a[3] = a[2];
+                a[2] = tempa[3];
+                v[3] = v[2];
+                v[2] = tempv[3];
+            }
+            else {
+                if(w[2]>=w[1] && w[1]>=w[3]){
 	
-					w[2] = w[1];
-					w[1] = tempw[2];
-					a[2] = a[1];
-					a[1] = tempa[2];
-					v[2] = v[1];
-					v[1] = tempv[2];
-				}
-				else {
-					if(w[2]>=w[3] && w[3]>=w[1]){
-						w[3] = w[2];
-						w[2] = tempw[3];
-						a[3] = a[2];
-						a[2] = tempa[3];
-						v[3] = v[2];
-						v[2] = tempv[3];
+                    w[2] = w[1];
+                    w[1] = tempw[2];
+                    a[2] = a[1];
+                    a[1] = tempa[2];
+                    v[2] = v[1];
+                    v[1] = tempv[2];
+                }
+                else {
+                    if(w[2]>=w[3] && w[3]>=w[1]){
+                        w[3] = w[2];
+                        w[2] = tempw[3];
+                        a[3] = a[2];
+                        a[2] = tempa[3];
+                        v[3] = v[2];
+                        v[2] = tempv[3];
 					
-						w[2] = w[1];
-						w[1] = tempw[3];
-						a[2] = a[1];
-						a[1] = tempa[3];
-						v[2] = v[1];
-						v[1] = tempv[3];
-					}
-					else {
-						if(w[3]>=w[1] && w[1]>=w[2]){
-							w[1] = w[2];
-							w[2] = tempw[1];
-							a[1] = a[2];
-							a[2] = tempa[1];
-							v[1] = v[2];
-							v[2] = tempv[1];
+                        w[2] = w[1];
+                        w[1] = tempw[3];
+                        a[2] = a[1];
+                        a[1] = tempa[3];
+                        v[2] = v[1];
+                        v[1] = tempv[3];
+                    }
+                    else {
+                        if(w[3]>=w[1] && w[1]>=w[2]){
+                            w[1] = w[2];
+                            w[2] = tempw[1];
+                            a[1] = a[2];
+                            a[2] = tempa[1];
+                            v[1] = v[2];
+                            v[2] = tempv[1];
 						
-							w[2] = w[3];
-							w[3] = tempw[1];
-							a[2] = a[3];
-							a[3] = tempa[1];
-							v[2] = v[3];
-							v[3] = tempv[1];
-						}
-						else {
-							w[3] = w[1];
-							w[1] = tempw[3];
-							a[3] = a[1];
-							a[1] = tempa[3];
-							v[3] = v[1];
-							v[1] = tempv[3];
-						}
-					}
-				}
-			}
-		}
+                            w[2] = w[3];
+                            w[3] = tempw[1];
+                            a[2] = a[3];
+                            a[3] = tempa[1];
+                            v[2] = v[3];
+                            v[3] = tempv[1];
+                        }
+                        else {
+                            w[3] = w[1];
+                            w[1] = tempw[3];
+                            a[3] = a[1];
+                            a[1] = tempa[3];
+                            v[3] = v[1];
+                            v[1] = tempv[3];
+                        }
+                    }
+                }
+            }
+        }
 	
-		//transpose them again
+        //transpose them again
 
-		for(int i = 1; i<=3; i++){
-			for(int j = 1; j<=3; j++){
-					tempa[j][i] = a[j][i];
-					tempv[j][i] = v[j][i];
-			}				
-		}
+        for(i = 1; i<=3; i++){
+            for(j = 1; j<=3; j++){
+                tempa[j][i] = a[j][i];
+                tempv[j][i] = v[j][i];
+            }				
+        }
 
-		for(int i = 1; i <= 3; i++){
-			for(int j = 1; j <= 3; j++){
-				a[i][j] = tempa[j][i];
-				v[i][j] = tempv[j][i];
-			}				
-		}
+        for(i = 1; i <= 3; i++){
+            for(j = 1; j <= 3; j++){
+                a[i][j] = tempa[j][i];
+                v[i][j] = tempv[j][i];
+            }				
+        }
 	
-	for(int i=1; i<=n; i++){
-		for(int j=1; j<=m ;j++){
-				push(a[j][i]);
-				//println("u2[" + j + "][" + i + "] = " + a[j][i]);
-		}
+	for(i=1; i<=n; i++){
+            for(j=1; j<=m ;j++){
+                push(a[j][i]);
+                //println("u2[" + j + "][" + i + "] = " + a[j][i]);
+            }
 	}
-	for(int i=1; i<=n ;i++){
-		push(w[i]);
-		//println("w2[" + i + "] = " + w[i]);
+	for(i=1; i<=n ;i++){
+            push(w[i]);
+            //println("w2[" + i + "] = " + w[i]);
 	}
-	for(int i=1; i<=n; i++){
-		for(int j=1; j<=n ;j++){
-				push(v[j][i]);
+	for(i=1; i<=n; i++){
+            for(j=1; j<=n ;j++){
+                push(v[j][i]);
 		//	println("v2[" + j + "][" + i + "] = " + v[j][i]);
-		}
+            }
 	}
-	}
+    }
 }
 
 float->float filter svd3(){
-	//svd code taken from the online version of the book 'numerical recipes in c', the part on 
-	//singular value decomposition.
-	/*Given a matrix a[1..m][1..n], this routine computes its singular value decomposition, A =
-		U*W*V T. Thematrix U replaces a on output. The diagonal matrix of singular values W is output
-		as a vector w[1..n]. ThematrixV (not the transpose V T ) is output as v[1..n][1..n].
-	*/
+    //svd code taken from the online version of the book 'numerical recipes in c', the part on 
+    //singular value decomposition.
+    /*Given a matrix a[1..m][1..n], this routine computes its singular value decomposition, A =
+      U*W*V T. Thematrix U replaces a on output. The diagonal matrix of singular values W is output
+      as a vector w[1..n]. ThematrixV (not the transpose V T ) is output as v[1..n][1..n].
+    */
 	
-	int flag,i,its,j,jj,k,l,nm,imintemp;
-	float anorm,c,f,g,h,s,scale,x,y,z,sgn;
 
 
-	//int m = myHeight, n = 9;
-	int m;
-	int n = 9;
-	
-	float[41][10] a; // 41 = 40 (max number of features) + 1;
-	float [10] w;
-	float [10][10] v;
-	float[10] rv1 ;//rv1=vector(1,n);
+    //int m = myHeight, n = 9;
+    int m; // actual state
 
-	//rates depend on n -- how many inliers are we talking here?
-        //	work pop m*n push (m*n + n + n*n){
-        work pop * push * { // by bill to push through compiler
+    //rates depend on n -- how many inliers are we talking here?
+    //	work pop m*n push (m*n + n + n*n){
+    work pop * push * { // by bill to push through compiler
+        int flag,i,its,j,jj,k,l,nm,imintemp;
+        float anorm,c,f,g,h,s,scale,x,y,z,sgn;
+        int n = 9;
 	
-	for(int i=1; i<=n; i++){
-		for(int j=1; j<=m ;j++){
-				a[j][i]= pop();
-		}
+        float[41][10] a; // 41 = 40 (max number of features) + 1;
+        float [10] w;
+        float [10][10] v;
+        float[10] rv1 ;//rv1=vector(1,n);
+        
+        for(i=1; i<=n; i++){
+            for(j=1; j<=m ;j++){
+                a[j][i]= pop();
+            }
 	}
 	
 
 	anorm=0.0; //Householder reduction to bidiagonal form.
 	scale = anorm; g = scale;
 	for (i=1;i<=n;i++) {
-		l=i+1;
-		rv1[i]=scale*g;
-		scale=0.0;
-		s = scale; g = s;
-		if (i <= m) {
-			for (k=i;k<=m;k++) scale += abs(a[k][i]);
-			if (scale>muP || scale<muN) {
-				for (k=i;k<=m;k++) {
-					a[k][i] /= scale;
-					s += a[k][i]*a[k][i];
-				}
-				f=a[i][i];
+            l=i+1;
+            rv1[i]=scale*g;
+            scale=0.0;
+            s = scale; g = s;
+            if (i <= m) {
+                for (k=i;k<=m;k++) scale += abs(a[k][i]);
+                if (scale>muP || scale<muN) {
+                    for (k=i;k<=m;k++) {
+                        a[k][i] /= scale;
+                        s += a[k][i]*a[k][i];
+                    }
+                    f=a[i][i];
 				
-				//line below replaced the original: g = -SIGN(sqrt(s),f);
-				if(f>=0) g = -abs(sqrt(s)); else g = abs(sqrt(s));
+                    //line below replaced the original: g = -SIGN(sqrt(s),f);
+                    if(f>=0) g = -abs(sqrt(s)); else g = abs(sqrt(s));
 
-				h=f*g-s;
-				a[i][i]=f-g;
-				for (j=l;j<=n;j++) {s=0.0;
-					for (k=i;k<=m;k++) s += a[k][i]*a[k][j];
-					f=s/h;
-					for (k=i;k<=m;k++) a[k][j] += f*a[k][i];
-				}
-				for (k=i;k<=m;k++) a[k][i] *= scale;
-			}
-		}
-		w[i]=scale*g;
-		scale=0.0;
-		s = scale; g = s;
-		if (i <= m && i != n) {
-			for (k=l;k<=n;k++) scale += abs(a[i][k]);
-			if (scale>muP || scale<muN) {
+                    h=f*g-s;
+                    a[i][i]=f-g;
+                    for (j=l;j<=n;j++) {s=0.0;
+                    for (k=i;k<=m;k++) s += a[k][i]*a[k][j];
+                    f=s/h;
+                    for (k=i;k<=m;k++) a[k][j] += f*a[k][i];
+                    }
+                    for (k=i;k<=m;k++) a[k][i] *= scale;
+                }
+            }
+            w[i]=scale*g;
+            scale=0.0;
+            s = scale; g = s;
+            if (i <= m && i != n) {
+                for (k=l;k<=n;k++) scale += abs(a[i][k]);
+                if (scale>muP || scale<muN) {
 			
-			for (k=l;k<=n;k++) {
-				a[i][k] /= scale;
-				s += a[i][k]*a[i][k];
-			}
-			f=a[i][l];
-			// replaced this: g = -SIGN(sqrt(s),f); with the following line
-			if(f>=0) g = -abs(sqrt(s)); else g = abs(sqrt(s));
-			h=f*g-s;
-			a[i][l]=f-g;
-			for (k=l;k<=n;k++) rv1[k]=a[i][k]/h;
-			for (j=l;j<=m;j++) { s=0.0;
-				for (k=l;k<=n;k++) s += a[j][k]*a[i][k];
-				for (k=l;k<=n;k++) a[j][k] += s*rv1[k];
-			}
-			for (k=l;k<=n;k++) a[i][k] *= scale;
-			}
-		}
-		if((abs(w[i]) + abs(rv1[i]))>anorm) anorm = (abs(w[i]) + abs(rv1[i]));
-		//anorm=FMAX(anorm,(abs(w[i])+abs(rv1[i])));
+                    for (k=l;k<=n;k++) {
+                        a[i][k] /= scale;
+                        s += a[i][k]*a[i][k];
+                    }
+                    f=a[i][l];
+                    // replaced this: g = -SIGN(sqrt(s),f); with the following line
+                    if(f>=0) g = -abs(sqrt(s)); else g = abs(sqrt(s));
+                    h=f*g-s;
+                    a[i][l]=f-g;
+                    for (k=l;k<=n;k++) rv1[k]=a[i][k]/h;
+                    for (j=l;j<=m;j++) { s=0.0;
+                    for (k=l;k<=n;k++) s += a[j][k]*a[i][k];
+                    for (k=l;k<=n;k++) a[j][k] += s*rv1[k];
+                    }
+                    for (k=l;k<=n;k++) a[i][k] *= scale;
+                }
+            }
+            if((abs(w[i]) + abs(rv1[i]))>anorm) anorm = (abs(w[i]) + abs(rv1[i]));
+            //anorm=FMAX(anorm,(abs(w[i])+abs(rv1[i])));
 	}
 	for (i=n;i>=1;i--) { //Accumulation of right-hand transformations.
-		if (i < n) {
-			if (g>muP || g<muN) {
-				for (j=l;j<=n;j++) //Double division to avoid possible underflow.
-				v[j][i]=(a[i][j]/a[i][l])/g;
-				for (j=l;j<=n;j++) {s=0.0;
-					for (k=l;k<=n;k++) s += a[i][k]*v[k][j];
-					for (k=l;k<=n;k++) v[k][j] += s*v[k][i];
-				}
-			}
-			for (j=l;j<=n;j++) {v[i][j]=0.0;
-								v[j][i]=0.0;}
-		}
-		v[i][i]=1.0;
-		g=rv1[i];
-		l=i;
+            if (i < n) {
+                if (g>muP || g<muN) {
+                    for (j=l;j<=n;j++) //Double division to avoid possible underflow.
+                        v[j][i]=(a[i][j]/a[i][l])/g;
+                    for (j=l;j<=n;j++) {s=0.0;
+                    for (k=l;k<=n;k++) s += a[i][k]*v[k][j];
+                    for (k=l;k<=n;k++) v[k][j] += s*v[k][i];
+                    }
+                }
+                for (j=l;j<=n;j++) {v[i][j]=0.0;
+                v[j][i]=0.0;}
+            }
+            v[i][i]=1.0;
+            g=rv1[i];
+            l=i;
 	}
 	if(m<n) imintemp = m; else imintemp = n;
 	for (i=imintemp;i>=1;i--) { //Accumulation of left-hand transformations.
-		l=i+1;
-		g=w[i];
-		for (j=l;j<=n;j++) a[i][j]=0.0;
-		if (g>muP || g<muN) {
-			g=1.0/g;
-			for (j=l;j<=n;j++) {s=0.0;
-				for (k=l;k<=m;k++) s += a[k][i]*a[k][j];
-				f=(s/a[i][i])*g;
-				for (k=i;k<=m;k++) a[k][j] += f*a[k][i];
-			}
-			for (j=i;j<=m;j++) a[j][i] *= g;
-		} else for (j=i;j<=m;j++) a[j][i]=0.0;
-		++a[i][i];
+            l=i+1;
+            g=w[i];
+            for (j=l;j<=n;j++) a[i][j]=0.0;
+            if (g>muP || g<muN) {
+                g=1.0/g;
+                for (j=l;j<=n;j++) {s=0.0;
+                for (k=l;k<=m;k++) s += a[k][i]*a[k][j];
+                f=(s/a[i][i])*g;
+                for (k=i;k<=m;k++) a[k][j] += f*a[k][i];
+                }
+                for (j=i;j<=m;j++) a[j][i] *= g;
+            } else for (j=i;j<=m;j++) a[j][i]=0.0;
+            ++a[i][i];
 	}
 	for (k=n;k>=1;k--) { //Diagonalization of the bidiagonal form: Loop over
-						 //singular values, and over
-		 for (its=1;its<=30;its++) { //allowed iterations.
-			flag=1;
-			for (l=k;l>=1;l--) { //Test for splitting.
-				nm=l-1; 	// Note that rv1[1] is always zero.
-				if ((float)(abs(rv1[l])+anorm) == anorm) {
-					flag=0;
-					break;
-				}
-				if ((float)(abs(w[nm])+anorm) == anorm) break;
-			}
-			if (flag>muP || flag<muN) {
-				c=0.0; //Cancellation of rv1[l], if l > 1.
-				s=1.0;
-				for (i=l;i<=k;i++) {
-					f=s*rv1[i];
-					rv1[i]=c*rv1[i];
-					if ((float)(abs(f)+anorm) == anorm) break;
-					g=w[i];
-					//substituted below for h=pythag(f,g);
-					h = sqrt(f*f + g*g);
-					w[i]=h;
-					h=1.0/h;
-					c=g*h;
-					s = -f*h;
-					for (j=1;j<=m;j++) {
-						y=a[j][nm];
-						z=a[j][i];
-						a[j][nm]=y*c+z*s;
-						a[j][i]=z*c-y*s;
-					}
-				}
-			}
-			z=w[k];
-			if (l == k) { //Convergence.
-				if (z < 0.0) { //Singular value is made nonnegative.
-					w[k] = -z;
-					for (j=1;j<=n;j++) v[j][k] = -v[j][k];
-				}
-				break;
-			}
-			if (its == 30) println("no convergence in 30 svdcmp iterations");
-			x=w[l]; //Shift from bottom 2-by-2 minor.
-			nm=k-1;
-			y=w[nm];
-			g=rv1[nm];
-			h=rv1[k];
-			f=((y-z)*(y+z)+(g-h)*(g+h))/(2.0*h*y);
-			//	substituting the pythagorean function for g=pythag(f,1.0);
-			g = sqrt(f*f + 1);
-			// another replacement for SIGN (...)
-			if(f>=0) sgn = abs(g); else sgn = -abs(g);
-			f=((x-z)*(x+z)+h*((y/(f+sgn))-h))/x;
-			s=1.0; //Next QR transformation:
-			c=s;
-			for (j=l;j<=nm;j++) {
-				i=j+1;
-				g=rv1[i];
-				y=w[i];
-				h=s*g;
-				g=c*g;
-				//substituting the pythagorean function for z=pythag(f,h);
-				z = sqrt(f*f + h*h);
+            //singular values, and over
+            for (its=1;its<=30;its++) { //allowed iterations.
+                flag=1;
+                for (l=k;l>=1;l--) { //Test for splitting.
+                    nm=l-1; 	// Note that rv1[1] is always zero.
+                    if ((float)(abs(rv1[l])+anorm) == anorm) {
+                        flag=0;
+                        break;
+                    }
+                    if ((float)(abs(w[nm])+anorm) == anorm) break;
+                }
+                if (flag>muP || flag<muN) {
+                    c=0.0; //Cancellation of rv1[l], if l > 1.
+                    s=1.0;
+                    for (i=l;i<=k;i++) {
+                        f=s*rv1[i];
+                        rv1[i]=c*rv1[i];
+                        if ((float)(abs(f)+anorm) == anorm) break;
+                        g=w[i];
+                        //substituted below for h=pythag(f,g);
+                        h = sqrt(f*f + g*g);
+                        w[i]=h;
+                        h=1.0/h;
+                        c=g*h;
+                        s = -f*h;
+                        for (j=1;j<=m;j++) {
+                            y=a[j][nm];
+                            z=a[j][i];
+                            a[j][nm]=y*c+z*s;
+                            a[j][i]=z*c-y*s;
+                        }
+                    }
+                }
+                z=w[k];
+                if (l == k) { //Convergence.
+                    if (z < 0.0) { //Singular value is made nonnegative.
+                        w[k] = -z;
+                        for (j=1;j<=n;j++) v[j][k] = -v[j][k];
+                    }
+                    break;
+                }
+                if (its == 30) println("no convergence in 30 svdcmp iterations");
+                x=w[l]; //Shift from bottom 2-by-2 minor.
+                nm=k-1;
+                y=w[nm];
+                g=rv1[nm];
+                h=rv1[k];
+                f=((y-z)*(y+z)+(g-h)*(g+h))/(2.0*h*y);
+                //	substituting the pythagorean function for g=pythag(f,1.0);
+                g = sqrt(f*f + 1);
+                // another replacement for SIGN (...)
+                if(f>=0) sgn = abs(g); else sgn = -abs(g);
+                f=((x-z)*(x+z)+h*((y/(f+sgn))-h))/x;
+                s=1.0; //Next QR transformation:
+                c=s;
+                for (j=l;j<=nm;j++) {
+                    i=j+1;
+                    g=rv1[i];
+                    y=w[i];
+                    h=s*g;
+                    g=c*g;
+                    //substituting the pythagorean function for z=pythag(f,h);
+                    z = sqrt(f*f + h*h);
 		
-				rv1[j]=z;
-				c=f/z;
-				s=h/z;
-				f=x*c+g*s;
-				g = g*c-x*s;
-				h=y*s;
-				y *= c;
-				for (jj=1;jj<=n;jj++) {
-					x=v[jj][j];
-					z=v[jj][i];
-					v[jj][j]=x*c+z*s;
-					v[jj][i]=z*c-x*s;
-				}
-				//	substituting the pythagorean function for z=pythag(f,h);
-				z = sqrt(f*f + h*h);
-				w[j]=z; //Rotation can be arbitrary if z = 0.
-				if (z>muP || z<muN) {
-					z=1.0/z;
-					c=f*z;
-					s=h*z;
-				}
-				f=c*g+s*y;
-				x=c*y-s*g;
-				for (jj=1;jj<=m;jj++) {
-					y=a[jj][j];
-					z=a[jj][i];
-					a[jj][j]=y*c+z*s;
-					a[jj][i]=z*c-y*s;
-				}
-			}
-			rv1[l]=0.0;
-			rv1[k]=f;
-			w[k]=x;
-		 }
+                    rv1[j]=z;
+                    c=f/z;
+                    s=h/z;
+                    f=x*c+g*s;
+                    g = g*c-x*s;
+                    h=y*s;
+                    y *= c;
+                    for (jj=1;jj<=n;jj++) {
+                        x=v[jj][j];
+                        z=v[jj][i];
+                        v[jj][j]=x*c+z*s;
+                        v[jj][i]=z*c-x*s;
+                    }
+                    //	substituting the pythagorean function for z=pythag(f,h);
+                    z = sqrt(f*f + h*h);
+                    w[j]=z; //Rotation can be arbitrary if z = 0.
+                    if (z>muP || z<muN) {
+                        z=1.0/z;
+                        c=f*z;
+                        s=h*z;
+                    }
+                    f=c*g+s*y;
+                    x=c*y-s*g;
+                    for (jj=1;jj<=m;jj++) {
+                        y=a[jj][j];
+                        z=a[jj][i];
+                        a[jj][j]=y*c+z*s;
+                        a[jj][i]=z*c-y*s;
+                    }
+                }
+                rv1[l]=0.0;
+                rv1[k]=f;
+                w[k]=x;
+            }
 	}
 	//println("u1:");
-	for(int i=1; i<=n; i++){
-		for(int j=1; j<=m ;j++){
-				push(a[j][i]);
-	//		println(a[j][i]);
-		}
+	for(i=1; i<=n; i++){
+            for(j=1; j<=m ;j++){
+                push(a[j][i]);
+                //		println(a[j][i]);
+            }
 	}
 	//println("w1:");
-	for(int i=1; i<=n ;i++){
-		push(w[i]);
-		//println(w[i]);
+	for(i=1; i<=n ;i++){
+            push(w[i]);
+            //println(w[i]);
 	}
 	//println("v1:");
-	for(int i=1; i<=n; i++){
-		for(int j=1; j<=n ;j++){
-				push(v[j][i]);
-			//println(v[j][i]);
-		}
+	for(i=1; i<=n; i++){
+            for(j=1; j<=n ;j++){
+                push(v[j][i]);
+                //println(v[j][i]);
+            }
 	}
-	}
-	handler setVal(int myWidth){
-		m = myWidth;
-	}
+    }
+    handler setVal(int myWidth){
+        m = myWidth;
+    }
 }
 
 
 
 float->float splitjoin TransposeM(int x, int y) {
-	split roundrobin;
-	for (int i = 0; i < x; i++) add Identity<float>();
-	join roundrobin(y);
+    split roundrobin;
+    for (int i = 0; i < x; i++) add Identity<float>();
+    join roundrobin(y);
 }

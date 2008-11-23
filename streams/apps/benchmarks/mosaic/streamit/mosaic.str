@@ -197,16 +197,12 @@ void->void pipeline mosaic{
 	
 	add imageAndFeatures->imageAndFeatures filter
 	{	
-		imageAndFeatures temp0;
-		imageAndFeatures temp1;
-		imageAndFeatures temp2;
-		imageAndFeatures temp3;
 		work pop 3 peek 4 push 2
 		{
-			temp0 = peek(0);
-			temp1 = peek(1);
-			temp2 = peek(2);
-			temp3 = peek(3);
+			imageAndFeatures temp0 = peek(0);
+			imageAndFeatures temp1 = peek(1);
+			imageAndFeatures temp2 = peek(2);
+			imageAndFeatures temp3 = peek(3);
 			temp0.myBest = temp1.myBest;
 			temp0.goodPts = temp1.goodPts;
 			temp3.myBest = temp2.myBest;			
@@ -225,29 +221,28 @@ void->void pipeline mosaic{
 			add makeFeatureListPairs();
 			add ransac();
 			add featureListPair->imageAndFeatures filter{
-				featureListPair fLP;
-				imageAndFeatures iAF1;			
-				imageAndFeatures iAF2;			
 
 				work pop 1 push 2{
-					fLP = pop();
-					println("Homography");
-					println(fLP.bestF[0][0] + "		" + fLP.bestF[0][1] + "		" + fLP.bestF[0][2]);
-					println(fLP.bestF[1][0] + "		" + fLP.bestF[1][1] + "		" + fLP.bestF[1][2]);
-					println(fLP.bestF[2][0] + "		" + fLP.bestF[2][1] + "		" + fLP.bestF[2][2]);
-
-					for(int i = 0; i< fLP.bestScore; i++)
+                                    imageAndFeatures iAF1;			
+                                    imageAndFeatures iAF2;			
+                                    featureListPair fLP = pop();
+                                    println("Homography");
+                                    println(fLP.bestF[0][0] + "		" + fLP.bestF[0][1] + "		" + fLP.bestF[0][2]);
+                                    println(fLP.bestF[1][0] + "		" + fLP.bestF[1][1] + "		" + fLP.bestF[1][2]);
+                                    println(fLP.bestF[2][0] + "		" + fLP.bestF[2][1] + "		" + fLP.bestF[2][2]);
+                                    
+                                    for(int i = 0; i< fLP.bestScore; i++)
 					{
-						println(fLP.x1[fLP.bestInliers[i]].x + "		" + fLP.x1[fLP.bestInliers[i]].y + "		" + fLP.x2[fLP.bestInliers[i]].x + "		" +fLP.x2[fLP.bestInliers[i]].y + "		");
-						iAF1.myBest[i] = fLP.x1[fLP.bestInliers[i]];
-						iAF2.myBest[i] = fLP.x2[fLP.bestInliers[i]];
+                                            println(fLP.x1[fLP.bestInliers[i]].x + "		" + fLP.x1[fLP.bestInliers[i]].y + "		" + fLP.x2[fLP.bestInliers[i]].x + "		" +fLP.x2[fLP.bestInliers[i]].y + "		");
+                                            iAF1.myBest[i] = fLP.x1[fLP.bestInliers[i]];
+                                            iAF2.myBest[i] = fLP.x2[fLP.bestInliers[i]];
 					}
-
-					iAF1.goodPts = fLP.bestScore;
-					iAF2.goodPts = fLP.bestScore;
-					
-					push(iAF1);
-					push(iAF2);					
+                                    
+                                    iAF1.goodPts = fLP.bestScore;
+                                    iAF2.goodPts = fLP.bestScore;
+                                    
+                                    push(iAF1);
+                                    push(iAF2);					
 				}
 			
 			}
@@ -256,22 +251,22 @@ void->void pipeline mosaic{
 	};
 
 	add imageAndFeatures->imageAndFeatures filter {
-		imageAndFeatures A;
-		imageAndFeatures B;
-		imageAndFeatures C;
-		imageAndFeatures D;
 		work pop 4 push 2 {
-		
-			A = pop();
-			B = pop();
-			C = pop();
-			D = pop();
-			A.myBest = C.myBest;
-			A.goodPts = C.goodPts;
-			B.myBest = D.myBest;
-			B.goodPts = D.goodPts;
-			push(A);
-			push(B);		
+                    imageAndFeatures A;
+                    imageAndFeatures B;
+                    imageAndFeatures C;
+                    imageAndFeatures D;
+                    
+                    A = pop();
+                    B = pop();
+                    C = pop();
+                    D = pop();
+                    A.myBest = C.myBest;
+                    A.goodPts = C.goodPts;
+                    B.myBest = D.myBest;
+                    B.goodPts = D.goodPts;
+                    push(A);
+                    push(B);		
 		}		
 	}
 
@@ -393,14 +388,14 @@ int->void splitjoin fileWrite()
 
 
 imageAndFeatures->float[320][240] filter backToJustMatrices(){
-	imageAndFeatures tempIAndF;
 	work pop 1 push 3
 	{
-		tempIAndF = pop();
- 
-		push(tempIAndF.yImage);
-		push(tempIAndF.iImage);
-		push(tempIAndF.qImage);
+            imageAndFeatures tempIAndF;
+            tempIAndF = pop();
+            
+            push(tempIAndF.yImage);
+            push(tempIAndF.iImage);
+            push(tempIAndF.qImage);
 	}	
 	
 }
@@ -440,14 +435,11 @@ rgb2yiq function.
 
 float->int filter YIQ2RGB()
 { 	
-	int temp1;
-	int temp2;
-	int temp3;
 	work pop 3 peek 3 push 3
 	{	
-		temp1 = (int)(peek(0) + peek(1)*0.956 + peek(2)*0.621);
-		temp2 = (int)(peek(0) - peek(1)*0.272 - peek(2)*0.647);
-		temp3 = (int)(peek(0) - peek(1)*1.105 + peek(2)*1.702);
+		int temp1 = (int)(peek(0) + peek(1)*0.956 + peek(2)*0.621);
+		int temp2 = (int)(peek(0) - peek(1)*0.272 - peek(2)*0.647);
+		int temp3 = (int)(peek(0) - peek(1)*1.105 + peek(2)*1.702);
 		if(temp1<0) { temp1 = 0; }
 		if(temp2<0) { temp2 = 0; }
 		if(temp3<0) { temp3 = 0; }
@@ -467,11 +459,11 @@ of them into 3 matrices corresponding to the y, i, and q values*/
 
 float->float[320][240] filter makeMatrices()
 {
+    work pop imageHeight*imageWidth*3 push 3 {
 	float[320][240] yMatrix;
 	float[320][240] iMatrix;
 	float[320][240] qMatrix;
-	
-    work pop imageHeight*imageWidth*3 push 3 {
+
 	for(int i = 0; i < imageHeight; i++){
 		  for(int  j = 0; j < imageWidth; j++){
 		   	yMatrix[j][i] = pop();
@@ -497,24 +489,24 @@ float->float[320][240] filter makeMatrices()
 
 float[320][240]->float filter unmakeMatrices()
 {	
-	float[320][240] yMatrix;
-	float[320][240] iMatrix;
-	float[320][240] qMatrix;
 	work pop 3 push imageHeight*imageWidth*3 
 	{
-		yMatrix = pop();
-		iMatrix = pop();
-		qMatrix = pop();
-		//println("before unmatrix push");
-		 for(int i = 0; i < imageHeight; i++){
-		  for(int  j = 0; j < imageWidth; j++){
-			    	push(yMatrix[j][i]);
-					push(iMatrix[j][i]);
-					push(qMatrix[j][i]);
-			
-		  }
-		  }
-		//println("after unmatrix pushes");
+            float[320][240] yMatrix;
+            float[320][240] iMatrix;
+            float[320][240] qMatrix;
+            yMatrix = pop();
+            iMatrix = pop();
+            qMatrix = pop();
+            //println("before unmatrix push");
+            for(int i = 0; i < imageHeight; i++){
+                for(int  j = 0; j < imageWidth; j++){
+                    push(yMatrix[j][i]);
+                    push(iMatrix[j][i]);
+                    push(qMatrix[j][i]);
+                    
+                }
+            }
+            //println("after unmatrix pushes");
 	}
 }
 
@@ -524,16 +516,16 @@ imageAndFeatures->imageAndFeatures filter plotFeatures(int patchsize)
 	 * and patchsize and returns the same thing but with the image
 	 * highlighted at those coordinates with blue boxes of size patchsize
 	 */
-	float[320][240] yMatrix;
-	float[320][240] iMatrix;
-	float[320][240] qMatrix;
-	bestFeatures[40]   best;
-	imageAndFeatures myImgAndFeat;
-	int r;
 	
 	work pop 1 push 1
 	{
-		
+            float[320][240] yMatrix;
+            float[320][240] iMatrix;
+            float[320][240] qMatrix;
+            bestFeatures[40]   best;
+            imageAndFeatures myImgAndFeat;
+            int r;
+            
 		myImgAndFeat = pop();
 		
 		yMatrix = myImgAndFeat.yImage;
@@ -587,38 +579,37 @@ imageAndFeatures->imageAndFeatures filter plotFeatures(int patchsize)
 }
 
 imageAndFeatures->featureListPair filter makeFeatureListPairs(){
-	
-	imageAndFeatures temp1;
-	imageAndFeatures temp2;
-	featureListPair newGuy;
-	int j;
-	boolean zeroIndexSet;
 	work pop 2 push 1{
 		
-		zeroIndexSet = false;
-		
-		temp1 = pop();
-		temp2 = pop();
-		
-		/*println("Correspondences post-correlation:");
-		println("X1\t\tX2");
-		for(int i = 0; i<temp1.goodPts; i++){
-		
-			println(temp1.myBest[i].x + "\t\t" + temp2.myBest[i].x);
-			println(temp1.myBest[i].y + "\t\t" + temp2.myBest[i].y);
-			println(" ");
-			
+            imageAndFeatures temp1;
+            imageAndFeatures temp2;
+            boolean zeroIndexSet;
+            featureListPair newGuy;
+            
+            zeroIndexSet = false;
+            
+            temp1 = pop();
+            temp2 = pop();
+            
+            /*println("Correspondences post-correlation:");
+              println("X1\t\tX2");
+              for(int i = 0; i<temp1.goodPts; i++){
+              
+              println(temp1.myBest[i].x + "\t\t" + temp2.myBest[i].x);
+              println(temp1.myBest[i].y + "\t\t" + temp2.myBest[i].y);
+              println(" ");
+              
 		}*/
-		
-		newGuy.x1 = temp1.myBest;
-		newGuy.x2 = temp2.myBest;
-		newGuy.firstZeroIndex = temp1.goodPts;
-		for(int i = 0; i<iters ; i++){
-			
-			newGuy.x1[i].z = 1;
-			newGuy.x2[i].z = 1;
-		}
-		push(newGuy);
-		
+            
+            newGuy.x1 = temp1.myBest;
+            newGuy.x2 = temp2.myBest;
+            newGuy.firstZeroIndex = temp1.goodPts;
+            for(int i = 0; i<iters ; i++){
+                
+                newGuy.x1[i].z = 1;
+                newGuy.x2[i].z = 1;
+            }
+            push(newGuy);
+            
 	}
 }

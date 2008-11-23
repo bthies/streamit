@@ -399,10 +399,9 @@ int->void pipeline fileWrite() {
 
 
 imageAndFeatures->float[320][240] filter backToJustMatrices(){
-    imageAndFeatures tempIAndF;
     work pop 1 push 3
         {
-            tempIAndF = pop();
+            imageAndFeatures tempIAndF = pop();
 
             push(tempIAndF.yImage);
             push(tempIAndF.iImage);
@@ -446,14 +445,11 @@ int->float filter RGB2YIQ()
 
 float->int filter YIQ2RGB()
 {
-    int temp1;
-    int temp2;
-    int temp3;
     work pop 3 peek 3 push 3
         {
-            temp1 = (int)(peek(0) + peek(1)*0.956 + peek(2)*0.621);
-            temp2 = (int)(peek(0) - peek(1)*0.272 - peek(2)*0.647);
-            temp3 = (int)(peek(0) - peek(1)*1.105 + peek(2)*1.702);
+            int temp1 = (int)(peek(0) + peek(1)*0.956 + peek(2)*0.621);
+            int temp2 = (int)(peek(0) - peek(1)*0.272 - peek(2)*0.647);
+            int temp3 = (int)(peek(0) - peek(1)*1.105 + peek(2)*1.702);
             if(temp1<0) { temp1 = 0; }
             if(temp2<0) { temp2 = 0; }
             if(temp3<0) { temp3 = 0; }
@@ -473,11 +469,10 @@ float->int filter YIQ2RGB()
 
 float->float[320][240] filter makeMatrices()
 {
-    float[320][240] yMatrix;
-    float[320][240] iMatrix;
-    float[320][240] qMatrix;
-
     work pop imageHeight*imageWidth*3 push 3 {
+        float[320][240] yMatrix;
+        float[320][240] iMatrix;
+        float[320][240] qMatrix;
         for(int i = 0; i < imageHeight; i++){
             for(int  j = 0; j < imageWidth; j++){
                 yMatrix[j][i] = pop();
@@ -503,11 +498,11 @@ float->float[320][240] filter makeMatrices()
 
 float[320][240]->float filter unmakeMatrices()
 {
-    float[320][240] yMatrix;
-    float[320][240] iMatrix;
-    float[320][240] qMatrix;
     work pop 3 push imageHeight*imageWidth*3
         {
+            float[320][240] yMatrix;
+            float[320][240] iMatrix;
+            float[320][240] qMatrix;
             yMatrix = pop();
             iMatrix = pop();
             qMatrix = pop();
@@ -530,16 +525,16 @@ imageAndFeatures->imageAndFeatures filter plotFeatures(int patchsize)
      * and patchsize and returns the same thing but with the image
      * highlighted at those coordinates with blue boxes of size patchsize
      */
-    float[320][240] yMatrix;
-    float[320][240] iMatrix;
-    float[320][240] qMatrix;
-    bestFeatures[40]   best;
-    imageAndFeatures myImgAndFeat;
-    int r;
 
     work pop 1 push 1
         {
-
+            float[320][240] yMatrix;
+            float[320][240] iMatrix;
+            float[320][240] qMatrix;
+            bestFeatures[40]   best;
+            imageAndFeatures myImgAndFeat;
+            int r;
+            
             myImgAndFeat = pop();
             
             yMatrix = myImgAndFeat.yImage;
@@ -593,18 +588,13 @@ imageAndFeatures->imageAndFeatures filter plotFeatures(int patchsize)
 }
 
 imageAndFeatures->featureListPair filter makeFeatureListPairs(){
-
-    imageAndFeatures temp1;
-    imageAndFeatures temp2;
-    featureListPair newGuy;
-    int j;
-    boolean zeroIndexSet;
     work pop 2 push 1{
+        featureListPair newGuy;
 
-        zeroIndexSet = false;
+        boolean zeroIndexSet = false;
 
-        temp1 = pop();
-        temp2 = pop();
+        imageAndFeatures temp1 = pop();
+        imageAndFeatures temp2 = pop();
 
         /*println("Correspondences post-correlation:");
           println("X1\t\tX2");

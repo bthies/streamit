@@ -189,33 +189,33 @@ float->float filter complexToReal(){
 }
 
 float->float filter Transpose(int M, int N) {
-   float[M][N] real;
-   float[M][N] imag;
-   work pop 2*M*N push 2*M*N {
-		for (int j=0; j<N; j++){
-		   for (int i=0; i<M; i++) {
-			   real[i][j] = pop();
-			   imag[i][j] = pop();
-		   }
-	   	}
-		for (int i=0; i<M; i++){
-		    for (int j=0; j<N; j++){
-			   push(real[i][j]);
-			   push(imag[i][j]);
-		   }
-	   }
-   }
+    work pop 2*M*N push 2*M*N {
+        float[M][N] real;
+        float[M][N] imag;
+        for (int j=0; j<N; j++){
+            for (int i=0; i<M; i++) {
+                real[i][j] = pop();
+                imag[i][j] = pop();
+            }
+        }
+        for (int i=0; i<M; i++){
+            for (int j=0; j<N; j++){
+                push(real[i][j]);
+                push(imag[i][j]);
+            }
+        }
+    }
 }
 
 //prints whatever comes across it on the tape
 
 float->float filter printer(){
-	float gerry;
 	work push 1 pop 1 peek 1
 	{
-		gerry = peek(0);
-		println(gerry);
-		push(pop());
+            float gerry;
+            gerry = peek(0);
+            println(gerry);
+            push(pop());
 	}
 	
 }
@@ -323,55 +323,54 @@ float->float filter DivideByN(int N) {
 float->float filter CombineDFT(int n) {
     // coefficients, real and imaginary interleaved
     float[n] w;
-	float[2*n] results;
-	float y0_r, y0_i, y1_r, y1_i, weight_real, weight_imag, y1w_r, y1w_i;
 	
     init {
-	  float wn_r = (float)cos(2 * pi / n); // pi = 3.141592654
-	  float wn_i = (float)sin(-2 * pi / n);
-	  float real = 1;
-	  float imag = 0;
-	  float next_real, next_imag; float y0_r, y0_i, y1_r, y1_i, weight_real, weight_imag, y1w_r, y1w_i;
+        float wn_r = (float)cos(2 * pi / n); // pi = 3.141592654
+        float wn_i = (float)sin(-2 * pi / n);
+        float real = 1;
+        float imag = 0;
+        float next_real, next_imag; float y0_r, y0_i, y1_r, y1_i, weight_real, weight_imag, y1w_r, y1w_i;
  
-	  for (int i = 0; i < n; i += 2) {
-		w[i] = real;
-		w[i+1] = imag;
-		next_real = real * wn_r - imag * wn_i;
-		next_imag = real * wn_i + imag * wn_r;
-		real = next_real;
-		imag = next_imag;
-	  }
+        for (int i = 0; i < n; i += 2) {
+            w[i] = real;
+            w[i+1] = imag;
+            next_real = real * wn_r - imag * wn_i;
+            next_imag = real * wn_i + imag * wn_r;
+            real = next_real;
+            imag = next_imag;
+        }
     }
     
     work push 2*n pop 2*n peek 2*n {
+        float[2*n] results;
 	  
         for (int i = 0; i < n; i += 2) {
 		
-		y0_r = peek(i);
-        y0_i = peek(i+1);
+            float y0_r = peek(i);
+            float y0_i = peek(i+1);
             
-		y1_r = peek(n + i);
-        y1_i = peek(n + i + 1);
+            float y1_r = peek(n + i);
+            float y1_i = peek(n + i + 1);
 		
-		// load into temps to make sure it doesn't got loaded
-		// separately for each load
-		weight_real = w[i];
-		weight_imag = w[i + 1];
+            // load into temps to make sure it doesn't got loaded
+            // separately for each load
+            float weight_real = w[i];
+            float weight_imag = w[i + 1];
 		
-        y1w_r = y1_r * weight_real - y1_i * weight_imag;
-        y1w_i = y1_r * weight_imag + y1_i * weight_real;
+            float y1w_r = y1_r * weight_real - y1_i * weight_imag;
+            float y1w_i = y1_r * weight_imag + y1_i * weight_real;
 		
-		    results[i] = y0_r + y1w_r;
+            results[i] = y0_r + y1w_r;
             results[i + 1] = y0_i + y1w_i;
 		
-		results[n + i] = y0_r - y1w_r;
-        results[n + i + 1] = y0_i - y1w_i;
+            results[n + i] = y0_r - y1w_r;
+            results[n + i + 1] = y0_i - y1w_i;
         }
 
         for (int i = 0; i < 2 * n; i++) {
-		pop();
-		push(results[i]);
-	  }
+            pop();
+            push(results[i]);
+        }
     }
 
 }

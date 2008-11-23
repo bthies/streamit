@@ -161,3 +161,9 @@ public class FuseAll {
         return at.dms.kjc.sir.lowering.fusion.FuseAll.fuse(str, false);
     }
 }
+
+POSSIBLE PROBLEMS IN THE APP
+----------------------------
+
+1. feature.str reads from the "clearedBest" variable without assigning
+to it

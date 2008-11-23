@@ -70,6 +70,7 @@ featureListPair->featureListPair pipeline FLPID_backloop {
 }
 
 
+// actually stateful
 featureListPair->featureListPair filter gateOfEntry(){
 	boolean nextPair;
 	featureListPair tempFeat;
@@ -90,6 +91,7 @@ featureListPair->featureListPair filter gateOfEntry(){
 	}
 }
 
+// actually stateful
 featureListPair->featureListPair filter gateOfExit(){
 	boolean nextPair;
 	featureListPair tempFeat;
@@ -106,9 +108,16 @@ featureListPair->featureListPair filter gateOfExit(){
 	}
 }
 
+// actually stateful
 featureListPair->featureListPair filter selectIndices(){
+    // actual state
+    boolean feedBack;
 	
-
+    init{
+        feedBack = false;	
+    }
+	
+    work pop 2 push 1{
 	featureListPair tempFLP;
 	featureListPair tempFromInput;
 	featureListPair tempFromFeedBackLoop;
@@ -117,160 +126,152 @@ featureListPair->featureListPair filter selectIndices(){
 	int tempRand;
 	boolean rndNumInIndex;
 	boolean degenerate;
-	boolean feedBack;
-	
-	init{
-		feedBack = false;	
-	}
-	
-	work pop 2 push 1{
 
-		tempFromInput = pop();
-		tempFromFeedBackLoop = pop();
-		if(feedBack){	 tempFLP = tempFromFeedBackLoop;	}
-		else		{	 tempFLP = tempFromInput;			}
-		rndNumInIndex = false;
-		degenerate = false;
-		if(tempFLP.firstZeroIndex==0) degenerate = true;
-		if(!degenerate){
-			// Generate s random indices in the range 1..npts
-			indFill = 0;
-			while(indFill < s){
-				 tempRand = (int)(round(random()*(tempFLP.firstZeroIndex-1)));
-				 //now check to see if tempRand is already an established index
-				 int g=0;
-				 while(g<indFill){
-					 if(tempFLP.ind[g]==tempRand){
-						 rndNumInIndex = true;
-						 g=indFill;
-					 }
-					 else{g++;}		  	    		
-				 }
-				 if(rndNumInIndex) {	rndNumInIndex = false;	    }
-				 else{	tempFLP.ind[indFill] = tempRand; indFill++;	 }
-			}
-		/*println("X Y Z for x1 then x2");	
-	    for(int i = 0;i<s; i++){
-	    	println(tempFLP.x1[tempFLP.ind[i]].x);
-			println(tempFLP.x1[tempFLP.ind[i]].y);
-			println(tempFLP.x1[tempFLP.ind[i]].z);
-	    }
-		for(int i = 0;i<s; i++){
-			println(tempFLP.x2[tempFLP.ind[i]].x);
-			println(tempFLP.x2[tempFLP.ind[i]].y);
-			println(tempFLP.x2[tempFLP.ind[i]].z);
-		}*/
+        tempFromInput = pop();
+        tempFromFeedBackLoop = pop();
+        if(feedBack){	 tempFLP = tempFromFeedBackLoop;	}
+        else		{	 tempFLP = tempFromInput;			}
+        rndNumInIndex = false;
+        degenerate = false;
+        if(tempFLP.firstZeroIndex==0) degenerate = true;
+        if(!degenerate){
+            // Generate s random indices in the range 1..npts
+            indFill = 0;
+            while(indFill < s){
+                tempRand = (int)(round(random()*(tempFLP.firstZeroIndex-1)));
+                //now check to see if tempRand is already an established index
+                int g=0;
+                while(g<indFill){
+                    if(tempFLP.ind[g]==tempRand){
+                        rndNumInIndex = true;
+                        g=indFill;
+                    }
+                    else{g++;}		  	    		
+                }
+                if(rndNumInIndex) {	rndNumInIndex = false;	    }
+                else{	tempFLP.ind[indFill] = tempRand; indFill++;	 }
+            }
+            /*println("X Y Z for x1 then x2");	
+              for(int i = 0;i<s; i++){
+              println(tempFLP.x1[tempFLP.ind[i]].x);
+              println(tempFLP.x1[tempFLP.ind[i]].y);
+              println(tempFLP.x1[tempFLP.ind[i]].z);
+              }
+              for(int i = 0;i<s; i++){
+              println(tempFLP.x2[tempFLP.ind[i]].x);
+              println(tempFLP.x2[tempFLP.ind[i]].y);
+              println(tempFLP.x2[tempFLP.ind[i]].z);
+              }*/
 	        			
-		}
-		push(tempFLP);
-	}
-	handler setVal(boolean val){
-		feedBack = val;	
-	}
+        }
+        push(tempFLP);
+    }
+    handler setVal(boolean val){
+        feedBack = val;	
+    }
 }
 
 featureListPair->featureListPair filter findInliers(portal<selectIndices> feedbackOrInput,
-													portal<gateOfEntry> pop1orNone,
-													portal<gateOfExit> push1orNone){
-	
-	float[40] x2tFx1;
-	float fracinliers, pNoOutliers;
-	float[40] Fx1x, Ftx2x, Fx1y, Ftx2y, Fx1z, Ftx2z;
-	featureListPair feat;
-	float denom;
-	float tempPrint;
-	
-	work pop 1 push 1{	
+                                                    portal<gateOfEntry> pop1orNone,
+                                                    portal<gateOfExit> push1orNone){
+    work pop 1 push 1{	
+        float denom;
+        float fracinliers, pNoOutliers;
+        float[40] Fx1x, Ftx2x, Fx1y, Ftx2y, Fx1z, Ftx2z;
+        float[40] x2tFx1;
+    
+        featureListPair feat;
 
 	feat = pop();
 	
 	feat.ninliers = 0;
 	for(int i = 0; i< feat.firstZeroIndex; i++){
 		
-		//x2tFx1 = x2'*F*x1
+            //x2tFx1 = x2'*F*x1
 
-		x2tFx1[i] = (feat.x2[i].x*feat.tempF[0][0] + feat.x2[i].y*feat.tempF[1][0] + feat.x2[i].z*feat.tempF[2][0])*feat.x1[i].x +
-			    	(feat.x2[i].x*feat.tempF[0][1] + feat.x2[i].y*feat.tempF[1][1] + feat.x2[i].z*feat.tempF[2][1])*feat.x1[i].y +
-			   		(feat.x2[i].x*feat.tempF[0][2] + feat.x2[i].y*feat.tempF[1][2] + feat.x2[i].z*feat.tempF[2][2])*feat.x1[i].z ;
+            x2tFx1[i] = (feat.x2[i].x*feat.tempF[0][0] + feat.x2[i].y*feat.tempF[1][0] + feat.x2[i].z*feat.tempF[2][0])*feat.x1[i].x +
+                (feat.x2[i].x*feat.tempF[0][1] + feat.x2[i].y*feat.tempF[1][1] + feat.x2[i].z*feat.tempF[2][1])*feat.x1[i].y +
+                (feat.x2[i].x*feat.tempF[0][2] + feat.x2[i].y*feat.tempF[1][2] + feat.x2[i].z*feat.tempF[2][2])*feat.x1[i].z ;
 
-		//Fx1 = F*x1
+            //Fx1 = F*x1
 
-		Fx1x[i] = feat.tempF[0][0]*feat.x1[i].x + feat.tempF[0][1]*feat.x1[i].y + feat.tempF[0][2]*feat.x1[i].z;
-		Fx1y[i] = feat.tempF[1][0]*feat.x1[i].x + feat.tempF[1][1]*feat.x1[i].y + feat.tempF[1][2]*feat.x1[i].z;
-		Fx1z[i] = feat.tempF[2][0]*feat.x1[i].x + feat.tempF[2][1]*feat.x1[i].y + feat.tempF[2][2]*feat.x1[i].z;
+            Fx1x[i] = feat.tempF[0][0]*feat.x1[i].x + feat.tempF[0][1]*feat.x1[i].y + feat.tempF[0][2]*feat.x1[i].z;
+            Fx1y[i] = feat.tempF[1][0]*feat.x1[i].x + feat.tempF[1][1]*feat.x1[i].y + feat.tempF[1][2]*feat.x1[i].z;
+            Fx1z[i] = feat.tempF[2][0]*feat.x1[i].x + feat.tempF[2][1]*feat.x1[i].y + feat.tempF[2][2]*feat.x1[i].z;
 
 		
-		//Ftx2 = F'*x2
+            //Ftx2 = F'*x2
 
-		Ftx2x[i] = feat.tempF[0][0]*feat.x2[i].x + feat.tempF[1][0]*feat.x2[i].y + feat.tempF[2][0]*feat.x2[i].z;
-		Ftx2y[i] = feat.tempF[0][1]*feat.x2[i].x + feat.tempF[1][1]*feat.x2[i].y + feat.tempF[2][1]*feat.x2[i].z;
-		Ftx2z[i] = feat.tempF[0][2]*feat.x2[i].x + feat.tempF[1][2]*feat.x2[i].y + feat.tempF[2][2]*feat.x2[i].z;
+            Ftx2x[i] = feat.tempF[0][0]*feat.x2[i].x + feat.tempF[1][0]*feat.x2[i].y + feat.tempF[2][0]*feat.x2[i].z;
+            Ftx2y[i] = feat.tempF[0][1]*feat.x2[i].x + feat.tempF[1][1]*feat.x2[i].y + feat.tempF[2][1]*feat.x2[i].z;
+            Ftx2z[i] = feat.tempF[0][2]*feat.x2[i].x + feat.tempF[1][2]*feat.x2[i].y + feat.tempF[2][2]*feat.x2[i].z;
 
 			
-		//d(i) = x2tFx1[i]^2 / (Fx1[i].x^2 + Fx1[i].y^2 + Ftx2[i].x^2 + Ftx2[i].y^2)
+            //d(i) = x2tFx1[i]^2 / (Fx1[i].x^2 + Fx1[i].y^2 + Ftx2[i].x^2 + Ftx2[i].y^2)
 
-		feat.d[i] = x2tFx1[i]*x2tFx1[i]/(Fx1x[i]*Fx1x[i] + Fx1y[i]*Fx1y[i] + Fx1z[i]*Fx1z[i] + Ftx2x[i]*Ftx2x[i] + Ftx2y[i]*Ftx2y[i]+ Ftx2z[i]*Ftx2z[i]);		
+            feat.d[i] = x2tFx1[i]*x2tFx1[i]/(Fx1x[i]*Fx1x[i] + Fx1y[i]*Fx1y[i] + Fx1z[i]*Fx1z[i] + Ftx2x[i]*Ftx2x[i] + Ftx2y[i]*Ftx2y[i]+ Ftx2z[i]*Ftx2z[i]);		
 		
-		if(abs(feat.d[i])<ransacThreshold){
-			feat.tempInliers[feat.ninliers] = i;
-			feat.ninliers++;				
-		}			
+            if(abs(feat.d[i])<ransacThreshold){
+                feat.tempInliers[feat.ninliers] = i;
+                feat.ninliers++;				
+            }			
 	}
 	
 	if(feat.ninliers>=feat.bestScore){
 		
-		feat.bestScore = feat.ninliers;
-		feat.bestInliers = feat.tempInliers;
-		feat.bestF = feat.tempF;
+            feat.bestScore = feat.ninliers;
+            feat.bestInliers = feat.tempInliers;
+            feat.bestF = feat.tempF;
 			
-		//now update N
-		fracinliers = feat.ninliers / (float)feat.firstZeroIndex;	
-		pNoOutliers = 1-pow(fracinliers,s);
-		pNoOutliers = max(eps, pNoOutliers);
-		if(min(1-eps, pNoOutliers)==(1-eps)){
-			pNoOutliers = 1-eps;
-			denom=-eps;	
-		}
-		else{denom = log(pNoOutliers);}
-		feat.N = (log(1-probOutliers)/denom) - 20 ; //get rid of this -20, a small hack!
+            //now update N
+            fracinliers = feat.ninliers / (float)feat.firstZeroIndex;	
+            pNoOutliers = 1-pow(fracinliers,s);
+            pNoOutliers = max(eps, pNoOutliers);
+            if(min(1-eps, pNoOutliers)==(1-eps)){
+                pNoOutliers = 1-eps;
+                denom=-eps;	
+            }
+            else{denom = log(pNoOutliers);}
+            feat.N = (log(1-probOutliers)/denom) - 20 ; //get rid of this -20, a small hack!
 	}	
 	feat.trialCount++;
 
 	println("best score: " + feat.bestScore + "\tninliners: " 
-			+ feat.ninliers + "\tN: " + feat.N  + "\ttrialCount: " 
-			+ feat.trialCount); 
+                + feat.ninliers + "\tN: " + feat.N  + "\ttrialCount: " 
+                + feat.trialCount); 
 	
 	if(feat.N<=feat.trialCount||feat.trialCount>=maxTrials||(!(feat.N>=0))){
-		//exit ransac
-		feedbackOrInput.setVal(false);
-		pop1orNone.setVal(true);
-		push1orNone.setVal(true);
-		println("Fx1:");
-		for(int i = 0; i< feat.firstZeroIndex; i++){
-			println(Fx1x[i] + " " + Fx1y[i] + " " + Fx1z[i] + ";");
-		}
+            //exit ransac
+            feedbackOrInput.setVal(false);
+            pop1orNone.setVal(true);
+            push1orNone.setVal(true);
+            println("Fx1:");
+            for(int i = 0; i< feat.firstZeroIndex; i++){
+                println(Fx1x[i] + " " + Fx1y[i] + " " + Fx1z[i] + ";");
+            }
+            println("");
+            println("Inliers");
+            println("");
+            for(int i = 0; i< feat.bestScore; i++){
+                println(feat.x1[feat.bestInliers[i]].x + "\t" + feat.x2[feat.bestInliers[i]].x);
+                println(feat.x1[feat.bestInliers[i]].y + "\t" + feat.x2[feat.bestInliers[i]].y);
                 println("");
-		println("Inliers");
-                println("");
-		for(int i = 0; i< feat.bestScore; i++){
-					println(feat.x1[feat.bestInliers[i]].x + "\t" + feat.x2[feat.bestInliers[i]].x);
-					println(feat.x1[feat.bestInliers[i]].y + "\t" + feat.x2[feat.bestInliers[i]].y);
-					println("");
-		}
+            }
 	}
 	else{
-		//continue to next trial
-		feedbackOrInput.setVal(true);
-		pop1orNone.setVal(false);
-		push1orNone.setVal(false);
+            //continue to next trial
+            feedbackOrInput.setVal(true);
+            pop1orNone.setVal(false);
+            push1orNone.setVal(false);
 	}
 	push(feat);	
 	
-	}	
+    }	
 }
 
 featureListPair->featureListPair filter normalizeFeaturePts()
 {	
+	work pop 1 push 1{
 	featureListPair feat;
 	float runningSumX1;
 	float runningSumY1;
@@ -282,7 +283,6 @@ featureListPair->featureListPair filter normalizeFeaturePts()
 	float muY1, muY2;
 	float stDevFactor1, stDevFactor2;
 	
-	work pop 1 push 1{
 		//println("started to normalizeFeaturePts");	
 		feat = pop();
 		
@@ -317,12 +317,12 @@ featureListPair->featureListPair filter normalizeFeaturePts()
 	
 
 		for(int i = 0; i < feat.firstZeroIndex; i++){
-			feat.n1[i].x-= muX1;
-			feat.n1[i].y-= muY1;
-			runningSumDist1+= sqrt(feat.n1[i].x*feat.n1[i].x + feat.n1[i].y*feat.n1[i].y);	
-			feat.n2[i].x-= muX2;
-			feat.n2[i].y-= muY2;
-			runningSumDist2+= sqrt(feat.n2[i].x*feat.n2[i].x + feat.n2[i].y*feat.n2[i].y);	
+                    feat.n1[i].x-= muX1;
+                    feat.n1[i].y-= muY1;
+                    runningSumDist1+= sqrt(feat.n1[i].x*feat.n1[i].x + feat.n1[i].y*feat.n1[i].y);	
+                    feat.n2[i].x-= muX2;
+                    feat.n2[i].y-= muY2;
+                    runningSumDist2+= sqrt(feat.n2[i].x*feat.n2[i].x + feat.n2[i].y*feat.n2[i].y);	
 			
 		}
 
@@ -331,10 +331,10 @@ featureListPair->featureListPair filter normalizeFeaturePts()
 		
 		for(int i = 0; i < feat.firstZeroIndex; i++){
 			
-			feat.n1[i].x*= stDevFactor1;
-			feat.n1[i].y*= stDevFactor1;
-			feat.n2[i].x*= stDevFactor2;
-			feat.n2[i].y*= stDevFactor2;
+                    feat.n1[i].x*= stDevFactor1;
+                    feat.n1[i].y*= stDevFactor1;
+                    feat.n2[i].x*= stDevFactor2;
+                    feat.n2[i].y*= stDevFactor2;
 
 		}
 

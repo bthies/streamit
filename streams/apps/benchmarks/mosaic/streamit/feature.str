@@ -40,9 +40,6 @@ patchsize number of columns:
 
 each column is, as noted above, patchsize tall.
 
-
-
-
 A gradient value in the x direction is simply the square of the difference of the pixel values on 
 either side of the selected pixel.  The gyy value (the gradient value in the y direction) is the same 
 but for the y direction, and the gxy value is the x difference times the y difference.  
@@ -52,45 +49,24 @@ but rather than computing the sum of a whole column again, we just use the old c
 new value and subtract an old value since everything in between hasn't changed.  we do this for every 
 row subsequently until finished.
 */
-
-
 float[320][240]->float[320][240] 
 		filter generateMinorEigs(int startx, int starty, 
-					int imageWidth, int imageHeight, int winWidth, int winHeight, 
-					float iweight, float qweight, int patchsize)
+                                         int imageWidth, int imageHeight, int winWidth, 
+                                         int winHeight, float iweight, float qweight, 
+                                         int patchsize)
 {
-	float[320][240] yMatrix;	
-	float[320][240] iMatrix;	
-	float[320][240] qMatrix;		
-	float[320][240] eigenMatrix;
-	int r;
-	float gx; float gy; float gxi; float gyi; float gxq; float gyq;	
-	Gstruct tempSum;
-	float minorEig;
-	float newgx; 
-	float newgy;
-	float newgxi; 
-	float newgyi;
-	float newgxq; 
-	float newgyq;
-	float oldgx;
-	float oldgy;
-	float oldgxi;
-	float oldgyi;
-	float oldgxq;
-	float oldgyq;
-	int row;
 	//check to make sure that the window has a half-patchsize cushion around it plus one.  
 	//actually, since patchsizes are odd, it's half-patchsize - 1/2 cushion plus one). 
 	work pop 3 push 4
 	{
+	float[320][240] eigenMatrix;
 	
 	Gstruct[320 + patchsize - 1] Garray;
-	yMatrix = pop();	
-	iMatrix = pop();	
-	qMatrix = pop();
+	float[320][240] yMatrix = pop();	
+	float[320][240] iMatrix = pop();	
+	float[320][240] qMatrix = pop();
 	
-	r = (patchsize-1)/2;
+	int r = (patchsize-1)/2;
 	
 	if(
 		(startx-(r + 1))<0 || 
@@ -112,12 +88,12 @@ float[320][240]->float[320][240]
 			//we weigh each gradient value based on how important we deem each
 			//and the variables iweight and qweight determine how important they are
 
-			gx = (yMatrix[i+1][j] - yMatrix[i-1][j])/2;
-			gy = (yMatrix[i][j+1] - yMatrix[i][j-1])/2;
-			gxi = (iMatrix[i+1][j] - iMatrix[i-1][j])/2;
-			gyi = (iMatrix[i][j+1] - iMatrix[i][j-1])/2;
-			gxq = (qMatrix[i+1][j] - qMatrix[i-1][j])/2;
-			gyq = (qMatrix[i][j+1] - qMatrix[i][j-1])/2;
+			float gx = (yMatrix[i+1][j] - yMatrix[i-1][j])/2;
+			float gy = (yMatrix[i][j+1] - yMatrix[i][j-1])/2;
+			float gxi = (iMatrix[i+1][j] - iMatrix[i-1][j])/2;
+			float gyi = (iMatrix[i][j+1] - iMatrix[i][j-1])/2;
+			float gxq = (qMatrix[i+1][j] - qMatrix[i-1][j])/2;
+			float gyq = (qMatrix[i][j+1] - qMatrix[i][j-1])/2;
 			Garray[i - (startx-r)].gxx+=gx*gx + iweight*gxi*gxi + qweight*gxq*gxq;
 			Garray[i - (startx-r)].gyy+=gy*gy + iweight*gyi*gyi + qweight*gyq*gyq;
 			Garray[i - (startx-r)].gxy+=gx*gy + iweight*gxi*gyi + qweight*gxq*gyq;	
@@ -131,7 +107,8 @@ float[320][240]->float[320][240]
 	println(Garray[winWidth + patchsize - 1].gxy);
 	println(Garray[winWidth + patchsize - 1].gyy);*/
 		
-	tempSum.gxx = 0;	
+	Gstruct tempSum;
+        tempSum.gxx = 0;
 	tempSum.gyy = 0;
 	tempSum.gxy = 0;
 	
@@ -155,7 +132,7 @@ float[320][240]->float[320][240]
 		tempSum.gxy+=(Garray[i+patchsize].gxy - Garray[i].gxy);			
 	}
 
-	row = starty;
+	int row = starty;
 	row++;
 
 
@@ -163,20 +140,20 @@ float[320][240]->float[320][240]
 	{	
 		for(int i = startx-r; i< (startx+winWidth+r); i++)
 		{	 	
-			newgx = (yMatrix[i+1][j+r] - yMatrix[i-1][j+r])/2;
-			newgy = (yMatrix[i][j+r+1] - yMatrix[i][j+r-1])/2;
-			newgxi = (iMatrix[i+1][j+r] - iMatrix[i-1][j+r])/2;
-			newgyi = (iMatrix[i][j+r+1] - iMatrix[i][j+r-1])/2;
-			newgxq = (qMatrix[i+1][j+r] - qMatrix[i-1][j+r])/2;
-			newgyq = (qMatrix[i][j+r+1] - qMatrix[i][j+r-1])/2;
+			float newgx = (yMatrix[i+1][j+r] - yMatrix[i-1][j+r])/2;
+			float newgy = (yMatrix[i][j+r+1] - yMatrix[i][j+r-1])/2;
+			float newgxi = (iMatrix[i+1][j+r] - iMatrix[i-1][j+r])/2;
+			float newgyi = (iMatrix[i][j+r+1] - iMatrix[i][j+r-1])/2;
+			float newgxq = (qMatrix[i+1][j+r] - qMatrix[i-1][j+r])/2;
+			float newgyq = (qMatrix[i][j+r+1] - qMatrix[i][j+r-1])/2;
 	
 				
-			oldgx = (yMatrix[i+1][j-r-1] - yMatrix[i-1][j-r-1])/2;
-			oldgy = (yMatrix[i][j-r] - yMatrix[i][j-r-2])/2;
-			oldgxi = (iMatrix[i+1][j-r-1] - iMatrix[i-1][j-r-1])/2;
-			oldgyi = (iMatrix[i][j-r] - iMatrix[i][j-r-2])/2;
-			oldgxq = (qMatrix[i+1][j-r-1] - qMatrix[i-1][j-r-1])/2;
-			oldgyq = (qMatrix[i][j-r] - qMatrix[i][j-r-2])/2;
+			float oldgx = (yMatrix[i+1][j-r-1] - yMatrix[i-1][j-r-1])/2;
+			float oldgy = (yMatrix[i][j-r] - yMatrix[i][j-r-2])/2;
+			float oldgxi = (iMatrix[i+1][j-r-1] - iMatrix[i-1][j-r-1])/2;
+			float oldgyi = (iMatrix[i][j-r] - iMatrix[i][j-r-2])/2;
+			float oldgxq = (qMatrix[i+1][j-r-1] - qMatrix[i-1][j-r-1])/2;
+			float oldgyq = (qMatrix[i][j-r] - qMatrix[i][j-r-2])/2;
 			
 
 			Garray[i - (startx-r)].gxx+=
@@ -250,7 +227,8 @@ float[320][240]->imageAndFeatures
 }
 
 float[320][240]->imageAndFeatures filter reMakeIAndF(){
-	
+
+    // actual state
 	bestFeatures[40] bestGuys;	
 		
 	work pop 4 push 1{			
@@ -271,18 +249,15 @@ float[320][240]->imageAndFeatures filter reMakeIAndF(){
 
 float[320][240]->bestFeatures[320][240] filter sortEigs(int width, int height){
 	
-	float[320][240] eig2D;
-	bestFeatures[320*240] eig1DBest;//bestFeatures[320][240] eig2DBest;
-	bestFeatures[320][240] eig2DBest;
-	bestFeatures h;	
-	int i, j, temp1;
-	
+    // not actual state, but here for efficiency to avoid array copies
+    // recursive call to mergesort
+    bestFeatures[320*240] eig1DBest;//bestFeatures[320][240] eig2DBest;
 	
 	void q_sort(int top, int bottom)
 	{	 float x;
 		 x = eig1DBest[top].val;
-		 i = top - 1;
-		 j = bottom + 1;
+		 int i = top - 1;
+		 int j = bottom + 1;
 		 bestFeatures temp;
 		 
 		 do
@@ -309,7 +284,7 @@ float[320][240]->bestFeatures[320][240] filter sortEigs(int width, int height){
 	
 	void q_sort2(int lo, int hi)
 	{	float x;
-		i=lo; j=hi;
+		int i=lo; int j=hi;
 		x=eig1DBest[(lo+hi)/2].val;
 
 		//  partition
@@ -319,8 +294,10 @@ float[320][240]->bestFeatures[320][240] filter sortEigs(int width, int height){
 			while (eig1DBest[j].val<x) j--;
 			if (i<=j)
 			{
-				h=eig1DBest[i]; eig1DBest[i]=eig1DBest[j]; eig1DBest[j]=h;
-				i++; j--;
+                            bestFeatures h=eig1DBest[i]; 
+                            eig1DBest[i]=eig1DBest[j]; 
+                            eig1DBest[j]=h;
+                            i++; j--;
 			}
 		} while (i<=j);
 
@@ -328,7 +305,8 @@ float[320][240]->bestFeatures[320][240] filter sortEigs(int width, int height){
 		if (lo<j) q_sort2(lo, j);
 		if (i<hi) q_sort2(i, hi);
 	}
-	
+
+        /*	
 	void q_sort3(int left, int right)
 	{
 	  bestFeatures pivot;
@@ -364,10 +342,12 @@ float[320][240]->bestFeatures[320][240] filter sortEigs(int width, int height){
 		q_sort3(tempInt+1, right);
 		
 	}
+        */
 	
 	work pop 1 push 1{
 	
-		eig2D = pop();
+            bestFeatures[320][240] eig2DBest;
+            float[320][240] eig2D = pop();
 		
 		/*for(int i = 0; i<width; i++){
 			for(int j = 0; j<height; j++){
@@ -378,7 +358,7 @@ float[320][240]->bestFeatures[320][240] filter sortEigs(int width, int height){
 		}*/
 		for(int i = 0; i<width; i++){
 			for(int j = 0; j<height; j++){
-				temp1 = i+j*imageWidth;
+				int temp1 = i+j*imageWidth;
 				eig1DBest[temp1].val = eig2D[i][j];
 				eig1DBest[temp1].x = i;
 				eig1DBest[temp1].y = j;
@@ -396,61 +376,63 @@ float[320][240]->bestFeatures[320][240] filter sortEigs(int width, int height){
 }
 
 bestFeatures[320][240]->float[320][240] filter findBest(int width, int height, int patchsize, portal<reMakeIAndF> bestGuys){
+
+    // this variable is read from but never assigned to -- why? (bill)
+    bestFeatures[40] clearedBest;
 	
-	int keptFeatures, m;
-	bestFeatures tempGuy;
-	bestFeatures[40] best, clearedBest;
-	boolean [320][240] patchMark;
-	bestFeatures[320][240] eig2DBest;
-	float[320][240] eig;
-	
-	work pop 1 push 1{
+    work pop 1 push 1{
+        // moving this variable from a filter field to a local because
+        // it looks like that is the intended behavior.  --bill
+        boolean [320][240] patchMark;
+
+        float[320][240] eig;
+        bestFeatures tempGuy;
+        bestFeatures[40] best=clearedBest;
+        bestFeatures[320][240] eig2DBest = pop();
+        int m = 0; int keptFeatures=0;
+        while(keptFeatures<iters)
+            {	
+                tempGuy = eig2DBest[m%width][m/width];
+                m++;
 			
-		best=clearedBest;
-		eig2DBest = pop();
-		m = 0; keptFeatures=0;
-		while(keptFeatures<iters)
-		{	
-			tempGuy = eig2DBest[m%width][m/width];
-			m++;
-			
-			if(!patchMark[tempGuy.x][tempGuy.y])
-			{
-				for(int i=(tempGuy.x-(patchsize-1));i<=(tempGuy.x+patchsize-1);i++){
-					for(int j=(tempGuy.y-(patchsize-1)); j<=(tempGuy.y+patchsize-1);j++){
-						patchMark[i][j] = true;
-					}
-				}
-				best[keptFeatures] = tempGuy;
-				keptFeatures++;									
-			}
-		}		
+                if(!patchMark[tempGuy.x][tempGuy.y])
+                    {
+                        for(int i=(tempGuy.x-(patchsize-1));i<=(tempGuy.x+patchsize-1);i++){
+                            for(int j=(tempGuy.y-(patchsize-1)); j<=(tempGuy.y+patchsize-1);j++){
+                                patchMark[i][j] = true;
+                            }
+                        }
+                        best[keptFeatures] = tempGuy;
+                        keptFeatures++;									
+                    }
+            }		
 
-		bestGuys.setVal(best);	
+        bestGuys.setVal(best);	
 
-		//organize the best in descending order (redundant?)
+        //organize the best in descending order (redundant?)
 
-		for (int i = (iters - 1); i >= 0; i--)
-		{
-		  for (int j = 1; j <= i; j++)
-		  {
+        for (int i = (iters - 1); i >= 0; i--)
+            {
+                for (int j = 1; j <= i; j++)
+                    {
 			if (best[j-1].val < best[j].val)
-			{
-			  tempGuy = best[j-1];
-			  best[j-1] = best[j];
-			  best[j] = tempGuy;
-			}
-		  }
-		}
+                            {
+                                tempGuy = best[j-1];
+                                best[j-1] = best[j];
+                                best[j] = tempGuy;
+                            }
+                    }
+            }
 
 
-		for(int i = 0; i<width*height; i++)
-		{
-			eig[i%width][i/width] = eig2DBest[i%width][i/width].val;
-		}
+        for(int i = 0; i<width; i++) {
+            for (int j=0;j<height; j++) {
+                eig[i][j] = eig2DBest[i][j].val;
+            }
+        }
 		
-		push(eig);	
-	}
+        push(eig);	
+    }
 }
 
 	

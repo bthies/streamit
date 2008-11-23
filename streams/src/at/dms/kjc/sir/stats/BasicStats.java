@@ -60,6 +60,8 @@ public class BasicStats {
     }
 
     private void collectBasicStats(SIRStream str) {
+        // don't deal with dynamic rates here
+        SIRDynamicRateManager.pushConstantPolicy(1);
 
         // get a work estimate
         final WorkEstimate work = WorkEstimate.getWorkEstimate(str);
@@ -133,7 +135,7 @@ public class BasicStats {
                         // computation.  They should be replaced with File I/O.
                         boolean COUNT_STATEFUL_SOURCES = false;
                         boolean COUNT_STATEFUL_SINKS = false;
-                        if ((self.getPopInt()>0 || COUNT_STATEFUL_SOURCES) && (self.getPushInt()>0 || COUNT_STATEFUL_SINKS)) {
+                        if ((self.getPop().isDynamic() || self.getPopInt()>0 || COUNT_STATEFUL_SOURCES) && (self.getPush().isDynamic() || self.getPushInt()>0 || COUNT_STATEFUL_SINKS)) {
                             stateful.add(self.getCleanIdent());
                             numStatefulFilters++;
                             totalStatefulWork += myWork;

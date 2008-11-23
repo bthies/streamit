@@ -185,12 +185,12 @@ public class PartitionDot extends StreamItDot {
                     filter.getPopForSchedule(execCounts) + "->" + 
                     filter.getPushForSchedule(execCounts);
             } else {
-                ioLabel = "\\nI/O: " + 
-                    filter.getPopInt() + "->" + 
-                    filter.getPushInt();
+                String popString = filter.getPop().isDynamic() ? filter.getPop().toString() : filter.getPopInt()+"";
+                String pushString = filter.getPush().isDynamic() ? filter.getPush().toString() : filter.getPushInt()+"";
+                ioLabel = "\\nI/O: " + popString  + "->" + pushString;
             }
             // indicate peeking prominently
-            if (filter.getPeekInt() > filter.getPopInt()) {
+            if (!filter.getPop().isDynamic() && !filter.getPeek().isDynamic() && filter.getPeekInt() > filter.getPopInt()) {
                 ioLabel += "\\n*** PEEKS " + (filter.getPeekInt() - filter.getPopInt()) + " AHEAD ***";
             }
         }
@@ -365,12 +365,18 @@ public class PartitionDot extends StreamItDot {
             StreamItDot dot = new PartitionDot(str, 
                                                new PrintStream(out), partitions, prefixLabel,
                                                simple, markStateful, markIO);
-            dot.print("digraph streamit {\n");
-            dot.print("size=\"6.5,9\"\n");
-            str.accept(dot);
-            dot.print("}\n");
-            out.flush();
-            out.close();
+            // now that execCounts are determined, make sure that
+            // dynamic rates show up in the labels
+            SIRDynamicRateManager.pushIdentityPolicy();
+            {
+                dot.print("digraph streamit {\n");
+                dot.print("size=\"6.5,9\"\n");
+                str.accept(dot);
+                dot.print("}\n");
+                out.flush();
+                out.close();
+            }
+            SIRDynamicRateManager.popPolicy();
         } catch (IOException e) {
             e.printStackTrace();
         }

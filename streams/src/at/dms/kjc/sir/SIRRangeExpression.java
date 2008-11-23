@@ -1,5 +1,6 @@
 package at.dms.kjc.sir;
 
+import at.dms.util.Utils;
 import at.dms.kjc.*;
 import at.dms.compiler.*;
 
@@ -149,7 +150,13 @@ public class SIRRangeExpression extends JExpression {
         }  else {
             maxStr = max.toString();
         }
-        return "[" + minStr + "," + aveStr + "," + maxStr + "]";
+        String result = "[" + minStr + "," + aveStr + "," + maxStr + "]";
+        // simplify repeated dynamic tokens
+        result = Utils.replaceAll(result, "*,*", "*");
+        if (result.equals("[*,*]")) {
+            result = "*";
+        }
+        return result;
     }
 
     // ----------------------------------------------------------------------

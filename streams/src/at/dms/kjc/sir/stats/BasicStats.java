@@ -67,6 +67,9 @@ public class BasicStats {
         final WorkEstimate work = WorkEstimate.getWorkEstimate(str);
         // dump graph
         work.printGraph(str, "stats-graph.dot");
+
+        SIRDynamicRateManager.popPolicy();
+
         // now that graph has been dumped with all pipelines labeled,
         // remove redundant pipelines for the sake of later counts
         Lifter.liftPreservingSync(str);

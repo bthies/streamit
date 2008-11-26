@@ -5,45 +5,39 @@ TriangleSetupInfo->void pipeline PixelPipeline( int offset, int numRasterizers,
     add RasterOps( offset, numRasterizers, screenWidth, screenHeight );
 }
 
-// float->float splitjoin FrontendSplitJoin
-Vertex->Vertex splitjoin FrontendSplitJoin
-{
-    split roundrobin;
-
-    add VertexShader( 0 );
-/*
-    add VertexShader( 1 );
-    add VertexShader( 2 );
-    add VertexShader( 3 );
-    add VertexShader( 4 );
-    add VertexShader( 5 );
-*/
-
-    join roundrobin;
-}
-
 TriangleSetupInfo->void splitjoin BackendSplit
 {
     split duplicate;
 
-    // bill: expanding from 1 to 20 to match paper
-    for (int i=0; i<20; i++) {
-        add PixelPipeline( i, 1, 600, 600 );
-    }
-/*
-    add PixelPipeline( 0, 4, 600, 600 );
-    add PixelPipeline( 1, 4, 600, 600 );
-    add PixelPipeline( 2, 4, 600, 600 );
-    add PixelPipeline( 3, 4, 600, 600 );
-*/
+    add PixelPipeline( 0, 20, 600, 600 );
+    add PixelPipeline( 1, 20, 600, 600 );
+    add PixelPipeline( 2, 20, 600, 600 );
+    add PixelPipeline( 3, 20, 600, 600 );
+    add PixelPipeline( 4, 20, 600, 600 );
+    add PixelPipeline( 5, 20, 600, 600 );
+    add PixelPipeline( 6, 20, 600, 600 );
+    add PixelPipeline( 7, 20, 600, 600 );
+    add PixelPipeline( 8, 20, 600, 600 );
+    add PixelPipeline( 9, 20, 600, 600 );
+    add PixelPipeline( 10, 20, 600, 600 );
+    add PixelPipeline( 11, 20, 600, 600 );
+    add PixelPipeline( 12, 20, 600, 600 );
+    add PixelPipeline( 13, 20, 600, 600 );
+    add PixelPipeline( 14, 20, 600, 600 );
+    add PixelPipeline( 15, 20, 600, 600 );
+    add PixelPipeline( 16, 20, 600, 600 );
+    add PixelPipeline( 17, 20, 600, 600 );
+    add PixelPipeline( 18, 20, 600, 600 );
+    add PixelPipeline( 19, 20, 600, 600 );
+
     join roundrobin( 0 );
 }
 
 void->void pipeline Pass1
 {
-	add FileReader< float >( "shadow_volume_geometry.bin" );
-	add Input( 252 );
-	add FrontendSplitJoin();
-	add TriangleSetup( 600, 600 );
-	add BackendSplit();
+    add FileReader< float >( "shadow_volume_geometry.bin" );
+    add Input( 1008 );
+    add VertexShader( 0 );
+    add TriangleSetup( 600, 600 );
+    add BackendSplit();
 }

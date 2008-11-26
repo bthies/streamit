@@ -12,11 +12,6 @@ Vertex->TriangleSetupInfo filter TriangleSetup( int screenWidth, int screenHeigh
     Matrix3f vertexMatrix;
     Matrix3f vertexMatrixInverse;
 
-    Vector3f wCoefficients;
-
-    // coefficients for z interpolation
-    Vector3f zInterp;
-
     void normalizeW()
 	{
 	    ndcSpace[0].x = v0.position.x / v0.position.w;
@@ -61,8 +56,6 @@ Vertex->TriangleSetupInfo filter TriangleSetup( int screenWidth, int screenHeigh
 	    v1y = ( int )( screenSpace[1].y );
 	    v2x = ( int )( screenSpace[2].x );
 	    v2y = ( int )( screenSpace[2].y );
-
-	    // sort vertices into top to bottom, left to right order
 
 	    // x max
 	    if( v0x > v1x )
@@ -253,9 +246,6 @@ Vertex->TriangleSetupInfo filter TriangleSetup( int screenWidth, int screenHeigh
 	    // special interpolants
 	    computeWInterp();
 	    computeZInterp();
-
-	    // determine backfacing
-	    determineFacing();
 
 	    // push out
 	    push( tsi );

@@ -1,17 +1,9 @@
-Fragment->void filter RasterOps( int offset, int numUnits,
-	int screenWidth, int screenHeight )
+Fragment->void filter RasterOps( int offset, int numUnits, int screenWidth, int screenHeight )
 {
-    // TODO: break it up!
-    //    float[ ( screenWidth / numUnits ) * screenHeight ] zBuffer = init_array_1D_float( "Pass0.zBuffer.xy.arr", 360000 );
-    float[ 360000 ] zBuffer = init_array_1D_float( "Pass0.zBuffer.xy.arr", 360000 );
-
+    float[ ( screenWidth / numUnits ) * screenHeight  ] zBuffer = init_array_1D_float( "Pass0.zBuffer.xy.arr", ( screenWidth / numUnits ) * screenHeight );
     int[ ( screenWidth / numUnits ) * screenHeight ] stencilBuffer;
 
     int width;
-
-    // not actual state, just avoids overhaed of initializing
-    // structure on every invocation of the filter
-    Fragment f;
 
     init
 	{
@@ -20,15 +12,15 @@ Fragment->void filter RasterOps( int offset, int numUnits,
 
     work pop 1
 	{
-	    f = pop();
-	
-	    f.x = f.x / numUnits;	    
-	    int index = f.y * width + f.x;
+	    Fragment r = pop();
+
+	    r.x = r.x / numUnits;
+	    int index = r.x * screenHeight + r.y;
 
 	    // zFail
-	    if( f.z >= zBuffer[ index ] )
+	    if( r.z >= zBuffer[ index ] )
 		{
-		    if( f.isFrontFacing == 1 )
+		    if( r.isFrontFacing == 1 )
 			{
 			    stencilBuffer[ index ] = stencilBuffer[ index ] - 1;
 			}

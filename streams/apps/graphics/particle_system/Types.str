@@ -50,6 +50,50 @@ struct Raster
 
 struct TriangleSetupInfo
 {
+    float m00;
+    float m01;
+    float m02;
+
+    float m10;
+    float m11;
+    float m12;
+
+    float m20;
+    float m21;
+    float m22;
+
+    float v0r;
+    float v0g;
+    float v0b;
+
+    float v1r;
+    float v1g;
+    float v1b;
+
+    float v2r;
+    float v2g;
+    float v2b;
+
+    // screen bounding box
+    int minX;
+    int minY;
+    int maxX;
+    int maxY;
+
+    // screen space z coordinates
+    float s0z;
+    float s1z;
+    float s2z;
+
+    // triangle edge equations
+    Vector3f edge01;
+    Vector3f edge12;
+    Vector3f edge20;
+
+}
+
+struct TriangleSetupInfo2
+{
     // screen bounding box
     int minX;
     int minY;

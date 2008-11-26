@@ -1,12 +1,10 @@
-TriangleSetupInfo->void pipeline PixelPipeline( int offset, int numRasterizers,
+TriangleSetupInfo2->void pipeline PixelPipeline( int offset, int numRasterizers,
 						int screenWidth, int screenHeight )
 {
     add Rasterizer( offset, numRasterizers, screenWidth, screenHeight );
-    // add PixelShader( offset );
     add RasterOps( offset, numRasterizers, screenWidth, screenHeight );
 }
 
-// float->float splitjoin FrontendSplitJoin
 Vertex->Vertex splitjoin FrontendSplitJoin
 {
     split roundrobin( 3 );
@@ -17,7 +15,6 @@ Vertex->Vertex splitjoin FrontendSplitJoin
     add VertexShader( 3 );
     add VertexShader( 4 );
     add VertexShader( 5 );
-// Bill: adding three more to correspond with paper
     add VertexShader( 6 );
     add VertexShader( 7 );
     add VertexShader( 8 );
@@ -25,15 +22,10 @@ Vertex->Vertex splitjoin FrontendSplitJoin
     join roundrobin( 12 );
 }
 
-TriangleSetupInfo->void splitjoin BackendSplit
+TriangleSetupInfo2->void splitjoin BackendSplit
 {
     split duplicate;
-/*
-    add PixelPipeline( 0, 4, 600, 600 );
-    add PixelPipeline( 1, 4, 600, 600 );
-    add PixelPipeline( 2, 4, 600, 600 );
-    add PixelPipeline( 3, 4, 600, 600 );
-*/
+
     add PixelPipeline( 0, 12, 600, 600 );
     add PixelPipeline( 1, 12, 600, 600 );
     add PixelPipeline( 2, 12, 600, 600 );
@@ -56,5 +48,6 @@ void->void pipeline GPUModel
 	add Input( 1350 );
 	add FrontendSplitJoin();
 	add TriangleSetup( 600, 600 );
+	add TriangleSetup2( 600, 600 );
 	add BackendSplit();
 }

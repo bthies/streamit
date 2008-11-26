@@ -1,6 +1,3 @@
-// TODO: figure out how to do triangle setup for splitting/joining
-
-// float->float filter TriangleSetup( int screenWidth, int screenHeight )
 Vertex->TriangleSetupInfo filter TriangleSetup( int screenWidth, int screenHeight )
 {
     Vertex v0;
@@ -199,57 +196,6 @@ Vertex->TriangleSetupInfo filter TriangleSetup( int screenWidth, int screenHeigh
 	    tsi.edge20.z = vertexMatrixInverse.m[5];
 	}
 
-    void computeWInterp()
-	{
-	    // w coefficients = vertexMatrixInverse * [ 1 1 1 ]^T
-	    tsi.wInterp.x = vertexMatrixInverse.m[0] + vertexMatrixInverse.m[3] + vertexMatrixInverse.m[6];
-	    tsi.wInterp.y = vertexMatrixInverse.m[1] + vertexMatrixInverse.m[4] + vertexMatrixInverse.m[7];
-	    tsi.wInterp.z = vertexMatrixInverse.m[2] + vertexMatrixInverse.m[5] + vertexMatrixInverse.m[8];
-	}
-
-
-    void computeZInterp()
-	{
-	    tsi.zInterp.x = vertexMatrixInverse.m[0] * screenSpace[0].z + vertexMatrixInverse.m[3] * screenSpace[1].z + vertexMatrixInverse.m[6]  * screenSpace[2].z;
-	    tsi.zInterp.y = vertexMatrixInverse.m[1] * screenSpace[0].z + vertexMatrixInverse.m[4] * screenSpace[1].z + vertexMatrixInverse.m[7]  * screenSpace[2].z;
-	    tsi.zInterp.z = vertexMatrixInverse.m[2] * screenSpace[0].z + vertexMatrixInverse.m[5] * screenSpace[1].z + vertexMatrixInverse.m[8] * screenSpace[2].z;
-	}
-
-    // would really like to return a vector3f
-    float computeInterpolantX( float u0, float u1, float u2 )
-	{
-	    return vertexMatrixInverse.m[0] * u0 + vertexMatrixInverse.m[3] * u1 + vertexMatrixInverse.m[6] * u2;
-	}
-
-    float computeInterpolantY( float u0, float u1, float u2 )
-	{
-	    return vertexMatrixInverse.m[1] * u0 + vertexMatrixInverse.m[4] * u1 + vertexMatrixInverse.m[7] * u2;
-	}
-
-    float computeInterpolantZ( float u0, float u1, float u2 )
-	{
-	    return vertexMatrixInverse.m[2] * u0 + vertexMatrixInverse.m[5] * u1 + vertexMatrixInverse.m[8] * u2;
-	}
-
-    void computeColorInterp()
-	{
-	    // red
-	    tsi.rInterp.x = computeInterpolantX( v0.color.r, v1.color.r, v2.color.r );
-	    tsi.rInterp.y = computeInterpolantY( v0.color.r, v1.color.r, v2.color.r );
-	    tsi.rInterp.z = computeInterpolantZ( v0.color.r, v1.color.r, v2.color.r );
-
-	    // green
-	    tsi.gInterp.x = computeInterpolantX( v0.color.g, v1.color.g, v2.color.g );
-	    tsi.gInterp.y = computeInterpolantY( v0.color.g, v1.color.g, v2.color.g );
-	    tsi.gInterp.z = computeInterpolantZ( v0.color.g, v1.color.g, v2.color.g );
-
-	    // blue
-	    tsi.bInterp.x = computeInterpolantX( v0.color.b, v1.color.b, v2.color.b );
-	    tsi.bInterp.y = computeInterpolantY( v0.color.b, v1.color.b, v2.color.b );
-	    tsi.bInterp.z = computeInterpolantZ( v0.color.b, v1.color.b, v2.color.b );
-	}
-
-    //	work pop 21 push 28
     work pop 3 push 1
 	{
 	    v0 = pop();
@@ -265,12 +211,33 @@ Vertex->TriangleSetupInfo filter TriangleSetup( int screenWidth, int screenHeigh
 	    computeScreenBoundingBox();
 	    computeEdgeEquations();
 
-	    // special interpolants
-	    computeWInterp();
-	    computeZInterp();
+	    tsi.m00 = vertexMatrix.m[0];
+	    tsi.m10 = vertexMatrix.m[1];
+	    tsi.m20 = vertexMatrix.m[2];
 
-	    // other interpolants
-	    computeColorInterp();	  
+	    tsi.m01 = vertexMatrix.m[3];
+	    tsi.m11 = vertexMatrix.m[4];
+	    tsi.m21 = vertexMatrix.m[5];
+
+	    tsi.m02 = vertexMatrix.m[6];
+	    tsi.m12 = vertexMatrix.m[7];
+	    tsi.m22 = vertexMatrix.m[8];
+
+	    tsi.v0r = v0.color.r;
+	    tsi.v0g = v0.color.g;
+	    tsi.v0b = v0.color.b;
+
+	    tsi.v1r = v1.color.r;
+	    tsi.v1g = v1.color.g;
+	    tsi.v1b = v1.color.b;
+
+	    tsi.v2r = v2.color.r;
+	    tsi.v2g = v2.color.g;
+	    tsi.v2b = v2.color.b;	    
+
+	    tsi.s0z = screenSpace[0].z;
+	    tsi.s1z = screenSpace[1].z;
+	    tsi.s2z = screenSpace[2].z;
 
 	    // push out
 	    push( tsi );

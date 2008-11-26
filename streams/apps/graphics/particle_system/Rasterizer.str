@@ -1,15 +1,14 @@
 // offset = rasterizer number (0, 1, 2, ... numUnits - 1)
-TriangleSetupInfo->Fragment filter Rasterizer( int offset, int numUnits, int screenWidth, int screenHeight )
+TriangleSetupInfo2->Fragment filter Rasterizer( int offset, int numUnits, int screenWidth, int screenHeight )
 {
     int numColumns;
-    TriangleSetupInfo tsi;
+    TriangleSetupInfo2 tsi;
 
     init
 	{
 	    numColumns = screenWidth / numUnits;
 	}
 
-    // TODO: would like to pass in a struct
     float interpolate( float interpX, float interpY, float interpZ,
 		       float ndcX, float ndcY, float w )
 	{

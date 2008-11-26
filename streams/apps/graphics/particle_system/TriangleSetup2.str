@@ -1,0 +1,88 @@
+TriangleSetupInfo->TriangleSetupInfo2 filter TriangleSetup2( int screenWidth, int screenHeight )
+{
+    TriangleSetupInfo tsi;
+    TriangleSetupInfo2 tsi2;
+
+    void computeWInterp()
+	{
+	    // w coefficients = vertexMatrixInverse * [ 1 1 1 ]^T
+	    tsi2.wInterp.x = tsi.m00 + tsi.m01 + tsi.m02;
+	    tsi2.wInterp.y = tsi.m10 + tsi.m11 + tsi.m12;
+	    tsi2.wInterp.z = tsi.m20 + tsi.m21 + tsi.m22;
+	}
+
+
+    void computeZInterp()
+	{
+	    tsi2.zInterp.x = tsi.m00 * tsi.s0z + tsi.m01 * tsi.s1z + tsi.m02  * tsi.s2z;
+	    tsi2.zInterp.y = tsi.m10 * tsi.s0z + tsi.m11 * tsi.s1z + tsi.m12  * tsi.s2z;
+	    tsi2.zInterp.z = tsi.m20 * tsi.s0z + tsi.m21 * tsi.s1z + tsi.m22 * tsi.s2z;
+	}
+
+    // would really like to return a vector3f
+    float computeInterpolantX( float u0, float u1, float u2 )
+	{
+	    return tsi.m00 * u0 + tsi.m01 * u1 + tsi.m02 * u2;
+	}
+
+    float computeInterpolantY( float u0, float u1, float u2 )
+	{
+	    return tsi.m10 * u0 + tsi.m11 * u1 + tsi.m12 * u2;
+	}
+
+    float computeInterpolantZ( float u0, float u1, float u2 )
+	{
+	    return tsi.m20 * u0 + tsi.m21 * u1 + tsi.m22 * u2;
+	}
+
+    void computeColorInterp()
+	{
+	    // red
+	    tsi2.rInterp.x = computeInterpolantX( tsi.v0r, tsi.v1r, tsi.v2r );
+	    tsi2.rInterp.y = computeInterpolantY( tsi.v0r, tsi.v1r, tsi.v2r );
+	    tsi2.rInterp.z = computeInterpolantZ( tsi.v0r, tsi.v1r, tsi.v2r );
+
+	    // green
+	    tsi2.gInterp.x = computeInterpolantX( tsi.v0g, tsi.v1g, tsi.v2g );
+	    tsi2.gInterp.y = computeInterpolantY( tsi.v0g, tsi.v1g, tsi.v2g );
+	    tsi2.gInterp.z = computeInterpolantZ( tsi.v0g, tsi.v1g, tsi.v2g );
+
+	    // blue
+	    tsi2.bInterp.x = computeInterpolantX( tsi.v0b, tsi.v1b, tsi.v2b );
+	    tsi2.bInterp.y = computeInterpolantY( tsi.v0b, tsi.v1b, tsi.v2b );
+	    tsi2.bInterp.z = computeInterpolantZ( tsi.v0b, tsi.v1b, tsi.v2b );
+	}
+
+    work pop 1 push 1
+	{
+	    tsi = pop();
+
+	    // special interpolants
+	    computeWInterp();
+	    computeZInterp();
+
+	    // other interpolants
+	    computeColorInterp();	  
+
+	    // copy
+	    tsi2.minX = tsi.minX;
+	    tsi2.maxX = tsi.maxX;
+	    tsi2.minY = tsi.minY;
+	    tsi2.maxY = tsi.maxY;
+
+	    tsi2.edge01.x = tsi.edge01.x;
+	    tsi2.edge01.y = tsi.edge01.y;
+	    tsi2.edge01.z = tsi.edge01.z;
+
+	    tsi2.edge12.x = tsi.edge12.x;
+	    tsi2.edge12.y = tsi.edge12.y;
+	    tsi2.edge12.z = tsi.edge12.z;
+
+	    tsi2.edge20.x = tsi.edge20.x;
+	    tsi2.edge20.y = tsi.edge20.y;
+	    tsi2.edge20.z = tsi.edge20.z;
+
+	    // push out
+	    push( tsi2 );
+	}
+}

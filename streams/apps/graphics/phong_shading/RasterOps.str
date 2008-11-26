@@ -1,10 +1,6 @@
-Raster->void filter RasterOps( int offset, int numUnits,
-	int screenWidth, int screenHeight )
+Raster->void filter RasterOps( int offset, int numUnits, int screenWidth, int screenHeight )
 {
-    float[ ( screenWidth / numUnits ) * screenHeight ] red;
-    float[ ( screenWidth / numUnits ) * screenHeight ] green;
-    float[ ( screenWidth / numUnits ) * screenHeight ] blue;
-
+    int[ ( screenWidth / numUnits ) * screenHeight ] rgb;
     float[ ( screenWidth / numUnits ) * screenHeight ] zBuffer;
 
     int width;
@@ -25,14 +21,10 @@ Raster->void filter RasterOps( int offset, int numUnits,
 
 	    r.x = r.x / numUnits;
 
-	    int index = r.y * width + r.x;
-
+	    int index = r.x * screenHeight + r.y;
 	    if( r.z < zBuffer[ index ] )
 		{
-		    red[ index ] = r.r;
-		    green[ index ] = r.g;
-		    blue[ index ] = r.b;
-			
+		    rgb[ index ] = ( ( int )( r.r * 255.0 ) << 16 ) | ( ( int )( r.g * 255.0 ) << 8 ) | ( ( int )( r.b * 255.0 ) );		       
 		    zBuffer[ index ] = r.z;
 		}
 	}

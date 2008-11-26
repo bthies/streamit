@@ -10,10 +10,6 @@ Fragment->void filter RasterOps( int offset, int numUnits,
 
     int width;
 
-    // not actual state, but reduces structure initialization overhead
-    // to put it as a field rather than a local
-    Fragment r;
-
     init
 	{
 	    width = screenWidth / numUnits;
@@ -26,7 +22,7 @@ Fragment->void filter RasterOps( int offset, int numUnits,
 
     work pop 1
 	{
-	    r = pop();
+	    Fragment r = pop();
 
 	    r.x = r.x / numUnits;
 

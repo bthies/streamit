@@ -7,15 +7,15 @@ void->int filter Input
 }
 
 // requires oldWidth divides factor and oldHeight divides factor
-int->void filter DownSampler( int id, int oldWidth, int oldHeight, int factor )
+int->void filter DownSampler( int oldWidth, int oldHeight, int factor )
 {
-    float[360000] oldRed = init_array_1D_float( "Pass1_input_red.arr", 360000 );
-    float[360000] oldGreen = init_array_1D_float( "Pass1_input_green.arr", 360000 );
-    float[360000] oldBlue = init_array_1D_float( "Pass1_input_blue.arr", 360000 );
+    float[5625] oldRed = init_array_1D_float( "Pass1_input_red.arr", 5625 );
+    float[5625] oldGreen = init_array_1D_float( "Pass1_input_green.arr", 5625 );
+    float[5625] oldBlue = init_array_1D_float( "Pass1_input_blue.arr", 5625 );
 
-    float[22500] newRed;
-    float[22500] newGreen;
-    float[22500] newBlue;
+    float[225] newRed;
+    float[225] newGreen;
+    float[225] newBlue;
 
     int newWidth;
     int newHeight;
@@ -66,7 +66,7 @@ int->void splitjoin Distrib
 {
     split duplicate;
     
-    add DownSampler( 0, 600, 600, 4 );
+    add DownSampler( 75, 75, 5 );
 
     join roundrobin( 0 );
 }

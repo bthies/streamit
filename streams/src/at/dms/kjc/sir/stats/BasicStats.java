@@ -29,6 +29,8 @@ public class BasicStats {
     int joinersWithZero = 0;
     // number of peeking filters
     int numPeekingFilters = 0;
+    // maximum peeking work
+    long maxPeekingWork = 0;
     // number of filters with dynamic rates
     int numDynamicRates = 0;
     // number of stateful filters
@@ -49,6 +51,8 @@ public class BasicStats {
     long maxStatefulWork = 0;
     // name of filter with max stateful work
     SIRFilter maxStatefulFilter;
+    // total work in feedback loops
+    long totalFeedbackWork = 0;
     // list of multiplicities of filters (in the schedule)
     List multiplicities = new LinkedList();
 
@@ -116,18 +120,31 @@ public class BasicStats {
                     if (work.getReps(self)==1) {
                         multiplicityOneFilters++;
                     }
+                    // see if this filter is in a feedback loop
+                    SIRContainer parent = self.getParent();
+                    while (parent!=null) {
+                        if (parent instanceof SIRFeedbackLoop) {
+                            totalFeedbackWork += myWork;
+                            break;
+                        }
+                        parent = parent.getParent();
+                    }
                     // count identities
                     if (self instanceof SIRIdentity) {
                         numIdentityFilters++;
                     } else if (self.getPeek().isDynamic() || self.getPop().isDynamic() || self.getPush().isDynamic()) {
                         numDynamicRates++;
-                    } else {
+                    }  else if (self.getPeekInt()==1 && self.getPushInt()==1) {
+                            numOneToOneFilters++;
+                    }
+                    if (!self.getPeek().isDynamic() && !self.getPop().isDynamic()) {
                         // don't worry about checking peeking for dynamic-rate filters
                         if (self.getPeekInt()>self.getPopInt()) {
+                            System.out.println("Peeking filter:" + self.getCleanIdent());
                             numPeekingFilters++;
-                        }
-                        if (self.getPeekInt()==1 && self.getPushInt()==1) {
-                            numOneToOneFilters++;
+                            if (myWork > maxPeekingWork) {
+                                maxPeekingWork = myWork;
+                            }
                         }
                     }
                     if (StatelessDuplicate.hasMutableState(self)) {
@@ -166,6 +183,8 @@ public class BasicStats {
         // print out results
         double fractionStatefulTotal = (double)totalStatefulWork/(double)totalWork;
         double fractionStatefulMax = (double)maxStatefulWork/(double)totalWork;
+        double fractionPeekingMax = (double)maxPeekingWork/(double)totalWork;
+        double fractionFeedbackWork = (double)totalFeedbackWork/(double)totalWork;
         System.out.println("Static filters types: " + Kopi2SIR.numFilters);
         System.out.println("Rest of stats refer to dynamic filter instances, not static types...");
         System.out.println("Number of non-identity filters: " + (numFilters - numIdentityFilters));
@@ -176,6 +195,8 @@ public class BasicStats {
         System.out.println("Number of splitters with a zero-weight: " + splittersWithZero);
         System.out.println("Number of joiners with a zero-weight: " + joinersWithZero);
         System.out.println("Number of peeking filters: " + numPeekingFilters);
+        System.out.println("Max work in peeking filter: " + fractionPeekingMax);
+        System.out.println("Total work in feedback loops: " + fractionFeedbackWork);
         System.out.println("Number of dynamic-rate filters: " + numDynamicRates);
         System.out.println("Number of pop 1, peek 1, push 1 filters: " + numOneToOneFilters);
         System.out.println("Number of stateful filters: " + numStatefulFilters);
@@ -209,11 +230,13 @@ public class BasicStats {
         System.out.print("Splitters with zero-weight" + ",");
         System.out.print("Joiners with zero-weight" + ",");
         System.out.print("Peeking filters" + ",");
+        System.out.print("Max peeking work in single filter" + ",");
+        System.out.print("Total work in feedback loops" + ",");
         System.out.print("Dynamic-rate filters" + ",");
         System.out.print("One-to-one filters" + ",");
         System.out.print("Stateful filters" + ",");
         System.out.print("Total stateful work in graph" + ",");
-        System.out.print("Max stateful filter in single filter" + ",");
+        System.out.print("Max stateful work in single filter" + ",");
         System.out.print("Min mult"  + ",");
         System.out.print("Median mult"  + ",");
         System.out.print("Max mult"  + ",");
@@ -230,6 +253,8 @@ public class BasicStats {
         System.out.print(splittersWithZero + ",");
         System.out.print(joinersWithZero + ",");
         System.out.print(numPeekingFilters + ",");
+        System.out.print(fractionPeekingMax + ",");
+        System.out.print(fractionFeedbackWork + ",");
         System.out.print(numDynamicRates + ",");
         System.out.print(numOneToOneFilters + ",");
         System.out.print(numStatefulFilters + ",");

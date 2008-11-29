@@ -8,7 +8,29 @@ float->float pipeline CFARPipe(int rows, int cols)
   add CFARDetectPipe(rows, cols);
 }
 
-float->float filter CFARDelayToLMax(int rows)
+// rewritten by Bill to be equivalen to CFARDelayToLMax_filter, but stateless
+float->float splitjoin CFARDelayToLMax(int rows) {
+    split roundrobin;
+    add Delay(rows-1);
+    add Delay(rows-1);
+    add Identity<float>();
+    add Delay(rows-1);
+    add Delay(rows-1);
+    join roundrobin;
+}
+
+float->float filter Delay(int N) {
+    prework push N {
+        for (int i=0; i<N; i++) {
+            push(0.0);
+        }
+    }
+    work push 1 pop 1 {
+        push(pop());
+    }
+}
+
+float->float filter CFARDelayToLMax_filter(int rows)
 {
   float[rows] guardNoise;
   float[rows] thresh;

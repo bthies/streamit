@@ -14,16 +14,17 @@
  * takes integers as inputs, but treats them as though they were bits.
  **/
 int->int filter PreDecoder {
-    int state = 0; // start with state 0
-    work push 1 pop 1 {
-	int y = pop();
+    prework push 1 peek 0 {
+        int x = peek(0) ^ 0;
+        push(x);
+    }
+    work push 1 pop 1 peek 2 {
+	int y = peek(1);
 
 	// calculate the input of the precoder given that it 
 	// produced y as an output
-	int x = y ^ state;
-
-	// update our state
-	state = y;
+	int x = y ^ peek(0);
+        pop();
 
 	// push out the output
 	push(x);

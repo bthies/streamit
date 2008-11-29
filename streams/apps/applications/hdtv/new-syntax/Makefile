@@ -2,7 +2,7 @@ LIB_FILES = TrellisEncoder.str TrellisDecoder.str PreCoder.str PreDecoder.str Un
 
 SOURCES = HDTV.str $(LIB_FILES)
 
-COMPILER = strc -stats
+COMPILER = strc -nodatacollapse -stats
 
 all:
 	$(COMPILER) $(SOURCES)

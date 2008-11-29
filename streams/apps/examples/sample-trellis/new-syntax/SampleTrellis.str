@@ -15,7 +15,7 @@ void->void pipeline SampleTrellis {
     add splitjoin {
 	split roundrobin;
 	add pipeline {
-	    add TrellisEncoder();
+	    add TrellisEncoderPipeline();
 	    add TrellisDecoder(FRAMESIZE * 8);
 	}
 	add Identity<int>();

@@ -9,12 +9,11 @@ int->int pipeline TrellisEncoderPipeline {
 }
 
 int->int filter TrellisEncoder {
-    // in Lecture 24, state0 corresponds to Dj-1
-    // and state1 corresponds to Dj-2
-    int state0, state1;
-
     work pop 1 peek 3 push 2 {
 	int currentData;
+        // in Lecture 24, state0 corresponds to Dj-1
+        // and state1 corresponds to Dj-2
+        int state0, state1;
 
 	// grab the data from the input stream (eg Dj) 
         state1 = peek(0);

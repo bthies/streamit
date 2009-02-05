@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.109 2008-11-11 20:13:52 mgordon Exp $
+ * $Id: KjcOptions.opt,v 1.110 2009-02-05 20:33:19 ctan Exp $
  */
 
 prefix Kjc
@@ -734,14 +734,17 @@ longname		"tilera"
 	requireArgument
 	help		"Uses the experimental Tilera (Tile64) backend with <n> cores"
 
-
-
-
- longname		"partitioner" 
+longname		"partitioner" 
  	type 		String 
  	default		"tmd"
  	requireArgument 
  	help		"For Tilera, choose a partitioner, tmd (default) or smd."
+
+longname		"smp"
+	type		int
+	default		"-1"
+	requireArgument
+	help		"Uses the experimental SMP backend with <n> cores"
 
 /* remove: now default */
 /* longname 	"noverbose" */

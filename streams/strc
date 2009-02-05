@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.134 2008-11-11 20:15:15 mgordon Exp $
+# $Id: strc,v 1.135 2009-02-05 20:43:14 ctan Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -174,7 +174,7 @@ exit(0);
 sub non_streamit_backend_defined {
     return $opts{library} || 
     $opts{cluster} || 
-    $opts{raw} || $opts{tilera} || $opts{spacedynamic} || $opts{spacetime} || defined($opts{cell}) || 
+    $opts{raw} || $opts{tilera} || $opts{smp} || $opts{spacedynamic} || $opts{spacetime} || defined($opts{cell}) || 
     $opts{rstream} || $opts{simpleC} ||
     defined($opts{newSimple}) || 
 	$opts{uni} 
@@ -219,6 +219,7 @@ Usage: strc [options] file.str ...
   --simpleC           Use basic backend (not full-featured) to generate C output
   --raw n, -r n       Compile for Raw, with an n-by-n grid
   --tilera n, -t n    Compile for Tilera's Tile64, targeting n-by-n cores
+  --smp n             Compile for SMP, targeting n cores
   --rstream, -R       Generate C-like file to be compiled by RStream compiler 
 * --standalone, -S    Use Raw backend to generate C file for uniprocessor
 * --streamit          Output of the compiler is a StreamIt program
@@ -293,6 +294,9 @@ Usage: strc [options] file.str ...
 
 + Options specific to Tilera backend:
 + --partitioner       For Tilera, choose a partitioner, tmd (default) or smd.
+
++ Options specific to SMP backend:
++ --partitioner       For SMP, choose a partitioner, tmd (default) or smd.
 
  Options specific to Raw backend:
   --asciifileio       Use ascii format for file I/O (also works on -simpleC)
@@ -390,6 +394,7 @@ sub get_options
                 "backend=s", # RMR accept a backend by name
 			    "raw|r=i",
 			    "tilera|t=i",
+			    "smp=i",
 			    "verbose|v",
 			    "optimize|O=i",
 			    "atlas!",
@@ -841,6 +846,7 @@ sub get_compiler_opts
   {
     my $copts = "";
     $opts{tilera} && ($copts .= " -tilera " . $opts{tilera});
+    $opts{smp} && ($copts .= " -smp " . $opts{smp});
     $opts{raw} && ($copts .= " -raw " . $opts{raw});
     $opts{raw} && $opts{spacetime} && ($copts .= " --spacetime");
     $opts{raw} && $opts{space} && ($copts .= " --space");

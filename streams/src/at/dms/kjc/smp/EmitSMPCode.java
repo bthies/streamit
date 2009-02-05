@@ -47,16 +47,12 @@ public class EmitSMPCode extends EmitCode {
             for (Core core : SMPBackend.chip.getCores())
                 core.getComputeCode().addInitFunctionCall(core.getComputeCode().getBufferInitMethod());
 
-            System.out.println("TESTING 2: " + ProcessFileWriter.getTotalOutputs());
-            
             // make sure that variables and methods are unique across cores            
             List<ComputeCodeStore<?>> codeStores = new LinkedList<ComputeCodeStore<?>>();
             for (Core core : SMPBackend.chip.getCores())
                 codeStores.add(core.getComputeCode());
             
             CodeStoreRenameAll.renameOverAllCodeStores(codeStores);
-            
-            System.out.println("TESTING 3: " + ProcessFileWriter.getTotalOutputs());
             
             // write out C code
             CodegenPrintWriter p = new CodegenPrintWriter(new BufferedWriter(new FileWriter(MAIN_FILE, false)));

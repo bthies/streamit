@@ -296,7 +296,6 @@ public class CoreCodeStore extends ComputeCodeStore<Core> {
     }
     
     public void generateNumbersCode() {
-        System.out.println("TESTING 1: " + ProcessFileWriter.getTotalOutputs());
         appendTxtToGlobal("uint64_t* __cycle_counts__;\n");
         appendTxtToGlobal("int __iteration__ = 0;\n");
         

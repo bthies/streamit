@@ -57,13 +57,8 @@ public class SMPBackend {
         //now convert to Kopi code plus communication commands.  
         backEndBits.getBackEndMain().run(graphSchedule, backEndBits);
         
-        System.out.println("TESTING 0: " + ProcessFileWriter.getTotalOutputs());
-        
-        if (KjcOptions.numbers > 0) {
-            System.out.println("TESTING 0a: " + ProcessFileWriter.getTotalOutputs());
+        if (KjcOptions.numbers > 0)
             chip.getNthComputeNode(0).getComputeCode().generateNumbersCode();
-            System.out.println("TESTING 0b: " + ProcessFileWriter.getTotalOutputs());
-        }
         else
             CoreCodeStore.generatePrintOutputCode();
         

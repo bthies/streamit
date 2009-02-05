@@ -40,7 +40,7 @@ public class GeneratePrimePump {
      */
     public void schedule(Slice[] sliceGraph) {
         LinkedList<LinkedList<Slice>> preLoopSchedule = new LinkedList<LinkedList<Slice>>();
-        if (! (KjcOptions.spacetime || (KjcOptions.tilera > -1)) || KjcOptions.noswpipe) {
+        if (! (KjcOptions.spacetime || (KjcOptions.tilera > -1 || KjcOptions.smp > -1)) || KjcOptions.noswpipe) {
             spaceTimeSchedule.setPrimePumpSchedule(preLoopSchedule);
             return;
         }

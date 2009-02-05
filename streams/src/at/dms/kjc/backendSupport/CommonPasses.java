@@ -173,7 +173,15 @@ public class CommonPasses {
         double CCRatioOrig = CompCommRatio.ratio(str, WorkEstimate.getWorkEstimate(str),
                 SIRScheduler.getExecutionCounts(str)[1]);
         System.out.println("Comp/Comm Ratio of original SIR graph: " + CCRatioOrig);
-        long[] workStats = at.dms.kjc.tilera.TMD.totalWork(str);
+        
+        long[] workStats = null;
+        if(KjcOptions.tilera != -1)
+            workStats = at.dms.kjc.tilera.TMD.totalWork(str);
+        else if(KjcOptions.smp != -1)
+            workStats = at.dms.kjc.smp.TMD.totalWork(str);
+        else
+            assert false : "Current backend does not contain workStats informations";
+         
         System.out.println("SIR Peeking Work: " + workStats[0] + ",  SIR Total Work: " + workStats[1]);
         if (KjcOptions.fusion || KjcOptions.dup >= 1 || KjcOptions.noswpipe) {
             // if we are about to fuse filters, we should perform
@@ -225,8 +233,27 @@ public class CommonPasses {
                 dup.smarterDuplicate(str, numCores);
             }
             
+        } else if (KjcOptions.smp != -1) {
+            //running the smp backend
+            
+            System.out.println("SIR Filters: " + at.dms.kjc.smp.TMD.countFilters(str));
+            System.out.println("SIR Peeking Filters: " + at.dms.kjc.smp.TMD.countPeekingFilters(str));
+            
+            DuplicateBottleneck dup = new DuplicateBottleneck();
+            dup.percentStateless(str);
+            str = FusePipelines.fusePipelinesOfStatelessStreams(str);
+            StreamItDot.printGraph(str, "after-fuse-stateless.dot");
+            
+            if (!at.dms.kjc.smp.TMD.allLevelsFit(str, KjcOptions.smp * KjcOptions.smp)) {
+                System.out.println("Have to fuse the graph because at least one level has too many filters...");
+                str = at.dms.kjc.smp.TMD.SIRFusion(str, KjcOptions.smp * KjcOptions.smp);
+            }
+            if (KjcOptions.dup == 1) {
+                dup.smarterDuplicate(str, numCores);
+            }
+            
         } else {
-            // some backend other than tilera
+            // some backend other than tilera and smp
             // for right now, we use the dup parameter to specify the type
             // of data-parallelization we are using
             // if we want to enable the data-parallelization
@@ -315,7 +342,7 @@ public class CommonPasses {
               KjcOptions.frequencyreplacement || KjcOptions.redundantreplacement)) {
             // for now, do not run in combination with linear replacements
             // because some linear expressions do not have type set
-            if (! vectorizedEarly && KjcOptions.tilera <= 0) { SimplifyPopPeekPush.simplify(str); }
+            if (! vectorizedEarly && KjcOptions.tilera <= 0 && KjcOptions.smp <= 0) { SimplifyPopPeekPush.simplify(str); }
         } else if (KjcOptions.vectorize>0) {
             System.err.println("Linear analysis + vectorization unsupported, because 3-address\n" +
                                "code cannot infer types of some expressions created.  Can fix\n" +
@@ -364,7 +391,7 @@ public class CommonPasses {
         Slice[] sliceGraph = null; 
         
         setSlicer(null);
-        if (KjcOptions.tilera > 1) {
+        if (KjcOptions.tilera > 1 || KjcOptions.smp > 1) {
             if (!KjcOptions.nopartition)
                 setSlicer(new OneFilterSlicer(topNodes, executionCounts));
             else {

@@ -371,6 +371,11 @@ public class ComputeCodeStore<ComputeNodeType extends ComputeNode<?>> implements
     public JMethodDeclaration getMainFunction() {
         return mainMethod;
     }
+    
+    public void setMainFunction(JMethodDeclaration mainMethod) {
+        this.mainMethod = mainMethod;
+        setMyMainName(mainMethod.getName());
+    }
 
     /**
      * Add the call the init function for a filter as the first statement in "main".

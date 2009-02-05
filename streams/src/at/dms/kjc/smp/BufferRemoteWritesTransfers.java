@@ -6,7 +6,7 @@ import java.util.HashMap;
 import at.dms.kjc.backendSupport.*;
 import at.dms.kjc.*;
 import java.util.LinkedList;
-import at.dms.kjc.tilera.arrayassignment.*;
+import at.dms.kjc.smp.arrayassignment.*;
 import java.util.List;
 
 public class BufferRemoteWritesTransfers extends BufferTransfers {

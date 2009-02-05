@@ -4,8 +4,6 @@ import at.dms.kjc.*;
 import at.dms.kjc.backendSupport.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.slicegraph.*;
-import at.dms.kjc.spacetime.BasicGenerateSteadyStateSchedule;
-import at.dms.kjc.tilera.TileCodeStore;
 
 public class SMPBackend {
     public static final boolean FAKE_IO = false;
@@ -59,8 +57,13 @@ public class SMPBackend {
         //now convert to Kopi code plus communication commands.  
         backEndBits.getBackEndMain().run(graphSchedule, backEndBits);
         
-        if (KjcOptions.numbers > 0) 
+        System.out.println("TESTING 0: " + ProcessFileWriter.getTotalOutputs());
+        
+        if (KjcOptions.numbers > 0) {
+            System.out.println("TESTING 0a: " + ProcessFileWriter.getTotalOutputs());
             chip.getNthComputeNode(0).getComputeCode().generateNumbersCode();
+            System.out.println("TESTING 0b: " + ProcessFileWriter.getTotalOutputs());
+        }
         else
             CoreCodeStore.generatePrintOutputCode();
         
@@ -91,7 +94,7 @@ public class SMPBackend {
         //we are space multiplexing and we need to prime the pipe more so that everything can fire
         //when ready
         if (at.dms.kjc.smp.SMPBackend.scheduler.isSMD())
-            new at.dms.kjc.tilera.GeneratePrimePumpScheduleSMD(schedule).schedule(slicer.getSliceGraph());
+            new at.dms.kjc.smp.GeneratePrimePumpScheduleSMD(schedule).schedule(slicer.getSliceGraph());
         else 
             new GeneratePrimePump(schedule).schedule(slicer.getSliceGraph());
 

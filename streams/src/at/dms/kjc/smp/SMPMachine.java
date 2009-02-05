@@ -1,11 +1,7 @@
 package at.dms.kjc.smp;
 
 import java.util.LinkedList;
-import java.util.List;
 import at.dms.kjc.backendSupport.ComputeNodesI;
-import at.dms.kjc.tilera.Tile;
-import at.dms.util.Utils;
-import at.dms.kjc.KjcOptions;
 
 public class SMPMachine implements ComputeNodesI<CoreCodeStore> {
     protected int numCores;

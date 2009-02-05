@@ -6,10 +6,7 @@ import at.dms.kjc.*;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.List;
 import at.dms.kjc.slicegraph.*;
-import at.dms.kjc.tilera.ProcessFileWriter;
-import at.dms.kjc.tilera.Util;
 
 public class CoreCodeStore extends ComputeCodeStore<Core> {
     /** True if this tile code store has code appended to it */
@@ -299,6 +296,7 @@ public class CoreCodeStore extends ComputeCodeStore<Core> {
     }
     
     public void generateNumbersCode() {
+        System.out.println("TESTING 1: " + ProcessFileWriter.getTotalOutputs());
         appendTxtToGlobal("uint64_t* __cycle_counts__;\n");
         appendTxtToGlobal("int __iteration__ = 0;\n");
         

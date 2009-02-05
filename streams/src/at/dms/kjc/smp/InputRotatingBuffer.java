@@ -4,9 +4,8 @@ import at.dms.kjc.slicegraph.*;
 import at.dms.util.Utils;
 import at.dms.kjc.spacetime.*;
 import at.dms.kjc.backendSupport.*;
-import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.*;
-import at.dms.kjc.tilera.arrayassignment.*;
+import at.dms.kjc.smp.arrayassignment.*;
 
 import java.util.*;
 

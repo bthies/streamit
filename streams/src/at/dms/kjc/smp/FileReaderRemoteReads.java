@@ -1,7 +1,7 @@
 package at.dms.kjc.smp;
 
 import java.util.List;
-import at.dms.kjc.tilera.arrayassignment.*;
+import at.dms.kjc.smp.arrayassignment.*;
 import at.dms.kjc.JStatement;
 import at.dms.kjc.backendSupport.FilterInfo;
 import at.dms.kjc.slicegraph.*;

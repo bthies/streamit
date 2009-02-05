@@ -1,7 +1,7 @@
 package at.dms.kjc.smp.arrayassignment;
 
 import at.dms.kjc.JStatement;
-import at.dms.kjc.tilera.Util;
+import at.dms.kjc.smp.Util;
 
 public class SingleAAStmt implements AAStatement, Comparable<SingleAAStmt>{
     String dstBufName;

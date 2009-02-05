@@ -1,7 +1,6 @@
 package at.dms.kjc.smp.arrayassignment;
 
 import at.dms.kjc.JStatement;
-import at.dms.kjc.tilera.Util;
 
 import java.util.*;
 

@@ -323,4 +323,20 @@ public class CoreCodeStore extends ComputeCodeStore<Core> {
         
         addStatementToBufferInit("__cycle_counts__ = (uint64_t*)malloc(ITERATIONS * sizeof(uint64_t))");
     }
+    
+    public void addFunctionCallFirst(JMethodDeclaration func, JExpression[] args) {
+        mainMethod.addStatementFirst
+        (new JExpressionStatement(null,
+                new JMethodCallExpression(null, new JThisExpression(null),
+                        func.getName(), args),
+                        null));
+    }
+    
+    public void addFunctionCallFirst(String funcName, JExpression[] args) {
+        mainMethod.addStatementFirst
+        (new JExpressionStatement(null,
+                new JMethodCallExpression(null, new JThisExpression(null),
+                        funcName, args),
+                        null));
+    }
 }

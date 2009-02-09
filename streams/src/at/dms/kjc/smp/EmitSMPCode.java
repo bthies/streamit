@@ -5,16 +5,16 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 
+import at.dms.kjc.JExpression;
 import at.dms.kjc.JFieldDeclaration;
+import at.dms.kjc.JIntLiteral;
 import at.dms.kjc.JMethodDeclaration;
 import at.dms.kjc.JStatement;
-import at.dms.kjc.backendSupport.Channel;
 import at.dms.kjc.backendSupport.ComputeCodeStore;
 import at.dms.kjc.backendSupport.ComputeNode;
 import at.dms.kjc.backendSupport.EmitCode;
 import at.dms.kjc.common.CodegenPrintWriter;
 import at.dms.kjc.sir.SIRCodeUnit;
-import at.dms.kjc.sir.lowering.RenameAll;
 import at.dms.kjc.KjcOptions;
 
 /**
@@ -43,9 +43,14 @@ public class EmitSMPCode extends EmitCode {
             // with all code gen
             CoreCodeStore.addBarrierSteady();
             
-            // call to buffer initialization
-            for (Core core : SMPBackend.chip.getCores())
-                core.getComputeCode().addInitFunctionCall(core.getComputeCode().getBufferInitMethod());
+            // call to buffer initialization and CPU affinity setting
+            for (Core core : SMPBackend.chip.getCores()) {
+                core.getComputeCode().addFunctionCallFirst(core.getComputeCode().getBufferInitMethod(), new JExpression[0]);
+                
+                JExpression[] setAffinityArgs = new JExpression[1];
+                setAffinityArgs[0] = new JIntLiteral(core.getCoreNumber());
+                core.getComputeCode().addFunctionCallFirst("setCPUAffinity", setAffinityArgs);
+            }
 
             // make sure that variables and methods are unique across cores            
             List<ComputeCodeStore<?>> codeStores = new LinkedList<ComputeCodeStore<?>>();
@@ -58,8 +63,10 @@ public class EmitSMPCode extends EmitCode {
             CodegenPrintWriter p = new CodegenPrintWriter(new BufferedWriter(new FileWriter(MAIN_FILE, false)));
             
             EmitSMPCode codeEmitter = new EmitSMPCode(backendBits);
+            
             codeEmitter.generateCHeader(p);
             codeEmitter.generateSharedGlobals(p);
+            codeEmitter.generateSetAffinity(p);
                         
             for (Core tile : SMPBackend.chip.getCores()) {
                 // if no code was written to this tile's code store, then skip it
@@ -256,6 +263,27 @@ public class EmitSMPCode extends EmitCode {
         for (JMethodDeclaration method : fieldsAndMethods.getMethods()) {
             method.accept(codegen);
         }
+    }
+    
+    public void generateSetAffinity(CodegenPrintWriter p) {
+        p.println();
+        p.println("void setCPUAffinity(int core) {");
+        p.indent();
+        
+        p.println("cpu_set_t cpu_set;");
+        p.println("CPU_ZERO(&cpu_set);");
+        p.println("CPU_SET(core, &cpu_set);");
+        p.println();
+        
+        p.println("if(pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpu_set) < 0) {");
+        p.indent();
+        p.println("printf(\"Error setting pthread affinity\\n\");");
+        p.println("exit(-1);");
+        p.outdent();
+        p.println("}");
+        
+        p.outdent();
+        p.println("}");
     }
     
     /**

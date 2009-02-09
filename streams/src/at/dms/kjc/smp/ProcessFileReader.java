@@ -151,9 +151,11 @@ public class ProcessFileReader {
                 allocatingTiles.put(filterNode, tile);
                 return tile;
             }
+/*
 	    else if(allocatingTiles.get(filterNode).equals(tile)) {
 		return tile;
 	    }
+*/
         }
         assert false : "Too many file readers for this chip (one per tile)!";
         return null;

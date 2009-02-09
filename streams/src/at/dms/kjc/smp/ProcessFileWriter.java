@@ -86,9 +86,11 @@ public class ProcessFileWriter {
                 allocatingTiles.put(fo, tile);
                 return tile;
             }
+/*
 	    else if(allocatingTiles.get(fo).equals(tile)) {
 		return tile;
 	    }
+*/
         }
         assert false : "Too many file readers for this chip (one per tile)!";
         return null;

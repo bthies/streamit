@@ -56,14 +56,6 @@ public class LoopedAssignments implements AAStatement {
      *  return this loopedAssignment, otherwise, return a new looped assignment with the statement added.
      */
     public LoopedAssignments addStmt(SingleAAStmt stmt) {
-        /*
-        System.out.println("1: " + this.dstBufName + ", " + stmt.dstBufName);
-        System.out.println("2: " + this.srcBufName + ", " + stmt.srcBufName);
-        System.out.println("3: " + this.dstOffsetName + ", " + stmt.dstOffsetName);
-        System.out.println("4: " + this.srcOffsetName + ", " + stmt.srcOffsetName);
-        System.out.println("5: " + (this.srcStartIndex + (iterations * srcStride)) + ", " + stmt.srcIndex);
-        System.out.println("6: " + (this.dstStartIndex + (iterations * dstStride)) + ", " + stmt.dstIndex);
-        */
         if (this.dstBufName.equals(stmt.dstBufName) &&
                 this.srcBufName.equals(stmt.srcBufName) &&
                 this.dstOffsetName.equals(stmt.dstOffsetName) &&

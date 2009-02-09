@@ -56,10 +56,18 @@ public class LoopedAssignments implements AAStatement {
      *  return this loopedAssignment, otherwise, return a new looped assignment with the statement added.
      */
     public LoopedAssignments addStmt(SingleAAStmt stmt) {
-        if (this.dstBufName == stmt.dstBufName &&
-                this.srcBufName == stmt.srcBufName &&
-                this.dstOffsetName == stmt.dstOffsetName &&
-                this.srcOffsetName == stmt.srcOffsetName) {
+        /*
+        System.out.println("1: " + this.dstBufName + ", " + stmt.dstBufName);
+        System.out.println("2: " + this.srcBufName + ", " + stmt.srcBufName);
+        System.out.println("3: " + this.dstOffsetName + ", " + stmt.dstOffsetName);
+        System.out.println("4: " + this.srcOffsetName + ", " + stmt.srcOffsetName);
+        System.out.println("5: " + (this.srcStartIndex + (iterations * srcStride)) + ", " + stmt.srcIndex);
+        System.out.println("6: " + (this.dstStartIndex + (iterations * dstStride)) + ", " + stmt.dstIndex);
+        */
+        if (this.dstBufName.equals(stmt.dstBufName) &&
+                this.srcBufName.equals(stmt.srcBufName) &&
+                this.dstOffsetName.equals(stmt.dstOffsetName) &&
+                this.srcOffsetName.equals(stmt.srcOffsetName)) {
             if (iterations == 1) {
                 srcStride = stmt.srcIndex - this.srcStartIndex;
                 dstStride = stmt.dstIndex - this.dstStartIndex;
@@ -74,10 +82,12 @@ public class LoopedAssignments implements AAStatement {
                 iterations++;
                 return this;
             } else {
+                //System.out.println("Creating new loop due to stride change");
                 //not a match for the loop because of stride change
                 return new LoopedAssignments(stmt);
             }
         } else {
+            //System.out.println("Creating new loop due to variable change");
             //not a match for the the loop because of the src, dst name or offset var
             return new LoopedAssignments(stmt);
         }

@@ -146,6 +146,9 @@ public class ProcessFileReader {
      * if there is more than one file reader, one reader per tile.
      */
     private Core nextAllocatingTile() {
+        if(allocatingTiles.get(filterNode) != null)
+            return allocatingTiles.get(filterNode);
+        
         for (Core tile : SMPBackend.chip.getCores()) {
             if (!allocatingTiles.containsValue(tile)) {
                 allocatingTiles.put(filterNode, tile);

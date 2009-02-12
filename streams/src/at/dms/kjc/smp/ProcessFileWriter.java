@@ -81,6 +81,10 @@ public class ProcessFileWriter {
     private static Core nextAllocatingTile(FilterSliceNode fo) {
         List<Core> reverseOrder = SMPBackend.chip.getCores(); 
         Collections.reverse(reverseOrder);
+        
+        if(allocatingTiles.get(fo) != null)
+            return allocatingTiles.get(fo);
+            
         for (Core tile : reverseOrder) {
             if (!allocatingTiles.containsValue(tile)) {
                 allocatingTiles.put(fo, tile);

@@ -133,7 +133,7 @@ public class EmitSMPCode extends EmitCode {
         p.println("LIBS = -lpthread");
         p.println();
         p.println("all: main.c");
-        p.println("\t$(CC) $(CFLAGS) $(LIBS) main.c");
+        p.println("\t$(CC) $(CFLAGS) $(LIBS) -o smp" + KjcOptions.smp + " main.c");
         p.println();
         p.close();
 

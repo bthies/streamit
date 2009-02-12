@@ -239,7 +239,7 @@ public class GreedierPartitioner {
                     temp.add(newPair);
                 }
             }
-        } while(cont && pairs.size()>0);
+        } while(cont && pairs.size()>1);
 	//Restore the Pairs temporarily removed from pairs
         Object[] fix=temp.toArray();
         for(int i=0;i<fix.length;i++)

@@ -4,7 +4,6 @@ import at.dms.kjc.*;
 import at.dms.kjc.backendSupport.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.slicegraph.*;
-import at.dms.kjc.spacetime.*;
 
 public class SMPBackend {
     public static final boolean FAKE_IO = false;
@@ -34,8 +33,6 @@ public class SMPBackend {
         commonPasses.run(str, interfaces, interfaceTables, structs, helpers, global, chip.size());
         // perform some standard cleanup on the slice graph.
         commonPasses.simplifySlices();
-        
-        MultiplySteadyState.doit(commonPasses.getSlicer().getTopSlices());
         
         commonPasses.getSlicer().dumpGraph("traces.dot", null);
         

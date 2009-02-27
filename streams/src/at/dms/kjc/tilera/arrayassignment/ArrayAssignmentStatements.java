@@ -67,7 +67,11 @@ public class ArrayAssignmentStatements {
     public LinkedList<JStatement> toCompressedJStmts() {
         compress();
         
-        LinkedList<JStatement> jstmts = new LinkedList<JStatement>();
+        return toJStmts();
+    }
+
+    public LinkedList<JStatement> toJStmts() {
+	LinkedList<JStatement> jstmts = new LinkedList<JStatement>();
         
         for (AAStatement ass : assignments) {
             jstmts.add(ass.toJStmt());

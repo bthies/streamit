@@ -191,7 +191,7 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
                                 continue;
                             
                             if (destTile == sourceTile) {
-                                localReorder.addAssignment(parent.currentWriteBufName, "", destElement, 
+                                localReorder.addAssignmentFirst(parent.currentWriteBufName, "", destElement, 
                                         parent.currentWriteBufName, "", sourceElement);
                             } else {
                                 SourceAddressRotation addrBuf = parent.getAddressBuffer(dest.getDest());

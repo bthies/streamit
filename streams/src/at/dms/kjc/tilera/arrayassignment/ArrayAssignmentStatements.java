@@ -13,6 +13,14 @@ public class ArrayAssignmentStatements {
         assignments = new LinkedList<AAStatement>();
     }
    
+    
+    public void addAssignmentFirst(String dstBufName, String dstOffsetName, int dstIndex,
+            String srcBufName, String srcOffsetName, int srcIndex) { 
+        SingleAAStmt newAss = new SingleAAStmt(dstBufName, dstOffsetName, dstIndex, 
+                srcBufName, srcOffsetName, srcIndex);
+        assignments.addFirst(newAss);
+    }
+    
     public void addAssignment(String dstBufName, String dstOffsetName, int dstIndex, 
             String srcBufName, String srcOffsetName, int srcIndex) {
         SingleAAStmt newAss = new SingleAAStmt(dstBufName, dstOffsetName, dstIndex, 

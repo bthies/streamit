@@ -11,6 +11,14 @@ public class ArrayAssignmentStatements {
     public ArrayAssignmentStatements() {
         assignments = new LinkedList<AAStatement>();
     }
+
+
+    public void addAssignmentFirst(String dstBufName, String dstOffsetName, int dstIndex,
+            String srcBufName, String srcOffsetName, int srcIndex) { 
+        SingleAAStmt newAss = new SingleAAStmt(dstBufName, dstOffsetName, dstIndex, 
+                srcBufName, srcOffsetName, srcIndex);
+        assignments.addFirst(newAss);
+    }
    
     public void addAssignment(String dstBufName, String dstOffsetName, int dstIndex, 
             String srcBufName, String srcOffsetName, int srcIndex) {
@@ -54,11 +62,15 @@ public class ArrayAssignmentStatements {
         
         assignments = newStmts;
     }
-    
+
     public LinkedList<JStatement> toCompressedJStmts() {
         compress();
         
-        LinkedList<JStatement> jstmts = new LinkedList<JStatement>();
+        return toJStmts();
+    }
+
+    public LinkedList<JStatement> toJStmts() {
+	LinkedList<JStatement> jstmts = new LinkedList<JStatement>();
         
         for (AAStatement ass : assignments) {
             jstmts.add(ass.toJStmt());

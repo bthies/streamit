@@ -184,7 +184,7 @@ public class EmitSMPCode extends EmitCode {
         p.println("typedef struct barrier {");
         p.println("  int num_threads;");
         p.println("  int count;");
-        p.println("  int generation;");
+        p.println("  volatile int generation;");
         p.println("} barrier_t;");
         p.println("");
         p.println("void barrier_init(barrier_t *barrier, int num_threads) {");

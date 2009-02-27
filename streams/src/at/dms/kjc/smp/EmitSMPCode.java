@@ -39,6 +39,9 @@ public class EmitSMPCode extends EmitCode {
             // generate header containing code to get clock cycles
             generateClockHeader();
             
+            // generate header containing barrier implementation
+            generateBarrierHeader();
+            
             // for all the tiles, add a barrier at the end of the steady state, do it here because we are done
             // with all code gen
             CoreCodeStore.addBarrierSteady();
@@ -105,6 +108,7 @@ public class EmitSMPCode extends EmitCode {
         if (KjcOptions.profile)
             p.println("#include <sys/profiler.h>");
         p.println("#include <pthread.h>");
+        p.println("#include \"barrier.h\"");
         p.println("#include <stdlib.h>");
         p.println("#include <unistd.h>");
         p.println("#include <sys/types.h>");
@@ -119,7 +123,7 @@ public class EmitSMPCode extends EmitCode {
     public void generateSharedGlobals(CodegenPrintWriter p) {
         p.println();
         p.println("// Global barrier");
-        p.println("pthread_barrier_t barrier;");
+        p.println("barrier_t barrier;");
         p.println();
         p.println("// Shared buffers");
         p.println(SMPBackend.chip.getOffChipMemory().getComputeCode().getGlobalText());
@@ -156,6 +160,50 @@ public class EmitSMPCode extends EmitCode {
         p.println("  return ((uint64_t ) lo) | (((uint64_t) hi) << 32);");
         p.println("}");
         p.println("");
+        p.println("#endif");
+        p.close();
+    }
+    
+    private static void generateBarrierHeader() throws IOException {
+        CodegenPrintWriter p = new CodegenPrintWriter(new BufferedWriter(new FileWriter("barrier.h", false)));
+        
+        p.println("#ifndef BARRIER_H");
+        p.println("#define BARRIER_H");
+        p.println("");
+        p.println("int FetchAndDecr(int *mem)");
+        p.println("{");
+        p.println("  int val = -1;");
+        p.println("");
+        p.println("  asm volatile (\"lock; xaddl %0,%1\"");
+        p.println("		: \"=r\" (val), \"=m\" (*mem)");
+        p.println("		: \"0\" (val), \"m\" (*mem)");
+        p.println("		: \"memory\", \"cc\");");
+        p.println("  return val;");
+        p.println("}");
+        p.println("");
+        p.println("typedef struct barrier {");
+        p.println("  int num_threads;");
+        p.println("  int count;");
+        p.println("  int generation;");
+        p.println("} barrier_t;");
+        p.println("");
+        p.println("void barrier_init(barrier_t *barrier, int num_threads) {");
+        p.println("  barrier->num_threads = num_threads;");
+        p.println("  barrier->count = num_threads;");
+        p.println("  barrier->generation = 0;");
+        p.println("}");
+        p.println("");
+        p.println("void barrier_wait(barrier_t *barrier) {");
+        p.println("  int cur_gen = barrier->generation;");
+        p.println("");
+        p.println("  if(FetchAndDecr(&barrier->count) == 1) {");
+        p.println("    barrier->count = barrier->num_threads;");
+        p.println("    barrier->generation++;");
+        p.println("  }");
+        p.println("  else {");
+        p.println("    while(cur_gen == barrier->generation);");
+        p.println("  }");
+        p.println("}");
         p.println("#endif");
         p.close();
     }
@@ -304,12 +352,7 @@ public class EmitSMPCode extends EmitCode {
 
         p.println();
         p.println("// Initialize barrier");
-        p.println("if((pthread_barrier_init(&barrier, NULL, " + SMPBackend.chip.size() + "))) {");
-        p.indent();
-        p.println("printf(\"Couldn't initialize barrier\\n\");");
-        p.println("exit(0);");
-        p.outdent();
-        p.println("}");
+        p.println("barrier_init(&barrier, " + SMPBackend.chip.size() + ");");
         
         p.println();
         p.println("// Spawn threads");

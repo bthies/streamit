@@ -76,7 +76,7 @@ public class CoreCodeStore extends ComputeCodeStore<Core> {
         
         for (int t = 0; t < SMPBackend.chip.size(); t++) {
             CoreCodeStore cs = SMPBackend.chip.getNthComputeNode(t).getComputeCode();
-            cs.addStatementToBufferInit("pthread_barrier_wait(&barrier)");
+            cs.addStatementToBufferInit("barrier_wait(&barrier)");
             cs.setHasCode();
         }
     }
@@ -92,7 +92,7 @@ public class CoreCodeStore extends ComputeCodeStore<Core> {
         
         for (int t = 0; t < SMPBackend.chip.size(); t++) {
             CoreCodeStore cs = SMPBackend.chip.getNthComputeNode(t).getComputeCode();
-             cs.addInitStatement(Util.toStmt("pthread_barrier_wait(&barrier)"));
+             cs.addInitStatement(Util.toStmt("barrier_wait(&barrier)"));
              cs.setHasCode();
          }
     }
@@ -109,7 +109,7 @@ public class CoreCodeStore extends ComputeCodeStore<Core> {
         for (int t = 0; t < SMPBackend.chip.size(); t++) {
             CoreCodeStore cs = SMPBackend.chip.getNthComputeNode(t).getComputeCode();
             cs.addSteadyLoopStatement(Util.toStmt("/* Steady-State Barrier */"));
-            cs.addSteadyLoopStatement(Util.toStmt("pthread_barrier_wait(&barrier)"));
+            cs.addSteadyLoopStatement(Util.toStmt("barrier_wait(&barrier)"));
             cs.setHasCode();
         }
     }

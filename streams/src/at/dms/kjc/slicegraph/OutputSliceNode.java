@@ -543,6 +543,34 @@ public class OutputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneab
     }
     
     /**
+     * Return true if this output has the typical fission peeking pattern which is
+     * a bunch to one edge, then some duplicated to that edge and another edge
+     * 
+     * Also return true if it is a simple pattern, meaning no splitting
+     * 
+     * @param phase
+     * 
+     */
+    public boolean peekingFissionPattern(SchedulingPhase phase) {
+        if (noOutputs(phase) || oneOutput(phase))
+            return true;
+    
+        //these checks might die because of null pointers if there aren't 2 outputs etc.
+        //so just catch them and return false.
+        try {
+            if (getWidth(phase) == 2 && getDests(phase).length == 2 &&
+                    getDests(phase)[0].length == 1 &&
+                    (getDests(phase)[1][0] == getDests(phase)[0][0] ||
+                            getDests(phase)[1][1] == getDests(phase)[0][0])) {
+                return true;
+            }
+        } catch (Exception e) {
+            
+        }
+        return false;
+    }   
+    
+    /**
      * Return the sum of weights for edges before this edge appears in the splitting schedule.
      * This output slice node must be single appearance.
      * 

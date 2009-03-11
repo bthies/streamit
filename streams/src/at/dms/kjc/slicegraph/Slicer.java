@@ -127,8 +127,12 @@ public abstract class Slicer {
         return false;
     }
   
-    // dump the the completed partition to a dot file
     public void dumpGraph(String filename, Layout layout) {
+        dumpGraph(filename, layout, true);
+    }
+    
+    // dump the the completed partition to a dot file
+    public void dumpGraph(String filename, Layout layout, boolean fullInfo) {
         Slice[] sliceGraph = getSliceGraph();
         StringBuffer buf = new StringBuffer();
         buf.append("digraph Flattend {\n");
@@ -138,7 +142,7 @@ public abstract class Slicer {
             Slice slice = sliceGraph[i];
             assert slice != null;
             buf.append(slice.hashCode() + " [ " + 
-                    sliceName(slice, layout) + 
+                    sliceName(slice, layout, fullInfo) + 
                     "\" ];\n");
             Slice[] next = getNext(slice/* ,parent */, SchedulingPhase.STEADY);
             for (int j = 0; j < next.length; j++) {
@@ -211,7 +215,7 @@ public abstract class Slicer {
     
     //return a string with all of the names of the filterslicenodes
     // and blue if linear
-    protected  String sliceName(Slice slice, Layout layout) {
+    protected  String sliceName(Slice slice, Layout layout, boolean fullInfo) {
         SliceNode node = slice.getHead();
 
         StringBuffer out = new StringBuffer();
@@ -220,9 +224,10 @@ public abstract class Slicer {
         if (((FilterSliceNode)node.getNext()).getFilter().getArray() != null)
             out.append("color=cornflowerblue, style=filled, ");
         
-        out.append("label=\"" + slice.hashCode() + "\\n" +
-                node.getAsInput().debugString(true, SchedulingPhase.INIT) + "\\n" +
-                node.getAsInput().debugString(true, SchedulingPhase.STEADY));//toString());
+        out.append("label=\"" + slice.hashCode() + "\\n");
+        if (fullInfo)
+            out.append(node.getAsInput().debugString(true, SchedulingPhase.INIT) + "\\n" +
+                        node.getAsInput().debugString(true, SchedulingPhase.STEADY));//toString());
         
         node = node.getNext();
         while (node != null ) {
@@ -241,8 +246,9 @@ public abstract class Slicer {
                 out.append("\\n *** ");
             }
             else {
-                out.append("\\n" + node.getAsOutput().debugString(true, SchedulingPhase.INIT) + "\\n" +
-                        node.getAsOutput().debugString(true, SchedulingPhase.STEADY));
+                if (fullInfo)
+                    out.append("\\n" + node.getAsOutput().debugString(true, SchedulingPhase.INIT) + "\\n" +
+                            node.getAsOutput().debugString(true, SchedulingPhase.STEADY));
                
             }
             /*else {

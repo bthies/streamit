@@ -416,6 +416,12 @@ public class Fissioner {
         int newPrePush = slicePrePush;
         int newInitMult = sliceInitMult;
         
+        //new initMult only counts the calls to work in the init stage
+        //and if this filter is a 2stage, then the first call is to prework
+        if (fInfo.isTwoStage()) {
+            newInitMult--;
+        }
+        
         if(sliceInitMult > 0) {
             JBlock firstWorkBody =
                 slice.getFirstFilter().getFilter().getWork().getBody();
@@ -441,7 +447,7 @@ public class Fissioner {
             JRelationalExpression initMultLoopCond =
                 new JRelationalExpression(JRelationalExpression.OPE_LT,
                                           new JLocalVariableExpression(initMultLoopVar),
-                                          new JIntLiteral(sliceInitMult));
+                                          new JIntLiteral(newInitMult));
             
             JExpressionStatement initMultLoopIncr =
                 new JExpressionStatement(new JAssignmentExpression(new JLocalVariableExpression(initMultLoopVar),
@@ -486,9 +492,9 @@ public class Fissioner {
             // initialization work was moved into prework
             
             newPrePeek = Math.max(slicePrePeek,
-                                    slicePrePop + (sliceInitMult * slicePop) + (slicePeek - slicePop));
-            newPrePop = slicePrePop + sliceInitMult * slicePop;
-            newPrePush = slicePrePush + sliceInitMult * slicePush;
+                                    slicePrePop + (newInitMult * slicePop) + (slicePeek - slicePop));
+            newPrePop = slicePrePop + newInitMult * slicePop;
+            newPrePush = slicePrePush + newInitMult * slicePush;
             
             sliceClones[0].getFirstFilter().getFilter().getPrework()[0].setPeek(newPrePeek);
             sliceClones[0].getFirstFilter().getFilter().getPrework()[0].setPop(newPrePop);

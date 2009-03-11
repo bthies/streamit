@@ -86,8 +86,10 @@ public class SliceWorkEstimate extends SLIREmptyVisitor implements
             //System.err.println("this filter has null work function: " + filter);
             return 0;
         } else {
-            return getWork(slice, slice.getFirstFilter().getFilter().getWork()) *
+                long work = getWork(slice, slice.getFirstFilter().getFilter().getWork()) *                
                 slice.getFirstFilter().getFilter().getSteadyMult();
+                System.out.println(slice + ": " + work);    
+                return work;
         }
         
         //TODO: Don't forget to multiply by steady mult

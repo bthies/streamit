@@ -70,6 +70,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
                 for (InterSliceEdge edge : slice.getTail().getDestSet(SchedulingPhase.STEADY)) {
                     InputRotatingBuffer inBuf = InputRotatingBuffer.getInputBuffer(edge.getDest().getNextFilter());
                     if (inBuf != null && inBuf.getLocalSrcFilter() == slice.getFirstFilter()) {
+                        assert RotatingBuffer.getOutputBuffer(slice.getFirstFilter()) != null;
                         createBuffer = false;
                         break;
                     }

@@ -133,8 +133,7 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
 
         List<JStatement> statements = null;
         
-        ArrayAssignmentStatements remoteWrites = new ArrayAssignmentStatements();
-        ArrayAssignmentStatements localReorder = new ArrayAssignmentStatements();
+        ArrayAssignmentStatements reorderStatements = new ArrayAssignmentStatements();
         
         switch (phase) {
             case INIT: statements = commandsInit; break;
@@ -191,16 +190,15 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
                                 continue;
                             
                             if (destTile == sourceTile) {
-                                localReorder.addAssignmentFirst(parent.currentWriteBufName, "", destElement, 
-                                        parent.currentWriteBufName, "", sourceElement);
-				System.out.println("localReorder: " + parent.currentWriteBufName + ", " + destElement + ", " + sourceElement);
-                            } else {
-                                SourceAddressRotation addrBuf = parent.getAddressBuffer(dest.getDest());
-                                remoteWrites.addAssignment(addrBuf.currentWriteBufName, "", destElement, 
-                                        parent.currentWriteBufName, "", sourceElement);
-				System.out.println("remoteWrites: " + addrBuf.currentWriteBufName + ", " + destElement + "; " + 
-						   parent.currentWriteBufName + ", " + sourceElement);
+                                assert !usesSharedBuffer() : "Trying to reorder a single buffer! Could lead to race. " + filter;
                             }
+                            
+                            SourceAddressRotation addrBuf = parent.getAddressBuffer(dest.getDest());
+                            reorderStatements.addAssignment(addrBuf.currentWriteBufName, "", destElement, 
+                                    parent.currentWriteBufName, "", sourceElement);
+                            //System.out.println("remoteWrites: " + addrBuf.currentWriteBufName + ", " + destElement + "; " + 
+                            //		   parent.currentWriteBufName + ", " + sourceElement);
+                           
                         }
                 }
             }
@@ -209,10 +207,8 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
         assert items == fi.totalItemsSent(phase);
         
         //add the compressed assignment statements to the appropriate stage
-        //we do the remote writes first, because the local reordering might overwrite
-        //elements that are remotely written
-        statements.addAll(remoteWrites.toCompressedJStmts());
-        statements.addAll(localReorder.toJStmts());
+        //these do the remote writes and any local copying needed
+        statements.addAll(reorderStatements.toCompressedJStmts());   
     }
     
     private int[] getDestIndices(InterSliceEdge edge, int outputRots, SchedulingPhase phase) {
@@ -250,7 +246,7 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
     private int getWriteOffset(SchedulingPhase phase) {
         if (usesSharedBuffer()) {
             FilterInfo localDest = FilterInfo.getFilterInfo(parent.filterNode);
-            /*
+            
             //no address array needed but we have to set the head to the copydown plus
             //the weights of any inputs that are not mapped to this tile that appear before
             //the local source
@@ -264,8 +260,7 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
             
             InterSliceEdge theEdge = input.getEdgeFrom(phase, localSrc);
             int offset = input.weightBefore(theEdge, phase);
-            */
-            int offset = 0;
+   
             //if we are not in the init, we must skip over the dest's copy down
             if (SchedulingPhase.INIT != phase) 
                 offset += localDest.copyDown;

@@ -18,7 +18,7 @@ public class ArrayAssignmentStatements {
             String srcBufName, String srcOffsetName, int srcIndex) { 
         SingleAAStmt newAss = new SingleAAStmt(dstBufName, dstOffsetName, dstIndex, 
                 srcBufName, srcOffsetName, srcIndex);
-        assignments.addFirst(newAss);
+        assignments.add(0, newAss);
     }
     
     public void addAssignment(String dstBufName, String dstOffsetName, int dstIndex, 

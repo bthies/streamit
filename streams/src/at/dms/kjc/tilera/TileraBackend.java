@@ -53,6 +53,7 @@ public class TileraBackend {
         backEndBits.setLayout(scheduler);
                 
         graphSchedule.getSlicer().dumpGraph("after_slice_partition.dot", scheduler);
+        graphSchedule.getSlicer().dumpGraph("slice_graph.dot", scheduler, false);
         
         //create all buffers and set the rotation lengths
         RotatingBuffer.createBuffers(graphSchedule);

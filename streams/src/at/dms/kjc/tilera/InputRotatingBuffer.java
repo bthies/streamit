@@ -126,19 +126,73 @@ public class InputRotatingBuffer extends RotatingBuffer {
     }
     
     /**
+     * This is a potential optimization.  If we have a source and dest mapped to the same
+     * tile, and we have a simple reorganization scheme between them, we can write directly into the
+     * downstream's input buffer.  No need for an output buffer at the source and then copying.
      * 
+     * So this will set the localSrcFilter to a filter if we can apply the optimization.
      */
     protected void setLocalSrcFilter() {
+       
+        //if we find a candidate this will be it
+        FilterSliceNode lsf = null;
+        //this is the edge between the 2 local filters
+        InterSliceEdge theEdge = null;
+        
         for (InterSliceEdge edge : filterNode.getParent().getHead().getSourceSet(SchedulingPhase.STEADY)) {
             FilterSliceNode upstream = edge.getSrc().getPrevFilter();
             if (TileraBackend.backEndBits.getLayout().getComputeNode(upstream) == parent) {
                 //System.out.println(upstream);
-                assert localSrcFilter == null : "Two upstream srcs mapped to same tile ?";
-                localSrcFilter = upstream;
-                
-            }
-        }
+                assert lsf == null : "Two upstream srcs mapped to same tile ?";
+                lsf = upstream;
+                theEdge = edge;
+            } 
+         } 
         
+        if (lsf == null)
+            return;
+        
+        //now we have to do some checks on the re-organization between them.
+        //make sure the output node only has one output (or none in init)
+        OutputSliceNode output = lsf.getParent().getTail();
+        if (!(output.peekingFissionPattern(SchedulingPhase.STEADY) && 
+                output.peekingFissionPattern(SchedulingPhase.INIT))) {
+            //System.out.println(filterNode + " has no good local source 1.");
+            return;
+        }
+
+        //now make sure the downstream consumer has a simple single appearance joiner and that
+        //the lsf is the first in that joiner so nothing has to be redistributed...
+        //or it is single appearance and all the upstream outputs fit in the slot in the joiner
+        InputSliceNode input = filterNode.getParent().getHead();
+        if (!input.singleAppearance())
+            return;
+
+        if (!(input.getWeight(theEdge, SchedulingPhase.INIT) == output.totalWeights(SchedulingPhase.INIT) &&
+                input.getWeight(theEdge, SchedulingPhase.STEADY) == output.totalWeights(SchedulingPhase.STEADY)))
+        {
+            //System.out.println(filterNode + " has no good local source 2.");
+            return;
+        }
+
+        FilterInfo consumer = FilterInfo.getFilterInfo(input.getNextFilter());
+        FilterInfo producer = FilterInfo.getFilterInfo(output.getPrevFilter());
+        
+        //check that the 
+        if ((input.getWidth(SchedulingPhase.INIT) > 1 && 
+                input.totalWeights(SchedulingPhase.INIT) != consumer.totalItemsPopped(SchedulingPhase.INIT)) ||
+            (input.getWidth(SchedulingPhase.STEADY) > 1 &&       
+                        input.totalWeights(SchedulingPhase.STEADY) != consumer.totalItemsPopped(SchedulingPhase.STEADY)) ||
+            (output.getWidth(SchedulingPhase.INIT) > 1 &&   
+                output.totalWeights(SchedulingPhase.INIT) != producer.totalItemsSent(SchedulingPhase.INIT)) ||
+            (output.getWidth(SchedulingPhase.STEADY) > 1 &&   
+                output.totalWeights(SchedulingPhase.STEADY) != producer.totalItemsSent(SchedulingPhase.STEADY)))
+        {
+            return;
+        }
+
+        //if we get here, everything checked out
+        localSrcFilter = lsf;
         
         //System.out.println(filterNode + " has local source " + localSrcFilter);
         

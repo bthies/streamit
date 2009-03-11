@@ -205,7 +205,13 @@ public class TMD extends Scheduler {
                     Set<Slice> theBest = null;;
                     
                     for (Edge edge : slice.getHead().getSourceSet(SchedulingPhase.STEADY)) {
-                        if (slice.getHead().getWeight(edge, SchedulingPhase.STEADY) > bestInputs) {
+                        if (slice.getHead().getWeight(edge, SchedulingPhase.STEADY) >= bestInputs) {
+                            if (slice.getHead().getWeight(edge, SchedulingPhase.STEADY) == bestInputs) {
+                                //want to be careful about when they are equal because you want to place the 
+                                //downstream best that is at the beginning of the round-robin when distributing
+                                if (slice.getHead().getSources(SchedulingPhase.STEADY)[0] != edge)
+                                    continue;
+                            }
                             //the set we want to see if this slice should be added to
                             Set<Slice> testSet = getSetWithSlice(sameTile, edge.getSrc().getParent());
                             
@@ -229,6 +235,7 @@ public class TMD extends Scheduler {
                             theBest = testSet;
                             bestInputs = slice.getHead().getWeight(edge, SchedulingPhase.STEADY);
                             
+                 
                         }
                     }
                     //remember that we have assigned this slice in the level
@@ -367,7 +374,7 @@ public class TMD extends Scheduler {
                         maxFission = fizzAmount.get(slice);
                 }
                 TileraBackend.scheduler.graphSchedule.getSlicer().dumpGraph("fission_pass_" + i + ".dot", 
-                        null);
+                        null, false);
                 i++;
             }
         }
@@ -511,6 +518,14 @@ public class TMD extends Scheduler {
             //assert that we use all the tiles for each level
             if (tilesUsed < totalTiles) 
                 System.out.println("Level " + l + " does not use all the tiles available for TMD " + tilesUsed);
+            
+           /* if (prevLevelSlices != -1) {
+                if (prevLevelSlices > tilesUsed) {
+                    
+                }
+            }
+            
+            prevLevelSlices = tilesUsed;*/
         }
         
         System.out.println("Total work (slicegraph): " + totalWork);

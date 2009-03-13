@@ -179,7 +179,7 @@ public class TMD extends Scheduler {
                         maxFission = fizzAmount.get(slice);
                 }
                 SMPBackend.scheduler.graphSchedule.getSlicer().dumpGraph("fission_pass_" + i + ".dot", 
-                        null);
+									 null, false);
                 i++;
             }
         }
@@ -323,6 +323,14 @@ public class TMD extends Scheduler {
             //assert that we use all the tiles for each level
             if (tilesUsed < totalTiles) 
                 System.out.println("Level " + l + " does not use all the tiles available for TMD " + tilesUsed);
+            
+           /* if (prevLevelSlices != -1) {
+                if (prevLevelSlices > tilesUsed) {
+                    
+                }
+            }
+            
+            prevLevelSlices = tilesUsed;*/
         }
         
         System.out.println("Total work (slicegraph): " + totalWork);

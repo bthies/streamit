@@ -1,6 +1,10 @@
 package at.dms.kjc.smp;
 
+import sun.security.krb5.internal.crypto.CksumType;
+import at.dms.kjc.CStdType;
+import at.dms.kjc.KjcOptions;
 import at.dms.kjc.backendSupport.ComputeNode;
+import at.dms.kjc.common.ALocalVariable;
 
 public class Core extends ComputeNode<CoreCodeStore> {
     /** the core number */
@@ -20,7 +24,10 @@ public class Core extends ComputeNode<CoreCodeStore> {
         this.coreNum = coreNum;
         setUniqueId(coreNum);
         
-        computeCode = new CoreCodeStore(this);
+        if(KjcOptions.iterations == -1)
+        	computeCode = new CoreCodeStore(this);
+        else
+        	computeCode = new CoreCodeStore(this, ALocalVariable.makeVar(CStdType.Integer, "maxSteadyIter"));
     }
     
     /**

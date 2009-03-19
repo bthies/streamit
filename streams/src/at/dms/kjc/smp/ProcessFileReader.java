@@ -135,7 +135,8 @@ public class ProcessFileReader {
         block.addStatement(Util.toStmt("stat(\"" + fileInput.getFileName() + "\", &statbuf)"));
         block.addStatement(Util.toStmt("fileReadBuffer = (" + fileInput.getType() + " *)malloc(statbuf.st_size)"));
         block.addStatement(Util.toStmt("INPUT = fopen(\"" + fileInput.getFileName() + "\", \"r\")"));
-        block.addStatement(Util.toStmt("if(fread((void *)fileReadBuffer, statbuf.st_size, " + fileInput.getType().getSizeInC() + ", INPUT) != statbuf.st_size)"));
+        block.addStatement(Util.toStmt("if(fread((void *)fileReadBuffer, " + fileInput.getType().getSizeInC() + 
+        								", statbuf.st_size / " + fileInput.getType().getSizeInC() + ", INPUT) != statbuf.st_size)"));
         block.addStatement(Util.toStmt("  printf(\"Error reading %lu bytes of input file\\n\", (unsigned long)statbuf.st_size)"));
 
         for (Core other : SMPBackend.chip.getCores()) {

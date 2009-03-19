@@ -61,7 +61,15 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
                 (output.oneOutput(SchedulingPhase.INIT) || output.noOutputs(SchedulingPhase.INIT)) &&
                 TileraBackend.scheduler.getComputeNode(parent.filterNode) !=
                     TileraBackend.scheduler.getComputeNode(output.getSingleEdge(SchedulingPhase.STEADY).getDest().getNextFilter()) &&
-                    output.getSingleEdge(SchedulingPhase.STEADY).getDest().singleAppearance())
+                    //now make sure that it is single appearance or downstream has only one input
+                    ((output.getSingleEdge(SchedulingPhase.STEADY).getDest().singleAppearance() &&
+                            output.getSingleEdge(SchedulingPhase.INIT).getDest().totalWeights(SchedulingPhase.INIT) == 
+                                FilterInfo.getFilterInfo(output.getSingleEdge(SchedulingPhase.INIT).getDest().getNextFilter()).totalItemsPopped(SchedulingPhase.INIT) &&
+                                output.getSingleEdge(SchedulingPhase.STEADY).getDest().totalWeights(SchedulingPhase.STEADY) == 
+                                    FilterInfo.getFilterInfo(output.getSingleEdge(SchedulingPhase.STEADY).getDest().getNextFilter()).totalItemsPopped(SchedulingPhase.STEADY)) ||
+                             (output.getSingleEdge(SchedulingPhase.INIT).getDest().oneInput(SchedulingPhase.INIT) &&
+                                     output.getSingleEdge(SchedulingPhase.STEADY).getDest().oneInput(SchedulingPhase.INIT))))
+                             
         {
             directWrite = true;
             if (output.getSingleEdge(SchedulingPhase.STEADY).getDest().getNextFilter().isFileOutput()) {
@@ -70,7 +78,6 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
             }
             
             assert !usesSharedBuffer();
-            
         }
         
         decls.add(new JVariableDeclarationStatement(writeHeadDefn));

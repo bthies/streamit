@@ -100,22 +100,30 @@ public class EmitSMPCode extends EmitCode {
      * 
      */
     public static void generateIncludes(CodegenPrintWriter p) {
-        p.println("#include <math.h>");     // in case math functions
+	p.println("#ifndef _GNU_SOURCE");
+	p.println("#define _GNU_SOURCE");
+	p.println("#endif");
+	p.println();
         p.println("#include <stdio.h>");    // in case of FileReader / FileWriter
+        p.println("#include <math.h>");     // in case math functions
+        p.println("#include <stdlib.h>");
+        p.println("#include <unistd.h>");
+        p.println("#include <fcntl.h>");
+        p.println("#include <pthread.h>");
+	p.println("#include <sched.h>");
+        p.println("#include <sys/types.h>");
+        p.println("#include <sys/stat.h>");
+        p.println("#include <sys/mman.h>");
+
+        p.println("#include \"barrier.h\"");
+        p.println("#include \"rdtsc.h\"");
+
         if (KjcOptions.fixedpoint)
             p.println("#include \"fixed.h\"");
         p.println("#include \"structs.h\"");
         if (KjcOptions.profile)
             p.println("#include <sys/profiler.h>");
-        p.println("#include <pthread.h>");
-        p.println("#include \"barrier.h\"");
-        p.println("#include <stdlib.h>");
-        p.println("#include <unistd.h>");
-        p.println("#include <sys/types.h>");
-        p.println("#include <sys/stat.h>");
-        p.println("#include <sys/mman.h>");
-        p.println("#include <fcntl.h>");
-        p.println("#include \"rdtsc.h\"");
+
         p.newLine();
         p.newLine();
     }
@@ -123,9 +131,14 @@ public class EmitSMPCode extends EmitCode {
     public void generateSharedGlobals(CodegenPrintWriter p) {
         p.println();
         if(KjcOptions.iterations != -1) {
-        	p.println("// Number of steady-state iterations");
-        	p.println("int maxSteadyIter = " + KjcOptions.iterations + ";");
-        	p.println();
+	    p.println("// Number of steady-state iterations");
+	    p.println("int maxSteadyIter = " + KjcOptions.iterations + ";");
+	    p.println();
+        }
+        if(KjcOptions.iterations != -1) {
+	    p.println("// Number of steady-state iterations");
+	    p.println("int maxSteadyIter = " + KjcOptions.iterations + ";");
+	    p.println();
         }
         p.println("// Global barrier");
         p.println("barrier_t barrier;");
@@ -137,9 +150,9 @@ public class EmitSMPCode extends EmitCode {
     private static void generateMakefile() throws IOException {
         CodegenPrintWriter p = new CodegenPrintWriter(new BufferedWriter(new FileWriter("Makefile", false)));
 
-        p.println("CC = g++");
+        p.println("CC = icc");
         p.println("CFLAGS = -O3");
-        p.println("LIBS = -lpthread");
+        p.println("LIBS = -pthread");
         p.println();
         p.println("all: main.c");
         p.println("\t$(CC) $(CFLAGS) $(LIBS) -o smp" + KjcOptions.smp + " main.c");

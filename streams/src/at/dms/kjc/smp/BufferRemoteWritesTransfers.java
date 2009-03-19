@@ -61,7 +61,17 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
                 (output.oneOutput(SchedulingPhase.INIT) || output.noOutputs(SchedulingPhase.INIT)) &&
                 SMPBackend.scheduler.getComputeNode(parent.filterNode) !=
                     SMPBackend.scheduler.getComputeNode(output.getSingleEdge(SchedulingPhase.STEADY).getDest().getNextFilter()) &&
-                    output.getSingleEdge(SchedulingPhase.STEADY).getDest().singleAppearance())
+                    //now make sure that it is single appearance or downstream has only one input for both steady and init
+                    (output.getSingleEdge(SchedulingPhase.STEADY).getDest().singleAppearance() &&
+                            //check steady for only one input downstream or only one rotation
+                            (output.getSingleEdge(SchedulingPhase.STEADY).getDest().totalWeights(SchedulingPhase.STEADY) == 
+                                FilterInfo.getFilterInfo(output.getSingleEdge(SchedulingPhase.STEADY).getDest().getNextFilter()).totalItemsPopped(SchedulingPhase.STEADY) ||
+                                output.getSingleEdge(SchedulingPhase.STEADY).getDest().oneInput(SchedulingPhase.INIT)) &&
+                                //check the init stage
+                                (output.noOutputs(SchedulingPhase.INIT) || (output.oneOutput(SchedulingPhase.INIT) &&
+                                        output.getSingleEdge(SchedulingPhase.INIT).getDest().totalWeights(SchedulingPhase.INIT) == 
+                                            FilterInfo.getFilterInfo(output.getSingleEdge(SchedulingPhase.INIT).getDest().getNextFilter()).totalItemsPopped(SchedulingPhase.INIT) ||
+                                            output.getSingleEdge(SchedulingPhase.INIT).getDest().oneInput(SchedulingPhase.INIT)))))
         {
             directWrite = true;
             if (output.getSingleEdge(SchedulingPhase.STEADY).getDest().getNextFilter().isFileOutput()) {
@@ -72,7 +82,7 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
             assert !usesSharedBuffer();
             
         }
-        
+	
         decls.add(new JVariableDeclarationStatement(writeHeadDefn));
         
         generateStatements(SchedulingPhase.INIT);
@@ -325,7 +335,8 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
 
         if (fileWrite && SMPBackend.FAKE_IO) {
             //if we are faking the io and this writes to a file writer assign val to volatile value
-            body.addStatement(Util.toStmt(FAKE_IO_VAR + " = " + valName));
+            body.addStatement(Util.toStmt(FAKE_IO_VAR + "__n" + 
+					  SMPBackend.scheduler.getComputeNode(parent.filterNode).getCoreNumber() + " = " + valName));
         } else {
             //otherwise generate buffer assignment
             body.addStatement(

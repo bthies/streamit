@@ -123,11 +123,18 @@ public class ProcessFileReader {
         codeStore.appendTxtToGlobal("int fileReadIndex__n" + codeStore.getParent().getUniqueId() + " = 0;\n");
 
         //open the file read the file into the buffer on the heap
+        /*
         codeStore.appendTxtToGlobal("int INPUT;\n");
         block.addStatement(Util.toStmt("struct stat statbuf"));
         block.addStatement(Util.toStmt("INPUT = open(\"" + fileInput.getFileName() + "\", O_RDWR)"));
         block.addStatement(Util.toStmt("fstat(INPUT, &statbuf)"));
         block.addStatement(Util.toStmt("fileReadBuffer = (" + fileInput.getType() + "*)mmap(NULL, statbuf.st_size, PROT_READ | PROT_WRITE, MAP_PRIVATE, INPUT, 0)"));
+        */
+        codeStore.appendTxtToGlobal("FILE *INPUT;\n");
+        block.addStatement(Util.toStmt("fileReadBuffer = (" + fileInput.getType() + " *)malloc(" + fileSize + ")"));
+        block.addStatement(Util.toStmt("INPUT = fopen(\"" + fileInput.getFileName() + "\", \"r\")"));
+        block.addStatement(Util.toStmt("if(fread((void *)fileReadBuffer, " + fileSize + ", " + fileInput.getType().getSizeInC() + ", INPUT) != " + fileSize + ")"));
+        block.addStatement(Util.toStmt("  printf(\"Error reading " + fileSize + " bytes of input file\\n\")"));
 
         for (Core other : SMPBackend.chip.getCores()) {
             if (codeStore.getParent() == other) 

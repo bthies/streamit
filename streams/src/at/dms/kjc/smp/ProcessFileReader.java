@@ -131,10 +131,12 @@ public class ProcessFileReader {
         block.addStatement(Util.toStmt("fileReadBuffer = (" + fileInput.getType() + "*)mmap(NULL, statbuf.st_size, PROT_READ | PROT_WRITE, MAP_PRIVATE, INPUT, 0)"));
         */
         codeStore.appendTxtToGlobal("FILE *INPUT;\n");
-        block.addStatement(Util.toStmt("fileReadBuffer = (" + fileInput.getType() + " *)malloc(" + fileSize + ")"));
+        block.addStatement(Util.toStmt("struct stat statbuf"));
+        block.addStatement(Util.toStmt("stat(\"" + fileInput.getFileName() + "\", &statbuf)"));
+        block.addStatement(Util.toStmt("fileReadBuffer = (" + fileInput.getType() + " *)malloc(statbuf.st_size)"));
         block.addStatement(Util.toStmt("INPUT = fopen(\"" + fileInput.getFileName() + "\", \"r\")"));
-        block.addStatement(Util.toStmt("if(fread((void *)fileReadBuffer, " + fileSize + ", " + fileInput.getType().getSizeInC() + ", INPUT) != " + fileSize + ")"));
-        block.addStatement(Util.toStmt("  printf(\"Error reading " + fileSize + " bytes of input file\\n\")"));
+        block.addStatement(Util.toStmt("if(fread((void *)fileReadBuffer, statbuf.st_size, " + fileInput.getType().getSizeInC() + ", INPUT) != statbuf.st_size)"));
+        block.addStatement(Util.toStmt("  printf(\"Error reading %lu bytes of input file\\n\", (unsigned long)statbuf.st_size)"));
 
         for (Core other : SMPBackend.chip.getCores()) {
             if (codeStore.getParent() == other) 

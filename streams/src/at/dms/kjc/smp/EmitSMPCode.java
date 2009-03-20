@@ -135,11 +135,6 @@ public class EmitSMPCode extends EmitCode {
 	    p.println("int maxSteadyIter = " + KjcOptions.iterations + ";");
 	    p.println();
         }
-        if(KjcOptions.iterations != -1) {
-	    p.println("// Number of steady-state iterations");
-	    p.println("int maxSteadyIter = " + KjcOptions.iterations + ";");
-	    p.println();
-        }
         p.println("// Global barrier");
         p.println("barrier_t barrier;");
         p.println();

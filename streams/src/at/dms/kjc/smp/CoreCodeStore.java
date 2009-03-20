@@ -40,6 +40,7 @@ public class CoreCodeStore extends ComputeCodeStore<Core> {
     public CoreCodeStore(Core parent, ALocalVariable iterationBound) {
        super(parent, iterationBound);
        setMyMainName("__main__");
+       filters = new HashSet<FilterSliceNode>();
        createBufferInitMethod();
        
        mainMethod.addParameter(new JFormalParameter(CVoidPtrType.VoidPtr, "arg"));

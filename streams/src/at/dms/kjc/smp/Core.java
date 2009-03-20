@@ -25,9 +25,9 @@ public class Core extends ComputeNode<CoreCodeStore> {
         setUniqueId(coreNum);
         
         if(KjcOptions.iterations == -1)
-        	computeCode = new CoreCodeStore(this);
+	    computeCode = new CoreCodeStore(this);
         else
-        	computeCode = new CoreCodeStore(this, ALocalVariable.makeVar(CStdType.Integer, "maxSteadyIter"));
+	    computeCode = new CoreCodeStore(this, ALocalVariable.makeVar(CStdType.Integer, "maxSteadyIter"));
     }
     
     /**

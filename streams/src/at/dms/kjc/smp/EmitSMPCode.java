@@ -5,7 +5,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 
+import at.dms.kjc.JEmittedTextExpression;
 import at.dms.kjc.JExpression;
+import at.dms.kjc.JExpressionStatement;
 import at.dms.kjc.JFieldDeclaration;
 import at.dms.kjc.JIntLiteral;
 import at.dms.kjc.JMethodDeclaration;
@@ -45,7 +47,15 @@ public class EmitSMPCode extends EmitCode {
             // for all the tiles, add a barrier at the end of the steady state, do it here because we are done
             // with all code gen
             CoreCodeStore.addBarrierSteady();
+
+            for (Core tile : SMPBackend.chip.getCores()) {
+                // if no code was written to this tile's code store, then skip it
+                if (!tile.getComputeCode().shouldGenerateCode())
+                    continue;
             
+		tile.getComputeCode().addCleanupStatement(new JExpressionStatement(new JEmittedTextExpression("pthread_exit(NULL)")));
+	    }
+
             // call to buffer initialization and CPU affinity setting
             for (Core core : SMPBackend.chip.getCores()) {
                 core.getComputeCode().addFunctionCallFirst(core.getComputeCode().getBufferInitMethod(), new JExpression[0]);
@@ -75,7 +85,7 @@ public class EmitSMPCode extends EmitCode {
                 // if no code was written to this tile's code store, then skip it
                 if (!tile.getComputeCode().shouldGenerateCode())
                     continue;
-                
+    
                 codeEmitter.emitCodeForComputeNode(tile,p);                
             }
 

@@ -91,15 +91,18 @@ public class TMD extends Scheduler {
             assert levels[l].length  <= SMPBackend.chip.size() : 
                 "Too many filters in level for TMD layout!";
             HashSet<Core> allocatedTiles = new HashSet<Core>(); 
-            
+
             if (levels[l].length == 1 && levels[l][0].getFirstFilter().isPredefined()) {
                 //we only support full levels for right now other than predefined filters 
                 //that are not fizzed
-               setComputeNode(levels[l][0].getFirstFilter(), SMPBackend.chip.getOffChipMemory());
+		System.out.println(levels[l][0].getFirstFilter() + " assigned to offChipMemory");
+		setComputeNode(levels[l][0].getFirstFilter(), SMPBackend.chip.getOffChipMemory());
             } else {
                 for (int f = 0; f < levels[l].length; f++) {
                     Slice slice = levels[l][f];
+		    System.out.println("Looking for tile for filter: " + slice.getFirstFilter());
                     Core theTile = tileToAssign(slice, SMPBackend.chip, allocatedTiles);
+		    System.out.println("Assigning filter to tile: " + theTile);
                     setComputeNode(slice.getFirstFilter(), theTile);
                     allocatedTiles.add(theTile);
                 }
@@ -110,10 +113,14 @@ public class TMD extends Scheduler {
     private Core tileToAssign(Slice slice, SMPMachine chip, Set<Core> allocatedTiles) {
         Core theBest = null;
         int bestInputs = -1;
-           
+
+	System.out.println("Inside tileToAssign for: " + slice.getFirstFilter());
+
         //add the tiles to the list that are allocated to upstream inputs
         for (Edge edge : slice.getHead().getSourceSet(SchedulingPhase.STEADY)) {
+	    System.out.println("Looking at source: " + edge.getSrc().getPrevious());
             Core upstreamTile = getComputeNode(edge.getSrc().getPrevious());
+	    System.out.println("Source on tile: " + upstreamTile);
             if (upstreamTile == SMPBackend.chip.getOffChipMemory())
                 continue;
             if (allocatedTiles.contains(upstreamTile))
@@ -147,8 +154,15 @@ public class TMD extends Scheduler {
      */
     public void run(int tiles) {
         //if we are using the SIR data parallelism pass, then don't run TMD
-        if (KjcOptions.dup == 1)
+        if (KjcOptions.dup == 1) {
+	    LinkedList<Slice> slices = DataFlowOrder.getTraversal(graphSchedule.getSlicer().getTopSlices());
+
+	    for (Slice slice : slices) {
+		FilterContent filter = slice.getFirstFilter().getFilter();
+		filter.multSteadyMult(KjcOptions.steadymult);
+	    }
             return;
+	}
         
         calculateFizzAmounts(tiles);
         
@@ -160,13 +174,13 @@ public class TMD extends Scheduler {
         //go through and multiply the steady multiplicity of each filter by factor
         for (Slice slice : slices) {
             FilterContent filter = slice.getFirstFilter().getFilter();
-            filter.multSteadyMult(factor);
+            filter.multSteadyMult(factor * KjcOptions.steadymult);
          }
         //must reset the filter info's because we have changed the schedule
         FilterInfo.reset();
         
         SMPBackend.scheduler.graphSchedule.getSlicer().dumpGraph("before_fission.dot", 
-                null);
+                null, false);
         
         int maxFission = 0;
         int i = 0;

@@ -1,5 +1,7 @@
 package at.dms.kjc.sir.lowering.partition;
 
+import at.dms.kjc.*;
+
 /**
  * This interface contains estimates of work for various operations.
  */
@@ -23,7 +25,7 @@ public interface WorkConstants {
     int FLOAT_ARITH_OP = 2;
 
     // how many times we assume a loop executes if we encounter one
-    int LOOP_COUNT = 5;
+    int LOOP_COUNT = KjcOptions.loopcount;
 
     // TODO - I can't find the mis-predict penalty for a branch on
     // raw.  I guess it should be factored into an the costs below.

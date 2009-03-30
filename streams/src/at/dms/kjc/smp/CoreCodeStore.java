@@ -315,6 +315,7 @@ public class CoreCodeStore extends ComputeCodeStore<Core> {
         } else {
             appendTxtToGlobal("    printf(\"Average cycles per SS for %d iterations: %llu \\n\", ITERATIONS, avgCycles);\n");
         }
+	appendTxtToGlobal("    fflush(stdout);\n");
         appendTxtToGlobal("    __iteration__ = 0;\n");
 
         appendTxtToGlobal("  }\n");

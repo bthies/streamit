@@ -3,10 +3,11 @@ package at.dms.kjc.smp;
 import at.dms.kjc.*;
 import at.dms.kjc.backendSupport.*;
 import at.dms.kjc.sir.*;
+import at.dms.kjc.sir.lowering.partition.*;
 import at.dms.kjc.slicegraph.*;
 
 public class SMPBackend {
-    public static final boolean FAKE_IO = false;
+    public static final boolean FAKE_IO = true;
 
     public static Scheduler scheduler;
     public static SMPMachine chip;
@@ -20,7 +21,7 @@ public class SMPBackend {
                            SIRHelper[] helpers,
                            SIRGlobal global) {
 	System.out.println("Entry to SMP Backend...");
-        
+
 	setScheduler();
 	//always create a chip with 64 tiles, let layout (Scheduler) worry about smaller chips
         chip = new SMPMachine(KjcOptions.smp);

@@ -44,17 +44,41 @@ public class EmitSMPCode extends EmitCode {
             // generate header containing barrier implementation
             generateBarrierHeader();
             
+            // add stats useful for performance debugging
+            if(KjcOptions.debug && KjcOptions.smp > 1) {
+            	for (Core tile : SMPBackend.chip.getCores()) {
+            		SMPBackend.chip.getOffChipMemory().getComputeCode().appendTxtToGlobal("uint64_t start_time_n" + tile.getCoreNumber() + ";");
+            		
+            		tile.getComputeCode().addSteadyLoopStatementFirst(new JExpressionStatement(
+            				new JEmittedTextExpression("printf(\"Thread " + tile.getCoreNumber() + ", start: %llu\\n\", start_time_n" + tile.getCoreNumber() +")")));
+            		
+            		tile.getComputeCode().addSteadyLoopStatementFirst(new JExpressionStatement(
+            				new JEmittedTextExpression("start_time_n" + tile.getCoreNumber() + " = rdtsc()")));
+            		
+            		tile.getComputeCode().addSteadyLoopStatement(new JExpressionStatement(
+            				new JEmittedTextExpression("printf(\"Thread " + tile.getCoreNumber() + ", before barrier: %llu\\n\", rdtsc() - start_time_n" + tile.getCoreNumber() + ")")));
+            	}
+            }
+            
             // for all the tiles, add a barrier at the end of the steady state, do it here because we are done
             // with all code gen
             CoreCodeStore.addBarrierSteady();
+            
+            // add more stats useful for performance debugging
+            if(KjcOptions.debug && KjcOptions.smp > 1) {
+            	for (Core tile : SMPBackend.chip.getCores()) {
+            		tile.getComputeCode().addSteadyLoopStatement(new JExpressionStatement(
+            				new JEmittedTextExpression("printf(\"Thread " + tile.getCoreNumber() + ", after barrier: %llu\\n\", rdtsc() - start_time_n" + tile.getCoreNumber() + ")")));
+            	}
+            }
 
             for (Core tile : SMPBackend.chip.getCores()) {
                 // if no code was written to this tile's code store, then skip it
                 if (!tile.getComputeCode().shouldGenerateCode())
                     continue;
             
-		tile.getComputeCode().addCleanupStatement(new JExpressionStatement(new JEmittedTextExpression("pthread_exit(NULL)")));
-	    }
+                tile.getComputeCode().addCleanupStatement(new JExpressionStatement(new JEmittedTextExpression("pthread_exit(NULL)")));
+            }
 
             // call to buffer initialization and CPU affinity setting
             for (Core core : SMPBackend.chip.getCores()) {
@@ -110,17 +134,17 @@ public class EmitSMPCode extends EmitCode {
      * 
      */
     public static void generateIncludes(CodegenPrintWriter p) {
-	p.println("#ifndef _GNU_SOURCE");
-	p.println("#define _GNU_SOURCE");
-	p.println("#endif");
-	p.println();
+    	p.println("#ifndef _GNU_SOURCE");
+    	p.println("#define _GNU_SOURCE");
+    	p.println("#endif");
+    	p.println();
         p.println("#include <stdio.h>");    // in case of FileReader / FileWriter
         p.println("#include <math.h>");     // in case math functions
         p.println("#include <stdlib.h>");
         p.println("#include <unistd.h>");
         p.println("#include <fcntl.h>");
         p.println("#include <pthread.h>");
-	p.println("#include <sched.h>");
+        p.println("#include <sched.h>");
         p.println("#include <sys/types.h>");
         p.println("#include <sys/stat.h>");
         p.println("#include <sys/mman.h>");

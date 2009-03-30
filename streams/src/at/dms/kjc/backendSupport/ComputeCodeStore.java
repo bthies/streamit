@@ -234,6 +234,10 @@ public class ComputeCodeStore<ComputeNodeType extends ComputeNode<?>> implements
         if (stmt != null) steadyLoop.addStatement(stmt);
      }
      
+    public void addSteadyLoopStatementFirst(JStatement stmt) {
+    	if (stmt != null) steadyLoop.addStatementFirst(stmt);
+    }
+    
     
     /**
      * Bill's code adds method <b>meth</b> to this, if <b>meth</b> is not already
@@ -394,5 +398,4 @@ public class ComputeCodeStore<ComputeNodeType extends ComputeNode<?>> implements
             System.err.println(" ** Warning: Init function is null");
 
     }
-
 }

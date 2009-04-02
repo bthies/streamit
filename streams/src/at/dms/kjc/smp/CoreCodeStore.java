@@ -297,33 +297,28 @@ public class CoreCodeStore extends ComputeCodeStore<Core> {
     }
     
     public void generateNumbersCode() {
-        appendTxtToGlobal("uint64_t* __cycle_counts__;\n");
-        appendTxtToGlobal("int __iteration__ = 0;\n");
+        appendTxtToGlobal("uint64_t __last_cycle__ = 0;\n");
+        appendTxtToGlobal("int __iteration__ = ITERATIONS;\n");
         
         appendTxtToGlobal("void __printSSCycleAvg() {\n");
-        appendTxtToGlobal("    uint64_t totalCycles = 0;\n");
-        appendTxtToGlobal("    uint64_t avgCycles;\n");
-        appendTxtToGlobal("    int i = 0;\n");
-        appendTxtToGlobal("     for (i = 0; i < ITERATIONS - 1; i++)\n"); 
-        appendTxtToGlobal("      totalCycles += __cycle_counts__[i+1] - __cycle_counts__[i];\n");
-
-        appendTxtToGlobal("    avgCycles = totalCycles / (ITERATIONS - 1);\n");
+        appendTxtToGlobal("  uint64_t __cur_cycle__ = rdtsc();\n");
+        appendTxtToGlobal("  if(__last_cycle__ != 0) {\n");
         if (ProcessFileWriter.getTotalOutputs() > 0) {
-            appendTxtToGlobal("    printf(\"Average cycles per SS for %d iterations: %llu, avg cycles per output: %llu \\n\", ITERATIONS, avgCycles" + 
-                    ", (avgCycles / ((uint64_t)" +
-                        ProcessFileWriter.getTotalOutputs() + ")));\n");
-        } else {
-            appendTxtToGlobal("    printf(\"Average cycles per SS for %d iterations: %llu \\n\", ITERATIONS, avgCycles);\n");
+            appendTxtToGlobal("    printf(\"Average cycles per SS for %d iterations: %llu, avg cycles per output: %llu\\n\", \n" +
+                              "      ITERATIONS, (__cur_cycle__ - __last_cycle__) / ITERATIONS, \n" +
+                              "      (((__cur_cycle__ - __last_cycle__) / ITERATIONS) / ((uint64_t)" + ProcessFileWriter.getTotalOutputs() + ")));\n");
+        }
+        else {
+            appendTxtToGlobal("    printf(\"Average cycles per SS for %d iterations: %llu \\n\", ITERATIONS, (__cur_cycle__ - __last_cycle__) / ITERATIONS);\n");
         }
         appendTxtToGlobal("    fflush(stdout);\n");
-        appendTxtToGlobal("    __iteration__ = 0;\n");
-
         appendTxtToGlobal("  }\n");
+        appendTxtToGlobal("  __last_cycle__ = __cur_cycle__;\n");
+        appendTxtToGlobal("  __iteration__ = 0;\n");
+        appendTxtToGlobal("}\n");
 
-        addSteadyLoopStatement(Util.toStmt("__cycle_counts__[__iteration__++] = rdtsc()"));
-        addSteadyLoopStatement(Util.toStmt("if (__iteration__ == ITERATIONS) __printSSCycleAvg()"));
-        
-        addStatementToBufferInit("__cycle_counts__ = (uint64_t*)malloc(ITERATIONS * sizeof(uint64_t))");
+        addSteadyLoopStatement(Util.toStmt("__iteration__++"));
+        addSteadyLoopStatement(Util.toStmt("if (__iteration__ >= ITERATIONS - 1) __printSSCycleAvg()"));
     }
     
     public void addFunctionCallFirst(JMethodDeclaration func, JExpression[] args) {

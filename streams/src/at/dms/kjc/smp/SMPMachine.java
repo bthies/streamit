@@ -27,20 +27,6 @@ public class SMPMachine implements ComputeNodesI<CoreCodeStore> {
     public SMPMachine(int[] coreIDOrder) {
     	this.numCores = coreIDOrder.length;
     	
-    	// Make sure that set of core IDs is contiguous starting from 0
-    	for (int x = 0 ; x < numCores ; x++) {
-    		boolean xFound = false;
-    		
-    		for(int y = 0 ; y < numCores ; y++)
-    			if (coreIDOrder[y] == x)
-    				xFound = true;
-
-    		if(!xFound) {
-    			System.out.println("Set of core IDs is not contiguous starting from 0");
-    			assert(false);
-    		}
-    	}
-    	
     	// Construct cores with IDs in requested order
     	cores = new Core[numCores];
     	for (int x = 0 ; x < numCores ; x++)

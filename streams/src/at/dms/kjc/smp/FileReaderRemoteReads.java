@@ -81,6 +81,7 @@ public class FileReaderRemoteReads extends FileReaderCode {
         
         //if currently in steady-state, prefetch items from the fileReadBuffer for the next steady-state
         //if we don't receive anything, don't generate prefetch code
+        /*
         if (phase == SchedulingPhase.STEADY && dstInfo.totalItemsReceived(phase) > 0) {
 
             //rotations of the output for the file reader
@@ -100,7 +101,7 @@ public class FileReaderRemoteReads extends FileReaderCode {
             LinkedList<JStatement> prefetchStmts = new LinkedList<JStatement>();
             
             //keep track of last src index that was prefetched
-            int prefetchedSrcIndex = Integer.MIN_VALUE;
+            int prefetchedSrcIndex = -64;
 
             for (int rot = 0; rot < rotations; rot++) {
                 for (int weight = 0; weight < fileOutput.getWeights(phase).length; weight++) {
@@ -114,18 +115,19 @@ public class FileReaderRemoteReads extends FileReaderCode {
                         //that current src index is on a different cache line, prefetch current src
                         //index
                         if(srcIndex - prefetchedSrcIndex >= (64 / parent.bufType.getSizeInC())) {
-                        	prefetchStmts.add(new JExpressionStatement(new JEmittedTextExpression(
-                        			"__builtin_prefetch(&fileReadBuffer[fileReadIndex__n" + parent.parent.getCoreID() + 
-                        			" + " + srcIndex + ")")));
-                        	
-                        	prefetchedSrcIndex = srcIndex;
+			    prefetchStmts.add(new JExpressionStatement(new JEmittedTextExpression(
+					  "__builtin_prefetch(&fileReadBuffer[fileReadIndex__n" + parent.parent.getCoreNumber() + 
+					  " + " + srcIndex + "])")));
+			    
+			    prefetchedSrcIndex = srcIndex;
                         }
                     }
                 }
             }
-            
+
             statements.addAll(prefetchStmts);
         }
+	*/
     }
     
     /**

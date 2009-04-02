@@ -267,7 +267,7 @@ public abstract class RotatingBuffer extends Channel {
 
             this.parent.getMachine().getOffChipMemory().getComputeCode().appendTxtToGlobal(
                     this.getType().toString() + "* " + bufferNames[i] + ";\n");
-            
+
             //set the allocate call, if this is an output buffer then it is not shared,
             //input buffers are shared and use malloc_shared
             //input buffers of file output are allocated from the file write heap 
@@ -281,6 +281,13 @@ public abstract class RotatingBuffer extends Channel {
                     alloc +
                     this.getBufferSize() + " * sizeof(" +
                     this.getType() + "))")));
+
+	    /*
+	    cs.addStatementToBufferInit(new JExpressionStatement(new JEmittedTextExpression(
+		    "posix_memalign((void **)(&" + bufferNames[i] + "), 64, " +
+		    this.getBufferSize() + " * sizeof(" +
+		    this.getType() + "))")));
+	    */
         }
     }
       

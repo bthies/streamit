@@ -165,9 +165,9 @@ public class EmitSMPCode extends EmitCode {
     public void generateSharedGlobals(CodegenPrintWriter p) {
         p.println();
         if(KjcOptions.iterations != -1) {
-	    p.println("// Number of steady-state iterations");
-	    p.println("int maxSteadyIter = " + KjcOptions.iterations + ";");
-	    p.println();
+            p.println("// Number of steady-state iterations");
+            p.println("int maxSteadyIter = " + KjcOptions.iterations + ";");
+            p.println();
         }
         p.println("// Global barrier");
         p.println("barrier_t barrier;");
@@ -391,11 +391,6 @@ public class EmitSMPCode extends EmitCode {
         // dumb template to override
         p.println("int main(int argc, char** argv) {");
         p.indent();
-        
-        if (KjcOptions.profile) {
-            p.println();
-            p.println("profiler_disable();");
-        }
 
         p.println();
         p.println("// Initialize barrier");

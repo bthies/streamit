@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.110 2009-02-05 20:33:19 ctan Exp $
+ * $Id: KjcOptions.opt,v 1.111 2009-04-02 07:50:54 ctan Exp $
  */
 
 prefix Kjc
@@ -745,6 +745,12 @@ longname		"smp"
 	default		"-1"
 	requireArgument
 	help		"Uses the experimental SMP backend with <n> cores"
+
+longname		"loopcount"
+	type		int
+	default		"5"
+	requireArgument
+	help		"Loop iteration count to use during work estimation when loop iteration can't be predicted"
 
 /* remove: now default */
 /* longname 	"noverbose" */

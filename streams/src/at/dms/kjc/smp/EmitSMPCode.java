@@ -45,7 +45,7 @@ public class EmitSMPCode extends EmitCode {
             generateBarrierHeader();
             
             // add stats useful for performance debugging
-            if(KjcOptions.debug && KjcOptions.smp > 1) {
+            if(KjcOptions.debug) {
             	for (Core tile : SMPBackend.chip.getCores()) {
             		SMPBackend.chip.getOffChipMemory().getComputeCode().appendTxtToGlobal("uint64_t start_time_n" + tile.getCoreNumber() + ";");
             		
@@ -55,8 +55,10 @@ public class EmitSMPCode extends EmitCode {
             		tile.getComputeCode().addSteadyLoopStatementFirst(new JExpressionStatement(
             				new JEmittedTextExpression("start_time_n" + tile.getCoreNumber() + " = rdtsc()")));
             		
-            		tile.getComputeCode().addSteadyLoopStatement(new JExpressionStatement(
+			if(KjcOptions.smp > 1) {
+			    tile.getComputeCode().addSteadyLoopStatement(new JExpressionStatement(
             				new JEmittedTextExpression("printf(\"Thread " + tile.getCoreNumber() + ", before barrier: %llu\\n\", rdtsc() - start_time_n" + tile.getCoreNumber() + ")")));
+			}
             	}
             }
             
@@ -65,10 +67,15 @@ public class EmitSMPCode extends EmitCode {
             CoreCodeStore.addBarrierSteady();
             
             // add more stats useful for performance debugging
-            if(KjcOptions.debug && KjcOptions.smp > 1) {
+            if(KjcOptions.debug) {
             	for (Core tile : SMPBackend.chip.getCores()) {
+		    if(KjcOptions.smp > 1) {
             		tile.getComputeCode().addSteadyLoopStatement(new JExpressionStatement(
             				new JEmittedTextExpression("printf(\"Thread " + tile.getCoreNumber() + ", after barrier: %llu\\n\", rdtsc() - start_time_n" + tile.getCoreNumber() + ")")));
+		    }
+
+		    tile.getComputeCode().addSteadyLoopStatement(new JExpressionStatement(
+				    new JEmittedTextExpression("printf(\"Thread " + tile.getCoreNumber() + ", end: %llu\\n\", rdtsc())")));
             	}
             }
 
@@ -179,7 +186,7 @@ public class EmitSMPCode extends EmitCode {
     private static void generateMakefile() throws IOException {
         CodegenPrintWriter p = new CodegenPrintWriter(new BufferedWriter(new FileWriter("Makefile", false)));
 
-        p.println("CC = icc");
+        p.println("CC = g++");
         p.println("CFLAGS = -O3");
         p.println("LIBS = -pthread");
         p.println();

@@ -90,9 +90,9 @@ public class InputRotatingBuffer extends RotatingBuffer {
         types.add(bufType);
         setInputBuffer(filterNode, this);
 
-        int coreNum = parent.getCoreNumber();
+        int coreNum = parent.getCoreID();
         if (filterNode.isFileOutput())
-            coreNum = ProcessFileWriter.getAllocatingTile(filterNode).getCoreNumber();
+            coreNum = ProcessFileWriter.getAllocatingTile(filterNode).getCoreID();
         
         readRotStructName =  this.getIdent() + "read_rot_struct__n" + coreNum;
         currentReadRotName = this.getIdent() + "_read_current__n" + coreNum;

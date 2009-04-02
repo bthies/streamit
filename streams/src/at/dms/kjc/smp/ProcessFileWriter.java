@@ -46,7 +46,7 @@ public class ProcessFileWriter {
         
         if (!allocatingTiles.containsKey(fo)) {
             Core allocatingTile = nextAllocatingTile(fo);
-            System.out.println(fo + " assigned to Tile " + allocatingTile.getCoreNumber());
+            System.out.println(fo + " assigned to Tile " + allocatingTile.getCoreID());
             allocatingTiles.put(fo, allocatingTile);
         }
         

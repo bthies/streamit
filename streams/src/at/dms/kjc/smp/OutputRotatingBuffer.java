@@ -100,8 +100,8 @@ public class OutputRotatingBuffer extends RotatingBuffer {
         bufType = filterNode.getFilter().getOutputType();
         setOutputBuffer(filterNode, this);
        
-        transRotName = this.getIdent() + "_rot_trans__n" + parent.getCoreNumber();
-        transBufName = this.getIdent() + "_trans_buf__n" + parent.getCoreNumber();
+        transRotName = this.getIdent() + "_rot_trans__n" + parent.getCoreID();
+        transBufName = this.getIdent() + "_trans_buf__n" + parent.getCoreID();
               
         tile = SMPBackend.backEndBits.getLayout().getComputeNode(filterNode);
         

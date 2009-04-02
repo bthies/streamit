@@ -127,7 +127,7 @@ public class CoreCodeStore extends ComputeCodeStore<Core> {
     
     private void createBufferInitMethod() {
         //create the method that will malloc the buffers and receive the addresses from downstream tiles
-        bufferInit = new JMethodDeclaration(CStdType.Void, bufferInitMethName + "__n" + parent.getCoreNumber(), new JFormalParameter[0], new JBlock());
+        bufferInit = new JMethodDeclaration(CStdType.Void, bufferInitMethName + "__n" + parent.getCoreID(), new JFormalParameter[0], new JBlock());
         //addMethod(bufferInit);
     }
     
@@ -315,7 +315,7 @@ public class CoreCodeStore extends ComputeCodeStore<Core> {
         } else {
             appendTxtToGlobal("    printf(\"Average cycles per SS for %d iterations: %llu \\n\", ITERATIONS, avgCycles);\n");
         }
-	appendTxtToGlobal("    fflush(stdout);\n");
+        appendTxtToGlobal("    fflush(stdout);\n");
         appendTxtToGlobal("    __iteration__ = 0;\n");
 
         appendTxtToGlobal("  }\n");

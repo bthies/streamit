@@ -13,6 +13,7 @@ public class SMPBackend {
     public static SMPMachine chip;
     public static SMPBackEndFactory backEndBits;
     public static Structs_h structs_h;
+    public static int[] coreOrder = {0, 8, 4, 12, 1, 9, 5, 13, 2, 10, 6, 14, 3, 11, 7, 15};
     
     public static void run(SIRStream str,
                            JInterfaceDeclaration[] interfaces,
@@ -20,11 +21,16 @@ public class SMPBackend {
                            SIRStructure[]structs,
                            SIRHelper[] helpers,
                            SIRGlobal global) {
-	System.out.println("Entry to SMP Backend...");
+    	System.out.println("Entry to SMP Backend...");
 
-	setScheduler();
-	//always create a chip with 64 tiles, let layout (Scheduler) worry about smaller chips
-        chip = new SMPMachine(KjcOptions.smp);
+    	setScheduler();
+    	
+    	//create cores in desired amount and order
+    	int[] cores = new int[KjcOptions.smp];
+    	for (int x = 0 ; x < KjcOptions.smp ; x++)
+    		cores[x] = coreOrder[x];
+        chip = new SMPMachine(cores);
+        
         //create a new structs.h file for typedefs etc.
         structs_h = new Structs_h();
 

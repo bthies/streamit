@@ -47,18 +47,14 @@ public class EmitSMPCode extends EmitCode {
             // add stats useful for performance debugging
             if(KjcOptions.debug) {
             	for (Core tile : SMPBackend.chip.getCores()) {
-            		SMPBackend.chip.getOffChipMemory().getComputeCode().appendTxtToGlobal("uint64_t start_time_n" + tile.getCoreNumber() + ";");
+            		SMPBackend.chip.getOffChipMemory().getComputeCode().appendTxtToGlobal("uint64_t start_time_n" + tile.getCoreID() + ";");
             		
-            		tile.getComputeCode().addSteadyLoopStatementFirst(new JExpressionStatement(
-            				new JEmittedTextExpression("printf(\"Thread " + tile.getCoreNumber() + ", start: %llu\\n\", start_time_n" + tile.getCoreNumber() +")")));
+            		tile.getComputeCode().addSteadyLoopStatementFirst(Util.toStmt("printf(\"Thread " + tile.getCoreID() + ", start: %llu\\n\", start_time_n" + tile.getCoreID() +")"));
             		
-            		tile.getComputeCode().addSteadyLoopStatementFirst(new JExpressionStatement(
-            				new JEmittedTextExpression("start_time_n" + tile.getCoreNumber() + " = rdtsc()")));
+            		tile.getComputeCode().addSteadyLoopStatementFirst(Util.toStmt("start_time_n" + tile.getCoreID() + " = rdtsc()"));
             		
-			if(KjcOptions.smp > 1) {
-			    tile.getComputeCode().addSteadyLoopStatement(new JExpressionStatement(
-            				new JEmittedTextExpression("printf(\"Thread " + tile.getCoreNumber() + ", before barrier: %llu\\n\", rdtsc() - start_time_n" + tile.getCoreNumber() + ")")));
-			}
+                    if(KjcOptions.smp > 1)
+                        tile.getComputeCode().addSteadyLoopStatement(Util.toStmt("printf(\"Thread " + tile.getCoreID() + ", before barrier: %llu\\n\", rdtsc() - start_time_n" + tile.getCoreID() + ")"));
             	}
             }
             
@@ -69,13 +65,10 @@ public class EmitSMPCode extends EmitCode {
             // add more stats useful for performance debugging
             if(KjcOptions.debug) {
             	for (Core tile : SMPBackend.chip.getCores()) {
-		    if(KjcOptions.smp > 1) {
-            		tile.getComputeCode().addSteadyLoopStatement(new JExpressionStatement(
-            				new JEmittedTextExpression("printf(\"Thread " + tile.getCoreNumber() + ", after barrier: %llu\\n\", rdtsc() - start_time_n" + tile.getCoreNumber() + ")")));
-		    }
+                    if(KjcOptions.smp > 1)
+                        tile.getComputeCode().addSteadyLoopStatement(Util.toStmt("printf(\"Thread " + tile.getCoreID() + ", after barrier: %llu\\n\", rdtsc() - start_time_n" + tile.getCoreID() + ")"));
 
-		    tile.getComputeCode().addSteadyLoopStatement(new JExpressionStatement(
-				    new JEmittedTextExpression("printf(\"Thread " + tile.getCoreNumber() + ", end: %llu\\n\", rdtsc())")));
+                    tile.getComputeCode().addSteadyLoopStatement(Util.toStmt("printf(\"Thread " + tile.getCoreID() + ", end: %llu\\n\", rdtsc())"));
             	}
             }
 
@@ -84,7 +77,7 @@ public class EmitSMPCode extends EmitCode {
                 if (!tile.getComputeCode().shouldGenerateCode())
                     continue;
             
-                tile.getComputeCode().addCleanupStatement(new JExpressionStatement(new JEmittedTextExpression("pthread_exit(NULL)")));
+                tile.getComputeCode().addCleanupStatement(Util.toStmt("pthread_exit(NULL)"));
             }
 
             // call to buffer initialization and CPU affinity setting
@@ -92,7 +85,7 @@ public class EmitSMPCode extends EmitCode {
                 core.getComputeCode().addFunctionCallFirst(core.getComputeCode().getBufferInitMethod(), new JExpression[0]);
                 
                 JExpression[] setAffinityArgs = new JExpression[1];
-                setAffinityArgs[0] = new JIntLiteral(core.getCoreNumber());
+                setAffinityArgs[0] = new JIntLiteral(core.getCoreID());
                 core.getComputeCode().addFunctionCallFirst("setCPUAffinity", setAffinityArgs);
             }
 
@@ -419,11 +412,11 @@ public class EmitSMPCode extends EmitCode {
 
         for(Core core : SMPBackend.chip.getCores()) {
             p.println();
-            p.println("pthread_t thread_n" + core.getCoreNumber() + ";");
-            p.println("if ((rc = pthread_create(&thread_n" + core.getCoreNumber() + ", NULL, " +
+            p.println("pthread_t thread_n" + core.getCoreID() + ";");
+            p.println("if ((rc = pthread_create(&thread_n" + core.getCoreID() + ", NULL, " +
                     core.getComputeCode().getMainFunction().getName() + ", (void *)NULL)) < 0)");
             p.indent();
-            p.println("printf(\"Error creating thread for core " + core.getCoreNumber() + ": %d\\n\", rc);");
+            p.println("printf(\"Error creating thread for core " + core.getCoreID() + ": %d\\n\", rc);");
             p.outdent();
         }
         
@@ -432,9 +425,9 @@ public class EmitSMPCode extends EmitCode {
         
         for(Core core : SMPBackend.chip.getCores()) {
             p.println();
-            p.println("if ((rc = pthread_join(thread_n" + core.getCoreNumber() + ", &status)) < 0) {");
+            p.println("if ((rc = pthread_join(thread_n" + core.getCoreID() + ", &status)) < 0) {");
             p.indent();
-            p.println("printf(\"Error joining thread for core " + core.getCoreNumber() + ": %d\\n\", rc);");
+            p.println("printf(\"Error joining thread for core " + core.getCoreID() + ": %d\\n\", rc);");
             p.println("exit(-1);");
             p.outdent();
             p.println("}");

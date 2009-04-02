@@ -87,9 +87,9 @@ public abstract class RotatingBuffer extends Channel {
         filterNode = fsn;
         filterInfo = FilterInfo.getFilterInfo(fsn);
         
-        int coreNum = parent.getCoreNumber();
+        int coreNum = parent.getCoreID();
         if(filterNode.isFileOutput())
-            coreNum = ProcessFileWriter.getAllocatingTile(filterNode).getCoreNumber();
+            coreNum = ProcessFileWriter.getAllocatingTile(filterNode).getCoreID();
         
         writeRotStructName =  this.getIdent() + "write_rot_struct__n" + coreNum;
         currentWriteRotName = this.getIdent() + "_write_current__n" + coreNum;

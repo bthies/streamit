@@ -7,8 +7,8 @@ import at.dms.kjc.backendSupport.ComputeNode;
 import at.dms.kjc.common.ALocalVariable;
 
 public class Core extends ComputeNode<CoreCodeStore> {
-    /** the core number */
-    protected int coreNum;
+    /** the core ID */
+    protected int coreID;
     /** the parent machine */
     protected SMPMachine machine;
 
@@ -17,17 +17,17 @@ public class Core extends ComputeNode<CoreCodeStore> {
      * 
      * @param machine The parent Machine.
      */
-    public Core(int coreNum, SMPMachine machine) 
+    public Core(int coreID, SMPMachine machine) 
     {
         super();
         this.machine = machine;
-        this.coreNum = coreNum;
-        setUniqueId(coreNum);
+        this.coreID = coreID;
+        setUniqueId(coreID);
         
         if(KjcOptions.iterations == -1)
-	    computeCode = new CoreCodeStore(this);
+        	computeCode = new CoreCodeStore(this);
         else
-	    computeCode = new CoreCodeStore(this, ALocalVariable.makeVar(CStdType.Integer, "maxSteadyIter"));
+        	computeCode = new CoreCodeStore(this, ALocalVariable.makeVar(CStdType.Integer, "maxSteadyIter"));
     }
     
     /**
@@ -35,7 +35,7 @@ public class Core extends ComputeNode<CoreCodeStore> {
      * 
      * @return The core number
      */
-    public int getCoreNumber() {
+    public int getCoreID() {
        return getUniqueId();
     }
     

@@ -27,7 +27,7 @@ public class SourceAddressRotation extends RotatingBuffer {
         bufType = buf.bufType;
         this.ident = buf.getIdent() + "_addr_";
         
-        int coreNum = parent.getCoreNumber();
+        int coreNum = parent.getCoreID();
         
         writeRotStructName = this.getIdent() + "rot_struct__n" + coreNum;
         currentWriteRotName = this.getIdent() + "write_current__n" + coreNum;

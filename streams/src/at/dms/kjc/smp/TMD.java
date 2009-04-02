@@ -12,6 +12,7 @@ import at.dms.kjc.backendSupport.*;
 import at.dms.kjc.iterator.IterFactory;
 import at.dms.kjc.iterator.SIRFilterIter;
 import at.dms.kjc.slicegraph.fission.*;
+
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.HashSet;
@@ -57,7 +58,6 @@ public class TMD extends Scheduler {
     public void setComputeNode(SliceNode node, Core core) {
         assert node != null && core != null;
         layoutMap.put(node, core);
-        
         //remember what filters each tile has mapped to it
         //System.out.println("Settting " + node + " to tile " + tile.getTileNumber());
         if (core.isComputeNode())
@@ -73,8 +73,204 @@ public class TMD extends Scheduler {
             "Must set the graph schedule (multiplicities) before running layout";
         
         lsg = new LevelizeSliceGraph(graphSchedule.getSlicer().getTopSlices());
+        Slice[][] levels = lsg.getLevels();
         
-        fallBackLayout();
+        
+        //if the fan out of any non-predefined filter is > 2 then we have to use the fallback
+        //layout algorithm and global barriers...
+        int maxFanout = 0;
+        fallBackLayout = false;
+        for (int l = 0; l < levels.length; l++) {
+            for (int f = 0; f < levels[l].length; f++) {
+                if (levels[l][f].getFirstFilter().isPredefined())
+                    continue;
+                if (levels[l][f].getTail().getDestSet(SchedulingPhase.STEADY).size() > maxFanout) {
+                    maxFanout = levels[l][f].getTail().getDestSet(SchedulingPhase.STEADY).size();
+                    if (maxFanout > 2) {
+                        fallBackLayout = true;
+                        System.out.println(levels[l][f] + " has fanout > 2!");
+                    }
+                }
+            }
+        }
+        
+        System.out.println("Max slice fanout: " + maxFanout);
+
+        if (fallBackLayout)
+            fallBackLayout();
+        else 
+            neighborsLayout(levels);
+    }
+    
+    /**
+     * In this optimized layout algorithm communicating filters that are not placed on the
+     * same tile are placed on neighboring tiles.
+     */
+    private void neighborsLayout(Slice[][] levels) {
+        //we know fanout <= 2 and each level has number_of_tiles slices
+        
+        //assert that the first level only has a file reader and that we always have a
+        //file reader
+        //assert levels[0].length == 1 && levels[0][0].getFirstFilter().isFileInput();
+        
+        //place each slice in a set that will be mapped to the same tile
+        System.out.println("Partitioning into same tile sets...");
+        Set<Set<Slice>> sameTile = createSameTileSets(levels);
+        assert sameTile.size() <= SMPBackend.chip.size() : 
+            sameTile.size() + " " + SMPBackend.chip.size();
+        Core nextToAssign = SMPBackend.chip.getNthComputeNode(0);
+        Set<Slice> current = sameTile.iterator().next();
+        Set<Set<Slice>> done = new HashSet<Set<Slice>>();
+        System.out.println("Beginning Neighbors Layout...");
+        
+        while (true) {
+            //system.out.println("Assigning " + current + " to " + nextToAssign.getTileNumber());
+            assignSlicesToTile(current, nextToAssign);
+            done.add(current);
+            assert done.contains(current);
+                        
+            //now find the next slice set to assign to the snake
+            //first find a slice that has a nonlocal output, so we can make the set it is in
+            //neighbors with the slice we just assigned...
+            Slice nonLocalOutput = null;
+            for (Slice slice : current) {
+                if (slice.getTail().getDestSet(SchedulingPhase.STEADY).size() > 1) 
+                    nonLocalOutput = slice;
+                else if (slice.getTail().getDestSet(SchedulingPhase.STEADY).size() == 1) {
+                    Slice destSlice = slice.getTail().getDestSlices(SchedulingPhase.STEADY).iterator().next();
+                    if (current != getSetWithSlice(sameTile, destSlice) && 
+                            getSetWithSlice(sameTile, destSlice) != null) {
+                        nonLocalOutput = slice;
+                    }
+                }
+            }
+            //nothing else to assign
+            if (done.size() == sameTile.size()) {
+                break;
+            }
+            
+            current = null;
+            //set the next set of slice to assign to the next tile in the snake
+            //fis
+            if (nonLocalOutput != null) {
+                //one of the slices does communicate with a slice not of its own set
+                for (Slice slice : nonLocalOutput.getTail().getDestSlices(SchedulingPhase.STEADY)) {
+                    Set<Slice> set = getSetWithSlice(sameTile, slice);
+                    if (set != current && 
+                            !done.contains(set)) {
+                        current = getSetWithSlice(sameTile, slice);
+                        break;
+                    }
+                }
+            }
+            //if we didn't find a communicating set to make a neighbor, then just pick any old set of slices 
+            if (current == null) {
+                for (Set<Slice> next : sameTile) {
+                    if (!done.contains(next))
+                        current = next;
+                }
+            }
+
+            assert current != null;
+            nextToAssign = SMPBackend.chip.getNextCore(nextToAssign);
+        }
+        
+        System.out.println("End Neighbors Layout...");
+        
+    }
+    
+    private void assignSlicesToTile(Set<Slice> slices, Core core) {
+        for (Slice slice : slices) {
+            //System.out.println("Assign " + slice.getFirstFilter() + " to tile " + tile.getTileNumber());
+            setComputeNode(slice.getFirstFilter(), core);
+        }
+    }
+    
+    /**
+     * 
+     */
+    private Set<Set<Slice>> createSameTileSets(Slice[][] levels) {
+        HashSet<Set<Slice>> sameTile = new HashSet<Set<Slice>>();
+        for (int l = 0; l < levels.length; l++) {
+            //System.out.println("Level " + l + " has size " + levels[l].length);
+            LinkedList<Slice> alreadyAssigned = new LinkedList<Slice>();
+            for (int s = 0; s < levels[l].length; s++) {
+                Slice slice = levels[l][s];
+                //assign predefined to offchip memory and don't add them to any set
+                if (slice.getFirstFilter().isPredefined()) {
+                    setComputeNode(slice.getFirstFilter(), SMPBackend.chip.getOffChipMemory());
+                } else {
+                    //find the input with the largest amount of data coming in
+                    //and put this slice in the set that the max input is in
+                    int bestInputs = -1;
+                    Set<Slice> theBest = null;;
+                    
+                    for (Edge edge : slice.getHead().getSourceSet(SchedulingPhase.STEADY)) {
+                        if (slice.getHead().getWeight(edge, SchedulingPhase.STEADY) >= bestInputs) {
+                            if (slice.getHead().getWeight(edge, SchedulingPhase.STEADY) == bestInputs) {
+                                //want to be careful about when they are equal because you want to place the 
+                                //downstream best that is at the beginning of the round-robin when distributing
+                                if (slice.getHead().getSources(SchedulingPhase.STEADY)[0] != edge)
+                                    continue;
+                            }
+                            //the set we want to see if this slice should be added to
+                            Set<Slice> testSet = getSetWithSlice(sameTile, edge.getSrc().getParent());
+                            
+                            //if the test set is null, then we have not put the upstream slice on the chip 
+                            if (testSet == null) {
+                                continue;
+                            }
+                            
+                            //check if the best contains a slice from this level already, if so, we cannot
+                            //assign another slice so continue
+                            boolean canUse = true;
+                            for (Slice seen : alreadyAssigned) {
+                                if (testSet.contains(seen))
+                                    canUse = false;
+                            }
+                            if (!canUse)
+                                continue;
+                            
+                            //otherwise, we have not added a slice from this level to this set, so 
+                            //we can use it
+                            theBest = testSet;
+                            bestInputs = slice.getHead().getWeight(edge, SchedulingPhase.STEADY);
+                            
+                 
+                        }
+                    }
+                    //remember that we have assigned this slice in the level
+                    alreadyAssigned.add(slice);
+                    //no upstream slice is in a set
+                    if (theBest == null) {
+                        //System.out.println("no best: " + slice.getFirstFilter());
+                        //create a new set and add it to the set of sets
+                        HashSet<Slice> newSet = new HashSet<Slice>();
+                        newSet.add(slice);
+                        sameTile.add(newSet);
+                    } else {
+                        //we should put slice in the set that is the best
+                        theBest.add(slice);
+                    }
+                }
+            }
+        }
+        return sameTile;
+    }
+    
+    /**
+     * Give a set of set of slices and slice return the set of slices that contains
+     * slice.
+     */
+    private Set<Slice> getSetWithSlice(Set<Set<Slice>> sameTile, Slice slice) {
+        Set<Slice> set = null;
+        for (Set<Slice> current : sameTile) {
+            if (current.contains(slice)) {
+                assert set == null;
+                set = current;
+            }
+        }
+        return set;
     }
     
     /**
@@ -95,14 +291,11 @@ public class TMD extends Scheduler {
             if (levels[l].length == 1 && levels[l][0].getFirstFilter().isPredefined()) {
                 //we only support full levels for right now other than predefined filters 
                 //that are not fizzed
-		System.out.println(levels[l][0].getFirstFilter() + " assigned to offChipMemory");
-		setComputeNode(levels[l][0].getFirstFilter(), SMPBackend.chip.getOffChipMemory());
+            	setComputeNode(levels[l][0].getFirstFilter(), SMPBackend.chip.getOffChipMemory());
             } else {
                 for (int f = 0; f < levels[l].length; f++) {
                     Slice slice = levels[l][f];
-		    System.out.println("Looking for tile for filter: " + slice.getFirstFilter());
                     Core theTile = tileToAssign(slice, SMPBackend.chip, allocatedTiles);
-		    System.out.println("Assigning filter to tile: " + theTile);
                     setComputeNode(slice.getFirstFilter(), theTile);
                     allocatedTiles.add(theTile);
                 }
@@ -114,13 +307,9 @@ public class TMD extends Scheduler {
         Core theBest = null;
         int bestInputs = -1;
 
-	System.out.println("Inside tileToAssign for: " + slice.getFirstFilter());
-
         //add the tiles to the list that are allocated to upstream inputs
         for (Edge edge : slice.getHead().getSourceSet(SchedulingPhase.STEADY)) {
-	    System.out.println("Looking at source: " + edge.getSrc().getPrevious());
             Core upstreamTile = getComputeNode(edge.getSrc().getPrevious());
-	    System.out.println("Source on tile: " + upstreamTile);
             if (upstreamTile == SMPBackend.chip.getOffChipMemory())
                 continue;
             if (allocatedTiles.contains(upstreamTile))
@@ -155,14 +344,15 @@ public class TMD extends Scheduler {
     public void run(int tiles) {
         //if we are using the SIR data parallelism pass, then don't run TMD
         if (KjcOptions.dup == 1) {
-	    LinkedList<Slice> slices = DataFlowOrder.getTraversal(graphSchedule.getSlicer().getTopSlices());
-
-	    for (Slice slice : slices) {
-		FilterContent filter = slice.getFirstFilter().getFilter();
-		filter.multSteadyMult(KjcOptions.steadymult);
-	    }
-            return;
-	}
+		    LinkedList<Slice> slices = DataFlowOrder.getTraversal(graphSchedule.getSlicer().getTopSlices());
+	
+		    for (Slice slice : slices) {
+		    	FilterContent filter = slice.getFirstFilter().getFilter();
+		    	filter.multSteadyMult(KjcOptions.steadymult);
+		    }
+		    
+		    return;
+        }
         
         calculateFizzAmounts(tiles);
         

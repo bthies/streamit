@@ -76,7 +76,7 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
             directWrite = true;
             if (output.getSingleEdge(SchedulingPhase.STEADY).getDest().getNextFilter().isFileOutput()) {
                 fileWrite = true;
-                decls.add(Util.toStmt("volatile " + buf.getType().toString() + " " + FAKE_IO_VAR + "__n" + buf.parent.getCoreNumber()));
+                decls.add(Util.toStmt("volatile " + buf.getType().toString() + " " + FAKE_IO_VAR + "__n" + buf.parent.getCoreID()));
             }
             
             assert !usesSharedBuffer();
@@ -336,7 +336,7 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
         if (fileWrite && SMPBackend.FAKE_IO) {
             //if we are faking the io and this writes to a file writer assign val to volatile value
             body.addStatement(Util.toStmt(FAKE_IO_VAR + "__n" + 
-					  SMPBackend.scheduler.getComputeNode(parent.filterNode).getCoreNumber() + " = " + valName));
+					  SMPBackend.scheduler.getComputeNode(parent.filterNode).getCoreID() + " = " + valName));
         } else {
             //otherwise generate buffer assignment
             body.addStatement(

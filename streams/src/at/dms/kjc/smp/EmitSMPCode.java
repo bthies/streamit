@@ -20,7 +20,7 @@ import at.dms.kjc.sir.SIRCodeUnit;
 import at.dms.kjc.KjcOptions;
 
 /**
- * Emit c code for tiles.
+ * Emit c code for tiles
  * 
  * @author mgordon
  *
@@ -46,42 +46,51 @@ public class EmitSMPCode extends EmitCode {
             
             // add stats useful for performance debugging
             if(KjcOptions.debug) {
-            	for (Core tile : SMPBackend.chip.getCores()) {
-            		SMPBackend.chip.getOffChipMemory().getComputeCode().appendTxtToGlobal("uint64_t start_time_n" + tile.getCoreID() + ";");
+            	for (Core core : SMPBackend.chip.getCores()) {
+                    if (!core.getComputeCode().shouldGenerateCode())
+                        continue;
+
+            		SMPBackend.chip.getOffChipMemory().getComputeCode().appendTxtToGlobal("uint64_t start_time_n" + core.getCoreID() + ";");
             		
-            		tile.getComputeCode().addSteadyLoopStatementFirst(Util.toStmt("printf(\"Thread " + tile.getCoreID() + ", start: %llu\\n\", start_time_n" + tile.getCoreID() +")"));
+            		core.getComputeCode().addSteadyLoopStatementFirst(Util.toStmt("printf(\"Thread " + core.getCoreID() + ", start: %llu\\n\", start_time_n" + core.getCoreID() +")"));
             		
-            		tile.getComputeCode().addSteadyLoopStatementFirst(Util.toStmt("start_time_n" + tile.getCoreID() + " = rdtsc()"));
+            		core.getComputeCode().addSteadyLoopStatementFirst(Util.toStmt("start_time_n" + core.getCoreID() + " = rdtsc()"));
             		
                     if(KjcOptions.smp > 1)
-                        tile.getComputeCode().addSteadyLoopStatement(Util.toStmt("printf(\"Thread " + tile.getCoreID() + ", before barrier: %llu\\n\", rdtsc() - start_time_n" + tile.getCoreID() + ")"));
+                        core.getComputeCode().addSteadyLoopStatement(Util.toStmt("printf(\"Thread " + core.getCoreID() + ", before barrier: %llu\\n\", rdtsc() - start_time_n" + core.getCoreID() + ")"));
             	}
             }
             
-            // for all the tiles, add a barrier at the end of the steady state, do it here because we are done
+            // for all the cores, add a barrier at the end of the steady state, do it here because we are done
             // with all code gen
             CoreCodeStore.addBarrierSteady();
             
             // add more stats useful for performance debugging
             if(KjcOptions.debug) {
-            	for (Core tile : SMPBackend.chip.getCores()) {
-                    if(KjcOptions.smp > 1)
-                        tile.getComputeCode().addSteadyLoopStatement(Util.toStmt("printf(\"Thread " + tile.getCoreID() + ", after barrier: %llu\\n\", rdtsc() - start_time_n" + tile.getCoreID() + ")"));
+            	for (Core core : SMPBackend.chip.getCores()) {
+                    if (!core.getComputeCode().shouldGenerateCode())
+                        continue;
 
-                    tile.getComputeCode().addSteadyLoopStatement(Util.toStmt("printf(\"Thread " + tile.getCoreID() + ", end: %llu\\n\", rdtsc())"));
+                    if(KjcOptions.smp > 1)
+                        core.getComputeCode().addSteadyLoopStatement(Util.toStmt("printf(\"Thread " + core.getCoreID() + ", after barrier: %llu\\n\", rdtsc() - start_time_n" + core.getCoreID() + ")"));
+
+                    core.getComputeCode().addSteadyLoopStatement(Util.toStmt("printf(\"Thread " + core.getCoreID() + ", end: %llu\\n\", rdtsc())"));
+                    core.getComputeCode().addSteadyLoopStatement(Util.toStmt("printf(\"Thread " + core.getCoreID() + ", time: %llu\\n\", rdtsc() - start)"));
             	}
             }
 
-            for (Core tile : SMPBackend.chip.getCores()) {
-                // if no code was written to this tile's code store, then skip it
-                if (!tile.getComputeCode().shouldGenerateCode())
+            for (Core core : SMPBackend.chip.getCores()) {
+                if (!core.getComputeCode().shouldGenerateCode())
                     continue;
             
-                tile.getComputeCode().addCleanupStatement(Util.toStmt("pthread_exit(NULL)"));
+                core.getComputeCode().addCleanupStatement(Util.toStmt("pthread_exit(NULL)"));
             }
 
             // call to buffer initialization and CPU affinity setting
             for (Core core : SMPBackend.chip.getCores()) {
+                if (!core.getComputeCode().shouldGenerateCode())
+                    continue;
+
                 core.getComputeCode().addFunctionCallFirst(core.getComputeCode().getBufferInitMethod(), new JExpression[0]);
                 
                 JExpression[] setAffinityArgs = new JExpression[1];
@@ -91,8 +100,12 @@ public class EmitSMPCode extends EmitCode {
 
             // make sure that variables and methods are unique across cores            
             List<ComputeCodeStore<?>> codeStores = new LinkedList<ComputeCodeStore<?>>();
-            for (Core core : SMPBackend.chip.getCores())
+            for (Core core : SMPBackend.chip.getCores()) {
+                if (!core.getComputeCode().shouldGenerateCode())
+                    continue;
+                
                 codeStores.add(core.getComputeCode());
+            }
             
             CodeStoreRenameAll.renameOverAllCodeStores(codeStores);
             
@@ -105,12 +118,12 @@ public class EmitSMPCode extends EmitCode {
             codeEmitter.generateSharedGlobals(p);
             codeEmitter.generateSetAffinity(p);
                         
-            for (Core tile : SMPBackend.chip.getCores()) {
-                // if no code was written to this tile's code store, then skip it
-                if (!tile.getComputeCode().shouldGenerateCode())
+            for (Core core : SMPBackend.chip.getCores()) {
+                // if no code was written to this core's code store, then skip it
+                if (!core.getComputeCode().shouldGenerateCode())
                     continue;
     
-                codeEmitter.emitCodeForComputeNode(tile,p);                
+                codeEmitter.emitCodeForComputeNode(core, p);
             }
 
             codeEmitter.generateMain(p);
@@ -185,6 +198,8 @@ public class EmitSMPCode extends EmitCode {
         p.println();
         p.println("all: main.c");
         p.println("\t$(CC) $(CFLAGS) $(LIBS) -o smp" + KjcOptions.smp + " main.c");
+        p.println("debug: main.c");
+        p.println("\t$(CC) $(CFLAGS) $(LIBS) -g -o smp" + KjcOptions.smp + "_debug main.c");
         p.println();
         p.close();
 
@@ -392,9 +407,15 @@ public class EmitSMPCode extends EmitCode {
         p.println("int main(int argc, char** argv) {");
         p.indent();
 
+        // figure out how many cores will participate in barrier
+        int barrier_count = 0;
+        for(Core core : SMPBackend.chip.getCores())
+            if(core.getComputeCode().shouldGenerateCode())
+                barrier_count++;
+
         p.println();
         p.println("// Initialize barrier");
-        p.println("barrier_init(&barrier, " + SMPBackend.chip.size() + ");");
+        p.println("barrier_init(&barrier, " + barrier_count + ");");
         
         p.println();
         p.println("// Spawn threads");
@@ -406,6 +427,9 @@ public class EmitSMPCode extends EmitCode {
         p.println("pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);");
 
         for(Core core : SMPBackend.chip.getCores()) {
+            if(core.getComputeCode().shouldGenerateCode())
+                continue;
+
             p.println();
             p.println("pthread_t thread_n" + core.getCoreID() + ";");
             p.println("if ((rc = pthread_create(&thread_n" + core.getCoreID() + ", NULL, " +
@@ -419,6 +443,9 @@ public class EmitSMPCode extends EmitCode {
         p.println("pthread_attr_destroy(&attr);");
         
         for(Core core : SMPBackend.chip.getCores()) {
+            if(core.getComputeCode().shouldGenerateCode())
+                continue;
+
             p.println();
             p.println("if ((rc = pthread_join(thread_n" + core.getCoreID() + ", &status)) < 0) {");
             p.indent();

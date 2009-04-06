@@ -475,7 +475,7 @@ public class FlatIRToCluster extends InsertTimers implements
             if (self instanceof SIRFileReader) { p.println("#include <FileReader.h>"); }
             if (self instanceof SIRFileWriter) { p.println("#include <FileWriter.h>"); }
             
-            p.println("int __file_descr__"+selfID+";\n");
+            p.println("void *__file_descr__"+selfID+";\n");
         }
 
         // +=============================+

@@ -84,18 +84,23 @@ public class ProcessFileWriter {
         
         if(allocatingTiles.get(fo) != null)
             return allocatingTiles.get(fo);
-            
+
+        // Try cores that are not yet allocating and already have existing code
+        for (Core tile : reverseOrder) {
+            if (!allocatingTiles.containsValue(tile) && tile.getComputeCode().shouldGenerateCode()) {
+                allocatingTiles.put(fo, tile);
+                return tile;
+            }
+        }
+
+        // Try cores that are not yet allocating, but do not already have code
         for (Core tile : reverseOrder) {
             if (!allocatingTiles.containsValue(tile)) {
                 allocatingTiles.put(fo, tile);
                 return tile;
             }
-/*
-	    else if(allocatingTiles.get(fo).equals(tile)) {
-		return tile;
-	    }
-*/
         }
+
         assert false : "Too many file readers for this chip (one per tile)!";
         return null;
     }

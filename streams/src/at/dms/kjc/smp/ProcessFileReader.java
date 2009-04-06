@@ -130,15 +130,16 @@ public class ProcessFileReader {
         block.addStatement(Util.toStmt("fstat(INPUT, &statbuf)"));
         block.addStatement(Util.toStmt("fileReadBuffer = (" + fileInput.getType() + "*)mmap(NULL, statbuf.st_size, PROT_READ | PROT_WRITE, MAP_PRIVATE, INPUT, 0)"));
         */
-        codeStore.appendTxtToGlobal("FILE *INPUT;\n");
+        codeStore.appendTxtToGlobal("FILE *input;\n");
+        codeStore.appendTxtToGlobal("off_t num_inputs;\n");
+
         block.addStatement(Util.toStmt("struct stat statbuf"));
         block.addStatement(Util.toStmt("stat(\"" + fileInput.getFileName() + "\", &statbuf)"));
+        block.addStatement(Util.toStmt("num_inputs = statbuf.st_size / " + fileInput.getType().getSizeInC()));
         block.addStatement(Util.toStmt("fileReadBuffer = (" + fileInput.getType() + " *)malloc(statbuf.st_size)"));
-        block.addStatement(Util.toStmt("INPUT = fopen(\"" + fileInput.getFileName() + "\", \"r\")"));
-        block.addStatement(Util.toStmt("if(fread((void *)fileReadBuffer, " + fileInput.getType().getSizeInC() + 
-        								", statbuf.st_size / " + fileInput.getType().getSizeInC() + ", INPUT) != statbuf.st_size / " + 
-                                       fileInput.getType().getSizeInC() + ")\n" +
-                                       "  printf(\"Error reading %lu bytes of input file\\n\", (unsigned long)statbuf.st_size)"));
+        block.addStatement(Util.toStmt("input = fopen(\"" + fileInput.getFileName() + "\", \"r\")"));
+        block.addStatement(Util.toStmt("if(fread((void *)fileReadBuffer, " + fileInput.getType().getSizeInC() + ", num_inputs, input) != num_inputs)" +
+        								"printf(\"Error reading %lu bytes of input file\\n\", (unsigned long)statbuf.st_size)"));
 
         for (Core other : SMPBackend.chip.getCores()) {
             if (codeStore.getParent() == other) 
@@ -160,17 +161,22 @@ public class ProcessFileReader {
         if(allocatingTiles.get(filterNode) != null)
             return allocatingTiles.get(filterNode);
         
+        // Try cores that are not yet allocating and already have existing code
+        for (Core tile : SMPBackend.chip.getCores()) {
+            if (!allocatingTiles.containsValue(tile) && tile.getComputeCode().shouldGenerateCode()) {
+                allocatingTiles.put(filterNode, tile);
+                return tile;
+            }
+        }
+
+        // Try cores that are not yet allocating, but do not already have code
         for (Core tile : SMPBackend.chip.getCores()) {
             if (!allocatingTiles.containsValue(tile)) {
                 allocatingTiles.put(filterNode, tile);
                 return tile;
             }
-/*
-	    else if(allocatingTiles.get(filterNode).equals(tile)) {
-		return tile;
-	    }
-*/
         }
+
         assert false : "Too many file readers for this chip (one per tile)!";
         return null;
     }

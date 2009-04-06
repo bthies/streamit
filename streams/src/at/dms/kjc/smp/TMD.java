@@ -107,6 +107,8 @@ public class TMD extends Scheduler {
      * same tile are placed on neighboring tiles.
      */
     private void neighborsLayout(Slice[][] levels) {
+        System.out.println("Using neighbors layout");
+
         //we know fanout <= 2 and each level has number_of_tiles slices
         
         //assert that the first level only has a file reader and that we always have a
@@ -278,7 +280,8 @@ public class TMD extends Scheduler {
      * it is used when the fanout of any slice is greater than 2.
      */
     private void fallBackLayout() {
-        System.out.println("Using fall back layout algorithm because neighbor algorithm doesn't make sense for SMP");
+        System.out.println("Using fallback layout");
+
         Slice[][] levels = lsg.getLevels();
         
         System.out.println("Levels: " + levels.length);

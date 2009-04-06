@@ -427,7 +427,7 @@ public class EmitSMPCode extends EmitCode {
         p.println("pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);");
 
         for(Core core : SMPBackend.chip.getCores()) {
-            if(core.getComputeCode().shouldGenerateCode())
+            if(!core.getComputeCode().shouldGenerateCode())
                 continue;
 
             p.println();
@@ -443,7 +443,7 @@ public class EmitSMPCode extends EmitCode {
         p.println("pthread_attr_destroy(&attr);");
         
         for(Core core : SMPBackend.chip.getCores()) {
-            if(core.getComputeCode().shouldGenerateCode())
+            if(!core.getComputeCode().shouldGenerateCode())
                 continue;
 
             p.println();

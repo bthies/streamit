@@ -93,8 +93,8 @@ public class CoreCodeStore extends ComputeCodeStore<Core> {
         
         for (int t = 0; t < SMPBackend.chip.size(); t++) {
             CoreCodeStore cs = SMPBackend.chip.getNthComputeNode(t).getComputeCode();
-             cs.addInitStatement(Util.toStmt("barrier_wait(&barrier)"));
-             cs.setHasCode();
+            cs.addInitStatement(Util.toStmt("barrier_wait(&barrier)"));
+            cs.setHasCode();
          }
     }
     
@@ -318,7 +318,7 @@ public class CoreCodeStore extends ComputeCodeStore<Core> {
         appendTxtToGlobal("}\n");
 
         addSteadyLoopStatement(Util.toStmt("__iteration__++"));
-        addSteadyLoopStatement(Util.toStmt("if (__iteration__ >= ITERATIONS - 1) __printSSCycleAvg()"));
+        addSteadyLoopStatement(Util.toStmt("if (__iteration__ >= ITERATIONS) __printSSCycleAvg()"));
     }
     
     public void addFunctionCallFirst(JMethodDeclaration func, JExpression[] args) {

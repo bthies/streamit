@@ -10,84 +10,71 @@ import at.dms.kjc.slicegraph.OutputSliceNode;
 import at.dms.kjc.slicegraph.SchedulingPhase;
 
 public abstract class BufferTransfers {
-    /** the output buffer that these dma commands uses as its source */
     protected RotatingBuffer parent;
-    /** the block of ilib_wait calls, one for each dma command generated, separated for steady 
-     * because we have concurrency, for init they are in commandsInit*/
-    protected List<JStatement> waitCallsSteady;
-    /** the dma commands block */
-    protected List<JStatement> commandsSteady;
-    /** the dma commands block */
-    protected List<JStatement> commandsInit;
-    /** the output slice node */
-    protected OutputSliceNode output;
+    
+    /** transfer commands used during reads */  
+    protected List<JStatement> readCommandsInit;
+    protected List<JStatement> readCommandsPrimePump;
+    protected List<JStatement> readCommandsSteady;
+    
+    /** transfer commands used during writes */
+    protected List<JStatement> writeCommandsInit;
+    protected List<JStatement> writeCommandsPrimePump;
+    protected List<JStatement> writeCommandsSteady;
+    
     /** any declarations that are needed */
-    protected List<JStatement> decls;
+    protected List<JStatement> readDecls;
+    protected List<JStatement> writeDecls;
     
     public BufferTransfers(RotatingBuffer buf) {
         parent = buf;
-        waitCallsSteady= new LinkedList<JStatement>();
-        commandsSteady = new LinkedList<JStatement>();
-        commandsInit = new LinkedList<JStatement>();
-        decls = new LinkedList<JStatement>();
-        //if this is a shared input buffer (one we are using for output), then 
-        //the output buffer we are implementing here is the upstream output buffer
-        //on the same tile
-        if (buf instanceof InputRotatingBuffer) {
-            output = ((InputRotatingBuffer)buf).getLocalSrcFilter().getParent().getTail();
-        }
-        else
-            output = parent.filterNode.getParent().getTail();
-    }
-    
-    /**
-     * Return the list of DMA commands that will transfer the items from the
-     * output buffer to to appropriate input buffer(s)
-     * 
-     * @return the dma commands
-     */
-    public List<JStatement> transferCommands(SchedulingPhase which) {
-        if (which == SchedulingPhase.INIT)
-            return commandsInit;
         
-        return commandsSteady;
+        readCommandsInit = new LinkedList<JStatement>();
+        readCommandsPrimePump = new LinkedList<JStatement>();
+        readCommandsSteady = new LinkedList<JStatement>();
+        
+        writeCommandsInit = new LinkedList<JStatement>();
+        writeCommandsPrimePump = new LinkedList<JStatement>();
+        writeCommandsSteady = new LinkedList<JStatement>();
+        
+        readDecls = new LinkedList<JStatement>();
+        writeDecls = new LinkedList<JStatement>();
     }
     
-    /**
-     * Return declarations of variables needed by the dma commands 
-     * @return declarations of variables needed by the dma commands 
-     */
-    public List<JStatement> decls() {
-        return decls;
+    public List<JStatement> readTransferCommands(SchedulingPhase which) {
+    	switch(which) {
+    		case INIT: return readCommandsInit;
+    		case PRIMEPUMP: return readCommandsPrimePump;
+    		case STEADY: return readCommandsSteady;
+    		default: assert(false);
+    	}
+
+    	return null;
     }
     
-    /**
-     * Return the ilib_wait statements that wait for the dma commands to complete
-     * 
-     * @return the wait statements
-     */
-    public List<JStatement> waitCallsSteady() {
-        return waitCallsSteady;    
+    public List<JStatement> writeTransferCommands(SchedulingPhase which) {
+    	switch(which) {
+			case INIT: return writeCommandsInit;
+			case PRIMEPUMP: return writeCommandsPrimePump;
+			case STEADY: return writeCommandsSteady;
+			default: assert(false);
+    	}
+	
+    	return null;
+    }
+
+    public List<JStatement> readDecls() {
+        return readDecls;
     }
     
+    public List<JStatement> writeDecls() {
+        return writeDecls;
+    }
+    
+    public abstract JStatement zeroOutTail(SchedulingPhase phase);
     public abstract JStatement zeroOutHead(SchedulingPhase phase);
     
+    public abstract JMethodDeclaration peekMethod();
+    public abstract JMethodDeclaration popMethod();
     public abstract JMethodDeclaration pushMethod();
-    
-    /**
-     * Do some checks to make sure we will generate correct code for this distribution pattern.
-     */
-    protected void checkSimple(SchedulingPhase phase) {
-        assert output.singleAppearance();
-        for (int w = 0; w < output.getWeights(phase).length; w++) {
-            for (InterSliceEdge edge : output.getDests(phase)[w]) {
-                InputSliceNode input = edge.getDest();
-                //assert that we don't have a single edge appear more than once for the input slice node
-                assert input.singleAppearance();
-                
-                int inWeight = input.getWeight(edge, phase);
-                assert inWeight == output.getWeights(phase)[w];
-            }
-        }
-    }
 }

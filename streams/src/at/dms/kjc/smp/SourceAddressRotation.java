@@ -130,4 +130,9 @@ public class SourceAddressRotation extends RotatingBuffer {
         assert false;
         return null;
     }
+
+	public JArrayAccessExpression readBufRef(JExpression offset) {
+		assert false;
+		return null;
+	}
 }

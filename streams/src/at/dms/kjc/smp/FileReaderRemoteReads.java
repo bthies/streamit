@@ -6,6 +6,7 @@ import at.dms.kjc.smp.arrayassignment.*;
 import at.dms.kjc.JEmittedTextExpression;
 import at.dms.kjc.JExpressionStatement;
 import at.dms.kjc.JStatement;
+import at.dms.kjc.KjcOptions;
 import at.dms.kjc.backendSupport.FilterInfo;
 import at.dms.kjc.slicegraph.*;
 
@@ -78,6 +79,8 @@ public class FileReaderRemoteReads extends FileReaderCode {
         //every filter that reads from this file must increment the index of items read
         //in a phase, even if the filter does not read during the current phase 
         statements.add(Util.toStmt("fileReadIndex__n" + parent.parent.getCoreID() + " += " + srcInfo.totalItemsSent(phase)));
+        if(!KjcOptions.noloopinput)
+            statements.add(Util.toStmt("if(fileReadIndex__n" + parent.parent.getCoreID() + " + " + srcInfo.totalItemsSent(phase) + " >= num_inputs) fileReadIndex__n" + parent.parent.getCoreID() + " = 0"));
         
         //if currently in steady-state, prefetch items from the fileReadBuffer for the next steady-state
         //if we don't receive anything, don't generate prefetch code

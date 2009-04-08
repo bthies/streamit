@@ -5,41 +5,43 @@ import at.dms.kjc.slicegraph.*;
 import java.util.HashMap;
 import at.dms.kjc.backendSupport.*;
 import at.dms.kjc.*;
+
 import java.util.LinkedList;
 import at.dms.kjc.smp.arrayassignment.*;
+
 import java.util.List;
 
 public class BufferRemoteWritesTransfers extends BufferTransfers {
-        
-    /** reference to head if this input buffer is shared as an output buffer */
+
+    /**
+     * Unique id
+     */
+    protected static int uniqueID = 0;
+    protected int myID;
+	
+	/** reference to tail */
+    protected JExpression tail;
+    /** name of variable containing head of array offset */
+    protected String readTailName;
+    /** definition for head */
+    protected JVariableDefinition readTailDefn;
+	
+    /** reference to head */
     protected JExpression head;
     /** name of variable containing head of array offset */
     protected String writeHeadName;
     /** definition for head */
     protected JVariableDefinition writeHeadDefn;
+    
+    /** the output slice node */
+    protected OutputSliceNode output;
+    
     /** optimization: if this is true, then we can write directly to the remote input buffer
      * when pushing and not into the local buffer.  This only works when the src and dest are on
      * different tiles.
      */
     protected boolean directWrite = false;
-    /** the address array of addresses into the local shared buffer (src buffer) in 
-     * which to write for init
-     */
-    protected LinkedList<Integer> addressArrayInit;
-    /** the address array of addresses into the local shared buffer (src buffer) in 
-     * which to write for steady
-     */
-    protected LinkedList<Integer> addressArraySteady;
-    protected static int uniqueID = 0;
-    protected int myID;
-    /** name of the address array pointer that is used in the push method,
-     * points to either steady or init
-     */
-    protected String addrArrayPointer;
-    /** name of the var that points to the address array for the steady */
-    protected String addrArraySteadyVar;
-    /** name of the var that points to the address array for the init */
-    protected String addrArrayInitVar;
+
     /** true if this buffer's dest is a file writer */
     protected boolean fileWrite = false;
     protected static final String FAKE_IO_VAR = "__fake_output_var__";
@@ -48,108 +50,189 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
         super(buf);
         myID = uniqueID++;
         
-        //set up the head pointer for writing
-        writeHeadName = buf.getIdent() + "head";
-        writeHeadDefn = new JVariableDefinition(null,
-                at.dms.kjc.Constants.ACC_STATIC,
-                CStdType.Integer, writeHeadName, null);
-        
-        head = new JFieldAccessExpression(writeHeadName);
-        head.setType(CStdType.Integer);
-      
-        if (output.oneOutput(SchedulingPhase.STEADY) && 
-                (output.oneOutput(SchedulingPhase.INIT) || output.noOutputs(SchedulingPhase.INIT)) &&
-                SMPBackend.scheduler.getComputeNode(parent.filterNode) !=
-                    SMPBackend.scheduler.getComputeNode(output.getSingleEdge(SchedulingPhase.STEADY).getDest().getNextFilter()) &&
-                    //now make sure that it is single appearance or downstream has only one input for both steady and init
-                    (output.getSingleEdge(SchedulingPhase.STEADY).getDest().singleAppearance() &&
-                            //check steady for only one input downstream or only one rotation
-                            (output.getSingleEdge(SchedulingPhase.STEADY).getDest().totalWeights(SchedulingPhase.STEADY) == 
-                                FilterInfo.getFilterInfo(output.getSingleEdge(SchedulingPhase.STEADY).getDest().getNextFilter()).totalItemsPopped(SchedulingPhase.STEADY) ||
-                                output.getSingleEdge(SchedulingPhase.STEADY).getDest().oneInput(SchedulingPhase.INIT)) &&
-                                //check the init stage
-                                (output.noOutputs(SchedulingPhase.INIT) || (output.oneOutput(SchedulingPhase.INIT) &&
-                                        output.getSingleEdge(SchedulingPhase.INIT).getDest().totalWeights(SchedulingPhase.INIT) == 
-                                            FilterInfo.getFilterInfo(output.getSingleEdge(SchedulingPhase.INIT).getDest().getNextFilter()).totalItemsPopped(SchedulingPhase.INIT) ||
-                                            output.getSingleEdge(SchedulingPhase.INIT).getDest().oneInput(SchedulingPhase.INIT)))))
-        {
-            directWrite = true;
-            if (output.getSingleEdge(SchedulingPhase.STEADY).getDest().getNextFilter().isFileOutput()) {
-                fileWrite = true;
-                decls.add(Util.toStmt("volatile " + buf.getType().toString() + " " + FAKE_IO_VAR + "__n" + buf.parent.getCoreID()));
-            }
+        if(parent instanceof InputRotatingBuffer) {            
+            //set up the tail pointer for reading
+            readTailName = buf.getIdent() + "tail";
+            readTailDefn = new JVariableDefinition(null,
+                    at.dms.kjc.Constants.ACC_STATIC,
+                    CStdType.Integer, readTailName, null);
             
-            assert !usesSharedBuffer();
-            
+            tail = new JFieldAccessExpression(readTailName);
+            tail.setType(CStdType.Integer);
+        	
+        	readDecls.add(new JVariableDeclarationStatement(readTailDefn));
+        	
+        	generateReadStatements(SchedulingPhase.INIT);
+        	generateReadStatements(SchedulingPhase.STEADY);
         }
-	
-        decls.add(new JVariableDeclarationStatement(writeHeadDefn));
         
-        generateStatements(SchedulingPhase.INIT);
-        generateStatements(SchedulingPhase.STEADY);
+        if(parent instanceof OutputRotatingBuffer ||
+        		(parent instanceof InputRotatingBuffer &&
+        				((InputRotatingBuffer)parent).hasLocalSrcFilter())) {
+        	
+            //set up the head pointer for writing
+            writeHeadName = buf.getIdent() + "head";
+            writeHeadDefn = new JVariableDefinition(null,
+                    at.dms.kjc.Constants.ACC_STATIC,
+                    CStdType.Integer, writeHeadName, null);
+            
+            head = new JFieldAccessExpression(writeHeadName);
+            head.setType(CStdType.Integer);
+        	
+        	writeDecls.add(new JVariableDeclarationStatement(writeHeadDefn));
+        	
+            //if this is a shared input buffer (one we are using for output), then 
+            //the output buffer we are implementing here is the upstream output buffer
+            //on the same tile
+            if (buf instanceof InputRotatingBuffer)
+                output = ((InputRotatingBuffer)buf).getLocalSrcFilter().getParent().getTail();
+            else
+                output = parent.filterNode.getParent().getTail();
+                
+            if (output.oneOutput(SchedulingPhase.STEADY) && 
+                    (output.oneOutput(SchedulingPhase.INIT) || output.noOutputs(SchedulingPhase.INIT)) &&
+                    SMPBackend.scheduler.getComputeNode(parent.filterNode) !=
+                        SMPBackend.scheduler.getComputeNode(output.getSingleEdge(SchedulingPhase.STEADY).getDest().getNextFilter()) &&
+                        //now make sure that it is single appearance or downstream has only one input for both steady and init
+                        (output.getSingleEdge(SchedulingPhase.STEADY).getDest().singleAppearance() &&
+                                //check steady for only one input downstream or only one rotation
+                                (output.getSingleEdge(SchedulingPhase.STEADY).getDest().totalWeights(SchedulingPhase.STEADY) == 
+                                    FilterInfo.getFilterInfo(output.getSingleEdge(SchedulingPhase.STEADY).getDest().getNextFilter()).totalItemsPopped(SchedulingPhase.STEADY) ||
+                                    output.getSingleEdge(SchedulingPhase.STEADY).getDest().oneInput(SchedulingPhase.INIT)) &&
+                                    //check the init stage
+                                    (output.noOutputs(SchedulingPhase.INIT) || (output.oneOutput(SchedulingPhase.INIT) &&
+                                            output.getSingleEdge(SchedulingPhase.INIT).getDest().totalWeights(SchedulingPhase.INIT) == 
+                                                FilterInfo.getFilterInfo(output.getSingleEdge(SchedulingPhase.INIT).getDest().getNextFilter()).totalItemsPopped(SchedulingPhase.INIT) ||
+                                                output.getSingleEdge(SchedulingPhase.INIT).getDest().oneInput(SchedulingPhase.INIT)))))
+            {
+                directWrite = true;
+                if (output.getSingleEdge(SchedulingPhase.STEADY).getDest().getNextFilter().isFileOutput()) {
+                    fileWrite = true;
+                    writeDecls.add(Util.toStmt("volatile " + buf.getType().toString() + " " + FAKE_IO_VAR + "__n" + buf.parent.getCoreID()));
+                }
+                
+                assert !usesSharedBuffer();
+            }
+        	
+        	generateWriteStatements(SchedulingPhase.INIT);
+        	generateWriteStatements(SchedulingPhase.STEADY);
+        }
     }
+    
+    /********** Read code **********/
+    
+    private void generateReadStatements(SchedulingPhase phase) {
+    	List<JStatement> statements = null;
+    	
+        switch (phase) {
+        	case INIT: statements = readCommandsInit; break;
+        	case PRIMEPUMP: assert(false); break;
+        	case STEADY: statements = readCommandsSteady; break;
+        	default: assert(false);
+        }
+        
+        statements.addAll(copyDownStatements(phase));
+    }
+    
+    /** 
+     * Generate and return the statements that implement the copying of the items on 
+     * a buffer to the next rotating buffer.  Only done for each primepump stage and the steady stage,
+     * not done for init.
+     * 
+     * @return statements to implement the copy down
+     */
+    protected List<JStatement> copyDownStatements(SchedulingPhase phase) {
+        List<JStatement> retval = new LinkedList<JStatement>();
+        //if we have items on the buffer after filter execution, we must copy them 
+        //to the next buffer, don't use memcopy, just generate individual statements
+        
+        //for the init phase we copy to the same buffer because we are not rotating
+        //for the steady phase we copy to the next rotation buffer
+        String dst = 
+            (phase == SchedulingPhase.INIT ? parent.currentReadBufName : parent.currentReadRotName + "->next->buffer");
+        String src = parent.currentReadBufName;
+        
+        ArrayAssignmentStatements aaStmts = new ArrayAssignmentStatements();
+        
+        for (int i = 0; i < parent.filterInfo.copyDown; i++)
+            aaStmts.addAssignment(dst, "", i, src, "", (i + parent.filterInfo.totalItemsPopped(phase)));
+        
+        retval.addAll(aaStmts.toCompressedJStmts());
+        return retval;
+    }
+    
+    public JStatement zeroOutTail(SchedulingPhase phase) {
+        return new JExpressionStatement(
+                new JAssignmentExpression(tail, new JIntLiteral(0)));
+    }
+    
+    public JMethodDeclaration peekMethod() {
+        String parameterName = "__offset";
+        JFormalParameter offset = new JFormalParameter(
+                CStdType.Integer,
+                parameterName);
+        JLocalVariableExpression offsetRef = new JLocalVariableExpression(offset);
+        JBlock body = new JBlock();
+        JMethodDeclaration retval = new JMethodDeclaration(
+                null,
+                /*at.dms.kjc.Constants.ACC_PUBLIC | at.dms.kjc.Constants.ACC_STATIC |*/ at.dms.kjc.Constants.ACC_INLINE,
+                parent.getType(),
+                parent.peekMethodName(),
+                new JFormalParameter[]{offset},
+                CClassType.EMPTY,
+                body, null, null);
+        body.addStatement(
+                new JReturnStatement(null,
+                        parent.readBufRef(new JAddExpression(tail, offsetRef)),null));
+        return retval;
+    }
+    
+    public JMethodDeclaration popMethod() {
+        JBlock body = new JBlock();
+        JMethodDeclaration retval = new JMethodDeclaration(
+                null,
+                /*at.dms.kjc.Constants.ACC_PUBLIC | at.dms.kjc.Constants.ACC_STATIC |*/ at.dms.kjc.Constants.ACC_INLINE,
+                parent.getType(),
+                parent.popMethodName(),
+                new JFormalParameter[0],
+                CClassType.EMPTY,
+                body, null, null);
+        body.addStatement(
+        		new JReturnStatement(null,
+        				parent.readBufRef(new JPostfixExpression(at.dms.kjc.Constants.OPE_POSTINC, tail)),null));
+        return retval;
+    }
+    
+    /********** Write code **********/
     
     public boolean usesSharedBuffer() {
-        return parent instanceof InputRotatingBuffer;
+        return (parent instanceof InputRotatingBuffer &&
+        		((InputRotatingBuffer)parent).hasLocalSrcFilter());
     }
     
-    /**
-     * Add the static initializer of the address array for pushing into the input buffer of the
-     * downstream filter.
-     */
-    private void addAddressArrayDecls(SchedulingPhase phase) {
-        boolean init = (phase == SchedulingPhase.INIT); 
-        LinkedList<Integer> addressArray = (init ? addressArrayInit : addressArraySteady);
-        String varName = "__addArray_" + phase + myID + "__"; 
-        
-        if (init) {
-            varName = addrArrayInitVar;
-            decls.add(Util.toStmt("int *" + addrArrayPointer));
-        } 
-        else
-            varName = addrArraySteadyVar;
-        
-        
-        StringBuffer decl = new StringBuffer("int " + varName + "[] = {");
-        if (addressArray != null) {
-            for (int i = 0 ; i < addressArray.size(); i++) {
-                decl.append(addressArray.get(i));
-                if (i != addressArray.size() - 1)
-                    decl.append(", ");
-            }
-        }
-        decl.append("}");
-        decls.add(Util.toStmt(decl.toString()));
-    }
-    
-    private void generateStatements(SchedulingPhase phase) {
+    private void generateWriteStatements(SchedulingPhase phase) {
      
-        FilterSliceNode filter;
         //if we are directly writing, then the push method does the remote writes,
         //so no other remote writes are necessary
         if (directWrite)
             return;
+        
+        List<JStatement> statements = null;        
+        switch (phase) {
+            case INIT: statements = writeCommandsInit; break;
+            case PRIMEPUMP: assert(false); break;
+            case STEADY: statements = writeCommandsSteady; break;
+        }
 
         //if this is an input buffer shared as an output buffer, then the output
         //filter is the local src filter of this input buffer
-        if (usesSharedBuffer()) {
+        FilterSliceNode filter;
+        if (usesSharedBuffer())
             filter = ((InputRotatingBuffer)parent).getLocalSrcFilter();
-        }
         else  //otherwise it is an output buffer, so use the parent's filter
             filter = parent.filterNode;
 
-
         FilterInfo fi = FilterInfo.getFilterInfo(filter);
-
-        List<JStatement> statements = null;
-        
-        ArrayAssignmentStatements reorderStatements = new ArrayAssignmentStatements();
-        
-        switch (phase) {
-            case INIT: statements = commandsInit; break;
-            case PRIMEPUMP: assert false; break;
-            case STEADY: statements = commandsSteady; break;
-        }
 
         //no further code necessary if nothing is being produced
         if (fi.totalItemsSent(phase) == 0)
@@ -178,6 +261,8 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
             nextWriteIndex[index] = 0;
             index++;
         }
+        
+        ArrayAssignmentStatements reorderStatements = new ArrayAssignmentStatements();
         
         int items = 0;
         for (int rot = 0; rot < rotations; rot++) {
@@ -360,5 +445,20 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
         return retval;
     }
     
-    
+    /**
+     * Do some checks to make sure we will generate correct code for this distribution pattern.
+     */
+    protected void checkSimple(SchedulingPhase phase) {
+        assert output.singleAppearance();
+        for (int w = 0; w < output.getWeights(phase).length; w++) {
+            for (InterSliceEdge edge : output.getDests(phase)[w]) {
+                InputSliceNode input = edge.getDest();
+                //assert that we don't have a single edge appear more than once for the input slice node
+                assert input.singleAppearance();
+                
+                int inWeight = input.getWeight(edge, phase);
+                assert inWeight == output.getWeights(phase)[w];
+            }
+        }
+    }
 }

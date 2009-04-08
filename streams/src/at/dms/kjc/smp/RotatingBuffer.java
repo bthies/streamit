@@ -41,19 +41,30 @@ public abstract class RotatingBuffer extends Channel {
     protected int bufSize;
     /** type of array: array of element type */
     protected CType bufType;
+    
     /** the name of the rotation structure (always points to its head) */
     protected String writeRotStructName;
     /** the name of the pointer to the current write rotation of this buffer */
     protected String currentWriteRotName;
     /** the name of the pointer to the write buffer of the current rotation */
     protected String currentWriteBufName;
+    
+    /** the name of the rotation struct, always points to head */
+    protected String readRotStructName;
+    /** the name of the pointer to the current read rotation of this buffer */
+    protected String currentReadRotName;
+    /** the name of the pointer to the read buffer of the current rotation */
+    protected String currentReadBufName;
+    
     /** name of the variable that points to the rotation structure we should be transferring from */
     public String transRotName;
     /** name of the variable that points to the buffer we should be transferring from */
     public String transBufName;
+    
     /** definition of boolean used during primepump to see if it is the first execution */
     protected JVariableDefinition firstExe;
     protected String firstExeName;
+    
     /** the filter this buffer is associated with */   
     protected FilterSliceNode filterNode;
     /** the names of the individual buffers */
@@ -62,12 +73,13 @@ public abstract class RotatingBuffer extends Channel {
     protected static HashSet<CType> types;
     /** prefix of the variable name for the rotating buffers */
     public static String rotTypeDefPrefix = "__rotating_buffer_";
-    /** the tile this buffer is mapped to */
+    /** the core this buffer is mapped to */
     protected Core parent;
     /** the filter info object for the filter that contains this buffer */
     protected FilterInfo filterInfo;
     /** the data transfer statements that are generated for this output buffer */
     protected BufferTransfers transferCommands;
+    
     /** the address buffers that this buffer rotation uses as destinations for transfers */ 
     protected HashMap<InputRotatingBuffer, SourceAddressRotation> addressBuffers;
     protected static HashMap<FilterSliceNode, InputRotatingBuffer> inputBuffers;
@@ -78,7 +90,6 @@ public abstract class RotatingBuffer extends Channel {
         types = new HashSet<CType>();
         inputBuffers = new HashMap<FilterSliceNode, InputRotatingBuffer>();
         outputBuffers = new HashMap<FilterSliceNode, RotatingBuffer>();
-        
     }
     
     protected RotatingBuffer(Edge edge, FilterSliceNode fsn, Core parent) {
@@ -113,7 +124,7 @@ public abstract class RotatingBuffer extends Channel {
         OutputRotatingBuffer.createOutputBuffers(schedule);
         
         //now that all the buffers are created, create the pointers to them
-        //that live on other tiles, and create the transfer commands
+        //that live on other cores, and create the transfer commands
         for (InputRotatingBuffer buf : inputBuffers.values()) {
             buf.createAddressBuffers();
             buf.createTransferCommands();
@@ -127,7 +138,7 @@ public abstract class RotatingBuffer extends Channel {
         
         //now add the typedefs needed for the rotating buffers to structs.h
         rotTypeDefs();
-        //now that all the buffers are allocated, we create a barrier on all the tiles
+        //now that all the buffers are allocated, we create a barrier on all the cores
         //so that we wait for all the shared memory to be allocated
         CoreCodeStore.addBufferInitBarrier();
         //generate the code for the address communication stage
@@ -145,7 +156,7 @@ public abstract class RotatingBuffer extends Channel {
     /**
      * Return the address rotation that this output rotation uses for the given input slice node
      * 
-     * @param input the input slice node 
+     * @param i`nput the input slice node 
      * @return the dma address rotation used to store the address of the 
      * rotation associated with this input slice node
      */
@@ -157,38 +168,29 @@ public abstract class RotatingBuffer extends Channel {
     
     /**
      * Generate the code necessary to communicate the addresses of the shared input buffers 
-     * of all input rotational structures to the sources that will write to the buffer 
-     * using DMA commands.
+     * of all input rotational structures to the sources that will write to the buffer
      */
     protected static void communicateAddresses() {
-        //handle all the filters that are mapped to compute tiles               
-        for (Core ownerTile : SMPBackend.chip.getCores()) {
-            CoreCodeStore cs = ownerTile.getComputeCode();
+        //handle all the filters that are mapped to compute cores
+    	//this will handle all filters except file writers and file readers
+        for (Core ownerCore : SMPBackend.chip.getCores()) {
+            CoreCodeStore cs = ownerCore.getComputeCode();
             
-            for (FilterSliceNode filter : cs.getFilters()) {
-                //if we have a file writer then get the allocating tile
-                communicateAddressesForFilter(filter, ownerTile);
-            }
-            //after we are all done with sending the addresses for this tile
-            //append a barrier instruction to all of the tiles
-            CoreCodeStore.addBufferInitBarrier();
+            for (FilterSliceNode filter : cs.getFilters())
+                communicateAddressesForFilter(filter, ownerCore);
         }
         
         //now handle the file writers
-        for (FilterSliceNode fileWriter : ProcessFileWriter.getFileWriterFilters()) {
+        for (FilterSliceNode fileWriter : ProcessFileWriter.getFileWriterFilters())
             communicateAddressesForFilter(fileWriter, ProcessFileWriter.getAllocatingTile(fileWriter));
-            CoreCodeStore.addBufferInitBarrier();
-        }
         
         //now handle the file readers
         
     }
     
     
-    private static void communicateAddressesForFilter(FilterSliceNode filter, Core ownerTile) { 
-        //the tag for the messages that we are using to send around the address
-        int tag = 0;
-        CoreCodeStore cs = ownerTile.getComputeCode();
+    private static void communicateAddressesForFilter(FilterSliceNode filter, Core ownerCore) { 
+        CoreCodeStore cs = ownerCore.getComputeCode();
         InputRotatingBuffer buf = InputRotatingBuffer.getInputBuffer(filter);
         //if this filter does not have an input buffer, then continue
         if (buf == null)
@@ -196,6 +198,7 @@ public abstract class RotatingBuffer extends Channel {
         for (int i = 0; i < buf.getAddressBuffers().length; i++) {
             SourceAddressRotation addr = buf.getAddressBuffers()[i];
             Core srcTile = addr.parent;
+            
             //we might have a file reader as a source, if so, don't send the addresses to it
             if (!srcTile.isComputeNode())
                 continue;
@@ -203,11 +206,12 @@ public abstract class RotatingBuffer extends Channel {
             //create the declaration of the buffers on the tile
             addr.declareBuffers();
             for (int b = 0; b < buf.rotationLength; b++) {
-                //all buffers preallocated and shared amongst cores, no need to
-                //communicate location of buffers, simply assign buffers directly
+                //buffers preallocated and shared amongst all cores, no need to
+                //communicate locations of buffers, simply assign buffers directly
                 srcTile.getComputeCode().addStatementToBufferInit(
                         addr.bufferNames[b] + " = " + buf.bufferNames[b]);
             }
+            
             //set up the rotation structure at the source
             addr.setupRotation();
         }
@@ -345,9 +349,9 @@ public abstract class RotatingBuffer extends Channel {
         inputBuffers.put(node, buf);
     }
     
-    
     /** Create an array reference given an offset */   
     public abstract JFieldAccessExpression writeBufRef();
+    public abstract JArrayAccessExpression readBufRef(JExpression offset);
     
     /**
      * Return the input buffer associated with the filter node.

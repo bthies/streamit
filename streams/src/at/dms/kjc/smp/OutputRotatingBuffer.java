@@ -118,6 +118,12 @@ public class OutputRotatingBuffer extends RotatingBuffer {
      
     }
     
+    /** Create an array reference given an offset */   
+    public JArrayAccessExpression readBufRef(JExpression offset) {
+    	assert(false);
+    	return null;
+    }
+    
     public void createAddressBuffers() {
       //fill the addressbuffers array
         addressBuffers = new HashMap<InputRotatingBuffer, SourceAddressRotation>();
@@ -149,7 +155,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
         //in the init stage we use dma to send the output to the dest filter
         //but we have to wait until the end because are not double buffering
         //also, don't rotate anything here
-        list.addAll(transferCommands.transferCommands(SchedulingPhase.INIT));
+        list.addAll(transferCommands.writeTransferCommands(SchedulingPhase.INIT));
         return list;
     }
     
@@ -169,7 +175,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
         LinkedList<JStatement> list = new LinkedList<JStatement>();
 
         //add the transfer commands for the data that was just computed
-        list.addAll(transferCommands.transferCommands(SchedulingPhase.STEADY));
+        list.addAll(transferCommands.writeTransferCommands(SchedulingPhase.STEADY));
         //generate the rotate statements for this output buffer
         list.addAll(rotateStatementsCurRot());
         //generate the rotate statements for the address buffers
@@ -208,7 +214,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
     public List<JStatement> endSteadyWrite() {
         LinkedList<JStatement> list = new LinkedList<JStatement>();
         
-        list.addAll(transferCommands.transferCommands(SchedulingPhase.STEADY));
+        list.addAll(transferCommands.writeTransferCommands(SchedulingPhase.STEADY));
         
         //generate the rotate statements for this output buffer
         list.addAll(rotateStatements());
@@ -228,7 +234,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
      */
     public List<JStatement> writeDecls() {
         List<JStatement> retval = new LinkedList<JStatement>();
-        retval.addAll(transferCommands.decls());
+        retval.addAll(transferCommands.writeDecls());
         return retval;
     }   
     

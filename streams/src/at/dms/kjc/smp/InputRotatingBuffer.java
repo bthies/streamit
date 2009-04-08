@@ -20,24 +20,14 @@ public class InputRotatingBuffer extends RotatingBuffer {
      * the same tile, then this references the upstream filter.
      */
     protected FilterSliceNode localSrcFilter;    
-    /** name of variable containing tail of array offset */
-    protected String tailName;
-    /** definition for tail */
-    protected JVariableDefinition tailDefn;
-    /** reference to tail */
-    protected JExpression tail;
+
     /** all the address buffers that are on the tiles that feed this input buffer */
     protected SourceAddressRotation[] addressBufs;
     /** a map from tile to address buf */
     protected HashMap<Core, SourceAddressRotation> addrBufMap;
+    
     /** true if what feeds this inputbuffer is a file reader */
     protected boolean upstreamFileReader;
-    /** the name of the rotation struct, always points to head */
-    protected String readRotStructName;
-    /** the name of the pointer to the current read rotation of this buffer */
-    protected String currentReadRotName;
-    /** the name of the pointer to the read buffer of the current rotation */
-    protected String currentReadBufName;
     /** the name of the pointer to the current rotation of this buffer that the file reader should
      * read into*/
     protected String currentFileReaderRotName;
@@ -99,14 +89,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
         currentReadBufName = this.getIdent() + "_read_buf__n" + coreNum;
         currentFileReaderRotName = this.getIdent() + "_fr_current__n" + coreNum;
         currentFileReaderBufName = this.getIdent() + "_fr_buf__n" + coreNum;
-        
-        tailName = this.getIdent() + "tail";
-        tailDefn = new JVariableDefinition(null,
-                at.dms.kjc.Constants.ACC_STATIC,
-                CStdType.Integer, tailName, null);
-        tail = new JFieldAccessExpression(tailName);
-        tail.setType(CStdType.Integer);
-        
+
         //if we have a file reader source for this filter, right now
         //we only support a single input for a filter that is feed by a file
         upstreamFileReader = filterNode.getParent().getHead().hasFileInput();
@@ -150,7 +133,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
                 lsf = upstream;
                 theEdge = edge;
             } 
-         } 
+         }
         
         if (lsf == null)
             return;
@@ -244,8 +227,8 @@ public class InputRotatingBuffer extends RotatingBuffer {
      * its destinations.  
      */
     public void createTransferCommands() {
-        if (!hasLocalSrcFilter())
-            return;
+        //if (!hasLocalSrcFilter())
+        //    return;
         
         transferCommands = new BufferRemoteWritesTransfers(this);
     }
@@ -477,19 +460,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
      * @see at.dms.kjc.backendSupport.ChannelI#popMethod()
      */
     public JMethodDeclaration popMethod() {
-        JBlock body = new JBlock();
-        JMethodDeclaration retval = new JMethodDeclaration(
-                null,
-                /*at.dms.kjc.Constants.ACC_PUBLIC | at.dms.kjc.Constants.ACC_STATIC |*/ at.dms.kjc.Constants.ACC_INLINE,
-                theEdge.getType(),
-                popMethodName(),
-                new JFormalParameter[0],
-                CClassType.EMPTY,
-                body, null, null);
-        body.addStatement(
-        new JReturnStatement(null,
-                readBufRef(new JPostfixExpression(at.dms.kjc.Constants.OPE_POSTINC, tail)),null));
-        return retval;
+    	return transferCommands.popMethod();
     }
     
     /** Create an array reference given an offset */   
@@ -498,9 +469,8 @@ public class InputRotatingBuffer extends RotatingBuffer {
         return new JFieldAccessExpression(new JThisExpression(), currentWriteBufName);
     }
     
-    
     /** Create an array reference given an offset */   
-    protected JArrayAccessExpression readBufRef(JExpression offset) {
+    public JArrayAccessExpression readBufRef(JExpression offset) {
         JFieldAccessExpression bufAccess = new JFieldAccessExpression(new JThisExpression(), currentReadBufName);
         return new JArrayAccessExpression(bufAccess, offset);
     }
@@ -588,24 +558,8 @@ public class InputRotatingBuffer extends RotatingBuffer {
      * @see at.dms.kjc.backendSupport.ChannelI#peekMethod()
      */
     public JMethodDeclaration peekMethod() {
-        String parameterName = "__offset";
-        JFormalParameter offset = new JFormalParameter(
-                CStdType.Integer,
-                parameterName);
-        JLocalVariableExpression offsetRef = new JLocalVariableExpression(offset);
-        JBlock body = new JBlock();
-        JMethodDeclaration retval = new JMethodDeclaration(
-                null,
-                /*at.dms.kjc.Constants.ACC_PUBLIC | at.dms.kjc.Constants.ACC_STATIC |*/ at.dms.kjc.Constants.ACC_INLINE,
-                theEdge.getType(),
-                peekMethodName(),
-                new JFormalParameter[]{offset},
-                CClassType.EMPTY,
-                body, null, null);
-        body.addStatement(
-                new JReturnStatement(null,
-                        readBufRef(new JAddExpression(tail, offsetRef)),null));
-        return retval;
+    	return transferCommands.peekMethod();
+
     }
 
     /* (non-Javadoc)
@@ -650,7 +604,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
      */
     public List<JStatement> beginInitRead() {
         LinkedList<JStatement> list = new LinkedList<JStatement>();
-        list.add(zeroOutTail());
+        list.add(transferCommands.zeroOutTail(SchedulingPhase.INIT));
         return list;
     }
 
@@ -666,38 +620,33 @@ public class InputRotatingBuffer extends RotatingBuffer {
      */
     public List<JStatement> endInitRead() {
         LinkedList<JStatement> list = new LinkedList<JStatement>(); 
-        list.addAll(copyDownStatements(SchedulingPhase.INIT));
+        list.addAll(transferCommands.readTransferCommands(SchedulingPhase.INIT));
         return list;
+        //copyDownStatements(SchedulingPhase.INIT));
     }
 
     public List<JStatement> beginPrimePumpRead() {
-        return beginSteadyRead();
+    	return beginSteadyRead();
     }
     
     public List<JStatement> endPrimePumpRead() {
-        return endSteadyRead();
+    	return endSteadyRead();
     }
     
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#beginSteadyRead()
-     */
     public List<JStatement> beginSteadyRead() {
         LinkedList<JStatement> list = new LinkedList<JStatement>();
-        list.add(zeroOutTail());
+        list.add(transferCommands.zeroOutTail(SchedulingPhase.STEADY));
         return list;
     }
-
-   
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#endSteadyRead()
-     */
+    
     public List<JStatement> endSteadyRead() {
         LinkedList<JStatement> list = new LinkedList<JStatement>();
         //copy the copyDown items to the next rotation buffer
-        list.addAll(copyDownStatements(SchedulingPhase.STEADY));
+        list.addAll(transferCommands.readTransferCommands(SchedulingPhase.STEADY));
         //rotate to the next buffer
-        list.addAll(rotateStatementsRead());        
+        list.addAll(rotateStatementsRead());
         return list;
+        //copyDownStatements(SchedulingPhase.STEADY));
     }
 
     /* (non-Javadoc)
@@ -734,53 +683,16 @@ public class InputRotatingBuffer extends RotatingBuffer {
      * @see at.dms.kjc.backendSupport.ChannelI#readDecls()
      */
     public List<JStatement> readDecls() {
+    	List<JStatement> retval = new LinkedList<JStatement>();
+    	retval.addAll(transferCommands.readDecls());
+    	return retval;
+    	/*
         //declare the tail    
         JStatement tailDecl = new JVariableDeclarationStatement(tailDefn);
         List<JStatement> retval = new LinkedList<JStatement>();
         retval.add(tailDecl);
         return retval;
-    }   
-    
-    /** Create statement zeroing out tail */
-    protected JStatement zeroOutTail() {
-        return new JExpressionStatement(
-                new JAssignmentExpression(tail, new JIntLiteral(0)));
-    }
-    
-    /** 
-     * Generate and return the statements that implement the copying of the items on 
-     * a buffer to the next rotating buffer.  Only done for each primepump stage and the steady stage,
-     * not done for init.
-     * 
-     * @return statements to implement the copy down
-     */
-    protected List<JStatement> copyDownStatements(SchedulingPhase phase) {
-        List<JStatement> retval = new LinkedList<JStatement>();
-        //if we have items on the buffer after filter execution, we must copy them 
-        //to the next buffer, don't use memcopy, just generate individual statements
-        
-        //for the init phase we copy to the same buffer because we are not rotating
-        //for the steady phase we copy to the next rotation buffer
-        String dst = 
-            (phase == SchedulingPhase.INIT ? currentReadBufName : currentReadRotName + "->next->buffer");
-        String src = currentReadBufName;
-        
-        ArrayAssignmentStatements aaStmts = new ArrayAssignmentStatements();
-        
-        for (int i = 0; i < filterInfo.copyDown; i++) {
-            aaStmts.addAssignment(dst, "", i, src, "", (i + filterInfo.totalItemsPopped(phase)));
-        }
-        
-        retval.addAll(aaStmts.toCompressedJStmts());
-        
-        /*
-        if (filterInfo.copyDown > 0) {
-            String size = (filterInfo.copyDown * Util.getTypeSize(bufType) * 4) + "";
-            
-            retval.add(Util.toStmt("memcpy(" + dst + ", " + src + ", " + size + ")"));
-        }
         */
-        return retval;
     }
     
     /* (non-Javadoc)
@@ -793,7 +705,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
         //in the init stage for dma, we need to dma to send the output to the dest filter
         //but we have to wait until the end because are not double buffering
         //also, don't rotate anything here
-        list.addAll(transferCommands.transferCommands(SchedulingPhase.INIT));
+        list.addAll(transferCommands.writeTransferCommands(SchedulingPhase.INIT));
         return list;
     }
     
@@ -805,9 +717,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
         assert hasLocalSrcFilter() : "Calling write method for input buffer that does not act as output buffer.";
         
         LinkedList<JStatement> list = new LinkedList<JStatement>();
-                
         list.add(transferCommands.zeroOutHead(SchedulingPhase.PRIMEPUMP));
-        
         return list;
     }
     
@@ -817,18 +727,15 @@ public class InputRotatingBuffer extends RotatingBuffer {
         LinkedList<JStatement> list = new LinkedList<JStatement>();
 
         //add the transfer commands for the data that was just computed
-        list.addAll(transferCommands.transferCommands(SchedulingPhase.STEADY));
+        list.addAll(transferCommands.writeTransferCommands(SchedulingPhase.STEADY));
         //generate the rotate statements for this output buffer
         list.addAll(rotateStatementsWrite());
         //generate the rotate statements for the address buffers
-        for (SourceAddressRotation addrRot : addressBuffers.values()) {
+        for (SourceAddressRotation addrRot : addressBuffers.values())
             list.addAll(addrRot.rotateStatements());
-        }
 
         return list;
     }
-    
-    
     
     /* (non-Javadoc)
      * @see at.dms.kjc.backendSupport.ChannelI#beginSteadyWrite()
@@ -838,7 +745,6 @@ public class InputRotatingBuffer extends RotatingBuffer {
         
         LinkedList<JStatement> list = new LinkedList<JStatement>();
         list.add(transferCommands.zeroOutHead(SchedulingPhase.STEADY));
-
         return list;
     }
     
@@ -851,20 +757,17 @@ public class InputRotatingBuffer extends RotatingBuffer {
         
         LinkedList<JStatement> list = new LinkedList<JStatement>();
         
-        list.addAll(transferCommands.transferCommands(SchedulingPhase.STEADY));
-        
+        //add the transfer commands for the data that was just computed
+        list.addAll(transferCommands.writeTransferCommands(SchedulingPhase.STEADY));
         //generate the rotate statements for this output buffer
         list.addAll(rotateStatementsWrite());
-        
         //generate the rotation statements for the address buffers that this output
         //buffer uses
-        for (SourceAddressRotation addrRot : addressBuffers.values()) {
+        for (SourceAddressRotation addrRot : addressBuffers.values())
             list.addAll(addrRot.rotateStatements());
-        }
+        
         return list;
     }
-    
- 
     
     /* (non-Javadoc)
      * @see at.dms.kjc.backendSupport.ChannelI#writeDecls()
@@ -872,8 +775,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
     public List<JStatement> writeDecls() {
         assert hasLocalSrcFilter() : "Calling write method for input buffer that does not act as output buffer.";
         List<JStatement> retval = new LinkedList<JStatement>();
-        
-        retval.addAll(transferCommands.decls());
+        retval.addAll(transferCommands.writeDecls());
         return retval;
     }   
     
@@ -885,6 +787,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
         assert hasLocalSrcFilter() : "Calling write method for input buffer that does not act as output buffer.";
         return "__push_" + unique_id;
     }
+    
     /* (non-Javadoc)
      * @see at.dms.kjc.backendSupport.ChannelI#pushMethod()
      */
@@ -912,7 +815,6 @@ public class InputRotatingBuffer extends RotatingBuffer {
 
         return list;
     }
-    
 
     protected List<JStatement> rotateStatementsRead() {
         LinkedList<JStatement> list = new LinkedList<JStatement>();
@@ -934,14 +836,4 @@ public class InputRotatingBuffer extends RotatingBuffer {
         list.add(Util.toStmt(transBufName + " = " + transRotName + "->buffer"));
         return list;
     }
-    
-    /*
-    protected List<JStatement> dmaFileReadCommands() {
-        
-    }
-    
-    protected List<JStatement> fileReadWait() {
-        
-    }
-    */
 }

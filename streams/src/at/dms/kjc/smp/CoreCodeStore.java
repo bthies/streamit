@@ -88,8 +88,8 @@ public class CoreCodeStore extends ComputeCodeStore<Core> {
      */
     public static void addBarrierInit() {
         // don't do anything for the single core case
-        //if(SMPBackend.chip.size() == 1)
-        //return;
+        if(SMPBackend.chip.size() == 1)
+            return;
         
         for (int t = 0; t < SMPBackend.chip.size(); t++) {
             CoreCodeStore cs = SMPBackend.chip.getNthComputeNode(t).getComputeCode();

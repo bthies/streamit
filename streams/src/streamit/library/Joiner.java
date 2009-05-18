@@ -99,6 +99,7 @@ abstract public class Joiner extends Operator
 
                 inputIndx++;
             }
+        addJoiner();
     }
 
     public String toString()
@@ -119,6 +120,24 @@ abstract public class Joiner extends Operator
         flIter = fl;
     }
 
+    public boolean canFire() {
+        // for the day when joiners can ever receive messages,
+        // make sure that all inputs are ready before starting
+        // execution, so that messages can be delivered in time
+        int throughput[] =
+            (sjIter != null
+             ? sjIter.getJoinPopWeights(nWork)
+             : flIter.getJoinPopWeights(nWork));
+        for (int i=0; i<inputChannel.length; i++) {
+            // input will be null for RR joiners that don't read
+            // in one direction
+            if (inputChannel[i]!=null && 
+                inputChannel[i].myqueue.size() < throughput[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
 
     public void prepareToWork() {
         if (!Stream.scheduledRun) {

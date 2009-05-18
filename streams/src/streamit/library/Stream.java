@@ -915,30 +915,20 @@ public abstract class Stream extends Operator
                         System.exit(0);
                     }
 
-                    if (scheduledRun) {
-                        // scheduled run: know how many times to try to execute
-                        while (nIters != 0) {
+                    // unscheduled: run for an iteration count if one is
+                    // passed in, otherwise run as long as someone fires
+                    if (nIters > 0) {
+                        // iteration count
+                        for (int i=0; i<nIters; i++) {
                             runSinks();
                             drainChannels();
-                            if (nIters > 0) {
-                                nIters--;
-                            }
                         }
                     } else {
-                        // unscheduled: run for an iteration count if one is
-                        // passed in, otherwise run as long as someone fires
-                        if (nIters > 0) {
-                            // iteration count
-                            for (int i=0; i<nIters; i++) {
-                                runSinks();
-                            }
-                        } else {
-                            // as long as possible
-                            boolean makingProgress;
-                            do {
-                                makingProgress = runSinks();
-                            } while (makingProgress);
-                        }
+                        // as long as possible
+                        boolean makingProgress;
+                        do {
+                            makingProgress = runSinks();
+                        } while (makingProgress);
                     }
                 }
         } catch (Throwable e) {

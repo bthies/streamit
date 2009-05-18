@@ -720,6 +720,15 @@ public abstract class Filter extends Stream
         }
     }
 
+    public boolean canFire() {
+        PhaseInfo phase = getCurrentPhase();
+        if (phase.e==Rate.DYNAMIC_RATE || phase.o==Rate.DYNAMIC_RATE) {
+            return false;
+        } else {
+            return inputChannel.myqueue.size() >= phase.e;
+        }
+    }
+
     public void prepareToWork() {
         if (!Stream.scheduledRun) {
             // if the phase is static-rate, we require enough inputs

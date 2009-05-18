@@ -192,6 +192,15 @@ public class Operator extends DestroyedClass
         // for plain filters, return number of work executions
         return getWorkExecutions();
     }
+
+    /**
+     *  For filters, splitters, joiners, returns whether they can fire
+     *  given items present on input channels.  For dynaimc rate pop
+     *  or peek rate, returns false.  For stream containers, returns false.
+     */
+    public boolean canFire() {
+        return false;
+    }
     
     /**
      * Set parent.
@@ -1183,13 +1192,18 @@ public class Operator extends DestroyedClass
     public static LinkedList<Operator> allSinks;
     public static LinkedList<Operator> allSources;
     public static LinkedList<Operator> allFilters;
-    public static HashSet<Channel> fullChannels;
+    public static LinkedList<Operator> allJoiners;
+    public static LinkedList<Operator> allSplitters;
+    // filters, splitters, joinres
+    public static LinkedList<Operator> allNodes;
     
     static {
         allSinks = new LinkedList<Operator> ();
         allSources = new LinkedList<Operator> ();
         allFilters = new LinkedList<Operator> ();
-        fullChannels = new HashSet<Channel> ();
+        allJoiners = new LinkedList<Operator> ();
+        allSplitters = new LinkedList<Operator> ();
+        allNodes = new LinkedList<Operator> ();
     }
     
     void addSink ()
@@ -1205,6 +1219,19 @@ public class Operator extends DestroyedClass
     void addFilter ()
     {
         allFilters.add (this);
+        allNodes.add (this);
+    }
+
+    void addJoiner ()
+    {
+        allJoiners.add (this);
+        allNodes.add (this);
+    }
+    
+    void addSplitter ()
+    {
+        allSplitters.add (this);
+        allNodes.add (this);
     }
     
     /**
@@ -1269,30 +1296,25 @@ public class Operator extends DestroyedClass
         return sourceExecs;
     }
 
-    void drainChannels ()
-    {
-        while (!fullChannels.isEmpty ())
-            {
-                // empty any full channels:
-                Iterator<Channel> fullChannel;
-                fullChannel = fullChannels.iterator ();
-            
-                Channel ch = fullChannel.next ();
-                assert ch != null;
-            
-                ch.getSink().doWork();
+    void drainChannels () {
+        boolean fired;
+        // fire as long as someone other than a source fires
+        do {
+            fired = false;
+
+            for (int j=0; j<allNodes.size(); j++) {
+                Operator o = allNodes.get(j);
+                // do not fire sources
+                if (!(o instanceof Filter) ||
+                    ((Filter)o).getInputChannel()!=null) {
+                    while (o.canFire()) {
+                        fired = true;
+                        o.doWork();
+                    }
+                }
             }
-    }
 
-
-    void addFullChannel (Channel channel)
-    {
-        fullChannels.add (channel);
-    }
-
-    void removeFullChannel (Channel channel)
-    {
-        fullChannels.remove (channel);
+        } while (fired);
     }
 
     public static void passOneData (Channel from, Channel to)

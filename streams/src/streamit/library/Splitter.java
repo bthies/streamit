@@ -49,35 +49,42 @@ abstract public class Splitter extends Operator
         flIter = fl;
     }
 
+    // returns the number of input items needed to fire
+    private int inputsNeededToFire() {
+        // for the day when splitters can ever receive messages,
+        // make sure that all inputs are ready before starting
+        // execution, so that messages can be delivered in time
+        
+        // get output weights
+        int throughput[] =
+            (sjIter != null
+             ? sjIter.getSplitPushWeights(nWork)
+             : flIter.getSplitPushWeights(nWork));
+        
+        // sum output weights to get input weights
+        int totalData = 0;
+        for (int i=0; i<throughput.length; i++) {
+            /* RMR { for duplicate splitters, only take the max output weight
+             * since the data on the input channel is shared 
+             */
+            if (duplicateSplitter) {
+                totalData = MAX(throughput[i], totalData);
+            }
+            else {
+                totalData += throughput[i];
+            }
+            /* } RMR */
+        }
+        return totalData;
+    }
+    
+    public boolean canFire() {
+        return inputChannel.myqueue.size() >= inputsNeededToFire();
+    }
+
     public void prepareToWork() {
         if (!Stream.scheduledRun) {
-            // for the day when splitters can ever receive messages,
-            // make sure that all inputs are ready before starting
-            // execution, so that messages can be delivered in time
-
-            // get output weights
-            int throughput[] =
-                (sjIter != null
-                 ? sjIter.getSplitPushWeights(nWork)
-                 : flIter.getSplitPushWeights(nWork));
-
-            // sum output weights to get input weights
-            int totalData = 0;
-            for (int i=0; i<throughput.length; i++) {
-                /* RMR { for duplicate splitters, only take the max output weight
-                 * since the data on the input channel is shared 
-                 */
-                if (duplicateSplitter) {
-                    totalData = MAX(throughput[i], totalData);
-                }
-                else {
-                    totalData += throughput[i];
-                }
-                /* } RMR */
-            }
-
-            // ensure data
-            inputChannel.ensureData(totalData);
+            inputChannel.ensureData(inputsNeededToFire());
         }
         super.prepareToWork();
     }
@@ -175,6 +182,7 @@ abstract public class Splitter extends Operator
 
                 outputIndx++;
             }
+        addSplitter();
     }
 
     public String toString()

@@ -94,14 +94,24 @@ public class LoopedAssignments implements AAStatement {
         String srcOffset = srcOffsetName.equals("") ? "" : srcOffsetName + " + ";
 
         if (iterations > MIN_LOOP_ITERATIONS) {
-            //MAKE A LOOP
-            String iv = "__ias__";
-            String srcStrideStr = (srcStride == 1 ? iv : iv + " * " + srcStride);
-            String dstStrideStr = (dstStride == 1 ? iv : iv + " * " + dstStride);
-            String loop = "for (int " + iv + " = 0; " + iv + " < " + iterations + "; " + iv + "++) ";
-            loop += dstBufName + "[" + dstOffset + dstStartIndex + " + " + dstStrideStr + "] = " + 
+
+            // if strides are right, do a memcpy instead of a loop
+            if(srcStride == 1 && dstStride == 1 && false) {
+                // memcpy
+                String memcpy = "memcpy(&" + dstBufName + "[" + dstOffset + dstStartIndex + "], &" +
+                    srcBufName + "[" + srcOffset + srcStartIndex + "], " + iterations * 4 + ")";
+                return Util.toStmt(memcpy);
+                
+            } else {
+                // make a loop
+                String iv = "__ias__";
+                String srcStrideStr = (srcStride == 1 ? iv : iv + " * " + srcStride);
+                String dstStrideStr = (dstStride == 1 ? iv : iv + " * " + dstStride);
+                String loop = "for (int " + iv + " = 0; " + iv + " < " + iterations + "; " + iv + "++) ";
+                loop += dstBufName + "[" + dstOffset + dstStartIndex + " + " + dstStrideStr + "] = " + 
                     srcBufName + "[" + srcOffset + srcStartIndex + " + " + srcStrideStr + "]";
-            return Util.toStmt(loop);
+                return Util.toStmt(loop);
+            }
         } else {
             //omit the statements by one by one
             JBlock block = new JBlock();

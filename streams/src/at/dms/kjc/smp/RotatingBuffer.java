@@ -210,6 +210,12 @@ public abstract class RotatingBuffer extends Channel {
                 //communicate locations of buffers, simply assign buffers directly
                 srcTile.getComputeCode().addStatementToBufferInit(
                         addr.bufferNames[b] + " = " + buf.bufferNames[b]);
+                /*
+                srcTile.getComputeCode()
+                    .addStatementToBufferInit(addr.bufferNames[b] + " = (" + buf.getType() +
+                                              "*) malloc(" + buf.getBufferSize() + " * sizeof(" +
+                                              buf.getType() + "))");
+                */
             }
             
             //set up the rotation structure at the source

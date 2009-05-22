@@ -1,6 +1,7 @@
 package at.dms.kjc.cluster;
 
 import java.io.FileWriter;
+import at.dms.kjc.KjcOptions;
 import at.dms.kjc.common.CodegenPrintWriter;
 
 
@@ -23,7 +24,10 @@ public class GenerateSetupFile {
 
         p.print("frequency_of_checkpoints 0    // Must be a multiple of 1000 or 0 for disabled.\n");
         p.print("outbound_data_buffer 1000     // Number of bytes to buffer before writing to socket. Must be <= 1400 or 0 for disabled\n");
-        p.print("number_of_iterations 10000    // Number of steady state iterations can be overriden by parameter -i <number>\n");
+        if(KjcOptions.iterations != -1)
+            p.print("number_of_iterations " + KjcOptions.iterations + "    // Number of steady state iterations can be overriden by parameter -i <number>\n");
+        else
+            p.print("number_of_iterations 10000    // Number of steady state iterations can be overriden by parameter -i <number>\n");
 
         try {
             FileWriter fw = new FileWriter("cluster-setup.txt");

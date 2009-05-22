@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterCodeGenerator.java,v 1.68 2007-07-23 19:20:55 thies Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterCodeGenerator.java,v 1.69 2009-05-22 19:15:44 ctan Exp $
 package at.dms.kjc.cluster;
 
 import java.util.*;
@@ -857,6 +857,11 @@ class ClusterCodeGenerator {
 
         if (steady_counts > 1) {
             r.add("    }\n");
+        }
+
+        if(KjcOptions.numbers > 0 && (oper instanceof SIRFileWriter)) {
+            r.add("    stats_iter_count++;\n");
+            r.add("    if(stats_iter_count >= STATS_WINDOW_SIZE) printSSCycleAvg();\n");
         }
 
         r.add("#ifdef __CHECKPOINT_FREQ\n");

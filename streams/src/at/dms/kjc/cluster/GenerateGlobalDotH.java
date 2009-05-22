@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/GenerateGlobalDotH.java,v 1.2 2006-07-21 19:42:36 dimock Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/GenerateGlobalDotH.java,v 1.3 2009-05-22 19:15:44 ctan Exp $
 package at.dms.kjc.cluster;
 
 import java.io.FileWriter;
@@ -9,6 +9,7 @@ import at.dms.kjc.JFieldDeclaration;
 import at.dms.kjc.JFloatLiteral;
 import at.dms.kjc.JIntLiteral;
 import at.dms.kjc.JMethodDeclaration;
+import at.dms.kjc.KjcOptions;
 import at.dms.kjc.sir.SIRGlobal;
 import at.dms.kjc.sir.SIRHelper;
 
@@ -50,6 +51,8 @@ public class GenerateGlobalDotH {
         str += "#include <math.h>\n";
         str += "#include \"structs.h\"\n";
         str += "#include <StreamItVectorLib.h>\n";
+	if(KjcOptions.numbers > 0)
+	    str += "#include <stdint.h>\n";
         str += "\n";
 
         str += "#define max(A,B) (((A)>(B))?(A):(B))\n";
@@ -79,6 +82,15 @@ public class GenerateGlobalDotH {
             String ident = fields[f].getVariable().getIdent();
             str += "extern " + ClusterUtils.declToString(type, "__global__" + ident) + ";\n";
         }
+
+	if(KjcOptions.numbers > 0) {
+	    str += "static __inline__ uint64_t rdtsc(void) {\n";
+	    str += "  uint32_t hi, lo;\n";
+	    str += "  asm volatile (\"rdtsc\" : \"=a\"(lo), \"=d\"(hi));\n";
+	    str += "  return ((uint64_t ) lo) | (((uint64_t) hi) << 32);\n";
+	    str += "}\n";
+	    str += "\n";
+	}
 
         str += "#endif // __GLOBAL_H\n";
         

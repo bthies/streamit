@@ -521,12 +521,12 @@ class BuiltinsCodeGen {
                 p.println("    FileWriter_write<unsigned char>(__file_descr__"+selfID+", __temp);");
                 p.println("    __frame_size <<= 8;");
                 p.println("    __frame_size += __temp;");
-
+                
                 p.println("    __temp = " + pop + ";");
                 p.println("    FileWriter_write<unsigned char>(__file_descr__"+selfID+", __temp);");
                 p.println("    __frame_size <<= 8;");
                 p.println("    __frame_size += __temp;");
-                    
+                
                 p.println("    __temp = " + pop + ";");
                 p.println("    FileWriter_write<unsigned char>(__file_descr__"+selfID+", __temp);");
                 p.println("    __frame_size <<= 8;");
@@ -539,7 +539,7 @@ class BuiltinsCodeGen {
                 p.println("    FileWriter_write<"+theType+">(__file_descr__"+selfID+", "+inputTape.getPopName()+"());");
             }
 	    p.println("  }\n");
-
+        
 	    /*
             NetStream in = RegisterStreams.getFilterInStream(fw);
             // source and destination of incoming stream
@@ -566,6 +566,10 @@ class BuiltinsCodeGen {
             p.outdent();
             p.println("#endif");
 	    */
+        
+        if(KjcOptions.numbers > 0) {
+            p.println("  stats_output_count++;");
+        }
         }
     }
     

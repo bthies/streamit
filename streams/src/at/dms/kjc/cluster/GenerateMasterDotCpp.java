@@ -64,6 +64,11 @@ public class GenerateMasterDotCpp {
             p.println("#include \"profiler.h\"");
         }
         p.newLine();
+        
+        if (KjcOptions.numbers > 0) {
+            p.print("#define STATS_WINDOW_SIZE " + KjcOptions.numbers + "\n");
+            p.newLine();
+        }
 
         p.print("int __max_iteration;\n");
         p.print("int __timer_enabled = 0;\n");
@@ -78,6 +83,26 @@ public class GenerateMasterDotCpp {
 
         p.print("unsigned myip;\n");
         p.newLine();
+
+        if(KjcOptions.numbers > 0) {
+            p.print("uint64_t stats_start_cycle = 0;\n");
+            p.print("uint64_t stats_output_count = 0;\n");
+            p.print("uint64_t stats_iter_count = STATS_WINDOW_SIZE;\n");
+            p.print("void printSSCycleAvg() {\n");
+            p.print("  uint64_t stats_end_cycle = rdtsc();\n");
+            p.print("  uint64_t avg_cycles_per_iter = (stats_end_cycle - stats_start_cycle) / STATS_WINDOW_SIZE;\n");
+            p.print("  uint64_t avg_cycles_per_output = (stats_end_cycle - stats_start_cycle) / stats_output_count;\n");
+            p.print("  if(stats_start_cycle != 0) {\n");
+            p.print("    printf(\"Average cycles per SS for %d iterations: %llu, \", STATS_WINDOW_SIZE, avg_cycles_per_iter);\n");
+            p.print("    printf(\"avg cycles per output: %llu\\n\", avg_cycles_per_output);\n");
+            p.print("    fflush(stdout);\n");
+            p.print("  }\n");
+            p.print("  stats_start_cycle = stats_end_cycle;\n");
+            p.print("  stats_output_count = 0;\n");
+            p.print("  stats_iter_count = 0;\n");
+            p.print("}\n");
+            p.newLine();
+        }
 
         for (int i = 0; i < threadNumber; i++) {
             if (isEliminated(i)) {continue;}

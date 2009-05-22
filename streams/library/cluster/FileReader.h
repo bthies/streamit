@@ -37,16 +37,16 @@ public:
 
 /* Routines that are independent of <T>, make them not be in class */
 
-extern int FileReader_open(char *pathname);
+extern void *FileReader_open(char *pathname);
 
-extern void FileReader_close(int fs_ptr);
+extern void FileReader_close(void *fs_ptr);
 
-extern int FileReader_getpos(int fs_ptr);
+extern int FileReader_getpos(void *fs_ptr);
 
-extern void FileReader_setpos(int fs_ptr, int pos);
+extern void FileReader_setpos(void *fs_ptr, int pos);
 
 template<class T>
-static inline T FileReader_read(int fs_ptr) {
+static inline T FileReader_read(void *fs_ptr) {
   
     FileReader_state *fs = (FileReader_state*)fs_ptr;
 
@@ -96,7 +96,7 @@ static inline T FileReader_read(int fs_ptr) {
 }
 
 template<>
-static inline unsigned char FileReader_read(int fs_ptr) {
+static inline unsigned char FileReader_read(void *fs_ptr) {
   
     FileReader_state *fs = (FileReader_state*)fs_ptr;
 
@@ -144,7 +144,7 @@ static inline unsigned char FileReader_read(int fs_ptr) {
 }
 
 //template<>
-static inline void FileReader_read(int fs_ptr, void* dest, int len) {
+static inline void FileReader_read(void *fs_ptr, void* dest, int len) {
   
     FileReader_state *fs = (FileReader_state*)fs_ptr;
 

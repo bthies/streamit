@@ -33,24 +33,26 @@ public:
   int file_offset, file_length;
   char file_buf[BUF_SIZE];
   int buf_index;
+  volatile int junk;
 };
 
 /* Routines that are independent of <T>, make them not be in class */
 
-extern int FileWriter_open(char *pathname);
+extern void *FileWriter_open(char *pathname);
 
-extern void FileWriter_close(int fs_ptr);
+extern void FileWriter_close(void *fs_ptr);
 
-extern int FileWriter_flush(int fs_ptr);
+extern int FileWriter_flush(void *fs_ptr);
 
-extern int FileWriter_getpos(int fs_ptr);
+extern int FileWriter_getpos(void *fs_ptr);
 
-extern void FileWriter_setpos(int fs_ptr, int pos);
+extern void FileWriter_setpos(void *fs_ptr, int pos);
 
 template<class T>
-static inline void FileWriter_write(int fs_ptr, T data) {
+static inline void FileWriter_write(void *fs_ptr, T data) {
     FileWriter_state *fs = (FileWriter_state*)fs_ptr;
 
+    /*
     assert((sizeof(T) % 4) == 0);
 
     // Flush if adding data to the buffer would overflow the buffer
@@ -64,12 +66,16 @@ static inline void FileWriter_write(int fs_ptr, T data) {
         fs->buf_index += 4;
     }
     // } RMR
+    */
+
+    fs->junk = (int)data;
 }
 
 template<>
-static inline void FileWriter_write(int fs_ptr, unsigned char data) {
+static inline void FileWriter_write(void *fs_ptr, unsigned char data) {
     FileWriter_state *fs = (FileWriter_state*)fs_ptr;
 
+    /*
     // Flush if adding data to the buffer would overflow the buffer
     if (fs->buf_index >= BUF_SIZE) FileWriter_flush(fs_ptr);
 
@@ -79,14 +85,19 @@ static inline void FileWriter_write(int fs_ptr, unsigned char data) {
     *(unsigned char*)(fs->file_buf + fs->buf_index) = data;
     ++(fs->buf_index);
     // } RMR
+    */
+
+    fs->junk = (int)data;
 }
 
 //template<>
-static inline void FileWriter_write(int fs_ptr, const void* data, int len) {
+static inline void FileWriter_write(void *fs_ptr, const void* data, int len) {
     FileWriter_state *fs = (FileWriter_state*)fs_ptr;
 
+    /*
     FileWriter_flush(fs_ptr);
     
     write(fs->file_handle, data, len);	
+    */
 }
 #endif

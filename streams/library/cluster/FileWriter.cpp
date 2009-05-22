@@ -23,7 +23,7 @@
 #include <assert.h>
 #include <FileWriter.h>
 
-int FileWriter_open(char *pathname) {
+void *FileWriter_open(char *pathname) {
     FileWriter_state *fs = new FileWriter_state();
     fs->file_handle = open(pathname, 
                            O_RDWR | O_CREAT, 
@@ -39,20 +39,20 @@ int FileWriter_open(char *pathname) {
     // RMR { comment out printf
     // printf("FileWriter.cpp: length of file [%s] is %d bytes.\n", pathname, fs->file_length); 
     // } RMR
-    return (int)fs;
+    return (void *)fs;
 }
 
-void FileWriter_close(int fs_ptr) {
+void FileWriter_close(void *fs_ptr) {
     FileWriter_state *fs = (FileWriter_state*)fs_ptr;
     close(fs->file_handle);
 }
 
-int FileWriter_getpos(int fs_ptr) {
+int FileWriter_getpos(void *fs_ptr) {
     FileWriter_state *fs = (FileWriter_state*)fs_ptr;
     return fs->file_offset + fs->buf_index;
 }
 
-void FileWriter_setpos(int fs_ptr, int pos) {
+void FileWriter_setpos(void *fs_ptr, int pos) {
     FileWriter_state *fs = (FileWriter_state*)fs_ptr;
     FileWriter_flush(fs_ptr); // Flush so that cached data is saved
 
@@ -67,7 +67,7 @@ void FileWriter_setpos(int fs_ptr, int pos) {
     fs->file_offset = pos;
 }
 
-int FileWriter_flush(int fs_ptr) {
+int FileWriter_flush(void *fs_ptr) {
     FileWriter_state *fs = (FileWriter_state*)fs_ptr;
 
     int pos = 0;

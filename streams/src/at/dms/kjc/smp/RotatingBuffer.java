@@ -1,27 +1,20 @@
 package at.dms.kjc.smp;
 
-import at.dms.kjc.CStdType;
 import at.dms.kjc.CType;
 import at.dms.kjc.JArrayAccessExpression;
 import at.dms.kjc.JExpression;
 import at.dms.kjc.JFieldAccessExpression;
 import at.dms.kjc.JStatement;
-import at.dms.kjc.JThisExpression;
-import at.dms.kjc.JVariableDefinition;
 import at.dms.kjc.backendSupport.*;
-import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.slicegraph.*;
 
 import java.util.LinkedList;
 import at.dms.kjc.spacetime.*;
 import at.dms.kjc.*;
-import at.dms.kjc.common.CommonUtils;
 import java.util.Set;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.HashMap;
-
 
 /**
  * A rotating buffer represents a block of memory that a filter reads from or writes to that
@@ -184,10 +177,8 @@ public abstract class RotatingBuffer extends Channel {
         //now handle the file readers
         
     }
-    
-    
+        
     private static void communicateAddressesForFilter(FilterSliceNode filter, Core ownerCore) { 
-        CoreCodeStore cs = ownerCore.getComputeCode();
         InputRotatingBuffer buf = InputRotatingBuffer.getInputBuffer(filter);
         
         //if this filter does not have an input buffer, then continue
@@ -213,7 +204,6 @@ public abstract class RotatingBuffer extends Channel {
             addr.setupRotation();
         }
     }
-
 
     /**
      * Create the typedef for the rotating buffer structure, one for each type 

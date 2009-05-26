@@ -5,7 +5,6 @@ import at.dms.util.Utils;
 import at.dms.kjc.spacetime.*;
 import at.dms.kjc.backendSupport.*;
 import at.dms.kjc.*;
-import at.dms.kjc.smp.arrayassignment.*;
 
 import java.util.*;
 
@@ -35,8 +34,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
     /** the name of the pointer to the read buffer of the current rotation that the file reader should
      * read into */
     protected String currentFileReaderBufName;
-    /** reference to head if this input buffer is shared as an output buffer */
-    //protected JExpression head;
+
     protected static HashSet<InputRotatingBuffer> fileWriterBuffers;
 
     static {
@@ -286,10 +284,11 @@ public class InputRotatingBuffer extends RotatingBuffer {
     protected void setupRotation() {
         String temp = "__temp__";
         CoreCodeStore cs; 
+        
         //this is the typedef we will use for this buffer rotation structure
         String rotType = rotTypeDefPrefix + getType().toString();
-        //if we are setting up the rotation for a file writer we have to do it on the 
-        //allocating core
+        
+        //if we are setting up the rotation for a file writer we have to do it on the allocating core
         if (filterNode.isFileOutput()) {
             fileWriterBuffers.add(this);
             cs = ProcessFileWriter.getAllocatingCore(filterNode).getComputeCode();
@@ -360,7 +359,6 @@ public class InputRotatingBuffer extends RotatingBuffer {
             parent.getComputeCode().appendTxtToGlobal(rotType + " *" + currentWriteRotName + ";\n");
             //add the declaration of the pointer that points to the current buffer in the current rotation
             parent.getComputeCode().appendTxtToGlobal(bufType.toString() + " *" + currentWriteBufName + ";\n");
-
             
             //create the first entry!!
             block.addStatement(Util.toStmt(writeRotStructName + " =  (" + rotType+ "*)" + "malloc(sizeof("
@@ -441,7 +439,6 @@ public class InputRotatingBuffer extends RotatingBuffer {
         }
     }
 
-    
     /* (non-Javadoc)
      * @see at.dms.kjc.backendSupport.ChannelI#popMethodName()
      */
@@ -524,7 +521,6 @@ public class InputRotatingBuffer extends RotatingBuffer {
         JFormalParameter val = new JFormalParameter(
                 CStdType.Integer,
                 parameterName);
-        JLocalVariableExpression valRef = new JLocalVariableExpression(val);
         JBlock body = new JBlock();
         JMethodDeclaration retval = new JMethodDeclaration(
                 null,
@@ -569,12 +565,10 @@ public class InputRotatingBuffer extends RotatingBuffer {
         JFormalParameter val = new JFormalParameter(
                 CStdType.Integer,
                 valName);
-        JLocalVariableExpression valRef = new JLocalVariableExpression(val);
         String offsetName = "__offset";
         JFormalParameter offset = new JFormalParameter(
                 CStdType.Integer,
                 offsetName);
-        JLocalVariableExpression offsetRef = new JLocalVariableExpression(offset);
         JBlock body = new JBlock();
         JMethodDeclaration retval = new JMethodDeclaration(
                 null,

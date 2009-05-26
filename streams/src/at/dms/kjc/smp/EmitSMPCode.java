@@ -332,8 +332,8 @@ public class EmitSMPCode extends EmitCode {
         codegen.setDeclOnly(false);
 
         // generate code for ends of channels that connect to code on this ComputeNode
-        Set <RotatingBuffer> outputBuffers = OutputRotatingBuffer.getOutputBuffersOnTile((Core)n);
-        Set <InputRotatingBuffer> inputBuffers = InputRotatingBuffer.getInputBuffersOnTile((Core)n);
+        Set <RotatingBuffer> outputBuffers = OutputRotatingBuffer.getOutputBuffersOnCore((Core)n);
+        Set <InputRotatingBuffer> inputBuffers = InputRotatingBuffer.getInputBuffersOnCore((Core)n);
         
         // externs
         for (RotatingBuffer c : outputBuffers) {

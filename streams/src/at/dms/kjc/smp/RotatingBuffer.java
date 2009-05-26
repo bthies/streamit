@@ -36,56 +36,49 @@ import java.util.HashMap;
  *
  */
 public abstract class RotatingBuffer extends Channel {
+
+    /** the core this buffer is mapped to */
+    protected Core parent;
+	/** the filter this buffer is associated with */   
+    protected FilterSliceNode filterNode;
+    /** the filter info object for the filter that contains this buffer */
+    protected FilterInfo filterInfo;
     
-    /** array size in elements of each buffer of the rotation*/
+    /** the names of the individual buffers */
+    protected String[] bufferNames;
+	/** array size in elements of each buffer of the rotation*/
     protected int bufSize;
     /** type of array: array of element type */
     protected CType bufType;
     
-    /** the name of the rotation structure (always points to its head) */
-    protected String writeRotStructName;
-    /** the name of the pointer to the current write rotation of this buffer */
-    protected String currentWriteRotName;
-    /** the name of the pointer to the write buffer of the current rotation */
-    protected String currentWriteBufName;
-    
-    /** the name of the rotation struct, always points to head */
+    /** the name of the read rotation structure, (always points to its head) */
     protected String readRotStructName;
     /** the name of the pointer to the current read rotation of this buffer */
     protected String currentReadRotName;
     /** the name of the pointer to the read buffer of the current rotation */
     protected String currentReadBufName;
     
-    /** name of the variable that points to the rotation structure we should be transferring from */
-    public String transRotName;
-    /** name of the variable that points to the buffer we should be transferring from */
-    public String transBufName;
+    /** the name of the write rotation structure (always points to its head) */
+    protected String writeRotStructName;
+    /** the name of the pointer to the current write rotation of this buffer */
+    protected String currentWriteRotName;
+    /** the name of the pointer to the write buffer of the current rotation */
+    protected String currentWriteBufName;
     
-    /** definition of boolean used during primepump to see if it is the first execution */
-    protected JVariableDefinition firstExe;
-    protected String firstExeName;
+    /** the address buffers that this buffer rotation uses as destinations for transfers */ 
+    protected HashMap<InputRotatingBuffer, SourceAddressRotation> addressBuffers;
+    /** the data transfer statements that are generated for this output buffer */
+    protected BufferTransfers transferCommands;
     
-    /** the filter this buffer is associated with */   
-    protected FilterSliceNode filterNode;
-    /** the names of the individual buffers */
-    protected String[] bufferNames;
     /** a set of all the buffer types in the application */
     protected static HashSet<CType> types;
     /** prefix of the variable name for the rotating buffers */
     public static String rotTypeDefPrefix = "__rotating_buffer_";
-    /** the core this buffer is mapped to */
-    protected Core parent;
-    /** the filter info object for the filter that contains this buffer */
-    protected FilterInfo filterInfo;
-    /** the data transfer statements that are generated for this output buffer */
-    protected BufferTransfers transferCommands;
-    
-    /** the address buffers that this buffer rotation uses as destinations for transfers */ 
-    protected HashMap<InputRotatingBuffer, SourceAddressRotation> addressBuffers;
+	
+    /** maps each FilterSliceNode to Input/OutputRotatingBuffers */
     protected static HashMap<FilterSliceNode, InputRotatingBuffer> inputBuffers;
     protected static HashMap<FilterSliceNode, RotatingBuffer> outputBuffers;
-    protected final String temp = "__temp__";
-        
+
     static {
         types = new HashSet<CType>();
         inputBuffers = new HashMap<FilterSliceNode, InputRotatingBuffer>();
@@ -94,13 +87,18 @@ public abstract class RotatingBuffer extends Channel {
     
     protected RotatingBuffer(Edge edge, FilterSliceNode fsn, Core parent) {
         super(edge);
+        
         this.parent = parent;
         filterNode = fsn;
         filterInfo = FilterInfo.getFilterInfo(fsn);
         
-        int coreNum = parent.getCoreID();
-        if(filterNode.isFileOutput())
-            coreNum = ProcessFileWriter.getAllocatingTile(filterNode).getCoreID();
+        int coreNum = (filterNode.isFileOutput() ?
+        	ProcessFileWriter.getAllocatingCore(filterNode).getCoreID() :
+       		parent.getCoreID());
+        
+        readRotStructName =  this.getIdent() + "read_rot_struct__n" + coreNum;
+        currentReadRotName = this.getIdent() + "_read_current__n" + coreNum;
+        currentReadBufName = this.getIdent() + "_read_buf__n" + coreNum;
         
         writeRotStructName =  this.getIdent() + "write_rot_struct__n" + coreNum;
         currentWriteRotName = this.getIdent() + "_write_current__n" + coreNum;
@@ -162,7 +160,6 @@ public abstract class RotatingBuffer extends Channel {
      */
     public SourceAddressRotation getAddressBuffer(InputSliceNode input) {
         assert addressBuffers.containsKey(InputRotatingBuffer.getInputBuffer(input.getNextFilter())) ;
-        
         return addressBuffers.get(InputRotatingBuffer.getInputBuffer(input.getNextFilter()));
     }
     
@@ -182,7 +179,7 @@ public abstract class RotatingBuffer extends Channel {
         
         //now handle the file writers
         for (FilterSliceNode fileWriter : ProcessFileWriter.getFileWriterFilters())
-            communicateAddressesForFilter(fileWriter, ProcessFileWriter.getAllocatingTile(fileWriter));
+            communicateAddressesForFilter(fileWriter, ProcessFileWriter.getAllocatingCore(fileWriter));
         
         //now handle the file readers
         
@@ -192,33 +189,27 @@ public abstract class RotatingBuffer extends Channel {
     private static void communicateAddressesForFilter(FilterSliceNode filter, Core ownerCore) { 
         CoreCodeStore cs = ownerCore.getComputeCode();
         InputRotatingBuffer buf = InputRotatingBuffer.getInputBuffer(filter);
+        
         //if this filter does not have an input buffer, then continue
         if (buf == null)
             return;
-        for (int i = 0; i < buf.getAddressBuffers().length; i++) {
-            SourceAddressRotation addr = buf.getAddressBuffers()[i];
-            Core srcTile = addr.parent;
+        
+        for (SourceAddressRotation addr : buf.getAddressBuffers()) {
+            Core srcCore = addr.parent;
             
             //we might have a file reader as a source, if so, don't send the addresses to it
-            if (!srcTile.isComputeNode())
+            if (!srcCore.isComputeNode())
                 continue;
 
-            //create the declaration of the buffers on the tile
+            //create declarations of the pointers to shared buffers on the source core
             addr.declareBuffers();
-            for (int b = 0; b < buf.rotationLength; b++) {
-                //buffers preallocated and shared amongst all cores, no need to
-                //communicate locations of buffers, simply assign buffers directly
-                srcTile.getComputeCode().addStatementToBufferInit(
-                        addr.bufferNames[b] + " = " + buf.bufferNames[b]);
-                /*
-                srcTile.getComputeCode()
-                    .addStatementToBufferInit(addr.bufferNames[b] + " = (" + buf.getType() +
-                                              "*) malloc(" + buf.getBufferSize() + " * sizeof(" +
-                                              buf.getType() + "))");
-                */
-            }
             
-            //set up the rotation structure at the source
+            //communicate addresses of shared buffers
+            for (int b = 0; b < buf.rotationLength; b++)
+                srcCore.getComputeCode().addStatementToBufferInit(
+                        addr.bufferNames[b] + " = " + buf.bufferNames[b]);
+            
+            //setup the rotation structure at the source
             addr.setupRotation();
         }
     }
@@ -239,6 +230,7 @@ public abstract class RotatingBuffer extends Channel {
             SMPBackend.structs_h.addText("} " + rotTypeDefPrefix + type.toString() + ";\n");
         }
     }
+    
     /**
      * Generate the code necessary to allocate the buffers, setup the rotation structure,
      * and communicate addresses.
@@ -252,52 +244,30 @@ public abstract class RotatingBuffer extends Channel {
     }
     
     /**
-     * Allocate the constituent buffers of this rotating buffer structure.  This is used
-     * for buffers that need allocation from memory but not for dma rotational buffers
-     * are just pointers to memory on another tile.
+     * Allocate the constituent buffers of this rotating buffer structure
      */
     protected void allocBuffers(boolean shared) {
-        for (int i = 0; i < rotationLength; i++) {
-            CoreCodeStore cs;
-            
-            if (filterNode.isFileOutput()) {
-                //if we have a file writer then the code has to be put on the allocating tile 
-                //not the off chip memory!
-                cs = ProcessFileWriter.getAllocatingTile(filterNode).getComputeCode();
-            } else  //we are dealing with a regular buffer on a tile
-                cs = this.parent.getComputeCode();
-            
-            
-            //create the pointer to the this buffer constituent
-            /*
-            cs.addStatementFirstToBufferInit("// Generated in RotatingBuffer.allocBuffers()");
-            cs.addStatementFirstToBufferInit(this.getType().toString() + "* " + 
-                    bufferNames[i]);
-            */
+    	for (int i = 0; i < rotationLength; i++) {
+    		CoreCodeStore cs;
 
-            this.parent.getMachine().getOffChipMemory().getComputeCode().appendTxtToGlobal(
-                    this.getType().toString() + "* " + bufferNames[i] + ";\n");
+    		//if we have a file writer then the code has to be put on the allocating core not the off chip memory!
+    		//else we are dealing with a regular buffer on a core, put on parent core
+    		if (filterNode.isFileOutput())
+    			cs = ProcessFileWriter.getAllocatingCore(filterNode).getComputeCode();
+    		else
+    			cs = this.parent.getComputeCode();
 
-            //set the allocate call, if this is an output buffer then it is not shared,
-            //input buffers are shared and use malloc_shared
-            //input buffers of file output are allocated from the file write heap 
-            //which is shared and uncacheable
-            String alloc = "malloc(";
-            
-            //malloc the steady buffer
-            cs.addStatementToBufferInit(new JExpressionStatement(new JEmittedTextExpression(
-                    bufferNames[i] + " = (" + this.getType() + 
-                    "*) " +  
-                    alloc +
-                    this.getBufferSize() + " * sizeof(" +
-                    this.getType() + "))")));
 
-	    /*
-	    cs.addStatementToBufferInit(new JExpressionStatement(new JEmittedTextExpression(
-		    "posix_memalign((void **)(&" + bufferNames[i] + "), 64, " +
-		    this.getBufferSize() + " * sizeof(" +
-		    this.getType() + "))")));
-	    */
+    		//create pointers to constituent buffers
+    		this.parent.getMachine().getOffChipMemory().getComputeCode().appendTxtToGlobal(
+    				this.getType().toString() + "* " + bufferNames[i] + ";\n");
+
+    		//malloc the steady buffer
+    		cs.addStatementToBufferInit(new JExpressionStatement(new JEmittedTextExpression(
+    				bufferNames[i] + " = (" + this.getType() + 
+    				"*) malloc(" +  
+    				this.getBufferSize() + " * sizeof(" +
+    				this.getType() + "))")));
         }
     }
       
@@ -306,17 +276,6 @@ public abstract class RotatingBuffer extends Channel {
      * as a circular linked list.
      */
     protected abstract void setupRotation();
-    
-    /** 
-     * The statement returned by this method will be added to the end of the rotation setup for this
-     * buffer.
-     * 
-     * @return The statement to add
-     */
-    protected JStatement endOfRotationSetup() {
-       JBlock block = new JBlock();
-       return block;
-    }
     
     /**
      * Return the number of buffers that comprise this rotating buffer.
@@ -374,9 +333,9 @@ public abstract class RotatingBuffer extends Channel {
     }
     
     /**
-     * Return the set of all the InputBuffers that are mapped to tile t.
+     * Return the set of all the InputBuffers that are mapped to Core t.
      */
-    public static Set<InputRotatingBuffer> getInputBuffersOnTile(Core t) {
+    public static Set<InputRotatingBuffer> getInputBuffersOnCore(Core t) {
         HashSet<InputRotatingBuffer> set = new HashSet<InputRotatingBuffer>();
         
         for (InputRotatingBuffer b : inputBuffers.values()) {
@@ -387,9 +346,9 @@ public abstract class RotatingBuffer extends Channel {
         return set;
     }
     /**
-     * Return the set of all the InputBuffers that are mapped to tile t.
+     * Return the set of all the InputBuffers that are mapped to Core t.
      */
-    public static Set<RotatingBuffer> getOutputBuffersOnTile(Core t) {
+    public static Set<RotatingBuffer> getOutputBuffersOnCore(Core t) {
         HashSet<RotatingBuffer> set = new HashSet<RotatingBuffer>();
         
         for (RotatingBuffer b : outputBuffers.values()) {

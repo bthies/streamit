@@ -16,14 +16,15 @@ import java.util.*;
  *
  */
 public class InputRotatingBuffer extends RotatingBuffer {
+	
     /** if this input buffer is shared as an upstream output buffer for a filter on
-     * the same tile, then this references the upstream filter.
+     * the same core, then this references the upstream filter.
      */
     protected FilterSliceNode localSrcFilter;    
 
-    /** all the address buffers that are on the tiles that feed this input buffer */
+    /** all the address buffers that are on the cores that feed this input buffer */
     protected SourceAddressRotation[] addressBufs;
-    /** a map from tile to address buf */
+    /** a map from core to address buf */
     protected HashMap<Core, SourceAddressRotation> addrBufMap;
     
     /** true if what feeds this inputbuffer is a file reader */
@@ -56,8 +57,8 @@ public class InputRotatingBuffer extends RotatingBuffer {
             if (!slice.getHead().noInputs()) {
                 assert slice.getHead().totalWeights(SchedulingPhase.STEADY) > 0;
                 Core parent = SMPBackend.backEndBits.getLayout().getComputeNode(slice.getFirstFilter());
-                //create the new buffer, the constructor will put the buffer in the 
-                //hashmap
+                
+                //create the new buffer, the constructor will put the buffer in the hashmap
                 InputRotatingBuffer buf = new InputRotatingBuffer(slice.getFirstFilter(), parent);
                                   
                 buf.setRotationLength(schedule);
@@ -76,17 +77,15 @@ public class InputRotatingBuffer extends RotatingBuffer {
      */
     private InputRotatingBuffer(FilterSliceNode filterNode, Core parent) {
         super(filterNode.getEdgeToPrev(), filterNode, parent);
+        
         bufType = filterNode.getFilter().getInputType();
         types.add(bufType);
         setInputBuffer(filterNode, this);
 
         int coreNum = parent.getCoreID();
         if (filterNode.isFileOutput())
-            coreNum = ProcessFileWriter.getAllocatingTile(filterNode).getCoreID();
+            coreNum = ProcessFileWriter.getAllocatingCore(filterNode).getCoreID();
         
-        readRotStructName =  this.getIdent() + "read_rot_struct__n" + coreNum;
-        currentReadRotName = this.getIdent() + "_read_current__n" + coreNum;
-        currentReadBufName = this.getIdent() + "_read_buf__n" + coreNum;
         currentFileReaderRotName = this.getIdent() + "_fr_current__n" + coreNum;
         currentFileReaderBufName = this.getIdent() + "_fr_buf__n" + coreNum;
 
@@ -113,7 +112,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
     
     /**
      * This is a potential optimization.  If we have a source and dest mapped to the same
-     * tile, and we have a simple reorganization scheme between them, we can write directly into the
+     * core, and we have a simple reorganization scheme between them, we can write directly into the
      * downstream's input buffer.  No need for an output buffer at the source and then copying.
      * 
      * So this will set the localSrcFilter to a filter if we can apply the optimization.
@@ -129,7 +128,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
             FilterSliceNode upstream = edge.getSrc().getPrevFilter();
             if (SMPBackend.backEndBits.getLayout().getComputeNode(upstream) == parent) {
                 //System.out.println(upstream);
-                assert lsf == null : "Two upstream srcs mapped to same tile ?";
+                assert lsf == null : "Two upstream srcs mapped to same core ?";
                 lsf = upstream;
                 theEdge = edge;
             } 
@@ -182,27 +181,22 @@ public class InputRotatingBuffer extends RotatingBuffer {
         
         //System.out.println(filterNode + " has local source " + localSrcFilter);
         
-        //if we found an upstream filter mapped to the same tile
+        //if we found an upstream filter mapped to the same core
         if (localSrcFilter != null) {
-          //remember that this input buffer is the output for the src filter on the same tile
-            setOutputBuffer(localSrcFilter, this);
-            
-            firstExeName = "__first__" + this.getIdent();        
-            firstExe = new JVariableDefinition(null,
-                    at.dms.kjc.Constants.ACC_STATIC,
-                    CStdType.Boolean, firstExeName, new JBooleanLiteral(true));
+          //remember that this input buffer is the output for the src filter on the same core
+          setOutputBuffer(localSrcFilter, this);
         }
     }
     
     /**
-     * Must be called after setLocalSrcFilter.  This creates the address buffers that other tiles
-     * use when writing to this input buffer.  Each source that is mapped to a different tile than 
+     * Must be called after setLocalSrcFilter.  This creates the address buffers that other cores
+     * use when writing to this input buffer.  Each source that is mapped to a different core than 
      * this input buffer has an address buffer for this input buffer.
      */
     protected void createAddressBufs() {
        int addressBufsSize = filterNode.getParent().getHead().getSourceSlices(SchedulingPhase.STEADY).size();
        //if we are using this input buffer as an output buffer, then we don't need the address buffer
-       //for the output buffer that is used for the upstream filter that is mapped to this tile
+       //for the output buffer that is used for the upstream filter that is mapped to this core
        if (hasLocalSrcFilter())
            addressBufsSize--;           
        
@@ -210,13 +204,13 @@ public class InputRotatingBuffer extends RotatingBuffer {
        
        int i = 0;
        for (Slice src : filterNode.getParent().getHead().getSourceSlices(SchedulingPhase.STEADY)) {
-           Core tile = SMPBackend.backEndBits.getLayout().getComputeNode(src.getFirstFilter());
-           if (tile == parent && hasLocalSrcFilter())
+           Core core = SMPBackend.backEndBits.getLayout().getComputeNode(src.getFirstFilter());
+           if (core == parent && hasLocalSrcFilter())
                continue;
            
-           SourceAddressRotation rot = new SourceAddressRotation(tile, this, filterNode, theEdge);
+           SourceAddressRotation rot = new SourceAddressRotation(core, this, filterNode, theEdge);
            addressBufs[i] = rot;
-           addrBufMap.put(tile, rot);
+           addrBufMap.put(core, rot);
            i++;
        }
     }
@@ -295,10 +289,10 @@ public class InputRotatingBuffer extends RotatingBuffer {
         //this is the typedef we will use for this buffer rotation structure
         String rotType = rotTypeDefPrefix + getType().toString();
         //if we are setting up the rotation for a file writer we have to do it on the 
-        //allocating tile
+        //allocating core
         if (filterNode.isFileOutput()) {
             fileWriterBuffers.add(this);
-            cs = ProcessFileWriter.getAllocatingTile(filterNode).getComputeCode();
+            cs = ProcessFileWriter.getAllocatingCore(filterNode).getComputeCode();
         } else
             cs = parent.getComputeCode();
         
@@ -356,7 +350,6 @@ public class InputRotatingBuffer extends RotatingBuffer {
             block.addStatement(Util.toStmt(currentFileReaderRotName + " = " + readRotStructName));
             block.addStatement(Util.toStmt(currentFileReaderBufName + " = " + currentReadRotName + "->buffer"));
         }
-        block.addStatement(endOfRotationSetup());
         
         if (hasLocalSrcFilter()) {
             //if this has a local upstream filter, then we can set up the rotation struct for its 
@@ -403,26 +396,26 @@ public class InputRotatingBuffer extends RotatingBuffer {
     }
     
     /**
-     * Return the set of address buffers that are declared on tiles that feed this buffer.
-     * @return the set of address buffers that are declared on tiles that feed this buffer.
+     * Return the set of address buffers that are declared on cores that feed this buffer.
+     * @return the set of address buffers that are declared on cores that feed this buffer.
      */
     public SourceAddressRotation[] getAddressBuffers() {
         return addressBufs;
     }
     
     /**
-     * Return the address buffer rotation for this input buffer on the tile.
+     * Return the address buffer rotation for this input buffer on the core.
      * 
-     * @param tile The tile
-     * @return the address buffer for this input buffer on the tile
+     * @param core The core
+     * @return the address buffer for this input buffer on the core
      */
-    public SourceAddressRotation getAddressRotation(Core tile) {
-        return addrBufMap.get(tile);
+    public SourceAddressRotation getAddressRotation(Core core) {
+        return addrBufMap.get(core);
     }
     
     /**
      * return true if this input rotating buffer has a source mapped to the same
-     * tile, if so they output for that source uses this buffer as an optimization.
+     * core, if so they output for that source uses this buffer as an optimization.
      */
     public boolean hasLocalSrcFilter() {
         return localSrcFilter != null;
@@ -827,13 +820,6 @@ public class InputRotatingBuffer extends RotatingBuffer {
         LinkedList<JStatement> list = new LinkedList<JStatement>();
         list.add(Util.toStmt(currentWriteRotName + " = " + currentWriteRotName + "->next"));
         list.add(Util.toStmt(currentWriteBufName + " = " + currentWriteRotName + "->buffer"));
-        return list;
-    }
-    
-    protected List<JStatement> rotateStatementsTransRot() {
-        LinkedList<JStatement> list = new LinkedList<JStatement>();
-        list.add(Util.toStmt(transRotName + " = " + transRotName + "->next"));
-        list.add(Util.toStmt(transBufName + " = " + transRotName + "->buffer"));
         return list;
     }
 }

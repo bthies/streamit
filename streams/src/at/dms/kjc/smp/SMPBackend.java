@@ -5,6 +5,7 @@ import at.dms.kjc.backendSupport.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.lowering.partition.*;
 import at.dms.kjc.slicegraph.*;
+import java.util.LinkedList;
 
 public class SMPBackend {
     public static final boolean FAKE_IO = true;
@@ -46,7 +47,7 @@ public class SMPBackend {
 
         // The usual optimizations and transformation to slice graph
         CommonPasses commonPasses = new CommonPasses();
-        // perform standard optimizations, use the number of tiles the user wants to target
+        // perform standard optimizations, use the number of cores the user wants to target
         commonPasses.run(str, interfaces, interfaceTables, structs, helpers, global, chip.size());
         // perform some standard cleanup on the slice graph.
         commonPasses.simplifySlices();
@@ -80,12 +81,19 @@ public class SMPBackend {
         else
             CoreCodeStore.generatePrintOutputCode();
         
-        //emit c code for all tiles
+        //emit c code for all cores
         EmitSMPCode.doit(backEndBits);
         
         //dump structs.h file
         structs_h.writeToFile();
         
+        //check DataFlowOrder output
+        System.out.println("TESTING==========================");
+        LinkedList<Slice> slices = DataFlowOrder.getTraversal(graphSchedule.getSlicer().getSliceGraph());
+        for(Slice slice : slices)
+            System.out.println(slice);
+        System.out.println("=================================");
+
         System.exit(0);
     }
     
@@ -103,7 +111,7 @@ public class SMPBackend {
         //set the prime pump to be empty
         new GeneratePrimePump(schedule).setEmptySchedule();
 
-        //for space multiplexing on tilera we need to use a different primepump scheduler because
+        //for space multiplexing on SMP we need to use a different primepump scheduler because
         //we are space multiplexing and we need to prime the pipe more so that everything can fire
         //when ready
         if (at.dms.kjc.smp.SMPBackend.scheduler.isSMD())

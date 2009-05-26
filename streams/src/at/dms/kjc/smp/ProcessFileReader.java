@@ -16,14 +16,14 @@ public class ProcessFileReader {
     protected SMPBackEndFactory factory;
     protected CoreCodeStore codeStore;
     protected FileInputContent fileInput;
-    protected static HashMap<FilterSliceNode, Core> allocatingTiles;
-    protected Core allocatingTile;
+    protected static HashMap<FilterSliceNode, Core> allocatingCores;
+    protected Core allocatingCore;
     protected OutputSliceNode fileOutput;  
     protected static HashMap<FilterSliceNode, JMethodDeclaration> PPMethods;
     protected static HashSet<String> fileNames;
     
     static {
-        allocatingTiles = new HashMap<FilterSliceNode, Core>();
+        allocatingCores = new HashMap<FilterSliceNode, Core>();
         PPMethods = new HashMap<FilterSliceNode, JMethodDeclaration>();
         fileNames = new HashSet<String>();
     }
@@ -33,9 +33,9 @@ public class ProcessFileReader {
         this.fileInput = (FileInputContent)filter.getFilter();
         this.phase = phase;
         this.factory = factory;
-        this.allocatingTile = nextAllocatingTile();
+        this.allocatingCore = nextAllocatingCore();
         this.fileOutput = filter.getParent().getTail();
-        codeStore = allocatingTile.getComputeCode();
+        codeStore = allocatingCore.getComputeCode();
     }
      
     public void processFileReader() {
@@ -153,31 +153,31 @@ public class ProcessFileReader {
 
 
     /**
-     * @return The tile we should allocate this file reader on.  Remember that 
-     * the file reader is allocated to off-chip memory.  We just cycle through the tiles
-     * if there is more than one file reader, one reader per tile.
+     * @return The core we should allocate this file reader on.  Remember that 
+     * the file reader is allocated to off-chip memory.  We just cycle through the cores
+     * if there is more than one file reader, one reader per core.
      */
-    private Core nextAllocatingTile() {
-        if(allocatingTiles.get(filterNode) != null)
-            return allocatingTiles.get(filterNode);
+    private Core nextAllocatingCore() {
+        if(allocatingCores.get(filterNode) != null)
+            return allocatingCores.get(filterNode);
         
         // Try cores that are not yet allocating and already have existing code
-        for (Core tile : SMPBackend.chip.getCores()) {
-            if (!allocatingTiles.containsValue(tile) && tile.getComputeCode().shouldGenerateCode()) {
-                allocatingTiles.put(filterNode, tile);
-                return tile;
+        for (Core core : SMPBackend.chip.getCores()) {
+            if (!allocatingCores.containsValue(core) && core.getComputeCode().shouldGenerateCode()) {
+                allocatingCores.put(filterNode, core);
+                return core;
             }
         }
 
         // Try cores that are not yet allocating, but do not already have code
-        for (Core tile : SMPBackend.chip.getCores()) {
-            if (!allocatingTiles.containsValue(tile)) {
-                allocatingTiles.put(filterNode, tile);
-                return tile;
+        for (Core core : SMPBackend.chip.getCores()) {
+            if (!allocatingCores.containsValue(core)) {
+                allocatingCores.put(filterNode, core);
+                return core;
             }
         }
 
-        assert false : "Too many file readers for this chip (one per tile)!";
+        assert false : "Too many file readers for this chip (one per core)!";
         return null;
     }
     

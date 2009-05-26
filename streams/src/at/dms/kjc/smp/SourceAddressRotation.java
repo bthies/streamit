@@ -7,10 +7,10 @@ import at.dms.kjc.*;
 import at.dms.kjc.slicegraph.*;
 
 /**
- * This class models the rotating structure that is needed when a tile uses double buffered communication
- * and rotating buffers.  A rotating structure of addresses is kept at a source tile that stores
- * the addresses of the rotating buffers of the source tile so that we can write to 
- * the appropriate location in memory in the destination's tile.
+ * This class models the rotating structure that is needed when a core uses double buffered communication
+ * and rotating buffers.  A rotating structure of addresses is kept at a source core that stores
+ * the addresses of the rotating buffers of the source core so that we can write to 
+ * the appropriate location in memory in the destination's core.
  * 
  * @author mgordon
  *
@@ -19,9 +19,9 @@ public class SourceAddressRotation extends RotatingBuffer {
     /** The InputBuffer this rotation models */
     protected InputRotatingBuffer inputBuffer;
     
-    public SourceAddressRotation(Core tile, InputRotatingBuffer buf, FilterSliceNode dest, Edge edge) {
-        super(edge, dest, tile);
-        this.parent = tile;
+    public SourceAddressRotation(Core core, InputRotatingBuffer buf, FilterSliceNode dest, Edge edge) {
+        super(edge, dest, core);
+        this.parent = core;
         this.inputBuffer = buf;
         setBufferSize();
         bufType = buf.bufType;
@@ -54,7 +54,7 @@ public class SourceAddressRotation extends RotatingBuffer {
             
             CoreCodeStore cs = this.parent.getComputeCode();
             
-            //create the pointer that will point to the buffer constituent on the dest tile
+            //create the pointer that will point to the buffer constituent on the dest core
             //cs.addStatementToBufferInit(new JExpressionStatement(new JEmittedTextExpression("// Generated in SourceAddressRotation.declareBuffers()")));
             cs.addStatementToBufferInit(new JExpressionStatement(new JEmittedTextExpression(this.getType().toString() + "* " + 
                     bufferNames[i])));
@@ -112,7 +112,6 @@ public class SourceAddressRotation extends RotatingBuffer {
         }
         block.addStatement(Util.toStmt(currentWriteRotName + " = " + writeRotStructName));
         block.addStatement(Util.toStmt(currentWriteBufName + " = " + currentWriteRotName + "->buffer"));
-        block.addStatement(endOfRotationSetup());
         cs.addStatementToBufferInit(block);
     }
     

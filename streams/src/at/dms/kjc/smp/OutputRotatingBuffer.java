@@ -39,8 +39,8 @@ import at.dms.kjc.spacetime.BasicSpaceTimeSchedule;
 public class OutputRotatingBuffer extends RotatingBuffer {
     /** the output slice node for this output buffer */
     protected OutputSliceNode outputNode;    
-    /** the tile we are mapped to */
-    protected Core tile;
+    /** the core we are mapped to */
+    protected Core core;
     
     /**
      * Create all the output buffers necessary for this slice graph.  Iterate over
@@ -60,11 +60,11 @@ public class OutputRotatingBuffer extends RotatingBuffer {
             if (!slice.getTail().noOutputs()) {
                 assert slice.getTail().totalWeights(SchedulingPhase.STEADY) > 0;
                 Core parent = SMPBackend.backEndBits.getLayout().getComputeNode(slice.getFirstFilter());
-                //only create an output buffer if no downstream filter is mapped to this tile
-                //if a downstream filter is mapped to this tile, then this slice will use the inputbuffer
+                //only create an output buffer if no downstream filter is mapped to this core
+                //if a downstream filter is mapped to this core, then this slice will use the inputbuffer
                 //for its output
                 boolean createBuffer = true;
-                //look to see if one of the downstream slices is mapped to the same tile as this slice
+                //look to see if one of the downstream slices is mapped to the same core as this slice
                 //and this slice uses the downstream's input buffer as an outputbuffer, if so, we don't
                 //need an output buffer
                 for (InterSliceEdge edge : slice.getTail().getDestSet(SchedulingPhase.STEADY)) {
@@ -99,17 +99,8 @@ public class OutputRotatingBuffer extends RotatingBuffer {
         outputNode = filterNode.getParent().getTail();
         bufType = filterNode.getFilter().getOutputType();
         setOutputBuffer(filterNode, this);
-       
-        transRotName = this.getIdent() + "_rot_trans__n" + parent.getCoreID();
-        transBufName = this.getIdent() + "_trans_buf__n" + parent.getCoreID();
               
-        tile = SMPBackend.backEndBits.getLayout().getComputeNode(filterNode);
-        
-        firstExeName = "__first__" + this.getIdent();        
-        firstExe = new JVariableDefinition(null,
-                at.dms.kjc.Constants.ACC_STATIC,
-                CStdType.Boolean, firstExeName, new JBooleanLiteral(true));
-        
+        core = SMPBackend.backEndBits.getLayout().getComputeNode(filterNode);
     }
    
     /** Create an array reference given an offset */   
@@ -129,7 +120,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
         addressBuffers = new HashMap<InputRotatingBuffer, SourceAddressRotation>();
         for (InterSliceEdge edge : outputNode.getDestSet(SchedulingPhase.STEADY)) {
             InputRotatingBuffer input = InputRotatingBuffer.getInputBuffer(edge.getDest().getNextFilter());
-            addressBuffers.put(input, input.getAddressRotation(tile));               
+            addressBuffers.put(input, input.getAddressRotation(core));               
         }
     }
     
@@ -353,14 +344,6 @@ public class OutputRotatingBuffer extends RotatingBuffer {
         list.add(Util.toStmt(currentWriteBufName + " = " + currentWriteRotName + "->buffer"));
         return list;
     }
-    
-    protected List<JStatement> rotateStatementsTransRot() {
-        LinkedList<JStatement> list = new LinkedList<JStatement>();
-        list.add(Util.toStmt(transRotName + " = " + transRotName + "->next"));
-        list.add(Util.toStmt(transBufName + " = " + transRotName + "->buffer"));
-        return list;
-    }
-    
     
     /* (non-Javadoc)
      * @see at.dms.kjc.backendSupport.ChannelI#topOfWorkSteadyWrite()

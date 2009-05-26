@@ -81,8 +81,8 @@ public class SMPBackEndFactory extends BackEndFactory<SMPMachine, Core, CoreCode
      * @see at.dms.kjc.backendSupport.BackEndFactory#getComputeNode(java.lang.Object)
      */
     @Override
-    public Core getComputeNode(Integer tileNum) {
-        return chip.getNthComputeNode(tileNum.intValue());
+    public Core getComputeNode(Integer coreNum) {
+        return chip.getNthComputeNode(coreNum.intValue());
     }
 
     /* (non-Javadoc)
@@ -99,7 +99,7 @@ public class SMPBackEndFactory extends BackEndFactory<SMPMachine, Core, CoreCode
     @Override
     public void processFilterSliceNode(FilterSliceNode filter,
             SchedulingPhase whichPhase, SMPMachine chip) {
-        //System.out.println("Processing: " + filter + " on tile " + layout.getComputeNode(filter).getTileNumber() + "(" + whichPhase + ")");
+        //System.out.println("Processing: " + filter + " on tile " + layout.getComputeNode(filter).getCoreNumber() + "(" + whichPhase + ")");
         if (filter.isPredefined()) {
             if (filter.isFileInput())
                 (new ProcessFileReader(filter, whichPhase, this)).processFileReader();
@@ -118,7 +118,7 @@ public class SMPBackEndFactory extends BackEndFactory<SMPMachine, Core, CoreCode
     @Override
     public void processFilterSlices(Slice slice, SchedulingPhase whichPhase,
             SMPMachine chip) {
-        assert false : "The Tilera backend does not support slices with multiple filters (processFilterSlices()).";
+        assert false : "The SMP backend does not support slices with multiple filters (processFilterSlices()).";
     }
 
     /* (non-Javadoc)

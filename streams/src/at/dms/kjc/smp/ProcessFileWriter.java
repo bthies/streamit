@@ -15,11 +15,11 @@ public class ProcessFileWriter {
     protected SMPBackEndFactory factory;
     protected CoreCodeStore codeStore;
     protected FileOutputContent fileOutput;
-    protected static HashMap<FilterSliceNode, Core> allocatingTiles;
-    protected Core allocatingTile; 
+    protected static HashMap<FilterSliceNode, Core> allocatingCores;
+    protected Core allocatingCore; 
 
     static {
-        allocatingTiles = new HashMap<FilterSliceNode, Core>();
+        allocatingCores = new HashMap<FilterSliceNode, Core>();
     }
     
     public ProcessFileWriter (FilterSliceNode filter, SchedulingPhase phase, SMPBackEndFactory factory) {
@@ -34,28 +34,28 @@ public class ProcessFileWriter {
     }
     
     public static Set<FilterSliceNode> getFileWriterFilters() {
-        return allocatingTiles.keySet();
+        return allocatingCores.keySet();
     }
     
     /**
-     * Return the tile that this file writer's buffer should be allocated on.
+     * Return the core that this file writer's buffer should be allocated on.
      * @param fo  The file writer
      */
-    public static Core getAllocatingTile(FilterSliceNode fo) {
+    public static Core getAllocatingCore(FilterSliceNode fo) {
         assert fo.isFileOutput();
         
-        if (!allocatingTiles.containsKey(fo)) {
-            Core allocatingTile = nextAllocatingTile(fo);
-            System.out.println(fo + " assigned to Tile " + allocatingTile.getCoreID());
-            allocatingTiles.put(fo, allocatingTile);
+        if (!allocatingCores.containsKey(fo)) {
+            Core allocatingCore = nextAllocatingCore(fo);
+            System.out.println(fo + " assigned to Core " + allocatingCore.getCoreID());
+            allocatingCores.put(fo, allocatingCore);
         }
         
-        return allocatingTiles.get(fo);
+        return allocatingCores.get(fo);
     }
     
     /** 
-     * Decide on the allocating tile for the file writer and create the shared, uncacheable heap
-     * on that tile the output will be written to.
+     * Decide on the allocating core for the file writer and create the shared, uncacheable heap
+     * on that core the output will be written to.
      */
     public void processFileWriter() {
         //do nothing if faking io
@@ -63,9 +63,9 @@ public class ProcessFileWriter {
             int outputs = filterNode.getFilter().getSteadyMult();
             System.out.println("Outputs for " + filterNode + ": " + outputs);
             totalOutputs += outputs;
-            assert allocatingTiles.containsKey(filterNode);
-            allocatingTile = allocatingTiles.get(filterNode);
-            codeStore = allocatingTile.getComputeCode();
+            assert allocatingCores.containsKey(filterNode);
+            allocatingCore = allocatingCores.get(filterNode);
+            codeStore = allocatingCore.getComputeCode();
                         
             codeStore.appendTxtToGlobal("int OUTPUT;\n");
             //JBlock block = new JBlock();
@@ -74,34 +74,34 @@ public class ProcessFileWriter {
     }
     
     /**
-     * @return The tile we should allocate this file reader on.  Remember that 
-     * the file reader is allocated to off-chip memory.  We just cycle through the tiles
-     * if there is more than one file reader, one reader per tile.
+     * @return The core we should allocate this file reader on.  Remember that 
+     * the file reader is allocated to off-chip memory.  We just cycle through the cores
+     * if there is more than one file reader, one reader per core.
      */
-    private static Core nextAllocatingTile(FilterSliceNode fo) {
+    private static Core nextAllocatingCore(FilterSliceNode fo) {
         List<Core> reverseOrder = SMPBackend.chip.getCores(); 
         Collections.reverse(reverseOrder);
         
-        if(allocatingTiles.get(fo) != null)
-            return allocatingTiles.get(fo);
+        if(allocatingCores.get(fo) != null)
+            return allocatingCores.get(fo);
 
         // Try cores that are not yet allocating and already have existing code
-        for (Core tile : reverseOrder) {
-            if (!allocatingTiles.containsValue(tile) && tile.getComputeCode().shouldGenerateCode()) {
-                allocatingTiles.put(fo, tile);
-                return tile;
+        for (Core core : reverseOrder) {
+            if (!allocatingCores.containsValue(core) && core.getComputeCode().shouldGenerateCode()) {
+                allocatingCores.put(fo, core);
+                return core;
             }
         }
 
         // Try cores that are not yet allocating, but do not already have code
-        for (Core tile : reverseOrder) {
-            if (!allocatingTiles.containsValue(tile)) {
-                allocatingTiles.put(fo, tile);
-                return tile;
+        for (Core core : reverseOrder) {
+            if (!allocatingCores.containsValue(core)) {
+                allocatingCores.put(fo, core);
+                return core;
             }
         }
 
-        assert false : "Too many file readers for this chip (one per tile)!";
+        assert false : "Too many file readers for this chip (one per core)!";
         return null;
     }
 }

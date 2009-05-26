@@ -9,17 +9,17 @@ import java.util.Set;
 import at.dms.kjc.slicegraph.*;
 
 public class CoreCodeStore extends ComputeCodeStore<Core> {
-    /** True if this tile code store has code appended to it */
+    /** True if this CoreCodeStore has code appended to it */
     private boolean hasCode = false;
     /** Code block containing declarations of all buffers */
     protected JBlock bufferDecls = new JBlock();
-    /** The method that will malloc the buffers and receive addresses from downstream tiles */
+    /** The method that will malloc the buffers and receive addresses from downstream cores */
     protected JMethodDeclaration bufferInit;
     /** The name of the bufferInit method */
     public static final String bufferInitMethName = "buffer_and_address_init";
     /** Any text that should appear outside a function declaration in the c code */
     private StringBuffer globalTxt = new StringBuffer();
-    /** set of filterslicenodes that are mapped to this tile */
+    /** set of FilterSliceNodes that are mapped to this core */
     protected HashSet<FilterSliceNode> filters;
     
     public CoreCodeStore(Core nodeType) {
@@ -48,9 +48,9 @@ public class CoreCodeStore extends ComputeCodeStore<Core> {
     }
     
     /**
-     * Remember that this filter is mapped to this tile.
+     * Remember that this filter is mapped to this core.
      * 
-     * @param filter The filter we are mapping to this tile.
+     * @param filter The filter we are mapping to this core.
      */
     public void addFilter(FilterSliceNode filter) {
         filters.add(filter);
@@ -58,9 +58,9 @@ public class CoreCodeStore extends ComputeCodeStore<Core> {
     }
     
     /**
-     * return all of the filters that are mapped to this tile.
+     * return all of the filters that are mapped to this core.
      * 
-     * @return all of the filters that are mapped to this tile.
+     * @return all of the filters that are mapped to this core.
      */
     public Set<FilterSliceNode> getFilters() {
         return filters;
@@ -99,7 +99,7 @@ public class CoreCodeStore extends ComputeCodeStore<Core> {
     }
     
     /**
-     * Append a barrier instruction to all of the (abstract) tiles in the steady state
+     * Append a barrier instruction to all of the (abstract) cores in the steady state
      * method.
      */
     public static void addBarrierSteady() {
@@ -126,7 +126,7 @@ public class CoreCodeStore extends ComputeCodeStore<Core> {
     }
     
     private void createBufferInitMethod() {
-        //create the method that will malloc the buffers and receive the addresses from downstream tiles
+        //create the method that will malloc the buffers and receive the addresses from downstream cores
         bufferInit = new JMethodDeclaration(CStdType.Void, bufferInitMethName + "__n" + parent.getCoreID(), new JFormalParameter[0], new JBlock());
         //addMethod(bufferInit);
     }
@@ -137,7 +137,7 @@ public class CoreCodeStore extends ComputeCodeStore<Core> {
     
     /**
      * Append str to the text that will appear outside of any function near the top 
-     * of the code for this tile.
+     * of the code for this core.
      * 
      * @param str The string to add
      */
@@ -165,7 +165,7 @@ public class CoreCodeStore extends ComputeCodeStore<Core> {
     
     /**
      * Add stmt to the end of the method that will perform the allocation of buffers
-     * and receive addresses of buffers from downstream tiles.
+     * and receive addresses of buffers from downstream cores.
      * 
      * @param stmt The statement to add to the end of the method
      */
@@ -176,7 +176,7 @@ public class CoreCodeStore extends ComputeCodeStore<Core> {
     
     /**
      * Add txt to the beginning of the method that will perform the allocation of buffers
-     * and receive addresses of buffers from downstream tiles.  Don't use ; or newline
+     * and receive addresses of buffers from downstream cores.  Don't use ; or newline
      * 
      * @param txt The statement to add to the end of the method
      */
@@ -188,7 +188,7 @@ public class CoreCodeStore extends ComputeCodeStore<Core> {
     
     /**
      * Add stmt to the beginning of the method that will perform the allocation of buffers
-     * and receive addresses of buffers from downstream tiles.
+     * and receive addresses of buffers from downstream cores.
      * 
      * @param stmt The statement to add to the end of the method
      */
@@ -200,7 +200,7 @@ public class CoreCodeStore extends ComputeCodeStore<Core> {
     
     /**
      * Add txt to the end of the method that will perform the allocation of buffers
-     * and receive addresses of buffers from downstream tiles.  Don't use ; or newline
+     * and receive addresses of buffers from downstream cores.  Don't use ; or newline
      * 
      * @param txt The statement to add to the end of the method
      */
@@ -228,18 +228,18 @@ public class CoreCodeStore extends ComputeCodeStore<Core> {
     }
     
     /**
-     * Return true if we should generate code for this tile,
-     * false if no code was ever generated for this tile.
+     * Return true if we should generate code for this core,
+     * false if no code was ever generated for this core.
      * 
-     * @return true if we should generate code for this tile,
-     * false if no code was ever generated for this tile.
+     * @return true if we should generate code for this core,
+     * false if no code was ever generated for this core.
      */
     public boolean shouldGenerateCode() {
         return hasCode;
     }
     
     /** 
-     * Set that this tile (code store) has code written to it and thus 
+     * Set that this core (code store) has code written to it and thus 
      * it needs to be considered during code generation.
      */
     public void setHasCode() {
@@ -257,22 +257,22 @@ public class CoreCodeStore extends ComputeCodeStore<Core> {
         //for now asser that we only have one file writer
         assert fwb.size() == 1;
         //for each of the file writer input buffers, so for each of the file writers,
-        //find one of its sources, and add code to the source's tile to print the outputs
+        //find one of its sources, and add code to the source's core to print the outputs
         //at the end of each steady state
         for (InputRotatingBuffer buf : fwb) {
             FilterSliceNode fileW = buf.filterNode;
-            //find the tile of the first input to the file writer
-            Core tile = 
+            //find the core of the first input to the file writer
+            Core core = 
                 SMPBackend.backEndBits.getLayout().
                 getComputeNode(fileW.getParent().getHead().getSources(SchedulingPhase.STEADY)[0].
                         getSrc().getParent().getFirstFilter());
             
-            tile.getComputeCode().addPrintOutputCode(buf);
+            core.getComputeCode().addPrintOutputCode(buf);
         }
     }
     
     /**
-     * Add code to print the output written to the file writer mapped to this tile.
+     * Add code to print the output written to the file writer mapped to this core.
      */
     private void addPrintOutputCode(InputRotatingBuffer buf) {
         //We print the address buffer after it has been rotated, so that it points to the section

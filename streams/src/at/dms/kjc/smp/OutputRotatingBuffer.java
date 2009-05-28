@@ -35,6 +35,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
     public static void createOutputBuffers(BasicSpaceTimeSchedule schedule) {
         for (Slice slice : schedule.getScheduleList()) {
             assert slice.getNumFilters() == 1;
+            
             //don't do anything for file readers or writers,
             //for file readers the output buffer is allocated in processfilereader
             if (slice.getHead().getNextFilter().isPredefined())
@@ -43,10 +44,12 @@ public class OutputRotatingBuffer extends RotatingBuffer {
             if (!slice.getTail().noOutputs()) {
                 assert slice.getTail().totalWeights(SchedulingPhase.STEADY) > 0;
                 Core parent = SMPBackend.backEndBits.getLayout().getComputeNode(slice.getFirstFilter());
+                
                 //only create an output buffer if no downstream filter is mapped to this core
                 //if a downstream filter is mapped to this core, then this slice will use the inputbuffer
                 //for its output
                 boolean createBuffer = true;
+                
                 //look to see if one of the downstream slices is mapped to the same core as this slice
                 //and this slice uses the downstream's input buffer as an outputbuffer, if so, we don't
                 //need an output buffer
@@ -60,14 +63,11 @@ public class OutputRotatingBuffer extends RotatingBuffer {
                 }
 
                 if (createBuffer) {
-                    // create the new buffer, the constructor will put the buffer in the 
-                    //hashmap
-                    
+                    // create the new buffer, the constructor will put the buffer in the hashmap
                     OutputRotatingBuffer buf = new OutputRotatingBuffer(slice.getFirstFilter(), parent);
                     buf.setRotationLength(schedule);
                     buf.setBufferSize();
-                    buf.createInitCode(false);
-
+                    buf.createInitCode(true);
                 }
             }
         }
@@ -82,14 +82,13 @@ public class OutputRotatingBuffer extends RotatingBuffer {
         outputNode = filterNode.getParent().getTail();
         bufType = filterNode.getFilter().getOutputType();
         setOutputBuffer(filterNode, this);
-              
+
         core = SMPBackend.backEndBits.getLayout().getComputeNode(filterNode);
     }
    
     /** Create an array reference given an offset */   
     public JFieldAccessExpression writeBufRef() {
         return new JFieldAccessExpression(new JThisExpression(), currentWriteBufName);
-     
     }
     
     /** Create an array reference given an offset */   
@@ -126,9 +125,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
      */
     public List<JStatement> endInitWrite() {
         LinkedList<JStatement> list = new LinkedList<JStatement>();
-        //in the init stage we use dma to send the output to the dest filter
-        //but we have to wait until the end because are not double buffering
-        //also, don't rotate anything here
+        //don't rotate anything here
         list.addAll(transferCommands.writeTransferCommands(SchedulingPhase.INIT));
         return list;
     }
@@ -381,8 +378,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
             block.addStatement(Util.toStmt(rotType + " *" + temp));
         
         //create the first entry!!
-        block.addStatement(Util.toStmt(writeRotStructName + " =  (" + rotType+ "*)" + "malloc(sizeof("
-                + rotType + "))"));
+        block.addStatement(Util.toStmt(writeRotStructName + " =  (" + rotType+ "*)" + "malloc(sizeof(" + rotType + "))"));
         
         //modify the first entry
         block.addStatement(Util.toStmt(writeRotStructName + "->buffer = " + bufferNames[0]));
@@ -391,17 +387,14 @@ public class OutputRotatingBuffer extends RotatingBuffer {
             block.addStatement(Util.toStmt(writeRotStructName + "->next = " + writeRotStructName));
         }
         else {
-            block.addStatement(Util.toStmt(temp + " = (" + rotType+ "*)" + "malloc(sizeof("
-                    + rotType + "))"));    
+            block.addStatement(Util.toStmt(temp + " = (" + rotType+ "*)" + "malloc(sizeof(" + rotType + "))"));    
             
-            block.addStatement(Util.toStmt(writeRotStructName + "->next = " + 
-                    temp));
+            block.addStatement(Util.toStmt(writeRotStructName + "->next = " + temp));
             
             block.addStatement(Util.toStmt(temp + "->buffer = " + bufferNames[1]));
             
             for (int i = 2; i < this.rotationLength; i++) {
-                block.addStatement(Util.toStmt(temp + "->next =  (" + rotType+ "*)" + "malloc(sizeof("
-                        + rotType + "))"));
+                block.addStatement(Util.toStmt(temp + "->next =  (" + rotType+ "*)" + "malloc(sizeof(" + rotType + "))"));
                 block.addStatement(Util.toStmt(temp + " = " + temp + "->next"));
                 block.addStatement(Util.toStmt(temp + "->buffer = " + bufferNames[i]));
             }

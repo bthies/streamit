@@ -132,6 +132,8 @@ public abstract class RotatingBuffer extends Channel {
         //now that all the buffers are allocated, we create a barrier on all the cores
         //so that we wait for all the shared memory to be allocated
         CoreCodeStore.addBufferInitBarrier();
+        //generate init code intentionally delayed until after shared memory allocation barrier
+        createDelayedInitCode();
         //generate the code for the address communication stage
         communicateAddresses();
     }
@@ -147,13 +149,23 @@ public abstract class RotatingBuffer extends Channel {
     /**
      * Return the address rotation that this output rotation uses for the given input slice node
      * 
-     * @param i`nput the input slice node 
+     * @param input the input slice node 
      * @return the dma address rotation used to store the address of the 
      * rotation associated with this input slice node
      */
     public SourceAddressRotation getAddressBuffer(InputSliceNode input) {
         assert addressBuffers.containsKey(InputRotatingBuffer.getInputBuffer(input.getNextFilter())) ;
         return addressBuffers.get(InputRotatingBuffer.getInputBuffer(input.getNextFilter()));
+    }
+    
+    /**
+     * Generate init code intentionally delayed until after shared memory allocation barrier
+     */
+    public static void createDelayedInitCode() {
+    	Set<InputRotatingBuffer> delayedInitBuffers = InputRotatingBuffer.getDelayedInitBuffers();
+    	
+    	for(InputRotatingBuffer buf : delayedInitBuffers)
+    		buf.createInitCode(false);
     }
     
     /**
@@ -227,16 +239,16 @@ public abstract class RotatingBuffer extends Channel {
      * 
      * @param input true if this is an input buffer
      */
-    protected void createInitCode(boolean input) {
+    protected void createInitCode(boolean allocBuffers) {
         this.setBufferNames();
-        this.allocBuffers(input);
+        if(allocBuffers) this.allocBuffers();
         this.setupRotation();
     }
     
     /**
      * Allocate the constituent buffers of this rotating buffer structure
      */
-    protected void allocBuffers(boolean shared) {
+    protected void allocBuffers() {
     	for (int i = 0; i < rotationLength; i++) {
     		CoreCodeStore cs;
 
@@ -246,7 +258,6 @@ public abstract class RotatingBuffer extends Channel {
     			cs = ProcessFileWriter.getAllocatingCore(filterNode).getComputeCode();
     		else
     			cs = this.parent.getComputeCode();
-
 
     		//create pointers to constituent buffers
     		this.parent.getMachine().getOffChipMemory().getComputeCode().appendTxtToGlobal(
@@ -260,7 +271,7 @@ public abstract class RotatingBuffer extends Channel {
     				this.getType() + "))")));
         }
     }
-      
+
     /**
      * Generate the code to setup the structure of the rotating buffer 
      * as a circular linked list.

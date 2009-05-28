@@ -1,10 +1,11 @@
 package at.dms.kjc.smp;
 
-import at.dms.kjc.slicegraph.*;
-import at.dms.util.Utils;
-import at.dms.kjc.spacetime.*;
-import at.dms.kjc.backendSupport.*;
 import at.dms.kjc.*;
+import at.dms.kjc.backendSupport.*;
+import at.dms.kjc.slicegraph.*;
+import at.dms.kjc.spacetime.*;
+import at.dms.kjc.slicegraph.fission.Fissioner;
+import at.dms.util.Utils;
 
 import java.util.*;
 
@@ -12,808 +13,1006 @@ import java.util.*;
  * 
  * 
  * @author mgordon
- *
+ * 
  */
 public class InputRotatingBuffer extends RotatingBuffer {
+
+	/**
+	 * all the address buffers that are on the cores that feed this input buffer
+	 */
+	protected SourceAddressRotation[] addressBufs;
+	/** a map from core to address buf */
+	protected HashMap<Core, SourceAddressRotation> addrBufMap;
+
+	/** true if what feeds this inputbuffer is a file reader */
+	protected boolean upstreamFileReader;
+	/**
+	 * the name of the pointer to the current rotation of this buffer that the
+	 * file reader should read into
+	 */
+	protected String currentFileReaderRotName;
+	/**
+	 * the name of the pointer to the read buffer of the current rotation that
+	 * the file reader should read into
+	 */
+	protected String currentFileReaderBufName;
+
+	/**
+	 * if this input buffer is shared as an upstream output buffer for a filter
+	 * on the same core, then this references the upstream filter.
+	 */
+	protected FilterSliceNode localSrcFilter;
 	
-    /** if this input buffer is shared as an upstream output buffer for a filter on
-     * the same core, then this references the upstream filter.
-     */
-    protected FilterSliceNode localSrcFilter;    
+	/**
+	 * If InputRotatingBuffer is for a fizzed filter, store fizzed filters
+	 * that belong to the same set of fizzed filters
+	 */
+	protected List<Slice> filterFissionSet;
+	/**
+	 * InputRotatingBuffers for fizzed filters will share constituent buffers.
+	 * This HashMap remembers the names of constituent buffers so that the
+	 * buffers can be used by multiple InputRotatingBuffers.
+	 */
+	protected static HashMap<Slice, List<String>> sharedBufferNames;
+	/**
+	 * InputRotatingBuffers of fizzed filters will share constituent buffers.
+	 * Only one InputRotatingBuffer will allocate the shared constituent
+	 * buffers.  The remaining InputRotatingBuffers must delay their init
+	 * code until the shared buffers have been allocated.  This HashSet stores
+	 * the InputRotatingBuffers that need their init code delayed.
+	 */
+	protected static HashSet<InputRotatingBuffer> delayedInitBuffers;
+	
+	/** store InputRotatingBuffer for all file writers */
+	protected static HashSet<InputRotatingBuffer> fileWriterBuffers;
+	
+	static {
+		sharedBufferNames = new HashMap<Slice, List<String>>();
+		delayedInitBuffers = new HashSet<InputRotatingBuffer>();
+		fileWriterBuffers = new HashSet<InputRotatingBuffer>();		
+	}
 
-    /** all the address buffers that are on the cores that feed this input buffer */
-    protected SourceAddressRotation[] addressBufs;
-    /** a map from core to address buf */
-    protected HashMap<Core, SourceAddressRotation> addrBufMap;
-    
-    /** true if what feeds this inputbuffer is a file reader */
-    protected boolean upstreamFileReader;
-    /** the name of the pointer to the current rotation of this buffer that the file reader should
-     * read into*/
-    protected String currentFileReaderRotName;
-    /** the name of the pointer to the read buffer of the current rotation that the file reader should
-     * read into */
-    protected String currentFileReaderBufName;
+	/**
+	 * Create all the input buffers necessary for this slice graph. Iterate over
+	 * the steady-state schedule, visiting each slice and creating an input
+	 * buffer for the filter of the slice. Also set the rotation lengths based
+	 * on the prime pump schedule.
+	 * 
+	 * @param schedule
+	 *            The spacetime schedule of the slices
+	 */
+	public static void createInputBuffers(BasicSpaceTimeSchedule schedule) {
+		for (Slice slice : schedule.getScheduleList()) {
+			assert slice.getNumFilters() == 1;
+			if (!slice.getHead().noInputs()) {
+				assert slice.getHead().totalWeights(SchedulingPhase.STEADY) > 0;
+				Core parent = SMPBackend.backEndBits.getLayout()
+						.getComputeNode(slice.getFirstFilter());
 
-    protected static HashSet<InputRotatingBuffer> fileWriterBuffers;
+				// create the new buffer, the constructor will put the buffer in
+				// the hashmap
+				InputRotatingBuffer buf = new InputRotatingBuffer(slice	.getFirstFilter(), parent);
 
-    static {
-        fileWriterBuffers = new HashSet<InputRotatingBuffer>();
-    }
-    
-    /**
-     * Create all the input buffers necessary for this slice graph.  Iterate over
-     * the steady-state schedule, visiting each slice and creating an input buffer
-     * for the filter of the slice.  Also set the rotation lengths based on the 
-     * prime pump schedule.
-     * 
-     * @param schedule The spacetime schedule of the slices 
-     */
-    public static void createInputBuffers(BasicSpaceTimeSchedule schedule) {
-        for (Slice slice : schedule.getScheduleList()) {
-            assert slice.getNumFilters() == 1;
-            if (!slice.getHead().noInputs()) {
-                assert slice.getHead().totalWeights(SchedulingPhase.STEADY) > 0;
-                Core parent = SMPBackend.backEndBits.getLayout().getComputeNode(slice.getFirstFilter());
-                
-                //create the new buffer, the constructor will put the buffer in the hashmap
-                InputRotatingBuffer buf = new InputRotatingBuffer(slice.getFirstFilter(), parent);
-                                  
-                buf.setRotationLength(schedule);
-                buf.createInitCode(true);
-                buf.createAddressBufs();
-                //System.out.println("Setting input buf " + buf.getFilterNode() + " to " + buf.rotationLength);
-            }
-        }
-    }
+				buf.setRotationLength(schedule);
+				if(!buf.hasFizzedFilter() || buf.isFirstFizzedFilter())
+					buf.createInitCode(true);
+				else
+					delayedInitBuffers.add(buf);
+				buf.createAddressBufs();
+			}
+		}
+	}
 
-    
-    /**
-     * Create a new input buffer that is associated with the filter node.
-     * 
-     * @param filterNode The filternode for which to create a new input buffer.
-     */
-    private InputRotatingBuffer(FilterSliceNode filterNode, Core parent) {
-        super(filterNode.getEdgeToPrev(), filterNode, parent);
-        
-        bufType = filterNode.getFilter().getInputType();
-        types.add(bufType);
-        setInputBuffer(filterNode, this);
+	/**
+	 * Create a new input buffer that is associated with the filter node.
+	 * 
+	 * @param filterNode
+	 *            The filternode for which to create a new input buffer.
+	 */
+	private InputRotatingBuffer(FilterSliceNode filterNode, Core parent) {
+		super(filterNode.getEdgeToPrev(), filterNode, parent);
+		
+		bufType = filterNode.getFilter().getInputType();
+		types.add(bufType);
+		setInputBuffer(filterNode, this);
+		
+		addrBufMap = new HashMap<Core, SourceAddressRotation>();
 
-        int coreNum = parent.getCoreID();
-        if (filterNode.isFileOutput())
-            coreNum = ProcessFileWriter.getAllocatingCore(filterNode).getCoreID();
-        
-        currentFileReaderRotName = this.getIdent() + "_fr_current__n" + coreNum;
-        currentFileReaderBufName = this.getIdent() + "_fr_buf__n" + coreNum;
+		int coreNum = parent.getCoreID();
+		if (filterNode.isFileOutput())
+			coreNum = ProcessFileWriter.getAllocatingCore(filterNode)
+					.getCoreID();
 
-        //if we have a file reader source for this filter, right now
-        //we only support a single input for a filter that is feed by a file
-        upstreamFileReader = filterNode.getParent().getHead().hasFileInput();
-        if (upstreamFileReader) {
-            //System.out.println(filterNode);
-            assert filterNode.getParent().getHead().getWidth(SchedulingPhase.INIT) <= 1 &&
-            filterNode.getParent().getHead().getWidth(SchedulingPhase.STEADY) <= 1;
-        }
-        addrBufMap = new HashMap<Core, SourceAddressRotation>();
-        localSrcFilter = null;
-        
-        setLocalSrcFilter();
-        assert !(upstreamFileReader && hasLocalSrcFilter());
-        setBufferSize();
-        
-    }
-    
-    public FilterSliceNode getLocalSrcFilter() {
-        return localSrcFilter;
-    }
-    
-    /**
-     * This is a potential optimization.  If we have a source and dest mapped to the same
-     * core, and we have a simple reorganization scheme between them, we can write directly into the
-     * downstream's input buffer.  No need for an output buffer at the source and then copying.
-     * 
-     * So this will set the localSrcFilter to a filter if we can apply the optimization.
-     */
-    protected void setLocalSrcFilter() {
-       
-        //if we find a candidate this will be it
-        FilterSliceNode lsf = null;
-        //this is the edge between the 2 local filters
-        InterSliceEdge theEdge = null;
-        
-        for (InterSliceEdge edge : filterNode.getParent().getHead().getSourceSet(SchedulingPhase.STEADY)) {
-            FilterSliceNode upstream = edge.getSrc().getPrevFilter();
-            if (SMPBackend.backEndBits.getLayout().getComputeNode(upstream) == parent) {
-                //System.out.println(upstream);
-                assert lsf == null : "Two upstream srcs mapped to same core ?";
-                lsf = upstream;
-                theEdge = edge;
-            } 
-         }
-        
-        if (lsf == null)
-            return;
-        
-        //now we have to do some checks on the re-organization between them.
-        //make sure the output node only has one output (or none in init)
-        OutputSliceNode output = lsf.getParent().getTail();
-        if (!(output.peekingFissionPattern(SchedulingPhase.STEADY) && 
-                output.peekingFissionPattern(SchedulingPhase.INIT))) {
-            //System.out.println(filterNode + " has no good local source 1.");
-            return;
-        }
+		currentFileReaderRotName = this.getIdent() + "_fr_current__n" + coreNum;
+		currentFileReaderBufName = this.getIdent() + "_fr_buf__n" + coreNum;
 
-        //now make sure the downstream consumer has a simple single appearance joiner and that
-        //the lsf is the first in that joiner so nothing has to be redistributed...
-        //or it is single appearance and all the upstream outputs fit in the slot in the joiner
-        InputSliceNode input = filterNode.getParent().getHead();
-        if (!input.singleAppearance())
-            return;
+		// if we have a file reader source for this filter, right now
+		// we only support a single input for a filter that is feed by a file
+		upstreamFileReader = filterNode.getParent().getHead().hasFileInput();
+		if (upstreamFileReader) {
+			// System.out.println(filterNode);
+			assert filterNode.getParent().getHead().getWidth(
+					SchedulingPhase.INIT) <= 1
+					&& filterNode.getParent().getHead().getWidth(
+							SchedulingPhase.STEADY) <= 1;
+		}
 
-        if (!(input.getWeight(theEdge, SchedulingPhase.INIT) == output.totalWeights(SchedulingPhase.INIT) &&
-                input.getWeight(theEdge, SchedulingPhase.STEADY) == output.totalWeights(SchedulingPhase.STEADY)))
-        {
-            //System.out.println(filterNode + " has no good local source 2.");
-            return;
-        }
+		filterFissionSet = null;
+		if(Fissioner.isFizzed(filterNode.getParent())) {
+			filterInfo = Fissioner.getOrigInfo(filterNode.getParent());
+			filterFissionSet = Fissioner.getFizzedSet(filterNode.getParent());
+		}
+		
+		localSrcFilter = null;
+		setLocalSrcFilter();
+		assert !(upstreamFileReader && hasLocalSrcFilter());
+		
+		setBufferSize();
+	}
 
-        FilterInfo consumer = FilterInfo.getFilterInfo(input.getNextFilter());
-        FilterInfo producer = FilterInfo.getFilterInfo(output.getPrevFilter());
-        
-        //check that the 
-        if ((input.getWidth(SchedulingPhase.INIT) > 1 && 
-                input.totalWeights(SchedulingPhase.INIT) != consumer.totalItemsPopped(SchedulingPhase.INIT)) ||
-            (input.getWidth(SchedulingPhase.STEADY) > 1 &&       
-                        input.totalWeights(SchedulingPhase.STEADY) != consumer.totalItemsPopped(SchedulingPhase.STEADY)) ||
-            (output.getWidth(SchedulingPhase.INIT) > 1 &&   
-                output.totalWeights(SchedulingPhase.INIT) != producer.totalItemsSent(SchedulingPhase.INIT)) ||
-            (output.getWidth(SchedulingPhase.STEADY) > 1 &&   
-                output.totalWeights(SchedulingPhase.STEADY) != producer.totalItemsSent(SchedulingPhase.STEADY)))
-        {
-            return;
-        }
+	public FilterSliceNode getLocalSrcFilter() {
+		return localSrcFilter;
+	}
 
-        //if we get here, everything checked out
-        localSrcFilter = lsf;        
-        
-        //System.out.println(filterNode + " has local source " + localSrcFilter);
-        
-        //if we found an upstream filter mapped to the same core
-        if (localSrcFilter != null) {
-          //remember that this input buffer is the output for the src filter on the same core
-          setOutputBuffer(localSrcFilter, this);
-        }
-    }
-    
-    /**
-     * Must be called after setLocalSrcFilter.  This creates the address buffers that other cores
-     * use when writing to this input buffer.  Each source that is mapped to a different core than 
-     * this input buffer has an address buffer for this input buffer.
-     */
-    protected void createAddressBufs() {
-       int addressBufsSize = filterNode.getParent().getHead().getSourceSlices(SchedulingPhase.STEADY).size();
-       //if we are using this input buffer as an output buffer, then we don't need the address buffer
-       //for the output buffer that is used for the upstream filter that is mapped to this core
-       if (hasLocalSrcFilter())
-           addressBufsSize--;           
-       
-       addressBufs = new SourceAddressRotation[addressBufsSize];
-       
-       int i = 0;
-       for (Slice src : filterNode.getParent().getHead().getSourceSlices(SchedulingPhase.STEADY)) {
-           Core core = SMPBackend.backEndBits.getLayout().getComputeNode(src.getFirstFilter());
-           if (core == parent && hasLocalSrcFilter())
-               continue;
-           
-           SourceAddressRotation rot = new SourceAddressRotation(core, this, filterNode, theEdge);
-           addressBufs[i] = rot;
-           addrBufMap.put(core, rot);
-           i++;
-       }
-    }
-    
-    /**
-     * If this input buffer is shared upstream as an output buffer, then 
-     * create the commands that the upstream filter will use to transfer items to 
-     * its destinations.  
-     */
-    public void createTransferCommands() {
-        //if (!hasLocalSrcFilter())
-        //    return;
-        
-        transferCommands = new BufferRemoteWritesTransfers(this);
-    }
-    
-    /**
-     * If we are using this input buffer as a shared buffer it is also an output buffer.  
-     * Thus it needs the address buffers of any destination for the upstream filter that
-     * uses the input buffer as an output buffer.
-     */
-    public void createAddressBuffers() {
-        //do nothing for input buffers that don't act as output buffers
-        if (!hasLocalSrcFilter())
-            return;
-        
-        //fill the addressbuffers array
-        addressBuffers = new HashMap<InputRotatingBuffer, SourceAddressRotation>();
-        
-        OutputSliceNode outputNode = localSrcFilter.getParent().getTail();
-        
-        for (InterSliceEdge edge : outputNode.getDestSet(SchedulingPhase.STEADY)) {
-            if (edge.getDest() == this.filterNode.getParent().getHead())
-                continue;
-            
-            InputRotatingBuffer input = InputRotatingBuffer.getInputBuffer(edge.getDest().getNextFilter());
-            addressBuffers.put(input, input.getAddressRotation(parent));               
-        }
-    }
-    
-    /**
-     * 
-     * @param schedule
-     */
-    protected void setRotationLength(BasicSpaceTimeSchedule schedule) {
-        //now set the rotation length
-        int destMult = schedule.getPrimePumpMult(filterNode.getParent());
-        //first find the max rotation length given the prime pump 
-        //mults of all the sources
-        int maxRotationLength = 0;
-        
-        for (Slice src : filterNode.getParent().getHead().getSourceSlices(SchedulingPhase.STEADY)) {
-            int diff = schedule.getPrimePumpMult(src) - destMult; 
-            assert diff >= 0;
-            if (diff > maxRotationLength) {
-                maxRotationLength = diff;
-            }
-        }
-        rotationLength = maxRotationLength + 1;
-    }
-    
-    /**
-     * return all the input buffers of the file writers of this application
-     */
-    public static Set<InputRotatingBuffer> getFileWriterBuffers() {
-        return fileWriterBuffers;
-    }
-    
-    /**
-     * Generate the code to setup the structure of the rotating buffer 
-     * as a circular linked list.
-     */
-    protected void setupRotation() {
-        String temp = "__temp__";
-        CoreCodeStore cs; 
-        
-        //this is the typedef we will use for this buffer rotation structure
-        String rotType = rotTypeDefPrefix + getType().toString();
-        
-        //if we are setting up the rotation for a file writer we have to do it on the allocating core
-        if (filterNode.isFileOutput()) {
-            fileWriterBuffers.add(this);
-            cs = ProcessFileWriter.getAllocatingCore(filterNode).getComputeCode();
-        } else
-            cs = parent.getComputeCode();
-        
-        JBlock block = new JBlock();
-                
-        //add the declaration of the rotation buffer of the appropriate rotation type
-        cs.appendTxtToGlobal(rotType + " *" + readRotStructName + ";\n");
-        //add the declaration of the pointer that points to the current rotation in the rotation structure
-        cs.appendTxtToGlobal(rotType + " *" + currentReadRotName + ";\n");
-        //add the declaration of the pointer that points to the current buffer in the current rotation
-        cs.appendTxtToGlobal(bufType.toString() + " *" + currentReadBufName + ";\n");
+	/**
+	 * This is a potential optimization. If we have a source and dest mapped to
+	 * the same core, and we have a simple reorganization scheme between them,
+	 * we can write directly into the downstream's input buffer. No need for an
+	 * output buffer at the source and then copying.
+	 * 
+	 * So this will set the localSrcFilter to a filter if we can apply the
+	 * optimization.
+	 */
+	protected void setLocalSrcFilter() {
 
-        if (upstreamFileReader) {
-            //add the declaration of the pointer that points to current in the rotation structure that the file
-            //reader should write into
-            parent.getComputeCode().appendTxtToGlobal(rotType + " *" + currentFileReaderRotName + ";\n");
-            //add the declaration of the pointer that points to the current buffer in the current rotation that
-            //the file reader should write into
-            parent.getComputeCode().appendTxtToGlobal(bufType.toString() + " *" + currentFileReaderBufName + ";\n");
-        }
+		// if we find a candidate this will be it
+		FilterSliceNode lsf = null;
+		// this is the edge between the 2 local filters
+		InterSliceEdge theEdge = null;
 
-        //create a temp var
-        if (this.rotationLength > 1)
-            block.addStatement(Util.toStmt(rotType + " *" + temp));
-        
-        //create the first entry!!
-        block.addStatement(Util.toStmt(readRotStructName + " =  (" + rotType+ "*)" + "malloc(sizeof("
-                + rotType + "))"));
-        
-        //modify the first entry
-        block.addStatement(Util.toStmt(readRotStructName + "->buffer = " + bufferNames[0]));
-        if (this.rotationLength == 1) 
-            block.addStatement(Util.toStmt(readRotStructName + "->next = " + readRotStructName));
-        else {
-            block.addStatement(Util.toStmt(temp + " = (" + rotType+ "*)" + "malloc(sizeof("
-                    + rotType + "))"));    
-            
-            block.addStatement(Util.toStmt(readRotStructName + "->next = " + 
-                    temp));
-            
-            block.addStatement(Util.toStmt(temp + "->buffer = " + bufferNames[1]));
-            
-            for (int i = 2; i < this.rotationLength; i++) {
-                block.addStatement(Util.toStmt(temp + "->next =  (" + rotType+ "*)" + "malloc(sizeof("
-                        + rotType + "))"));
-                block.addStatement(Util.toStmt(temp + " = " + temp + "->next"));
-                block.addStatement(Util.toStmt(temp + "->buffer = " + bufferNames[i]));
-            }
-            
-            block.addStatement(Util.toStmt(temp + "->next = " + readRotStructName));
-        }
-        block.addStatement(Util.toStmt(currentReadRotName + " = " + readRotStructName));
-        block.addStatement(Util.toStmt(currentReadBufName + " = " + currentReadRotName + "->buffer"));
-        if (upstreamFileReader) {
-            block.addStatement(Util.toStmt(currentFileReaderRotName + " = " + readRotStructName));
-            block.addStatement(Util.toStmt(currentFileReaderBufName + " = " + currentReadRotName + "->buffer"));
-        }
-        
-        if (hasLocalSrcFilter()) {
-            //if this has a local upstream filter, then we can set up the rotation struct for its 
-            //output
-            //add the declaration of the rotation buffer of the appropriate rotation type
-            parent.getComputeCode().appendTxtToGlobal(rotType + " *" + writeRotStructName + ";\n");
-            //add the declaration of the pointer that points to the current rotation in the rotation structure
-            parent.getComputeCode().appendTxtToGlobal(rotType + " *" + currentWriteRotName + ";\n");
-            //add the declaration of the pointer that points to the current buffer in the current rotation
-            parent.getComputeCode().appendTxtToGlobal(bufType.toString() + " *" + currentWriteBufName + ";\n");
-            
-            //create the first entry!!
-            block.addStatement(Util.toStmt(writeRotStructName + " =  (" + rotType+ "*)" + "malloc(sizeof("
-                    + rotType + "))"));
-            
-            //modify the first entry
-            block.addStatement(Util.toStmt(writeRotStructName + "->buffer = " + bufferNames[0]));
-            if (this.rotationLength == 1) 
-                block.addStatement(Util.toStmt(writeRotStructName + "->next = " + writeRotStructName));
-            else {
-                block.addStatement(Util.toStmt(temp + " = (" + rotType+ "*)" + "malloc(sizeof("
-                        + rotType + "))"));    
-                
-                block.addStatement(Util.toStmt(writeRotStructName + "->next = " + 
-                        temp));
-                
-                block.addStatement(Util.toStmt(temp + "->buffer = " + bufferNames[1]));
-                
-                for (int i = 2; i < this.rotationLength; i++) {
-                    block.addStatement(Util.toStmt(temp + "->next =  (" + rotType+ "*)" + "malloc(sizeof("
-                            + rotType + "))"));
-                    block.addStatement(Util.toStmt(temp + " = " + temp + "->next"));
-                    block.addStatement(Util.toStmt(temp + "->buffer = " + bufferNames[i]));
-                }
-                
-                block.addStatement(Util.toStmt(temp + "->next = " + writeRotStructName));
-            }
-            block.addStatement(Util.toStmt(currentWriteRotName + " = " + writeRotStructName));
-            block.addStatement(Util.toStmt(currentWriteBufName + " = " + currentWriteRotName + "->buffer"));
-        }
-        
-        cs.addStatementToBufferInit(block);
-    }
-    
-    /**
-     * Return the set of address buffers that are declared on cores that feed this buffer.
-     * @return the set of address buffers that are declared on cores that feed this buffer.
-     */
-    public SourceAddressRotation[] getAddressBuffers() {
-        return addressBufs;
-    }
-    
-    /**
-     * Return the address buffer rotation for this input buffer on the core.
-     * 
-     * @param core The core
-     * @return the address buffer for this input buffer on the core
-     */
-    public SourceAddressRotation getAddressRotation(Core core) {
-        return addrBufMap.get(core);
-    }
-    
-    /**
-     * return true if this input rotating buffer has a source mapped to the same
-     * core, if so they output for that source uses this buffer as an optimization.
-     */
-    public boolean hasLocalSrcFilter() {
-        return localSrcFilter != null;
-    }
-    
-    /**
-     * Set the buffer size of this input buffer based on the max
-     * number of items it receives.
-     */
-    protected void setBufferSize() {
-       
-        bufSize = Math.max(filterInfo.totalItemsReceived(SchedulingPhase.INIT),
-                (filterInfo.totalItemsReceived(SchedulingPhase.STEADY) + filterInfo.copyDown));
-        
-        if (hasLocalSrcFilter()) {
-            //if this filter has a local source filter, then we are using this buffer
-            //for its output also, so we have to consider the amount of output in the 
-            //buffer calculation
-            FilterInfo srcInfo = FilterInfo.getFilterInfo(localSrcFilter);
-            int output = Math.max(srcInfo.totalItemsSent(SchedulingPhase.STEADY) + filterInfo.copyDown, 
-                    srcInfo.totalItemsSent(SchedulingPhase.INIT) + filterInfo.copyDown);
-            bufSize = Math.max(bufSize, output);
-        }
-    }
+		for (InterSliceEdge edge : filterNode.getParent().getHead()
+				.getSourceSet(SchedulingPhase.STEADY)) {
+			FilterSliceNode upstream = edge.getSrc().getPrevFilter();
+			if (SMPBackend.backEndBits.getLayout().getComputeNode(upstream) == parent) {
+				// System.out.println(upstream);
+				assert lsf == null : "Two upstream srcs mapped to same core ?";
+				lsf = upstream;
+				theEdge = edge;
+			}
+		}
 
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#popMethodName()
-     */
-    public String popMethodName() {
-        return "__pop_" + unique_id;
-    }
-    
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#popMethod()
-     */
-    public JMethodDeclaration popMethod() {
-    	return transferCommands.popMethod();
-    }
-    
-    /** Create an array reference given an offset */   
-    public JFieldAccessExpression writeBufRef() {
-        assert hasLocalSrcFilter();
-        return new JFieldAccessExpression(new JThisExpression(), currentWriteBufName);
-    }
-    
-    /** Create an array reference given an offset */   
-    public JArrayAccessExpression readBufRef(JExpression offset) {
-        JFieldAccessExpression bufAccess = new JFieldAccessExpression(new JThisExpression(), currentReadBufName);
-        return new JArrayAccessExpression(bufAccess, offset);
-    }
-    
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#popManyMethodName()
-     */
-    public String popManyMethodName() {
-        return "__popN_" + unique_id;
-    }
- 
-    JMethodDeclaration popManyCode = null;
-    
-    /**
-     * Pop many items at once ignoring them.
-     * Default method generated here to call popMethod() repeatedly.
-     */
-    public JMethodDeclaration popManyMethod() {
-        if (popManyCode != null) {
-            return popManyCode;
-        }
-        if (popMethod() == null) {
-            return null;
-        }
-        
-        String formalParamName = "n";
-        CType formalParamType = CStdType.Integer;
-        
-        JVariableDefinition nPopsDef = new JVariableDefinition(formalParamType, formalParamName);
-        JExpression nPops = new JLocalVariableExpression(nPopsDef);
-        
-        JVariableDefinition loopIndex = new JVariableDefinition(formalParamType, "i");
-        
-        JStatement popOne = new JExpressionStatement(
-                new JMethodCallExpression(popMethodName(),new JExpression[0]));
-        
-        JBlock body = new JBlock();
-        body.addStatement(Utils.makeForLoop(popOne, nPops, loopIndex));
-        
-        popManyCode = new JMethodDeclaration(CStdType.Void,
-                popManyMethodName(),
-                new JFormalParameter[]{new JFormalParameter(formalParamType, formalParamName)},
-                body);
-        return popManyCode;
-     }
+		if (lsf == null)
+			return;
 
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#assignFromPopMethodName()
-     */
-    public String assignFromPopMethodName() {
-        return "__popv_" + unique_id;
-    }
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#assignFromPopMethod()
-     */
-    public JMethodDeclaration assignFromPopMethod() {
-        String parameterName = "__val";
-        JFormalParameter val = new JFormalParameter(
-                CStdType.Integer,
-                parameterName);
-        JBlock body = new JBlock();
-        JMethodDeclaration retval = new JMethodDeclaration(
-                null,
-                /*at.dms.kjc.Constants.ACC_PUBLIC | at.dms.kjc.Constants.ACC_STATIC |*/ at.dms.kjc.Constants.ACC_INLINE,
-                CStdType.Void,
-                assignFromPopMethodName(),
-                new JFormalParameter[]{val},
-                CClassType.EMPTY,
-                body, null, null);
-        body.addStatement(
-                new JExpressionStatement(
-                        new JEmittedTextExpression(
-                                "/* assignFromPopMethod not yet implemented */")));
-        return retval;
-    }
-    
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#peekMethodName()
-     */
-    public String peekMethodName() {
-        return "__peek_" + unique_id;
-    }
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#peekMethod()
-     */
-    public JMethodDeclaration peekMethod() {
-    	return transferCommands.peekMethod();
+		// now we have to do some checks on the re-organization between them.
+		// make sure the output node only has one output (or none in init)
+		OutputSliceNode output = lsf.getParent().getTail();
+		if (!(output.peekingFissionPattern(SchedulingPhase.STEADY) && output
+				.peekingFissionPattern(SchedulingPhase.INIT))) {
+			// System.out.println(filterNode + " has no good local source 1.");
+			return;
+		}
 
-    }
+		// now make sure the downstream consumer has a simple single appearance
+		// joiner and that the lsf is the first in that joiner so nothing has to
+		// be redistributed...
+		// or it is single appearance and all the upstream outputs fit in the
+		// slot in the joiner
+		InputSliceNode input = filterNode.getParent().getHead();
+		if (!input.singleAppearance())
+			return;
 
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#assignFromPeekMethodName()
-     */
-    public String assignFromPeekMethodName() {
-        return "__peekv_" + unique_id;
-    }
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#assignFromPeekMethod()
-     */
-    public JMethodDeclaration assignFromPeekMethod() {
-        String valName = "__val";
-        JFormalParameter val = new JFormalParameter(
-                CStdType.Integer,
-                valName);
-        String offsetName = "__offset";
-        JFormalParameter offset = new JFormalParameter(
-                CStdType.Integer,
-                offsetName);
-        JBlock body = new JBlock();
-        JMethodDeclaration retval = new JMethodDeclaration(
-                null,
-                /*at.dms.kjc.Constants.ACC_PUBLIC | at.dms.kjc.Constants.ACC_STATIC |*/ at.dms.kjc.Constants.ACC_INLINE,
-                CStdType.Void,
-                assignFromPeekMethodName(),
-                new JFormalParameter[]{val,offset},
-                CClassType.EMPTY,
-                body, null, null);
-         body.addStatement(
-                new JExpressionStatement(
-                        new JEmittedTextExpression(
-                                "/* assignFromPeekMethod not yet implemented */")));
-        return retval;
-    }
-    
-    
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#beginInitRead()
-     */
-    public List<JStatement> beginInitRead() {
-        LinkedList<JStatement> list = new LinkedList<JStatement>();
-        list.add(transferCommands.zeroOutTail(SchedulingPhase.INIT));
-        return list;
-    }
+		if (!(input.getWeight(theEdge, SchedulingPhase.INIT) == output
+				.totalWeights(SchedulingPhase.INIT) && input.getWeight(theEdge,
+				SchedulingPhase.STEADY) == output
+				.totalWeights(SchedulingPhase.STEADY))) {
+			// System.out.println(filterNode + " has no good local source 2.");
+			return;
+		}
 
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#beginInitRead()
-     */
-    public List<JStatement> postPreworkInitRead() {
-        return new LinkedList<JStatement>(); 
-    }
+		FilterInfo consumer = FilterInfo.getFilterInfo(input.getNextFilter());
+		FilterInfo producer = FilterInfo.getFilterInfo(output.getPrevFilter());
 
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#endInitRead()
-     */
-    public List<JStatement> endInitRead() {
-        LinkedList<JStatement> list = new LinkedList<JStatement>(); 
-        list.addAll(transferCommands.readTransferCommands(SchedulingPhase.INIT));
-        return list;
-        //copyDownStatements(SchedulingPhase.INIT));
-    }
+		// check that the
+		if ((input.getWidth(SchedulingPhase.INIT) > 1 && input
+				.totalWeights(SchedulingPhase.INIT) != consumer
+				.totalItemsPopped(SchedulingPhase.INIT))
+				|| (input.getWidth(SchedulingPhase.STEADY) > 1 && input
+						.totalWeights(SchedulingPhase.STEADY) != consumer
+						.totalItemsPopped(SchedulingPhase.STEADY))
+				|| (output.getWidth(SchedulingPhase.INIT) > 1 && output
+						.totalWeights(SchedulingPhase.INIT) != producer
+						.totalItemsSent(SchedulingPhase.INIT))
+				|| (output.getWidth(SchedulingPhase.STEADY) > 1 && output
+						.totalWeights(SchedulingPhase.STEADY) != producer
+						.totalItemsSent(SchedulingPhase.STEADY))) {
+			return;
+		}
 
-    public List<JStatement> beginPrimePumpRead() {
-    	return beginSteadyRead();
-    }
-    
-    public List<JStatement> endPrimePumpRead() {
-    	return endSteadyRead();
-    }
-    
-    public List<JStatement> beginSteadyRead() {
-        LinkedList<JStatement> list = new LinkedList<JStatement>();
-        list.add(transferCommands.zeroOutTail(SchedulingPhase.STEADY));
-        return list;
-    }
-    
-    public List<JStatement> endSteadyRead() {
-        LinkedList<JStatement> list = new LinkedList<JStatement>();
-        //copy the copyDown items to the next rotation buffer
-        list.addAll(transferCommands.readTransferCommands(SchedulingPhase.STEADY));
-        //rotate to the next buffer
-        list.addAll(rotateStatementsRead());
-        return list;
-        //copyDownStatements(SchedulingPhase.STEADY));
-    }
+		// if we get here, everything checked out
+		localSrcFilter = lsf;
 
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#topOfWorkSteadyRead()
-     */
-    public List<JStatement> topOfWorkSteadyRead() {
-        return new LinkedList<JStatement>(); 
+		// System.out.println(filterNode + " has local source " + localSrcFilter);
+
+		// if we found an upstream filter mapped to the same core
+		if (localSrcFilter != null) {
+			// remember that this input buffer is the output for the src filter
+			// on the same core
+			setOutputBuffer(localSrcFilter, this);
+		}
+	}
+
+	/**
+	 * Must be called after setLocalSrcFilter. This creates the address buffers
+	 * that other cores use when writing to this input buffer. Each source that
+	 * is mapped to a different core than this input buffer has an address
+	 * buffer for this input buffer.
+	 */
+	protected void createAddressBufs() {
+		int addressBufsSize = filterNode.getParent().getHead().getSourceSlices(
+				SchedulingPhase.STEADY).size();
+		// if we are using this input buffer as an output buffer, then we don't
+		// need the address buffer
+		// for the output buffer that is used for the upstream filter that is
+		// mapped to this core
+		if (hasLocalSrcFilter())
+			addressBufsSize--;
+
+		addressBufs = new SourceAddressRotation[addressBufsSize];
+
+		int i = 0;
+		for (Slice src : filterNode.getParent().getHead().getSourceSlices(
+				SchedulingPhase.STEADY)) {
+			Core core = SMPBackend.backEndBits.getLayout().getComputeNode(
+					src.getFirstFilter());
+			if (core == parent && hasLocalSrcFilter())
+				continue;
+
+			SourceAddressRotation rot = new SourceAddressRotation(core, this, filterNode, theEdge);
+			addressBufs[i] = rot;
+			addrBufMap.put(core, rot);
+			i++;
+		}
+	}
+
+	/**
+	 * If this input buffer is shared upstream as an output buffer, then create
+	 * the commands that the upstream filter will use to transfer items to its
+	 * destinations.
+	 */
+	public void createTransferCommands() {
+		transferCommands = new BufferRemoteWritesTransfers(this);
+	}
+
+	/**
+	 * If we are using this input buffer as a shared buffer it is also an output
+	 * buffer. Thus it needs the address buffers of any destination for the
+	 * upstream filter that uses the input buffer as an output buffer.
+	 */
+	public void createAddressBuffers() {
+		// do nothing for input buffers that don't act as output buffers
+		if (!hasLocalSrcFilter())
+			return;
+
+		// fill the addressbuffers array
+		addressBuffers = new HashMap<InputRotatingBuffer, SourceAddressRotation>();
+
+		OutputSliceNode outputNode = localSrcFilter.getParent().getTail();
+
+		for (InterSliceEdge edge : outputNode.getDestSet(SchedulingPhase.STEADY)) {
+			if (edge.getDest() == this.filterNode.getParent().getHead())
+				continue;
+
+			InputRotatingBuffer input = InputRotatingBuffer.getInputBuffer(edge.getDest().getNextFilter());
+			addressBuffers.put(input, input.getAddressRotation(parent));
+		}
+	}
+
+	/**
+	 * 
+	 * @param schedule
+	 */
+	protected void setRotationLength(BasicSpaceTimeSchedule schedule) {
+		// now set the rotation length
+		int destMult = schedule.getPrimePumpMult(filterNode.getParent());
+		// first find the max rotation length given the prime pump
+		// mults of all the sources
+		int maxRotationLength = 0;
+
+		for (Slice src : filterNode.getParent().getHead().getSourceSlices(
+				SchedulingPhase.STEADY)) {
+			int diff = schedule.getPrimePumpMult(src) - destMult;
+			assert diff >= 0;
+			if (diff > maxRotationLength) {
+				maxRotationLength = diff;
+			}
+		}
+		rotationLength = maxRotationLength + 1;
+	}
+
+	/**
+	 * return all the input buffers of the file writers of this application
+	 */
+	public static Set<InputRotatingBuffer> getFileWriterBuffers() {
+		return fileWriterBuffers;
+	}
+	
+	/**
+	 * return all input buffers that need their init code delayed
+	 */
+	public static Set<InputRotatingBuffer> getDelayedInitBuffers() {
+		return delayedInitBuffers;
+	}
+
+	/**
+	 * Generate the code to setup the structure of the rotating buffer as a
+	 * circular linked list.
+	 */
+	protected void setupRotation() {
+		String temp = "__temp__";
+		CoreCodeStore cs;
+
+		// this is the typedef we will use for this buffer rotation structure
+		String rotType = rotTypeDefPrefix + getType().toString();
+
+		// if we are setting up the rotation for a file writer we have to do it
+		// on the allocating core
+		if (filterNode.isFileOutput()) {
+			fileWriterBuffers.add(this);
+			cs = ProcessFileWriter.getAllocatingCore(filterNode)
+					.getComputeCode();
+		} else
+			cs = parent.getComputeCode();
+
+		JBlock block = new JBlock();
+
+		// add the declaration of the rotation buffer of the appropriate
+		// rotation type
+		cs.appendTxtToGlobal(rotType + " *" + readRotStructName + ";\n");
+		// add the declaration of the pointer that points to the current
+		// rotation in the rotation structure
+		cs.appendTxtToGlobal(rotType + " *" + currentReadRotName + ";\n");
+		// add the declaration of the pointer that points to the current buffer
+		// in the current rotation
+		cs.appendTxtToGlobal(bufType.toString() + " *" + currentReadBufName
+				+ ";\n");
+
+		if (upstreamFileReader) {
+			// add the declaration of the pointer that points to current in the
+			// rotation structure that the file
+			// reader should write into
+			parent.getComputeCode().appendTxtToGlobal(
+					rotType + " *" + currentFileReaderRotName + ";\n");
+			// add the declaration of the pointer that points to the current
+			// buffer in the current rotation that
+			// the file reader should write into
+			parent.getComputeCode().appendTxtToGlobal(
+					bufType.toString() + " *" + currentFileReaderBufName
+							+ ";\n");
+		}
+
+		// create a temp var
+		if (this.rotationLength > 1)
+			block.addStatement(Util.toStmt(rotType + " *" + temp));
+
+		// create the first entry!!
+		block.addStatement(Util.toStmt(readRotStructName + " =  (" + rotType
+				+ "*)" + "malloc(sizeof(" + rotType + "))"));
+
+		// modify the first entry
+		block.addStatement(Util.toStmt(readRotStructName + "->buffer = "
+				+ bufferNames[0]));
+		if (this.rotationLength == 1)
+			block.addStatement(Util.toStmt(readRotStructName + "->next = "
+					+ readRotStructName));
+		else {
+			block.addStatement(Util.toStmt(temp + " = (" + rotType + "*)"
+					+ "malloc(sizeof(" + rotType + "))"));
+
+			block.addStatement(Util.toStmt(readRotStructName + "->next = "
+					+ temp));
+
+			block.addStatement(Util.toStmt(temp + "->buffer = "
+					+ bufferNames[1]));
+
+			for (int i = 2; i < this.rotationLength; i++) {
+				block.addStatement(Util.toStmt(temp + "->next =  (" + rotType
+						+ "*)" + "malloc(sizeof(" + rotType + "))"));
+				block.addStatement(Util.toStmt(temp + " = " + temp + "->next"));
+				block.addStatement(Util.toStmt(temp + "->buffer = "
+						+ bufferNames[i]));
+			}
+
+			block.addStatement(Util.toStmt(temp + "->next = "
+					+ readRotStructName));
+		}
+		block.addStatement(Util.toStmt(currentReadRotName + " = "
+				+ readRotStructName));
+		block.addStatement(Util.toStmt(currentReadBufName + " = "
+				+ currentReadRotName + "->buffer"));
+		if (upstreamFileReader) {
+			block.addStatement(Util.toStmt(currentFileReaderRotName + " = "
+					+ readRotStructName));
+			block.addStatement(Util.toStmt(currentFileReaderBufName + " = "
+					+ currentReadRotName + "->buffer"));
+		}
+
+		if (hasLocalSrcFilter()) {
+			// if this has a local upstream filter, then we can set up the
+			// rotation struct for its
+			// output
+			// add the declaration of the rotation buffer of the appropriate
+			// rotation type
+			parent.getComputeCode().appendTxtToGlobal(
+					rotType + " *" + writeRotStructName + ";\n");
+			// add the declaration of the pointer that points to the current
+			// rotation in the rotation structure
+			parent.getComputeCode().appendTxtToGlobal(
+					rotType + " *" + currentWriteRotName + ";\n");
+			// add the declaration of the pointer that points to the current
+			// buffer in the current rotation
+			parent.getComputeCode().appendTxtToGlobal(
+					bufType.toString() + " *" + currentWriteBufName + ";\n");
+
+			// create the first entry!!
+			block.addStatement(Util.toStmt(writeRotStructName + " =  ("
+					+ rotType + "*)" + "malloc(sizeof(" + rotType + "))"));
+
+			// modify the first entry
+			block.addStatement(Util.toStmt(writeRotStructName + "->buffer = "
+					+ bufferNames[0]));
+			if (this.rotationLength == 1)
+				block.addStatement(Util.toStmt(writeRotStructName + "->next = "
+						+ writeRotStructName));
+			else {
+				block.addStatement(Util.toStmt(temp + " = (" + rotType + "*)"
+						+ "malloc(sizeof(" + rotType + "))"));
+
+				block.addStatement(Util.toStmt(writeRotStructName + "->next = "
+						+ temp));
+
+				block.addStatement(Util.toStmt(temp + "->buffer = "
+						+ bufferNames[1]));
+
+				for (int i = 2; i < this.rotationLength; i++) {
+					block.addStatement(Util.toStmt(temp + "->next =  ("
+							+ rotType + "*)" + "malloc(sizeof(" + rotType
+							+ "))"));
+					block.addStatement(Util.toStmt(temp + " = " + temp
+							+ "->next"));
+					block.addStatement(Util.toStmt(temp + "->buffer = "
+							+ bufferNames[i]));
+				}
+
+				block.addStatement(Util.toStmt(temp + "->next = "
+						+ writeRotStructName));
+			}
+			block.addStatement(Util.toStmt(currentWriteRotName + " = "
+					+ writeRotStructName));
+			block.addStatement(Util.toStmt(currentWriteBufName + " = "
+					+ currentWriteRotName + "->buffer"));
+		}
+
+		cs.addStatementToBufferInit(block);
+	}
+
+	/**
+	 * Return the set of address buffers that are declared on cores that feed
+	 * this buffer.
+	 * 
+	 * @return the set of address buffers that are declared on cores that feed
+	 *         this buffer.
+	 */
+	public SourceAddressRotation[] getAddressBuffers() {
+		return addressBufs;
+	}
+
+	/**
+	 * Return the address buffer rotation for this input buffer on the core.
+	 * 
+	 * @param core
+	 *            The core
+	 * @return the address buffer for this input buffer on the core
+	 */
+	public SourceAddressRotation getAddressRotation(Core core) {
+		return addrBufMap.get(core);
+	}
+
+	/**
+	 * return true if this input rotating buffer has a source mapped to the same
+	 * core, if so they output for that source uses this buffer as an
+	 * optimization.
+	 */
+	public boolean hasLocalSrcFilter() {
+		return localSrcFilter != null;
+	}
+
+	/**
+	 * Set the buffer size of this input buffer based on the max number of items
+	 * it receives.
+	 */
+	protected void setBufferSize() {
+		bufSize = Math.max(filterInfo.totalItemsReceived(SchedulingPhase.INIT),
+				(filterInfo.totalItemsReceived(SchedulingPhase.STEADY) + filterInfo.copyDown));
+	
+		if (hasLocalSrcFilter()) {
+			// if this filter has a local source filter, then we are using this
+			// buffer
+			// for its output also, so we have to consider the amount of output
+			// in the
+			// buffer calculation
+			FilterInfo srcInfo = FilterInfo.getFilterInfo(localSrcFilter);
+			int output = Math.max(srcInfo.totalItemsSent(SchedulingPhase.STEADY) + filterInfo.copyDown, 
+					srcInfo.totalItemsSent(SchedulingPhase.INIT) + filterInfo.copyDown);
+			bufSize = Math.max(bufSize, output);
+		}
+	}
+
+	/**
+	 * Set the names of the buffers that comprise this rotating buffer.
+	 */
+	protected void setBufferNames() {
+		System.out.println("Inside setBufferNames for " + filterNode);
+		
+		if(hasFizzedFilter()) {
+    		System.out.println(filterNode + " is fizzed");
+
+    		if(!sharedBufferNames.containsKey(filterNode.getParent())) {
+    			System.out.println("Fizzed set has not yet been handled, creating new bufferNames");
+    			super.setBufferNames();
+    			System.out.println("Number of bufferNames: " + bufferNames.length);
+    			
+    			List<String> bufNames = new ArrayList<String>(bufferNames.length);
+    			for(int i = 0 ; i < bufferNames.length ; i++)
+    				bufNames.add(bufferNames[i]);
+    			
+    			for(Slice slice : filterFissionSet)
+    				sharedBufferNames.put(slice, bufNames);
+    		}
+    		else {
+    			List<String> bufNames = sharedBufferNames.get(filterNode.getParent());
+    			bufferNames = new String[bufNames.size()];
+    			for (int i = 0; i < bufNames.size(); i++)
+    				bufferNames[i] = bufNames.get(i);
+    		}
+    	}
+    	else {
+    		super.setBufferNames();
+    	}
     }
-    
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#dataDeclsH()
-     */
-    public List<JStatement> dataDeclsH() {
-        return new LinkedList<JStatement>();
-    }
-    
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#dataDecls()
-     */
-    public List<JStatement> dataDecls() {
-        //declare the buffer array
-        List<JStatement> retval = new LinkedList<JStatement>();
-        return retval;
-    }
-    
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#readDeclsExtern()
-     */
-    public List<JStatement> readDeclsExtern() {
-        return new LinkedList<JStatement>();
-    }   
-    
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#readDecls()
-     */
-    public List<JStatement> readDecls() {
-    	List<JStatement> retval = new LinkedList<JStatement>();
-    	retval.addAll(transferCommands.readDecls());
-    	return retval;
-    	/*
-        //declare the tail    
-        JStatement tailDecl = new JVariableDeclarationStatement(tailDefn);
-        List<JStatement> retval = new LinkedList<JStatement>();
-        retval.add(tailDecl);
-        return retval;
-        */
-    }
-    
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#endInitWrite()
-     */
-    public List<JStatement> endInitWrite() {
-        assert hasLocalSrcFilter() : "Calling write method for input buffer that does not act as output buffer.";
-        
-        LinkedList<JStatement> list = new LinkedList<JStatement>();
-        //in the init stage for dma, we need to dma to send the output to the dest filter
-        //but we have to wait until the end because are not double buffering
-        //also, don't rotate anything here
-        list.addAll(transferCommands.writeTransferCommands(SchedulingPhase.INIT));
-        return list;
-    }
-    
-    /**
+	
+	/** returns whether input buffer is for a fizzed filter */
+	public boolean hasFizzedFilter() {
+		return filterFissionSet != null;
+	}
+	
+	/** returns whether input buffer is for a fizzed filter that is the first in its set */
+	public boolean isFirstFizzedFilter() {
+		assert hasFizzedFilter();
+		return filterFissionSet.get(0).equals(filterNode.getParent());
+	}
+	
+	/** returns fission set for filter */
+	public List<Slice> getFilterFissionSet() {
+		return filterFissionSet;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see at.dms.kjc.backendSupport.ChannelI#popMethodName()
+	 */
+	public String popMethodName() {
+		return "__pop_" + unique_id;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see at.dms.kjc.backendSupport.ChannelI#popMethod()
+	 */
+	public JMethodDeclaration popMethod() {
+		return transferCommands.popMethod();
+	}
+
+	/** Create an array reference given an offset */
+	public JFieldAccessExpression writeBufRef() {
+		assert hasLocalSrcFilter();
+		return new JFieldAccessExpression(new JThisExpression(),
+				currentWriteBufName);
+	}
+
+	/** Create an array reference given an offset */
+	public JArrayAccessExpression readBufRef(JExpression offset) {
+		JFieldAccessExpression bufAccess = new JFieldAccessExpression(
+				new JThisExpression(), currentReadBufName);
+		return new JArrayAccessExpression(bufAccess, offset);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see at.dms.kjc.backendSupport.ChannelI#popManyMethodName()
+	 */
+	public String popManyMethodName() {
+		return "__popN_" + unique_id;
+	}
+
+	JMethodDeclaration popManyCode = null;
+
+	/**
+	 * Pop many items at once ignoring them. Default method generated here to
+	 * call popMethod() repeatedly.
+	 */
+	public JMethodDeclaration popManyMethod() {
+		if (popManyCode != null) {
+			return popManyCode;
+		}
+		if (popMethod() == null) {
+			return null;
+		}
+
+		String formalParamName = "n";
+		CType formalParamType = CStdType.Integer;
+
+		JVariableDefinition nPopsDef = new JVariableDefinition(formalParamType,
+				formalParamName);
+		JExpression nPops = new JLocalVariableExpression(nPopsDef);
+
+		JVariableDefinition loopIndex = new JVariableDefinition(
+				formalParamType, "i");
+
+		JStatement popOne = new JExpressionStatement(new JMethodCallExpression(
+				popMethodName(), new JExpression[0]));
+
+		JBlock body = new JBlock();
+		body.addStatement(Utils.makeForLoop(popOne, nPops, loopIndex));
+
+		popManyCode = new JMethodDeclaration(CStdType.Void,
+				popManyMethodName(),
+				new JFormalParameter[] { new JFormalParameter(formalParamType,
+						formalParamName) }, body);
+		return popManyCode;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see at.dms.kjc.backendSupport.ChannelI#assignFromPopMethodName()
+	 */
+	public String assignFromPopMethodName() {
+		return "__popv_" + unique_id;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see at.dms.kjc.backendSupport.ChannelI#assignFromPopMethod()
+	 */
+	public JMethodDeclaration assignFromPopMethod() {
+		String parameterName = "__val";
+		JFormalParameter val = new JFormalParameter(CStdType.Integer,
+				parameterName);
+		JBlock body = new JBlock();
+		JMethodDeclaration retval = new JMethodDeclaration(null,
+				/*
+				 * at.dms.kjc.Constants.ACC_PUBLIC |
+				 * at.dms.kjc.Constants.ACC_STATIC |
+				 */at.dms.kjc.Constants.ACC_INLINE, CStdType.Void,
+				assignFromPopMethodName(), new JFormalParameter[] { val },
+				CClassType.EMPTY, body, null, null);
+		body.addStatement(new JExpressionStatement(new JEmittedTextExpression(
+				"/* assignFromPopMethod not yet implemented */")));
+		return retval;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see at.dms.kjc.backendSupport.ChannelI#peekMethodName()
+	 */
+	public String peekMethodName() {
+		return "__peek_" + unique_id;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see at.dms.kjc.backendSupport.ChannelI#peekMethod()
+	 */
+	public JMethodDeclaration peekMethod() {
+		return transferCommands.peekMethod();
+
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see at.dms.kjc.backendSupport.ChannelI#assignFromPeekMethodName()
+	 */
+	public String assignFromPeekMethodName() {
+		return "__peekv_" + unique_id;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see at.dms.kjc.backendSupport.ChannelI#assignFromPeekMethod()
+	 */
+	public JMethodDeclaration assignFromPeekMethod() {
+		String valName = "__val";
+		JFormalParameter val = new JFormalParameter(CStdType.Integer, valName);
+		String offsetName = "__offset";
+		JFormalParameter offset = new JFormalParameter(CStdType.Integer, offsetName);
+		JBlock body = new JBlock();
+		JMethodDeclaration retval = new JMethodDeclaration(null,
+				/*
+				 * at.dms.kjc.Constants.ACC_PUBLIC |
+				 * at.dms.kjc.Constants.ACC_STATIC |
+				 */at.dms.kjc.Constants.ACC_INLINE, CStdType.Void,
+				assignFromPeekMethodName(), new JFormalParameter[] { val,
+						offset }, CClassType.EMPTY, body, null, null);
+		body.addStatement(new JExpressionStatement(new JEmittedTextExpression(
+				"/* assignFromPeekMethod not yet implemented */")));
+		return retval;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see at.dms.kjc.backendSupport.ChannelI#beginInitRead()
+	 */
+	public List<JStatement> beginInitRead() {
+		LinkedList<JStatement> list = new LinkedList<JStatement>();
+		if(!hasFizzedFilter() || isFirstFizzedFilter())
+			list.add(transferCommands.zeroOutTail(SchedulingPhase.INIT));
+		else
+			System.out.println("beginInitRead for non-first fizzed filter: " + filterNode);
+		return list;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see at.dms.kjc.backendSupport.ChannelI#beginInitRead()
+	 */
+	public List<JStatement> postPreworkInitRead() {
+		return new LinkedList<JStatement>();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see at.dms.kjc.backendSupport.ChannelI#endInitRead()
+	 */
+	public List<JStatement> endInitRead() {
+		LinkedList<JStatement> list = new LinkedList<JStatement>();
+		list.addAll(transferCommands.readTransferCommands(SchedulingPhase.INIT));
+		return list;
+		// copyDownStatements(SchedulingPhase.INIT));
+	}
+
+	public List<JStatement> beginPrimePumpRead() {
+		return beginSteadyRead();
+	}
+
+	public List<JStatement> endPrimePumpRead() {
+		return endSteadyRead();
+	}
+
+	public List<JStatement> beginSteadyRead() {
+		LinkedList<JStatement> list = new LinkedList<JStatement>();
+		list.add(transferCommands.zeroOutTail(SchedulingPhase.STEADY));
+		return list;
+	}
+
+	public List<JStatement> endSteadyRead() {
+		LinkedList<JStatement> list = new LinkedList<JStatement>();
+		// copy the copyDown items to the next rotation buffer
+		list.addAll(transferCommands.readTransferCommands(SchedulingPhase.STEADY));
+		// rotate to the next buffer
+		list.addAll(rotateStatementsRead());
+		return list;
+		// copyDownStatements(SchedulingPhase.STEADY));
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see at.dms.kjc.backendSupport.ChannelI#topOfWorkSteadyRead()
+	 */
+	public List<JStatement> topOfWorkSteadyRead() {
+		return new LinkedList<JStatement>();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see at.dms.kjc.backendSupport.ChannelI#dataDeclsH()
+	 */
+	public List<JStatement> dataDeclsH() {
+		return new LinkedList<JStatement>();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see at.dms.kjc.backendSupport.ChannelI#dataDecls()
+	 */
+	public List<JStatement> dataDecls() {
+		// declare the buffer array
+		List<JStatement> retval = new LinkedList<JStatement>();
+		return retval;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see at.dms.kjc.backendSupport.ChannelI#readDeclsExtern()
+	 */
+	public List<JStatement> readDeclsExtern() {
+		return new LinkedList<JStatement>();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see at.dms.kjc.backendSupport.ChannelI#readDecls()
+	 */
+	public List<JStatement> readDecls() {
+		List<JStatement> retval = new LinkedList<JStatement>();
+		retval.addAll(transferCommands.readDecls());
+		return retval;
+		/*
+		 * //declare the tail JStatement tailDecl = new
+		 * JVariableDeclarationStatement(tailDefn); List<JStatement> retval =
+		 * new LinkedList<JStatement>(); retval.add(tailDecl); return retval;
+		 */
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see at.dms.kjc.backendSupport.ChannelI#endInitWrite()
+	 */
+	public List<JStatement> endInitWrite() {
+		assert hasLocalSrcFilter() : "Calling write method for input buffer that does not act as output buffer.";
+
+		LinkedList<JStatement> list = new LinkedList<JStatement>();
+		//don't rotate anything here
+		list.addAll(transferCommands.writeTransferCommands(SchedulingPhase.INIT));
+		return list;
+	}
+
+	/**
      *  
      *       
      */
-    public List<JStatement> beginPrimePumpWrite() {
-        assert hasLocalSrcFilter() : "Calling write method for input buffer that does not act as output buffer.";
-        
-        LinkedList<JStatement> list = new LinkedList<JStatement>();
-        list.add(transferCommands.zeroOutHead(SchedulingPhase.PRIMEPUMP));
-        return list;
-    }
-    
-    public List<JStatement> endPrimePumpWrite() {
-        assert hasLocalSrcFilter() : "Calling write method for input buffer that does not act as output buffer.";
-        
-        LinkedList<JStatement> list = new LinkedList<JStatement>();
+	public List<JStatement> beginPrimePumpWrite() {
+		assert hasLocalSrcFilter() : "Calling write method for input buffer that does not act as output buffer.";
 
-        //add the transfer commands for the data that was just computed
-        list.addAll(transferCommands.writeTransferCommands(SchedulingPhase.STEADY));
-        //generate the rotate statements for this output buffer
-        list.addAll(rotateStatementsWrite());
-        //generate the rotate statements for the address buffers
-        for (SourceAddressRotation addrRot : addressBuffers.values())
-            list.addAll(addrRot.rotateStatements());
+		LinkedList<JStatement> list = new LinkedList<JStatement>();
+		list.add(transferCommands.zeroOutHead(SchedulingPhase.PRIMEPUMP));
+		return list;
+	}
 
-        return list;
-    }
-    
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#beginSteadyWrite()
-     */
-    public List<JStatement> beginSteadyWrite() {
-        assert hasLocalSrcFilter() : "Calling write method for input buffer that does not act as output buffer.";
-        
-        LinkedList<JStatement> list = new LinkedList<JStatement>();
-        list.add(transferCommands.zeroOutHead(SchedulingPhase.STEADY));
-        return list;
-    }
-    
+	public List<JStatement> endPrimePumpWrite() {
+		assert hasLocalSrcFilter() : "Calling write method for input buffer that does not act as output buffer.";
 
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#endSteadyWrite()
-     */
-    public List<JStatement> endSteadyWrite() {
-        assert hasLocalSrcFilter() : "Calling write method for input buffer that does not act as output buffer.";
-        
-        LinkedList<JStatement> list = new LinkedList<JStatement>();
-        
-        //add the transfer commands for the data that was just computed
-        list.addAll(transferCommands.writeTransferCommands(SchedulingPhase.STEADY));
-        //generate the rotate statements for this output buffer
-        list.addAll(rotateStatementsWrite());
-        //generate the rotation statements for the address buffers that this output
-        //buffer uses
-        for (SourceAddressRotation addrRot : addressBuffers.values())
-            list.addAll(addrRot.rotateStatements());
-        
-        return list;
-    }
-    
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#writeDecls()
-     */
-    public List<JStatement> writeDecls() {
-        assert hasLocalSrcFilter() : "Calling write method for input buffer that does not act as output buffer.";
-        List<JStatement> retval = new LinkedList<JStatement>();
-        retval.addAll(transferCommands.writeDecls());
-        return retval;
-    }   
-    
-    
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#pushMethodName()
-     */
-    public String pushMethodName() {
-        assert hasLocalSrcFilter() : "Calling write method for input buffer that does not act as output buffer.";
-        return "__push_" + unique_id;
-    }
-    
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#pushMethod()
-     */
-    public JMethodDeclaration pushMethod() {
-        assert hasLocalSrcFilter() : "Calling write method for input buffer that does not act as output buffer.";
-        return transferCommands.pushMethod();
-    }
-    
-    /* (non-Javadoc)
-     * @see at.dms.kjc.backendSupport.ChannelI#beginInitWrite()
-     */
-    public List<JStatement> beginInitWrite() {
-        assert hasLocalSrcFilter() : "Calling write method for input buffer that does not act as output buffer.";
-        LinkedList<JStatement> list = new LinkedList<JStatement>();
-        if (FilterInfo.getFilterInfo(localSrcFilter).totalItemsSent(SchedulingPhase.INIT) > 0)
-            list.add(transferCommands.zeroOutHead(SchedulingPhase.INIT));
-        return list;
-    }
-    
-    protected List<JStatement> rotateStatementsWrite() {
-        assert hasLocalSrcFilter() : "Calling write method for input buffer that does not act as output buffer.";
-        
-        LinkedList<JStatement> list = new LinkedList<JStatement>();
-        list.addAll(rotateStatementsCurRot());
+		LinkedList<JStatement> list = new LinkedList<JStatement>();
 
-        return list;
-    }
+		// add the transfer commands for the data that was just computed
+		list.addAll(transferCommands.writeTransferCommands(SchedulingPhase.STEADY));
+		// generate the rotate statements for this output buffer
+		list.addAll(rotateStatementsWrite());
+		// generate the rotate statements for the address buffers
+		for (SourceAddressRotation addrRot : addressBuffers.values())
+			list.addAll(addrRot.rotateStatements());
 
-    protected List<JStatement> rotateStatementsRead() {
-        LinkedList<JStatement> list = new LinkedList<JStatement>();
-        list.add(Util.toStmt(currentReadRotName + " = " + currentReadRotName + "->next"));
-        list.add(Util.toStmt(currentReadBufName + " = " + currentReadRotName + "->buffer"));
-        return list;
-    }
+		return list;
+	}
 
-    protected List<JStatement> rotateStatementsCurRot() {
-        LinkedList<JStatement> list = new LinkedList<JStatement>();
-        list.add(Util.toStmt(currentWriteRotName + " = " + currentWriteRotName + "->next"));
-        list.add(Util.toStmt(currentWriteBufName + " = " + currentWriteRotName + "->buffer"));
-        return list;
-    }
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see at.dms.kjc.backendSupport.ChannelI#beginSteadyWrite()
+	 */
+	public List<JStatement> beginSteadyWrite() {
+		assert hasLocalSrcFilter() : "Calling write method for input buffer that does not act as output buffer.";
+
+		LinkedList<JStatement> list = new LinkedList<JStatement>();
+		list.add(transferCommands.zeroOutHead(SchedulingPhase.STEADY));
+		return list;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see at.dms.kjc.backendSupport.ChannelI#endSteadyWrite()
+	 */
+	public List<JStatement> endSteadyWrite() {
+		assert hasLocalSrcFilter() : "Calling write method for input buffer that does not act as output buffer.";
+
+		LinkedList<JStatement> list = new LinkedList<JStatement>();
+
+		// add the transfer commands for the data that was just computed
+		list.addAll(transferCommands.writeTransferCommands(SchedulingPhase.STEADY));
+		// generate the rotate statements for this output buffer
+		list.addAll(rotateStatementsWrite());
+		// generate the rotation statements for the address buffers that this
+		// output
+		// buffer uses
+		for (SourceAddressRotation addrRot : addressBuffers.values())
+			list.addAll(addrRot.rotateStatements());
+
+		return list;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see at.dms.kjc.backendSupport.ChannelI#writeDecls()
+	 */
+	public List<JStatement> writeDecls() {
+		assert hasLocalSrcFilter() : "Calling write method for input buffer that does not act as output buffer.";
+		List<JStatement> retval = new LinkedList<JStatement>();
+		retval.addAll(transferCommands.writeDecls());
+		return retval;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see at.dms.kjc.backendSupport.ChannelI#pushMethodName()
+	 */
+	public String pushMethodName() {
+		assert hasLocalSrcFilter() : "Calling write method for input buffer that does not act as output buffer.";
+		return "__push_" + unique_id;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see at.dms.kjc.backendSupport.ChannelI#pushMethod()
+	 */
+	public JMethodDeclaration pushMethod() {
+		assert hasLocalSrcFilter() : "Calling write method for input buffer that does not act as output buffer.";
+		return transferCommands.pushMethod();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see at.dms.kjc.backendSupport.ChannelI#beginInitWrite()
+	 */
+	public List<JStatement> beginInitWrite() {
+		assert hasLocalSrcFilter() : "Calling write method for input buffer that does not act as output buffer.";
+		LinkedList<JStatement> list = new LinkedList<JStatement>();
+		if (FilterInfo.getFilterInfo(localSrcFilter).totalItemsSent(SchedulingPhase.INIT) > 0)
+			list.add(transferCommands.zeroOutHead(SchedulingPhase.INIT));
+		return list;
+	}
+
+	protected List<JStatement> rotateStatementsWrite() {
+		assert hasLocalSrcFilter() : "Calling write method for input buffer that does not act as output buffer.";
+
+		LinkedList<JStatement> list = new LinkedList<JStatement>();
+		list.addAll(rotateStatementsCurRot());
+
+		return list;
+	}
+
+	protected List<JStatement> rotateStatementsRead() {
+		LinkedList<JStatement> list = new LinkedList<JStatement>();
+		list.add(Util.toStmt(currentReadRotName + " = " + currentReadRotName + "->next"));
+		list.add(Util.toStmt(currentReadBufName + " = " + currentReadRotName + "->buffer"));
+		return list;
+	}
+
+	protected List<JStatement> rotateStatementsCurRot() {
+		LinkedList<JStatement> list = new LinkedList<JStatement>();
+		list.add(Util.toStmt(currentWriteRotName + " = " + currentWriteRotName + "->next"));
+		list.add(Util.toStmt(currentWriteBufName + " = " + currentWriteRotName + "->buffer"));
+		return list;
+	}
 }

@@ -1,6 +1,7 @@
 package at.dms.kjc.smp;
 
 import at.dms.kjc.slicegraph.*;
+import at.dms.kjc.slicegraph.fission.Fissioner;
 
 import java.util.HashMap;
 import at.dms.kjc.backendSupport.*;
@@ -111,12 +112,32 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
                     writeDecls.add(Util.toStmt("volatile " + buf.getType().toString() + " " + FAKE_IO_VAR + "__n" + buf.parent.getCoreID()));
                 }
                 
-                assert !usesSharedBuffer();
+                assert !hasLocalSrcFilter();
             }
         	
         	generateWriteStatements(SchedulingPhase.INIT);
         	generateWriteStatements(SchedulingPhase.STEADY);
         }
+    }
+    
+    public boolean hasLocalSrcFilter() {
+        return (parent instanceof InputRotatingBuffer &&
+        		((InputRotatingBuffer)parent).hasLocalSrcFilter());
+    }
+    
+    public boolean hasFizzedFilter() {
+    	return (parent instanceof InputRotatingBuffer &&
+    			((InputRotatingBuffer)parent).hasFizzedFilter());
+    }
+    
+    public boolean isFirstFizzedFilter() {
+    	return (parent instanceof InputRotatingBuffer &&
+    			((InputRotatingBuffer)parent).isFirstFizzedFilter());
+    }
+    
+    public List<Slice> getFilterFissionSet() {
+    	assert parent instanceof InputRotatingBuffer;
+    	return ((InputRotatingBuffer)parent).getFilterFissionSet();
     }
     
     /********** Read code **********/
@@ -136,13 +157,16 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
     
     /** 
      * Generate and return the statements that implement the copying of the items on 
-     * a buffer to the next rotating buffer.  Only done for each primepump stage and the steady stage,
-     * not done for init.
+     * a buffer to the next rotating buffer
      * 
      * @return statements to implement the copy down
      */
     protected List<JStatement> copyDownStatements(SchedulingPhase phase) {
         List<JStatement> retval = new LinkedList<JStatement>();
+        
+        if(hasFizzedFilter() && !isFirstFizzedFilter())
+        	return retval;
+        
         //if we have items on the buffer after filter execution, we must copy them 
         //to the next buffer, don't use memcopy, just generate individual statements
         
@@ -162,8 +186,22 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
     }
     
     public JStatement zeroOutTail(SchedulingPhase phase) {
+    	int zeroTail = 0;
+    	
+    	if(phase != SchedulingPhase.INIT && this.hasFizzedFilter()) {
+    		List<Slice> fissionSet = this.getFilterFissionSet();
+    		
+    		int fissionPos = fissionSet.indexOf(parent.filterNode.getParent());
+    		assert fissionPos != -1;
+
+    		zeroTail = ((parent.filterInfo.pop * parent.filterInfo.getMult(phase)) / 
+    				fissionSet.size()) * fissionPos;
+    		
+    		System.out.println("zeroOutTail (" + phase + "), filter: " + parent.filterNode + " is in pos " + fissionPos + ", zeroTail: " + zeroTail);
+    	}
+    	
         return new JExpressionStatement(
-                new JAssignmentExpression(tail, new JIntLiteral(0)));
+                new JAssignmentExpression(tail, new JIntLiteral(zeroTail)));
     }
     
     public JMethodDeclaration peekMethod() {
@@ -205,11 +243,6 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
     
     /********** Write code **********/
     
-    public boolean usesSharedBuffer() {
-        return (parent instanceof InputRotatingBuffer &&
-        		((InputRotatingBuffer)parent).hasLocalSrcFilter());
-    }
-    
     private void generateWriteStatements(SchedulingPhase phase) {
      
         //if we are directly writing, then the push method does the remote writes,
@@ -227,7 +260,7 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
         //if this is an input buffer shared as an output buffer, then the output
         //filter is the local src filter of this input buffer
         FilterSliceNode filter;
-        if (usesSharedBuffer())
+        if (hasLocalSrcFilter())
             filter = ((InputRotatingBuffer)parent).getLocalSrcFilter();
         else  //otherwise it is an output buffer, so use the parent's filter
             filter = parent.filterNode;
@@ -281,11 +314,11 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
                             //don't do anything if this dest is on the same tiles, we are sharing the buffer with the
                             //dest, and the indices are the same.
                             
-                            if (destTile == sourceTile && destElement == sourceElement && usesSharedBuffer()) 
+                            if (destTile == sourceTile && destElement == sourceElement && hasLocalSrcFilter()) 
                                 continue;
                             
                             if (destTile == sourceTile) {
-                                assert !usesSharedBuffer() : "Trying to reorder a single buffer! Could lead to race. " + filter;
+                                assert !hasLocalSrcFilter() : "Trying to reorder a single buffer! Could lead to race. " + filter;
                             }
                             
                             SourceAddressRotation addrBuf = parent.getAddressBuffer(dest.getDest());
@@ -308,21 +341,39 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
     
     private int[] getDestIndices(InterSliceEdge edge, int outputRots, SchedulingPhase phase) {
         int[] indices = new int[outputRots * output.getWeight(edge, phase)];
+        
         InputSliceNode input = edge.getDest();
-        FilterInfo dsFilter = FilterInfo.getFilterInfo(input.getNextFilter());
-        //System.out.println("Dest copyDown: "+dsFilter.copyDown);
+        InputRotatingBuffer inputBuf = RotatingBuffer.getInputBuffer(input.getNextFilter());
+        
+        FilterInfo dsFilter = inputBuf.filterInfo;  //HACK: FilterInfo.getFilterInfo(input.getNextFilter());
+        
         assert indices.length %  input.getWeight(edge, phase) == 0;
         
         int inputRots = indices.length / input.getWeight(edge, phase);
         int nextWriteIndex = 0;
+        
+        int fissionOffset = 0;
+        if(inputBuf.hasFizzedFilter()) {
+        	List<Slice> fissionSet = inputBuf.getFilterFissionSet();
+        	
+        	int fissionPos = fissionSet.indexOf(input.getParent());
+        	assert fissionPos != -1;
+        	
+        	fissionOffset = ((inputBuf.filterInfo.push * inputBuf.filterInfo.getMult(phase)) / 
+        			fissionSet.size()) * fissionPos;
+        }
+        
+    	System.out.println("getDestIndices (" + phase + "), filter: " + output.getParent().getFirstFilter() + " to " + input.getNextFilter() +
+    			" has offset: " + (fissionOffset + (phase == SchedulingPhase.INIT ? 0 : dsFilter.copyDown)));
 
         for (int rot = 0; rot < inputRots; rot++) {
             for (int index = 0; index < input.getWeights(phase).length; index++) {
                 if (input.getSources(phase)[index] == edge) {
                     for (int item = 0; item < input.getWeights(phase)[index]; item++) {
                         indices[nextWriteIndex++] = rot * input.totalWeights(phase) +
-                            input.weightBefore(index, phase) + item + 
-                            (phase == SchedulingPhase.INIT ? 0 : dsFilter.copyDown);
+                            (inputBuf.hasFizzedFilter() ? 0 : input.weightBefore(index, phase)) +  //HACK 
+                            (phase == SchedulingPhase.INIT ? 0 : dsFilter.copyDown) +
+                            fissionOffset + item;
                         //System.out.println("Dest index: " + indices[nextWriteIndex -1]);
                     }
                 }
@@ -339,26 +390,47 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
      * copy down and any non-local edges into the buffer
      */
     private int getWriteOffset(SchedulingPhase phase) {
-        if (usesSharedBuffer()) {
-            FilterInfo localDest = FilterInfo.getFilterInfo(parent.filterNode);
-            
+        if (hasLocalSrcFilter()) {
             //no address array needed but we have to set the head to the copydown plus
             //the weights of any inputs that are not mapped to this tile that appear before
             //the local source
             
             InputSliceNode input = parent.filterNode.getParent().getHead();
             FilterSliceNode localSrc = ((InputRotatingBuffer)parent).getLocalSrcFilter();
+            
+            FilterInfo localDest = parent.filterInfo;  //HACK: FilterInfo.getFilterInfo(parent.filterNode);
+            
             //the local source and dest might not communicate in the init stage, if not
             //the offset should just be zero
             if (!input.hasEdgeFrom(phase, localSrc))
                 return 0;
             
-            InterSliceEdge theEdge = input.getEdgeFrom(phase, localSrc);
-            int offset = input.weightBefore(theEdge, phase);
+            int offset = 0;
+            
+            if(!this.hasFizzedFilter()) {  //HACK
+            	InterSliceEdge theEdge = input.getEdgeFrom(phase, localSrc);
+            	offset += input.weightBefore(theEdge, phase);
+            }
+            
+            System.out.println("testing1: " + offset);
    
             //if we are not in the init, we must skip over the dest's copy down
-            if (SchedulingPhase.INIT != phase) 
+            if (SchedulingPhase.INIT != phase)
                 offset += localDest.copyDown;
+            
+            System.out.println("testing2: " + offset);
+            
+            if(this.hasFizzedFilter()) {
+            	List<Slice> fissionSet = this.getFilterFissionSet();
+            	
+            	int fissionPos = fissionSet.indexOf(parent.filterNode.getParent());
+            	assert fissionPos != -1;
+            	
+            	offset += ((parent.filterInfo.push * parent.filterInfo.getMult(phase)) / 
+            			fissionSet.size()) * fissionPos;
+            }
+            
+            System.out.println("getWriteOffset (" + phase + "), filter: " + output.getParent().getFirstFilter() + " to " + input.getNextFilter() + " has write offset: " + offset);
             return offset;
         } else
             return 0;
@@ -369,13 +441,14 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
         //on the same tile, so we need to do special things to the head
         int literal = 0; 
         JBlock block = new JBlock();
-        if (usesSharedBuffer()) {
-                literal = getWriteOffset(phase);
+        if (hasLocalSrcFilter()) {
+        	System.out.println("zeroOutHead (" + phase + "), filter: " + output.getParent().getFirstFilter() + " has localSrcFilter");
+        	literal = getWriteOffset(phase);
         } else {
+            //if we are directly writing then we have to get the index into the remote
+            //buffer of start of this source
             if (directWrite) {
                 InterSliceEdge edge = output.getSingleEdge(phase);
-                //if we are directly writing then we have to get the index into the remote
-                //buffer of start of this source
                 
                 //first make sure we actually write in this stage
                 if (edge == null || !edge.getDest().getSourceSet(phase).contains(edge)) {
@@ -383,11 +456,28 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
                 }
                 else {
                     FilterInfo destInfo = FilterInfo.getFilterInfo(edge.getDest().getNextFilter());
-                    literal = 
-                        edge.getDest().weightBefore(edge, phase);
+                    
+                    literal = edge.getDest().weightBefore(edge, phase);
+                    
                     //if we are in the init, skip copy down as well
                     if (SchedulingPhase.INIT == phase)
-                            literal += destInfo.copyDown;
+                    	literal += destInfo.copyDown;
+                    
+                    //if destination buffer is for a fizzed filter, destination buffer 
+                    //is shared amongst multiple InputRotatingBuffers, must calculate
+                    //index into shared destination buffer
+                    InputRotatingBuffer destBuf = RotatingBuffer.getInputBuffer(edge.getDest().getNextFilter());
+                    if(destBuf.hasFizzedFilter()) {
+                    	List<Slice> fissionSet = destBuf.getFilterFissionSet();
+                    	
+                    	int fissionPos = fissionSet.indexOf(edge.getDest().getParent());
+                    	assert fissionPos != -1;
+                    	
+                    	literal += ((destBuf.filterInfo.push * destBuf.filterInfo.getMult(phase)) / 
+                    			fissionSet.size()) * fissionPos;
+                    }
+                    System.out.println("zeroOutHead (" + phase + "), filter: " + output.getParent().getFirstFilter() + " has directWrite");
+                    System.out.println("zeroOutHead (" + phase + "), filter: " + output.getParent().getFirstFilter() + " directWrite offset: " + literal);
                 }
             } else {
                 //no optimizations, just zero head so that we write to beginning of output buffer

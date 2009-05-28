@@ -8,19 +8,13 @@ import at.dms.kjc.slicegraph.*;
 import java.util.LinkedList;
 
 public class SMPBackend {
-    public static final boolean FAKE_IO = true;
+    public static final boolean FAKE_IO = false;
 
     public static Scheduler scheduler;
     public static SMPMachine chip;
     public static SMPBackEndFactory backEndBits;
     public static Structs_h structs_h;
-    //public static int[] coreOrder = {0, 8, 4, 12, 1, 9, 5, 13, 2, 10, 6, 14, 3, 11, 7, 15};
-    //public static int[] coreOrder = {0, 8, 2, 10, 1, 9, 3, 11, 4, 12, 6, 14, 5, 13, 7, 15};
-    public static int[] coreOrder = {0, 8, 1, 9, 2, 10, 3, 11, 4, 12, 5, 13, 6, 14, 7, 15};
-
-    //public static int[] coreOrder = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
-    //public static int[] coreOrder = {0, 8, 1, 9, 2, 10, 3, 11, 4, 12, 5, 13, 6, 14, 7, 15};
-    //public static int[] coreOrder = {0, 4, 1, 5, 2, 6, 3, 7, 8, 12, 9, 13, 10, 14, 4, 15};
+    public static int[] coreOrder = {0, 8, 4, 12, 1, 9, 5, 13, 2, 10, 6, 14, 3, 11, 7, 15};
 
     public static void run(SIRStream str,
                            JInterfaceDeclaration[] interfaces,

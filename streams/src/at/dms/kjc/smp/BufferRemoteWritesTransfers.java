@@ -135,6 +135,16 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
     			((InputRotatingBuffer)parent).isFirstFizzedFilter());
     }
     
+    public Slice getUnfizzedFilter() {
+    	assert parent instanceof InputRotatingBuffer;
+    	return ((InputRotatingBuffer)parent).getUnfizzedFilter();
+    }
+    
+    public FilterInfo getUnfizzedFilterInfo() {
+    	assert parent instanceof InputRotatingBuffer;
+    	return ((InputRotatingBuffer)parent).getUnfizzedFilterInfo();
+    }
+    
     public List<Slice> getFilterFissionSet() {
     	assert parent instanceof InputRotatingBuffer;
     	return ((InputRotatingBuffer)parent).getFilterFissionSet();
@@ -164,7 +174,7 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
     protected List<JStatement> copyDownStatements(SchedulingPhase phase) {
         List<JStatement> retval = new LinkedList<JStatement>();
         
-        if(hasFizzedFilter() && !isFirstFizzedFilter())
+        if(this.hasFizzedFilter() && !this.isFirstFizzedFilter())
         	return retval;
         
         //if we have items on the buffer after filter execution, we must copy them 
@@ -302,8 +312,8 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
             for (int weightIndex = 0; weightIndex < output.getWeights(phase).length; weightIndex++) {
                 InterSliceEdge[] dests = output.getDests(phase)[weightIndex];
                 for (int curWeight = 0; curWeight < output.getWeights(phase)[weightIndex]; curWeight++) {
-                    int sourceElement= rot * output.totalWeights(phase) + 
-                        output.weightBefore(weightIndex, phase) + curWeight + writeOffset;
+                    int sourceElement = rot * output.totalWeights(phase) + 
+                    	output.weightBefore(weightIndex, phase) + curWeight + writeOffset;
                         items++;
                         for (InterSliceEdge dest : dests) {
                             int destElement = 
@@ -318,7 +328,7 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
                                 continue;
                             
                             if (destTile == sourceTile) {
-                                assert !hasLocalSrcFilter() : "Trying to reorder a single buffer! Could lead to race. " + filter;
+                                assert !hasLocalSrcFilter() : "Trying to reorder a single buffer! Could lead to race. " + filter + ", moving " + sourceElement + " to " + destElement;
                             }
                             
                             SourceAddressRotation addrBuf = parent.getAddressBuffer(dest.getDest());
@@ -370,11 +380,15 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
             for (int index = 0; index < input.getWeights(phase).length; index++) {
                 if (input.getSources(phase)[index] == edge) {
                     for (int item = 0; item < input.getWeights(phase)[index]; item++) {
+                    	int weightBefore = 0;
+                        if(!inputBuf.hasFizzedFilter() || !RotatingBuffer.getInputBuffer(output.getParent().getFirstFilter()).hasFizzedFilter())
+                        	weightBefore = input.weightBefore(index, phase);
+                        
                         indices[nextWriteIndex++] = rot * input.totalWeights(phase) +
-                            (inputBuf.hasFizzedFilter() ? 0 : input.weightBefore(index, phase)) +  //HACK 
+                        	weightBefore +
+                        	//input.weightBefore(index, phase) +
                             (phase == SchedulingPhase.INIT ? 0 : dsFilter.copyDown) +
                             fissionOffset + item;
-                        //System.out.println("Dest index: " + indices[nextWriteIndex -1]);
                     }
                 }
             }
@@ -397,7 +411,7 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
             
             InputSliceNode input = parent.filterNode.getParent().getHead();
             FilterSliceNode localSrc = ((InputRotatingBuffer)parent).getLocalSrcFilter();
-            
+
             FilterInfo localDest = parent.filterInfo;  //HACK: FilterInfo.getFilterInfo(parent.filterNode);
             
             //the local source and dest might not communicate in the init stage, if not
@@ -407,8 +421,8 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
             
             int offset = 0;
             
-            if(!this.hasFizzedFilter()) {  //HACK
-            	InterSliceEdge theEdge = input.getEdgeFrom(phase, localSrc);
+            if(!this.hasFizzedFilter() || !RotatingBuffer.getInputBuffer(output.getParent().getFirstFilter()).hasFizzedFilter()) {
+                InterSliceEdge theEdge = input.getEdgeFrom(phase, localSrc);
             	offset += input.weightBefore(theEdge, phase);
             }
             

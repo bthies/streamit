@@ -44,6 +44,16 @@ public class InputRotatingBuffer extends RotatingBuffer {
 	protected FilterSliceNode localSrcFilter;
 	
 	/**
+	 * If InputRotatingBuffer is for a fizzed filter, store original unfizzed
+	 * filter
+	 */
+	protected Slice unfizzedFilter;
+	/**
+	 * If InputRotatingBuffer is for a fizzed filter, store information about
+	 * original unfizzed filter
+	 */
+	protected FilterInfo unfizzedFilterInfo;
+	/**
 	 * If InputRotatingBuffer is for a fizzed filter, store fizzed filters
 	 * that belong to the same set of fizzed filters
 	 */
@@ -137,10 +147,15 @@ public class InputRotatingBuffer extends RotatingBuffer {
 							SchedulingPhase.STEADY) <= 1;
 		}
 
+		unfizzedFilter = null;
+		unfizzedFilterInfo = null;
 		filterFissionSet = null;
 		if(Fissioner.isFizzed(filterNode.getParent())) {
-			filterInfo = Fissioner.getOrigInfo(filterNode.getParent());
+			unfizzedFilter = Fissioner.getOrigSlice(filterNode.getParent());
+			unfizzedFilterInfo = Fissioner.getOrigInfo(filterNode.getParent());
 			filterFissionSet = Fissioner.getFizzedSet(filterNode.getParent());
+			
+			filterInfo = Fissioner.getOrigInfo(filterNode.getParent());
 		}
 		
 		localSrcFilter = null;
@@ -583,13 +598,23 @@ public class InputRotatingBuffer extends RotatingBuffer {
 	
 	/** returns whether input buffer is for a fizzed filter */
 	public boolean hasFizzedFilter() {
-		return filterFissionSet != null;
+		return unfizzedFilter != null;
 	}
 	
 	/** returns whether input buffer is for a fizzed filter that is the first in its set */
 	public boolean isFirstFizzedFilter() {
 		assert hasFizzedFilter();
 		return filterFissionSet.get(0).equals(filterNode.getParent());
+	}
+	
+	/** returns unfizzed filter */
+	public Slice getUnfizzedFilter() {
+		return unfizzedFilter;
+	}
+	
+	/** returns unfizzed filter info */
+	public FilterInfo getUnfizzedFilterInfo() {
+		return unfizzedFilterInfo;
 	}
 	
 	/** returns fission set for filter */

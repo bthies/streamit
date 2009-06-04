@@ -119,8 +119,13 @@ public class ProcessFileReader {
         long fileSize = getFileSizeBytes();
         JBlock block = new JBlock();
 
+        codeStore.appendTxtToGlobal("FILE *input;\n");
+        codeStore.appendTxtToGlobal("off_t num_inputs;\n");
         codeStore.appendTxtToGlobal(fileInput.getType() + "*fileReadBuffer;\n");
         codeStore.appendTxtToGlobal("int fileReadIndex__n" + codeStore.getParent().getUniqueId() + " = 0;\n");
+
+        SMPBackend.chip.getOffChipMemory().getComputeCode().appendTxtToGlobal("extern " + fileInput.getType() + "*fileReadBuffer;\n");
+        SMPBackend.chip.getOffChipMemory().getComputeCode().appendTxtToGlobal("extern off_t num_inputs;\n");
 
         //open the file read the file into the buffer on the heap
         /*
@@ -130,8 +135,6 @@ public class ProcessFileReader {
         block.addStatement(Util.toStmt("fstat(INPUT, &statbuf)"));
         block.addStatement(Util.toStmt("fileReadBuffer = (" + fileInput.getType() + "*)mmap(NULL, statbuf.st_size, PROT_READ | PROT_WRITE, MAP_PRIVATE, INPUT, 0)"));
         */
-        codeStore.appendTxtToGlobal("FILE *input;\n");
-        codeStore.appendTxtToGlobal("off_t num_inputs;\n");
 
         block.addStatement(Util.toStmt("struct stat statbuf"));
         block.addStatement(Util.toStmt("stat(\"" + fileInput.getFileName() + "\", &statbuf)"));

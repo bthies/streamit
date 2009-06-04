@@ -46,6 +46,16 @@ public class CoreCodeStore extends ComputeCodeStore<Core> {
        mainMethod.addParameter(new JFormalParameter(CVoidPtrType.VoidPtr, "arg"));
        mainMethod.setReturnType(CVoidPtrType.VoidPtr);
     }
+
+    /**
+     * Set name of main function
+     *
+     * @param main The new name of the main function
+     */
+    public void setMainName(String mainName) {
+        assert (mainName != null && mainName != "");
+        setMyMainName(mainName);
+    }
     
     /**
      * Remember that this filter is mapped to this core.

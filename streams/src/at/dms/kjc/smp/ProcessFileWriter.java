@@ -67,7 +67,8 @@ public class ProcessFileWriter {
             allocatingCore = allocatingCores.get(filterNode);
             codeStore = allocatingCore.getComputeCode();
                         
-            codeStore.appendTxtToGlobal("int OUTPUT;\n");
+            //codeStore.appendTxtToGlobal("int OUTPUT;\n");
+            codeStore.appendTxtToGlobal("FILE *output;\n");
             //JBlock block = new JBlock();
             //codeStore.addStatementFirstToBufferInit(block);
         }

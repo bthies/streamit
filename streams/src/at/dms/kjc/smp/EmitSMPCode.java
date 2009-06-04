@@ -36,16 +36,7 @@ public class EmitSMPCode extends EmitCode {
     }
     
     public static void doit(SMPBackEndFactory backendBits) {
-        try {
-            // generate the makefile that will compile all the tile executables
-            generateMakefile();
-            
-            // generate header containing code to get clock cycles
-            generateClockHeader();
-            
-            // generate header containing barrier implementation
-            generateBarrierHeader();
-            
+        try {            
             // add stats useful for performance debugging
             if(KjcOptions.debug) {
             	for (Core core : SMPBackend.chip.getCores()) {
@@ -81,6 +72,7 @@ public class EmitSMPCode extends EmitCode {
                                                          null));
             }
 
+            // make sure each thread exits properly
             for (Core core : SMPBackend.chip.getCores()) {
                 if (!core.getComputeCode().shouldGenerateCode())
                     continue;
@@ -88,7 +80,7 @@ public class EmitSMPCode extends EmitCode {
                 core.getComputeCode().addCleanupStatement(Util.toStmt("pthread_exit(NULL)"));
             }
 
-            // call to buffer initialization and CPU affinity setting
+            // add call to buffer initialization and CPU affinity setting
             for (Core core : SMPBackend.chip.getCores()) {
                 if (!core.getComputeCode().shouldGenerateCode())
                     continue;
@@ -102,7 +94,7 @@ public class EmitSMPCode extends EmitCode {
                 }
             }
 
-            // make sure that variables and methods are unique across cores            
+            // make sure that variables and methods are unique across cores
             List<ComputeCodeStore<?>> codeStores = new LinkedList<ComputeCodeStore<?>>();
             for (Core core : SMPBackend.chip.getCores()) {
                 if (!core.getComputeCode().shouldGenerateCode())
@@ -113,86 +105,56 @@ public class EmitSMPCode extends EmitCode {
             
             CodeStoreRenameAll.renameOverAllCodeStores(codeStores);
             
-            // write out C code
-            CodegenPrintWriter p = new CodegenPrintWriter(new BufferedWriter(new FileWriter(MAIN_FILE, false)));
-            
-            EmitSMPCode codeEmitter = new EmitSMPCode(backendBits);
-            
-            codeEmitter.generateCHeader(p);
-            codeEmitter.generateSharedGlobals(p);
-
-            if(KjcOptions.debug)
-                codeEmitter.generatePerfStatsOutput(p);
-
-            if(!KjcOptions.nobind)
-                codeEmitter.generateSetAffinity(p);
-                        
+            // write out C code for tiles
             for (Core core : SMPBackend.chip.getCores()) {
                 // if no code was written to this core's code store, then skip it
                 if (!core.getComputeCode().shouldGenerateCode())
                     continue;
-    
+
+                String outputFileName = "core" + core.getCoreID() + ".c";
+                CodegenPrintWriter p = new CodegenPrintWriter(new BufferedWriter(new FileWriter(outputFileName, false)));
+
+                EmitSMPCode codeEmitter = new EmitSMPCode(backendBits);
+                codeEmitter.generateIncludes(p);
                 codeEmitter.emitCodeForComputeNode(core, p);
+
+                p.close();
             }
 
-            codeEmitter.generateMain(p);
+            // generate main file that will initialize threads for each core
+            generateMainFile();
 
-            p.close();
-            
+            // generate header containing global variables
+            generateGlobalsHeader();
+
+            // generate header containing code to get clock cycles
+            generateClockHeader();
+
+            // generate header containing barrier implementation
+            generateBarrierCode();
+
+            // generate the makefile that will compile all the tile executables
+            generateMakefile();
+
         } catch (IOException e) {
             throw new AssertionError("I/O error" + e);
         }
     }
-    
-    public void generateCHeader(CodegenPrintWriter p) {
+
+    private static void generateMainFile() throws IOException {
+        CodegenPrintWriter p = new CodegenPrintWriter(new BufferedWriter(new FileWriter(MAIN_FILE, false)));
+
         generateIncludes(p);
-        
-        //THE NUMBER OF SS ITERATIONS FOR EACH cycle counting block 
-        p.println("#define ITERATIONS " + KjcOptions.numbers);   
-    }
-    
-    /**
-     * Standard code for front of a C file here.
-     * 
-     */
-    public static void generateIncludes(CodegenPrintWriter p) {
-    	p.println("#ifndef _GNU_SOURCE");
-    	p.println("#define _GNU_SOURCE");
-    	p.println("#endif");
-    	p.println();
-        p.println("#include <stdio.h>");    // in case of FileReader / FileWriter
-        p.println("#include <math.h>");     // in case math functions
-        p.println("#include <stdlib.h>");
-        p.println("#include <unistd.h>");
-        p.println("#include <fcntl.h>");
-        p.println("#include <pthread.h>");
-        p.println("#include <sched.h>");
-        p.println("#include <sys/types.h>");
-        p.println("#include <sys/stat.h>");
-        p.println("#include <sys/mman.h>");
-        p.println("#include <string.h>");
-
-        p.println("#include \"barrier.h\"");
-        p.println("#include \"rdtsc.h\"");
-
-        if (KjcOptions.fixedpoint)
-            p.println("#include \"fixed.h\"");
-        p.println("#include \"structs.h\"");
-        if (KjcOptions.profile)
-            p.println("#include <sys/profiler.h>");
-
-        p.newLine();
-        p.newLine();
-    }
-
-    public void generateSharedGlobals(CodegenPrintWriter p) {
-        p.println();
 
         if(KjcOptions.iterations != -1) {
             p.println("// Number of steady-state iterations");
             p.println("int maxSteadyIter = " + KjcOptions.iterations + ";");
             p.println();
         }
+
+        p.println("// Global barrier");
+        p.println("barrier_t barrier;");
+        p.println();
 
         if(KjcOptions.debug) {
             assert(KjcOptions.iterations != -1);
@@ -203,40 +165,137 @@ public class EmitSMPCode extends EmitCode {
             p.println("uint64_t end_times[" + KjcOptions.smp + "][" + KjcOptions.iterations + "];");
             p.println();
 
-            p.println("int perfcore_iter;");
             for (Core core : SMPBackend.chip.getCores()) {
                 if (!core.getComputeCode().shouldGenerateCode())
                     continue;
-
                 p.println("int perfstats_iter_n" + core.getCoreID() + " = 0;");
             }
+            p.println();
 
+            generatePerfStatsOutput(p);
+        }
+
+        generateSetAffinity(p);
+
+        p.println("// main() Function Here");
+        p.println("int main(int argc, char** argv) {");
+        p.indent();
+
+        // figure out how many cores will participate in barrier
+        int barrier_count = 0;
+        for(Core core : SMPBackend.chip.getCores())
+            if(core.getComputeCode().shouldGenerateCode())
+                barrier_count++;
+
+        p.println();
+        p.println("// Initialize barrier");
+        p.println("barrier_init(&barrier, " + barrier_count + ");");
+        
+        p.println();
+        p.println("// Spawn threads");
+        p.println("int rc;");
+        p.println("pthread_attr_t attr;");
+        p.println("void *status;");
+        p.println();
+        p.println("pthread_attr_init(&attr);");
+        p.println("pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);");
+
+        for(Core core : SMPBackend.chip.getCores()) {
+            if(!core.getComputeCode().shouldGenerateCode())
+                continue;
+
+            p.println();
+            p.println("pthread_t thread_n" + core.getCoreID() + ";");
+            p.println("if ((rc = pthread_create(&thread_n" + core.getCoreID() + ", NULL, " +
+                    core.getComputeCode().getMainFunction().getName() + ", (void *)NULL)) < 0)");
+            p.indent();
+            p.println("printf(\"Error creating thread for core " + core.getCoreID() + ": %d\\n\", rc);");
+            p.outdent();
+        }
+        
+        p.println();
+        p.println("pthread_attr_destroy(&attr);");
+        
+        for(Core core : SMPBackend.chip.getCores()) {
+            if(!core.getComputeCode().shouldGenerateCode())
+                continue;
+
+            p.println();
+            p.println("if ((rc = pthread_join(thread_n" + core.getCoreID() + ", &status)) < 0) {");
+            p.indent();
+            p.println("printf(\"Error joining thread for core " + core.getCoreID() + ": %d\\n\", rc);");
+            p.println("exit(-1);");
+            p.outdent();
+            p.println("}");
+        }
+        
+        p.println();
+        p.println("// Exit");
+        p.println("pthread_exit(NULL);");
+        p.outdent();
+        p.println("}");
+        p.close();
+    }
+
+    private static void generateGlobalsHeader() throws IOException {
+        CodegenPrintWriter p = new CodegenPrintWriter(new BufferedWriter(new FileWriter("globals.h", false)));
+
+        p.println("#ifndef GLOBALS_H");
+        p.println("#define GLOBALS_H");
+        p.println();
+
+        p.println("#include \"barrier.h\"");
+        p.println();
+
+        p.println("#define ITERATIONS " + KjcOptions.numbers);   
+        p.println();
+
+        if(KjcOptions.iterations != -1) {
+            p.println("// Number of steady-state iterations");
+            p.println("extern int maxSteadyIter;");
             p.println();
         }
 
         p.println("// Global barrier");
-        p.println("barrier_t barrier;");
+        p.println("extern barrier_t barrier;");
         p.println();
+
         p.println("// Shared buffers");
         p.println(SMPBackend.chip.getOffChipMemory().getComputeCode().getGlobalText());
-    }
-    
-    private static void generateMakefile() throws IOException {
-        CodegenPrintWriter p = new CodegenPrintWriter(new BufferedWriter(new FileWriter("Makefile", false)));
 
-        p.println("CC = icc");
-        p.println("CFLAGS = -O2");
-        p.println("LIBS = -pthread");
+        if(KjcOptions.debug) {
+            assert(KjcOptions.iterations != -1);
+
+            p.println("// Debugging stats");
+            p.println("extern uint64_t start_times[" + KjcOptions.smp + "][" + KjcOptions.iterations + "];");
+            p.println("extern uint64_t barrier_times[" + KjcOptions.smp + "][" + KjcOptions.iterations + "];");
+            p.println("extern uint64_t end_times[" + KjcOptions.smp + "][" + KjcOptions.iterations + "];");
+            p.println();
+
+            for (Core core : SMPBackend.chip.getCores()) {
+                if (!core.getComputeCode().shouldGenerateCode())
+                    continue;
+                p.println("extern int perfstats_iter_n" + core.getCoreID() + ";");
+            }
+            p.println();
+            p.println("extern void perfStatsOutput();");
+            p.println();
+        }
+
+        p.println("extern void setCPUAffinity(int core);");
         p.println();
-        p.println("all: main.c");
-        p.println("\t$(CC) $(CFLAGS) $(LIBS) -o smp" + KjcOptions.smp + " main.c");
-        p.println("debug: main.c");
-        p.println("\t$(CC) $(CFLAGS) $(LIBS) -g -o smp" + KjcOptions.smp + "_debug main.c");
+
+        for(Core core : SMPBackend.chip.getCores()) {
+            if(!core.getComputeCode().shouldGenerateCode())
+                continue;
+            p.println("extern void *" + core.getComputeCode().getMyMainName() + "(void * arg);");
+        }
         p.println();
+
+        p.println("#endif");
         p.close();
-
     }
-    
+
     private static void generateClockHeader() throws IOException {
         CodegenPrintWriter p = new CodegenPrintWriter(new BufferedWriter(new FileWriter("rdtsc.h", false)));
         
@@ -257,39 +316,50 @@ public class EmitSMPCode extends EmitCode {
         p.println("#endif");
         p.close();
     }
-    
-    private static void generateBarrierHeader() throws IOException {
-        CodegenPrintWriter p = new CodegenPrintWriter(new BufferedWriter(new FileWriter("barrier.h", false)));
-        
+
+    private static void generateBarrierCode() throws IOException {
+        CodegenPrintWriter p;
+
+        p = new CodegenPrintWriter(new BufferedWriter(new FileWriter("barrier.h", false)));
         p.println("#ifndef BARRIER_H");
         p.println("#define BARRIER_H");
-        p.println("");
+        p.println();
+        p.println("typedef struct barrier {");
+        p.println("  int num_threads;");
+        p.println("  int count;");
+        p.println("  volatile int generation;");
+        p.println("} barrier_t;");
+        p.println();
+        p.println("extern int FetchAndDecr(int *mem);");
+        p.println("extern void barrier_init(barrier_t *barrier, int num_threads);");
+        p.println("extern void barrier_wait(barrier_t *barrier);");
+        p.println();
+        p.println("#endif");
+        p.close();
+
+        p = new CodegenPrintWriter(new BufferedWriter(new FileWriter("barrier.c", false)));
+        p.println("#include \"barrier.h\"");
+        p.println();
         p.println("int FetchAndDecr(int *mem)");
         p.println("{");
         p.println("  int val = -1;");
-        p.println("");
+        p.println();
         p.println("  asm volatile (\"lock; xaddl %0,%1\"");
         p.println("		: \"=r\" (val), \"=m\" (*mem)");
         p.println("		: \"0\" (val), \"m\" (*mem)");
         p.println("		: \"memory\", \"cc\");");
         p.println("  return val;");
         p.println("}");
-        p.println("");
-        p.println("typedef struct barrier {");
-        p.println("  int num_threads;");
-        p.println("  int count;");
-        p.println("  volatile int generation;");
-        p.println("} barrier_t;");
-        p.println("");
+        p.println();
         p.println("void barrier_init(barrier_t *barrier, int num_threads) {");
         p.println("  barrier->num_threads = num_threads;");
         p.println("  barrier->count = num_threads;");
         p.println("  barrier->generation = 0;");
         p.println("}");
-        p.println("");
+        p.println();
         p.println("void barrier_wait(barrier_t *barrier) {");
         p.println("  int cur_gen = barrier->generation;");
-        p.println("");
+        p.println();
         p.println("  if(FetchAndDecr(&barrier->count) == 1) {");
         p.println("    barrier->count = barrier->num_threads;");
         p.println("    barrier->generation++;");
@@ -298,8 +368,78 @@ public class EmitSMPCode extends EmitCode {
         p.println("    while(cur_gen == barrier->generation);");
         p.println("  }");
         p.println("}");
-        p.println("#endif");
         p.close();
+    }
+
+    private static void generateMakefile() throws IOException {
+        CodegenPrintWriter p = new CodegenPrintWriter(new BufferedWriter(new FileWriter("Makefile", false)));
+
+        //p.println("CC = g++");
+        p.println("CFLAGS = -O2");
+        p.println("LIBS = -pthread");
+        p.print("OBJS = main.o barrier.o ");
+        for(Core core : SMPBackend.chip.getCores()) {
+            if(!core.getComputeCode().shouldGenerateCode())
+                continue;
+            p.print("core" + core.getCoreID() + ".o ");
+        }
+        p.println();
+        p.println();
+
+        p.println("all: $(OBJS)");
+        p.println("\t$(CC) $(CFLAGS) $(LIBS) $(OBJS) -o " + 
+                  (KjcOptions.output == null ? "smp" + KjcOptions.smp : KjcOptions.output));
+        p.println();
+        p.println("clean:");
+        p.println("\trm *.o " + 
+                  (KjcOptions.output == null ? "smp" + KjcOptions.smp : KjcOptions.output));
+        p.println();
+
+        p.println("main.o: main.c");
+        p.println("\t$(CC) $(CFLAGS) $(LIBS) -c main.c");
+        p.println();
+
+        p.println("barrier.o: barrier.c");
+        p.println("\t$(CC) $(CFLAGS) $(LIBS) -c barrier.c");
+        p.println();
+
+        for(Core core : SMPBackend.chip.getCores()) {
+            if(!core.getComputeCode().shouldGenerateCode())
+                continue;
+            p.println("core" + core.getCoreID() + ".o: core" + core.getCoreID() + ".c");
+            p.println("\t$(CC) $(CFLAGS) $(LIBS) -c core" + core.getCoreID() + ".c");
+            p.println();
+        }
+        p.close();
+    }
+    
+    public static void generateIncludes(CodegenPrintWriter p) {
+    	p.println("#ifndef _GNU_SOURCE");
+    	p.println("#define _GNU_SOURCE");
+    	p.println("#endif");
+    	p.println();
+        p.println("#include <stdio.h>");    // in case of FileReader / FileWriter
+        p.println("#include <math.h>");     // in case math functions
+        p.println("#include <stdlib.h>");
+        p.println("#include <unistd.h>");
+        p.println("#include <fcntl.h>");
+        p.println("#include <pthread.h>");
+        p.println("#include <sched.h>");
+        p.println("#include <sys/types.h>");
+        p.println("#include <sys/stat.h>");
+        p.println("#include <sys/mman.h>");
+        p.println("#include <string.h>");
+        p.println();
+        p.println("#include \"globals.h\"");
+        p.println("#include \"barrier.h\"");
+        p.println("#include \"rdtsc.h\"");
+
+        if (KjcOptions.fixedpoint)
+            p.println("#include \"fixed.h\"");
+        p.println("#include \"structs.h\"");
+
+        p.println();
+        p.println();
     }
     
     /**
@@ -318,8 +458,7 @@ public class EmitSMPCode extends EmitCode {
         System.out.println("Optimizing...");
         (new at.dms.kjc.sir.lowering.FinalUnitOptimize()).optimize(fieldsAndMethods);
         
-        p.println("// code for tile " + n.getUniqueId());
-        
+        p.println("// code for core " + n.getUniqueId());
         p.println(((Core)n).getComputeCode().getGlobalText());
         
         // generate function prototypes for methods so that they can call each other
@@ -407,8 +546,7 @@ public class EmitSMPCode extends EmitCode {
         }
     }
     
-    public void generatePerfStatsOutput(CodegenPrintWriter p) {
-        p.println();
+    public static void generatePerfStatsOutput(CodegenPrintWriter p) {
         p.println("void perfStatsOutput() {");
         p.indent();
         p.println("int core, iter;");
@@ -526,10 +664,10 @@ public class EmitSMPCode extends EmitCode {
 
         p.outdent();
         p.println("}");
+        p.println();
     }
 
-    public void generateSetAffinity(CodegenPrintWriter p) {
-        p.println();
+    public static void generateSetAffinity(CodegenPrintWriter p) {
         p.println("void setCPUAffinity(int core) {");
         p.indent();
         
@@ -547,71 +685,6 @@ public class EmitSMPCode extends EmitCode {
         
         p.outdent();
         p.println("}");
-    }
-    
-    /**
-     * Generate a "main" function for the current tile (this is used for filter code).
-     */
-    public void generateMain(CodegenPrintWriter p) {
         p.println();
-        p.println();
-        p.println("// main() Function Here");
-        // dumb template to override
-        p.println("int main(int argc, char** argv) {");
-        p.indent();
-
-        // figure out how many cores will participate in barrier
-        int barrier_count = 0;
-        for(Core core : SMPBackend.chip.getCores())
-            if(core.getComputeCode().shouldGenerateCode())
-                barrier_count++;
-
-        p.println();
-        p.println("// Initialize barrier");
-        p.println("barrier_init(&barrier, " + barrier_count + ");");
-        
-        p.println();
-        p.println("// Spawn threads");
-        p.println("int rc;");
-        p.println("pthread_attr_t attr;");
-        p.println("void *status;");
-        p.println();
-        p.println("pthread_attr_init(&attr);");
-        p.println("pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);");
-
-        for(Core core : SMPBackend.chip.getCores()) {
-            if(!core.getComputeCode().shouldGenerateCode())
-                continue;
-
-            p.println();
-            p.println("pthread_t thread_n" + core.getCoreID() + ";");
-            p.println("if ((rc = pthread_create(&thread_n" + core.getCoreID() + ", NULL, " +
-                    core.getComputeCode().getMainFunction().getName() + ", (void *)NULL)) < 0)");
-            p.indent();
-            p.println("printf(\"Error creating thread for core " + core.getCoreID() + ": %d\\n\", rc);");
-            p.outdent();
-        }
-        
-        p.println();
-        p.println("pthread_attr_destroy(&attr);");
-        
-        for(Core core : SMPBackend.chip.getCores()) {
-            if(!core.getComputeCode().shouldGenerateCode())
-                continue;
-
-            p.println();
-            p.println("if ((rc = pthread_join(thread_n" + core.getCoreID() + ", &status)) < 0) {");
-            p.indent();
-            p.println("printf(\"Error joining thread for core " + core.getCoreID() + ": %d\\n\", rc);");
-            p.println("exit(-1);");
-            p.outdent();
-            p.println("}");
-        }
-        
-        p.println();
-        p.println("// Exit");
-        p.println("pthread_exit(NULL);");
-        p.outdent();
-        p.println("}");
     }
 }

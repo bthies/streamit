@@ -250,7 +250,9 @@ public abstract class RotatingBuffer extends Channel {
 
     		//create pointers to constituent buffers
     		this.parent.getMachine().getOffChipMemory().getComputeCode().appendTxtToGlobal(
-    				this.getType().toString() + "* " + bufferNames[i] + ";\n");
+    				"extern " + this.getType().toString() + "* " + bufferNames[i] + ";\n");
+
+            cs.appendTxtToGlobal(this.getType().toString() + "* " + bufferNames[i] + ";\n");
 
     		//malloc the steady buffer
     		cs.addStatementToBufferInit(new JExpressionStatement(new JEmittedTextExpression(

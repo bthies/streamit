@@ -372,9 +372,9 @@ public class EmitSMPCode extends EmitCode {
     }
 
     private static void generateMakefile() throws IOException {
-        CodegenPrintWriter p = new CodegenPrintWriter(new BufferedWriter(new FileWriter("Makefile", false)));
+        CodegenPrintWriter p = new CodegenPrintWriter(new BufferedWriter(new FileWriter("Makefile.smp", false)));
 
-        //p.println("CC = g++");
+        p.println("CC = icc");
         p.println("CFLAGS = -O2");
         p.println("LIBS = -pthread");
         p.print("OBJS = main.o barrier.o ");

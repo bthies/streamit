@@ -19,6 +19,12 @@ public class Structs_h {
      */
     public Structs_h() {
         buf = new StringBuffer();
+
+        buf.append("typedef struct __Complex__ {\n");
+        buf.append("  float real;\n");
+        buf.append("  float imag;\n");
+        buf.append("} __Complex;\n");
+        buf.append("typedef int bit\n");
     }
     
     /**

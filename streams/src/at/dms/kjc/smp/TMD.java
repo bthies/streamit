@@ -456,7 +456,7 @@ public class TMD extends Scheduler {
                levelTotal += workEst;
                int commRate = (fc.getPushInt()  + fc.getPopInt()) * fc.getMult(SchedulingPhase.STEADY);
                if (Fissioner.canFizz(origLevels[l][s], true)) {
-                   if (workEst / commRate <= FISS_COMP_COMM_THRESHOLD) {
+                   if (commRate > 0 && workEst / commRate <= FISS_COMP_COMM_THRESHOLD) {
                        System.out.println("Dont' fiss " + fsn + ", too much communication!");
                        cannotFizz++;
                    } else {
@@ -490,7 +490,7 @@ public class TMD extends Scheduler {
                 int commRate = (fc.getPushInt() + fc.getPopInt()) * fc.getMult(SchedulingPhase.STEADY);
                 //if we cannot fizz this filter, do nothing
                 if (!Fissioner.canFizz(fsn.getParent(), false) || 
-                        workEsts.get(fsn) / commRate <= FISS_COMP_COMM_THRESHOLD) {
+                    (commRate > 0 && workEsts.get(fsn) / commRate <= FISS_COMP_COMM_THRESHOLD)) {
                     assert false;
                 } 
                 //System.out.println("Calculating fizz amount for: " + fsn + "(" + availTiles + " avail tiles)");

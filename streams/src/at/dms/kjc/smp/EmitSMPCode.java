@@ -250,6 +250,10 @@ public class EmitSMPCode extends EmitCode {
         p.println("#define ITERATIONS " + KjcOptions.numbers);   
         p.println();
 
+        p.println("#define minf(a, b) ((a) < (b) ? (a) : (b))\n");
+        p.println("#define maxf(a, b) ((a) > (b) ? (a) : (b))\n");
+        p.println();
+
         if(KjcOptions.iterations != -1) {
             p.println("// Number of steady-state iterations");
             p.println("extern int maxSteadyIter;");

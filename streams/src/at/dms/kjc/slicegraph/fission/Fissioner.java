@@ -69,6 +69,7 @@ public class Fissioner {
      * Attempt to fiss <slice> by <fissAmount>.  Return true if the fission was successful.
      */
     public static boolean doit(Slice slice, Slicer slicer, int fissAmount) {
+        System.out.println("Performing fission on: " + slice.getFirstFilter() + ", fizzAmount: " + fissAmount);
         Fissioner fissioner = new Fissioner(slice, slicer, fissAmount);
         return canFizz(slice, false) && fissioner.fizz();
     }
@@ -174,7 +175,7 @@ public class Fissioner {
     
     private boolean checks() {
         // Check copyDown constraint: copyDown < mult * pop
-        if  (fInfo.pop > 0 && fInfo.copyDown >= fInfo.steadyMult * fInfo.pop) { 
+        if  (fInfo.pop > 0 && fInfo.copyDown >= fInfo.steadyMult * fInfo.pop / fizzAmount) { 
             System.out.println("Can't fizz: Slice does not meet copyDown constraint");
             return false;
         }
@@ -185,18 +186,29 @@ public class Fissioner {
     private boolean fizz() {
         if (!checks())
             return false;
-        
+
+        //System.out.println("1");
         createFissedSlices();
+        //System.out.println("2");
         createIDInputSlice();
+        //System.out.println("3");
         createIDOutputSlice();
+        //System.out.println("4");
         setupInitPhase();
+        //System.out.println("5");
         replaceInputEdges(SchedulingPhase.INIT); replaceInputEdges(SchedulingPhase.STEADY);
+        //System.out.println("6");
         moveJoinToInputID();
+        //System.out.println("7");
         installFissionSplitPattern();
+        //System.out.println("8");
         installSplitJoinIDOutput();
+        //System.out.println("9");
         replaceOutputEdges(SchedulingPhase.INIT); replaceOutputEdges(SchedulingPhase.STEADY);
+        //System.out.println("10");
         //debug();
         synchRemoveIDs();
+        //System.out.println("11");
         
         return true;
     }
@@ -615,12 +627,14 @@ public class Fissioner {
         FilterInfo.reset();
         FilterInfo idI = FilterInfo.getFilterInfo(idInput.getFirstFilter());
         FilterInfo idO = FilterInfo.getFilterInfo(idOutput.getFirstFilter());
-        
+
         assert idI.copyDown == 0 : idI.copyDown;
         assert idO.copyDown == 0;
-        
+        //System.out.println("11a");        
         IDSliceRemoval.doit(idInput);
+        //System.out.println("11b");
         IDSliceRemoval.doit(idOutput);
+        //System.out.println("11c");
     }
     
     private InterSliceEdge[][] replaceEdge(InterSliceEdge[][] oldEdges, 

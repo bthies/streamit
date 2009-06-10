@@ -444,7 +444,7 @@ public class TMD extends Scheduler {
                levelTotal += workEst;
                int commRate = (fc.getPushInt()  + fc.getPopInt()) * fc.getMult(SchedulingPhase.STEADY);
                if (Fissioner.canFizz(origLevels[l][s], true)) {
-                   if (workEst / commRate <= FISS_COMP_COMM_THRESHOLD) {
+                   if (commRate > 0 && workEst / commRate <= FISS_COMP_COMM_THRESHOLD) {
                        System.out.println("Dont' fiss " + fsn + ", too much communication!");
                        cannotFizz++;
                    } else {
@@ -478,7 +478,7 @@ public class TMD extends Scheduler {
                 int commRate = (fc.getPushInt() + fc.getPopInt()) * fc.getMult(SchedulingPhase.STEADY);
                 //if we cannot fizz this filter, do nothing
                 if (!Fissioner.canFizz(fsn.getParent(), false) || 
-                        workEsts.get(fsn) / commRate <= FISS_COMP_COMM_THRESHOLD) {
+                    (commRate > 0 && workEsts.get(fsn) / commRate <= FISS_COMP_COMM_THRESHOLD)) {
                     assert false;
                 } 
                 //System.out.println("Calculating fizz amount for: " + fsn + "(" + availTiles + " avail tiles)");
@@ -555,7 +555,7 @@ public class TMD extends Scheduler {
                 continue;
 
             if (fizzAmount.containsKey(slice) && fizzAmount.get(slice) > 1) {
-              //this works only for pipelines right now, so just that we have at most
+                //this works only for pipelines right now, so just that we have at most
                 //one input and at most one output for the slice
                 assert slice.getHead().getSourceSet(SchedulingPhase.STEADY).size() <= 1;
                 
@@ -564,7 +564,7 @@ public class TMD extends Scheduler {
                         ((double)(DUP_THRESHOLD * (((double)fi.pop) * ((double)fi.steadyMult)))));
 
                 //this factor makes sure that copydown is less than pop*mult*factor
-                int cdFactor = (int)Math.ceil(((double)fi.copyDown) / ((double)(fi.pop * fi.steadyMult)));
+                int cdFactor = (int)Math.ceil(((double)fi.copyDown) / ((double)(fi.pop * fi.steadyMult / fizzAmount.get(slice))));
 
                 int myFactor = Math.max(cdFactor, threshFactor);
 

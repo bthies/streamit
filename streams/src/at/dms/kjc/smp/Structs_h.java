@@ -24,7 +24,7 @@ public class Structs_h {
         buf.append("  float real;\n");
         buf.append("  float imag;\n");
         buf.append("} __Complex;\n");
-        buf.append("typedef int bit\n");
+        buf.append("typedef int bit;\n");
     }
     
     /**

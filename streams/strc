@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.136 2009-04-02 07:46:17 ctan Exp $
+# $Id: strc,v 1.137 2009-06-10 21:58:56 ctan Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -298,6 +298,8 @@ Usage: strc [options] file.str ...
 + Options specific to SMP backend:
 + --partitioner       For SMP, choose a partitioner, tmd (default) or smd.
 + --loopcount         Loop iteration count to assume during work estimation
++ --noloopinput       Do not loop through input file, terminate at end
++ --nobind            No binding of threads to cores
 
  Options specific to Raw backend:
   --asciifileio       Use ascii format for file I/O (also works on -simpleC)
@@ -486,6 +488,8 @@ sub get_options
 			    "cluster=i",
 			    "steadymult=i",
 			    "loopcount=i",
+			    "noloopinput",
+			    "nobind",
 			    "slicethresh=i",
 			    "dupthresh=i",
 			    "st_cyc_per_wd=i",
@@ -938,6 +942,8 @@ sub get_compiler_opts
     $opts{fixedpoint} && ($copts .= " --fixedpoint");
     $opts{steadymult} && ($copts .= " --steadymult ". $opts{steadymult});
     $opts{loopcount} && ($copts .= " --loopcount ". $opts{loopcount});
+    $opts{noloopinput} && ($copts .= " --noloopinput");
+    $opts{nobind} && ($copts .= " --nobind");
     $opts{slicethresh} && ($copts .= " --slicethresh ". $opts{slicethresh});
     $opts{dupthresh} && ($copts .= " --dupthresh ". $opts{dupthresh});
     $opts{st_cyc_per_wd} && ($copts .= " --st_cyc_per_wd ". $opts{st_cyc_per_wd});

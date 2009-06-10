@@ -55,7 +55,7 @@ public class GreedierPartitioner {
         this.work=work;
         this.numTiles=numTiles;
         this.joinersNeedTiles=joinersNeedTiles;
-	//Setup pairs (of nodes) ordered by work
+        //Setup pairs (of nodes) ordered by work
         pairs=new TreeMap(new Comparator() {
                 public int compare(Object o1,Object o2) {
                     if(o1==o2)
@@ -95,7 +95,7 @@ public class GreedierPartitioner {
                     }
                 }
             });
-	//Setup full list of nodes ordered by work
+        //Setup full list of nodes ordered by work
         nodes=new TreeMap<Node,Object>(new Comparator() {
                 public int compare(Object o1,Object o2) {
                     if(o1==o2)
@@ -134,21 +134,26 @@ public class GreedierPartitioner {
                 public void visitFilter(SIRFilter self,
                                         SIRFilterIter iter) {
                     if (FusePipe.isFusable(self)) {
+                        System.out.println("visitFilter, isFusable: " + self);
                         Node node=new Node(self,work.getWork(self));
                         nodes.put(node,null);
                         if(StatelessDuplicate.isFissable(self))
                             node.fissable=true; //Set fissable
                         SIRContainer parent=self.getParent();
                         if(prevNode!=null) { //Check edge condition
-			    //Connect adjacent Nodes
+                            //Connect adjacent Nodes
                             prevNode.next=node;
                             node.prev=prevNode;
                             if(parent.equals(prevParent)) { //Make sure parents equal
+                                System.out.println("created pair between " + prevNode + " and " + node);
                                 Pair pair=new Pair(prevNode,node);
                                 pairs.put(pair,null);
                             }
+                            else {
+                                System.out.println("can't create pair because different parents");
+                            }
                         }
-			//Set state for next filter check
+                        //Set state for next filter check
                         prevNode=node;
                         prevParent=parent;
                     }
@@ -167,27 +172,29 @@ public class GreedierPartitioner {
         int count=Partitioner.countTilesNeeded(str, joinersNeedTiles);
         System.out.println("  GreedierPartitioner detects " + count + " tiles.");
         boolean cont;
-       do { //Iterate till can't (# fissable filters is always decreasing)
+        do { //Iterate till can't (# fissable filters is always decreasing)
             cont=false;
             boolean fiss=shouldFiss(); //Try Fiss
-	    //Fiss while appropriate and under target num of tiles
+            //Fiss while appropriate and under target num of tiles
             System.out.println("Tiles: " + numTiles);
-           while(fiss&&count<numTiles) {
+            while(fiss&&count<numTiles) {
                 cont=true; //Some change so continue iterating
                 Node big=nodes.lastKey(); //Get biggest Node
                 System.out.println("  Fissing: "+big.filter);
                 fiss(big); //Fiss
-		//Reeval number of tiles needed and whether should fiss
+                //Reeval number of tiles needed and whether should fiss
                 count=Partitioner.countTilesNeeded(str, joinersNeedTiles);
                 fiss=shouldFiss();
                 System.out.println("  GreedierPartitioner detects " + count + " tiles.");
             }
             while(count>numTiles) { //Try Fuse
                 System.out.println("one pass");
-                cont=true; //Some change so continue iterating
                 Pair smallest=findSmallest();  //Get smallest Pair
+                if(smallest == null)
+                    break;
+                cont=true; //Some change so continue iterating
                 fuse(smallest); //Fuse
-		//Reeval number of tiles needed
+                //Reeval number of tiles needed
                 count=Partitioner.countTilesNeeded(str, joinersNeedTiles);
                 System.out.println("  GreedierPartitioner detects " + count + " tiles.");
             }
@@ -199,6 +206,11 @@ public class GreedierPartitioner {
      * Helper function that returns smallest Pair.
      */
     private Pair findSmallest() {
+        if (pairs.size()==0) {
+            System.out.println("No fusable pairs!");
+            return null;
+        }
+
         // if there is only one key left, return it
         if (pairs.size()==1) {
             return (Pair)pairs.firstKey();
@@ -207,10 +219,10 @@ public class GreedierPartitioner {
         Pair smallest=(Pair)pairs.firstKey(); //Get smallest pair
         long work=smallest.work;
         ArrayList<Pair> temp=new ArrayList<Pair>();
-	/* There may be several filters with smallest work though. If
-	 * there are prefer the ones near the top of the container.
-	 * This guarantees that we come out even if there is a
-	 * perfect fusion option. */
+        /* There may be several filters with smallest work though. If
+         * there are prefer the ones near the top of the container.
+         * This guarantees that we come out even if there is a
+         * perfect fusion option. */
         boolean cont;
         do {
             cont=false;
@@ -223,9 +235,9 @@ public class GreedierPartitioner {
                 SIRContainer parent1=smallest.n1.filter.getParent();
                 SIRContainer parent2=newPair.n1.filter.getParent();
                 if(parent1==parent2) {
-		    //If there are several smallest in same parent
-		    //prefer the ones at the top (this will let us
-		    //come out even if we need to fuse 32 down to 16)
+                    //If there are several smallest in same parent
+                    //prefer the ones at the top (this will let us
+                    //come out even if we need to fuse 32 down to 16)
                     if(parent1.indexOf(newPair.n1.filter) < parent1.indexOf(smallest.n1.filter)) {
                         smallest=newPair;
                         work=newWork;
@@ -240,7 +252,7 @@ public class GreedierPartitioner {
                 }
             }
         } while(cont && pairs.size()>1);
-	//Restore the Pairs temporarily removed from pairs
+        //Restore the Pairs temporarily removed from pairs
         Object[] fix=temp.toArray();
         for(int i=0;i<fix.length;i++)
             pairs.put(fix[i],null);
@@ -255,15 +267,24 @@ public class GreedierPartitioner {
      * extra filter.
      */
     private boolean shouldFiss() {
+        if(nodes.size() == 0) {
+            System.out.println("No nodes to fiss!");
+            return false;
+        }
+
         Node big=nodes.lastKey();
         if(!big.fissable)
         {
             System.out.println("The biggest is not fissable!");    
             return false;
         }
+
+        if(pairs.size() == 0)
+            return false;
+
         Pair small=(Pair)pairs.firstKey();
         pairs.remove(small);
-        Pair testSmall=(Pair)pairs.firstKey(); // Make sure 2nd smallest pair is below bottleneck
+        //Pair testSmall=(Pair)pairs.firstKey(); // Make sure 2nd smallest pair is below bottleneck
         pairs.put(small,null);
         //if (testSmall.work+FUSION_OVERHEAD>big.work)
         //    System.out.println("The biggest filter is not worth fissing!");
@@ -274,7 +295,7 @@ public class GreedierPartitioner {
      * Helper function to fuse Pairs.
      */
     private void fuse(Pair p) {
-	//Remove nodes
+        //Remove nodes
         nodes.remove(p.n1);
         nodes.remove(p.n2);
         SIRContainer parent=p.n1.filter.getParent();

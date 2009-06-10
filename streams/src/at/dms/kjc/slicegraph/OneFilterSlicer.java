@@ -66,8 +66,7 @@ public class OneFilterSlicer extends Slicer {
                     slice = new Slice((InputSliceNode) node);
 
 
-                    FilterSliceNode filterNode = new FilterSliceNode(
-                            filterContent);
+                    FilterSliceNode filterNode = new FilterSliceNode(filterContent);
                     node.setNext(filterNode);
                     filterNode.setPrevious(node);
                     node = filterNode;
@@ -111,8 +110,10 @@ public class OneFilterSlicer extends Slicer {
                                 if (edge == null) {
                                     edge = new InterSliceEdge(outNode);
                                     edges.put(unflatEdge, edge);
-                                } else
-                                    edge.setSrc(outNode);
+                                } else {
+                                    if (edge.getSrc() != outNode)
+                                        edge.setSrc(outNode);
+                                }
                                 innerEdges[j] = edge;
                             }
                         }

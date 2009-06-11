@@ -576,7 +576,7 @@ public class TMD extends Scheduler {
                         ((double)(DUP_THRESHOLD * (((double)fi.pop) * ((double)fi.steadyMult)))));
 
                 //this factor makes sure that copydown is less than pop*mult*factor
-                int cdFactor = (int)Math.ceil(((double)fi.copyDown) / ((double)(fi.pop * fi.steadyMult / fizzAmount.get(slice))));
+                int cdFactor = (int)Math.ceil(((double)fi.copyDown) / ((double)(fi.pop * fi.steadyMult) / (double)(fizzAmount.get(slice))));
 
                 int myFactor = Math.max(cdFactor, threshFactor);
 

@@ -94,6 +94,16 @@ public class EmitSMPCode extends EmitCode {
                 }
             }
 
+            // Standard final optimization of a code unit before code emission:
+            // unrolling and constant prop as allowed, DCE, array destruction into scalars.
+            for (Core core : SMPBackend.chip.getCores()) {
+                if (!core.getComputeCode().shouldGenerateCode())
+                    continue;
+
+                System.out.println("Optimizing core " + core.getCoreID() + "...");
+                (new at.dms.kjc.sir.lowering.FinalUnitOptimize()).optimize(core.getComputeCode());
+            }
+
             // make sure that variables and methods are unique across cores
             List<ComputeCodeStore<?>> codeStores = new LinkedList<ComputeCodeStore<?>>();
             for (Core core : SMPBackend.chip.getCores()) {
@@ -103,6 +113,7 @@ public class EmitSMPCode extends EmitCode {
                 codeStores.add(core.getComputeCode());
             }
             
+            System.out.println("Entering CodeStoreRenameAll");
             CodeStoreRenameAll.renameOverAllCodeStores(codeStores);
             
             // write out C code for tiles
@@ -456,11 +467,6 @@ public class EmitSMPCode extends EmitCode {
      */
     public void emitCodeForComputeStore (SIRCodeUnit fieldsAndMethods,
             ComputeNode n, CodegenPrintWriter p, CodeGen codegen) {
-        
-        // Standard final optimization of a code unit before code emission:
-        // unrolling and constant prop as allowed, DCE, array destruction into scalars.
-        System.out.println("Optimizing...");
-        (new at.dms.kjc.sir.lowering.FinalUnitOptimize()).optimize(fieldsAndMethods);
         
         p.println("// code for core " + n.getUniqueId());
         p.println(((Core)n).getComputeCode().getGlobalText());

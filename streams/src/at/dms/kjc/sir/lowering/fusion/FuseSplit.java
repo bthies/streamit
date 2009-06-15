@@ -782,7 +782,8 @@ public class FuseSplit {
                                           new JFieldAccessExpression(null,
                                                                      new JThisExpression(null),
                                                                      buffer.target.getVariable().getIdent()),
-                                          index);
+                                          index,
+                                          ((CArrayType)buffer.target.getType()).getElementType());
     }
 
     private static JMethodDeclaration makeInitFunction(SIRSplitJoin sj,

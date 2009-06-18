@@ -12,6 +12,7 @@ import at.dms.kjc.slicegraph.SIRSlicer;
 import at.dms.kjc.slicegraph.SchedulingPhase;
 import at.dms.kjc.slicegraph.SliceNode;
 import at.dms.kjc.slicegraph.Util;
+import java.lang.*;
 
 import java.util.*;
 
@@ -25,8 +26,8 @@ import java.util.*;
 public class CompCommRatio {
     
    
-    private static int comp = 0;
-    private static int comm = 0;
+    private static double comp = 0;
+    private static double comm = 0;
     private static WorkEstimate work;
     private static HashMap<SIRStream, int[]> mults;
     
@@ -39,10 +40,10 @@ public class CompCommRatio {
         mults = executionCounts;
         walkSTR(str);
         
-        return ((double)comp)/((double)comm);
- 
+        return ((double)comp)/((double)comm); 
     }
-//  The following structure appears all over the place.  It needs to be abstracted somehow.
+
+    // The following structure appears all over the place.  It needs to be abstracted somehow.
     // Walk SIR structure to get down to 
     private static void walkSTR(SIRStream str) {
         if (str instanceof SIRFeedbackLoop) {
@@ -70,12 +71,13 @@ public class CompCommRatio {
                 walkSTR(child);
             }
         }
-        //update the comm and comp numbers...
+        // update the comm and comp numbers...
         if (str instanceof SIRFilter) {
            comp += work.getWork((SIRFilter)str);
            comm += ((SIRFilter)str).getPushInt();
         }
-    } 
+    }
+
     /**
      * Calculate the computation to communication ratio of the 
      * application.  Where the computation is total work of all the filters

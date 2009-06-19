@@ -45,7 +45,7 @@ public class EmitTileCode extends EmitCode {
                 // if no code was written to this tile's code store, then skip it
                 if (!tile.getComputeCode().shouldGenerateCode())
                     continue;
-                String outputFileName = "tile" + tile.getTileNumber() + ".c";            
+                String outputFileName = "tile" + tile.getTileNumber() + ".c";
                 
                 CodegenPrintWriter p = new CodegenPrintWriter(new BufferedWriter(new FileWriter(outputFileName, false)));
                 // write out C code
@@ -416,8 +416,7 @@ public class EmitTileCode extends EmitCode {
         p.println();
         p.println("// main() Function Here");
         // dumb template to override
-        p.println(
-"int main(int argc, char** argv) {\n");
+        p.println("int main(int argc, char** argv) {\n");
         p.indent();
         if (KjcOptions.profile)
             p.println("profiler_disable();");
@@ -425,9 +424,7 @@ public class EmitTileCode extends EmitCode {
         p.println("__insn_mtspr(SPR_SNCTL, 0x2);");
         p.println("ilib_init();");
         p.println(TileCodeStore.bufferInitMethName + "();");
-        p.println(
-backendbits.getComputeNodes().getNthComputeNode(0).getComputeCode().getMainFunction().getName()
-+ "();");
+        p.println(backendbits.getComputeNodes().getNthComputeNode(0).getComputeCode().getMainFunction().getName() + "();");
         p.println("ilib_finish();");
         p.println("return 0;");
         p.outdent();

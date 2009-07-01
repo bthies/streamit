@@ -113,7 +113,6 @@ public class EmitSMPCode extends EmitCode {
                 codeStores.add(core.getComputeCode());
             }
             
-            System.out.println("Entering CodeStoreRenameAll");
             CodeStoreRenameAll.renameOverAllCodeStores(codeStores);
             
             // write out C code for tiles
@@ -256,6 +255,7 @@ public class EmitSMPCode extends EmitCode {
         p.println();
 
         p.println("#include \"barrier.h\"");
+        p.println("#include <stdint.h>");
         p.println();
 
         p.println("#define ITERATIONS " + KjcOptions.numbers);   
@@ -437,6 +437,7 @@ public class EmitSMPCode extends EmitCode {
         p.println("#include <math.h>");     // in case math functions
         p.println("#include <stdlib.h>");
         p.println("#include <unistd.h>");
+        p.println("#include <stdint.h>");
         p.println("#include <fcntl.h>");
         p.println("#include <pthread.h>");
         p.println("#include <sched.h>");

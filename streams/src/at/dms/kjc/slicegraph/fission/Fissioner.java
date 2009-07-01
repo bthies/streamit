@@ -68,10 +68,12 @@ public class Fissioner {
     /**
      * Attempt to fiss <slice> by <fissAmount>.  Return true if the fission was successful.
      */
-    public static boolean doit(Slice slice, Slicer slicer, int fissAmount) {
+    public static Slice[] doit(Slice slice, Slicer slicer, int fissAmount) {
         System.out.println("Performing fission on: " + slice.getFirstFilter() + ", fizzAmount: " + fissAmount);
         Fissioner fissioner = new Fissioner(slice, slicer, fissAmount);
-        return canFizz(slice, false) && fissioner.fizz();
+        if(canFizz(slice, false)) 
+            return fissioner.fizz();
+        return null;
     }
     
     /**
@@ -183,34 +185,23 @@ public class Fissioner {
         return true;
     }
     
-    private boolean fizz() {
+    private Slice[] fizz() {
         if (!checks())
-            return false;
+            return null;
 
-        //System.out.println("1");
         createFissedSlices();
-        //System.out.println("2");
         createIDInputSlice();
-        //System.out.println("3");
         createIDOutputSlice();
-        //System.out.println("4");
         setupInitPhase();
-        //System.out.println("5");
         replaceInputEdges(SchedulingPhase.INIT); replaceInputEdges(SchedulingPhase.STEADY);
-        //System.out.println("6");
         moveJoinToInputID();
-        //System.out.println("7");
         installFissionSplitPattern();
-        //System.out.println("8");
         installSplitJoinIDOutput();
-        //System.out.println("9");
         replaceOutputEdges(SchedulingPhase.INIT); replaceOutputEdges(SchedulingPhase.STEADY);
-        //System.out.println("10");
         //debug();
         synchRemoveIDs();
-        //System.out.println("11");
         
-        return true;
+        return sliceClones;
     }
     
     /**

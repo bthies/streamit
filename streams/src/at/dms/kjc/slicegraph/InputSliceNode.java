@@ -101,6 +101,40 @@ public class InputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneabl
      * being run on all output nodes whose edges are combined by canonicalize.
      */
     public void canonicalize(SchedulingPhase phase) {
+        if (getWeights(phase).length == 0)
+            return;
+
+        int[] weights = new int[getWeights(phase).length];
+        InterSliceEdge[] edges = new InterSliceEdge[getWeights(phase).length];
+        int curPort = 0;
+
+        //add the first port to the new edges and weights
+        edges[0] = getSources(phase)[0];
+        weights[0] = getWeights(phase)[0];
+
+        for(int i = 1 ; i < getWeights(phase).length ; i++) {
+            if(edges[curPort].equals(getSources(phase)[i])) {
+                weights[curPort] += getWeights(phase)[i];
+            }
+            else {
+                curPort++;
+                edges[curPort] = getSources(phase)[i];
+                weights[curPort] = getWeights(phase)[i];
+            }
+        }
+
+        InterSliceEdge[] newEdges = new InterSliceEdge[curPort + 1];
+        int[] newWeights = new int[curPort + 1];
+
+        System.arraycopy(edges, 0, newEdges, 0, curPort + 1);
+        System.arraycopy(weights, 0, newWeights, 0, curPort + 1);
+
+        //set the new weights and the dests
+        set(newWeights, newEdges, phase);
+    }
+
+    /*
+    public void canonicalize(SchedulingPhase phase) {
         //do nothing for 0 length joiners
         if (getSources(phase).length == 0)
             return;
@@ -129,6 +163,7 @@ public class InputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneabl
         }
         set(newWeights, newEdges, phase);
     }
+    */
     
     /** InputSliceNode is FileOutput if FilterSliceNode is FileOutput.*/
     public boolean isFileOutput() {
@@ -293,6 +328,23 @@ public class InputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneabl
         } else {
             setWeights(intArr);
             setSources(edges.toArray(new InterSliceEdge[edges.size()]));
+        }
+    }
+
+    /**
+     * Set the weights and sources array of this input slice node
+     * to the weights list and the edges list.
+     * 
+     * @param weights The array of weights (integer).
+     * @param edges The array of edges.
+     */
+    public void set(int[] weights, InterSliceEdge[] edges, SchedulingPhase phase) {
+        if (SchedulingPhase.INIT == phase) {
+            setInitWeights(weights);
+            setInitSources(edges);
+        } else {
+            setWeights(weights);
+            setSources(edges);
         }
     }
     

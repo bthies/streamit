@@ -3,6 +3,7 @@ package at.dms.kjc.slicegraph;
 import at.dms.kjc.*;
 import at.dms.kjc.spacetime.Util;
 import at.dms.kjc.backendSupport.*;
+import java.util.Arrays;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Vector;
@@ -138,7 +139,7 @@ public class OutputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneab
             LinkedList<LinkedList<InterSliceEdge>> dests, SchedulingPhase phase) {
         int[] newWeights;
         InterSliceEdge[][] newDests;
-        
+
         if (weights.size() == 1) 
             newWeights = new int[]{1};
         else {
@@ -146,17 +147,36 @@ public class OutputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneab
             for (int i = 0; i < weights.size(); i++)
                 newWeights[i] = weights.get(i).intValue();
         }
+
         //convert the dests list
+        int i = 0;
         newDests = new InterSliceEdge[dests.size()][];
-        for (int i = 0; i < dests.size(); i++) 
-            newDests[i] = dests.get(i).toArray(new InterSliceEdge[0]);
-        
+        for(LinkedList<InterSliceEdge> dest : dests)
+            newDests[i++] = dest.toArray(new InterSliceEdge[0]);
+
         if (SchedulingPhase.INIT == phase) {
             setInitWeights(newWeights);
             setInitDests(newDests);
         } else {
             setWeights(newWeights);
             setDests(newDests);
+        }
+    }
+    
+    /**
+     * Set the steady weights and dests of this input slice node to 
+     * weights and dests.
+     * 
+     * @param weights Array of integer weights
+     * @param dests Array of Edge arrays for splitting pattern.
+     */
+    public void set(int[] weights, InterSliceEdge[][] dests, SchedulingPhase phase) {
+        if (SchedulingPhase.INIT == phase) {
+            setInitWeights(weights);
+            setInitDests(dests);
+        } else {
+            setWeights(weights);
+            setDests(dests);
         }
     }
         
@@ -184,7 +204,6 @@ public class OutputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneab
     public InterSliceEdge[][] getDests(SchedulingPhase phase) {
         if (phase == SchedulingPhase.INIT && initDests != null)
             return initDests;
-        
         return dests;
     }
 
@@ -232,8 +251,43 @@ public class OutputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneab
     public void canonicalize(SchedulingPhase phase) {
         if (getWeights(phase).length == 0)
             return;
+
+        int[] weights = new int[getWeights(phase).length];
+        InterSliceEdge[][] edges = new InterSliceEdge[getWeights(phase).length][];
+        int curPort = 0;
+
+        //add the first port to the new edges and weights
+        edges[0] = getDests(phase)[0];
+        weights[0] = getWeights(phase)[0];
+
+        for(int i = 1 ; i < getWeights(phase).length ; i++) {
+            if(Util.setCompare(edges[curPort], getDests(phase)[i])) {
+                weights[curPort] += getWeights(phase)[i];
+            }
+            else {
+                curPort++;
+                edges[curPort] = getDests(phase)[i];
+                weights[curPort] = getWeights(phase)[i];
+            }
+        }
+
+        InterSliceEdge[][] newEdges = new InterSliceEdge[curPort + 1][];
+        int[] newWeights = new int[curPort + 1];
+
+        System.arraycopy(edges, 0, newEdges, 0, curPort + 1);
+        System.arraycopy(weights, 0, newWeights, 0, curPort + 1);
+
+        //set the new weights and the dests
+        set(newWeights, newEdges, phase);
+    }
+
+    /*
+    public void canonicalize(SchedulingPhase phase) {
+        if (getWeights(phase).length == 0)
+            return;
         LinkedList<LinkedList<InterSliceEdge>> edges = new LinkedList<LinkedList<InterSliceEdge>>();
         LinkedList<Integer> newWeights = new LinkedList<Integer>();
+
         //add the first port to the new edges and weights
         LinkedList<InterSliceEdge> port = new LinkedList<InterSliceEdge>();
         Util.add(port, getDests(phase)[0]);
@@ -256,9 +310,11 @@ public class OutputSliceNode extends SliceNode implements at.dms.kjc.DeepCloneab
                 newWeights.add(new Integer(getWeights(phase)[i]));
             }
         }
+
         //set the new weights and the dests
         set(newWeights, edges, phase);
     }
+    */
     
     /**
      * Return the width of this splitter meaning the number

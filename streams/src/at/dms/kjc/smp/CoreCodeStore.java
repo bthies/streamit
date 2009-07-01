@@ -271,20 +271,22 @@ public class CoreCodeStore extends ComputeCodeStore<Core> {
         //at the end of each steady state
         for (InputRotatingBuffer buf : fwb) {
             FilterSliceNode fileW = buf.filterNode;
-            //find the core of the first input to the file writer
-            Core core = 
-                SMPBackend.backEndBits.getLayout().
-                getComputeNode(fileW.getParent().getHead().getSources(SchedulingPhase.STEADY)[0].
-                        getSrc().getParent().getFirstFilter());
             
-            core.getComputeCode().addPrintOutputCode(buf);
+            //find the core of the first input to the file writer
+            FilterSliceNode firstInputFilter = 
+            	fileW.getParent().getHead().getSources(SchedulingPhase.STEADY)[0].getSrc().getParent().getFirstFilter();
+            
+            Core core = 
+                SMPBackend.backEndBits.getLayout().getComputeNode(firstInputFilter);
+            
+            core.getComputeCode().addPrintOutputCode(buf, firstInputFilter);
         }
     }
     
     /**
      * Add code to print the output written to the file writer mapped to this core.
      */
-    private void addPrintOutputCode(InputRotatingBuffer buf) {
+    private void addPrintOutputCode(InputRotatingBuffer buf, FilterSliceNode filter) {
         //We print the address buffer after it has been rotated, so that it points to the section
         //of the filewriter buffer that is about to be written to, but was written to 2 steady-states
         //ago
@@ -299,7 +301,7 @@ public class CoreCodeStore extends ComputeCodeStore<Core> {
         int outputs = fileW.getFilter().getSteadyMult();
         String type = ((FileOutputContent)fileW.getFilter()).getType() == CStdType.Integer ? "%d" : "%f";
         String cast = ((FileOutputContent)fileW.getFilter()).getType() == CStdType.Integer ? "(int)" : "(float)";
-        String bufferName = buf.getAddressRotation(this.parent).currentWriteBufName;
+        String bufferName = buf.getAddressRotation(filter).currentWriteBufName;
         //create the loop
         addSteadyLoopStatement(Util.toStmt(
                 "for (int _i_ = 0; _i_ < " + outputs + "; _i_++) printf(\"" + type + "\\n\", " + cast + 

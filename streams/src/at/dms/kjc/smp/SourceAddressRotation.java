@@ -1,5 +1,6 @@
 package at.dms.kjc.smp;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -26,24 +27,36 @@ public class SourceAddressRotation extends RotatingBuffer {
     /** the name of the pointer to the write buffer of the current rotation */
     protected String currentWriteBufName;
     
+    /** 
+     * Number of times each InputRotatingBuffer has been seen.  Used to create
+     * SourceAddressRotations with unique idents
+     */
+    private static HashMap<InputRotatingBuffer, Integer> bufCount =
+    	new HashMap<InputRotatingBuffer, Integer>();
+    
     public SourceAddressRotation(Core core, InputRotatingBuffer buf, FilterSliceNode dest, Edge edge) {
         super(edge, dest, core);
         this.parent = core;
         this.inputBuffer = buf;
+        
         setBufferSize();
-        bufType = buf.bufType;
+        this.bufType = buf.bufType;
+        this.rotationLength = buf.getRotationLength();
+        
+        Integer count = bufCount.get(buf);
+        if(count == null)
+        	count = new Integer(0);
+        bufCount.put(buf, count + 1);
+        
         this.ident = buf.getIdent() + "_addr_";
         
         int coreNum = parent.getCoreID();
+        writeRotStructName = this.getIdent() + "rot_struct__" + count.intValue() + "__n" + coreNum;
+        currentWriteRotName = this.getIdent() + "write_current__" + count.intValue() + "__n" + coreNum;
+        currentWriteBufName = this.getIdent() + "_write_buf__" + count.intValue() + "__n" + coreNum;
         
-        writeRotStructName = this.getIdent() + "rot_struct__n" + coreNum;
-        currentWriteRotName = this.getIdent() + "write_current__n" + coreNum;
-        currentWriteBufName = this.getIdent() + "_write_buf__n" + coreNum;
-        
-        this.rotationLength = buf.getRotationLength();
         //set the names of the individual address buffers that constitute this rotation
         setBufferNames();
-
     }
 
     public InputRotatingBuffer getIntputRotatingBuffer() {

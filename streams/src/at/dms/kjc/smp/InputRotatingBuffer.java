@@ -25,8 +25,8 @@ public class InputRotatingBuffer extends RotatingBuffer {
 	
     /** all the address buffers that are on the cores that feed this input buffer */
     protected SourceAddressRotation[] addressBufs;
-    /** a map from core to address buf */
-    protected HashMap<Core, SourceAddressRotation> addrBufMap;
+    /** a map from source FilterSliceNode to address buf */
+    protected HashMap<FilterSliceNode, SourceAddressRotation> addrBufMap;
     
     /** true if what feeds this inputbuffer is a file reader */
     protected boolean upstreamFileReader;
@@ -102,7 +102,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
             assert filterNode.getParent().getHead().getWidth(SchedulingPhase.INIT) <= 1 &&
             filterNode.getParent().getHead().getWidth(SchedulingPhase.STEADY) <= 1;
         }
-        addrBufMap = new HashMap<Core, SourceAddressRotation>();
+        addrBufMap = new HashMap<FilterSliceNode, SourceAddressRotation>();
     }
     
     /**
@@ -119,7 +119,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
            Core core = SMPBackend.backEndBits.getLayout().getComputeNode(src.getFirstFilter());
            SourceAddressRotation rot = new SourceAddressRotation(core, this, filterNode, theEdge);
            addressBufs[i] = rot;
-           addrBufMap.put(core, rot);
+           addrBufMap.put(src.getFirstFilter(), rot);
            i++;
        }
     }
@@ -243,13 +243,14 @@ public class InputRotatingBuffer extends RotatingBuffer {
     }
     
     /**
-     * Return the address buffer rotation for this input buffer on the core.
+     * Return the address buffer rotation for this input buffer, to be used by a 
+     * source FilterSliceNode
      * 
-     * @param core The core
+     * @param filterSliceNode The FilterSliceNode
      * @return the address buffer for this input buffer on the core
      */
-    public SourceAddressRotation getAddressRotation(Core core) {
-        return addrBufMap.get(core);
+    public SourceAddressRotation getAddressRotation(FilterSliceNode filterSliceNode) {
+        return addrBufMap.get(filterSliceNode);
     }
     
     /**

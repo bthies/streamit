@@ -336,7 +336,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
         addressBuffers = new HashMap<InputRotatingBuffer, SourceAddressRotation>();
         for (InterSliceEdge edge : outputNode.getDestSet(SchedulingPhase.STEADY)) {
             InputRotatingBuffer input = InputRotatingBuffer.getInputBuffer(edge.getDest().getNextFilter());
-            addressBuffers.put(input, input.getAddressRotation(parent));               
+            addressBuffers.put(input, input.getAddressRotation(filterNode));
         }
     }
     

@@ -125,7 +125,7 @@ public class FilterCodeGeneration extends CodeStoreHelper {
             int outputs = filterInfo.totalItemsSent(SchedulingPhase.INIT);
             String type = ((FileOutputContent)fileW.getFilter()).getType() == CStdType.Integer ? "%d" : "%f";
             String cast = ((FileOutputContent)fileW.getFilter()).getType() == CStdType.Integer ? "(int)" : "(float)";
-            String bufferName = buf.getAddressRotation(SMPBackend.backEndBits.getLayout().getComputeNode(filterNode)).currentWriteBufName;
+            String bufferName = buf.getAddressRotation(filterNode).currentWriteBufName;
             //create the loop
             statements.addStatement(Util.toStmt(
                     "for (int _i_ = 0; _i_ < " + outputs + "; _i_++) printf(\"" + type + "\\n\", " + cast + 

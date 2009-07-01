@@ -8,7 +8,7 @@ import at.dms.kjc.slicegraph.*;
 import java.util.LinkedList;
 
 public class SMPBackend {
-    public static final boolean FAKE_IO = true;
+    public static final boolean FAKE_IO = false;
 
     public static Scheduler scheduler;
     public static SMPMachine chip;
@@ -24,19 +24,16 @@ public class SMPBackend {
                            SIRGlobal global) {
     	System.out.println("Entry to SMP Backend...");
 
+    	checkArguments();
     	setScheduler();
-
-        // if debugging and number of iterations unspecified, limit number of iterations
-        if(KjcOptions.debug && KjcOptions.iterations == -1)
-            KjcOptions.iterations = 100;
     	
-    	//create cores in desired amount and order
+    	// create cores in desired amount and order
     	int[] cores = new int[KjcOptions.smp];
     	for (int x = 0 ; x < KjcOptions.smp ; x++)
     		cores[x] = coreOrder[x];
         chip = new SMPMachine(cores);
         
-        //create a new structs.h file for typedefs etc.
+        // create a new structs.h file for typedefs etc.
         structs_h = new Structs_h();
 
         // The usual optimizations and transformation to slice graph
@@ -45,29 +42,31 @@ public class SMPBackend {
         commonPasses.run(str, interfaces, interfaceTables, structs, helpers, global, chip.size());
         // perform some standard cleanup on the slice graph.
         commonPasses.simplifySlices();
-        
+        // dump slice graph to dot file
         commonPasses.getSlicer().dumpGraph("traces.dot", null);
         
+        // partition the slice graph based on the scheduling policy
         SpaceTimeScheduleAndSlicer graphSchedule = new SpaceTimeScheduleAndSlicer(commonPasses.getSlicer());
         scheduler.setGraphSchedule(graphSchedule);
-        
-        //partition the slice graph based on the scheduling policy
         scheduler.run(chip.size());
         FilterInfo.reset();
         
-        scheduleSlices(graphSchedule);      
-       
+        // generate schedules for initialization, primepump and steady-state
+        scheduleSlices(graphSchedule);
+
+        // generate layout for filters
         scheduler.runLayout();
-        backEndBits = new SMPBackEndFactory(chip);
-        backEndBits.setLayout(scheduler);
-                
+
+        // dump final slice graph to dot file
         graphSchedule.getSlicer().dumpGraph("after_slice_partition.dot", scheduler);
         graphSchedule.getSlicer().dumpGraph("slice_graph.dot", scheduler, false);
         
-        //create all buffers and set the rotation lengths
+        // create all buffers and set the rotation lengths
         RotatingBuffer.createBuffers(graphSchedule);
 	        
-        //now convert to Kopi code plus communication commands.  
+        // now convert to Kopi code plus communication commands
+        backEndBits = new SMPBackEndFactory(chip);
+        backEndBits.setScheduler(scheduler);
         backEndBits.getBackEndMain().run(graphSchedule, backEndBits);
         
         if (KjcOptions.numbers > 0)
@@ -75,13 +74,37 @@ public class SMPBackend {
         else
             CoreCodeStore.generatePrintOutputCode();
         
-        //emit c code for all cores
+        // emit c code for all cores
         EmitSMPCode.doit(backEndBits);
         
-        //dump structs.h file
+        // dump structs.h file
         structs_h.writeToFile();
 
         System.exit(0);
+    }
+    
+    /**
+     * Check arguments to backend to make sure that they are valid
+     */
+    private static void checkArguments() {
+        // if debugging and number of iterations unspecified, limit number of iterations
+        if(KjcOptions.debug && KjcOptions.iterations == -1)
+            KjcOptions.iterations = 100;
+    }
+    
+    /**
+     * Set the scheduler field to the correct leaf class that implements a scheduling 
+     * policy.
+     */
+    private static void setScheduler() {
+        if (KjcOptions.partitioner.equals("tmd")) {
+            scheduler = new TMD();
+        } else if (KjcOptions.partitioner.equals("smd")) {
+            scheduler = new SMD();
+        } else {
+            System.err.println("Unknown Scheduler Type!");
+            System.exit(1);
+        }
     }
     
     /** 
@@ -108,22 +131,5 @@ public class SMPBackend {
 
         //Still need to generate the steady state schedule!
         schedule.setSchedule(DataFlowOrder.getTraversal(slicer.getTopSlices()));
-        
-    }
-
-    
-    /**
-     * Set the scheduler field to the correct leaf class that implements a scheduling 
-     * policy.
-     */
-    private static void setScheduler() {
-        if (KjcOptions.partitioner.equals("tmd")) {
-            scheduler = new TMD();
-        } else if (KjcOptions.partitioner.equals("smd")) {
-            scheduler = new SMD();
-        } else {
-            System.err.println("Unknown Scheduler Type!");
-            System.exit(1);
-        }
     }
 }

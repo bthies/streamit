@@ -57,7 +57,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
             
             if (!slice.getTail().noOutputs()) {
                 assert slice.getTail().totalWeights(SchedulingPhase.STEADY) > 0;
-                Core parent = SMPBackend.backEndBits.getLayout().getComputeNode(slice.getFirstFilter());
+                Core parent = SMPBackend.scheduler.getComputeNode(slice.getFirstFilter());
 
                 // create the new buffer, the constructor will put the buffer in the hashmap
                 OutputRotatingBuffer buf = new OutputRotatingBuffer(slice.getFirstFilter(), parent);

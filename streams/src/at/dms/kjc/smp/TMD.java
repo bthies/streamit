@@ -27,7 +27,7 @@ import java.util.List;
 public class TMD extends Scheduler {
 
     private double DUP_THRESHOLD;
-    public LevelizeSliceGraph lsg;
+    private LevelizeSliceGraph lsg;
     private HashMap<Slice, Integer> fizzAmount;
     public static final int FISS_COMP_COMM_THRESHOLD = 10;
     /** if true, then we have slices with fanout greater than 2 and we do not 

@@ -28,6 +28,11 @@ public class SMPBackEndFactory extends BackEndFactory<SMPMachine, Core, CoreCode
         scaffold = new SMPBackEndScaffold();
     }
     
+    public void setScheduler(Scheduler scheduler) {
+    	this.setLayout(scheduler);
+    	ProcessFilterSliceNode.setScheduler(scheduler);
+    }
+    
     /* (non-Javadoc)
      * @see at.dms.kjc.backendSupport.BackEndFactory#getBackEndMain()
      */
@@ -42,6 +47,7 @@ public class SMPBackEndFactory extends BackEndFactory<SMPMachine, Core, CoreCode
     @Override
     public Channel getChannel(Edge e) {
         // TODO Auto-generated method stub
+    	assert false;
         return null;
     }
 
@@ -51,6 +57,7 @@ public class SMPBackEndFactory extends BackEndFactory<SMPMachine, Core, CoreCode
     @Override
     public Channel getChannel(SliceNode src, SliceNode dst) {
         // TODO Auto-generated method stub
+    	assert false;
         return null;
     }
 
@@ -64,7 +71,6 @@ public class SMPBackEndFactory extends BackEndFactory<SMPMachine, Core, CoreCode
             // simply do appropriate wrapping of calls...
             return new FilterCodeGeneration((FilterSliceNode)node,this);
         } else {
-            assert false;
             return null;
         }
     }
@@ -128,9 +134,6 @@ public class SMPBackEndFactory extends BackEndFactory<SMPMachine, Core, CoreCode
     public void processInputSliceNode(InputSliceNode input,
             SchedulingPhase whichPhase, SMPMachine chip) {
         // TODO Auto-generated method stub
-        //System.out.println("Processing: " + input);
-        // Convert the channel accesses to reads from and writes to the input and output buffers
-       
     }
 
     /* (non-Javadoc)
@@ -140,6 +143,5 @@ public class SMPBackEndFactory extends BackEndFactory<SMPMachine, Core, CoreCode
     public void processOutputSliceNode(OutputSliceNode output,
             SchedulingPhase whichPhase, SMPMachine chip) {
         // TODO Auto-generated method stub
-        //System.out.println("Processing: " + output);
     }
 }

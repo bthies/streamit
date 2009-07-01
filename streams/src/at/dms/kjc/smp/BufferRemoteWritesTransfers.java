@@ -144,6 +144,8 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
         
         ArrayAssignmentStatements aaStmts = new ArrayAssignmentStatements();
         
+        System.out.println("filterNode: " + parent.filterNode + ", phase: " + phase + ", copyDown: " + parent.filterInfo.copyDown);
+
         for (int i = 0; i < parent.filterInfo.copyDown; i++)
             aaStmts.addAssignment(dst, "", i, src, "", (i + parent.filterInfo.totalItemsPopped(phase)));
         
@@ -230,7 +232,7 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
         //is a shared buffer
         int writeOffset = getWriteOffset(phase);
        
-        Core sourceTile = SMPBackend.backEndBits.getLayout().getComputeNode(filter);
+        Core sourceTile = SMPBackend.scheduler.getComputeNode(filter);
         
         int rotations = fi.totalItemsSent(phase) / output.totalWeights(phase);
         
@@ -263,7 +265,7 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
                             destIndices[destIndex.get(dest)][nextWriteIndex[destIndex.get(dest)]];
                         nextWriteIndex[destIndex.get(dest)]++;
                         Core destTile = 
-                            SMPBackend.backEndBits.getLayout().getComputeNode(dest.getDest().getNextFilter());
+                            SMPBackend.scheduler.getComputeNode(dest.getDest().getNextFilter());
                         
                         //don't do anything if this dest is on the same tiles, we are sharing the buffer with the
                         //dest, and the indices are the same.

@@ -57,7 +57,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
             
             if (!slice.getHead().noInputs()) {
                 assert slice.getHead().totalWeights(SchedulingPhase.STEADY) > 0;
-                Core parent = SMPBackend.backEndBits.getLayout().getComputeNode(slice.getFirstFilter());
+                Core parent = SMPBackend.scheduler.getComputeNode(slice.getFirstFilter());
                 
                 //create the new buffer, the constructor will put the buffer in the hashmap
                 InputRotatingBuffer buf = new InputRotatingBuffer(slice.getFirstFilter(), parent);
@@ -112,7 +112,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
        
        int i = 0;
        for (Slice src : filterNode.getParent().getHead().getSourceSlices(SchedulingPhase.STEADY)) {
-           Core core = SMPBackend.backEndBits.getLayout().getComputeNode(src.getFirstFilter());
+           Core core = SMPBackend.scheduler.getComputeNode(src.getFirstFilter());
            SourceAddressRotation rot = new SourceAddressRotation(core, this, filterNode, theEdge);
            addressBufs[i] = rot;
            addrBufMap.put(src.getFirstFilter(), rot);

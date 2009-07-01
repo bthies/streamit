@@ -277,7 +277,7 @@ public class CoreCodeStore extends ComputeCodeStore<Core> {
             	fileW.getParent().getHead().getSources(SchedulingPhase.STEADY)[0].getSrc().getParent().getFirstFilter();
             
             Core core = 
-                SMPBackend.backEndBits.getLayout().getComputeNode(firstInputFilter);
+                SMPBackend.scheduler.getComputeNode(firstInputFilter);
             
             core.getComputeCode().addPrintOutputCode(buf, firstInputFilter);
         }

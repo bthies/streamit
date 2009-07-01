@@ -14,24 +14,34 @@ import at.dms.kjc.sir.*;
  *
  */
 public class ProcessFilterSliceNode {
-    /**
-     * print debugging info?
-     */
+	
+    /** print debugging info? */
     public static boolean debug = false;
-    /** the number of filters that we have yet to process from a level the init stage */
-    public static HashMap<Integer, Integer> levelLeftToProcessInit;
-    /** the number of filters that we have yet to process from a level the init stage */
-    public static HashMap<Integer, Integer> levelLeftToProcessPP;
     
-    static {
-        if (SMPBackend.scheduler.isTMD()) {
+    /** scheduler used by backend */
+    private static Scheduler scheduler;
+    /** splits the slicegraph into levels */
+    private static LevelizeSliceGraph lsg; 
+    /** the number of filters that we have yet to process from a level the init stage */
+    private static HashMap<Integer, Integer> levelLeftToProcessInit;
+    /** the number of filters that we have yet to process from a level the init stage */
+    private static HashMap<Integer, Integer> levelLeftToProcessPP;
+    
+    public static void setScheduler(Scheduler s) {
+    	scheduler = s;
+    	
+        if (scheduler.isTMD()) {
+        	//levelize the slicegraph
+        	lsg = new LevelizeSliceGraph(scheduler.getGraphSchedule().getSlicer().getTopSlices());
+        	        	
             //fill the left to process maps with the number of filters in a level
             levelLeftToProcessInit = new HashMap<Integer, Integer>();
             levelLeftToProcessPP = new HashMap<Integer, Integer>();
-            TMD tmd = (TMD)SMPBackend.scheduler;
-            for (int i = 0; i < tmd.numLevels(); i++) {
-                levelLeftToProcessInit.put(i, tmd.getLevelSize(i));
-                levelLeftToProcessPP.put(i, tmd.getLevelSize(i));
+
+        	Slice[][] levels = lsg.getLevels();
+            for (int i = 0; i < levels.length; i++) {
+                levelLeftToProcessInit.put(i, levels[i].length);
+                levelLeftToProcessPP.put(i, levels[i].length);
             }
         }
     }
@@ -159,13 +169,13 @@ public class ProcessFilterSliceNode {
             
         }
         
-        if (SMPBackend.scheduler.isTMD()) {
+        if (scheduler.isTMD()) {
             //if we are using the tmd scheduler we have to add barriers between each 
             //init call of different levels 
             //so we keep a hashmap that will tell us how many more filters needs to be 
             //processed in the level so that we only add the barrier after the last to be processed
             //so after the entire level has executed
-            int level = ((TMD)SMPBackend.scheduler).getLevel(filterNode.getParent());
+            int level = lsg.getLevel(filterNode.getParent());
             int leftToProcess = levelLeftToProcessInit.get(level);
             leftToProcess--;
             levelLeftToProcessInit.put(level, leftToProcess);
@@ -197,19 +207,19 @@ public class ProcessFilterSliceNode {
 
         }
 
-        if (SMPBackend.scheduler.isTMD()) {
+        if (scheduler.isTMD()) {
             //if we are using the tmd scheduler we have to add barriers between each 
             //init call of different levels 
             //so we keep a hashmap that will tell us how many more filters needs to be 
             //processed in the level so that we only add the barrier after the last to be processed
             //so after the entire level has executed
-            int level = ((TMD)SMPBackend.scheduler).getLevel(filterNode.getParent());
+            int level = lsg.getLevel(filterNode.getParent());
             int leftToProcess = levelLeftToProcessPP.get(level);
             leftToProcess--;
             levelLeftToProcessPP.put(level, leftToProcess);
             if (leftToProcess == 0) {
                 CoreCodeStore.addBarrierInit();
-                levelLeftToProcessPP.put(level, ((TMD)SMPBackend.scheduler).getLevelSize(level));
+                levelLeftToProcessPP.put(level, lsg.getLevels()[level].length);
             }
         }
     }

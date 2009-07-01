@@ -299,7 +299,7 @@ public abstract class RotatingBuffer extends Channel {
         HashSet<InputRotatingBuffer> set = new HashSet<InputRotatingBuffer>();
         
         for (InputRotatingBuffer b : inputBuffers.values()) {
-            if (SMPBackend.backEndBits.getLayout().getComputeNode(b.getFilterNode()).equals(t))
+            if (SMPBackend.scheduler.getComputeNode(b.getFilterNode()).equals(t))
                 set.add(b);
         }
         
@@ -312,7 +312,7 @@ public abstract class RotatingBuffer extends Channel {
         HashSet<RotatingBuffer> set = new HashSet<RotatingBuffer>();
         
         for (RotatingBuffer b : outputBuffers.values()) {
-            if (SMPBackend.backEndBits.getLayout().getComputeNode(b.getFilterNode()).equals(t))
+            if (SMPBackend.scheduler.getComputeNode(b.getFilterNode()).equals(t))
                 set.add(b);
         }
         

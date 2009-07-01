@@ -124,8 +124,9 @@ public class EmitSMPCode extends EmitCode {
                 String outputFileName = "core" + core.getCoreID() + ".c";
                 CodegenPrintWriter p = new CodegenPrintWriter(new BufferedWriter(new FileWriter(outputFileName, false)));
 
+                generateIncludes(p);
+                
                 EmitSMPCode codeEmitter = new EmitSMPCode(backendBits);
-                codeEmitter.generateIncludes(p);
                 codeEmitter.emitCodeForComputeNode(core, p);
 
                 p.close();

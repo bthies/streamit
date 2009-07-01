@@ -149,6 +149,27 @@ public class Util {
         }
         return false;
     }
+
+    /**
+     * Return true if the sets contructed from two arrays are equal.
+     * @param <T> Type of list elements and array elements.
+     * 
+     * @param array1 First array
+     * @param array2 Second array
+     * @return true if the sets contructed from two arrays are equal.
+     */
+    public static <T> boolean setCompare(T[] array1, T[] array2) {
+        if (array1.length == array2.length) {
+            HashSet<T> array1Set = new HashSet<T>();
+            HashSet<T> array2Set = new HashSet<T>();
+            for(int i = 0 ; i < array1.length ; i++) {
+                array1Set.add(array1[i]);
+                array2Set.add(array2[i]);
+            }
+            return array1Set.equals(array2Set);
+        }
+        return false;
+    }
     
     /**
      * Add the elements of addme to list.

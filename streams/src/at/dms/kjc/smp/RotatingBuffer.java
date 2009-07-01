@@ -44,22 +44,6 @@ public abstract class RotatingBuffer extends Channel {
     /** type of array: array of element type */
     protected CType bufType;
     
-    /** the name of the read rotation structure, (always points to its head) */
-    protected String readRotStructName;
-    /** the name of the pointer to the current read rotation of this buffer */
-    protected String currentReadRotName;
-    /** the name of the pointer to the read buffer of the current rotation */
-    protected String currentReadBufName;
-    
-    /** the name of the write rotation structure (always points to its head) */
-    protected String writeRotStructName;
-    /** the name of the pointer to the current write rotation of this buffer */
-    protected String currentWriteRotName;
-    /** the name of the pointer to the write buffer of the current rotation */
-    protected String currentWriteBufName;
-    
-    /** the address buffers that this buffer rotation uses as destinations for transfers */ 
-    protected HashMap<InputRotatingBuffer, SourceAddressRotation> addressBuffers;
     /** the data transfer statements that are generated for this output buffer */
     protected BufferTransfers transferCommands;
     
@@ -84,18 +68,6 @@ public abstract class RotatingBuffer extends Channel {
         this.parent = parent;
         filterNode = fsn;
         filterInfo = FilterInfo.getFilterInfo(fsn);
-        
-        int coreNum = (filterNode.isFileOutput() ?
-        	ProcessFileWriter.getAllocatingCore(filterNode).getCoreID() :
-       		parent.getCoreID());
-        
-        readRotStructName =  this.getIdent() + "read_rot_struct__n" + coreNum;
-        currentReadRotName = this.getIdent() + "_read_current__n" + coreNum;
-        currentReadBufName = this.getIdent() + "_read_buf__n" + coreNum;
-        
-        writeRotStructName =  this.getIdent() + "write_rot_struct__n" + coreNum;
-        currentWriteRotName = this.getIdent() + "_write_current__n" + coreNum;
-        currentWriteBufName = this.getIdent() + "_write_buf__n" + coreNum;
     }
    
     /**
@@ -142,18 +114,6 @@ public abstract class RotatingBuffer extends Channel {
     
     public void createTransferCommands() {
         transferCommands = new BufferRemoteWritesTransfers(this);
-    }
-        
-    /**
-     * Return the address rotation that this output rotation uses for the given input slice node
-     * 
-     * @param i`nput the input slice node 
-     * @return the dma address rotation used to store the address of the 
-     * rotation associated with this input slice node
-     */
-    public SourceAddressRotation getAddressBuffer(InputSliceNode input) {
-        assert addressBuffers.containsKey(InputRotatingBuffer.getInputBuffer(input.getNextFilter())) ;
-        return addressBuffers.get(InputRotatingBuffer.getInputBuffer(input.getNextFilter()));
     }
     
     /**
@@ -227,16 +187,16 @@ public abstract class RotatingBuffer extends Channel {
      * 
      * @param input true if this is an input buffer
      */
-    protected void createInitCode(boolean input) {
+    protected void createInitCode() {
         this.setBufferNames();
-        this.allocBuffers(input);
+        this.allocBuffers();
         this.setupRotation();
     }
     
     /**
      * Allocate the constituent buffers of this rotating buffer structure
      */
-    protected void allocBuffers(boolean shared) {
+    protected void allocBuffers() {
     	for (int i = 0; i < rotationLength; i++) {
     		CoreCodeStore cs;
 
@@ -247,7 +207,14 @@ public abstract class RotatingBuffer extends Channel {
     		else
     			cs = this.parent.getComputeCode();
 
+    		this.parent.getMachine().getOffChipMemory().getComputeCode().appendTxtToGlobal(
+    				"extern " + this.getType().toString() + " " + bufferNames[i] + "[" + 
+                    this.getBufferSize() + "];\n");
 
+            cs.appendTxtToGlobal(this.getType().toString() + " " + bufferNames[i] + "[" +
+                                 this.getBufferSize() + "];\n");
+
+            /*
     		//create pointers to constituent buffers
     		this.parent.getMachine().getOffChipMemory().getComputeCode().appendTxtToGlobal(
     				"extern " + this.getType().toString() + "* " + bufferNames[i] + ";\n");
@@ -260,6 +227,7 @@ public abstract class RotatingBuffer extends Channel {
     				"*) malloc(" +  
     				this.getBufferSize() + " * sizeof(" +
     				this.getType() + "))")));
+            */
         }
     }
       

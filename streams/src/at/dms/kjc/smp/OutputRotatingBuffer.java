@@ -1,8 +1,10 @@
 package at.dms.kjc.smp;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import at.dms.kjc.JArrayAccessExpression;
 import at.dms.kjc.JBlock;
@@ -13,6 +15,7 @@ import at.dms.kjc.JStatement;
 import at.dms.kjc.JThisExpression;
 import at.dms.kjc.backendSupport.FilterInfo;
 import at.dms.kjc.slicegraph.FilterSliceNode;
+import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.InterSliceEdge;
 import at.dms.kjc.slicegraph.OutputSliceNode;
 import at.dms.kjc.slicegraph.SchedulingPhase;
@@ -20,10 +23,21 @@ import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.spacetime.BasicSpaceTimeSchedule;
 
 public class OutputRotatingBuffer extends RotatingBuffer {
-    /** the output slice node for this output buffer */
-    protected OutputSliceNode outputNode;    
-    /** the core we are mapped to */
-    protected Core core;
+
+    /** the name of the write rotation structure (always points to its head) */
+    protected String writeRotStructName;
+    /** the name of the pointer to the current write rotation of this buffer */
+    protected String currentWriteRotName;
+    /** the name of the pointer to the write buffer of the current rotation */
+    protected String currentWriteBufName;
+    
+    /** the address buffers that this buffer rotation uses as destinations for transfers */ 
+    protected HashMap<InputRotatingBuffer, SourceAddressRotation> addressBuffers;
+    
+    /** whether transmitter can write directly into a receiver's buffer */
+    protected boolean directWrite;
+    /** filter whose receiver this transmitter will directly write to */
+    protected FilterSliceNode directWriteFilter;
     
     /**
      * Create all the output buffers necessary for this slice graph.  Iterate over
@@ -35,40 +49,22 @@ public class OutputRotatingBuffer extends RotatingBuffer {
     public static void createOutputBuffers(BasicSpaceTimeSchedule schedule) {
         for (Slice slice : schedule.getScheduleList()) {
             assert slice.getNumFilters() == 1;
+            
             //don't do anything for file readers or writers,
-            //for file readers the output buffer is allocated in processfilereader
+            //for file readers the output buffer is allocated in ProcessFileReader
             if (slice.getHead().getNextFilter().isPredefined())
                 continue;
             
             if (!slice.getTail().noOutputs()) {
                 assert slice.getTail().totalWeights(SchedulingPhase.STEADY) > 0;
                 Core parent = SMPBackend.backEndBits.getLayout().getComputeNode(slice.getFirstFilter());
-                //only create an output buffer if no downstream filter is mapped to this core
-                //if a downstream filter is mapped to this core, then this slice will use the inputbuffer
-                //for its output
-                boolean createBuffer = true;
-                //look to see if one of the downstream slices is mapped to the same core as this slice
-                //and this slice uses the downstream's input buffer as an outputbuffer, if so, we don't
-                //need an output buffer
-                for (InterSliceEdge edge : slice.getTail().getDestSet(SchedulingPhase.STEADY)) {
-                    InputRotatingBuffer inBuf = InputRotatingBuffer.getInputBuffer(edge.getDest().getNextFilter());
-                    if (inBuf != null && inBuf.getLocalSrcFilter() == slice.getFirstFilter()) {
-                        assert RotatingBuffer.getOutputBuffer(slice.getFirstFilter()) != null;
-                        createBuffer = false;
-                        break;
-                    }
-                }
 
-                if (createBuffer) {
-                    // create the new buffer, the constructor will put the buffer in the 
-                    //hashmap
-                    
-                    OutputRotatingBuffer buf = new OutputRotatingBuffer(slice.getFirstFilter(), parent);
-                    buf.setRotationLength(schedule);
-                    buf.setBufferSize();
-                    buf.createInitCode(false);
-
-                }
+                // create the new buffer, the constructor will put the buffer in the hashmap
+                OutputRotatingBuffer buf = new OutputRotatingBuffer(slice.getFirstFilter(), parent);
+                
+                buf.setRotationLength(schedule);
+                buf.setBufferSize();
+                buf.createInitCode();
             }
         }
     }
@@ -79,32 +75,238 @@ public class OutputRotatingBuffer extends RotatingBuffer {
      */
     protected OutputRotatingBuffer(FilterSliceNode filterNode, Core parent) {
         super(filterNode.getEdgeToNext(), filterNode, parent);
-        outputNode = filterNode.getParent().getTail();
+        
         bufType = filterNode.getFilter().getOutputType();
+        
+        int coreNum = (filterNode.isFileOutput() ?
+            	ProcessFileWriter.getAllocatingCore(filterNode).getCoreID() :
+           		parent.getCoreID());
+        
+        writeRotStructName =  this.getIdent() + "write_rot_struct__n" + coreNum;
+        currentWriteRotName = this.getIdent() + "_write_current__n" + coreNum;
+        currentWriteBufName = this.getIdent() + "_write_buf__n" + coreNum;
+        
+		System.out.println("Inside constructor for OutputRotatingBuffer: " + filterNode);
+		System.out.println("  Checking for directWrite");
+        checkDirectWrite();
+		if(directWrite)
+			System.out.println("  directWrite is true: " + directWriteFilter);
+		else
+			System.out.println("  directWrite is false");
         setOutputBuffer(filterNode, this);
-              
-        core = SMPBackend.backEndBits.getLayout().getComputeNode(filterNode);
-    }
-   
-    /** Create an array reference given an offset */   
-    public JFieldAccessExpression writeBufRef() {
-        return new JFieldAccessExpression(new JThisExpression(), currentWriteBufName);
-     
     }
     
-    /** Create an array reference given an offset */   
-    public JArrayAccessExpression readBufRef(JExpression offset) {
-    	assert(false);
-    	return null;
-    }
-    
-    public void createAddressBuffers() {
-      //fill the addressbuffers array
-        addressBuffers = new HashMap<InputRotatingBuffer, SourceAddressRotation>();
-        for (InterSliceEdge edge : outputNode.getDestSet(SchedulingPhase.STEADY)) {
-            InputRotatingBuffer input = InputRotatingBuffer.getInputBuffer(edge.getDest().getNextFilter());
-            addressBuffers.put(input, input.getAddressRotation(core));               
+    private void checkDirectWrite() {
+		directWrite = false;
+		directWriteFilter = null;
+		
+		// Get receivers that receive all outputs of this transmitter in steady-state
+		// In other words, receivers that appear in every weight of this filter's OutputSliceNode
+		
+		InterSliceEdge steadyDests[][] = filterNode.getParent().getTail().getDests(SchedulingPhase.STEADY);
+		Set<InterSliceEdge> steadyDestSet = filterNode.getParent().getTail().getDestSet(SchedulingPhase.STEADY);
+		Set<InterSliceEdge> candidateDestsSteady = new HashSet<InterSliceEdge>();
+		
+		for(InterSliceEdge edge : steadyDestSet) {
+			boolean recvAllOutputs = true;
+			
+			for(int x = 0 ; x < steadyDests.length ; x++) {
+				boolean recvOutput = false;
+				
+				for(int y = 0 ; y < steadyDests[x].length ; y++) {
+					if(steadyDests[x][y].equals(edge)) {
+						recvOutput = true;
+						break;
+					}
+				}
+				
+				if(!recvOutput) {
+					recvAllOutputs = false;
+					break;
+				}
+			}
+			
+			if(recvAllOutputs) {
+				candidateDestsSteady.add(edge);
+			}
+		}
+		
+		if(candidateDestsSteady.isEmpty()) {
+			System.out.println("  failed 1");
+			return;
+		}
+		
+		// Get receivers that receive everything or do not receive anything from
+		// this transmitter in initialization
+		
+		InterSliceEdge initDests[][] = filterNode.getParent().getTail().getDests(SchedulingPhase.INIT);
+		Set<InterSliceEdge> initDestsSet = filterNode.getParent().getTail().getDestSet(SchedulingPhase.INIT);
+		Set<InterSliceEdge> candidateDestsInit = new HashSet<InterSliceEdge>();
+		
+		for(InterSliceEdge edge : initDestsSet) {
+			boolean recvAllOutputs = true;
+			
+			for(int x = 0 ; x < initDests.length ; x++) {
+				boolean recvOutput = false;
+				
+				for(int y = 0 ; y < initDests[x].length ; y++) {
+					if(initDests[x][y].equals(edge)) {
+						recvOutput = true;
+						break;
+					}
+				}
+				
+				if(!recvOutput) {
+					recvAllOutputs = false;
+					break;
+				}
+			}
+			
+			if(recvAllOutputs) {
+				candidateDestsInit.add(edge);
+			}
+		}
+		
+		for(InterSliceEdge edge : initDestsSet) {
+			boolean recvNoOutputs = true;
+			
+			for(int x = 0 ; x < initDests.length ; x++) {
+				boolean recvOutput = false;
+				
+				for(int y = 0 ; y < initDests[x].length ; y++) {
+					if(initDests[x][y].equals(edge)) {
+						recvOutput = true;
+						break;
+					}
+				}
+				
+				if(recvOutput) {
+					recvNoOutputs = false;
+					break;
+				}
+			}
+			
+			if(recvNoOutputs) {
+				candidateDestsInit.add(edge);
+			}
+		}
+		
+		if(!initDestsSet.isEmpty() && candidateDestsInit.isEmpty()) {
+			System.out.println("  failed 2");
+			return;
+		}
+		
+		// Intersect candidate receivers from steady-state and initialization
+		Set<InterSliceEdge> candidateDests = new HashSet<InterSliceEdge>();
+		
+		if(!initDestsSet.isEmpty()) {
+			for(InterSliceEdge edge : candidateDestsSteady)
+				if(candidateDestsInit.contains(edge))
+					candidateDests.add(edge);
+		}
+		else {
+			candidateDests.addAll(candidateDestsSteady);
+		}
+		
+		if(candidateDests.isEmpty()) {
+			System.out.println("  failed 3");
+			return;
+		}
+		
+		// Take only candidate receivers that are single appearance
+		Set<InterSliceEdge> saCandidateDests = new HashSet<InterSliceEdge>();
+		
+		for(InterSliceEdge edge : candidateDests)
+			if(edge.getDest().singleAppearance())
+				saCandidateDests.add(edge);
+			
+		if(saCandidateDests.isEmpty()) {
+			System.out.println("  failed 4");
+			return;
+		}
+
+        /*
+		// Check that number of transmitted elements matches slot in joiner
+		Set<InterSliceEdge> matchedCandidateDests = new HashSet<InterSliceEdge>();
+		
+		for(InterSliceEdge edge : saCandidateDests) {
+            System.out.println("  match candidate: " + edge.getDest().getNextFilter());
+            System.out.println("  INIT");
+            System.out.println("  ====");
+            System.out.println("  src.width: " + edge.getSrc().getWidth(SchedulingPhase.INIT));
+            System.out.println("  src.totalWeight: " + edge.getSrc().getWidth(SchedulingPhase.INIT));
+            System.out.println("  dest.weight: " + edge.getDest().getWeight(edge, SchedulingPhase.INIT));
+            System.out.println("  dest.width: " + (edge.getDest().getWidth(SchedulingPhase.INIT));
+            System.out.println("  STEADY");
+            System.out.println("  ====");
+            System.out.println("  src.width: " + edge.getSrc().getWidth(SchedulingPhase.STEADY));
+            System.out.println("  src.totalWeight: " + edge.getSrc().getWidth(SchedulingPhase.STEADY));
+            System.out.println("  dest.weight: " + edge.getDest().getWeight(edge, SchedulingPhase.STEADY));
+            System.out.println("  dest.width: " + (edge.getDest().getWidth(SchedulingPhase.STEADY));
+
+            boolean initMatched = false;
+            boolean steadyMatched = false;
+
+            if((edge.getSrc().getWidth(SchedulingPhase.INIT) == 0) ||
+               (edge.getSrc().totalWeights(SchedulingPhase.INIT) == edge.getDest().getWeight(edge, SchedulingPhase.INIT)) ||
+               (edge.getDest().getWidth(SchedulingPhase.INIT) == 1))
+                initMatched = true;
+
+            if((edge.getSrc().getWidth(SchedulingPhase.STEADY) == 0) ||
+               (edge.getSrc().totalWeights(SchedulingPhase.STEADY) == edge.getDest().getWeight(edge, SchedulingPhase.STEADY)) ||
+               (edge.getDest().getWidth(SchedulingPhase.STEADY) == 1))
+                steadyMatched = true;
+
+            if(initMatched && steadyMatched)
+                matchedCandidateDests.add(edge);
         }
+		
+		if(matchedCandidateDests.isEmpty()) {
+			System.out.println("  failed 5");
+			return;
+		}
+        */
+		
+		// Check that schedules for OutputSliceNode and InputSliceNode are executed only once
+		Set<InterSliceEdge> finalCandidateDests = new HashSet<InterSliceEdge>();
+		
+		for(InterSliceEdge edge : saCandidateDests) {
+			FilterInfo consumer = FilterInfo.getFilterInfo(edge.getDest().getNextFilter());
+			FilterInfo producer = FilterInfo.getFilterInfo(edge.getSrc().getPrevFilter());
+		
+	        if ((edge.getDest().getWidth(SchedulingPhase.INIT) > 1 && 
+	                edge.getDest().totalWeights(SchedulingPhase.INIT) != consumer.totalItemsPopped(SchedulingPhase.INIT)) ||
+	            (edge.getDest().getWidth(SchedulingPhase.STEADY) > 1 &&       
+	                        edge.getDest().totalWeights(SchedulingPhase.STEADY) != consumer.totalItemsPopped(SchedulingPhase.STEADY)) ||
+	            (edge.getSrc().getWidth(SchedulingPhase.INIT) > 1 &&   
+	                edge.getSrc().totalWeights(SchedulingPhase.INIT) != producer.totalItemsSent(SchedulingPhase.INIT)) ||
+	            (edge.getSrc().getWidth(SchedulingPhase.STEADY) > 1 &&   
+	                edge.getSrc().totalWeights(SchedulingPhase.STEADY) != producer.totalItemsSent(SchedulingPhase.STEADY)))
+	        {
+	        	continue;
+	        }
+	        
+	        finalCandidateDests.add(edge);
+		}
+		
+		if(finalCandidateDests.isEmpty()) {
+			System.out.println("  failed 6");
+			return;
+		}
+		
+		System.out.println("Number of final candidates for directWrite: " + finalCandidateDests.size());
+		
+		// Pick one of the candidates receivers to directly write to
+		directWrite = true;
+		directWriteFilter = finalCandidateDests.iterator().next().getDest().getNextFilter();
+    }
+    
+    public boolean hasDirectWrite() {
+    	return directWrite;
+    }
+    
+    public FilterSliceNode getDirectWriteFilter() {
+    	return directWriteFilter;
     }
     
     public void setRotationLength(BasicSpaceTimeSchedule schedule) {
@@ -120,7 +322,48 @@ public class OutputRotatingBuffer extends RotatingBuffer {
         rotationLength = maxRotLength + 1;
     }
     
-
+    protected void setBufferSize() {
+        FilterInfo fi = FilterInfo.getFilterInfo(filterNode);
+        
+        bufSize = Math.max(fi.totalItemsSent(SchedulingPhase.INIT),
+                fi.totalItemsSent(SchedulingPhase.STEADY));
+    }
+    
+    public void createAddressBuffers() {
+    	//fill the addressBuffers array
+    	OutputSliceNode outputNode = filterNode.getParent().getTail();
+    	
+        addressBuffers = new HashMap<InputRotatingBuffer, SourceAddressRotation>();
+        for (InterSliceEdge edge : outputNode.getDestSet(SchedulingPhase.STEADY)) {
+            InputRotatingBuffer input = InputRotatingBuffer.getInputBuffer(edge.getDest().getNextFilter());
+            addressBuffers.put(input, input.getAddressRotation(parent));               
+        }
+    }
+    
+    /**
+     * Return the address rotation that this output rotation uses for the given input slice node
+     * 
+     * @param input the input slice node 
+     * @return the dma address rotation used to store the address of the 
+     * rotation associated with this input slice node
+     */
+    public SourceAddressRotation getAddressBuffer(InputSliceNode input) {
+        assert addressBuffers.containsKey(InputRotatingBuffer.getInputBuffer(input.getNextFilter())) ;
+        return addressBuffers.get(InputRotatingBuffer.getInputBuffer(input.getNextFilter()));
+    }
+    
+    /** Create an array reference given an offset */   
+    public JFieldAccessExpression writeBufRef() {
+        return new JFieldAccessExpression(new JThisExpression(), currentWriteBufName);
+     
+    }
+    
+    /** Create an array reference given an offset */   
+    public JArrayAccessExpression readBufRef(JExpression offset) {
+    	assert(false);
+    	return null;
+    }
+    
     /* (non-Javadoc)
      * @see at.dms.kjc.backendSupport.ChannelI#endInitWrite()
      */
@@ -160,8 +403,6 @@ public class OutputRotatingBuffer extends RotatingBuffer {
         return list;
     }
     
-    
-    
     /* (non-Javadoc)
      * @see at.dms.kjc.backendSupport.ChannelI#beginSteadyWrite()
      */
@@ -180,7 +421,6 @@ public class OutputRotatingBuffer extends RotatingBuffer {
         list.addAll(rotateStatementsCurRot());
         return list;
     }
-        
 
     /* (non-Javadoc)
      * @see at.dms.kjc.backendSupport.ChannelI#endSteadyWrite()
@@ -201,8 +441,6 @@ public class OutputRotatingBuffer extends RotatingBuffer {
         return list;
     }
     
- 
-    
     /* (non-Javadoc)
      * @see at.dms.kjc.backendSupport.ChannelI#writeDecls()
      */
@@ -210,14 +448,6 @@ public class OutputRotatingBuffer extends RotatingBuffer {
         List<JStatement> retval = new LinkedList<JStatement>();
         retval.addAll(transferCommands.writeDecls());
         return retval;
-    }   
-    
-    protected void setBufferSize() {
-        FilterInfo fi = FilterInfo.getFilterInfo(filterNode);
-        
-        bufSize = Math.max(fi.totalItemsSent(SchedulingPhase.INIT),
-                fi.totalItemsSent(SchedulingPhase.STEADY));
-      
     }
     
     /* (non-Javadoc)

@@ -19,6 +19,13 @@ public class SourceAddressRotation extends RotatingBuffer {
     /** The InputBuffer this rotation models */
     protected InputRotatingBuffer inputBuffer;
     
+    /** the name of the write rotation structure (always points to its head) */
+    protected String writeRotStructName;
+    /** the name of the pointer to the current write rotation of this buffer */
+    protected String currentWriteRotName;
+    /** the name of the pointer to the write buffer of the current rotation */
+    protected String currentWriteBufName;
+    
     public SourceAddressRotation(Core core, InputRotatingBuffer buf, FilterSliceNode dest, Edge edge) {
         super(edge, dest, core);
         this.parent = core;

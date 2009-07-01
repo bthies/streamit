@@ -82,17 +82,13 @@ public class InputRotatingBuffer extends RotatingBuffer {
         bufType = filterNode.getFilter().getInputType();
         types.add(bufType);
         setInputBuffer(filterNode, this);
-
-        int coreNum = parent.getCoreID();
-        if (filterNode.isFileOutput())
-            coreNum = ProcessFileWriter.getAllocatingCore(filterNode).getCoreID();
         
-        readRotStructName =  this.getIdent() + "read_rot_struct__n" + coreNum;
-        currentReadRotName = this.getIdent() + "_read_current__n" + coreNum;
-        currentReadBufName = this.getIdent() + "_read_buf__n" + coreNum;
+        readRotStructName =  this.getIdent() + "read_rot_struct";
+        currentReadRotName = this.getIdent() + "_read_current";
+        currentReadBufName = this.getIdent() + "_read_buf";
         
-        currentFileReaderRotName = this.getIdent() + "_fr_current__n" + coreNum;
-        currentFileReaderBufName = this.getIdent() + "_fr_buf__n" + coreNum;
+        currentFileReaderRotName = this.getIdent() + "_fr_current";
+        currentFileReaderBufName = this.getIdent() + "_fr_buf";
 
         //if we have a file reader source for this filter, right now
         //we only support a single input for a filter that is feed by a file

@@ -78,13 +78,9 @@ public class OutputRotatingBuffer extends RotatingBuffer {
         
         bufType = filterNode.getFilter().getOutputType();
         
-        int coreNum = (filterNode.isFileOutput() ?
-            	ProcessFileWriter.getAllocatingCore(filterNode).getCoreID() :
-           		parent.getCoreID());
-        
-        writeRotStructName =  this.getIdent() + "write_rot_struct__n" + coreNum;
-        currentWriteRotName = this.getIdent() + "_write_current__n" + coreNum;
-        currentWriteBufName = this.getIdent() + "_write_buf__n" + coreNum;
+        writeRotStructName =  this.getIdent() + "write_rot_struct";
+        currentWriteRotName = this.getIdent() + "_write_current";
+        currentWriteBufName = this.getIdent() + "_write_buf";
         
 		System.out.println("Inside constructor for OutputRotatingBuffer: " + filterNode);
 		System.out.println("  Checking for directWrite");

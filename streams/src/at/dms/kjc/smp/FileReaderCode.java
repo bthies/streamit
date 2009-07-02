@@ -26,6 +26,10 @@ public abstract class FileReaderCode {
     protected OutputSliceNode fileOutput;
     /** the edge between the file reader and this input buffer */
     protected InterSliceEdge edge;
+
+    /** unique id generator */
+    protected int id;
+    protected static int uid = 0;
     
     public FileReaderCode(InputRotatingBuffer buf) {
         parent = buf;
@@ -39,6 +43,7 @@ public abstract class FileReaderCode {
             assert input.getSources(SchedulingPhase.INIT)[0] == input.getSources(SchedulingPhase.STEADY)[0];
         }
         edge = input.getSingleEdge(SchedulingPhase.STEADY);
+        id = uid++;
     }
     
     /**
@@ -63,11 +68,20 @@ public abstract class FileReaderCode {
     }
     
     /**
-     * Return the ilib_wait statements that wait 
+     * Return statements that wait 
      * 
      * @return the wait statements
      */
     public List<JStatement> waitCallsSteady() {
         return waitCallsSteady;    
+    }
+
+    /**
+     * Return unique id for FileReaderCode
+     *
+     * @return unique id
+     */
+    public int getID() {
+        return id;
     }
 }

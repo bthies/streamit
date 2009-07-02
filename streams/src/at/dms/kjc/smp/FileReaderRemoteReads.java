@@ -19,6 +19,8 @@ public class FileReaderRemoteReads extends FileReaderCode {
         checkSimple();
         generateStatements(SchedulingPhase.INIT);
         generateStatements(SchedulingPhase.STEADY);
+
+        buf.parent.getComputeCode().appendTxtToGlobal("int fileReadIndex__" + id + " = 0;\n");
     }
 
     private void generateStatements(SchedulingPhase phase) {
@@ -54,7 +56,7 @@ public class FileReaderRemoteReads extends FileReaderCode {
                         //add to the array assignment loop
                         int dstElement = (copyDown + destIndex++);
                         int srcIndex = ((rot * fileOutput.totalWeights(phase)) + fileOutput.weightBefore(weight, phase) + item);
-                        aaStmts.addAssignment(dst_buffer, "", dstElement, "fileReadBuffer", "fileReadIndex__n" + parent.parent.getCoreID(), srcIndex);
+                        aaStmts.addAssignment(dst_buffer, "", dstElement, "fileReadBuffer", "fileReadIndex__" + id, srcIndex);
                     }
                 }
             }
@@ -78,9 +80,9 @@ public class FileReaderRemoteReads extends FileReaderCode {
         
         //every filter that reads from this file must increment the index of items read
         //in a phase, even if the filter does not read during the current phase 
-        statements.add(Util.toStmt("fileReadIndex__n" + parent.parent.getCoreID() + " += " + srcInfo.totalItemsSent(phase)));
+        statements.add(Util.toStmt("fileReadIndex__" + id + " += " + srcInfo.totalItemsSent(phase)));
         if(!KjcOptions.noloopinput)
-            statements.add(Util.toStmt("if(fileReadIndex__n" + parent.parent.getCoreID() + " + " + srcInfo.totalItemsSent(phase) + " >= num_inputs) fileReadIndex__n" + parent.parent.getCoreID() + " = 0"));
+            statements.add(Util.toStmt("if(fileReadIndex__" + id + " + " + srcInfo.totalItemsSent(phase) + " >= num_inputs) fileReadIndex__" + id + " = 0"));
         
         //if currently in steady-state, prefetch items from the fileReadBuffer for the next steady-state
         //if we don't receive anything, don't generate prefetch code

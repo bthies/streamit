@@ -8,6 +8,7 @@ import at.dms.kjc.*;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Set;
 
 public class ProcessFileReader {
     
@@ -16,15 +17,22 @@ public class ProcessFileReader {
     protected SMPBackEndFactory factory;
     protected CoreCodeStore codeStore;
     protected FileInputContent fileInput;
-    protected static HashMap<FilterSliceNode, Core> allocatingCores;
     protected Core allocatingCore;
-    protected OutputSliceNode fileOutput;  
-    protected static HashMap<FilterSliceNode, JMethodDeclaration> PPMethods;
+    protected OutputSliceNode fileOutput;
+
+    protected static HashMap<FilterSliceNode, Core> allocatingCores;
+
+    protected static HashMap<FileReaderCodeKey, FileReaderCode> fileReaderCodeStore;
+    protected static HashMap<FileReaderCodeKey, JMethodDeclaration> PPMethodStore;
+
     protected static HashSet<String> fileNames;
     
     static {
         allocatingCores = new HashMap<FilterSliceNode, Core>();
-        PPMethods = new HashMap<FilterSliceNode, JMethodDeclaration>();
+
+        fileReaderCodeStore = new HashMap<FileReaderCodeKey, FileReaderCode>();
+        PPMethodStore = new HashMap<FileReaderCodeKey, JMethodDeclaration>();
+
         fileNames = new HashSet<String>();
     }
     
@@ -43,16 +51,24 @@ public class ProcessFileReader {
             fileNames.add(fileInput.getFileName());
             allocateAndCommunicateAddrs();
         }
+
+        System.out.print("Generating FileReader code: ");
         for (InterSliceEdge edge : fileOutput.getDestSet(SchedulingPhase.STEADY)) {
+            System.out.print(".");
             generateCode(edge.getDest().getNextFilter());
         }
+        System.out.println();
     }
 
     private void generateCode(FilterSliceNode dsFilter) {
-        //TODO: fix so that file reader code is not created twice!
-        FileReaderCode fileReaderCode;
         InputRotatingBuffer destBuf = InputRotatingBuffer.getInputBuffer(dsFilter);
-        fileReaderCode = new FileReaderRemoteReads(destBuf);
+        FileReaderCodeKey frcKey = new FileReaderCodeKey(filterNode, dsFilter);
+
+        FileReaderCode fileReaderCode = fileReaderCodeStore.get(frcKey);
+        if(fileReaderCode == null) {
+            fileReaderCode = new FileReaderRemoteReads(destBuf);
+            fileReaderCodeStore.put(frcKey, fileReaderCode);
+        }
         
         CoreCodeStore codeStore = SMPBackend.scheduler.getComputeNode(dsFilter).getComputeCode();
         
@@ -65,17 +81,18 @@ public class ProcessFileReader {
     
     private void generateInitCode(FileReaderCode fileReaderCode, CoreCodeStore codeStore, 
             InputRotatingBuffer destBuf) {
+
         JBlock statements = new JBlock(fileReaderCode.commandsInit);
+
         //create a method 
         JMethodDeclaration initMethod = new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
                 CStdType.Void,
-                "__File_Reader_Init__",
+                "__File_Reader_Init__" + fileReaderCode.getID() + "__",
                 JFormalParameter.EMPTY,
                 CClassType.EMPTY,
                 statements,
                 null,
                 null);
-
 
         codeStore.addMethod(initMethod);
         codeStore.addInitStatement(new JExpressionStatement(null,
@@ -85,26 +102,29 @@ public class ProcessFileReader {
 
     private void generatePPCode(FilterSliceNode node, FileReaderCode fileReaderCode, CoreCodeStore codeStore, 
             InputRotatingBuffer destBuf) {
-        if (!PPMethods.containsKey(node)) {
+
+        FileReaderCodeKey frcKey = new FileReaderCodeKey(filterNode, node);
+
+        if (!PPMethodStore.containsKey(frcKey)) {
             JBlock statements = new JBlock(fileReaderCode.commandsSteady);
+
             //create a method 
             JMethodDeclaration ppMethod = new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
                     CStdType.Void,
-                    "__File_Reader_PrimePump__",
+                    "__File_Reader_PrimePump__" + fileReaderCode.getID() + "__",
                     JFormalParameter.EMPTY,
                     CClassType.EMPTY,
                     statements,
                     null,
                     null);
 
-
             codeStore.addMethod(ppMethod);
-            PPMethods.put(node, ppMethod);
+            PPMethodStore.put(frcKey, ppMethod);
         }
 
         codeStore.addInitStatement(new JExpressionStatement(null,
                 new JMethodCallExpression(null, new JThisExpression(null),
-                        PPMethods.get(node).getName(), new JExpression[0]), null));
+                        PPMethodStore.get(frcKey).getName(), new JExpression[0]), null));
     }
     
     private void generateSteadyCode(FileReaderCode fileReaderCode, CoreCodeStore codeStore, 
@@ -122,20 +142,12 @@ public class ProcessFileReader {
         codeStore.appendTxtToGlobal("FILE *input;\n");
         codeStore.appendTxtToGlobal("off_t num_inputs;\n");
         codeStore.appendTxtToGlobal(fileInput.getType() + "*fileReadBuffer;\n");
-        codeStore.appendTxtToGlobal("int fileReadIndex__n" + codeStore.getParent().getUniqueId() + " = 0;\n");
+        //codeStore.appendTxtToGlobal("int fileReadIndex__n" + codeStore.getParent().getUniqueId() + " = 0;\n");
 
         SMPBackend.chip.getOffChipMemory().getComputeCode().appendTxtToGlobal("extern " + fileInput.getType() + "*fileReadBuffer;\n");
         SMPBackend.chip.getOffChipMemory().getComputeCode().appendTxtToGlobal("extern off_t num_inputs;\n");
 
         //open the file read the file into the buffer on the heap
-        /*
-        codeStore.appendTxtToGlobal("int INPUT;\n");
-        block.addStatement(Util.toStmt("struct stat statbuf"));
-        block.addStatement(Util.toStmt("INPUT = open(\"" + fileInput.getFileName() + "\", O_RDWR)"));
-        block.addStatement(Util.toStmt("fstat(INPUT, &statbuf)"));
-        block.addStatement(Util.toStmt("fileReadBuffer = (" + fileInput.getType() + "*)mmap(NULL, statbuf.st_size, PROT_READ | PROT_WRITE, MAP_PRIVATE, INPUT, 0)"));
-        */
-
         block.addStatement(Util.toStmt("struct stat statbuf"));
         block.addStatement(Util.toStmt("stat(\"" + fileInput.getFileName() + "\", &statbuf)"));
         block.addStatement(Util.toStmt("num_inputs = statbuf.st_size / " + fileInput.getType().getSizeInC()));
@@ -144,12 +156,14 @@ public class ProcessFileReader {
         block.addStatement(Util.toStmt("if(fread((void *)fileReadBuffer, " + fileInput.getType().getSizeInC() + ", num_inputs, input) != num_inputs)" +
         								"printf(\"Error reading %lu bytes of input file\\n\", (unsigned long)statbuf.st_size)"));
 
+        /*
         for (Core other : SMPBackend.chip.getCores()) {
             if (codeStore.getParent() == other) 
                 continue;
 
             other.getComputeCode().appendTxtToGlobal("int fileReadIndex__n" + other.getUniqueId() + " = 0;\n");
         }
+        */
 
         codeStore.addStatementFirstToBufferInit(block);
     }
@@ -198,4 +212,32 @@ public class ProcessFileReader {
         return size;
     }
     
+    private class FileReaderCodeKey {
+        public FilterSliceNode filter;
+        public FilterSliceNode dsFilter;
+
+        public FileReaderCodeKey(FilterSliceNode filter, FilterSliceNode dsFilter) {
+            this.filter = filter;
+            this.dsFilter = dsFilter;
+        }
+
+        public boolean equals(Object obj) {
+            if(obj instanceof FileReaderCodeKey) {
+                FileReaderCodeKey id = (FileReaderCodeKey)obj;
+
+                if(this.filter.equals(id.filter) &&
+                   this.dsFilter.equals(id.dsFilter)) {
+                    return true;
+                }
+
+                return false;
+            }
+
+            return false;
+        }
+
+        public int hashCode() {
+            return filter.hashCode() + dsFilter.hashCode();
+        }
+    }
 }

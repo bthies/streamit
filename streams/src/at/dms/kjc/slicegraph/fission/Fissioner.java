@@ -189,28 +189,17 @@ public class Fissioner {
         if (!checks())
             return null;
 
-        System.out.println("a");
         createFissedSlices();
-        System.out.println("b");
         createIDInputSlice();
-        System.out.println("c");
         createIDOutputSlice();
-        System.out.println("d");
         setupInitPhase();
-        System.out.println("e");
         replaceInputEdges(SchedulingPhase.INIT); replaceInputEdges(SchedulingPhase.STEADY);
-        System.out.println("f");
         moveJoinToInputID();
-        System.out.println("g");
         installFissionSplitPattern();
-        System.out.println("h");
         installSplitJoinIDOutput();
-        System.out.println("i");
         replaceOutputEdges(SchedulingPhase.INIT); replaceOutputEdges(SchedulingPhase.STEADY);
-        System.out.println("j");
         //debug();
         synchRemoveIDs();
-        System.out.println("k");
         
         return new FissionGroup(slice, fInfo, sliceClones);
     }
@@ -632,11 +621,8 @@ public class Fissioner {
 
         assert idI.copyDown == 0 : idI.copyDown;
         assert idO.copyDown == 0;
-        System.out.println("  1");        
         IDSliceRemoval.doit(idInput);
-        System.out.println("  2");
         IDSliceRemoval.doit(idOutput);
-        System.out.println("  3");
     }
     
     private InterSliceEdge[][] replaceEdge(InterSliceEdge[][] oldEdges, 

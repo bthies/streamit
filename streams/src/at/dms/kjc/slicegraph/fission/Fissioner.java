@@ -68,7 +68,7 @@ public class Fissioner {
     /**
      * Attempt to fiss <slice> by <fissAmount>.  Return true if the fission was successful.
      */
-    public static Slice[] doit(Slice slice, Slicer slicer, int fissAmount) {
+    public static FissionGroup doit(Slice slice, Slicer slicer, int fissAmount) {
         System.out.println("Performing fission on: " + slice.getFirstFilter() + ", fizzAmount: " + fissAmount);
         Fissioner fissioner = new Fissioner(slice, slicer, fissAmount);
         if(canFizz(slice, false)) 
@@ -185,7 +185,7 @@ public class Fissioner {
         return true;
     }
     
-    private Slice[] fizz() {
+    private FissionGroup fizz() {
         if (!checks())
             return null;
 
@@ -212,7 +212,7 @@ public class Fissioner {
         synchRemoveIDs();
         System.out.println("k");
         
-        return sliceClones;
+        return new FissionGroup(slice, fInfo, sliceClones);
     }
     
     /**

@@ -48,11 +48,11 @@ public class SourceAddressRotation extends RotatingBuffer {
         	count = new Integer(0);
         bufCount.put(buf, count + 1);
         
-        this.ident = buf.getIdent() + "_addr_";
+        this.ident = buf.getIdent() + "_addr_" + count.intValue() + "_";
         
-        writeRotStructName = this.getIdent() + "rot_struct__" + count.intValue();
-        currentWriteRotName = this.getIdent() + "write_current__" + count.intValue();
-        currentWriteBufName = this.getIdent() + "_write_buf__" + count.intValue();
+        writeRotStructName = this.getIdent() + "rot_struct__";
+        currentWriteRotName = this.getIdent() + "write_current__";
+        currentWriteBufName = this.getIdent() + "_write_buf__";
         
         //set the names of the individual address buffers that constitute this rotation
         setBufferNames();

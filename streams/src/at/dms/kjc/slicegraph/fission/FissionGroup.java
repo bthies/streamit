@@ -4,23 +4,23 @@ import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.backendSupport.FilterInfo;
 
 public class FissionGroup {
-    public Slice origSlice;
-    public FilterInfo origFilterInfo;
+    public Slice unfizzedSlice;
+    public FilterInfo unfizzedFilterInfo;
 
     public Slice[] fizzedSlices;
 
-    public FissionGroup(Slice origSlice, FilterInfo origFilterInfo, Slice[] fizzedSlices) {
-        this.origSlice = origSlice;
-        this.origFilterInfo = origFilterInfo;
+    public FissionGroup(Slice unfizzedSlice, FilterInfo unfizzedFilterInfo, Slice[] fizzedSlices) {
+        this.unfizzedSlice = unfizzedSlice;
+        this.unfizzedFilterInfo = unfizzedFilterInfo;
         this.fizzedSlices = fizzedSlices;
     }
 
-    public Slice getOrigSlice() {
-        return origSlice;
+    public Slice getUnfizzedSlice() {
+        return unfizzedSlice;
     }
 
-    public FilterInfo getOrigFilterInfo() {
-        return origFilterInfo;
+    public FilterInfo getUnfizzedFilterInfo() {
+        return unfizzedFilterInfo;
     }
 
     public Slice[] getFizzedSlices() {

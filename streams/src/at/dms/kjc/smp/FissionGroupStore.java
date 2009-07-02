@@ -13,52 +13,64 @@ public class FissionGroupStore {
 
     private static HashSet<FissionGroup> fissionGroups;
 
-    private static HashMap<Slice, List<Slice>> origToFizzed;
-    private static HashMap<Slice, Slice> fizzedToOrig;
+    private static HashMap<Slice, FissionGroup> unfizzedToFissionGroup;
+    private static HashMap<Slice, FissionGroup> fizzedToFissionGroup;
 
     static {
         fissionGroups = new HashSet<FissionGroup>();
-        origToFizzed = new HashMap<Slice, List<Slice>>();
-        fizzedToOrig = new HashMap<Slice, Slice>();
+
+        unfizzedToFissionGroup = new HashMap<Slice, FissionGroup>();
+        fizzedToFissionGroup = new HashMap<Slice, FissionGroup>();
     }
 
     public static void addFissionGroup(FissionGroup group) {
         fissionGroups.add(group);
 
-        List<Slice> fizzedSlicesList = new LinkedList<Slice>();
-        for(Slice slice : group.fizzedSlices)
-            fizzedSlicesList.add(slice);
-        origToFizzed.put(group.origSlice, fizzedSlicesList);
+        unfizzedToFissionGroup.put(group.unfizzedSlice, group);
 
         for(Slice slice : group.fizzedSlices)
-            fizzedToOrig.put(slice, group.origSlice);
+            fizzedToFissionGroup.put(slice, group);
     }
 
     public static Set<FissionGroup> getFissionGroups() {
         return fissionGroups;
     }
 
+    public static FissionGroup getFissionGroup(Slice slice) {
+        if(unfizzedToFissionGroup.containsKey(slice))
+            return unfizzedToFissionGroup.get(slice);
+
+        if(fizzedToFissionGroup.containsKey(slice))
+            return fizzedToFissionGroup.get(slice);
+
+        return null;
+    }
+
     public static boolean isFizzed(Slice slice) {
-        return origToFizzed.containsKey(slice) || fizzedToOrig.containsKey(slice);
+        return unfizzedToFissionGroup.containsKey(slice) ||
+            fizzedToFissionGroup.containsKey(slice);
     }
 
-    public static Slice getOrigSlice(Slice fizzedSlice) {
-        return fizzedToOrig.get(fizzedSlice);
+    public static Slice getUnfizzedSlice(Slice fizzedSlice) {
+        if(fizzedToFissionGroup.containsKey(fizzedSlice))
+            return fizzedToFissionGroup.get(fizzedSlice).unfizzedSlice;
+
+        return null;
     }
 
-    public static List<Slice> getFizzedSlices(Slice slice) {
-        if(origToFizzed.containsKey(slice))
-            return origToFizzed.get(slice);
+    public static Slice[] getFizzedSlices(Slice slice) {
+        if(unfizzedToFissionGroup.containsKey(slice))
+            return unfizzedToFissionGroup.get(slice).fizzedSlices;
 
-        if(fizzedToOrig.containsKey(slice))
-            return origToFizzed.get(fizzedToOrig.get(slice));
+        if(fizzedToFissionGroup.containsKey(slice))
+            return fizzedToFissionGroup.get(slice).fizzedSlices;
 
         return null;
     }
 
     public static void reset() {
         fissionGroups.clear();
-        origToFizzed.clear();
-        fizzedToOrig.clear();
+        unfizzedToFissionGroup.clear();
+        fizzedToFissionGroup.clear();
     }
 }

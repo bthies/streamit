@@ -68,6 +68,20 @@ public class FissionGroupStore {
         return null;
     }
 
+    public static int getFizzedSliceIndex(Slice slice) {
+        Slice[] fizzedSlices = getFizzedSlices(slice);
+
+        int index = -1;
+        for(int x = 0 ; x < fizzedSlices.length ; x++) {
+            if(fizzedSlices[x].equals(slice)) {
+                index = x;
+                break;
+            }
+        }
+
+        return index;
+    }
+
     public static void reset() {
         fissionGroups.clear();
         unfizzedToFissionGroup.clear();

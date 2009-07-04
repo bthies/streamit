@@ -324,6 +324,18 @@ public class OutputRotatingBuffer extends RotatingBuffer {
         bufSize = Math.max(fi.totalItemsSent(SchedulingPhase.INIT),
                 fi.totalItemsSent(SchedulingPhase.STEADY));
     }
+
+    /**
+     * Allocate the constituent buffers of this rotating buffer structure
+     */
+    protected void allocBuffers() {
+        System.out.println("Inside OutputRotatingBuffer.allocBuffers()");
+
+        if(directWrite)
+            return;
+
+        super.allocBuffers();
+    }
     
     public void createAddressBuffers() {
     	//fill the addressBuffers array
@@ -549,8 +561,12 @@ public class OutputRotatingBuffer extends RotatingBuffer {
 
     protected List<JStatement> rotateStatementsCurRot() {
         LinkedList<JStatement> list = new LinkedList<JStatement>();
-        list.add(Util.toStmt(currentWriteRotName + " = " + currentWriteRotName + "->next"));
-        list.add(Util.toStmt(currentWriteBufName + " = " + currentWriteRotName + "->buffer"));
+
+        if(!directWrite) {
+            list.add(Util.toStmt(currentWriteRotName + " = " + currentWriteRotName + "->next"));
+            list.add(Util.toStmt(currentWriteBufName + " = " + currentWriteRotName + "->buffer"));
+        }
+
         return list;
     }
     
@@ -588,6 +604,9 @@ public class OutputRotatingBuffer extends RotatingBuffer {
      * as a circular linked list.
      */
     protected void setupRotation() {
+        if(directWrite)
+            return;
+
         String temp = "__temp__";
         CoreCodeStore cs = parent.getComputeCode();
         //this is the typedef we will use for this buffer rotation structure

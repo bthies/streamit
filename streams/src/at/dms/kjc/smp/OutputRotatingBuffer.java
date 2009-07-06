@@ -77,11 +77,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
         super(filterNode.getEdgeToNext(), filterNode, parent);
         
         bufType = filterNode.getFilter().getOutputType();
-        
-        writeRotStructName =  this.getIdent() + "write_rot_struct";
-        currentWriteRotName = this.getIdent() + "_write_current";
-        currentWriteBufName = this.getIdent() + "_write_buf";
-        
+
 		System.out.println("Inside constructor for OutputRotatingBuffer: " + filterNode);
 		System.out.println("  Checking for directWrite");
         checkDirectWrite();
@@ -89,6 +85,14 @@ public class OutputRotatingBuffer extends RotatingBuffer {
 			System.out.println("  directWrite is true: " + directWriteFilter);
 		else
 			System.out.println("  directWrite is false");
+        
+        if(directWrite)
+            this.ident = InputRotatingBuffer.getInputBuffer(directWriteFilter).getIdent();
+
+        writeRotStructName =  this.getIdent() + "write_rot_struct";
+        currentWriteRotName = this.getIdent() + "_write_current";
+        currentWriteBufName = this.getIdent() + "_write_buf";
+        
         setOutputBuffer(filterNode, this);
     }
     
@@ -541,6 +545,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
      */
     public String pushMethodName() {
         return "__push_" + unique_id;
+        //return "__push" + this.getIdent();
     }
     /* (non-Javadoc)
      * @see at.dms.kjc.backendSupport.ChannelI#pushMethod()

@@ -26,4 +26,16 @@ public class FissionGroup {
     public Slice[] getFizzedSlices() {
         return fizzedSlices;
     }
+
+    public int getFizzedSliceIndex(Slice slice) {
+        int index = -1;
+        for(int x = 0 ; x < fizzedSlices.length ; x++) {
+            if(fizzedSlices[x].equals(slice)) {
+                index = x;
+                break;
+            }
+        }
+
+        return index;
+    }
 }

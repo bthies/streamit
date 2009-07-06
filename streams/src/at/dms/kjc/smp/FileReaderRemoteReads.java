@@ -9,7 +9,7 @@ import at.dms.kjc.JStatement;
 import at.dms.kjc.KjcOptions;
 import at.dms.kjc.backendSupport.FilterInfo;
 import at.dms.kjc.slicegraph.*;
-
+import at.dms.kjc.slicegraph.fission.*;
 
 
 public class FileReaderRemoteReads extends FileReaderCode {
@@ -42,6 +42,21 @@ public class FileReaderRemoteReads extends FileReaderCode {
             //the index into the destination buffer we are currently receiving to
             int destIndex = 0;
 
+            int fissionOffset = 0;
+            if(KjcOptions.sharedbufs && phase != SchedulingPhase.INIT &&
+               FissionGroupStore.isFizzed(input.getParent())) {
+                FissionGroup group = FissionGroupStore.getFissionGroup(input.getParent());
+
+                int totalItemsReceived = group.unfizzedFilterInfo.totalItemsReceived(phase);
+                int numFizzedSlices = group.fizzedSlices.length;
+                int curFizzedSlice = FissionGroupStore.getFizzedSliceIndex(parent.filterNode.getParent());
+
+                assert curFizzedSlice != -1;
+                assert (totalItemsReceived % numFizzedSlices) == 0;
+
+                fissionOffset = curFizzedSlice * (totalItemsReceived / numFizzedSlices);
+            }
+
             String dst_buffer = parent.currentFileReaderBufName;
                         
             //we must account for the copy down in the pp and ss
@@ -54,7 +69,7 @@ public class FileReaderRemoteReads extends FileReaderCode {
                         continue;
                     for (int item = 0; item < fileOutput.getWeights(phase)[weight]; item++) {
                         //add to the array assignment loop
-                        int dstElement = (copyDown + destIndex++);
+                        int dstElement = (copyDown + fissionOffset + destIndex++);
                         int srcIndex = ((rot * fileOutput.totalWeights(phase)) + fileOutput.weightBefore(weight, phase) + item);
                         aaStmts.addAssignment(dst_buffer, "", dstElement, "fileReadBuffer", "fileReadIndex__" + id, srcIndex);
                     }

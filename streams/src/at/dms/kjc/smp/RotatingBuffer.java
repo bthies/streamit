@@ -113,7 +113,10 @@ public abstract class RotatingBuffer extends Channel {
     }
     
     public void createTransferCommands() {
-        transferCommands = new BufferRemoteWritesTransfers(this);
+        if(KjcOptions.sharedbufs)
+            transferCommands = new SharedBufferRemoteWritesTransfers(this);
+        else
+            transferCommands = new BufferRemoteWritesTransfers(this);
     }
     
     /**

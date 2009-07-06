@@ -37,9 +37,15 @@ public class InputRotatingBuffer extends RotatingBuffer {
      * read into */
     protected String currentFileReaderBufName;
 
+    /** InputRotatingBuffers for fizzed filters will use shared constituent buffers.
+     * This HashMap will store the names of the shared constituent buffers */
+    protected static HashMap<FilterSliceNode, String> sharedBufferNames;
+
+    /** stores InputRotatingBuffers for file writers */
     protected static HashSet<InputRotatingBuffer> fileWriterBuffers;
 
     static {
+        sharedBufferNames = new HashMap<FilterSliceNode, String>();
         fileWriterBuffers = new HashSet<InputRotatingBuffer>();
     }
     
@@ -68,9 +74,8 @@ public class InputRotatingBuffer extends RotatingBuffer {
                 buf.createAddressBufs();
             }
         }
-    }
+    }    
 
-    
     /**
      * Create a new input buffer that is associated with the filter node.
      * 
@@ -90,15 +95,110 @@ public class InputRotatingBuffer extends RotatingBuffer {
         currentFileReaderRotName = this.getIdent() + "_fr_current";
         currentFileReaderBufName = this.getIdent() + "_fr_buf";
 
+        if(KjcOptions.sharedbufs && FissionGroupStore.isFizzed(filterNode.getParent())) {
+            System.out.println(filterNode + " is fizzed");
+            if(!sharedBufferNames.containsKey(filterNode)) {
+                System.out.println("  first InputRotatingBuffer, setting base name of: " + this.getIdent());
+                Slice[] fizzedSlices = FissionGroupStore.getFizzedSlices(filterNode.getParent());
+
+                for(Slice slice : fizzedSlices)
+                    sharedBufferNames.put(slice.getFirstFilter(), this.getIdent());
+            }
+        }
+
         //if we have a file reader source for this filter, right now
         //we only support a single input for a filter that is feed by a file
         upstreamFileReader = filterNode.getParent().getHead().hasFileInput();
         if (upstreamFileReader) {
-            //System.out.println(filterNode);
             assert filterNode.getParent().getHead().getWidth(SchedulingPhase.INIT) <= 1 &&
             filterNode.getParent().getHead().getWidth(SchedulingPhase.STEADY) <= 1;
         }
+
         addrBufMap = new HashMap<FilterSliceNode, SourceAddressRotation>();
+
+    }
+
+    /**
+     * Set the rotation length of this rotating buffer
+     */
+    protected void setRotationLength(BasicSpaceTimeSchedule schedule) {
+        //now set the rotation length
+        int destMult = schedule.getPrimePumpMult(filterNode.getParent());
+        //first find the max rotation length given the prime pump 
+        //mults of all the sources
+        int maxRotationLength = 0;
+        
+        for (Slice src : filterNode.getParent().getHead().getSourceSlices(SchedulingPhase.STEADY)) {
+            int diff = schedule.getPrimePumpMult(src) - destMult; 
+            assert diff >= 0;
+            if (diff > maxRotationLength) {
+                maxRotationLength = diff;
+            }
+        }
+        rotationLength = maxRotationLength + 1;
+    }
+
+    /**
+     * Set the buffer size of this input buffer based on the max
+     * number of items it receives.
+     */
+    protected void setBufferSize() {
+        System.out.println("Inside InputRotatingBuffer.setBufferSize()");
+
+        FilterInfo fi;
+        if(KjcOptions.sharedbufs && FissionGroupStore.isFizzed(filterNode.getParent())) {
+            System.out.println("  " + filterNode + " is fizzed");
+            fi = FissionGroupStore.getFissionGroup(filterNode.getParent()).unfizzedFilterInfo;
+        }
+        else {
+            System.out.println("  " + filterNode + " is NOT fizzed");
+            fi = filterInfo;
+        }
+
+        bufSize = Math.max(fi.totalItemsReceived(SchedulingPhase.INIT),
+                           (fi.totalItemsReceived(SchedulingPhase.STEADY) + fi.copyDown));
+    }
+
+    /**
+     * Set the names of the buffers that comprise this rotating buffer.
+     */
+    protected void setBufferNames() {
+        System.out.println("Inside InputRotatingBuffer.setBufferNames()");
+
+        String baseName;
+        if(KjcOptions.sharedbufs && FissionGroupStore.isFizzed(filterNode.getParent())) {
+            System.out.println("  " + filterNode + " is fizzed");
+            baseName = sharedBufferNames.get(filterNode);
+            assert baseName != null;
+        }
+        else {
+            System.out.println("  " + filterNode + " is NOT fizzed");
+            baseName = this.getIdent();
+        }
+
+        bufferNames = new String[rotationLength];
+        for (int i = 0; i < rotationLength; i++) {
+            bufferNames[i] = baseName + "_Buf_" + i;
+        }
+    }
+
+    /**
+     * Allocate the constituent buffers of this rotating buffer structure
+     */
+    protected void allocBuffers() {
+        System.out.println("Inside InputRotatingBuffer.allocBuffers()");
+
+        if(KjcOptions.sharedbufs && FissionGroupStore.isFizzed(filterNode.getParent())) {
+            System.out.println("  " + filterNode + " is fizzed");
+            if(sharedBufferNames.get(filterNode).equals(this.getIdent())) {
+                System.out.println("  " + filterNode + " allocated by me: " + this.getIdent());
+                super.allocBuffers();
+            }
+        }
+        else {
+            System.out.println("  " + filterNode + " is NOT fizzed");
+            super.allocBuffers();
+        }
     }
     
     /**
@@ -121,29 +221,22 @@ public class InputRotatingBuffer extends RotatingBuffer {
     }
     
     /**
-     * If this input buffer is shared upstream as an output buffer, then 
-     * create the commands that the upstream filter will use to transfer items to 
-     * its destinations.  
+     * Return the set of address buffers that are declared on cores that feed this buffer.
+     * @return the set of address buffers that are declared on cores that feed this buffer.
      */
-    public void createTransferCommands() {
-        transferCommands = new BufferRemoteWritesTransfers(this);
+    public SourceAddressRotation[] getAddressBuffers() {
+        return addressBufs;
     }
     
-    protected void setRotationLength(BasicSpaceTimeSchedule schedule) {
-        //now set the rotation length
-        int destMult = schedule.getPrimePumpMult(filterNode.getParent());
-        //first find the max rotation length given the prime pump 
-        //mults of all the sources
-        int maxRotationLength = 0;
-        
-        for (Slice src : filterNode.getParent().getHead().getSourceSlices(SchedulingPhase.STEADY)) {
-            int diff = schedule.getPrimePumpMult(src) - destMult; 
-            assert diff >= 0;
-            if (diff > maxRotationLength) {
-                maxRotationLength = diff;
-            }
-        }
-        rotationLength = maxRotationLength + 1;
+    /**
+     * Return the address buffer rotation for this input buffer, to be used by a 
+     * source FilterSliceNode
+     * 
+     * @param filterSliceNode The FilterSliceNode
+     * @return the address buffer for this input buffer on the core
+     */
+    public SourceAddressRotation getAddressRotation(FilterSliceNode filterSliceNode) {
+        return addrBufMap.get(filterSliceNode);
     }
     
     /**
@@ -222,6 +315,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
         }
         block.addStatement(Util.toStmt(currentReadRotName + " = " + readRotStructName));
         block.addStatement(Util.toStmt(currentReadBufName + " = " + currentReadRotName + "->buffer"));
+
         if (upstreamFileReader) {
             block.addStatement(Util.toStmt(currentFileReaderRotName + " = " + readRotStructName));
             block.addStatement(Util.toStmt(currentFileReaderBufName + " = " + currentReadRotName + "->buffer"));
@@ -230,39 +324,12 @@ public class InputRotatingBuffer extends RotatingBuffer {
         cs.addStatementToBufferInit(block);
     }
     
-    /**
-     * Return the set of address buffers that are declared on cores that feed this buffer.
-     * @return the set of address buffers that are declared on cores that feed this buffer.
-     */
-    public SourceAddressRotation[] getAddressBuffers() {
-        return addressBufs;
-    }
-    
-    /**
-     * Return the address buffer rotation for this input buffer, to be used by a 
-     * source FilterSliceNode
-     * 
-     * @param filterSliceNode The FilterSliceNode
-     * @return the address buffer for this input buffer on the core
-     */
-    public SourceAddressRotation getAddressRotation(FilterSliceNode filterSliceNode) {
-        return addrBufMap.get(filterSliceNode);
-    }
-    
-    /**
-     * Set the buffer size of this input buffer based on the max
-     * number of items it receives.
-     */
-    protected void setBufferSize() {
-        bufSize = Math.max(filterInfo.totalItemsReceived(SchedulingPhase.INIT),
-        		(filterInfo.totalItemsReceived(SchedulingPhase.STEADY) + filterInfo.copyDown));
-    }
-
     /* (non-Javadoc)
      * @see at.dms.kjc.backendSupport.ChannelI#popMethodName()
      */
     public String popMethodName() {
         return "__pop_" + unique_id;
+        //return "__pop" + this.getIdent();
     }
     
     /* (non-Javadoc)
@@ -289,6 +356,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
      */
     public String popManyMethodName() {
         return "__popN_" + unique_id;
+        //return "__popN" + this.getIdent();
     }
  
     JMethodDeclaration popManyCode = null;
@@ -331,6 +399,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
      */
     public String assignFromPopMethodName() {
         return "__popv_" + unique_id;
+        //return "__popv" + this.getIdent();
     }
     
     /* (non-Javadoc)
@@ -362,6 +431,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
      */
     public String peekMethodName() {
         return "__peek_" + unique_id;
+        //return "__peek" + this.getIdent();
     }
     
     /* (non-Javadoc)
@@ -376,6 +446,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
      */
     public String assignFromPeekMethodName() {
         return "__peekv_" + unique_id;
+        //return "__peekv" + this.getIdent();
     }
     
     /* (non-Javadoc)

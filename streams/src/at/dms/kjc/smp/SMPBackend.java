@@ -90,6 +90,10 @@ public class SMPBackend {
         // if debugging and number of iterations unspecified, limit number of iterations
         if(KjcOptions.debug && KjcOptions.iterations == -1)
             KjcOptions.iterations = 100;
+
+        // if load-balancing, enable shared buffers
+        if(KjcOptions.loadbalance)
+            KjcOptions.sharedbufs = true;
     }
     
     /**
@@ -98,7 +102,7 @@ public class SMPBackend {
      */
     private static void setScheduler() {
         if (KjcOptions.partitioner.equals("tmd")) {
-            scheduler = new TMD();
+            scheduler = new TMDBinPackFissAll();
         } else if (KjcOptions.partitioner.equals("smd")) {
             scheduler = new SMD();
         } else {

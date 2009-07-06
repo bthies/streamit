@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.112 2009-05-21 18:17:24 ctan Exp $
+ * $Id: KjcOptions.opt,v 1.113 2009-07-06 09:47:13 ctan Exp $
  */
 
 prefix Kjc
@@ -751,6 +751,16 @@ longname		"loopcount"
 	default		"5"
 	requireArgument
 	help		"Loop iteration count to use during work estimation when loop iteration can't be predicted"
+
+longname                "sharedbufs"
+	type		boolean
+	default		"false"
+	help		"Use shared buffers for fissed filters"
+
+longname		"loadbalance"
+	type		boolean
+	default		"false"
+	help		"Enable experimental load balancing"
 
 longname		"noloopinput"
 	type		boolean

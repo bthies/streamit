@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.137 2009-06-10 21:58:56 ctan Exp $
+# $Id: strc,v 1.138 2009-07-06 09:47:14 ctan Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -21,7 +21,7 @@
 
 use strict;
 use warnings;
-use vars qw(%opts $java $javac $cc $rm $make $have_fftw $vmmemory);
+use vars qw(%opts $java $javac $cc $rm $make $have_fftw $vmmemory $pgmemory);
 use POSIX qw(:sys_wait_h);
 
 use Cwd;
@@ -34,6 +34,7 @@ $rm = "rm";
 $make = "make";
 $have_fftw = "1";
 $vmmemory = "1700M";
+$pgmemory = "128M";
 # END AUTOCONFISCATE
 
 # Detect cygwin and adjust java to use new classpath
@@ -228,6 +229,7 @@ Usage: strc [options] file.str ...
   --backend class     Compile using named class as the backend
 
 + --memory, -Xmx      Specify Java heap limit (applies to library and compiler)
++ --pgmemory          Specify Java PermGen size limit (applies to library and compiler)
 * --noexecutable      Do not create an executable (for configurations that 
 *                     might otherwise)
   --output, -o file   Write a binary to given filename
@@ -297,6 +299,8 @@ Usage: strc [options] file.str ...
 +
 + Options specific to SMP backend:
 + --partitioner       For SMP, choose a partitioner, tmd (default) or smd.
++ --sharedbufs        Use shared buffers for fissed filters
++ --loadbalance       Enable experimental load balancing
 + --loopcount         Loop iteration count to assume during work estimation
 + --noloopinput       Do not loop through input file, terminate at end
 + --nobind            No binding of threads to cores
@@ -385,6 +389,7 @@ sub get_options
   {
     $opts{home} = $ENV{STREAMIT_HOME};
     $opts{memory} = $vmmemory;
+    $opts{pgmemory} = $pgmemory;
     # Note: the exclamation points below indicate negatable options.  That is,
     # for an option "myoption!", you can pass either "--myoption" or
     # "--no-myoption" at the command line.  Only makes sense for boolean 
@@ -448,6 +453,7 @@ sub get_options
 			    "partition-dp|pdp",
 			    "partition-greedy|pgreedy",
 			    "partition-greedier|pgreedier",
+			    "pgmemory=s",
 			    "poptopeek",
 			    "marksteady!",
 			    "printreps!",
@@ -487,6 +493,8 @@ sub get_options
 			    "workestunroll",
 			    "cluster=i",
 			    "steadymult=i",
+			    "sharedbufs",
+			    "loadbalance",
 			    "loopcount=i",
 			    "noloopinput",
 			    "nobind",
@@ -634,6 +642,7 @@ sub streamit_to_java
     my ($fns) = @_;
     return [] if !@$fns;
     my $xmx = "-Xmx" . $opts{memory};
+    my $pgmem = "-XX:MaxPermSize=" . $opts{pgmemory};
     my $server = $opts{server} ? "-server" : "";
     my $target = change_extension($fns->[0], "str", "java");
     my $libflag = "";
@@ -642,7 +651,7 @@ sub streamit_to_java
     # only tell the frontend to profile on the library path.
     # Otherwise, the compiler gets the profile flag.
     $opsflag = "--countops" if $opts{countops} && $opts{library};
-    my $result = call("$java $xmx $server streamit.frontend.ToJava --output $target " .
+    my $result = call("$java $xmx $pgmem $server streamit.frontend.ToJava --output $target " .
 		      "$libflag $opsflag " . join(' ', @$fns));
     return undef if $result != 0;
     return [$target];
@@ -669,12 +678,13 @@ sub java_to_streamit
     my ($fns) = @_;
     return [] if !@$fns;
     my $xmx = "-Xmx" . $opts{memory};
+    my $pgmem = "-XX:MaxPermSize=" . $opts{pgmemory};
     my $server = $opts{server} ? "-server" : "";
     my $jfiles = join(' ', @$fns);
     my $target = change_extension($fns->[0], "java", "str");
     # Add "_c" to the basename.
     $target =~ s/^([^.]*)/$1_c/;
-    my $result = call("$java $xmx $server at.dms.kjc.Main --streamit " .
+    my $result = call("$java $xmx $pgmem $server at.dms.kjc.Main --streamit " .
 		      "--backend at.dms.kjc.sir.SIRToStreamIt " .
 		      "$compiler_opts $jfiles > $target");
     return undef if $result != 0;
@@ -692,18 +702,19 @@ sub java_to_c
     my ($fns) = @_;
     return [] if !@$fns;
     my $xmx = "-Xmx" . $opts{memory};
+    my $pgmem = "-XX:MaxPermSize=" . $opts{pgmemory};
     my $server = $opts{server} ? "-server" : "";
     my $jfiles = join(' ', @$fns);
     if ($opts{uni})	     # uni backend writes to stdout: TODO fix some day
       {
 		my $target = change_extension($fns->[0], "java", "c");
 		$target = $opts{output} . ".c" if $opts{outputs};
-		my $result = call("$java $xmx $server at.dms.kjc.Main --streamit $compiler_opts " .
+		my $result = call("$java $xmx $pgmem $server at.dms.kjc.Main --streamit $compiler_opts " .
 			  "$jfiles > $target");
 		return undef if $result != 0;
 		return [$target];
       } else {
-          my $result = call("$java $xmx $server at.dms.kjc.Main --streamit $compiler_opts $jfiles " .
+          my $result = call("$java $xmx $pgmem $server at.dms.kjc.Main --streamit $compiler_opts $jfiles " .
                             (! defined($opts{backend}) ? "" : "--backend $opts{backend}"));
 		return undef if $result != 0;
 		# TODO: implement --output flags to all backends.
@@ -727,6 +738,7 @@ sub streamit_via_tokopi
     my ($fns) = @_;
     return [] if !@$fns;
     my $xmx = "-Xmx" . $opts{memory};
+    my $pgmem = "-XX:MaxPermSize=" . $opts{pgmemory};
     my $server = $opts{server} ? "-server" : "";
     my $sfiles = join(' ', @$fns);
     my $result;
@@ -734,13 +746,13 @@ sub streamit_via_tokopi
       {
 	my $target = change_extension($fns->[0], "str", "c");
 	$target = $opts{output} . ".c" if $opts{output};
-	$result = call("$java $xmx $server streamit.frontend.ToKopi $compiler_opts $sfiles > $target");
+	$result = call("$java $xmx $pgmem $server streamit.frontend.ToKopi $compiler_opts $sfiles > $target");
 	return undef if $result != 0;
 	return [$target];
       }
     else
       {
-	$result = call("$java $xmx $server at.dms.kjc.Main --streamit $compiler_opts $sfiles");
+	$result = call("$java $xmx $pgmem $server at.dms.kjc.Main --streamit $compiler_opts $sfiles");
 	return undef if $result != 0;
 	return [];
       }
@@ -759,6 +771,7 @@ sub run_in_library
     return if !@$fns;
     my @out = ();
     my $xmx = "-Xmx" . $opts{memory};
+    my $pgmem = "-XX:MaxPermSize=" . $opts{pgmemory};
     my $server = $opts{server} ? "-server" : "";
     my $result;
     foreach my $jfile (@$fns)
@@ -766,7 +779,7 @@ sub run_in_library
 	  my $class = remove_extension($jfile, "java");
 	  $result = call("$javac $jfile");
 	  return undef if $result != 0;
-	  $result = call("$java $xmx $server $class " . get_lib_opts());
+	  $result = call("$java $xmx $pgmem $server $class " . get_lib_opts());
 #	  $result = call("$java -Xrunhprof:cpu=samples,heap=all $xmx $server $class " . get_lib_opts());
 	  return undef if $result != 0;
       }
@@ -941,6 +954,8 @@ sub get_compiler_opts
     $opts{nopartition} && ($copts .= " --nopartition");
     $opts{fixedpoint} && ($copts .= " --fixedpoint");
     $opts{steadymult} && ($copts .= " --steadymult ". $opts{steadymult});
+    $opts{sharedbufs} && ($copts .= " --sharedbufs");
+    $opts{loadbalance} && ($copts .= " --loadbalance");
     $opts{loopcount} && ($copts .= " --loopcount ". $opts{loopcount});
     $opts{noloopinput} && ($copts .= " --noloopinput");
     $opts{nobind} && ($copts .= " --nobind");

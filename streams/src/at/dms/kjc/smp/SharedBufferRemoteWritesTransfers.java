@@ -170,8 +170,7 @@ public class SharedBufferRemoteWritesTransfers extends BufferTransfers {
     	
         int literal = 0;
 
-        if(phase != SchedulingPhase.INIT &&
-           FissionGroupStore.isFizzed(parent.filterNode.getParent())) {
+        if(phase != SchedulingPhase.INIT && FissionGroupStore.isFizzed(parent.filterNode.getParent())) {
             FissionGroup group = FissionGroupStore.getFissionGroup(parent.filterNode.getParent());
 
             int totalItemsReceived = group.unfizzedFilterInfo.totalItemsReceived(phase);
@@ -184,7 +183,7 @@ public class SharedBufferRemoteWritesTransfers extends BufferTransfers {
             literal = curFizzedSlice * (totalItemsReceived / numFizzedSlices);
         }
 
-        System.out.println("zeroOutTail, phase: " + phase + ", filterNode: " + parent.filterNode + ", literal: " + literal);
+        //System.out.println("zeroOutTail, phase: " + phase + ", filterNode: " + parent.filterNode + ", literal: " + literal);
 
         return new JExpressionStatement(
                 new JAssignmentExpression(tail, new JIntLiteral(literal)));
@@ -343,11 +342,10 @@ public class SharedBufferRemoteWritesTransfers extends BufferTransfers {
         else
             dsFilterCopyDown = FilterInfo.getFilterInfo(input.getNextFilter()).copyDown;
 
-        System.out.println("getDestIndices, phase: " + phase + ", edge: " + edge.getSrc().getParent().getFirstFilter() + "->" + edge.getDest().getParent().getFirstFilter() + ", dsFilterCopyDown: " + dsFilterCopyDown);
+        //System.out.println("getDestIndices, phase: " + phase + ", edge: " + edge.getSrc().getParent().getFirstFilter() + "->" + edge.getDest().getParent().getFirstFilter() + ", dsFilterCopyDown: " + dsFilterCopyDown);
 
         int fissionOffset = 0;
-        if(phase != SchedulingPhase.INIT &&
-           FissionGroupStore.isFizzed(input.getParent())) {
+        if(phase != SchedulingPhase.INIT && FissionGroupStore.isFizzed(input.getParent())) {
             FissionGroup group = FissionGroupStore.getFissionGroup(input.getParent());
 
             int totalItemsReceived = group.unfizzedFilterInfo.totalItemsReceived(phase);
@@ -358,9 +356,14 @@ public class SharedBufferRemoteWritesTransfers extends BufferTransfers {
             assert (totalItemsReceived % numFizzedSlices) == 0;
 
             fissionOffset = curFizzedSlice * (totalItemsReceived / numFizzedSlices);
+
+            if(group.getFizzedSliceIndex(input.getParent()) != 0)
+                fissionOffset -= (group.unfizzedFilterInfo.peek - group.unfizzedFilterInfo.pop);
+
+            assert fissionOffset >= 0;
         }
 
-        System.out.println("getDestIndices, phase: " + phase + ", edge: " + edge.getSrc().getParent().getFirstFilter() + "->" + edge.getDest().getParent().getFirstFilter() + ", fissionOffset: " + fissionOffset);
+        //System.out.println("getDestIndices, phase: " + phase + ", edge: " + edge.getSrc().getParent().getFirstFilter() + "->" + edge.getDest().getParent().getFirstFilter() + ", fissionOffset: " + fissionOffset);
         
         int inputRots = indices.length / input.getWeight(edge, phase);
         int nextWriteIndex = 0;
@@ -368,23 +371,12 @@ public class SharedBufferRemoteWritesTransfers extends BufferTransfers {
         for (int rot = 0; rot < inputRots; rot++) {
             for (int index = 0; index < input.getWeights(phase).length; index++) {
                 if (input.getSources(phase)[index] == edge) {
-                    System.out.println("getDestIndices, phase: " + phase + ", edge: " + edge.getSrc().getParent().getFirstFilter() + "->" + edge.getDest().getParent().getFirstFilter() + ", index: " + index + ", weightBefore: " + input.weightBefore(index, phase));
+                    //System.out.println("getDestIndices, phase: " + phase + ", edge: " + edge.getSrc().getParent().getFirstFilter() + "->" + edge.getDest().getParent().getFirstFilter() + ", index: " + index + ", weightBefore: " + input.weightBefore(index, phase));
                     for (int item = 0; item < input.getWeights(phase)[index]; item++) {
-                        indices[nextWriteIndex] = rot * input.totalWeights(phase) +
+                        indices[nextWriteIndex++] = rot * input.totalWeights(phase) +
                             input.weightBefore(index, phase) + item + 
                             (phase == SchedulingPhase.INIT ? 0 : dsFilterCopyDown) +
                             fissionOffset;
-
-                        if(phase != SchedulingPhase.INIT &&
-                           FissionGroupStore.isFizzed(input.getParent()) &&
-                           FissionGroupStore.getFizzedSliceIndex(input.getParent()) != 0 &&
-                           index > 0) {
-                            indices[nextWriteIndex] -= input.getWeights(phase)[0];
-
-                            System.out.println("getDestIndices, phase: " + phase + ", edge: " + edge.getSrc().getParent().getFirstFilter() + "->" + edge.getDest().getParent().getFirstFilter() + ", index: " + index + ", removing duplicated weight: " + input.getWeights(phase)[0]);
-                        }
-
-                        nextWriteIndex++;
                     }
                 }
             }
@@ -428,7 +420,7 @@ public class SharedBufferRemoteWritesTransfers extends BufferTransfers {
         	
         	int offset = edge.getDest().weightBefore(edge, phase);
 
-            System.out.println("getWriteOffset, phase: " + phase + ", filterNode: " + parent.filterNode + ", weightBefore: " + offset);
+            //System.out.println("getWriteOffset, phase: " + phase + ", filterNode: " + parent.filterNode + ", weightBefore: " + offset);
         	
             //if we are not in the init, we must skip over the dest's copy down
         	if(phase != SchedulingPhase.INIT) {
@@ -438,7 +430,7 @@ public class SharedBufferRemoteWritesTransfers extends BufferTransfers {
                 }
                 else {
                     offset += FilterInfo.getFilterInfo(destFilter).copyDown;
-                    System.out.println("getWriteOffset, phase: " + phase + ", copyDown 2: " + FilterInfo.getFilterInfo(destFilter).copyDown);
+                    //System.out.println("getWriteOffset, phase: " + phase + ", copyDown 2: " + FilterInfo.getFilterInfo(destFilter).copyDown);
                 }
         	}
 
@@ -455,10 +447,10 @@ public class SharedBufferRemoteWritesTransfers extends BufferTransfers {
                 
                 offset += curFizzedSlice * (totalItemsSent / numFizzedSlices);
 
-                System.out.println("getWriteOffset, phase: " + phase + ", filterNode: " + parent.filterNode + ", fissionOffset: " + (curFizzedSlice * (totalItemsSent / numFizzedSlices)));
+                //System.out.println("getWriteOffset, phase: " + phase + ", filterNode: " + parent.filterNode + ", fissionOffset: " + (curFizzedSlice * (totalItemsSent / numFizzedSlices)));
             }
 
-            System.out.println("getWriteOffset, phase: " + phase + ", filterNode: " + parent.filterNode + ", offset: " + offset);
+            //System.out.println("getWriteOffset, phase: " + phase + ", filterNode: " + parent.filterNode + ", offset: " + offset);
         	return offset;
         }
         else {
@@ -470,7 +462,7 @@ public class SharedBufferRemoteWritesTransfers extends BufferTransfers {
     	assert (parent instanceof OutputRotatingBuffer);
     	
         int literal = getWriteOffset(phase);
-        System.out.println("zeroOutHead, phase: " + phase + ", filterNode: " + parent.filterNode + ", literal: " + literal);
+        //System.out.println("zeroOutHead, phase: " + phase + ", filterNode: " + parent.filterNode + ", literal: " + literal);
 
         JBlock block = new JBlock();        
         block.addStatement(new JExpressionStatement(

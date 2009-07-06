@@ -251,41 +251,42 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
         }
         
         ArrayAssignmentStatements reorderStatements = new ArrayAssignmentStatements();
+
+        String srcBuffer;
+        if(((OutputRotatingBuffer)parent).hasDirectWrite()) {
+            FilterSliceNode directWriteFilter = ((OutputRotatingBuffer)parent).getDirectWriteFilter();
+            srcBuffer = ((OutputRotatingBuffer)parent).getAddressBuffer(directWriteFilter.getParent().getHead()).currentWriteBufName;
+        }
+        else {
+            srcBuffer = ((OutputRotatingBuffer)parent).currentWriteBufName;
+        }
         
         int items = 0;
         for (int rot = 0; rot < rotations; rot++) {
             for (int weightIndex = 0; weightIndex < output.getWeights(phase).length; weightIndex++) {
                 InterSliceEdge[] dests = output.getDests(phase)[weightIndex];
                 for (int curWeight = 0; curWeight < output.getWeights(phase)[weightIndex]; curWeight++) {
-                    int sourceElement= rot * output.totalWeights(phase) + 
+                    int srcElement= rot * output.totalWeights(phase) + 
                         output.weightBefore(weightIndex, phase) + curWeight + writeOffset;
 
                     for (InterSliceEdge dest : dests) {
-                        int destElement = 
-                            destIndices[destIndex.get(dest)][nextWriteIndex[destIndex.get(dest)]];
+                        int destElement = destIndices[destIndex.get(dest)][nextWriteIndex[destIndex.get(dest)]];
                         nextWriteIndex[destIndex.get(dest)]++;
-                        Core destTile = 
-                            SMPBackend.scheduler.getComputeNode(dest.getDest().getNextFilter());
-                        
-                        //don't do anything if this dest is on the same tiles, we are sharing the buffer with the
-                        //dest, and the indices are the same.
-                        if (destTile == sourceTile && destElement == sourceElement && ((OutputRotatingBuffer)parent).hasDirectWrite()) 
+
+                        SourceAddressRotation addrBuf = ((OutputRotatingBuffer)parent).getAddressBuffer(dest.getDest());
+                        String destBuffer = addrBuf.currentWriteBufName;
+
+                        //don't do anything if src buffer and dest buffer are the same, we have
+                        //direct write, and src/dest indices are the same
+                        if (destBuffer.equals(srcBuffer) && destElement == srcElement && ((OutputRotatingBuffer)parent).hasDirectWrite()) 
                             continue;
                         
-                        if (destTile == sourceTile) {
-                            assert !((OutputRotatingBuffer)parent).hasDirectWrite() : "Trying to reorder a single buffer! Could lead to race. " + filter;
+                        if (destBuffer.equals(srcBuffer)) {
+                            assert !((OutputRotatingBuffer)parent).hasDirectWrite() : "Trying to reorder a single buffer! Could lead to race. filter: " + filter + ", phase: " + phase + ", src: " + srcElement + ", dest: " + destElement;
                         }
-                        
-                        SourceAddressRotation addrBuf = ((OutputRotatingBuffer)parent).getAddressBuffer(dest.getDest());
-                        
-                        if(((OutputRotatingBuffer)parent).hasDirectWrite()) {
-	                        reorderStatements.addAssignment(addrBuf.currentWriteBufName, "", destElement, 
-	                        		((OutputRotatingBuffer)parent).getAddressBuffer(((OutputRotatingBuffer)parent).getDirectWriteFilter().getParent().getHead()).currentWriteBufName, "", sourceElement);
-                        }
-                        else {
-	                        reorderStatements.addAssignment(addrBuf.currentWriteBufName, "", destElement, 
-	                        		((OutputRotatingBuffer)parent).currentWriteBufName, "", sourceElement);                        	
-                        }
+                       
+                        reorderStatements.addAssignment(destBuffer, "", destElement,
+                                                        srcBuffer, "", srcElement);
                     }
                     
                     items++;

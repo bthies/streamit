@@ -17,35 +17,7 @@ public class ProcessFilterSliceNode {
 	
     /** print debugging info? */
     public static boolean debug = false;
-    
-    /** scheduler used by backend */
-    private static Scheduler scheduler;
-    /** splits the slicegraph into levels */
-    private static LevelizeSliceGraph lsg; 
-    /** the number of filters that we have yet to process from a level the init stage */
-    private static HashMap<Integer, Integer> levelLeftToProcessInit;
-    /** the number of filters that we have yet to process from a level the init stage */
-    private static HashMap<Integer, Integer> levelLeftToProcessPP;
-    
-    public static void setScheduler(Scheduler s) {
-    	scheduler = s;
-    	
-        if (scheduler.isTMD()) {
-        	//levelize the slicegraph
-        	lsg = new LevelizeSliceGraph(scheduler.getGraphSchedule().getSlicer().getTopSlices());
-        	        	
-            //fill the left to process maps with the number of filters in a level
-            levelLeftToProcessInit = new HashMap<Integer, Integer>();
-            levelLeftToProcessPP = new HashMap<Integer, Integer>();
-
-        	Slice[][] levels = lsg.getLevels();
-            for (int i = 0; i < levels.length; i++) {
-                levelLeftToProcessInit.put(i, levels[i].length);
-                levelLeftToProcessPP.put(i, levels[i].length);
-            }
-        }
-    }
-    
+        
     private static int uid = 0;
     public static int getUid() {
         return uid++;
@@ -165,23 +137,8 @@ public class ProcessFilterSliceNode {
             // must follow order of init schedule.
             codeStore.addInitStatement(new JExpressionStatement(null,
                     new JMethodCallExpression(null, new JThisExpression(null),
-                            workAtInit.getName(), new JExpression[0]), null));
-            
-        }
-        
-        if (scheduler.isTMD()) {
-            //if we are using the tmd scheduler we have to add barriers between each 
-            //init call of different levels 
-            //so we keep a hashmap that will tell us how many more filters needs to be 
-            //processed in the level so that we only add the barrier after the last to be processed
-            //so after the entire level has executed
-            int level = lsg.getLevel(filterNode.getParent());
-            int leftToProcess = levelLeftToProcessInit.get(level);
-            leftToProcess--;
-            levelLeftToProcessInit.put(level, leftToProcess);
-            if (leftToProcess == 0)
-                CoreCodeStore.addBarrierInit();
-        }
+                            workAtInit.getName(), new JExpression[0]), null));            
+        }        
     }
     
     protected void additionalInitProcessing() {
@@ -205,22 +162,6 @@ public class ProcessFilterSliceNode {
                                             .getName(), new JExpression[0]),
                             null));
 
-        }
-
-        if (scheduler.isTMD()) {
-            //if we are using the tmd scheduler we have to add barriers between each 
-            //init call of different levels 
-            //so we keep a hashmap that will tell us how many more filters needs to be 
-            //processed in the level so that we only add the barrier after the last to be processed
-            //so after the entire level has executed
-            int level = lsg.getLevel(filterNode.getParent());
-            int leftToProcess = levelLeftToProcessPP.get(level);
-            leftToProcess--;
-            levelLeftToProcessPP.put(level, leftToProcess);
-            if (leftToProcess == 0) {
-                CoreCodeStore.addBarrierInit();
-                levelLeftToProcessPP.put(level, lsg.getLevels()[level].length);
-            }
         }
     }
     

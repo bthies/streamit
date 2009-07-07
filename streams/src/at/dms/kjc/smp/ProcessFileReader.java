@@ -54,8 +54,16 @@ public class ProcessFileReader {
 
         System.out.print("Generating FileReader code: ");
         for (InterSliceEdge edge : fileOutput.getDestSet(SchedulingPhase.STEADY)) {
-            System.out.print(".");
-            generateCode(edge.getDest().getNextFilter());
+            if(KjcOptions.sharedbufs && FissionGroupStore.isFizzed(edge.getDest().getParent())) {
+                for(Slice fizzedSlice : FissionGroupStore.getFizzedSlices(edge.getDest().getParent())) {
+                    System.out.println(".");
+                    generateCode(fizzedSlice.getFirstFilter());
+                }
+            }
+            else {
+                System.out.print(".");
+                generateCode(edge.getDest().getNextFilter());
+            }
         }
         System.out.println();
     }

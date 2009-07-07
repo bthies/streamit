@@ -75,15 +75,15 @@ public class SMPBackEndScaffold extends BackEndScaffold {
         // schedule the initialization phase.
         slices = schedule.getInitSchedule();
         iterateInorder(slices, SchedulingPhase.INIT, computeNodes);
+
         // schedule the prime pump phase.
         // (schedule should be empty if not spacetime)
         slices = schedule.getPrimePumpScheduleFlat();
         iterateInorder(slices, SchedulingPhase.PRIMEPUMP, computeNodes);
+
         // schedule the steady-state phase.
         slices = schedule.getSchedule();
-
         betweenScheduling(schedule, resources);
-      
         iterateInorder(slices, SchedulingPhase.STEADY, computeNodes);
         
         afterScheduling(schedule, resources);
@@ -113,7 +113,6 @@ public class SMPBackEndScaffold extends BackEndScaffold {
             //create communication code for splitting the output
             resources.processOutputSliceNode((OutputSliceNode)slice.getTail(),
                     whichPhase, computeNodes);
-            
         }
     }  
 }

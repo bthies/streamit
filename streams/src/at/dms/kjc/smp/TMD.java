@@ -377,7 +377,7 @@ public class TMD extends Scheduler {
         
         int maxFission = 0;
         int i = 0;
-        //go throught and perform the fission
+        //go through and perform the fission
         for (Slice slice : slices) {
             if (fizzAmount.containsKey(slice) && fizzAmount.get(slice) > 1) {
                 if (Fissioner.doit(slice, graphSchedule.getSlicer(), fizzAmount.get(slice)) != null) {

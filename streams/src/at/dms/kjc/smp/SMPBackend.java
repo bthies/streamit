@@ -60,13 +60,16 @@ public class SMPBackend {
         // dump final slice graph to dot file
         graphSchedule.getSlicer().dumpGraph("after_slice_partition.dot", scheduler);
         graphSchedule.getSlicer().dumpGraph("slice_graph.dot", scheduler, false);
+
+        // if load balancing, find candidiate fission groups to load balance
+        if(KjcOptions.loadbalance)
+            LoadBalancer.findCandidates();
         
         // create all buffers and set the rotation lengths
         RotatingBuffer.createBuffers(graphSchedule);
 	        
         // now convert to Kopi code plus communication commands
-        backEndBits = new SMPBackEndFactory(chip);
-        backEndBits.setScheduler(scheduler);
+        backEndBits = new SMPBackEndFactory(chip, scheduler);
         backEndBits.getBackEndMain().run(graphSchedule, backEndBits);
         
         if (KjcOptions.numbers > 0)

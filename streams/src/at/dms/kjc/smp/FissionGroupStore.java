@@ -1,5 +1,6 @@
 package at.dms.kjc.smp;
 
+import at.dms.kjc.backendSupport.FilterInfo;
 import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.slicegraph.fission.FissionGroup;
 
@@ -51,11 +52,26 @@ public class FissionGroupStore {
             fizzedToFissionGroup.containsKey(slice);
     }
 
-    public static Slice getUnfizzedSlice(Slice fizzedSlice) {
-        if(fizzedToFissionGroup.containsKey(fizzedSlice))
-            return fizzedToFissionGroup.get(fizzedSlice).unfizzedSlice;
+    public static boolean isUnfizzedSlice(Slice slice) {
+        return unfizzedToFissionGroup.containsKey(slice);
+    }
+
+    public static boolean isFizzedSlice(Slice slice) {
+        return fizzedToFissionGroup.containsKey(slice);
+    }
+
+    public static Slice getUnfizzedSlice(Slice slice) {
+        if(unfizzedToFissionGroup.containsKey(slice))
+            return slice;
+
+        if(fizzedToFissionGroup.containsKey(slice))
+            return fizzedToFissionGroup.get(slice).unfizzedSlice;
 
         return null;
+    }
+
+    public static FilterInfo getUnfizzedFilterInfo(Slice slice) {
+        return getFissionGroup(slice).unfizzedFilterInfo;
     }
 
     public static Slice[] getFizzedSlices(Slice slice) {

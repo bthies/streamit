@@ -275,6 +275,9 @@ public class CoreCodeStore extends ComputeCodeStore<Core> {
             //find the core of the first input to the file writer
             FilterSliceNode firstInputFilter = 
             	fileW.getParent().getHead().getSources(SchedulingPhase.STEADY)[0].getSrc().getParent().getFirstFilter();
+
+            if(KjcOptions.sharedbufs && FissionGroupStore.isFizzed(firstInputFilter.getParent()))
+                firstInputFilter = FissionGroupStore.getFizzedSlices(firstInputFilter.getParent())[0].getFirstFilter();
             
             Core core = 
                 SMPBackend.scheduler.getComputeNode(firstInputFilter);

@@ -26,6 +26,8 @@ public class FileReaderRemoteReads extends FileReaderCode {
     private void generateStatements(SchedulingPhase phase) {
         FilterInfo srcInfo = FilterInfo.getFilterInfo(fileOutput.getPrevFilter());
         FilterInfo dstInfo = FilterInfo.getFilterInfo(input.getNextFilter());
+
+        System.out.println("FileReaderRemoteReads, dstFilter: " + input.getNextFilter());
        
         //we are assuming that the downstream filter has only the file reader as input
         
@@ -37,10 +39,28 @@ public class FileReaderRemoteReads extends FileReaderCode {
             //rotations of the output for the file reader
             InterSliceEdge edge = input.getSingleEdge(phase);
             assert edge == input.getEdgeFrom(phase, fileOutput.getPrevFilter());
-            assert dstInfo.totalItemsReceived(phase) % fileOutput.getWeight(edge, phase) == 0;
-            int rotations = dstInfo.totalItemsReceived(phase) / fileOutput.getWeight(edge, phase);
+
+            int dstTotalItemsReceived;
+            if(KjcOptions.sharedbufs && phase != SchedulingPhase.INIT &&
+               FissionGroupStore.isFizzed(input.getParent())) {
+                FissionGroup group = FissionGroupStore.getFissionGroup(input.getParent());
+
+                int totalItemsReceived = group.unfizzedFilterInfo.totalItemsReceived(phase);
+                int numFizzedSlices = group.fizzedSlices.length;
+
+                dstTotalItemsReceived = totalItemsReceived / numFizzedSlices;
+            }
+            else {
+                dstTotalItemsReceived = dstInfo.totalItemsReceived(phase);
+            }
+
+            assert dstTotalItemsReceived % fileOutput.getWeight(edge, phase) == 0;
+            int rotations = dstTotalItemsReceived / fileOutput.getWeight(edge, phase);
+
             //the index into the destination buffer we are currently receiving to
             int destIndex = 0;
+
+            System.out.print("FileReaderRemoteReads, itemsReceived: " + dstTotalItemsReceived + ", rotations: " + rotations);
 
             int fissionOffset = 0;
             if(KjcOptions.sharedbufs && phase != SchedulingPhase.INIT &&
@@ -57,10 +77,20 @@ public class FileReaderRemoteReads extends FileReaderCode {
                 fissionOffset = curFizzedSlice * (totalItemsReceived / numFizzedSlices);
             }
 
+            System.out.println("FileReaderRemoteReads, fissionOffset: " + fissionOffset);
+
             String dst_buffer = parent.currentFileReaderBufName;
                         
             //we must account for the copy down in the pp and ss
-            int copyDown = (phase == SchedulingPhase.INIT ? 0 : dstInfo.copyDown);
+            int copyDown = 0;
+            if(phase != SchedulingPhase.INIT) {
+                if(KjcOptions.sharedbufs && FissionGroupStore.isFizzed(input.getParent()))
+                    copyDown = FissionGroupStore.getUnfizzedFilterInfo(input.getParent()).copyDown;
+                else
+                    copyDown = dstInfo.copyDown;
+            }
+
+            System.out.println("FileReaderRemoteReads, copyDown: " + copyDown);
 
             for (int rot = 0; rot < rotations; rot++) {
                 for (int weight = 0; weight < fileOutput.getWeights(phase).length; weight++) {

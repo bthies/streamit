@@ -3,10 +3,8 @@ package at.dms.kjc.smp;
 import java.util.HashMap;
 
 import at.dms.kjc.sir.*;
-import at.dms.kjc.sir.lowering.fission.StatelessDuplicate;
 import at.dms.kjc.sir.lowering.partition.*;
 import at.dms.kjc.slicegraph.*;
-import at.dms.kjc.slicegraph.fission.Fissioner;
 import at.dms.kjc.slicegraph.fission.FissionGroup;
 import at.dms.kjc.*;
 import java.util.LinkedList;
@@ -149,6 +147,18 @@ public class TMDBinPackFissAll extends TMD {
             // Mark fizzed set as assigned
             for(Slice fizzedSlice : fizzedCopies)
                 alreadyAssigned.add(fizzedSlice);
+
+            // If using shared buffers, then fission does not replace the original
+            // unfizzed slice with fizzed slices.  The current 'slice' is the original
+            // unfizzed slice.  Set the compute node for 'slice' to the offChipMemory.
+            // This is so that when we dump a dot-graph, we have a core to return when
+            // we display the 'slice' in the graph.  Returning offChipMemory as the core
+            // is sub-optimal, though there's not much else we can do right now
+            if(KjcOptions.sharedbufs) {
+                assert FissionGroupStore.isUnfizzedSlice(slice);
+                setComputeNode(slice.getFirstFilter(), SMPBackend.chip.getOffChipMemory());
+                alreadyAssigned.add(slice);
+            }
         }
     }
     
@@ -195,13 +205,13 @@ public class TMDBinPackFissAll extends TMD {
         SMPBackend.scheduler.graphSchedule.getSlicer().dumpGraph("before_fission.dot", 
                 null, false);
         
-        //go through and register fission amounts with Fissioner
         int maxFission = 0;
         int i = 0;
+        //go through and perform the fission
         for (Slice slice : slices) {
             if (fizzAmount.containsKey(slice) && fizzAmount.get(slice) > 1) {
                 FissionGroup fissionGroup = 
-                    Fissioner.doit(slice, graphSchedule.getSlicer(), fizzAmount.get(slice));
+                    StatelessFissioner.doit(slice, graphSchedule.getSlicer(), fizzAmount.get(slice));
 
                 if(fissionGroup != null) {
                     System.out.println("Fissing " + slice.getFirstFilter() + " by " + fizzAmount.get(slice));
@@ -245,7 +255,7 @@ public class TMDBinPackFissAll extends TMD {
     			continue;
     	
     		// Check if fizzable.  If so, fizz by totalTiles
-    		if(Fissioner.canFizz(slice, false)) {
+    		if(StatelessFissioner.canFizz(slice, false)) {
     			if(commRate > 0 && workEst / commRate <= FISS_COMP_COMM_THRESHOLD) {
     				System.out.println("Can fizz, but too much communication: " + fsn);
     			}

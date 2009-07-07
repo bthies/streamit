@@ -13,6 +13,7 @@ import at.dms.kjc.JFieldAccessExpression;
 import at.dms.kjc.JMethodDeclaration;
 import at.dms.kjc.JStatement;
 import at.dms.kjc.JThisExpression;
+import at.dms.kjc.KjcOptions;
 import at.dms.kjc.backendSupport.FilterInfo;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
@@ -20,6 +21,7 @@ import at.dms.kjc.slicegraph.InterSliceEdge;
 import at.dms.kjc.slicegraph.OutputSliceNode;
 import at.dms.kjc.slicegraph.SchedulingPhase;
 import at.dms.kjc.slicegraph.Slice;
+import at.dms.kjc.slicegraph.fission.FissionGroup;
 import at.dms.kjc.spacetime.BasicSpaceTimeSchedule;
 
 public class OutputRotatingBuffer extends RotatingBuffer {
@@ -48,26 +50,40 @@ public class OutputRotatingBuffer extends RotatingBuffer {
      */
     public static void createOutputBuffers(BasicSpaceTimeSchedule schedule) {
         for (Slice slice : schedule.getScheduleList()) {
-            assert slice.getNumFilters() == 1;
-            
-            //don't do anything for file readers or writers,
-            //for file readers the output buffer is allocated in ProcessFileReader
-            if (slice.getHead().getNextFilter().isPredefined())
-                continue;
-            
-            if (!slice.getTail().noOutputs()) {
-                assert slice.getTail().totalWeights(SchedulingPhase.STEADY) > 0;
-                Core parent = SMPBackend.scheduler.getComputeNode(slice.getFirstFilter());
+            if(KjcOptions.sharedbufs && FissionGroupStore.isFizzed(slice)) {
+                assert FissionGroupStore.isUnfizzedSlice(slice);
 
-                // create the new buffer, the constructor will put the buffer in the hashmap
-                OutputRotatingBuffer buf = new OutputRotatingBuffer(slice.getFirstFilter(), parent);
-                
-                buf.setRotationLength(schedule);
-                buf.setBufferSize();
-                buf.createInitCode();
+                FissionGroup group = FissionGroupStore.getFissionGroup(slice);
+                for(Slice fizzedSlice : group.fizzedSlices)
+                    createOutputBuffer(fizzedSlice, schedule);
+            }
+            else {
+                createOutputBuffer(slice, schedule);
             }
         }
     }
+
+    public static void createOutputBuffer(Slice slice, BasicSpaceTimeSchedule schedule) {
+        assert slice.getNumFilters() == 1;
+        
+        //don't do anything for file readers or writers,
+        //for file readers the output buffer is allocated in ProcessFileReader
+        if (slice.getHead().getNextFilter().isPredefined())
+            return;
+        
+        if (!slice.getTail().noOutputs()) {
+            assert slice.getTail().totalWeights(SchedulingPhase.STEADY) > 0;
+            Core parent = SMPBackend.scheduler.getComputeNode(slice.getFirstFilter());
+            
+            // create the new buffer, the constructor will put the buffer in the hashmap
+            OutputRotatingBuffer buf = new OutputRotatingBuffer(slice.getFirstFilter(), parent);
+            
+            buf.setRotationLength(schedule);
+            buf.setBufferSize();
+            buf.createInitCode();
+        }
+    }
+
     /**
      * Create a new output buffer that is associated with the filter node.
      * 
@@ -86,8 +102,8 @@ public class OutputRotatingBuffer extends RotatingBuffer {
 		else
 			System.out.println("  directWrite is false");
         
-        if(directWrite)
-            this.ident = InputRotatingBuffer.getInputBuffer(directWriteFilter).getIdent();
+//         if(directWrite)
+//             this.ident = InputRotatingBuffer.getInputBuffer(directWriteFilter).getIdent();
 
         writeRotStructName =  this.getIdent() + "write_rot_struct";
         currentWriteRotName = this.getIdent() + "_write_current";
@@ -309,9 +325,22 @@ public class OutputRotatingBuffer extends RotatingBuffer {
     	return directWriteFilter;
     }
     
+    /**
+     * Set the rotation length of this rotating buffer
+     */
     public void setRotationLength(BasicSpaceTimeSchedule schedule) {
         //calculate the rotation length
-        int srcMult = schedule.getPrimePumpMult(filterNode.getParent());
+
+        int srcMult;
+        if(KjcOptions.sharedbufs && FissionGroupStore.isFizzed(filterNode.getParent())) {
+            srcMult = schedule.getPrimePumpMult(FissionGroupStore.getUnfizzedSlice(filterNode.getParent()));
+        }
+        else {
+            srcMult = schedule.getPrimePumpMult(filterNode.getParent());
+        }
+
+        //first find the max rotation length given the prime pump 
+        //mults of all the sources
         int maxRotLength = 0;
         for (Slice dest : filterNode.getParent().getTail().getDestSlices(SchedulingPhase.STEADY)) {
             int diff = srcMult - schedule.getPrimePumpMult(dest);
@@ -319,6 +348,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
             if (diff > maxRotLength)
                 maxRotLength = diff;
         }
+
         rotationLength = maxRotLength + 1;
     }
     

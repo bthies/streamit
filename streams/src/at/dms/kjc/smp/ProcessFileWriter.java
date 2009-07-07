@@ -66,7 +66,7 @@ public class ProcessFileWriter {
             assert allocatingCores.containsKey(filterNode);
             allocatingCore = allocatingCores.get(filterNode);
             codeStore = allocatingCore.getComputeCode();
-                        
+
             //codeStore.appendTxtToGlobal("int OUTPUT;\n");
             codeStore.appendTxtToGlobal("FILE *output;\n");
             //JBlock block = new JBlock();

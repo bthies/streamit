@@ -54,12 +54,12 @@ public abstract class RotatingBuffer extends Channel {
 	
     /** maps each FilterSliceNode to Input/OutputRotatingBuffers */
     protected static HashMap<FilterSliceNode, InputRotatingBuffer> inputBuffers;
-    protected static HashMap<FilterSliceNode, RotatingBuffer> outputBuffers;
+    protected static HashMap<FilterSliceNode, OutputRotatingBuffer> outputBuffers;
 
     static {
         types = new HashSet<CType>();
         inputBuffers = new HashMap<FilterSliceNode, InputRotatingBuffer>();
-        outputBuffers = new HashMap<FilterSliceNode, RotatingBuffer>();
+        outputBuffers = new HashMap<FilterSliceNode, OutputRotatingBuffer>();
     }
     
     protected RotatingBuffer(Edge edge, FilterSliceNode fsn, Core parent) {
@@ -92,9 +92,7 @@ public abstract class RotatingBuffer extends Channel {
             buf.createAddressBuffers();
             buf.createTransferCommands();
         }
-        for (RotatingBuffer buf : outputBuffers.values()) {
-            if (buf instanceof InputRotatingBuffer)
-                continue;
+        for (OutputRotatingBuffer buf : outputBuffers.values()) {
             buf.createAddressBuffers();
             buf.createTransferCommands();
         }
@@ -269,7 +267,7 @@ public abstract class RotatingBuffer extends Channel {
         }
     }
     
-    public static void setOutputBuffer(FilterSliceNode node, RotatingBuffer buf) {
+    public static void setOutputBuffer(FilterSliceNode node, OutputRotatingBuffer buf) {
         outputBuffers.put(node, buf);
     }
     
@@ -288,11 +286,27 @@ public abstract class RotatingBuffer extends Channel {
      * @return The input buffer of the filter node.
      */
     public static InputRotatingBuffer getInputBuffer(FilterSliceNode fsn) {
-        return inputBuffers.get(fsn);
+        if(!inputBuffers.containsKey(fsn) && KjcOptions.sharedbufs &&
+           FissionGroupStore.isFizzed(fsn.getParent())) {
+            //System.out.println("Warning: Arbitrarily returning 1st InputRotatingBuffer for fizzed filter: " + fsn);
+            assert FissionGroupStore.isUnfizzedSlice(fsn.getParent());
+            return inputBuffers.get(FissionGroupStore.getFizzedSlices(fsn.getParent())[0].getFirstFilter());
+        }
+        else {
+            return inputBuffers.get(fsn);
+        }
     }
   
     public static RotatingBuffer getOutputBuffer(FilterSliceNode fsn) {
-        return outputBuffers.get(fsn);
+        if(!outputBuffers.containsKey(fsn) && KjcOptions.sharedbufs &&
+           FissionGroupStore.isFizzed(fsn.getParent())) {
+            //System.out.println("Warning: Arbitrarily returning 1st OutputRotatingBuffer for fizzed filter: " + fsn);
+            assert FissionGroupStore.isUnfizzedSlice(fsn.getParent());
+            return outputBuffers.get(FissionGroupStore.getFizzedSlices(fsn.getParent())[0].getFirstFilter());
+        }
+        else {
+            return outputBuffers.get(fsn);
+        }
     }
     
     /**

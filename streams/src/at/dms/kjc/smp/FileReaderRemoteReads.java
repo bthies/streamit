@@ -62,7 +62,7 @@ public class FileReaderRemoteReads extends FileReaderCode {
 
             System.out.print("FileReaderRemoteReads, itemsReceived: " + dstTotalItemsReceived + ", rotations: " + rotations);
 
-            int fissionOffset = 0;
+            int destFissionOffset = 0;
             if(KjcOptions.sharedbufs && phase != SchedulingPhase.INIT &&
                FissionGroupStore.isFizzed(input.getParent())) {
                 FissionGroup group = FissionGroupStore.getFissionGroup(input.getParent());
@@ -74,10 +74,33 @@ public class FileReaderRemoteReads extends FileReaderCode {
                 assert curFizzedSlice != -1;
                 assert (totalItemsReceived % numFizzedSlices) == 0;
 
-                fissionOffset = curFizzedSlice * (totalItemsReceived / numFizzedSlices);
+                destFissionOffset = curFizzedSlice * (totalItemsReceived / numFizzedSlices);
             }
 
-            System.out.println("FileReaderRemoteReads, fissionOffset: " + fissionOffset);
+            int srcFissionOffset = 0;
+            if(KjcOptions.sharedbufs && phase != SchedulingPhase.INIT &&
+               FissionGroupStore.isFizzed(input.getParent())) {
+                FissionGroup group = FissionGroupStore.getFissionGroup(input.getParent());
+
+                // Calculate number of elements sent to preceding fizzed copies of downstream
+                // filter
+                int numItersPerFizzedSlice = group.unfizzedFilterInfo.getMult(phase) / group.fizzedSlices.length;
+                int destFizzedIndex = group.getFizzedSliceIndex(input.getParent());
+
+                assert(group.unfizzedFilterInfo.pop * numItersPerFizzedSlice * destFizzedIndex) % input.totalWeights(phase) == 0;
+                int numPrevSent =
+                    (group.unfizzedFilterInfo.pop * numItersPerFizzedSlice * destFizzedIndex) /
+                    input.totalWeights(phase) * input.getWeight(edge, phase);
+
+                // Calculate number of previous output rotations
+                assert numPrevSent % fileOutput.getWeight(edge, phase) == 0;
+                int numPrevOutputRots = numPrevSent / fileOutput.getWeight(edge, phase);
+
+                // Calculate fission offset based upon number of previous output rotations
+                srcFissionOffset = numPrevOutputRots * fileOutput.totalWeights(phase);
+            }
+
+            System.out.println("FileReaderRemoteReads, destFissionOffset: " + destFissionOffset);
 
             String dst_buffer = parent.currentFileReaderBufName;
                         
@@ -99,8 +122,8 @@ public class FileReaderRemoteReads extends FileReaderCode {
                         continue;
                     for (int item = 0; item < fileOutput.getWeights(phase)[weight]; item++) {
                         //add to the array assignment loop
-                        int dstElement = (copyDown + fissionOffset + destIndex++);
-                        int srcIndex = ((rot * fileOutput.totalWeights(phase)) + fileOutput.weightBefore(weight, phase) + item);
+                        int dstElement = (copyDown + destFissionOffset + destIndex++);
+                        int srcIndex = ((rot * fileOutput.totalWeights(phase)) + srcFissionOffset + fileOutput.weightBefore(weight, phase) + item);
                         aaStmts.addAssignment(dst_buffer, "", dstElement, "fileReadBuffer", "fileReadIndex__" + id, srcIndex);
                     }
                 }

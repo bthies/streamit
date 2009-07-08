@@ -27,11 +27,13 @@ public class FileReaderRemoteReads extends FileReaderCode {
         FilterInfo srcInfo = FilterInfo.getFilterInfo(fileOutput.getPrevFilter());
         FilterInfo dstInfo = FilterInfo.getFilterInfo(input.getNextFilter());
 
-        System.out.println("FileReaderRemoteReads, dstFilter: " + input.getNextFilter());
+        System.out.println("FileReaderRemoteReads, dstFilter: " + input.getNextFilter() + ", phase: " + phase);
        
         //we are assuming that the downstream filter has only the file reader as input
         
         ArrayAssignmentStatements aaStmts = new ArrayAssignmentStatements();
+
+        System.out.println("FileReaderRemoteReads, totalItemsReceived: " + dstInfo.totalItemsReceived(phase));
 
         //if we don't receive anything, don't generate code
         if (dstInfo.totalItemsReceived(phase) > 0) {
@@ -60,7 +62,7 @@ public class FileReaderRemoteReads extends FileReaderCode {
             //the index into the destination buffer we are currently receiving to
             int destIndex = 0;
 
-            System.out.print("FileReaderRemoteReads, itemsReceived: " + dstTotalItemsReceived + ", rotations: " + rotations);
+            System.out.println("FileReaderRemoteReads, itemsReceived: " + dstTotalItemsReceived + ", rotations: " + rotations);
 
             int destFissionOffset = 0;
             if(KjcOptions.sharedbufs && phase != SchedulingPhase.INIT &&

@@ -118,8 +118,7 @@ public class SharedBufferRemoteWritesTransfers extends BufferTransfers {
         }
 
         if(FissionGroupStore.isFizzed(parent.filterNode.getParent())) {
-            FissionGroup group = FissionGroupStore.getFissionGroup(parent.filterNode.getParent());
-            if(group.fizzedSlices[0].equals(parent.filterNode.getParent())) {
+            if(FissionGroupStore.getFizzedSliceIndex(parent.filterNode.getParent()) == 0) {
                 statements.addAll(copyDownStatements(phase));
             }
         }
@@ -344,8 +343,8 @@ public class SharedBufferRemoteWritesTransfers extends BufferTransfers {
         if(phase != SchedulingPhase.INIT && FissionGroupStore.isFizzed(parent.filterNode.getParent())) {
             FissionGroup group = FissionGroupStore.getFissionGroup(parent.filterNode.getParent());
 
-            // Calculate number of elements dest receives from fizzed slices before this
-            // fizzed slice
+            // Calculate number of elements downstream filter has received from the fizzed
+            // slices preceding this fizzed slice
             int numItersPerFizzedSlice = group.unfizzedFilterInfo.getMult(phase) / group.fizzedSlices.length;
             int sourceFizzedIndex = group.getFizzedSliceIndex(parent.filterNode.getParent());
 
@@ -354,11 +353,11 @@ public class SharedBufferRemoteWritesTransfers extends BufferTransfers {
                 (group.unfizzedFilterInfo.push * numItersPerFizzedSlice * sourceFizzedIndex) /
                 output.totalWeights(phase) * output.getWeight(edge, phase);
 
-            // Calculate number of previous input rots
+            // Calculate number of previous input rotations
             assert numPrevReceived % input.getWeight(edge, phase) == 0;
             int numPrevInputRots = numPrevReceived / input.getWeight(edge, phase);
 
-            // Calculate fission offset based upon number of previous input rots
+            // Calculate fission offset based upon number of previous input rotations
             fissionOffset = numPrevInputRots * input.totalWeights(phase);
         }
 

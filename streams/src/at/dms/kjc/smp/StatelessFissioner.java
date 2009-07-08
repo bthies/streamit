@@ -431,12 +431,12 @@ public class StatelessFissioner {
         // clones' init dests to null
 
         for(int x = 1 ; x < fizzAmount ; x++) {
-            sliceClones[x].getHead().setInitWeights(null);
-            sliceClones[x].getHead().setInitSources(null);
+            sliceClones[x].getHead().setInitWeights(new int[0]);
+            sliceClones[x].getHead().setInitSources(new InterSliceEdge[0]);
         }
         for(int x = 1 ; x < fizzAmount ; x++) {
-            sliceClones[x].getTail().setInitWeights(null);
-            sliceClones[x].getTail().setInitDests(null);
+            sliceClones[x].getTail().setInitWeights(new int[0]);
+            sliceClones[x].getTail().setInitDests(new InterSliceEdge[0][0]);
         }
     }
 }

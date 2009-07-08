@@ -92,7 +92,9 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
             {
                 if (output.getSingleEdge(SchedulingPhase.STEADY).getDest().getNextFilter().isFileOutput()) {
                     directFileWrite = true;
-                    writeDecls.add(Util.toStmt("volatile " + buf.getType().toString() + " " + FAKE_IO_VAR + "__n" + buf.parent.getCoreID()));
+
+                    if(SMPBackend.FAKE_IO)
+                        writeDecls.add(Util.toStmt("volatile " + buf.getType().toString() + " " + FAKE_IO_VAR + "__n" + buf.parent.getCoreID()));
                 }
                 
                 assert ((OutputRotatingBuffer)parent).hasDirectWrite(); 

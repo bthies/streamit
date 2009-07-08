@@ -56,7 +56,7 @@ public class ProcessFileReader {
         for (InterSliceEdge edge : fileOutput.getDestSet(SchedulingPhase.STEADY)) {
             if(KjcOptions.sharedbufs && FissionGroupStore.isFizzed(edge.getDest().getParent())) {
                 for(Slice fizzedSlice : FissionGroupStore.getFizzedSlices(edge.getDest().getParent())) {
-                    System.out.println(".");
+                    System.out.print(".");
                     generateCode(fizzedSlice.getFirstFilter());
                 }
             }

@@ -146,7 +146,7 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
         
         ArrayAssignmentStatements aaStmts = new ArrayAssignmentStatements();
         
-        System.out.println("filterNode: " + parent.filterNode + ", phase: " + phase + ", copyDown: " + parent.filterInfo.copyDown);
+        //System.out.println("filterNode: " + parent.filterNode + ", phase: " + phase + ", copyDown: " + parent.filterInfo.copyDown);
 
         for (int i = 0; i < parent.filterInfo.copyDown; i++)
             aaStmts.addAssignment(dst, "", i, src, "", (i + parent.filterInfo.totalItemsPopped(phase)));

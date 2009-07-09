@@ -110,9 +110,9 @@ public class InputRotatingBuffer extends RotatingBuffer {
         currentFileReaderBufName = this.getIdent() + "_fr_buf";
 
         if(KjcOptions.sharedbufs && FissionGroupStore.isFizzed(filterNode.getParent())) {
-            System.out.println(filterNode + " is fizzed");
+            //System.out.println(filterNode + " is fizzed");
             if(!sharedBufferNames.containsKey(filterNode)) {
-                System.out.println("  first InputRotatingBuffer, setting base name of: " + this.getIdent());
+                //System.out.println("  first InputRotatingBuffer, setting base name of: " + this.getIdent());
                 Slice[] fizzedSlices = FissionGroupStore.getFizzedSlices(filterNode.getParent());
 
                 for(Slice slice : fizzedSlices)
@@ -165,15 +165,15 @@ public class InputRotatingBuffer extends RotatingBuffer {
      * number of items it receives.
      */
     protected void setBufferSize() {
-        System.out.println("Inside InputRotatingBuffer.setBufferSize()");
+        //System.out.println("Inside InputRotatingBuffer.setBufferSize()");
 
         FilterInfo fi;
         if(KjcOptions.sharedbufs && FissionGroupStore.isFizzed(filterNode.getParent())) {
-            System.out.println("  " + filterNode + " is fizzed");
+            //System.out.println("  " + filterNode + " is fizzed");
             fi = FissionGroupStore.getFissionGroup(filterNode.getParent()).unfizzedFilterInfo;
         }
         else {
-            System.out.println("  " + filterNode + " is NOT fizzed");
+            //System.out.println("  " + filterNode + " is NOT fizzed");
             fi = filterInfo;
         }
 
@@ -185,16 +185,16 @@ public class InputRotatingBuffer extends RotatingBuffer {
      * Set the names of the buffers that comprise this rotating buffer.
      */
     protected void setBufferNames() {
-        System.out.println("Inside InputRotatingBuffer.setBufferNames()");
+        //System.out.println("Inside InputRotatingBuffer.setBufferNames()");
 
         String baseName;
         if(KjcOptions.sharedbufs && FissionGroupStore.isFizzed(filterNode.getParent())) {
-            System.out.println("  " + filterNode + " is fizzed");
+            //System.out.println("  " + filterNode + " is fizzed");
             baseName = sharedBufferNames.get(filterNode);
             assert baseName != null;
         }
         else {
-            System.out.println("  " + filterNode + " is NOT fizzed");
+            //System.out.println("  " + filterNode + " is NOT fizzed");
             baseName = this.getIdent();
         }
 
@@ -208,17 +208,17 @@ public class InputRotatingBuffer extends RotatingBuffer {
      * Allocate the constituent buffers of this rotating buffer structure
      */
     protected void allocBuffers() {
-        System.out.println("Inside InputRotatingBuffer.allocBuffers()");
+        //System.out.println("Inside InputRotatingBuffer.allocBuffers()");
 
         if(KjcOptions.sharedbufs && FissionGroupStore.isFizzed(filterNode.getParent())) {
-            System.out.println("  " + filterNode + " is fizzed");
+            //System.out.println("  " + filterNode + " is fizzed");
             if(sharedBufferNames.get(filterNode).equals(this.getIdent())) {
-                System.out.println("  " + filterNode + " allocated by me: " + this.getIdent());
+                //System.out.println("  " + filterNode + " allocated by me: " + this.getIdent());
                 super.allocBuffers();
             }
         }
         else {
-            System.out.println("  " + filterNode + " is NOT fizzed");
+            //System.out.println("  " + filterNode + " is NOT fizzed");
             super.allocBuffers();
         }
     }

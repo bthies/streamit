@@ -94,13 +94,11 @@ public class OutputRotatingBuffer extends RotatingBuffer {
         
         bufType = filterNode.getFilter().getOutputType();
 
-		System.out.println("Inside constructor for OutputRotatingBuffer: " + filterNode);
-		System.out.println("  Checking for directWrite");
         checkDirectWrite();
 		if(directWrite)
-			System.out.println("  directWrite is true: " + directWriteFilter);
+			System.out.println(filterNode + " has directWrite to " + directWriteFilter);
 		else
-			System.out.println("  directWrite is false");
+			System.out.println(filterNode + " does not have directWrite");
         
 //         if(directWrite)
 //             this.ident = InputRotatingBuffer.getInputBuffer(directWriteFilter).getIdent();
@@ -148,7 +146,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
 		}
 		
 		if(candidateDestsSteady.isEmpty()) {
-			System.out.println("  failed 1");
+			//System.out.println("  failed 1");
 			return;
 		}
 		
@@ -208,7 +206,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
 		}
 		
 		if(!initDestsSet.isEmpty() && candidateDestsInit.isEmpty()) {
-			System.out.println("  failed 2");
+			//System.out.println("  failed 2");
 			return;
 		}
 		
@@ -225,7 +223,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
 		}
 		
 		if(candidateDests.isEmpty()) {
-			System.out.println("  failed 3");
+			//System.out.println("  failed 3");
 			return;
 		}
 		
@@ -237,7 +235,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
 				saCandidateDests.add(edge);
 			
 		if(saCandidateDests.isEmpty()) {
-			System.out.println("  failed 4");
+			//System.out.println("  failed 4");
 			return;
 		}
 
@@ -306,11 +304,11 @@ public class OutputRotatingBuffer extends RotatingBuffer {
 		}
 		
 		if(finalCandidateDests.isEmpty()) {
-			System.out.println("  failed 6");
+			//System.out.println("  failed 6");
 			return;
 		}
 		
-		System.out.println("Number of final candidates for directWrite: " + finalCandidateDests.size());
+		//System.out.println("Number of final candidates for directWrite: " + finalCandidateDests.size());
 		
 		// Pick one of the candidates receivers to directly write to
 		directWrite = true;
@@ -363,8 +361,6 @@ public class OutputRotatingBuffer extends RotatingBuffer {
      * Allocate the constituent buffers of this rotating buffer structure
      */
     protected void allocBuffers() {
-        System.out.println("Inside OutputRotatingBuffer.allocBuffers()");
-
         if(directWrite)
             return;
 
@@ -397,7 +393,6 @@ public class OutputRotatingBuffer extends RotatingBuffer {
     /** Create an array reference given an offset */   
     public JFieldAccessExpression writeBufRef() {
         return new JFieldAccessExpression(new JThisExpression(), currentWriteBufName);
-     
     }
     
     /** Create an array reference given an offset */   
@@ -499,14 +494,14 @@ public class OutputRotatingBuffer extends RotatingBuffer {
         assert false : "Should not call pop() method on output buffer.";
         return "";
     }
+
     /* (non-Javadoc)
      * @see at.dms.kjc.backendSupport.ChannelI#popMethod()
      */
     public JMethodDeclaration popMethod() {
         assert false : "Should not call pop() method on output buffer.";
         return null;
-    }
-    
+    }    
     
     /* (non-Javadoc)
      * @see at.dms.kjc.backendSupport.ChannelI#popManyMethodName()

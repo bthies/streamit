@@ -36,40 +36,20 @@ public class EmitSMPCode extends EmitCode {
     }
     
     public static void doit(SMPBackEndFactory backendBits) {
-        try {            
-            // add stats useful for performance debugging
-            if(KjcOptions.debug) {
-            	for (Core core : SMPBackend.chip.getCores()) {
-                    if (!core.getComputeCode().shouldGenerateCode())
-                        continue;
+        try {
 
-                    core.getComputeCode().addSteadyLoopStatementFirst(Util.toStmt("start_times[" + core.getCoreID() + "][perfstats_iter_n" + core.getCoreID() + "] = rdtsc()"));
-            		
-                    if(KjcOptions.smp > 1)
-                        core.getComputeCode().addSteadyLoopStatement(Util.toStmt("barrier_times[" + core.getCoreID() + "][perfstats_iter_n" + core.getCoreID() + "] = rdtsc()"));
-            	}
+            // if profiling, add instrumentation before steady-state barrier
+            if(KjcOptions.debug) {
+                Profiler.instrumentBeforeBarrier();
             }
             
-            // for all the cores, add a barrier at the end of the steady state, do it here because we are done
-            // with all code gen
+            // for all the cores, add a barrier at the end of the steady state, do it here 
+            // because we are done with all code gen
             CoreCodeStore.addBarrierSteady();
             
-            // add more stats useful for performance debugging
+            // if profiling, add instrumentation before steady-state barrier
             if(KjcOptions.debug) {
-            	for (Core core : SMPBackend.chip.getCores()) {
-                    if (!core.getComputeCode().shouldGenerateCode())
-                        continue;
-
-            		core.getComputeCode().addSteadyLoopStatement(Util.toStmt("end_times[" + core.getCoreID() + "][perfstats_iter_n" + core.getCoreID() + "] = rdtsc()"));
-                    core.getComputeCode().addSteadyLoopStatement(Util.toStmt("perfstats_iter_n" + core.getCoreID() + "++"));
-            	}
-
-                JExpression[] perfStatsOutputArgs = new JExpression[0];
-                SMPBackend.chip.getNthComputeNode(0).getComputeCode()
-                    .addCleanupStatement(new JExpressionStatement(null, 
-                                                new JMethodCallExpression(null, new JThisExpression(null),
-                                                        "perfStatsOutput", perfStatsOutputArgs),
-                                                         null));
+                Profiler.instrumentAfterBarrier();
             }
 
             // make sure each thread exits properly
@@ -147,6 +127,10 @@ public class EmitSMPCode extends EmitCode {
             // generate the makefile that will compile all the tile executables
             generateMakefile();
 
+            // generate load balancing code
+            if(KjcOptions.loadbalance)
+                LoadBalancer.generateLoadBalancerCode();
+
         } catch (IOException e) {
             throw new AssertionError("I/O error" + e);
         }
@@ -167,26 +151,17 @@ public class EmitSMPCode extends EmitCode {
         p.println("barrier_t barrier;");
         p.println();
 
+        generateSetAffinity(p);
+
         if(KjcOptions.debug) {
-            assert(KjcOptions.iterations != -1);
-
-            p.println("// Debugging stats");
-            p.println("uint64_t start_times[" + KjcOptions.smp + "][" + KjcOptions.iterations + "];");
-            p.println("uint64_t barrier_times[" + KjcOptions.smp + "][" + KjcOptions.iterations + "];");
-            p.println("uint64_t end_times[" + KjcOptions.smp + "][" + KjcOptions.iterations + "];");
-            p.println();
-
-            for (Core core : SMPBackend.chip.getCores()) {
-                if (!core.getComputeCode().shouldGenerateCode())
-                    continue;
-                p.println("int perfstats_iter_n" + core.getCoreID() + " = 0;");
-            }
-            p.println();
-
-            generatePerfStatsOutput(p);
+            Profiler.emitProfilerGlobals(p);
+            Profiler.generateProfilerOutputCode(p);
         }
 
-        generateSetAffinity(p);
+        if(KjcOptions.loadbalance) {
+            LoadBalancer.emitLoadBalancerGlobals(p);
+            LoadBalancer.emitLoadBalancerInit(p);
+        }
 
         p.println("// main() Function Here");
         p.println("int main(int argc, char** argv) {");
@@ -201,6 +176,11 @@ public class EmitSMPCode extends EmitCode {
         p.println();
         p.println("// Initialize barrier");
         p.println("barrier_init(&barrier, " + barrier_count + ");");
+
+        if(KjcOptions.loadbalance) {
+            p.println();
+            p.println(LoadBalancer.initLoadBalancerMethodName() + "();");
+        }
         
         p.println();
         p.println("// Spawn threads");
@@ -262,8 +242,8 @@ public class EmitSMPCode extends EmitCode {
         p.println("#define ITERATIONS " + KjcOptions.numbers);   
         p.println();
 
-        p.println("#define minf(a, b) ((a) < (b) ? (a) : (b))\n");
-        p.println("#define maxf(a, b) ((a) > (b) ? (a) : (b))\n");
+        p.println("#define minf(a, b) ((a) < (b) ? (a) : (b))");
+        p.println("#define maxf(a, b) ((a) > (b) ? (a) : (b))");
         p.println();
 
         if(KjcOptions.iterations != -1) {
@@ -279,28 +259,17 @@ public class EmitSMPCode extends EmitCode {
         p.println("// Shared buffers");
         p.println(SMPBackend.chip.getOffChipMemory().getComputeCode().getGlobalText());
 
-        if(KjcOptions.debug) {
-            assert(KjcOptions.iterations != -1);
-
-            p.println("// Debugging stats");
-            p.println("extern uint64_t start_times[" + KjcOptions.smp + "][" + KjcOptions.iterations + "];");
-            p.println("extern uint64_t barrier_times[" + KjcOptions.smp + "][" + KjcOptions.iterations + "];");
-            p.println("extern uint64_t end_times[" + KjcOptions.smp + "][" + KjcOptions.iterations + "];");
-            p.println();
-
-            for (Core core : SMPBackend.chip.getCores()) {
-                if (!core.getComputeCode().shouldGenerateCode())
-                    continue;
-                p.println("extern int perfstats_iter_n" + core.getCoreID() + ";");
-            }
-            p.println();
-            p.println("extern void perfStatsOutput();");
-            p.println();
-        }
-
+        p.println("// CPU Affinity");
         p.println("extern void setCPUAffinity(int core);");
         p.println();
 
+        if(KjcOptions.debug)
+            Profiler.emitProfilerExternGlobals(p);
+
+        if(KjcOptions.loadbalance)
+            LoadBalancer.emitLoadBalancerExternGlobals(p);
+
+        p.println("// Thread entry points");
         for(Core core : SMPBackend.chip.getCores()) {
             if(!core.getComputeCode().shouldGenerateCode())
                 continue;
@@ -392,8 +361,10 @@ public class EmitSMPCode extends EmitCode {
 
         p.println("CC = icc");
         p.println("CFLAGS = -O2");
-        p.println("LIBS = -pthread");
+        p.println("INCLUDES = ");
+        p.println("LIBS = -pthread -lstdc++");
         p.print("OBJS = main.o barrier.o ");
+        if(KjcOptions.loadbalance) p.print("load_balancer.o ");
         for(Core core : SMPBackend.chip.getCores()) {
             if(!core.getComputeCode().shouldGenerateCode())
                 continue;
@@ -412,18 +383,24 @@ public class EmitSMPCode extends EmitCode {
         p.println();
 
         p.println("main.o: main.c");
-        p.println("\t$(CC) $(CFLAGS) $(LIBS) -c main.c");
+        p.println("\t$(CC) $(CFLAGS) $(INCLUDES) -c main.c");
         p.println();
 
         p.println("barrier.o: barrier.c");
-        p.println("\t$(CC) $(CFLAGS) $(LIBS) -c barrier.c");
+        p.println("\t$(CC) $(CFLAGS) $(INCLUDES) -c barrier.c");
         p.println();
+
+        if(KjcOptions.loadbalance) {
+            p.println("load_balancer.o: load_balancer.c");
+            p.println("\t$(CC) $(CFLAGS) $(INCLUDES) -c load_balancer.c");
+            p.println();
+        }
 
         for(Core core : SMPBackend.chip.getCores()) {
             if(!core.getComputeCode().shouldGenerateCode())
                 continue;
             p.println("core" + core.getCoreID() + ".o: core" + core.getCoreID() + ".c");
-            p.println("\t$(CC) $(CFLAGS) $(LIBS) -c core" + core.getCoreID() + ".c");
+            p.println("\t$(CC) $(CFLAGS) $(INCLUDES) -c core" + core.getCoreID() + ".c");
             p.println();
         }
         p.close();
@@ -450,10 +427,13 @@ public class EmitSMPCode extends EmitCode {
         p.println("#include \"globals.h\"");
         p.println("#include \"barrier.h\"");
         p.println("#include \"rdtsc.h\"");
-
-        if (KjcOptions.fixedpoint)
-            p.println("#include \"fixed.h\"");
         p.println("#include \"structs.h\"");
+
+        if(KjcOptions.loadbalance)
+            p.println("#include \"load_balancer.h\"");
+
+        if(KjcOptions.fixedpoint)
+            p.println("#include \"fixed.h\"");
 
         p.println();
         p.println();
@@ -558,127 +538,6 @@ public class EmitSMPCode extends EmitCode {
         }
     }
     
-    public static void generatePerfStatsOutput(CodegenPrintWriter p) {
-        p.println("void perfStatsOutput() {");
-        p.indent();
-        p.println("int core, iter;");
-        p.println("uint64_t min_start, min_barrier, min_end;");
-        p.println("uint64_t work_time, barrier_time;");
-        p.println("float aggregate_work_percentage = 0;");
-        p.println("uint64_t core_work_totals[" + KjcOptions.smp + "];");
-        p.println();
-
-        p.println("for (core = 0 ; core < " + KjcOptions.smp + " ; core++)");
-        p.indent();
-        p.println("core_work_totals[core] = 0;");
-        p.outdent();
-        p.println();
-
-        p.println("for (iter = 0 ; iter < " + KjcOptions.iterations + " ; iter++) {");
-        p.indent();
-
-        p.println("printf(\"Steady-state iteration: %d\\n\", iter);");
-        p.println("printf(\"=======================\\n\");");
-        p.println();
-
-        p.println("min_start = -1;");
-        p.println("for (core = 0 ; core < " + KjcOptions.smp + " ; core++)");
-        p.indent();
-        p.println("if (start_times[core][iter] < min_start)");
-        p.indent();
-        p.println("min_start = start_times[core][iter];");
-        p.outdent();
-        p.outdent();
-        p.println();
-
-        p.println("min_barrier = -1;");
-        p.println("for (core = 0 ; core < " + KjcOptions.smp + " ; core++)");
-        p.indent();
-        p.println("if (barrier_times[core][iter] < min_barrier)");
-        p.indent();
-        p.println("min_barrier = barrier_times[core][iter];");
-        p.outdent();
-        p.outdent();
-        p.println();
-
-        p.println("barrier_time = 0;");
-        p.println("for (core = 0 ; core < " + KjcOptions.smp + " ; core++)");
-        p.indent();
-        p.println("if (end_times[core][iter] - start_times[core][iter] > barrier_time)");
-        p.indent();
-        p.println("barrier_time = end_times[core][iter] - start_times[core][iter];");
-        p.outdent();
-        p.outdent();
-        p.println();
-
-        p.println("work_time = 0;");
-        p.println("for (core = 0 ; core < " + KjcOptions.smp + " ; core++)");
-        p.indent();
-        p.println("work_time += barrier_times[core][iter] - start_times[core][iter];");
-        p.outdent();
-        p.println();
-
-        p.println("min_end = -1;");
-        p.println("for (core = 0 ; core < " + KjcOptions.smp + " ; core++)");
-        p.indent();
-        p.println("if (end_times[core][iter] < min_end)");
-        p.indent();
-        p.println("min_end = end_times[core][iter];");
-        p.outdent();
-        p.outdent();
-        p.println();
-
-        p.println("for (core = 0 ; core < " + KjcOptions.smp + " ; core++)");
-        p.indent();
-        p.println("core_work_totals[core] += barrier_times[core][iter] - start_times[core][iter];");
-        p.outdent();
-        p.println();
-
-        p.println("for (core = 0 ; core < " + KjcOptions.smp + " ; core++)");
-        p.indent();
-        p.println("printf(\"Thread %3d, start:   %10llu            %llu\\n\", core, start_times[core][iter] - min_start, start_times[core][iter]);");
-        p.outdent();
-        p.println();
-
-        p.println("for (core = 0 ; core < " + KjcOptions.smp + " ; core++)");
-        p.indent();
-        p.println("printf(\"Thread %3d, barrier: %10llu %10llu %llu\\n\", core, barrier_times[core][iter] - min_barrier, barrier_times[core][iter] - start_times[core][iter], barrier_times[core][iter]);");
-        p.outdent();
-        p.println();
-
-        p.println("for (core = 0 ; core < " + KjcOptions.smp + " ; core++)");
-        p.indent();
-        p.println("printf(\"Thread %3d, end:     %10llu %10llu %llu\\n\", core, end_times[core][iter] - min_end, end_times[core][iter] - start_times[core][iter], end_times[core][iter]);");
-        p.outdent();
-        p.println();
-
-        p.println("printf(\"\\n\");");
-
-        p.println("printf(\"Total work: %llu\\n\", work_time);");
-        p.println("printf(\"Total time: %llu\\n\", barrier_time * " + KjcOptions.smp + ");");
-        p.println("printf(\"Work percentage: %f\\n\", ((float)work_time / (float)(barrier_time * " + KjcOptions.smp + ")) * 100);");
-        p.println("printf(\"\\n\");");
-        p.println();
-
-        p.println("aggregate_work_percentage += ((float)work_time / (float)(barrier_time * " + KjcOptions.smp + "));");
-
-        p.outdent();
-        p.println("}");
-        p.println();
-
-        p.println("printf(\"Aggregate stats\\n\");");
-        p.println("printf(\"===============\\n\");");
-        p.println("printf(\"Aggregate work percentage: %f\\n\", (aggregate_work_percentage / " + KjcOptions.iterations + ") * 100);");
-        p.println("for (core = 0 ; core < " + KjcOptions.smp + " ; core++)");
-        p.indent();
-        p.println("printf(\"Core %d avg work per steady state: %llu\\n\", core, core_work_totals[core] / " + KjcOptions.iterations + ");");
-        p.outdent();
-
-        p.outdent();
-        p.println("}");
-        p.println();
-    }
-
     public static void generateSetAffinity(CodegenPrintWriter p) {
         p.println("void setCPUAffinity(int core) {");
         p.indent();

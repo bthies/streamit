@@ -70,7 +70,7 @@ public class ArrayAssignmentStatements {
     }
 
     public LinkedList<JStatement> toJStmts() {
-	LinkedList<JStatement> jstmts = new LinkedList<JStatement>();
+        LinkedList<JStatement> jstmts = new LinkedList<JStatement>();
         
         for (AAStatement ass : assignments) {
             jstmts.add(ass.toJStmt());

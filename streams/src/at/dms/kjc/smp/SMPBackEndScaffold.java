@@ -63,6 +63,7 @@ public class SMPBackEndScaffold extends BackEndScaffold {
      * @param computeNodes
      * @param resources The instance of BackEndFactory to be used for callbacks, data.
      */
+    @Override
     public void run(BasicSpaceTimeSchedule schedule, BackEndFactory resources) {
    
         ComputeNodesI computeNodes = resources.getComputeNodes();
@@ -98,8 +99,9 @@ public class SMPBackEndScaffold extends BackEndScaffold {
      * @param whichPhase True if the init stage.
      * @param computeNodes The collection of compute nodes.
      */
+    @Override
     protected void iterateInorder(Slice slices[], SchedulingPhase whichPhase,
-                                       SMPMachine computeNodes) {
+                                       ComputeNodesI computeNodes) {
         Slice slice;
 
         for (int i = 0; i < slices.length; i++) {

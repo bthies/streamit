@@ -263,9 +263,14 @@ public class CodeStoreRenameAll extends SLIRReplacingVisitor
                                       JExpression prefix,
                                       String ident)
     {
-        return new JNameExpression(self.getTokenReference(),
-                                   (JExpression)prefix.accept(this),
-                                   symtab.nameFor(ident));
+        if(prefix != null)
+            return new JNameExpression(self.getTokenReference(),
+                                       (JExpression)prefix.accept(this),
+                                       symtab.nameFor(ident));
+        else
+            return new JNameExpression(self.getTokenReference(),
+                                       null,
+                                       symtab.nameFor(ident));            
     }
 
     public Object visitMethodCallExpression(JMethodCallExpression self,

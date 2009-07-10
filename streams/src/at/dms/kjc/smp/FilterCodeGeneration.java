@@ -10,13 +10,16 @@ import at.dms.kjc.JFormalParameter;
 import at.dms.kjc.JIntLiteral;
 import at.dms.kjc.JMethodCallExpression;
 import at.dms.kjc.JMethodDeclaration;
+import at.dms.kjc.JNameExpression;
 import at.dms.kjc.JStatement;
 import at.dms.kjc.JThisExpression;
 import at.dms.kjc.JVariableDefinition;
+import at.dms.kjc.JVariableDeclarationStatement;
 import at.dms.kjc.backendSupport.CodeStoreHelper;
 import at.dms.kjc.backendSupport.FilterInfo;
 import at.dms.kjc.sir.SIRBeginMarker;
 import at.dms.kjc.slicegraph.*;
+import at.dms.kjc.slicegraph.fission.*;
 import at.dms.kjc.backendSupport.*;
 import at.dms.util.Utils;
 import at.dms.kjc.KjcOptions;
@@ -271,6 +274,46 @@ public class FilterCodeGeneration extends CodeStoreHelper {
         statements.addAllStatements(endSchedulingPhase(SchedulingPhase.STEADY));
     
         return statements;
+    }
+
+    /**
+     * Return a JBlock that iterates <b>mult</b> times the result of calling 
+     * <b>getWorkFunctionCall()</b>.
+     * @param mult Number of times to iterate work function.
+     * @return as described, or <b>null</b> if <b>getWorkFunctionCall()</b> returns null;
+     */
+    @Override
+    protected JBlock getWorkFunctionBlock(int mult) {
+        if (getWorkMethod() == null) { return null; }
+        JBlock block = new JBlock();
+        JStatement workStmt = getWorkFunctionCall();
+        JVariableDefinition loopCounter = new JVariableDefinition(null,
+                0,
+                CStdType.Integer,
+                workCounter,
+                null);
+
+        JStatement loop;
+        if(LoadBalancer.isLoadBalanced(filterNode.getParent())) {
+            FissionGroup group = FissionGroupStore.getFissionGroup(filterNode.getParent());
+
+            loop = 
+                Utils.makeForLoopLocalIndex(workStmt, 
+                                            loopCounter, 
+                                            new JNameExpression(
+                                                null,
+                                                LoadBalancer.getNumItersRef(group,
+                                                                            filterNode.getParent())));
+        }
+        else {
+            loop = Utils.makeForLoopLocalIndex(workStmt, loopCounter, new JIntLiteral(mult));
+        }
+
+        block.addStatement(new JVariableDeclarationStatement(null,
+                loopCounter,
+                null));
+        block.addStatement(loop);
+        return block;
     }
     
     /**

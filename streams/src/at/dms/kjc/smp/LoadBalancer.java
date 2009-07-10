@@ -28,6 +28,8 @@ public class LoadBalancer {
     private static final String numSamplesDef = "LOAD_BALANCE_SAMPLES";
     private static final int numSamples = 100;
 
+    private static final String curSampleName = "cur_sample";
+
     private static HashSet<FissionGroup> loadBalancedGroups;
     private static HashMap<FissionGroup, Integer> groupIDs;
 
@@ -36,7 +38,7 @@ public class LoadBalancer {
         groupIDs = new HashMap<FissionGroup, Integer>();
     }
 
-    public static boolean canLoadBalance(FissionGroup group) {
+    private static boolean canLoadBalance(FissionGroup group) {
         FilterSliceNode filter = group.unfizzedSlice.getFirstFilter();
         FilterInfo filterInfo = group.unfizzedFilterInfo;
         OutputSliceNode output = group.unfizzedSlice.getTail();
@@ -85,9 +87,39 @@ public class LoadBalancer {
 
     public static boolean isLoadBalanced(Slice slice) {
         FissionGroup group = FissionGroupStore.getFissionGroup(slice);
+
         if(group == null)
             return false;
+
         return isLoadBalanced(group);
+    }
+
+    public static String getStartIterRef(FissionGroup group, Slice fizzedSlice) {
+        int id = groupIDs.get(group).intValue();
+        Core core = SMPBackend.scheduler.getComputeNode(fizzedSlice.getFirstFilter());
+        int coreIndex = SMPBackend.chip.getCoreIndex(core);
+
+        return startItersArrayPrefix + "_" + id + "[" + coreIndex + "]";
+    }
+
+    public static String getNumItersRef(FissionGroup group, Slice fizzedSlice) {
+        int id = groupIDs.get(group).intValue();
+        Core core = SMPBackend.scheduler.getComputeNode(fizzedSlice.getFirstFilter());
+        int coreIndex = SMPBackend.chip.getCoreIndex(core);
+
+        return numItersArrayPrefix + "_" + id + "[" + coreIndex + "]";
+    }
+
+    public static String getCurCycleCountRef(FissionGroup group, Slice fizzedSlice) {
+        int id = groupIDs.get(group).intValue();
+        Core core = SMPBackend.scheduler.getComputeNode(fizzedSlice.getFirstFilter());
+        int coreIndex = SMPBackend.chip.getCoreIndex(core);
+
+        return cycleCountsArrayPrefix + "_" + id + "_" + coreIndex + "[" + curSampleName + "]";
+    }
+
+    public static String getCurSampleRef() {
+        return curSampleName;
     }
 
     public static void generateLoadBalancerCode() throws IOException {
@@ -102,11 +134,13 @@ public class LoadBalancer {
         p.println("extern void initLoadBalancer(int _num_cores, int _num_filters, int _num_samples);");
         p.println("extern void registerGroup(int *_start_iters, int *_num_iters, uint64_t **_cycle_counts);");
         p.println();
+        /*
         p.println("extern void calcAvgCycles();");
         p.println("extern void swapGroups(int index1, int index2);");
         p.println("extern void sortGroupsInsertionSort();");
         p.println("extern void recalcStartIters();");
         p.println();
+        */
         p.println("extern void doLoadBalance();");
         p.println();
         p.println("#endif");
@@ -255,29 +289,73 @@ public class LoadBalancer {
             p.println("extern uint64_t *" + cycleCountsArrayPrefix + "_" + id + "[" + KjcOptions.smp + "];");
             p.println();
         }
+
+        p.println("extern int " + curSampleName + ";");
         p.println();
+    }
+
+    private static Slice getFizzedSliceOnCore(FissionGroup group, Core core) {
+        for(Slice slice : group.fizzedSlices) {
+            if(SMPBackend.scheduler.getComputeNode(slice.getFirstFilter()).equals(core)) {
+                return slice;
+            }
+        }
+
+        return null;
     }
 
     public static void emitLoadBalancerGlobals(CodegenPrintWriter p) throws IOException {
         for(FissionGroup group : loadBalancedGroups) {
             int id = groupIDs.get(group).intValue();
-            int itersPerFizzedSlice = group.unfizzedFilterInfo.steadyMult / group.fizzedSlices.length;
 
-            p.println();
+            int itersPerFizzedSlice = group.unfizzedFilterInfo.steadyMult / group.fizzedSlices.length;
+            int curStartIter = 0;
+
             p.println("// Load balancing for " + group.unfizzedSlice.getFirstFilter());
 
-            p.print("int " + startItersArrayPrefix + "_" + id + "[" + KjcOptions.smp + "] = {0");
+            // Construct array for starting iterations
+            p.print("int " + startItersArrayPrefix + "_" + id + "[" + KjcOptions.smp + "] = {");
+
+            if(getFizzedSliceOnCore(group, SMPBackend.chip.getNthComputeNode(0)) == null) {
+                p.print("-1");
+            }
+            else {
+                p.print(curStartIter);
+                curStartIter += itersPerFizzedSlice;
+            }
+
             for(int core = 1 ; core < KjcOptions.smp ; core++) {
-                p.print(", " + itersPerFizzedSlice * core);
+                if(getFizzedSliceOnCore(group, SMPBackend.chip.getNthComputeNode(0)) == null) {
+                    p.print(", -1");
+                }
+                else {
+                    p.print(", " + curStartIter);
+                    curStartIter += itersPerFizzedSlice;
+                }
             }
             p.println("};");
 
-            p.print("int " + numItersArrayPrefix + "_" + id + "[" + KjcOptions.smp + "] = {" + itersPerFizzedSlice);
+            // Construct array for number of iterations
+            p.print("int " + numItersArrayPrefix + "_" + id + "[" + KjcOptions.smp + "] = {");
+
+            if(getFizzedSliceOnCore(group, SMPBackend.chip.getNthComputeNode(0)) == null) {
+                p.print("-1");
+            }
+            else {
+                p.print(itersPerFizzedSlice);
+            }
+
             for(int core = 1 ; core < KjcOptions.smp ; core++) {
-                p.print(", " + itersPerFizzedSlice);
+                if(getFizzedSliceOnCore(group, SMPBackend.chip.getNthComputeNode(0)) == null) {
+                    p.print(", -1");
+                }
+                else {
+                    p.print(", " + itersPerFizzedSlice);
+                }
             }
             p.println("};");
 
+            // Construct arrays to store clock cycle samples
             for(int fizzedSlice = 0 ; fizzedSlice < group.fizzedSlices.length ; fizzedSlice++) {
                 int coreID = SMPBackend.scheduler.getComputeNode(group.fizzedSlices[fizzedSlice].getFirstFilter()).getCoreID();
                 p.println("uint64_t " + cycleCountsArrayPrefix + "_" + id + "_" + coreID + "[" + numSamplesDef + "];");
@@ -291,12 +369,17 @@ public class LoadBalancer {
                 p.print(", " + cycleCountsArrayPrefix + "_" + id + "_" + coreID);
             }
             p.println("};");
+            p.println();
         }
+
+        // Counter for number of clock cycle samples stored
+        p.println("// Clock cycles sample counter");
+        p.println("int " + curSampleName + " = 0;");
         p.println();
     }
 
     public static void emitLoadBalancerInit(CodegenPrintWriter p) throws IOException {
-        p.println("// Initializes load balancer");
+        p.println("// Load balancer initialization");
         p.println("void " + initLoadBalancerMethodName() + "() {");
         p.indent();
 

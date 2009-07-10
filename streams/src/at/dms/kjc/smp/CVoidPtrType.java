@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CVoidPtrType.java,v 1.1 2009-02-05 20:29:49 ctan Exp $
+ * $Id: CVoidPtrType.java,v 1.2 2009-07-10 19:50:53 ctan Exp $
  */
 
 package at.dms.kjc.smp;
@@ -24,10 +24,6 @@ import at.dms.compiler.UnpositionedError;
 import at.dms.kjc.*;
 import at.dms.util.SimpleStringBuffer;
 
-/**
- * This class represents java and kopi numericals types
- * Such as byte, short, int, long, float, double
- */
 final class CVoidPtrType extends CType {
 
     public static CVoidPtrType VoidPtr = new CVoidPtrType();
@@ -108,14 +104,14 @@ final class CVoidPtrType extends CType {
      * type.
      */
     public int getSizeInC() {
-        return 0;
+        return 4;
     }
 
     /**
      * Returns the stack size used by a value of this type.
      */
     public int getSize() {
-        return 0;
+        return 1;
     }
     
     public boolean isReference() {

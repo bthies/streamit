@@ -1,15 +1,24 @@
 package at.dms.kjc.smp;
 
+import at.dms.compiler.JavaStyleComment;
 import at.dms.kjc.CClassType;
 import at.dms.kjc.CStdType;
+import at.dms.kjc.JAddExpression;
+import at.dms.kjc.JAssignmentExpression;
 import at.dms.kjc.JBlock;
+import at.dms.kjc.JBooleanLiteral;
+import at.dms.kjc.JEqualityExpression;
 import at.dms.kjc.JExpression;
 import at.dms.kjc.JExpressionStatement;
+import at.dms.kjc.JFieldAccessExpression;
 import at.dms.kjc.JFieldDeclaration;
 import at.dms.kjc.JFormalParameter;
+import at.dms.kjc.JIfStatement;
 import at.dms.kjc.JIntLiteral;
+import at.dms.kjc.JLocalVariableExpression;
 import at.dms.kjc.JMethodCallExpression;
 import at.dms.kjc.JMethodDeclaration;
+import at.dms.kjc.JMinusExpression;
 import at.dms.kjc.JNameExpression;
 import at.dms.kjc.JStatement;
 import at.dms.kjc.JThisExpression;
@@ -255,10 +264,92 @@ public class FilterCodeGeneration extends CodeStoreHelper {
                 statements.addStatement(stmt);
             }
         }
+
+        // Load balancing variables
+        JVariableDefinition startCycleVar = null;
+        JVariableDefinition endCycleVar = null;
+
+        // load balancing code before filter execution
+        if(KjcOptions.loadbalance && LoadBalancer.isLoadBalanced(filterNode.getParent())) {
+            startCycleVar = 
+                new JVariableDefinition(null,
+                                        0,
+                                        CInt64Type.Int64,
+                                        "startCycle__" + uniqueID,
+                                        null);
+
+            statements.addStatement(new JVariableDeclarationStatement(startCycleVar));
+
+            statements.addStatement(
+                new JIfStatement(null,
+                                 new JEqualityExpression(null,
+                                                         true,
+                                                         new JLocalVariableExpression(
+                                                             LoadBalancer.getSampleBoolVar(
+                                                                 SMPBackend.scheduler.getComputeNode(filterNode))),
+                                                         new JBooleanLiteral(true)),
+                                 new JExpressionStatement(
+                                     new JAssignmentExpression(
+                                         new JLocalVariableExpression(startCycleVar),
+                                         new JMethodCallExpression("rdtsc",
+                                                                   new JExpression[0]))),
+                                 new JBlock(),
+                                 new JavaStyleComment[0]));
+        }
         
         // iterate work function as needed
         statements.addStatement(getWorkFunctionBlock(FilterInfo
                 .getFilterInfo((FilterSliceNode) sliceNode).steadyMult));
+
+        // load balancing code after filter execution
+        if(KjcOptions.loadbalance && LoadBalancer.isLoadBalanced(filterNode.getParent())) {
+            endCycleVar =
+                new JVariableDefinition(null,
+                                        0,
+                                        CInt64Type.Int64,
+                                        "endCycle__" + uniqueID,
+                                        null);
+
+            statements.addStatement(new JVariableDeclarationStatement(endCycleVar));
+
+            String cycleCountRef = 
+                LoadBalancer.getCycleCountRef(
+                    FissionGroupStore.getFissionGroup(filterNode.getParent()),
+                    filterNode.getParent());
+
+            JBlock ifSampleThen = new JBlock();
+            ifSampleThen.addStatement(
+                new JExpressionStatement(
+                    new JAssignmentExpression(
+                        new JLocalVariableExpression(endCycleVar),
+                        new JMethodCallExpression("rdtsc",
+                                                  new JExpression[0]))));
+            ifSampleThen.addStatement(
+                new JExpressionStatement(
+                    new JAssignmentExpression(
+                        new JFieldAccessExpression(cycleCountRef),
+                        new JAddExpression(
+                            new JFieldAccessExpression(cycleCountRef),
+                            new JMinusExpression(
+                                null,
+                                new JLocalVariableExpression(endCycleVar),
+                                new JLocalVariableExpression(startCycleVar))))));
+
+            JStatement ifSampleStatement =
+                new JIfStatement(null,
+                                 new JEqualityExpression(null,
+                                                         true,
+                                                         new JLocalVariableExpression(
+                                                             LoadBalancer.getSampleBoolVar(
+                                                                 SMPBackend.scheduler.getComputeNode(filterNode))),
+                                                         new JBooleanLiteral(true)),
+                                 ifSampleThen,
+                                 new JBlock(),
+                                 new JavaStyleComment[0]);
+
+            statements.addStatement(ifSampleStatement);
+        }
+
         
         // channel code after work block
         if (backEndBits.sliceHasUpstreamChannel(sliceNode.getParent())) {
@@ -294,7 +385,7 @@ public class FilterCodeGeneration extends CodeStoreHelper {
                 null);
 
         JStatement loop;
-        if(LoadBalancer.isLoadBalanced(filterNode.getParent())) {
+        if(KjcOptions.loadbalance && LoadBalancer.isLoadBalanced(filterNode.getParent())) {
             FissionGroup group = FissionGroupStore.getFissionGroup(filterNode.getParent());
 
             loop = 

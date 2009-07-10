@@ -62,8 +62,10 @@ public class SMPBackend {
         graphSchedule.getSlicer().dumpGraph("slice_graph.dot", scheduler, false);
 
         // if load balancing, find candidiate fission groups to load balance
-        if(KjcOptions.loadbalance)
+        if(KjcOptions.loadbalance) {
             LoadBalancer.findCandidates();
+            LoadBalancer.instrumentMainMethods();
+        }
         
         // create all buffers and set the rotation lengths
         RotatingBuffer.createBuffers(graphSchedule);

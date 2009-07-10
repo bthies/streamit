@@ -46,6 +46,11 @@ public class EmitSMPCode extends EmitCode {
             // for all the cores, add a barrier at the end of the steady state, do it here 
             // because we are done with all code gen
             CoreCodeStore.addBarrierSteady();
+
+            // if load balancing, instrument steady-state loop
+            if(KjcOptions.loadbalance) {
+                LoadBalancer.instrumentSteadyStateLoops();
+            }
             
             // if profiling, add instrumentation before steady-state barrier
             if(KjcOptions.debug) {

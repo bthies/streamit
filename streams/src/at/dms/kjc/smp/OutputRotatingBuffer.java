@@ -238,48 +238,6 @@ public class OutputRotatingBuffer extends RotatingBuffer {
 			//System.out.println("  failed 4");
 			return;
 		}
-
-        /*
-		// Check that number of transmitted elements matches slot in joiner
-		Set<InterSliceEdge> matchedCandidateDests = new HashSet<InterSliceEdge>();
-		
-		for(InterSliceEdge edge : saCandidateDests) {
-            System.out.println("  match candidate: " + edge.getDest().getNextFilter());
-            System.out.println("  INIT");
-            System.out.println("  ====");
-            System.out.println("  src.width: " + edge.getSrc().getWidth(SchedulingPhase.INIT));
-            System.out.println("  src.totalWeight: " + edge.getSrc().getWidth(SchedulingPhase.INIT));
-            System.out.println("  dest.weight: " + edge.getDest().getWeight(edge, SchedulingPhase.INIT));
-            System.out.println("  dest.width: " + (edge.getDest().getWidth(SchedulingPhase.INIT));
-            System.out.println("  STEADY");
-            System.out.println("  ====");
-            System.out.println("  src.width: " + edge.getSrc().getWidth(SchedulingPhase.STEADY));
-            System.out.println("  src.totalWeight: " + edge.getSrc().getWidth(SchedulingPhase.STEADY));
-            System.out.println("  dest.weight: " + edge.getDest().getWeight(edge, SchedulingPhase.STEADY));
-            System.out.println("  dest.width: " + (edge.getDest().getWidth(SchedulingPhase.STEADY));
-
-            boolean initMatched = false;
-            boolean steadyMatched = false;
-
-            if((edge.getSrc().getWidth(SchedulingPhase.INIT) == 0) ||
-               (edge.getSrc().totalWeights(SchedulingPhase.INIT) == edge.getDest().getWeight(edge, SchedulingPhase.INIT)) ||
-               (edge.getDest().getWidth(SchedulingPhase.INIT) == 1))
-                initMatched = true;
-
-            if((edge.getSrc().getWidth(SchedulingPhase.STEADY) == 0) ||
-               (edge.getSrc().totalWeights(SchedulingPhase.STEADY) == edge.getDest().getWeight(edge, SchedulingPhase.STEADY)) ||
-               (edge.getDest().getWidth(SchedulingPhase.STEADY) == 1))
-                steadyMatched = true;
-
-            if(initMatched && steadyMatched)
-                matchedCandidateDests.add(edge);
-        }
-		
-		if(matchedCandidateDests.isEmpty()) {
-			System.out.println("  failed 5");
-			return;
-		}
-        */
 		
 		// Check that schedules for OutputSliceNode and InputSliceNode are executed only once
 		Set<InterSliceEdge> finalCandidateDests = new HashSet<InterSliceEdge>();
@@ -351,10 +309,26 @@ public class OutputRotatingBuffer extends RotatingBuffer {
     }
     
     protected void setBufferSize() {
-        FilterInfo fi = FilterInfo.getFilterInfo(filterNode);
+        if(KjcOptions.sharedbufs && FissionGroupStore.isFizzed(filterNode.getParent())) {
+            FissionGroup group = FissionGroupStore.getFissionGroup(filterNode.getParent());
+
+            if(LoadBalancer.isLoadBalanced(filterNode.getParent())) {
+                bufSize = Math.max(group.unfizzedFilterInfo.totalItemsSent(SchedulingPhase.INIT),
+                                   group.unfizzedFilterInfo.totalItemsSent(SchedulingPHase.STEADY));
+            }
+            else {
+                bufSize = Math.max(group.unfizzedFilterInfo.totalItemsSent(SchedulingPhase.INIT) /
+                                   group.fizzedSlices.length,
+                                   group.unfizzedFilterInfo.totalItemsSent(SchedulingPhase.STEADY) /
+                                   group.fizzedSlices.length);
+            }
+        }
+        else {
+            FilterInfo fi = FilterInfo.getFilterInfo(filterNode);
         
-        bufSize = Math.max(fi.totalItemsSent(SchedulingPhase.INIT),
-                fi.totalItemsSent(SchedulingPhase.STEADY));
+            bufSize = Math.max(fi.totalItemsSent(SchedulingPhase.INIT),
+                               fi.totalItemsSent(SchedulingPhase.STEADY));
+        }
     }
 
     /**

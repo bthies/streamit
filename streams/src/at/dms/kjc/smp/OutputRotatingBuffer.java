@@ -314,7 +314,7 @@ public class OutputRotatingBuffer extends RotatingBuffer {
 
             if(LoadBalancer.isLoadBalanced(filterNode.getParent())) {
                 bufSize = Math.max(group.unfizzedFilterInfo.totalItemsSent(SchedulingPhase.INIT),
-                                   group.unfizzedFilterInfo.totalItemsSent(SchedulingPHase.STEADY));
+                                   group.unfizzedFilterInfo.totalItemsSent(SchedulingPhase.STEADY));
             }
             else {
                 bufSize = Math.max(group.unfizzedFilterInfo.totalItemsSent(SchedulingPhase.INIT) /

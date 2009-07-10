@@ -1,5 +1,6 @@
 package at.dms.kjc.smp;
 
+import at.dms.util.*;
 import at.dms.kjc.*;
 import at.dms.kjc.backendSupport.*;
 import at.dms.kjc.slicegraph.*;
@@ -12,6 +13,8 @@ import java.util.List;
 import java.util.Set;
 
 public class SharedBufferRemoteWritesTransfers extends BufferTransfers {
+
+    private static final boolean debug = true;
 
     /** Unique id */
     protected static int uniqueID = 0;
@@ -103,6 +106,25 @@ public class SharedBufferRemoteWritesTransfers extends BufferTransfers {
         }
     }
     
+    private void debugPrint(String methodName, SchedulingPhase phase, FilterSliceNode filterNode,
+                            String valueName, int value) {
+        if(debug) {
+            System.out.println(methodName + ", phase: " + phase + ", filterNode: " + filterNode +
+                               ", " + valueName + ": " + value);
+        }
+    }
+
+
+    private void debugPrint(String methodName, SchedulingPhase phase, InterSliceEdge edge,
+                            String valueName, int value) {
+        if(debug) {
+            System.out.println(methodName + ", phase: " + phase + ", edge: " + 
+                               edge.getSrc().getParent().getFirstFilter() + "->" +
+                               edge.getDest().getParent().getFirstFilter() +
+                               ", " + valueName + ": " + value);
+        }
+    }
+
     /********** Read code **********/
     
     private void generateReadStatements(SchedulingPhase phase) {
@@ -166,26 +188,39 @@ public class SharedBufferRemoteWritesTransfers extends BufferTransfers {
     
     public JStatement zeroOutTail(SchedulingPhase phase) {
     	assert (parent instanceof InputRotatingBuffer);
-    	
-        int literal = 0;
 
         if(phase != SchedulingPhase.INIT && FissionGroupStore.isFizzed(parent.filterNode.getParent())) {
             FissionGroup group = FissionGroupStore.getFissionGroup(parent.filterNode.getParent());
 
-            int totalItemsReceived = group.unfizzedFilterInfo.totalItemsReceived(phase);
-            int numFizzedSlices = group.fizzedSlices.length;
-            int curFizzedSlice = group.getFizzedSliceIndex(parent.filterNode.getParent());
+            if(LoadBalancer.isLoadBalanced(group)) {
+                JEmittedTextExpression startIterExpr =
+                    new JEmittedTextExpression(LoadBalancer.getStartIterRef(group, parent.filterNode.getParent()));
+                JIntLiteral popRate = new JIntLiteral(group.unfizzedFilterInfo.pop);
 
-            assert curFizzedSlice != -1;
-            assert (totalItemsReceived % numFizzedSlices) == 0;
+                return new JExpressionStatement(
+                        new JAssignmentExpression(tail,
+                                                  new JMultExpression(startIterExpr,
+                                                                      popRate)));
+            }
+            else {
+                int totalItemsReceived = group.unfizzedFilterInfo.totalItemsReceived(phase);
+                int numFizzedSlices = group.fizzedSlices.length;
+                int curFizzedSlice = group.getFizzedSliceIndex(parent.filterNode.getParent());
+                
+                assert curFizzedSlice != -1;
+                assert (totalItemsReceived % numFizzedSlices) == 0;
+                
+                int tailOffset = curFizzedSlice * (totalItemsReceived / numFizzedSlices);
 
-            literal = curFizzedSlice * (totalItemsReceived / numFizzedSlices);
+                return new JExpressionStatement(
+                    new JAssignmentExpression(tail, 
+                                              new JIntLiteral(tailOffset)));
+            }
         }
 
-        //System.out.println("zeroOutTail, phase: " + phase + ", filterNode: " + parent.filterNode + ", literal: " + literal);
-
         return new JExpressionStatement(
-                new JAssignmentExpression(tail, new JIntLiteral(literal)));
+            new JAssignmentExpression(tail,
+                                      new JIntLiteral(0)));
     }
     
     public JMethodDeclaration peekMethod() {
@@ -244,83 +279,294 @@ public class SharedBufferRemoteWritesTransfers extends BufferTransfers {
             case STEADY: statements = writeCommandsSteady; break;
         }
 
-        FilterSliceNode filter = parent.filterNode;
-        FilterInfo fi = FilterInfo.getFilterInfo(filter);
+        if(phase == SchedulingPhase.STEADY && 
+           FissionGroupStore.isFizzed(parent.filterNode.getParent()) &&
+           LoadBalancer.isLoadBalanced(parent.filterNode.getParent())) {
 
-        //no further code necessary if nothing is being produced
-        if (fi.totalItemsSent(phase) == 0)
-            return;
- 
-        assert fi.totalItemsSent(phase) % output.totalWeights(phase) == 0;
-        int rotations = fi.totalItemsSent(phase) / output.totalWeights(phase);
+            FissionGroup group = FissionGroupStore.getFissionGroup(parent.filterNode.getParent());
+            FilterSliceNode filter = group.unfizzedSlice.getFirstFilter();
+            FilterInfo fi = group.unfizzedFilterInfo;
+            OutputSliceNode output = filter.getParent().getTail();
 
-        //we might have to skip over some elements when we push into the buffer if this
-        //is a shared buffer
-        int writeOffset = getWriteOffset(phase);       
-        
-        //first create an map from destinations to ints to index into the state arrays
-        HashMap<InterSliceEdge, Integer> destIndex = new HashMap<InterSliceEdge, Integer>();
-        int index = 0;
-        int numDests = output.getDestSet(phase).size();
-        int[][] destIndices = new int[numDests][];
-        int[] nextWriteIndex = new int[numDests];
-        
-        for (InterSliceEdge edge : output.getDestSet(phase)) {
-            destIndex.put(edge, index);
-            destIndices[index] = getDestIndices(edge, rotations, phase);
-            nextWriteIndex[index] = 0;
-            index++;
-        }
-        
-        ArrayAssignmentStatements reorderStatements = new ArrayAssignmentStatements();
+            // Declare variables used for transfers
+            JVariableDefinition srcBaseOffsetVar =
+                new JVariableDefinition(0,
+                                        CStdType.Integer,
+                                        "srcBaseOffset__" + myID,
+                                        null);
 
-        String srcBuffer;
-        if(((OutputRotatingBuffer)parent).hasDirectWrite()) {
-            FilterSliceNode directWriteFilter = ((OutputRotatingBuffer)parent).getDirectWriteFilter();
-            srcBuffer = ((OutputRotatingBuffer)parent).getAddressBuffer(directWriteFilter.getParent().getHead()).currentWriteBufName;
-        }
-        else {
-            srcBuffer = ((OutputRotatingBuffer)parent).currentWriteBufName;
-        }
-        
-        int items = 0;
-        for (int rot = 0; rot < rotations; rot++) {
-            for (int weightIndex = 0; weightIndex < output.getWeights(phase).length; weightIndex++) {
-                InterSliceEdge[] dests = output.getDests(phase)[weightIndex];
-                for (int curWeight = 0; curWeight < output.getWeights(phase)[weightIndex]; curWeight++) {
-                    int srcElement= rot * output.totalWeights(phase) + 
-                        output.weightBefore(weightIndex, phase) + curWeight + writeOffset;
+            JVariableDefinition destBaseOffsetVar =
+                new JVariableDefinition(0,
+                                        CStdType.Integer,
+                                        "destBaseOffset__" + myID,
+                                        null);
 
-                    for (InterSliceEdge dest : dests) {
-                        int destElement = destIndices[destIndex.get(dest)][nextWriteIndex[destIndex.get(dest)]];
-                        nextWriteIndex[destIndex.get(dest)]++;
+            JVariableDefinition loopIterVar =
+                new JVariableDefinition(0,
+                                        CStdType.Integer,
+                                        "transferIter__" + myID,
+                                        null);
 
-                        SourceAddressRotation addrBuf = ((OutputRotatingBuffer)parent).getAddressBuffer(dest.getDest());
-                        String destBuffer = addrBuf.currentWriteBufName;
-                        
-                        //don't do anything if src buffer and dest buffer are the same, we have
-                        //direct write, and src/dest indices are the same
-                        if (destBuffer.equals(srcBuffer) && destElement == srcElement && ((OutputRotatingBuffer)parent).hasDirectWrite()) 
-                            continue;
-                        
-                        if (destBuffer.equals(srcBuffer)) {
-                            assert !((OutputRotatingBuffer)parent).hasDirectWrite() : "Trying to reorder a single buffer! Could lead to race. filter: " + filter + ", phase: " + phase + ", src: " + srcElement + ", dest: " + destElement;
-                        }
-                       
-                        reorderStatements.addAssignment(destBuffer, "", destElement,
-                                                        srcBuffer, "", srcElement);
-                    }
-                    
-                    items++;
+            JVariableDeclarationStatement srcBaseOffsetDecl =
+                new JVariableDeclarationStatement(srcBaseOffsetVar);
+            JVariableDeclarationStatement destBaseOffsetDecl =
+                new JVariableDeclarationStatement(destBaseOffsetVar);
+            JVariableDeclarationStatement loopIterVarDecl =
+                new JVariableDeclarationStatement(loopIterVar);
+
+            statements.add(srcBaseOffsetDecl);
+            statements.add(destBaseOffsetDecl);
+            statements.add(loopIterVarDecl);
+
+            // Set base offset for reading data elements
+            statements.add(
+                new JExpressionStatement(
+                    new JAssignmentExpression(
+                        new JLocalVariableExpression(srcBaseOffsetVar),
+                        getWriteOffsetExpr(phase))));
+
+            // Calculate number of output rotations per steady-state iteration
+            assert fi.push % output.totalWeights(SchedulingPhase.STEADY) == 0;
+            int outputRotsPerIter = fi.push / output.totalWeights(SchedulingPhase.STEADY);
+            
+            Set<InterSliceEdge> destSet = output.getDestSet(SchedulingPhase.STEADY);
+            int numDests = destSet.size();
+
+            // Iteration through destinations, generate code to transfer to each
+            // destination
+            for(InterSliceEdge edge : destSet) {
+                InputSliceNode input = edge.getDest();
+
+                int outputWeight = output.getWeight(edge, SchedulingPhase.STEADY);
+                int inputWeight = input.getWeight(edge, SchedulingPhase.STEADY);
+
+                // Calculate number of input rotations per steady-state iteration
+                assert (outputRotsPerIter * outputWeight) % inputWeight == 0;
+                int inputRotsPerIter = (outputRotsPerIter * outputWeight) / inputWeight;
+
+                // Calculate dest's copyDown
+                int destCopyDown;
+
+                if(FissionGroupStore.isFizzed(input.getParent())) {
+                    FissionGroup inputGroup = FissionGroupStore.getFissionGroup(input.getParent());
+                    destCopyDown = inputGroup.unfizzedFilterInfo.copyDown;
                 }
+                else {
+                    FilterInfo destInfo = FilterInfo.getFilterInfo(input.getParent().getFirstFilter());
+                    destCopyDown = destInfo.copyDown;
+                }
+
+                // Calculate dest stride per filter iteration
+                int destStridePerIter = (outputRotsPerIter * outputWeight) / inputWeight *
+                    input.totalWeights(SchedulingPhase.STEADY);
+
+                // Calculate dest offsets of all data elements received in each
+                // steady-state iteration
+                int destElemOffsets[] = new int[inputRotsPerIter * inputWeight];
+
+                int elemIndex = 0;
+                for(int rot = 0 ; rot < inputRotsPerIter ; rot++) {
+                    for(int index = 0 ; index < input.getWeights(phase).length ; index++) {
+                        if(input.getSources(phase)[index].equals(edge)) {
+                            for(int item = 0 ; item < input.getWeights(phase)[index] ; item++) {
+                                destElemOffsets[elemIndex++] =
+                                    rot * input.totalWeights(phase) +
+                                    input.weightBefore(index, phase) + item;
+                            }
+                        }
+                    }
+                }
+
+                // Get source and dest buffer names
+                String srcBuffer;
+                if(((OutputRotatingBuffer)parent).hasDirectWrite()) {
+                    FilterSliceNode directWriteFilter = 
+                        ((OutputRotatingBuffer)parent).getDirectWriteFilter();
+                    srcBuffer = 
+                        ((OutputRotatingBuffer)parent).getAddressBuffer(directWriteFilter.getParent().getHead()).currentWriteBufName;
+                }
+                else {
+                    srcBuffer = ((OutputRotatingBuffer)parent).currentWriteBufName;
+                }
+
+                String destBuffer = 
+                    ((OutputRotatingBuffer)parent).getAddressBuffer(edge.getDest()).currentWriteBufName;
+
+                // Set base offset for writing data elements
+                statements.add(
+                    new JExpressionStatement(
+                        new JAssignmentExpression(
+                            new JLocalVariableExpression(destBaseOffsetVar),
+                            new JAddExpression(
+                                new JMultExpression(
+                                    new JNameExpression(null,
+                                                        LoadBalancer.getStartIterRef(group, parent.filterNode.getParent())),
+                                    new JIntLiteral(destStridePerIter)),
+                                new JIntLiteral(destCopyDown)))));
+
+                // Generate loop to transfer data to destination
+                JBlock transfersPerIter = new JBlock();
+                
+                int destElem = 0;
+                for(int rot = 0 ; rot < outputRotsPerIter ; rot++) {
+                    for(int index = 0 ; index < output.getWeights(phase).length ; index++) {
+                        InterSliceEdge[] dests = output.getDests(phase)[index];
+                        for(InterSliceEdge dest : dests) {
+                            if(dest.equals(edge)) {
+                                for(int curWeight = 0 ; curWeight < output.getWeights(phase)[index] ; curWeight++) {
+                                    int srcOffset = rot * output.totalWeights(phase) +
+                                        output.weightBefore(index, phase) + curWeight;
+                                    JExpression srcIndex = 
+                                        new JAddExpression(
+                                            new JAddExpression(
+                                                new JLocalVariableExpression(srcBaseOffsetVar),
+                                                new JMultExpression(
+                                                    new JLocalVariableExpression(loopIterVar),
+                                                    new JIntLiteral(outputRotsPerIter * output.totalWeights(phase)))),
+                                            new JIntLiteral(srcOffset));
+                                    
+                                    int destOffset = destElemOffsets[destElem++];
+                                    JExpression destIndex = 
+                                        new JAddExpression(
+                                            new JAddExpression(
+                                                new JLocalVariableExpression(destBaseOffsetVar),
+                                                new JMultExpression(
+                                                    new JLocalVariableExpression(loopIterVar),
+                                                    new JIntLiteral(destStridePerIter))),
+                                            new JIntLiteral(destOffset));
+
+                                    JArrayAccessExpression srcAccess = 
+                                        new JArrayAccessExpression(
+                                            null,
+                                            new JNameExpression(null, srcBuffer),
+                                            srcIndex);
+
+                                    JArrayAccessExpression destAccess =
+                                        new JArrayAccessExpression(
+                                            null,
+                                            new JNameExpression(null, destBuffer),
+                                            destIndex);
+
+                                    JStatement transfer = 
+                                        new JExpressionStatement(
+                                            new JAssignmentExpression(
+                                                destAccess, srcAccess));
+
+                                    transfersPerIter.addStatement(transfer);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                JStatement loopInit = 
+                    new JExpressionStatement(
+                        new JAssignmentExpression(
+                            new JLocalVariableExpression(loopIterVar), new JIntLiteral(0)));
+
+                JExpression loopCond =
+                    new JRelationalExpression(null,
+                                              Constants.OPE_LT,
+                                              new JLocalVariableExpression(null, loopIterVar),
+                                              new JEmittedTextExpression(
+                                                  LoadBalancer.getNumItersRef(group,
+                                                                              parent.filterNode.getParent())));
+
+                JStatement loopIncr =
+                    new JExpressionStatement(null,
+                                             new JPostfixExpression(null,
+                                                                    Constants.OPE_POSTINC,
+                                                                    new JLocalVariableExpression(null, loopIterVar)),
+                                             null);
+
+                JStatement forLoop =
+                    new JForStatement(loopInit,
+                                      loopCond,
+                                      loopIncr,
+                                      transfersPerIter);
+
+                statements.add(forLoop);
             }
         }
-
-        assert items == fi.totalItemsSent(phase);
-        
-        //add the compressed assignment statements to the appropriate stage
-        //these do the remote writes and any local copying needed
-        statements.addAll(reorderStatements.toCompressedJStmts());   
+        else {
+            FilterSliceNode filter = parent.filterNode;
+            FilterInfo fi = FilterInfo.getFilterInfo(filter);
+            
+            //no further code necessary if nothing is being produced
+            if (fi.totalItemsSent(phase) == 0)
+                return;
+            
+            assert fi.totalItemsSent(phase) % output.totalWeights(phase) == 0;
+            int rotations = fi.totalItemsSent(phase) / output.totalWeights(phase);
+            
+            //we might have to skip over some elements when we push into the buffer if this
+            //is a shared buffer
+            int writeOffset = getWriteOffsetValue(phase);       
+            
+            //first create an map from destinations to ints to index into the state arrays
+            HashMap<InterSliceEdge, Integer> destIndex = new HashMap<InterSliceEdge, Integer>();
+            int index = 0;
+            int numDests = output.getDestSet(phase).size();
+            int[][] destIndices = new int[numDests][];
+            int[] nextWriteIndex = new int[numDests];
+            
+            for (InterSliceEdge edge : output.getDestSet(phase)) {
+                destIndex.put(edge, index);
+                destIndices[index] = getDestIndices(edge, rotations, phase);
+                nextWriteIndex[index] = 0;
+                index++;
+            }
+            
+            ArrayAssignmentStatements reorderStatements = new ArrayAssignmentStatements();
+            
+            String srcBuffer;
+            if(((OutputRotatingBuffer)parent).hasDirectWrite()) {
+                FilterSliceNode directWriteFilter = ((OutputRotatingBuffer)parent).getDirectWriteFilter();
+                srcBuffer = ((OutputRotatingBuffer)parent).getAddressBuffer(directWriteFilter.getParent().getHead()).currentWriteBufName;
+            }
+            else {
+                srcBuffer = ((OutputRotatingBuffer)parent).currentWriteBufName;
+            }
+            
+            int items = 0;
+            for (int rot = 0; rot < rotations; rot++) {
+                for (int weightIndex = 0; weightIndex < output.getWeights(phase).length; weightIndex++) {
+                    InterSliceEdge[] dests = output.getDests(phase)[weightIndex];
+                    for (int curWeight = 0; curWeight < output.getWeights(phase)[weightIndex]; curWeight++) {
+                        int srcElement= rot * output.totalWeights(phase) + 
+                            output.weightBefore(weightIndex, phase) + curWeight + writeOffset;
+                        
+                        for (InterSliceEdge dest : dests) {
+                            int destElement = destIndices[destIndex.get(dest)][nextWriteIndex[destIndex.get(dest)]];
+                            nextWriteIndex[destIndex.get(dest)]++;
+                            
+                            SourceAddressRotation addrBuf = ((OutputRotatingBuffer)parent).getAddressBuffer(dest.getDest());
+                            String destBuffer = addrBuf.currentWriteBufName;
+                            
+                            //don't do anything if src buffer and dest buffer are the same, we have
+                            //direct write, and src/dest indices are the same
+                            if (destBuffer.equals(srcBuffer) && destElement == srcElement && ((OutputRotatingBuffer)parent).hasDirectWrite()) 
+                                continue;
+                            
+                            if (destBuffer.equals(srcBuffer)) {
+                                assert !((OutputRotatingBuffer)parent).hasDirectWrite() : "Trying to reorder a single buffer! Could lead to race. filter: " + filter + ", phase: " + phase + ", src: " + srcElement + ", dest: " + destElement;
+                            }
+                            
+                            reorderStatements.addAssignment(destBuffer, "", destElement,
+                                                            srcBuffer, "", srcElement);
+                        }
+                        
+                        items++;
+                    }
+                }
+            }
+            
+            assert items == fi.totalItemsSent(phase);
+            
+            //add the compressed assignment statements to the appropriate stage
+            //these do the remote writes and any local copying needed
+            statements.addAll(reorderStatements.toCompressedJStmts());
+        }
     }
     
     private int[] getDestIndices(InterSliceEdge edge, int outputRots, SchedulingPhase phase) {
@@ -336,8 +582,7 @@ public class SharedBufferRemoteWritesTransfers extends BufferTransfers {
             dsFilterCopyDown = FissionGroupStore.getUnfizzedFilterInfo(input.getParent()).copyDown;
         else
             dsFilterCopyDown = FilterInfo.getFilterInfo(input.getNextFilter()).copyDown;
-
-        //System.out.println("getDestIndices, phase: " + phase + ", edge: " + edge.getSrc().getParent().getFirstFilter() + "->" + edge.getDest().getParent().getFirstFilter() + ", dsFilterCopyDown: " + dsFilterCopyDown);
+        debugPrint("getDestIndices", phase, edge, "dsFilterCopyDown", dsFilterCopyDown);
 
         int fissionOffset = 0;
         if(phase != SchedulingPhase.INIT && FissionGroupStore.isFizzed(parent.filterNode.getParent())) {
@@ -363,15 +608,16 @@ public class SharedBufferRemoteWritesTransfers extends BufferTransfers {
             fissionOffset = numPrevInputRots * input.totalWeights(phase);
         }
 
-        //System.out.println("getDestIndices, phase: " + phase + ", edge: " + edge.getSrc().getParent().getFirstFilter() + "->" + edge.getDest().getParent().getFirstFilter() + ", fissionOffset: " + fissionOffset);
-        
+        debugPrint("getDestIndices", phase, edge, "fissionOffset", fissionOffset);
+
         int inputRots = indices.length / input.getWeight(edge, phase);
         int nextWriteIndex = 0;
 
         for (int rot = 0; rot < inputRots; rot++) {
             for (int index = 0; index < input.getWeights(phase).length; index++) {
                 if (input.getSources(phase)[index] == edge) {
-                    //System.out.println("getDestIndices, phase: " + phase + ", edge: " + edge.getSrc().getParent().getFirstFilter() + "->" + edge.getDest().getParent().getFirstFilter() + ", index: " + index + ", weightBefore: " + input.weightBefore(index, phase));
+                    //debugPrint("getDestIndices", phase, edge, "index", index);
+                    //debugPrint("getDestIndices", phase, edge, "weightBefore", input.weightBefore(index, phase));
                     for (int item = 0; item < input.getWeights(phase)[index]; item++) {
                         indices[nextWriteIndex++] = rot * input.totalWeights(phase) +
                             input.weightBefore(index, phase) + item + 
@@ -386,14 +632,11 @@ public class SharedBufferRemoteWritesTransfers extends BufferTransfers {
         
         return indices;
     }
-    
-    private int getWriteOffset(SchedulingPhase phase) {
-    	assert (parent instanceof OutputRotatingBuffer);
-    	
-        if (((OutputRotatingBuffer)parent).hasDirectWrite()) {
-            //if we are directly writing then we have to get the index into the remote
-            //buffer of start of this source
 
+    private int getBaseWriteOffset(SchedulingPhase phase) {
+        assert (parent instanceof OutputRotatingBuffer);
+
+        if (((OutputRotatingBuffer)parent).hasDirectWrite()) {
             Slice srcSlice = parent.filterNode.getParent();
             Slice destSlice = ((OutputRotatingBuffer)parent).getDirectWriteFilter().getParent();
 
@@ -415,15 +658,11 @@ public class SharedBufferRemoteWritesTransfers extends BufferTransfers {
         	}
 
         	//make sure we actually write in this stage
-        	if(edge == null) {
-                //System.out.println("getWriteOffset, phase: " + phase + ", filterNode: " + parent.filterNode + ", offset: 0");
+        	if(edge == null)
         		return 0;
-            }
         	
         	int offset = edge.getDest().weightBefore(edge, phase);
 
-            //System.out.println("getWriteOffset, phase: " + phase + ", filterNode: " + parent.filterNode + ", weightBefore: " + offset);
-        	
             //if we are not in the init, we must skip over the dest's copy down
         	if(phase != SchedulingPhase.INIT) {
                 if(FissionGroupStore.isFizzed(((OutputRotatingBuffer)parent).getDirectWriteFilter().getParent())) {
@@ -432,12 +671,31 @@ public class SharedBufferRemoteWritesTransfers extends BufferTransfers {
                 }
                 else {
                     offset += FilterInfo.getFilterInfo(((OutputRotatingBuffer)parent).getDirectWriteFilter()).copyDown;
-                    //System.out.println("getWriteOffset, phase: " + phase + ", copyDown 2: " + FilterInfo.getFilterInfo(((OutputRotatingBuffer)parent).getDirectWriteFilter()).copyDown);
                 }
         	}
 
-            if(phase != SchedulingPhase.INIT &&
-               FissionGroupStore.isFizzed(parent.filterNode.getParent())) {
+            return offset;
+        }
+
+        return 0;
+    }
+    
+    private int getWriteOffsetValue(SchedulingPhase phase) {
+    	assert (parent instanceof OutputRotatingBuffer);
+        
+        /*
+        assert !FissionGroupStore.isFizzed(parent.filterNode.getParent()) ||
+            !LoadBalancer.isLoadBalanced(parent.filterNode.getParent());
+        */
+
+        if (((OutputRotatingBuffer)parent).hasDirectWrite()) {
+            //if we are directly writing then we have to get the index into the remote
+            //buffer of start of this source
+
+            int offset = getBaseWriteOffset(phase);
+            debugPrint("getWriteOffsetValue", phase, parent.filterNode, "edgeWriteOffset", offset);
+
+            if(phase != SchedulingPhase.INIT && FissionGroupStore.isFizzed(parent.filterNode.getParent())) {
                 FissionGroup group = FissionGroupStore.getFissionGroup(parent.filterNode.getParent());
                 
                 int totalItemsSent = group.unfizzedFilterInfo.totalItemsSent(phase);
@@ -448,29 +706,71 @@ public class SharedBufferRemoteWritesTransfers extends BufferTransfers {
                 assert (totalItemsSent % numFizzedSlices) == 0;
                 
                 offset += curFizzedSlice * (totalItemsSent / numFizzedSlices);
-
-                //System.out.println("getWriteOffset, phase: " + phase + ", filterNode: " + parent.filterNode + ", fissionOffset: " + (curFizzedSlice * (totalItemsSent / numFizzedSlices)));
+                debugPrint("getWriteOffsetValue", phase, parent.filterNode, "fissionOffset",
+                           curFizzedSlice * (totalItemsSent / numFizzedSlices));
             }
 
-            //System.out.println("getWriteOffset, phase: " + phase + ", filterNode: " + parent.filterNode + ", offset: " + offset);
+            debugPrint("getWriteOffsetValue", phase, parent.filterNode, "offset", offset);
         	return offset;
         }
         else {
-            //System.out.println("getWriteOffset, phase: " + phase + ", filterNode: " + parent.filterNode + ", offset: 0");
+            debugPrint("getWriteOffsetValue", phase, parent.filterNode, "offset", 0);
             return 0;
+        }
+    }
+
+    private JExpression getWriteOffsetExpr(SchedulingPhase phase) {
+        assert (parent instanceof OutputRotatingBuffer);
+
+        assert FissionGroupStore.isFizzed(parent.filterNode.getParent()) &&
+            LoadBalancer.isLoadBalanced(parent.filterNode.getParent());
+
+        if(((OutputRotatingBuffer)parent).hasDirectWrite()) {
+            //if we are directly writing then we have to get the index into the remote
+            //buffer of start of this source
+
+            int offset = getBaseWriteOffset(phase);
+            debugPrint("getWriteOffsetExpr", phase, parent.filterNode, "edgeWriteOffset", offset);
+
+            if(phase != SchedulingPhase.INIT && FissionGroupStore.isFizzed(parent.filterNode.getParent())) {
+                FissionGroup group = FissionGroupStore.getFissionGroup(parent.filterNode.getParent());
+                assert LoadBalancer.isLoadBalanced(group);
+
+                JEmittedTextExpression startIterExpr =
+                    new JEmittedTextExpression(LoadBalancer.getStartIterRef(group, parent.filterNode.getParent()));
+                JIntLiteral pushRate = new JIntLiteral(group.unfizzedFilterInfo.push);
+
+                return new JAddExpression(new JIntLiteral(offset),
+                                          new JMultExpression(startIterExpr,
+                                                              pushRate));
+            }
+
+            return new JIntLiteral(offset);
+        }
+        else {
+            return new JIntLiteral(0);
         }
     }
 
     public JStatement zeroOutHead(SchedulingPhase phase) {
     	assert (parent instanceof OutputRotatingBuffer);
     	
-        int literal = getWriteOffset(phase);
-        //System.out.println("zeroOutHead, phase: " + phase + ", filterNode: " + parent.filterNode + ", literal: " + literal);
+        if(FissionGroupStore.isFizzed(parent.filterNode.getParent()) &&
+           LoadBalancer.isLoadBalanced(parent.filterNode.getParent())) {
+            JExpression writeOffsetExpr = getWriteOffsetExpr(phase);
+            return new JExpressionStatement(
+                new JAssignmentExpression(head, writeOffsetExpr));
+        }
+        else {
+            int writeOffsetValue = getWriteOffsetValue(phase);
+            debugPrint("zeroOutHead", phase, parent.filterNode, "writeOffsetValue", writeOffsetValue);
 
-        JBlock block = new JBlock();        
-        block.addStatement(new JExpressionStatement(
-                new JAssignmentExpression(head, new JIntLiteral(literal))));        
-        return block;
+            JBlock block = new JBlock();        
+            block.addStatement(new JExpressionStatement(
+                                   new JAssignmentExpression(head, 
+                                                             new JIntLiteral(writeOffsetValue))));
+            return block;
+        }
     }
 
     public JMethodDeclaration pushMethod() {

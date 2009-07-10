@@ -179,6 +179,7 @@ public class EmitSMPCode extends EmitCode {
 
         if(KjcOptions.loadbalance) {
             p.println();
+            p.println("// Initalize load balancer");
             p.println(LoadBalancer.initLoadBalancerMethodName() + "();");
         }
         
@@ -539,6 +540,7 @@ public class EmitSMPCode extends EmitCode {
     }
     
     public static void generateSetAffinity(CodegenPrintWriter p) {
+        p.println("// Set CPU affinity for thread");
         p.println("void setCPUAffinity(int core) {");
         p.indent();
         

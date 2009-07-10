@@ -67,8 +67,15 @@ public class SMPMachine implements ComputeNodesI<CoreCodeStore> {
         return false;
     }
 
+    public int getCoreIndex(Core core) {
+        for(int x = 0 ; x < numCores ; x++)
+            if(cores[x].equals(core))
+                return x;
+        return -1;
+    }
+
     public int newComputeNode() {
-        // TODO Auto-generated method stub
+        assert false;
         return 0;
     }
 
@@ -93,12 +100,14 @@ public class SMPMachine implements ComputeNodesI<CoreCodeStore> {
     }
     
     public Core getNextCore(Core core) {
-    	int coreID = core.getCoreID();
-    	
-    	for (int x = 0 ; x < numCores - 1 ; x++)
-    		if(cores[x].getCoreID() == coreID)
-    			return cores[x + 1];
-    	
-    	return null;
+        int coreIndex = getCoreIndex(core);
+
+        if(coreIndex == -1)
+            return null;
+
+        if(coreIndex < numCores - 1)
+            return cores[coreIndex + 1];
+
+        return null;
     }
 }

@@ -38,6 +38,11 @@ public class EmitSMPCode extends EmitCode {
     public static void doit(SMPBackEndFactory backendBits) {
         try {
 
+            // if load balancing, instrument steady-state loop before steady-state barrier
+            if(KjcOptions.loadbalance) {
+                LoadBalancer.instrumentSteadyStateLoopsBeforeBarrier();
+            }
+
             // if profiling, add instrumentation before steady-state barrier
             if(KjcOptions.debug) {
                 Profiler.instrumentBeforeBarrier();
@@ -46,13 +51,13 @@ public class EmitSMPCode extends EmitCode {
             // for all the cores, add a barrier at the end of the steady state, do it here 
             // because we are done with all code gen
             CoreCodeStore.addBarrierSteady();
-
-            // if load balancing, instrument steady-state loop
-            if(KjcOptions.loadbalance) {
-                LoadBalancer.instrumentSteadyStateLoops();
-            }
             
-            // if profiling, add instrumentation before steady-state barrier
+            // if load balancing, instrument steady-state loop after steady-state barrier
+            if(KjcOptions.loadbalance) {
+                LoadBalancer.instrumentSteadyStateLoopsAfterBarrier();
+            }
+
+            // if profiling, add instrumentation after steady-state barrier
             if(KjcOptions.debug) {
                 Profiler.instrumentAfterBarrier();
             }
@@ -317,11 +322,11 @@ public class EmitSMPCode extends EmitCode {
         p.println();
         p.println("typedef struct barrier {");
         p.println("  int num_threads;");
-        p.println("  int count;");
+        p.println("  volatile int count;");
         p.println("  volatile int generation;");
         p.println("} barrier_t;");
         p.println();
-        p.println("extern int FetchAndDecr(int *mem);");
+        p.println("extern int FetchAndDecr(volatile int *mem);");
         p.println("extern void barrier_init(barrier_t *barrier, int num_threads);");
         p.println("extern void barrier_wait(barrier_t *barrier);");
         p.println();
@@ -331,7 +336,7 @@ public class EmitSMPCode extends EmitCode {
         p = new CodegenPrintWriter(new BufferedWriter(new FileWriter("barrier.c", false)));
         p.println("#include \"barrier.h\"");
         p.println();
-        p.println("int FetchAndDecr(int *mem)");
+        p.println("int FetchAndDecr(volatile int *mem)");
         p.println("{");
         p.println("  int val = -1;");
         p.println();
@@ -339,7 +344,7 @@ public class EmitSMPCode extends EmitCode {
         p.println("		: \"=r\" (val), \"=m\" (*mem)");
         p.println("		: \"0\" (val), \"m\" (*mem)");
         p.println("		: \"memory\", \"cc\");");
-        p.println("  return val;");
+        p.println("  return val - 1;");
         p.println("}");
         p.println();
         p.println("void barrier_init(barrier_t *barrier, int num_threads) {");
@@ -351,7 +356,7 @@ public class EmitSMPCode extends EmitCode {
         p.println("void barrier_wait(barrier_t *barrier) {");
         p.println("  int cur_gen = barrier->generation;");
         p.println();
-        p.println("  if(FetchAndDecr(&barrier->count) == 1) {");
+        p.println("  if(FetchAndDecr(&barrier->count) == 0) {");
         p.println("    barrier->count = barrier->num_threads;");
         p.println("    barrier->generation++;");
         p.println("  }");

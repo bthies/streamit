@@ -31,19 +31,19 @@ public class LoadBalancer {
     private static HashSet<FissionGroup> loadBalancedGroups;
     private static HashMap<FissionGroup, Integer> groupIDs;
 
+    private static HashMap<Core, JVariableDefinition> sampleBoolVars;
     private static HashMap<Core, JVariableDefinition> sampleIntervalIterVars;
     private static HashMap<Core, JVariableDefinition> numSamplesIterVars;
     private static HashMap<Core, JVariableDefinition> totalStartCycleVars;
     private static HashMap<Core, JVariableDefinition> totalEndCycleVars;
-    private static HashMap<Core, JVariableDefinition> sampleBoolVars;
 
     static {
         loadBalancedGroups = new HashSet<FissionGroup>();
         groupIDs = new HashMap<FissionGroup, Integer>();
 
+        sampleBoolVars = new HashMap<Core, JVariableDefinition>();
         sampleIntervalIterVars = new HashMap<Core, JVariableDefinition>();
         numSamplesIterVars = new HashMap<Core, JVariableDefinition>();
-        sampleBoolVars = new HashMap<Core, JVariableDefinition>();
         totalStartCycleVars = new HashMap<Core, JVariableDefinition>();
         totalEndCycleVars = new HashMap<Core, JVariableDefinition>();
     }
@@ -128,6 +128,12 @@ public class LoadBalancer {
         return cycleCountsArrayPrefix + "_" + id + "[" + coreIndex + "]";
     }
 
+    public static String getTotalCycleCountRef(Core core) {
+        int coreIndex = SMPBackend.chip.getCoreIndex(core);
+
+        return totalCycleCountsArrayPrefix + "[" + coreIndex + "]";
+    }
+
     public static void generateLoadBalancerCode() throws IOException {
         CodegenPrintWriter p;
 
@@ -148,20 +154,21 @@ public class LoadBalancer {
         p = new CodegenPrintWriter(new BufferedWriter(new FileWriter("load_balancer.c", false)));
         p.println("#include <stdlib.h>");
         p.println("#include <stdint.h>");
+        p.println("#include <stdio.h>");
         p.println();
-        p.println("int num_cores;");
-        p.println("int num_filters;");
-        p.println("int num_samples;");
+        p.println("static int num_cores;");
+        p.println("static int num_filters;");
+        p.println("static int num_samples;");
         p.println();
-        p.println("int **start_iters;");
-        p.println("int **num_iters;");
-        p.println("int *total_iters;");
-        p.println("uint64_t **cycle_counts;");
-        p.println("uint64_t *avg_cycles;");
+        p.println("static int **start_iters;");
+        p.println("static int **num_iters;");
+        p.println("static int *total_iters;");
+        p.println("static uint64_t **cycle_counts;");
+        p.println("static uint64_t *avg_cycles;");
         p.println();
-        p.println("uint64_t *total_cycle_counts;");
+        p.println("static uint64_t *total_cycle_counts;");
         p.println();
-        p.println("int num_registered;");
+        p.println("static int num_registered;");
         p.println();
         p.println("void initLoadBalancer(int _num_cores, int _num_filters, int _num_samples, uint64_t *_total_cycle_counts) {");
         p.println("  num_cores = _num_cores;");
@@ -273,13 +280,40 @@ public class LoadBalancer {
         p.println("  }");
         p.println("}");
         p.println();
+        p.println("void clearSamples() {");
+        p.println("  int x, y;");
+        p.println("  for(x = 0 ; x < num_filters ; x++) {");
+        p.println("    for(y = 0 ; y < num_cores ; y++) {");
+        p.println("      cycle_counts[x][y] = 0;");
+        p.println("    }");
+        p.println("  }");
+        p.println("  for(x = 0 ; x < num_cores ; x++) {");
+        p.println("    total_cycle_counts[x] = 0;");
+        p.println("  }");
+        p.println("}");
+        p.println();
         p.println("void doLoadBalance() {");
+        p.println("  int x, y;");
+        p.println();
         p.println("  calcAvgCycles();");
         p.println("  sortGroupsInsertionSort();");
         p.println();
         p.println("  // do load balancing stuff");
+        p.println("  printf(\"Load balancing\\n\");");
+        p.println("  printf(\"==============\\n\");");
+        p.println("  for(x = 0 ; x < num_filters ; x++) {");
+        p.println("    printf(\"filter %d: \", x);");
+        p.println("    for(y = 0 ; y < num_cores ; y++) {");
+        p.println("      printf(\"%llu \", cycle_counts[x][y]);");
+        p.println("    }");
+        p.println("    printf(\"\\n\");");
+        p.println("  }");
+        p.println("  for(x = 0 ; x < num_cores ; x++) {");
+        p.println("    printf(\"Core %d: %llu\\n\", x, total_cycle_counts[x]);");
+        p.println("  }");
         p.println();
         p.println("  recalcStartIters();");
+        p.println("  clearSamples();");
         p.println("}");
         p.close();
     }
@@ -404,6 +438,17 @@ public class LoadBalancer {
         for(int x = 0 ; x < KjcOptions.smp ; x++) {
             Core core = SMPBackend.chip.getNthComputeNode(x);
             
+            // Whether to sample on this iteration
+            JVariableDefinition sampleBoolVar =
+                new JVariableDefinition(null,
+                                        0,
+                                        CStdType.Boolean,
+                                        "sample__" + x,
+                                        null);
+            core.getComputeCode().getMainFunction().addStatementFirst(
+                new JVariableDeclarationStatement(sampleBoolVar));
+            sampleBoolVars.put(core, sampleBoolVar);
+
             // Number of steady-state iterations between sampling
             JVariableDefinition sampleIntervalIterVar =
                 new JVariableDefinition(null,
@@ -425,17 +470,6 @@ public class LoadBalancer {
             core.getComputeCode().getMainFunction().addStatementFirst(
                 new JVariableDeclarationStatement(numSamplesIterVar));
             numSamplesIterVars.put(core, numSamplesIterVar);
-
-            // Whether to sample on this iteration
-            JVariableDefinition sampleBoolVar =
-                new JVariableDefinition(null,
-                                        0,
-                                        CStdType.Boolean,
-                                        "sample__" + x,
-                                        null);
-            core.getComputeCode().getMainFunction().addStatementFirst(
-                new JVariableDeclarationStatement(sampleBoolVar));
-            sampleBoolVars.put(core, sampleBoolVar);
 
             // Start clock cycle for entire steady-state
             JVariableDefinition totalStartCycleVar =
@@ -461,58 +495,177 @@ public class LoadBalancer {
         }
     }
 
-    public static void instrumentSteadyStateLoops() {
+    public static void instrumentSteadyStateLoopsBeforeBarrier() {
         for(int x = 0 ; x < KjcOptions.smp ; x++) {
             Core core = SMPBackend.chip.getNthComputeNode(x);
 
-            JVariableDefinition sampleIntervalIterVar = sampleIntervalIterVars.get(core);
             JVariableDefinition sampleBoolVar = sampleBoolVars.get(core);
-            
-            // Add block that increments sampleIntervalIter, then checks to see if it's
-            // time to take a sample
-            JBlock header = new JBlock();
-            header.addStatement(
-                new JExpressionStatement(null,
-                                         new JPostfixExpression(null,
-                                                                Constants.OPE_POSTINC,
-                                                                new JLocalVariableExpression(sampleIntervalIterVar)),
-                                         null));
+            JVariableDefinition sampleIntervalIterVar = sampleIntervalIterVars.get(core);
+            JVariableDefinition numSamplesIterVar = numSamplesIterVars.get(core);
+            JVariableDefinition totalStartCycleVar = totalStartCycleVars.get(core);
+            JVariableDefinition totalEndCycleVar = totalEndCycleVars.get(core);
 
-            JEqualityExpression ifSampleCond =
+            // Add if-statement to beginning of steady-state loop that checks to see if it's 
+            // time to take a sample.  If so, read clock cycle at beginning of steady-state loop
+            core.getComputeCode().addSteadyLoopStatementFirst(
+                new JIfStatement(null,
+                                 new JEqualityExpression(null,
+                                                         true,
+                                                         new JLocalVariableExpression(sampleBoolVar),
+                                                         new JBooleanLiteral(true)),
+                                 new JExpressionStatement(
+                                     new JAssignmentExpression(
+                                         new JLocalVariableExpression(totalStartCycleVar),
+                                         new JMethodCallExpression("rdtsc", new JExpression[0]))),
+                                 new JBlock(),
+                                 new JavaStyleComment[0]));
+            
+            // Add block to beginning of steady-state loop that increments 
+            // sampleIntervalIter, then checks to see if it's time to take a sample
+            JBlock incIntervalIterBlock = new JBlock();
+            incIntervalIterBlock.addStatement(
+                new JExpressionStatement(
+                    new JPostfixExpression(null,
+                                           Constants.OPE_POSTINC,
+                                           new JLocalVariableExpression(sampleIntervalIterVar))));
+
+            JEqualityExpression setSampleCond =
                 new JEqualityExpression(null,
                                         true,
                                         new JLocalVariableExpression(sampleIntervalIterVar),
                                         new JFieldAccessExpression(samplesIntervalDef));
 
-            JBlock ifSampleThen = new JBlock();
-            ifSampleThen.addStatement(
+            JBlock setSampleThen = new JBlock();
+            setSampleThen.addStatement(
                 new JExpressionStatement(
                     new JAssignmentExpression(
                         new JLocalVariableExpression(sampleBoolVar),
                         new JBooleanLiteral(true))));
-            ifSampleThen.addStatement(
+            setSampleThen.addStatement(
                 new JExpressionStatement(
                     new JAssignmentExpression(
                         new JLocalVariableExpression(sampleIntervalIterVar),
                         new JIntLiteral(0))));
 
-            JBlock ifNotSampleThen = new JBlock();
-            ifNotSampleThen.addStatement(
+            JBlock setSampleElse = new JBlock();
+            setSampleElse.addStatement(
                 new JExpressionStatement(
                     new JAssignmentExpression(
                         new JLocalVariableExpression(sampleBoolVar),
                         new JBooleanLiteral(false))));
 
-            JIfStatement ifSampleStatement =
+            JIfStatement setSampleIf =
                 new JIfStatement(null,
-                                 ifSampleCond,
-                                 ifSampleThen,
-                                 ifNotSampleThen,
+                                 setSampleCond,
+                                 setSampleThen,
+                                 setSampleElse,
                                  new JavaStyleComment[0]);
 
-            header.addStatement(ifSampleStatement);
+            incIntervalIterBlock.addStatement(setSampleIf);
+            core.getComputeCode().addSteadyLoopStatementFirst(incIntervalIterBlock);
 
-            core.getComputeCode().addSteadyLoopStatementFirst(header);
+            // Add if-statement to end of steady-state loop that checks to see if it's 
+            // time to take a sample.  If so, read clock cycle at end of steady-state loop,
+            // then store difference into array of total cycle counts.
+            JBlock sampleEndSteadyStateBlock = new JBlock();
+
+            JEqualityExpression sampleEndSteadyStateCond =
+                new JEqualityExpression(null,
+                                        true,
+                                        new JLocalVariableExpression(sampleBoolVar),
+                                        new JBooleanLiteral(true));
+
+            JBlock sampleEndSteadyStateThen = new JBlock();
+            sampleEndSteadyStateThen.addStatement(
+                new JExpressionStatement(
+                    new JAssignmentExpression(
+                        new JLocalVariableExpression(totalEndCycleVar),
+                        new JMethodCallExpression("rdtsc", new JExpression[0]))));
+            sampleEndSteadyStateThen.addStatement(
+                new JExpressionStatement(
+                    new JAssignmentExpression(
+                        new JFieldAccessExpression(getTotalCycleCountRef(core)),
+                        new JAddExpression(
+                            new JFieldAccessExpression(getTotalCycleCountRef(core)),
+                            new JMinusExpression(
+                                null, 
+                                new JLocalVariableExpression(totalEndCycleVar),
+                                new JLocalVariableExpression(totalStartCycleVar))))));
+
+            JStatement sampleEndSteadyStateIf =
+                new JIfStatement(null,
+                                 sampleEndSteadyStateCond,
+                                 sampleEndSteadyStateThen,
+                                 new JBlock(),
+                                 new JavaStyleComment[0]);
+            sampleEndSteadyStateBlock.addStatement(sampleEndSteadyStateIf);
+
+            core.getComputeCode().addSteadyLoopStatement(sampleEndSteadyStateBlock);
+        }
+    }
+
+    public static void instrumentSteadyStateLoopsAfterBarrier() {
+        for(int x = 0 ; x < KjcOptions.smp ; x++) {
+            // Add block after barrier that checks if we sampled.  If so, increment number of
+            // samples.  If target number of samples reached, then do load balancing.
+
+            Core core = SMPBackend.chip.getNthComputeNode(x);
+
+            JVariableDefinition sampleBoolVar = sampleBoolVars.get(core);
+            JVariableDefinition numSamplesIterVar = numSamplesIterVars.get(core);
+
+            JEqualityExpression ifSampledCond =
+                new JEqualityExpression(null,
+                                        true,
+                                        new JLocalVariableExpression(sampleBoolVar),
+                                        new JBooleanLiteral(true));
+            
+            JBlock ifSampledThen = new JBlock();
+            {
+                ifSampledThen.addStatement(
+                    new JExpressionStatement(
+                        new JPostfixExpression(null,
+                                               Constants.OPE_POSTINC,
+                                               new JLocalVariableExpression(numSamplesIterVar))));
+                
+                JEqualityExpression loadBalanceCond =
+                    new JEqualityExpression(null,
+                                            true,
+                                            new JLocalVariableExpression(numSamplesIterVar),
+                                            new JFieldAccessExpression(numSamplesDef));
+                
+                JBlock loadBalanceThen = new JBlock();
+                if(x == 0) {
+                    loadBalanceThen.addStatement(
+                        new JExpressionStatement(
+                            new JMethodCallExpression("doLoadBalance", new JExpression[0])));
+                }
+                loadBalanceThen.addStatement(
+                    new JExpressionStatement(
+                        new JAssignmentExpression(
+                            new JLocalVariableExpression(numSamplesIterVar),
+                            new JIntLiteral(0))));
+                loadBalanceThen.addStatement(
+                    new JExpressionStatement(
+                        new JEmittedTextExpression("barrier_wait(&barrier)")));
+                
+                JIfStatement loadBalanceIf =
+                    new JIfStatement(null,
+                                     loadBalanceCond,
+                                     loadBalanceThen,
+                                     new JBlock(),
+                                     new JavaStyleComment[0]);
+                ifSampledThen.addStatement(loadBalanceIf);
+            }
+            
+            JIfStatement ifSampledIf =
+                new JIfStatement(null,
+                                 ifSampledCond,
+                                 ifSampledThen,
+                                 new JBlock(),
+                                 new JavaStyleComment[0]);
+            
+            core.getComputeCode().addSteadyLoopStatement(ifSampledIf);
         }
     }
 

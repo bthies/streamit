@@ -1,6 +1,5 @@
 package at.dms.kjc.smp;
 
-import sun.security.krb5.internal.crypto.CksumType;
 import at.dms.kjc.CStdType;
 import at.dms.kjc.KjcOptions;
 import at.dms.kjc.backendSupport.ComputeNode;

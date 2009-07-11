@@ -438,13 +438,15 @@ public class SharedBufferRemoteWritesTransfers extends BufferTransfers {
                                     JArrayAccessExpression srcAccess = 
                                         new JArrayAccessExpression(
                                             null,
-                                            new JNameExpression(null, srcBuffer),
+                                            //new JNameExpression(null, srcBuffer),
+                                            new JFieldAccessExpression(srcBuffer),
                                             srcIndex);
 
                                     JArrayAccessExpression destAccess =
                                         new JArrayAccessExpression(
                                             null,
-                                            new JNameExpression(null, destBuffer),
+                                            //new JNameExpression(null, destBuffer),
+                                            new JFieldAccessExpression(destBuffer),
                                             destIndex);
 
                                     JStatement transfer = 

@@ -186,8 +186,8 @@ public class LoadBalancer {
         p.println("  num_iters = (int **)malloc(num_filters * sizeof(int *));");
         p.println("  total_iters = (int *)malloc(num_filters * sizeof(int));");
         p.println();
-        p.println("  filter_cycle_counts = (uint64_t **)malloc(num_filters * sizeof(int *));");
-        p.println("  filter_avg_cycles = (uint64_t *)malloc(num_filters * sizeof(float));");
+        p.println("  filter_cycle_counts = (uint64_t **)malloc(num_filters * sizeof(uint64_t *));");
+        p.println("  filter_avg_cycles = (uint64_t *)malloc(num_filters * sizeof(uint64_t));");
         p.println();
         p.println("  core_cycle_counts = _core_cycle_counts;");
         p.println("  core_avg_cycles = (uint64_t *)malloc(num_cores * sizeof(uint64_t));");
@@ -214,7 +214,7 @@ public class LoadBalancer {
         p.println("");
         p.println("      sum += filter_cycle_counts[x][y];");
         p.println("    }");
-        p.println("    filter_avg_cycles[x] = (uint64_t)(sum / (num_samples * total_iters[x]));");
+        p.println("    filter_avg_cycles[x] = (uint64_t)(sum / ((uint64_t)num_samples * (uint64_t)total_iters[x]));");
         p.println("  }");
         p.println("  for(x = 0 ; x < num_cores ; x++) {");
         p.println("    core_avg_cycles[x] = core_cycle_counts[x] / num_samples;");
@@ -349,6 +349,10 @@ public class LoadBalancer {
         p.println();
         p.println("#ifdef DEBUG");
         p.println("  for(x = 0 ; x < num_cores ; x++) {");
+        p.println("    printf(\"core %d cycles: %llu\\n\", x, core_cycle_counts[x]);");
+        p.println("  }");
+        p.println("  printf(\"\\n\");");
+        p.println("  for(x = 0 ; x < num_cores ; x++) {");
         p.println("    printf(\"core %d avg cycles: %llu\\n\", x, core_avg_cycles[x]);");
         p.println("  }");
         p.println("  printf(\"\\n\");");
@@ -387,7 +391,7 @@ public class LoadBalancer {
         p.println("#endif");
         p.println();
         p.println("  for(x = 0 ; x < num_filters ; x++) {");
-        p.println("     if(filter_avg_cycles[x] > cycles_to_transfer || num_iters[x][maxcore] == 0)");
+        p.println("     if(filter_avg_cycles[x] > cycles_to_transfer || num_iters[x][maxcore] <= 0)");
         p.println("       continue;");
         p.println();
         p.println("     num_iters_to_transfer = (int)(cycles_to_transfer / filter_avg_cycles[x]);");

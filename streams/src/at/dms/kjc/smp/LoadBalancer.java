@@ -19,8 +19,8 @@ public class LoadBalancer {
 
     private static final String startItersArrayPrefix = "start_iters";
     private static final String numItersArrayPrefix = "num_iters";
-    private static final String cycleCountsArrayPrefix = "cycle_counts";
-    private static final String totalCycleCountsArrayPrefix = "total_cycle_counts";
+    private static final String filterCycleCountsArrayPrefix = "filter_cycle_counts";
+    private static final String coreCycleCountsArrayPrefix = "core_cycle_counts";
 
     private static final String numSamplesDef = "LB_NUM_SAMPLES";
     private static final int numSamples = 10;
@@ -34,8 +34,8 @@ public class LoadBalancer {
     private static HashMap<Core, JVariableDefinition> sampleBoolVars;
     private static HashMap<Core, JVariableDefinition> sampleIntervalIterVars;
     private static HashMap<Core, JVariableDefinition> numSamplesIterVars;
-    private static HashMap<Core, JVariableDefinition> totalStartCycleVars;
-    private static HashMap<Core, JVariableDefinition> totalEndCycleVars;
+    private static HashMap<Core, JVariableDefinition> coreStartCycleVars;
+    private static HashMap<Core, JVariableDefinition> coreEndCycleVars;
 
     static {
         loadBalancedGroups = new HashSet<FissionGroup>();
@@ -44,8 +44,8 @@ public class LoadBalancer {
         sampleBoolVars = new HashMap<Core, JVariableDefinition>();
         sampleIntervalIterVars = new HashMap<Core, JVariableDefinition>();
         numSamplesIterVars = new HashMap<Core, JVariableDefinition>();
-        totalStartCycleVars = new HashMap<Core, JVariableDefinition>();
-        totalEndCycleVars = new HashMap<Core, JVariableDefinition>();
+        coreStartCycleVars = new HashMap<Core, JVariableDefinition>();
+        coreEndCycleVars = new HashMap<Core, JVariableDefinition>();
     }
 
     private static boolean canLoadBalance(FissionGroup group) {
@@ -120,18 +120,18 @@ public class LoadBalancer {
         return numItersArrayPrefix + "_" + id + "[" + coreIndex + "]";
     }
 
-    public static String getCycleCountRef(FissionGroup group, Slice fizzedSlice) {
+    public static String getFilterCycleCountRef(FissionGroup group, Slice fizzedSlice) {
         int id = groupIDs.get(group).intValue();
         Core core = SMPBackend.scheduler.getComputeNode(fizzedSlice.getFirstFilter());
         int coreIndex = SMPBackend.chip.getCoreIndex(core);
 
-        return cycleCountsArrayPrefix + "_" + id + "[" + coreIndex + "]";
+        return filterCycleCountsArrayPrefix + "_" + id + "[" + coreIndex + "]";
     }
 
-    public static String getTotalCycleCountRef(Core core) {
+    public static String getCoreCycleCountRef(Core core) {
         int coreIndex = SMPBackend.chip.getCoreIndex(core);
 
-        return totalCycleCountsArrayPrefix + "[" + coreIndex + "]";
+        return coreCycleCountsArrayPrefix + "[" + coreIndex + "]";
     }
 
     public static void generateLoadBalancerCode() throws IOException {
@@ -143,8 +143,8 @@ public class LoadBalancer {
         p.println();
         p.println("#include <stdint.h>");
         p.println();
-        p.println("extern void initLoadBalancer(int _num_cores, int _num_filters, int _num_samples, uint64_t *_total_cycle_counts);");
-        p.println("extern void registerGroup(int *_start_iters, int *_num_iters, int _total_iters, uint64_t *_cycle_counts);");
+        p.println("extern void initLoadBalancer(int _num_cores, int _num_filters, int _num_samples, uint64_t *_core_cycle_counts);");
+        p.println("extern void registerGroup(int *_start_iters, int *_num_iters, int _total_iters, uint64_t *_filter_cycle_counts);");
         p.println();
         p.println("extern void doLoadBalance();");
         p.println();
@@ -156,6 +156,11 @@ public class LoadBalancer {
         p.println("#include <stdint.h>");
         p.println("#include <stdio.h>");
         p.println();
+        p.println("//#define DEBUG");
+        p.println();
+        p.println("#define MIN(a, b) ((a) < (b) ? (a) : (b))");
+        p.println("#define MAX(a, b) ((a) > (b) ? (a) : (b))");
+        p.println();
         p.println("static int num_cores;");
         p.println("static int num_filters;");
         p.println("static int num_samples;");
@@ -163,14 +168,16 @@ public class LoadBalancer {
         p.println("static int **start_iters;");
         p.println("static int **num_iters;");
         p.println("static int *total_iters;");
-        p.println("static uint64_t **cycle_counts;");
-        p.println("static uint64_t *avg_cycles;");
         p.println();
-        p.println("static uint64_t *total_cycle_counts;");
+        p.println("static uint64_t **filter_cycle_counts;");
+        p.println("static uint64_t *filter_avg_cycles;");
+        p.println();
+        p.println("static uint64_t *core_cycle_counts;");
+        p.println("static uint64_t *core_avg_cycles;");
         p.println();
         p.println("static int num_registered;");
         p.println();
-        p.println("void initLoadBalancer(int _num_cores, int _num_filters, int _num_samples, uint64_t *_total_cycle_counts) {");
+        p.println("void initLoadBalancer(int _num_cores, int _num_filters, int _num_samples, uint64_t *_core_cycle_counts) {");
         p.println("  num_cores = _num_cores;");
         p.println("  num_filters = _num_filters;");
         p.println("  num_samples = _num_samples;");
@@ -178,19 +185,21 @@ public class LoadBalancer {
         p.println("  start_iters = (int **)malloc(num_filters * sizeof(int *));");
         p.println("  num_iters = (int **)malloc(num_filters * sizeof(int *));");
         p.println("  total_iters = (int *)malloc(num_filters * sizeof(int));");
-        p.println("  cycle_counts = (uint64_t **)malloc(num_filters * sizeof(int *));");
-        p.println("  avg_cycles = (uint64_t *)malloc(num_filters * sizeof(float));");
         p.println();
-        p.println("  total_cycle_counts = _total_cycle_counts;");
+        p.println("  filter_cycle_counts = (uint64_t **)malloc(num_filters * sizeof(int *));");
+        p.println("  filter_avg_cycles = (uint64_t *)malloc(num_filters * sizeof(float));");
+        p.println();
+        p.println("  core_cycle_counts = _core_cycle_counts;");
+        p.println("  core_avg_cycles = (uint64_t *)malloc(num_cores * sizeof(uint64_t));");
         p.println();
         p.println("  num_registered = 0;");
         p.println("}");
         p.println();
-        p.println("void registerGroup(int *_start_iters, int *_num_iters, int _total_iters, uint64_t *_cycle_counts) {");
+        p.println("void registerGroup(int *_start_iters, int *_num_iters, int _total_iters, uint64_t *_filter_cycle_counts) {");
         p.println("  start_iters[num_registered] = _start_iters;");
         p.println("  num_iters[num_registered] = _num_iters;");
         p.println("  total_iters[num_registered] = _total_iters;");
-        p.println("  cycle_counts[num_registered] = _cycle_counts;");
+        p.println("  filter_cycle_counts[num_registered] = _filter_cycle_counts;");
         p.println("  num_registered++;");
         p.println("}");
         p.println();
@@ -203,9 +212,12 @@ public class LoadBalancer {
         p.println("      if(num_iters[x][y] == -1)");
         p.println("        continue;");
         p.println("");
-        p.println("      sum += cycle_counts[x][y];");
+        p.println("      sum += filter_cycle_counts[x][y];");
         p.println("    }");
-        p.println("    avg_cycles[x] = (uint64_t)(sum / (num_samples * total_iters[x]));");
+        p.println("    filter_avg_cycles[x] = (uint64_t)(sum / (num_samples * total_iters[x]));");
+        p.println("  }");
+        p.println("  for(x = 0 ; x < num_cores ; x++) {");
+        p.println("    core_avg_cycles[x] = core_cycle_counts[x] / num_samples;");
         p.println("  }");
         p.println("}");
         p.println();
@@ -213,20 +225,20 @@ public class LoadBalancer {
         p.println("  int *temp_start_iters = start_iters[index1];");
         p.println("  int *temp_num_iters = num_iters[index1];");
         p.println("  int temp_total_iters = total_iters[index1];");
-        p.println("  uint64_t *temp_cycle_counts = cycle_counts[index1];");
-        p.println("  uint64_t temp_avg_cycles = avg_cycles[index1];");
+        p.println("  uint64_t *temp_filter_cycle_counts = filter_cycle_counts[index1];");
+        p.println("  uint64_t temp_filter_avg_cycles = filter_avg_cycles[index1];");
         p.println();
         p.println("  start_iters[index1] = start_iters[index2];");
         p.println("  num_iters[index1] = num_iters[index2];");
         p.println("  total_iters[index1] = total_iters[index2];");
-        p.println("  cycle_counts[index1] = cycle_counts[index2];");
-        p.println("  avg_cycles[index1] = avg_cycles[index2];");
+        p.println("  filter_cycle_counts[index1] = filter_cycle_counts[index2];");
+        p.println("  filter_avg_cycles[index1] = filter_avg_cycles[index2];");
         p.println();
         p.println("  start_iters[index2] = temp_start_iters;");
         p.println("  num_iters[index2] = temp_num_iters;");
         p.println("  total_iters[index2] = temp_total_iters;");
-        p.println("  cycle_counts[index2] = temp_cycle_counts;");
-        p.println("  avg_cycles[index2] = temp_avg_cycles;");
+        p.println("  filter_cycle_counts[index2] = temp_filter_cycle_counts;");
+        p.println("  filter_avg_cycles[index2] = temp_filter_avg_cycles;");
         p.println("}");
         p.println();
         p.println("void sortGroupsInsertionSort() {");
@@ -235,32 +247,60 @@ public class LoadBalancer {
         p.println("  int *temp_start_iters;");
         p.println("  int *temp_num_iters;");
         p.println("  int temp_total_iters;");
-        p.println("  uint64_t *temp_cycle_counts;");
-        p.println("  uint64_t temp_avg_cycles;");
+        p.println("  uint64_t *temp_filter_cycle_counts;");
+        p.println("  uint64_t temp_filter_avg_cycles;");
         p.println();
         p.println("  for(x = 1 ; x < num_filters ; x++) {");
-        p.println("    temp_start_iters = start_iters[x];");
-        p.println("    temp_num_iters = num_iters[x];");
-        p.println("    temp_total_iters = total_iters[x];");
-        p.println("    temp_cycle_counts = cycle_counts[x];");
-        p.println("    temp_avg_cycles = avg_cycles[x];");
+        p.println("    if(filter_avg_cycles[x - 1] < filter_avg_cycles[x]) {");
+        p.println("      temp_start_iters = start_iters[x];");
+        p.println("      temp_num_iters = num_iters[x];");
+        p.println("      temp_total_iters = total_iters[x];");
+        p.println("      temp_filter_cycle_counts = filter_cycle_counts[x];");
+        p.println("      temp_filter_avg_cycles = filter_avg_cycles[x];");
         p.println();
-        p.println("    y = x - 1;");
-        p.println("    while(y >= 0 && avg_cycles[y] < temp_avg_cycles) {");
-        p.println("      start_iters[y + 1] = start_iters[y];");
-        p.println("      num_iters[y + 1] = num_iters[y];");
-        p.println("      total_iters[y + 1] = total_iters[y];");
-        p.println("      cycle_counts[y + 1] = cycle_counts[y];");
-        p.println("      avg_cycles[y + 1] = avg_cycles[y];");
-        p.println("      y--;");
+        p.println("      y = x - 1;");
+        p.println("      while(y >= 0 && filter_avg_cycles[y] < temp_filter_avg_cycles) {");
+        p.println("        start_iters[y + 1] = start_iters[y];");
+        p.println("        num_iters[y + 1] = num_iters[y];");
+        p.println("        total_iters[y + 1] = total_iters[y];");
+        p.println("        filter_cycle_counts[y + 1] = filter_cycle_counts[y];");
+        p.println("        filter_avg_cycles[y + 1] = filter_avg_cycles[y];");
+        p.println("        y--;");
+        p.println("      }");
+        p.println();
+        p.println("      start_iters[y + 1] = temp_start_iters;");
+        p.println("      num_iters[y + 1] = temp_num_iters;");
+        p.println("      total_iters[y + 1] = temp_total_iters;");
+        p.println("      filter_cycle_counts[y + 1] = temp_filter_cycle_counts;");
+        p.println("      filter_avg_cycles[y + 1] = temp_filter_avg_cycles;");
         p.println("    }");
-        p.println();
-        p.println("    start_iters[y + 1] = temp_start_iters;");
-        p.println("    num_iters[y + 1] = temp_num_iters;");
-        p.println("    total_iters[y + 1] = temp_total_iters;");
-        p.println("    cycle_counts[y + 1] = temp_cycle_counts;");
-        p.println("    avg_cycles[y + 1] = temp_avg_cycles;");
         p.println("  }");
+        p.println("}");
+        p.println();
+        p.println("int findMinCore() {");
+        p.println("  int x;");
+        p.println("  int mincore = 0;");
+        p.println("  uint64_t mincore_cycles = core_avg_cycles[0];");
+        p.println("  for(x = 1 ; x < num_cores ; x++) {");
+        p.println("    if(core_avg_cycles[x] < mincore_cycles) {");
+        p.println("      mincore = x;");
+        p.println("      mincore_cycles = core_avg_cycles[x];");
+        p.println("    }");
+        p.println("  }");
+        p.println("  return mincore;");
+        p.println("}");
+        p.println();
+        p.println("int findMaxCore() {");
+        p.println("  int x;");
+        p.println("  int maxcore = 0;");
+        p.println("  uint64_t maxcore_cycles = core_avg_cycles[0];");
+        p.println("  for(x = 1 ; x < num_cores ; x++) {");
+        p.println("    if(core_avg_cycles[x] > maxcore_cycles) {");
+        p.println("      maxcore = x;");
+        p.println("      maxcore_cycles = core_avg_cycles[x];");
+        p.println("    }");
+        p.println("  }");
+        p.println("  return maxcore;");
         p.println("}");
         p.println();
         p.println("void recalcStartIters() {");
@@ -284,32 +324,91 @@ public class LoadBalancer {
         p.println("  int x, y;");
         p.println("  for(x = 0 ; x < num_filters ; x++) {");
         p.println("    for(y = 0 ; y < num_cores ; y++) {");
-        p.println("      cycle_counts[x][y] = 0;");
+        p.println("      filter_cycle_counts[x][y] = 0;");
         p.println("    }");
         p.println("  }");
         p.println("  for(x = 0 ; x < num_cores ; x++) {");
-        p.println("    total_cycle_counts[x] = 0;");
+        p.println("    core_cycle_counts[x] = 0;");
         p.println("  }");
         p.println("}");
         p.println();
         p.println("void doLoadBalance() {");
         p.println("  int x, y;");
+        p.println("  int mincore, maxcore;");
+        p.println("  uint64_t cycles_to_transfer;");
+        p.println("  int num_iters_to_transfer;");
+        p.println();
+        p.println("#ifdef DEBUG");
+        p.println("  printf(\"==================\\n\");");
+        p.println("  printf(\"= Load balancing =\\n\");");
+        p.println("  printf(\"==================\\n\");");
+        p.println("#endif");
         p.println();
         p.println("  calcAvgCycles();");
         p.println("  sortGroupsInsertionSort();");
         p.println();
-        p.println("  // do load balancing stuff");
-        p.println("  printf(\"Load balancing\\n\");");
-        p.println("  printf(\"==============\\n\");");
+        p.println("#ifdef DEBUG");
+        p.println("  for(x = 0 ; x < num_cores ; x++) {");
+        p.println("    printf(\"core %d avg cycles: %llu\\n\", x, core_avg_cycles[x]);");
+        p.println("  }");
+        p.println("  printf(\"\\n\");");
         p.println("  for(x = 0 ; x < num_filters ; x++) {");
-        p.println("    printf(\"filter %d: \", x);");
+        p.println("    printf(\"filter %d cycles: \", x);");
         p.println("    for(y = 0 ; y < num_cores ; y++) {");
-        p.println("      printf(\"%llu \", cycle_counts[x][y]);");
+        p.println("      printf(\"%llu \", filter_cycle_counts[x][y]);");
         p.println("    }");
         p.println("    printf(\"\\n\");");
         p.println("  }");
+        p.println("  printf(\"\\n\");");
+        p.println("  for(x = 0 ; x < num_filters ; x++) {");
+        p.println("    printf(\"filter %d avg cycles: %llu\\n\", x, filter_avg_cycles[x]);");
+        p.println("  }");
+        p.println("  printf(\"\\n\");");
+        p.println("  printf(\"filter iterations:\\n\");");
         p.println("  for(x = 0 ; x < num_cores ; x++) {");
-        p.println("    printf(\"Core %d: %llu\\n\", x, total_cycle_counts[x]);");
+        p.println("    printf(\"core %d: \", x);");
+        p.println("    for(y = 0 ; y < num_filters ; y++) {");
+        p.println("      printf(\"%6d \", num_iters[y][x]);");
+        p.println("    }");
+        p.println("    printf(\"\\n\");");
+        p.println("  }");
+        p.println("  printf(\"\\n\");");
+        p.println("#endif");
+        p.println();
+        p.println("  mincore = findMinCore();");
+        p.println("  maxcore = findMaxCore();");
+        p.println("  cycles_to_transfer = (core_avg_cycles[maxcore] - core_avg_cycles[mincore]) / 2;");
+        p.println();
+        p.println("#ifdef DEBUG");
+        p.println("  printf(\"mincore: %d\\n\", mincore);");
+        p.println("  printf(\"maxcore: %d\\n\", maxcore);");
+        p.println("  printf(\"cycles to transfer: %llu\\n\", cycles_to_transfer);");
+        p.println("  printf(\"\\n\");");
+        p.println("#endif");
+        p.println();
+        p.println("  for(x = 0 ; x < num_filters ; x++) {");
+        p.println("     if(filter_avg_cycles[x] > cycles_to_transfer || num_iters[x][maxcore] == 0)");
+        p.println("       continue;");
+        p.println();
+        p.println("     num_iters_to_transfer = (int)(cycles_to_transfer / filter_avg_cycles[x]);");
+        p.println("     num_iters_to_transfer = MIN(num_iters_to_transfer, num_iters[x][maxcore]);");
+        p.println();
+        p.println("#ifdef DEBUG");
+        p.println("     printf(\"filter %d, num iters to transfer: %d\\n\", x, num_iters_to_transfer);");
+        p.println("     printf(\"mincore, iters before: %d\\n\", num_iters[x][mincore]);");
+        p.println("     printf(\"maxcore, iters before: %d\\n\", num_iters[x][maxcore]);");
+        p.println("#endif");
+        p.println();
+        p.println("     num_iters[x][maxcore] -= num_iters_to_transfer;");
+        p.println("     num_iters[x][mincore] += num_iters_to_transfer;");
+        p.println("     cycles_to_transfer -= num_iters_to_transfer * filter_avg_cycles[x];");
+        p.println();
+        p.println("#ifdef DEBUG");
+        p.println("     printf(\"mincore, iters after: %d\\n\", num_iters[x][mincore]);");
+        p.println("     printf(\"maxcore, iters after: %d\\n\", num_iters[x][maxcore]);");
+        p.println("     printf(\"cycles left to transfer: %llu\\n\", cycles_to_transfer);");
+        p.println("     printf(\"\\n\");");
+        p.println("#endif");
         p.println("  }");
         p.println();
         p.println("  recalcStartIters();");
@@ -324,14 +423,14 @@ public class LoadBalancer {
         p.println("#define " + samplesIntervalDef + " " + samplesInterval);
         p.println();
 
-        p.println("extern uint64_t " + totalCycleCountsArrayPrefix + "[" + KjcOptions.smp + "];");
+        p.println("extern uint64_t " + coreCycleCountsArrayPrefix + "[" + KjcOptions.smp + "];");
 
         for(FissionGroup group : loadBalancedGroups) {
             int id = groupIDs.get(group).intValue();
 
             p.println("extern int " + startItersArrayPrefix + "_" + id + "[" + KjcOptions.smp + "];");
             p.println("extern int " + numItersArrayPrefix + "_" + id + "[" + KjcOptions.smp + "];");
-            p.println("extern uint64_t " + cycleCountsArrayPrefix + "_" + id + "[" + KjcOptions.smp + "];");
+            p.println("extern uint64_t " + filterCycleCountsArrayPrefix + "_" + id + "[" + KjcOptions.smp + "];");
             p.println();
         }
     }
@@ -348,8 +447,8 @@ public class LoadBalancer {
 
     public static void emitLoadBalancerGlobals(CodegenPrintWriter p) throws IOException {
 
-        p.println("// Total cycle counts for steady-states");
-        p.println("uint64_t " + totalCycleCountsArrayPrefix + "[" + KjcOptions.smp + "];");
+        p.println("// Core cycle counts for steady-states");
+        p.println("uint64_t " + coreCycleCountsArrayPrefix + "[" + KjcOptions.smp + "];");
         p.println();
 
         for(FissionGroup group : loadBalancedGroups) {
@@ -403,7 +502,7 @@ public class LoadBalancer {
             p.println("};");
 
             // Construct array to store clock cycle samples
-            p.println("uint64_t " + cycleCountsArrayPrefix + "_" + id + "[" + KjcOptions.smp + "];");
+            p.println("uint64_t " + filterCycleCountsArrayPrefix + "_" + id + "[" + KjcOptions.smp + "];");
             p.println();
         }
     }
@@ -413,7 +512,7 @@ public class LoadBalancer {
         p.println("void " + initLoadBalancerMethodName() + "() {");
         p.indent();
 
-        p.println("initLoadBalancer(" + KjcOptions.smp + ", " + loadBalancedGroups.size() + ", " + numSamplesDef + ", " + totalCycleCountsArrayPrefix + ");");
+        p.println("initLoadBalancer(" + KjcOptions.smp + ", " + loadBalancedGroups.size() + ", " + numSamplesDef + ", " + coreCycleCountsArrayPrefix + ");");
 
         for(FissionGroup group : loadBalancedGroups) {
             int id = groupIDs.get(group).intValue();
@@ -422,7 +521,7 @@ public class LoadBalancer {
                       startItersArrayPrefix + "_" + id + ", " +
                       numItersArrayPrefix + "_" + id + ", " +
                       group.unfizzedFilterInfo.steadyMult + ", " +
-                      cycleCountsArrayPrefix + "_" + id + ");");
+                      filterCycleCountsArrayPrefix + "_" + id + ");");
         }
 
         p.outdent();
@@ -472,26 +571,26 @@ public class LoadBalancer {
             numSamplesIterVars.put(core, numSamplesIterVar);
 
             // Start clock cycle for entire steady-state
-            JVariableDefinition totalStartCycleVar =
+            JVariableDefinition coreStartCycleVar =
                 new JVariableDefinition(null,
                                         0,
                                         CInt64Type.Int64,
-                                        "totalStartCycle__" + x,
+                                        "coreStartCycle__" + x,
                                         null);
             core.getComputeCode().getMainFunction().addStatementFirst(
-                new JVariableDeclarationStatement(totalStartCycleVar));
-            totalStartCycleVars.put(core, totalStartCycleVar);
+                new JVariableDeclarationStatement(coreStartCycleVar));
+            coreStartCycleVars.put(core, coreStartCycleVar);
             
             // End clock cycle for entire steady-state
-            JVariableDefinition totalEndCycleVar =
+            JVariableDefinition coreEndCycleVar =
                 new JVariableDefinition(null,
                                         0,
                                         CInt64Type.Int64,
-                                        "totalEndCycle__" + x,
+                                        "coreEndCycle__" + x,
                                         null);
             core.getComputeCode().getMainFunction().addStatementFirst(
-                new JVariableDeclarationStatement(totalEndCycleVar));
-            totalEndCycleVars.put(core, totalEndCycleVar);
+                new JVariableDeclarationStatement(coreEndCycleVar));
+            coreEndCycleVars.put(core, coreEndCycleVar);
         }
     }
 
@@ -502,8 +601,8 @@ public class LoadBalancer {
             JVariableDefinition sampleBoolVar = sampleBoolVars.get(core);
             JVariableDefinition sampleIntervalIterVar = sampleIntervalIterVars.get(core);
             JVariableDefinition numSamplesIterVar = numSamplesIterVars.get(core);
-            JVariableDefinition totalStartCycleVar = totalStartCycleVars.get(core);
-            JVariableDefinition totalEndCycleVar = totalEndCycleVars.get(core);
+            JVariableDefinition coreStartCycleVar = coreStartCycleVars.get(core);
+            JVariableDefinition coreEndCycleVar = coreEndCycleVars.get(core);
 
             // Add if-statement to beginning of steady-state loop that checks to see if it's 
             // time to take a sample.  If so, read clock cycle at beginning of steady-state loop
@@ -515,7 +614,7 @@ public class LoadBalancer {
                                                          new JBooleanLiteral(true)),
                                  new JExpressionStatement(
                                      new JAssignmentExpression(
-                                         new JLocalVariableExpression(totalStartCycleVar),
+                                         new JLocalVariableExpression(coreStartCycleVar),
                                          new JMethodCallExpression("rdtsc", new JExpression[0]))),
                                  new JBlock(),
                                  new JavaStyleComment[0]));
@@ -566,7 +665,7 @@ public class LoadBalancer {
 
             // Add if-statement to end of steady-state loop that checks to see if it's 
             // time to take a sample.  If so, read clock cycle at end of steady-state loop,
-            // then store difference into array of total cycle counts.
+            // then store difference into array of core cycle counts.
             JBlock sampleEndSteadyStateBlock = new JBlock();
 
             JEqualityExpression sampleEndSteadyStateCond =
@@ -579,18 +678,18 @@ public class LoadBalancer {
             sampleEndSteadyStateThen.addStatement(
                 new JExpressionStatement(
                     new JAssignmentExpression(
-                        new JLocalVariableExpression(totalEndCycleVar),
+                        new JLocalVariableExpression(coreEndCycleVar),
                         new JMethodCallExpression("rdtsc", new JExpression[0]))));
             sampleEndSteadyStateThen.addStatement(
                 new JExpressionStatement(
                     new JAssignmentExpression(
-                        new JFieldAccessExpression(getTotalCycleCountRef(core)),
+                        new JFieldAccessExpression(getCoreCycleCountRef(core)),
                         new JAddExpression(
-                            new JFieldAccessExpression(getTotalCycleCountRef(core)),
+                            new JFieldAccessExpression(getCoreCycleCountRef(core)),
                             new JMinusExpression(
                                 null, 
-                                new JLocalVariableExpression(totalEndCycleVar),
-                                new JLocalVariableExpression(totalStartCycleVar))))));
+                                new JLocalVariableExpression(coreEndCycleVar),
+                                new JLocalVariableExpression(coreStartCycleVar))))));
 
             JStatement sampleEndSteadyStateIf =
                 new JIfStatement(null,
@@ -677,12 +776,12 @@ public class LoadBalancer {
         return numSamplesIterVars.get(core);
     }
 
-    public static JVariableDefinition totalStartCycleVar(Core core) {
-        return totalStartCycleVars.get(core);
+    public static JVariableDefinition coreStartCycleVar(Core core) {
+        return coreStartCycleVars.get(core);
     }
 
-    public static JVariableDefinition totalEndCycleVar(Core core) {
-        return totalEndCycleVars.get(core);
+    public static JVariableDefinition coreEndCycleVar(Core core) {
+        return coreEndCycleVars.get(core);
     }
 
     public static JVariableDefinition getSampleBoolVar(Core core) {

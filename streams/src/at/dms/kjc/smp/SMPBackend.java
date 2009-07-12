@@ -99,6 +99,10 @@ public class SMPBackend {
         // if load-balancing, enable shared buffers
         if(KjcOptions.loadbalance)
             KjcOptions.sharedbufs = true;
+
+        // if load-balancing, but only 1 core, disable load-balancing
+        if(KjcOptions.loadbalance && KjcOptions.smp == 1)
+            KjcOptions.loadbalance = false;
     }
     
     /**

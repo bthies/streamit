@@ -313,7 +313,7 @@ public class FilterCodeGeneration extends CodeStoreHelper {
             statements.addStatement(new JVariableDeclarationStatement(endCycleVar));
 
             String cycleCountRef = 
-                LoadBalancer.getCycleCountRef(
+                LoadBalancer.getFilterCycleCountRef(
                     FissionGroupStore.getFissionGroup(filterNode.getParent()),
                     filterNode.getParent());
 

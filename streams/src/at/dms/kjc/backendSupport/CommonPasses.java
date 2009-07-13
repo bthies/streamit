@@ -366,13 +366,14 @@ public class CommonPasses {
 
         // get the execution counts from the scheduler
         HashMap[] executionCounts = SIRScheduler.getExecutionCounts(str);
-        if (numCores > 1) {
 
-            // Print out computation to communication ratio.
-            double CCRatio = CompCommRatio.ratio(str, getWorkEstimate(),
-                    executionCounts[1]);
-            //System.out.println("Comp/Comm Ratio of SIR graph: " + CCRatio);
-            // and average max slice size.
+        // Print out computation to communication ratio.
+        double CCRatio = CompCommRatio.ratio(str, getWorkEstimate(),
+                                             executionCounts[1]);
+        System.out.println("Comp/Comm Ratio of SIR graph: " + CCRatio);
+
+        if (numCores > 1) {
+            // average max slice size.
             new CalculateParams(str, CCRatio, executionCounts[1]).doit();
         }
         
@@ -392,9 +393,12 @@ public class CommonPasses {
         
         setSlicer(null);
         if (KjcOptions.tilera > 1 || KjcOptions.smp > 1) {
-            if (!KjcOptions.nopartition)
+            if (!KjcOptions.nopartition) {
+                System.out.println("Using OneFilterSlicer slicer");
                 setSlicer(new OneFilterSlicer(topNodes, executionCounts));
+            }
             else {
+                System.out.println("Using FlattenAndPartition slicer");
                 setSlicer(new FlattenAndPartition(topNodes,
                         executionCounts, lfa, getWorkEstimate(), numCores));
                 ((FlattenAndPartition)getSlicer()).flatten(str, executionCounts);

@@ -5,7 +5,7 @@ import at.dms.kjc.backendSupport.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.lowering.partition.*;
 import at.dms.kjc.slicegraph.*;
-import java.util.LinkedList;
+import java.util.*;
 
 public class SMPBackend {
     public static final boolean FAKE_IO = false;
@@ -85,6 +85,23 @@ public class SMPBackend {
         // dump structs.h file
         structs_h.writeToFile();
 
+        // display final assignment of filters to cores
+        System.out.println("Final filter assignments:");
+        System.out.println("========================================");
+        for(int x = 0 ; x < KjcOptions.smp ; x++) {
+            Core core = chip.getNthComputeNode(x);
+            Set<FilterSliceNode> filters = core.getComputeCode().getFilters();
+            long totalWork = 0;
+
+            System.out.println("Core " + core.getCoreID() + ": ");
+            for(FilterSliceNode filter : filters) {
+                long work = SliceWorkEstimate.getWork(filter.getParent());
+                System.out.format("%16d | " + filter + "\n", work);
+                totalWork += work;
+            }
+            System.out.format("%16d | Total\n", totalWork);
+        }
+
         System.exit(0);
     }
     
@@ -103,6 +120,14 @@ public class SMPBackend {
         // if load-balancing, but only 1 core, disable load-balancing
         if(KjcOptions.loadbalance && KjcOptions.smp == 1)
             KjcOptions.loadbalance = false;
+
+        // if using old TMD, make sure not using sharedbufs since they're incompatible
+        if(KjcOptions.partitioner.equals("oldtmd")) {
+            if(KjcOptions.sharedbufs) {
+                System.out.println("WARNING: Disabling shared buffers due to incompatibility with old TMD scheduler");
+                KjcOptions.sharedbufs = false;
+            }
+        }
     }
     
     /**
@@ -112,6 +137,8 @@ public class SMPBackend {
     private static void setScheduler() {
         if (KjcOptions.partitioner.equals("tmd")) {
             scheduler = new TMDBinPackFissAll();
+        } else if (KjcOptions.partitioner.equals("oldtmd")) {
+            scheduler = new TMD();
         } else if (KjcOptions.partitioner.equals("smd")) {
             scheduler = new SMD();
         } else {

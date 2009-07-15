@@ -150,7 +150,7 @@ public class Partitioner {
      * there need to be at least one filter on each side of a feedback
      * loop.
      */
-    static int estimateFuseAllResult(SIRStream str) {
+    public static int estimateFuseAllResult(SIRStream str) {
         // Should this count identity filters or not?  Unclear,
         // depending on backend, so for now be conservative and count
         // them.

@@ -87,26 +87,26 @@ public class StatelessFissioner {
         // Check to see if Slice has file reader/writer.  Don't fizz file
         // reader/writer
         if(filter.isPredefined()) {
-            if(debug) System.out.println("Can't fizz: Slice contains file reader/writer");
+            if(debug) System.out.println("Can't fizz: Slice contains file reader/writer: " + slice);
             return false;
         }
 
         // Make sure that Slice has only one FilterSliceNode
         if(!(slice.getNumFilters() == 1)) {
-            if(debug) System.out.println("Can't fizz: Slice has more than one FilterSliceNode");
+            if(debug) System.out.println("Can't fizz: Slice has more than one FilterSliceNode: " + slice);
             return false;
         }
 
         // Check to make sure that Slice is stateless
         if(MutableStateExtractor.hasMutableState(slice.getFirstFilter().getFilter())) {
-            if(debug) System.out.println("Can't fizz: Slice is not stateless!!");
+            if(debug) System.out.println("Can't fizz: Slice is not stateless: " + slice);
             return false;
         }
 
         // Check to see if FilterSliceNode contains a linear filter.  At the
         // moment, we can't fizz linear filters
         if(filter.getFilter().isLinear()) {
-            if(debug) System.out.println("Can't fizz: Slice contains linear filter, presently unsupported");
+            if(debug) System.out.println("Can't fizz: Slice contains linear filter, presently unsupported: " + slice);
             return false;
         }
         

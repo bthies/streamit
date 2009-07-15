@@ -36,8 +36,11 @@ public class GranularityAdjust {
             oldStr = (SIRStream)ObjectDeepCloner.deepCopy(str);
             //StreamItDot.printGraph(oldStr, "oldstr.dot");
             int tilesNeeded = at.dms.kjc.sir.lowering.partition.Partitioner.countFilters(str);
+            int minTiles = at.dms.kjc.sir.lowering.partition.Partitioner.estimateFuseAllResult(str);
             str = at.dms.kjc.sir.lowering.partition.Partitioner.doit(str,
                     tilesNeeded - 1, false, false, true);
+            //if tiles desired is smaller than fuseAll size, then quit since we can't do better
+            if(tilesNeeded <= minTiles + 1) break;
             //StreamItDot.printGraph(str, "newstr.dot");
             work = WorkEstimate.getWorkEstimate(str);
             //greedy bin pack the shits

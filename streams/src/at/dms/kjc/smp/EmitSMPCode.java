@@ -44,7 +44,7 @@ public class EmitSMPCode extends EmitCode {
             }
 
             // if profiling, add instrumentation before steady-state barrier
-            if(KjcOptions.debug) {
+            if(KjcOptions.profile) {
                 Profiler.instrumentBeforeBarrier();
             }
             
@@ -58,7 +58,7 @@ public class EmitSMPCode extends EmitCode {
             }
 
             // if profiling, add instrumentation after steady-state barrier
-            if(KjcOptions.debug) {
+            if(KjcOptions.profile) {
                 Profiler.instrumentAfterBarrier();
             }
 
@@ -163,7 +163,7 @@ public class EmitSMPCode extends EmitCode {
 
         generateSetAffinity(p);
 
-        if(KjcOptions.debug) {
+        if(KjcOptions.profile) {
             Profiler.emitProfilerGlobals(p);
             Profiler.generateProfilerOutputCode(p);
         }
@@ -247,6 +247,7 @@ public class EmitSMPCode extends EmitCode {
         p.println();
 
         p.println("#include \"barrier.h\"");
+        p.println("#include \"structs.h\"");
         p.println("#include <stdint.h>");
         p.println();
 
@@ -274,7 +275,7 @@ public class EmitSMPCode extends EmitCode {
         p.println("extern void setCPUAffinity(int core);");
         p.println();
 
-        if(KjcOptions.debug)
+        if(KjcOptions.profile)
             Profiler.emitProfilerExternGlobals(p);
 
         if(KjcOptions.loadbalance)

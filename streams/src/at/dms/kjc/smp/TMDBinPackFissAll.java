@@ -3,9 +3,11 @@ package at.dms.kjc.smp;
 import java.util.HashMap;
 
 import at.dms.kjc.sir.*;
+import at.dms.kjc.sir.lowering.fusion.*;
 import at.dms.kjc.sir.lowering.partition.*;
 import at.dms.kjc.slicegraph.*;
 import at.dms.kjc.slicegraph.fission.FissionGroup;
+import at.dms.kjc.spacetime.*;
 import at.dms.kjc.*;
 import java.util.LinkedList;
 import at.dms.kjc.backendSupport.*;
@@ -17,7 +19,9 @@ import java.util.TreeSet;
 import java.util.HashSet;
 import java.util.List;
 
-public class TMDBinPackFissAll extends TMD {
+public class TMDBinPackFissAll extends Scheduler {
+
+    public final static double FUSE_WORK_CHANGE_THRESHOLD = .90;
 
     private double DUP_THRESHOLD;
     public static final int FISS_COMP_COMM_THRESHOLD = 10;
@@ -319,11 +323,14 @@ public class TMDBinPackFissAll extends TMD {
                 //assert slice.getHead().getSourceSet(SchedulingPhase.STEADY).size() <= 1;
                 
                 //check that we have reached the threshold for duplicated items
-                int threshFactor = (int)Math.ceil((((double)(fi.peek - fi.pop)) * fizzAmount.get(slice)) / 
+                int threshFactor = 
+                    (int)Math.ceil((((double)(fi.peek - fi.pop)) * fizzAmount.get(slice)) / 
                         ((double)(DUP_THRESHOLD * (((double)fi.pop) * ((double)fi.steadyMult)))));
 
                 //this factor makes sure that copydown is less than pop*mult*factor
-                int cdFactor = (int)Math.ceil(((double)fi.copyDown) / ((double)(fi.pop * fi.steadyMult) / (double)(fizzAmount.get(slice))));
+                int cdFactor = 
+                    (int)Math.ceil(((double)fi.copyDown) / ((double)(fi.pop * fi.steadyMult) 
+                                                            / (double)(fizzAmount.get(slice))));
 
                 int myFactor = Math.max(cdFactor, threshFactor);
 
@@ -342,5 +349,74 @@ public class TMDBinPackFissAll extends TMD {
         lcm = (int)Math.ceil((double)maxFactor / (double)lcm) * lcm;
         
         return lcm;
+    }
+
+    @Override
+    public SIRStream SIRFusion(SIRStream str, int tiles) {
+        if(false)
+            return str;
+
+        System.out.println("Performing fusion of stateful filters");
+
+        SIRStream oldStr;
+        //get the first work estimate
+        WorkEstimate work = WorkEstimate.getWorkEstimate(str);
+        //bin pack the shits
+        StatefulGreedyBinPacking binPacker = new StatefulGreedyBinPacking(str, tiles, work);
+        binPacker.pack();
+        //get the max bin weight for the packing
+        long oldWork = binPacker.maxBinWeight();
+        //the work of the new partitioning
+        long newWork = 0;
+        //the percentage change
+        double workChange;
+
+        if(StatefulFusion.countStatefulFilters(str) < KjcOptions.smp) {
+            return str;
+        }
+        
+        do {
+            oldStr = (SIRStream)ObjectDeepCloner.deepCopy(str);
+
+            int numStatefulFilters = StatefulFusion.countStatefulFilters(str);
+            int minTiles = at.dms.kjc.sir.lowering.partition.Partitioner.estimateFuseAllResult(str);
+
+            if(numStatefulFilters - 1 <= minTiles + 1) {
+                System.out.println("  Fusing all filters");
+                str = FuseAll.fuse(str, false);
+            }
+            else {
+                System.out.println("  Attempting to fuse down to " + (numStatefulFilters - 1) + 
+                                   " stateful filters");
+                str = new StatefulFusion(str, work, numStatefulFilters - 1, false).doFusion();
+            }
+
+            work = WorkEstimate.getWorkEstimate(str);
+
+            //greedy bin pack the stateful filters
+            binPacker = new StatefulGreedyBinPacking(str, tiles, work);
+            binPacker.pack();
+            newWork = binPacker.maxBinWeight();
+
+            //find the percentage change in work between the two 
+            workChange = ((double)oldWork) / ((double)newWork);
+
+            //remember this as the old work for the next (possible) iteration
+            System.out.println(oldWork + " / " + newWork + " = " + workChange);
+            oldWork = newWork;
+
+            //if number of stateful filters didn't change, then quit since can't fuse anymore
+            int newNumStatefulFilters = StatefulFusion.countStatefulFilters(str);
+            if(newNumStatefulFilters == numStatefulFilters || 
+               newNumStatefulFilters <= KjcOptions.smp) {
+                break;
+            }
+        } while (workChange >= FUSE_WORK_CHANGE_THRESHOLD);
+        
+        if(workChange < FUSE_WORK_CHANGE_THRESHOLD) {
+            str = oldStr;
+        }
+
+        return str;
     }
 }

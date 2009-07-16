@@ -142,6 +142,7 @@ public class LoadBalancer {
         p.println("#define LOAD_BALANCER_H");
         p.println();
         p.println("#include <stdint.h>");
+        p.println("#include \"rdtsc.h\"");
         p.println();
         p.println("extern void initLoadBalancer(int _num_cores, int _num_filters, int _num_samples, uint64_t *_core_cycle_counts);");
         p.println("extern void registerGroup(int *_start_iters, int *_num_iters, int _total_iters, uint64_t *_filter_cycle_counts);");
@@ -156,7 +157,10 @@ public class LoadBalancer {
         p.println("#include <stdint.h>");
         p.println("#include <stdio.h>");
         p.println();
+        p.println("#include \"load_balancer.h\"");
+        p.println();
         p.println("//#define DEBUG");
+        p.println("//#define TIME");
         p.println();
         p.println("#define MIN(a, b) ((a) < (b) ? (a) : (b))");
         p.println("#define MAX(a, b) ((a) > (b) ? (a) : (b))");
@@ -338,6 +342,11 @@ public class LoadBalancer {
         p.println("  uint64_t cycles_to_transfer;");
         p.println("  int num_iters_to_transfer;");
         p.println();
+        p.println("#ifdef TIME");
+        p.println("  uint64_t lb_start_cycle, lb_end_cycle;");
+        p.println("  lb_start_cycle = rdtsc();");
+        p.println("#endif");
+        p.println();
         p.println("#ifdef DEBUG");
         p.println("  printf(\"==================\\n\");");
         p.println("  printf(\"= Load balancing =\\n\");");
@@ -417,6 +426,11 @@ public class LoadBalancer {
         p.println();
         p.println("  recalcStartIters();");
         p.println("  clearSamples();");
+        p.println();
+        p.println("#ifdef TIME");
+        p.println("  lb_end_cycle = rdtsc();");
+        p.println("  printf(\"Load balancing time: %llu\\n\", (lb_end_cycle - lb_start_cycle));");
+        p.println("#endif");
         p.println("}");
         p.close();
     }

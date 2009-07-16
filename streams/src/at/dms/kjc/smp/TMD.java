@@ -655,7 +655,11 @@ public class TMD extends Scheduler {
         return count[0];
     }
     
-    public static SIRStream SIRFusion(SIRStream str, int tiles) {
+    @Override
+    public SIRStream SIRFusion(SIRStream str, int tiles) {
+        if(!allLevelsFit(str, tiles))
+            System.out.println("Have to fuse the graph because at least one level has too many filters...");
+
         KjcOptions.partition_greedier = true;
         KjcOptions.partition_dp = false;
         while (!allLevelsFit(str, tiles)) {

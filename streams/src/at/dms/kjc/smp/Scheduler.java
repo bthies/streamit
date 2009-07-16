@@ -37,6 +37,8 @@ public abstract class Scheduler implements Layout<Core> {
     }
     
     public abstract void run(int tiles);
+
+    public SIRStream SIRFusion(SIRStream str, int tiles) {return str;};
     
     public SpaceTimeScheduleAndSlicer getGraphSchedule() {
         return graphSchedule;

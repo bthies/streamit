@@ -243,11 +243,9 @@ public class CommonPasses {
             dup.percentStateless(str);
             str = FusePipelines.fusePipelinesOfStatelessStreams(str);
             StreamItDot.printGraph(str, "after-fuse-stateless.dot");
-    
-            if (!at.dms.kjc.smp.TMD.allLevelsFit(str, KjcOptions.smp)) {
-                System.out.println("Have to fuse the graph because at least one level has too many filters...");
-                str = at.dms.kjc.smp.TMD.SIRFusion(str, KjcOptions.smp);
-            }
+
+            str = at.dms.kjc.smp.SMPBackend.scheduler.SIRFusion(str, KjcOptions.smp);
+
             if (KjcOptions.dup == 1) {
                 dup.smarterDuplicate(str, numCores);
             }

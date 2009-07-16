@@ -39,8 +39,6 @@ public class GranularityAdjust {
             int minTiles = at.dms.kjc.sir.lowering.partition.Partitioner.estimateFuseAllResult(str);
             str = at.dms.kjc.sir.lowering.partition.Partitioner.doit(str,
                     tilesNeeded - 1, false, false, true);
-            //if tiles desired is smaller than fuseAll size, then quit since we can't do better
-            if(tilesNeeded <= minTiles + 1) break;
             //StreamItDot.printGraph(str, "newstr.dot");
             work = WorkEstimate.getWorkEstimate(str);
             //greedy bin pack the shits
@@ -52,9 +50,13 @@ public class GranularityAdjust {
             //remember this as the old work for the next (possible) iteration
             System.out.println(oldWork + " / " + newWork + " = " + workChange);
             oldWork = newWork;
+            //if tiles desired is smaller than fuseAll size, then quit since we can't do better
+            if(tilesNeeded <= minTiles + 1) break;
         } while (workChange >= threshold);
         
-        str = oldStr;
+        if (workChange >= threshold) {
+            str = oldStr;
+        }
         //StreamItDot.printGraph(str, "str.dot");
         //KjcOptions.partition_greedier = false;
         //WorkEstimate.UNROLL_FOR_WORK_EST = false;

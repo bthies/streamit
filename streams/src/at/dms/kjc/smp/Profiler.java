@@ -97,6 +97,7 @@ public class Profiler {
             p.println("uint64_t min_start, min_barrier, min_end;");
             p.println("uint64_t work_time, barrier_time;");
             p.println("float aggregate_work_percentage = 0;");
+            p.println("uint64_t average_barrier_time = 0;");
             p.println("uint64_t core_work_totals[" + KjcOptions.smp + "];");
             p.println();
             
@@ -193,6 +194,7 @@ public class Profiler {
             p.println();
             
             p.println("aggregate_work_percentage += ((float)work_time / (float)(barrier_time * " + KjcOptions.smp + "));");
+            p.println("average_barrier_time += barrier_time;");
             
             p.outdent();
             p.println("}");
@@ -201,6 +203,7 @@ public class Profiler {
             p.println("printf(\"Aggregate stats\\n\");");
             p.println("printf(\"===============\\n\");");
             p.println("printf(\"Aggregate work percentage: %f\\n\", (aggregate_work_percentage / " + KjcOptions.iterations + ") * 100);");
+            p.println("printf(\"Average barrier time: %llu\\n\", (average_barrier_time / " + KjcOptions.iterations + "));");
             p.println("for (core = 0 ; core < " + KjcOptions.smp + " ; core++)");
             p.indent();
             p.println("printf(\"Core %d avg work per steady state: %llu\\n\", core, core_work_totals[core] / " + KjcOptions.iterations + ");");

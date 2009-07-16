@@ -54,7 +54,7 @@ public class GranularityAdjust {
             if(tilesNeeded <= minTiles + 1) break;
         } while (workChange >= threshold);
         
-        if (workChange >= threshold) {
+        if (workChange < threshold) {
             str = oldStr;
         }
         //StreamItDot.printGraph(str, "str.dot");

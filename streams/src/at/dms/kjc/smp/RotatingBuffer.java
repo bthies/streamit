@@ -48,7 +48,7 @@ public abstract class RotatingBuffer extends Channel {
     protected BufferTransfers transferCommands;
     
     /** a set of all the buffer types in the application */
-    protected static HashSet<CType> types;
+    protected static HashSet<String> types;
     /** prefix of the variable name for the rotating buffers */
     public static String rotTypeDefPrefix = "__rotating_buffer_";
 	
@@ -57,7 +57,7 @@ public abstract class RotatingBuffer extends Channel {
     protected static HashMap<FilterSliceNode, OutputRotatingBuffer> outputBuffers;
 
     static {
-        types = new HashSet<CType>();
+        types = new HashSet<String>();
         inputBuffers = new HashMap<FilterSliceNode, InputRotatingBuffer>();
         outputBuffers = new HashMap<FilterSliceNode, OutputRotatingBuffer>();
     }
@@ -171,14 +171,13 @@ public abstract class RotatingBuffer extends Channel {
      * we see in the program (each channel type).
      */
     protected static void rotTypeDefs() {
-        for (CType type : types) {
-            SMPBackend.structs_h.addLineSC("typedef struct __rotating_struct_" +
-                    type.toString() + "__" + 
-                    " *__rot_ptr_" + type.toString() + "__");
-            SMPBackend.structs_h.addText("typedef struct __rotating_struct_" + type.toString() + "__ {\n");
-            SMPBackend.structs_h.addText("\t" + type.toString() + " *buffer;\n");
-            SMPBackend.structs_h.addText("\t__rot_ptr_" + type.toString() + "__ next;\n");
-            SMPBackend.structs_h.addText("} " + rotTypeDefPrefix + type.toString() + ";\n");
+        for (String type : types) {
+            SMPBackend.structs_h.addLineSC("typedef struct __rotating_struct_" + type + "__" + 
+                    " *__rot_ptr_" + type + "__");
+            SMPBackend.structs_h.addText("typedef struct __rotating_struct_" + type + "__ {\n");
+            SMPBackend.structs_h.addText("\t" + type + " *buffer;\n");
+            SMPBackend.structs_h.addText("\t__rot_ptr_" + type + "__ next;\n");
+            SMPBackend.structs_h.addText("} " + rotTypeDefPrefix + type + ";\n");
         }
     }
     
@@ -287,8 +286,8 @@ public abstract class RotatingBuffer extends Channel {
      */
     public static InputRotatingBuffer getInputBuffer(FilterSliceNode fsn) {
         if(!inputBuffers.containsKey(fsn) && KjcOptions.sharedbufs &&
-           FissionGroupStore.isFizzed(fsn.getParent())) {
-            assert FissionGroupStore.isUnfizzedSlice(fsn.getParent());
+           FissionGroupStore.isFizzed(fsn.getParent()) && 
+           FissionGroupStore.isUnfizzedSlice(fsn.getParent())) {
             return inputBuffers.get(FissionGroupStore.getFizzedSlices(fsn.getParent())[0].getFirstFilter());
         }
         else {
@@ -298,7 +297,8 @@ public abstract class RotatingBuffer extends Channel {
   
     public static RotatingBuffer getOutputBuffer(FilterSliceNode fsn) {
         if(!outputBuffers.containsKey(fsn) && KjcOptions.sharedbufs &&
-           FissionGroupStore.isFizzed(fsn.getParent())) {
+           FissionGroupStore.isFizzed(fsn.getParent()) &&
+           FissionGroupStore.isUnfizzedSlice(fsn.getParent())) {
             assert FissionGroupStore.isUnfizzedSlice(fsn.getParent());
             return outputBuffers.get(FissionGroupStore.getFizzedSlices(fsn.getParent())[0].getFirstFilter());
         }

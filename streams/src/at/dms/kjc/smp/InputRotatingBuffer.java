@@ -74,7 +74,7 @@ public class InputRotatingBuffer extends RotatingBuffer {
     }
 
     public static void createInputBuffer(Slice slice, BasicSpaceTimeSchedule schedule) {
-        assert slice.getNumFilters() == 1;
+        assert slice.getNumFilters() == 1 : slice.getNumFilters();
         
         if (!slice.getHead().noInputs()) {
             assert slice.getHead().totalWeights(SchedulingPhase.STEADY) > 0;
@@ -99,9 +99,9 @@ public class InputRotatingBuffer extends RotatingBuffer {
         super(filterNode.getEdgeToPrev(), filterNode, parent);
         
         bufType = filterNode.getFilter().getInputType();
-        types.add(bufType);
+        types.add(bufType.toString());
         setInputBuffer(filterNode, this);
-        
+
         readRotStructName =  this.getIdent() + "read_rot_struct";
         currentReadRotName = this.getIdent() + "_read_current";
         currentReadBufName = this.getIdent() + "_read_buf";

@@ -26,7 +26,7 @@ public class LoadBalancer {
     private static final int numSamples = 10;
 
     private static final String samplesIntervalDef = "LB_SAMPLES_INTERVAL";
-    private static final int samplesInterval = 25;
+    private static final int samplesInterval = 10;
 
     private static HashSet<FissionGroup> loadBalancedGroups;
     private static HashMap<FissionGroup, Integer> groupIDs;

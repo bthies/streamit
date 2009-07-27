@@ -369,10 +369,10 @@ public class EmitSMPCode extends EmitCode {
     }
 
     private static void generateMakefile() throws IOException {
-        CodegenPrintWriter p = new CodegenPrintWriter(new BufferedWriter(new FileWriter("Makefile.smp", false)));
+        CodegenPrintWriter p = new CodegenPrintWriter(new BufferedWriter(new FileWriter("Makefile", false)));
 
         p.println("CC = icc");
-        p.println("CFLAGS = -O2");
+        p.println("CFLAGS = -O2 -vec-report0");
         p.println("INCLUDES = ");
         p.println("LIBS = -pthread -lstdc++");
         p.print("OBJS = main.o barrier.o ");

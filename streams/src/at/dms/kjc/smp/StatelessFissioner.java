@@ -146,8 +146,10 @@ public class StatelessFissioner {
     }
    
     private FissionGroup fizz() {
+        /*
         if(!checks())
             return null;
+        */
 
         createFissedSlices();
         setupInitPhase();

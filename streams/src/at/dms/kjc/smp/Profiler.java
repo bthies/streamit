@@ -17,13 +17,23 @@ public class Profiler {
         for (Core core : SMPBackend.chip.getCores()) {
             if (!core.getComputeCode().shouldGenerateCode())
                 continue;
-            
+
             core.getComputeCode().addSteadyLoopStatementFirst(
                 Util.toStmt("start_times[" + core.getCoreID() + "][perfstats_iter_n" + core.getCoreID() + "] = rdtsc()"));
             
             if(KjcOptions.smp > 1)
                 core.getComputeCode().addSteadyLoopStatement(
                     Util.toStmt("barrier_times[" + core.getCoreID() + "][perfstats_iter_n" + core.getCoreID() + "] = rdtsc()"));
+
+            /*
+            core.getComputeCode().addSteadyLoopStatementFirst(
+                Util.toStmt("clock_gettime(CLOCK_REALTIME, &start_times[" + core.getCoreID() + "][perfstats_iter_n" + core.getCoreID() + "]);"));
+            
+            if(KjcOptions.smp > 1)
+                core.getComputeCode().addSteadyLoopStatement(
+                    Util.toStmt("clock_gettime(CLOCK_REALTIME, &barrier_times[" + core.getCoreID() + "][perfstats_iter_n" + core.getCoreID() + "]);"));
+            */
+
         }
     }
 
@@ -31,9 +41,13 @@ public class Profiler {
         for (Core core : SMPBackend.chip.getCores()) {
             if (!core.getComputeCode().shouldGenerateCode())
                 continue;
-            
+
             core.getComputeCode().addSteadyLoopStatement(
                 Util.toStmt("end_times[" + core.getCoreID() + "][perfstats_iter_n" + core.getCoreID() + "] = rdtsc()"));
+            /*
+            core.getComputeCode().addSteadyLoopStatement(
+                Util.toStmt("clock_gettime(CLOCK_REALTIME, &end_times[" + core.getCoreID() + "][perfstats_iter_n" + core.getCoreID() + "]);"))
+            */
             core.getComputeCode().addSteadyLoopStatement(
                 Util.toStmt("perfstats_iter_n" + core.getCoreID() + "++"));
         }
@@ -59,6 +73,16 @@ public class Profiler {
         }
         p.println("extern uint64_t end_times[" + KjcOptions.smp + "][" + KjcOptions.iterations + "];");
         p.println();
+
+        /*
+        p.println("// Debugging stats");
+        p.println("extern struct timespec start_times[" + KjcOptions.smp + "][" + KjcOptions.iterations + "];");
+        if(KjcOptions.smp > 1) {
+            p.println("extern struct timespec barrier_times[" + KjcOptions.smp + "][" + KjcOptions.iterations + "];");
+        }
+        p.println("extern struct timespec end_times[" + KjcOptions.smp + "][" + KjcOptions.iterations + "];");
+        p.println();
+        */
         
         for (Core core : SMPBackend.chip.getCores()) {
             if (!core.getComputeCode().shouldGenerateCode())
@@ -80,6 +104,16 @@ public class Profiler {
         }
         p.println("uint64_t end_times[" + KjcOptions.smp + "][" + KjcOptions.iterations + "];");
         p.println();
+
+        /*
+        p.println("// Debugging stats");
+        p.println("struct timespec start_times[" + KjcOptions.smp + "][" + KjcOptions.iterations + "];");
+        if(KjcOptions.smp > 1) {
+            p.println("struct timespec barrier_times[" + KjcOptions.smp + "][" + KjcOptions.iterations + "];");
+        }
+        p.println("struct timespec end_times[" + KjcOptions.smp + "][" + KjcOptions.iterations + "];");
+        p.println();
+        */
         
         for (Core core : SMPBackend.chip.getCores()) {
             if (!core.getComputeCode().shouldGenerateCode())
@@ -93,6 +127,7 @@ public class Profiler {
         p.println("void perfStatsOutput() {");
         p.indent();
         if(KjcOptions.smp > 1) {
+            /*
             p.println("int core, iter;");
             p.println("uint64_t min_start, min_barrier, min_end;");
             p.println("uint64_t work_time, barrier_time;");
@@ -110,8 +145,10 @@ public class Profiler {
             p.println("for (iter = 0 ; iter < " + KjcOptions.iterations + " ; iter++) {");
             p.indent();
             
+            p.println("#ifdef PROFILEFINE");
             p.println("printf(\"Steady-state iteration: %d\\n\", iter);");
             p.println("printf(\"=======================\\n\");");
+            p.println("#endif");
             p.println();
             
             p.println("min_start = -1;");
@@ -167,6 +204,7 @@ public class Profiler {
             p.outdent();
             p.println();
             
+            p.println("#ifdef PROFILEFINE");
             p.println("for (core = 0 ; core < " + KjcOptions.smp + " ; core++)");
             p.indent();
             p.println("printf(\"Thread %3d, start:   %10llu            %llu\\n\", core, start_times[core][iter] - min_start, start_times[core][iter]);");
@@ -191,6 +229,7 @@ public class Profiler {
             p.println("printf(\"Total time: %llu\\n\", barrier_time * " + KjcOptions.smp + ");");
             p.println("printf(\"Work percentage: %f\\n\", ((float)work_time / (float)(barrier_time * " + KjcOptions.smp + ")) * 100);");
             p.println("printf(\"\\n\");");
+            p.println("#endif");
             p.println();
             
             p.println("aggregate_work_percentage += ((float)work_time / (float)(barrier_time * " + KjcOptions.smp + "));");
@@ -208,6 +247,51 @@ public class Profiler {
             p.indent();
             p.println("printf(\"Core %d avg work per steady state: %llu\\n\", core, core_work_totals[core] / " + KjcOptions.iterations + ");");
             p.outdent();
+            */
+
+            p.println("int core, iter;");
+            p.println("uint64_t work_time, barrier_time, total_time;");
+            p.println();
+
+            p.println("for (core = 0 ; core < " + KjcOptions.smp + " ; core++) {");
+            p.indent();
+            p.println("for (iter = 0 ; iter < " + KjcOptions.iterations + " ; iter++) {");
+            p.indent();
+            p.println("work_time += barrier_times[core][iter] - start_times[core][iter];");
+            p.println("barrier_time += end_times[core][iter] - barrier_times[core][iter];");
+            p.println("total_time += end_times[core][iter] - start_times[core][iter];");
+            p.println("}");
+            p.outdent();
+            p.println("}");
+            p.outdent();
+            p.println();
+
+            p.println("printf(\"Average work time: %f\\n\", ((float)(work_time / " + KjcOptions.iterations + ")) / " + KjcOptions.smp + ");");
+            p.println("printf(\"Average barrier time: %f\\n\", ((float)(barrier_time / " + KjcOptions.iterations + ")) / " + KjcOptions.smp + ");");
+            p.println("printf(\"Average total time: %f\\n\", ((float)(total_time / " + KjcOptions.iterations + ")) / " + KjcOptions.smp + ");");
+
+            /*
+            p.println("int core, iter;");
+            p.println("uint64_t work_time, barrier_time, total_time;");
+            p.println();
+
+            p.println("for (core = 0 ; core < " + KjcOptions.smp + " ; core++) {");
+            p.indent();
+            p.println("for (iter = 0 ; iter < " + KjcOptions.iterations + " ; iter++) {");
+            p.indent();
+            p.println("work_time += (barrier_times[core][iter].tv_sec - start_times[core][iter].tv_sec) * 1000000000 + (barrier_times[core][iter].tv_nsec - start_times[core][iter].tv_nsec);");
+            p.println("barrier_time += (end_times[core][iter].tv_sec - barrier_times[core][iter].tv_sec) * 1000000000 + (end_times[core][iter].tv_nsec - barrier_times[core][iter].tv_nsec);");
+            p.println("total_time += (end_times[core][iter].tv_sec - start_times[core][iter].tv_sec) * 1000000000 + (end_times[core][iter].tv_nsec - start_times[core][iter].tv_nsec);");
+            p.println("}");
+            p.outdent();
+            p.println("}");
+            p.outdent();
+            p.println();
+
+            p.println("printf(\"Average work time: %f\\n\", ((float)(work_time / " + KjcOptions.iterations + ")) / " + KjcOptions.smp + ");");
+            p.println("printf(\"Average barrier time: %f\\n\", ((float)(barrier_time / " + KjcOptions.iterations + ")) / " + KjcOptions.smp + ");");
+            p.println("printf(\"Average total time: %f\\n\", ((float)(total_time / " + KjcOptions.iterations + ")) / " + KjcOptions.smp + ");");
+            */
         }
         else {
             p.println("int iter;");

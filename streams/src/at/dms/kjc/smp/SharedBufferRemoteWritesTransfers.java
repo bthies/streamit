@@ -14,7 +14,7 @@ import java.util.Set;
 
 public class SharedBufferRemoteWritesTransfers extends BufferTransfers {
 
-    private static final boolean debug = true;
+    private static final boolean debug = false;
 
     /** Unique id */
     protected static int uniqueID = 0;
@@ -265,6 +265,25 @@ public class SharedBufferRemoteWritesTransfers extends BufferTransfers {
     }
     
     /********** Write code **********/
+
+    /**
+     * Calculates least common multiple between <a> and <b>
+     */
+    private int LCM(int a, int b) {
+    	int product = a * b;
+    	
+    	do {
+    		if(a < b) {
+    			int tmp = a;
+    			a = b;
+    			b = tmp;
+    		}
+    		
+    		a = a % b;
+    	} while(a != 0);
+    	
+    	return product / b;
+    }
     
     private void generateWriteStatements(SchedulingPhase phase) {
     	assert (parent instanceof OutputRotatingBuffer);
@@ -301,22 +320,38 @@ public class SharedBufferRemoteWritesTransfers extends BufferTransfers {
                                         "destBaseOffset__" + myID,
                                         null);
 
-            JVariableDefinition loopIterVar =
+            JVariableDefinition iterLoopVar =
                 new JVariableDefinition(0,
                                         CStdType.Integer,
-                                        "transferIter__" + myID,
+                                        "iter__" + myID,
+                                        null);
+
+            JVariableDefinition frameLoopVar =
+                new JVariableDefinition(0,
+                                        CStdType.Integer,
+                                        "frame__" + myID,
                                         null);
 
             JVariableDeclarationStatement srcBaseOffsetDecl =
                 new JVariableDeclarationStatement(srcBaseOffsetVar);
             JVariableDeclarationStatement destBaseOffsetDecl =
                 new JVariableDeclarationStatement(destBaseOffsetVar);
-            JVariableDeclarationStatement loopIterVarDecl =
-                new JVariableDeclarationStatement(loopIterVar);
+            JVariableDeclarationStatement iterLoopVarDecl =
+                new JVariableDeclarationStatement(iterLoopVar);
+            JVariableDeclarationStatement frameLoopVarDecl =
+                new JVariableDeclarationStatement(frameLoopVar);
 
             statements.add(srcBaseOffsetDecl);
             statements.add(destBaseOffsetDecl);
-            statements.add(loopIterVarDecl);
+            statements.add(iterLoopVarDecl);
+            statements.add(frameLoopVarDecl);
+
+            // Number of output rotations per steady-state iteration
+            assert fi.push % output.totalWeights(SchedulingPhase.STEADY) == 0;
+            int outputRotsPerIter = fi.push / output.totalWeights(SchedulingPhase.STEADY);
+
+            // Src stride per steady-state iteration
+            int srcStridePerIter = outputRotsPerIter * output.totalWeights(phase);
 
             // Set base offset for reading data elements
             statements.add(
@@ -325,28 +360,15 @@ public class SharedBufferRemoteWritesTransfers extends BufferTransfers {
                         new JLocalVariableExpression(srcBaseOffsetVar),
                         getWriteOffsetExpr(phase))));
 
-            // Calculate number of output rotations per steady-state iteration
-            assert fi.push % output.totalWeights(SchedulingPhase.STEADY) == 0;
-            int outputRotsPerIter = fi.push / output.totalWeights(SchedulingPhase.STEADY);
-            
-            Set<InterSliceEdge> destSet = output.getDestSet(SchedulingPhase.STEADY);
-            int numDests = destSet.size();
-
-            // Iteration through destinations, generate code to transfer to each
-            // destination
-            for(InterSliceEdge edge : destSet) {
+            // Iterate through dests, generate transfer code for each dest
+            for(InterSliceEdge edge : output.getDestSet(SchedulingPhase.STEADY)) {
                 InputSliceNode input = edge.getDest();
 
                 int outputWeight = output.getWeight(edge, SchedulingPhase.STEADY);
                 int inputWeight = input.getWeight(edge, SchedulingPhase.STEADY);
 
-                // Calculate number of input rotations per steady-state iteration
-                assert (outputRotsPerIter * outputWeight) % inputWeight == 0;
-                int inputRotsPerIter = (outputRotsPerIter * outputWeight) / inputWeight;
-
-                // Calculate dest's copyDown
+                // Dest's copyDown
                 int destCopyDown;
-
                 if(FissionGroupStore.isFizzed(input.getParent())) {
                     FissionGroup inputGroup = FissionGroupStore.getFissionGroup(input.getParent());
                     destCopyDown = inputGroup.unfizzedFilterInfo.copyDown;
@@ -356,41 +378,9 @@ public class SharedBufferRemoteWritesTransfers extends BufferTransfers {
                     destCopyDown = destInfo.copyDown;
                 }
 
-                // Calculate dest stride per filter iteration
+                // Dest stride per steady-state iteration
                 int destStridePerIter = (outputRotsPerIter * outputWeight) / inputWeight *
                     input.totalWeights(SchedulingPhase.STEADY);
-
-                // Calculate dest offsets of all data elements received in each
-                // steady-state iteration
-                int destElemOffsets[] = new int[inputRotsPerIter * inputWeight];
-
-                int elemIndex = 0;
-                for(int rot = 0 ; rot < inputRotsPerIter ; rot++) {
-                    for(int index = 0 ; index < input.getWeights(phase).length ; index++) {
-                        if(input.getSources(phase)[index].equals(edge)) {
-                            for(int item = 0 ; item < input.getWeights(phase)[index] ; item++) {
-                                destElemOffsets[elemIndex++] =
-                                    rot * input.totalWeights(phase) +
-                                    input.weightBefore(index, phase) + item;
-                            }
-                        }
-                    }
-                }
-
-                // Get source and dest buffer names
-                String srcBuffer;
-                if(((OutputRotatingBuffer)parent).hasDirectWrite()) {
-                    FilterSliceNode directWriteFilter = 
-                        ((OutputRotatingBuffer)parent).getDirectWriteFilter();
-                    srcBuffer = 
-                        ((OutputRotatingBuffer)parent).getAddressBuffer(directWriteFilter.getParent().getHead()).currentWriteBufName;
-                }
-                else {
-                    srcBuffer = ((OutputRotatingBuffer)parent).currentWriteBufName;
-                }
-
-                String destBuffer = 
-                    ((OutputRotatingBuffer)parent).getAddressBuffer(edge.getDest()).currentWriteBufName;
 
                 // Set base offset for writing data elements
                 statements.add(
@@ -400,10 +390,203 @@ public class SharedBufferRemoteWritesTransfers extends BufferTransfers {
                             new JAddExpression(
                                 new JMultExpression(
                                     new JNameExpression(null,
-                                                        LoadBalancer.getStartIterRef(group, parent.filterNode.getParent())),
+                                                        LoadBalancer.getStartIterRef(
+                                                            group, parent.filterNode.getParent())),
                                     new JIntLiteral(destStridePerIter)),
                                 new JIntLiteral(destCopyDown)))));
 
+                /********************** 
+                 * Frame calculations *
+                 **********************/
+
+                // Size of frame
+                int frameWidth = LCM(outputWeight, inputWeight);
+
+                // Number of frames per steady-state iteration
+                int framesPerIter = (outputRotsPerIter * outputWeight) / frameWidth;
+                assert (outputRotsPerIter * outputWeight) % frameWidth == 0;
+
+                // Src stride per frame
+                int srcStridePerFrame = (frameWidth / outputWeight) *
+                    output.totalWeights(SchedulingPhase.STEADY);
+
+                // Dest stride per frame
+                int destStridePerFrame = (frameWidth / inputWeight) * 
+                    input.totalWeights(SchedulingPhase.STEADY);
+
+                // Number of output and input rotations per frame
+                int outputRotsPerFrame = frameWidth / outputWeight;
+                int inputRotsPerFrame = frameWidth / inputWeight;                
+
+                // Src offsets of all data elements sent in each frame
+                int srcElemOffsets[] = new int[frameWidth];
+                int srcElemIndex = 0;
+
+                for(int rot = 0 ; rot < outputRotsPerFrame ; rot++) {
+                    for(int index = 0 ; index < output.getWeights(phase).length ; index++) {
+                        InterSliceEdge[] dests = output.getDests(phase)[index];
+                        for(InterSliceEdge dest : dests) {
+                            if(dest.equals(edge)) {
+                                for(int item = 0 ; item < output.getWeights(phase)[index] ; item++) {
+                                    srcElemOffsets[srcElemIndex++] =
+                                        rot * output.totalWeights(phase) +
+                                        output.weightBefore(index, phase) + item;
+                                }
+
+                                // TODO: Check for duplicates in dests?
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                // Dest offsets of all data elements received in each frame
+                int destElemOffsets[] = new int[frameWidth];
+                int destElemIndex = 0;
+
+                for(int rot = 0 ; rot < inputRotsPerFrame ; rot++) {
+                    for(int index = 0 ; index < input.getWeights(phase).length ; index++) {
+                        if(input.getSources(phase)[index].equals(edge)) {
+                            for(int item = 0 ; item < input.getWeights(phase)[index] ; item++) {
+                                destElemOffsets[destElemIndex++] =
+                                    rot * input.totalWeights(phase) +
+                                    input.weightBefore(index, phase) + item;
+                            }
+                        }
+                    }
+                }
+
+                /*********************
+                 * Transfer commands *
+                 *********************/
+
+                // Get source and dest buffer names
+                String srcBuffer;
+                if(((OutputRotatingBuffer)parent).hasDirectWrite()) {
+                    FilterSliceNode directWriteFilter = 
+                        ((OutputRotatingBuffer)parent).getDirectWriteFilter();
+                    srcBuffer = 
+                        ((OutputRotatingBuffer)parent).getAddressBuffer(
+                            directWriteFilter.getParent().getHead()).currentWriteBufName;
+                }
+                else {
+                    srcBuffer = ((OutputRotatingBuffer)parent).currentWriteBufName;
+                }
+
+                String destBuffer = 
+                    ((OutputRotatingBuffer)parent).getAddressBuffer(
+                        edge.getDest()).currentWriteBufName;
+
+                // Generate transfers for each frame
+                JBlock transfersPerFrame = new JBlock();
+                for(int frameElem = 0 ; frameElem < frameWidth ; frameElem++) {
+                    JExpression srcIndex =
+                        new JAddExpression(
+                            new JAddExpression(
+                                new JAddExpression(
+                                    new JLocalVariableExpression(srcBaseOffsetVar),
+                                    new JMultExpression(
+                                        new JLocalVariableExpression(iterLoopVar),
+                                        new JIntLiteral(srcStridePerIter))),
+                                new JMultExpression(
+                                    new JLocalVariableExpression(frameLoopVar),
+                                    new JIntLiteral(srcStridePerFrame))),
+                            new JIntLiteral(srcElemOffsets[frameElem]));
+
+                    JExpression destIndex =
+                        new JAddExpression(
+                            new JAddExpression(
+                                new JAddExpression(
+                                    new JLocalVariableExpression(destBaseOffsetVar),
+                                    new JMultExpression(
+                                        new JLocalVariableExpression(iterLoopVar),
+                                        new JIntLiteral(destStridePerIter))),
+                                new JMultExpression(
+                                    new JLocalVariableExpression(frameLoopVar),
+                                    new JIntLiteral(destStridePerFrame))),
+                            new JIntLiteral(destElemOffsets[frameElem]));
+
+                    JArrayAccessExpression srcAccess =
+                        new JArrayAccessExpression(
+                            null,
+                            //new JNameExpression(null, srcBuffer)
+                            new JFieldAccessExpression(srcBuffer),
+                            srcIndex);
+
+                    JArrayAccessExpression destAccess =
+                        new JArrayAccessExpression(
+                            null,
+                            //new JNameExpression(null, destBuffer)
+                            new JFieldAccessExpression(destBuffer),
+                            destIndex);
+
+                    JStatement transfer =
+                        new JExpressionStatement(
+                            new JAssignmentExpression(destAccess, srcAccess));
+
+                    transfersPerFrame.addStatement(transfer);
+                }
+
+                // Repeat frame transfers enough times to transfer data for a single
+                // steady-state iteration
+                JStatement frameLoopInit =
+                    new JExpressionStatement(
+                        new JAssignmentExpression(
+                            new JLocalVariableExpression(frameLoopVar),
+                            new JIntLiteral(0)));
+
+                JExpression frameLoopCond =
+                    new JRelationalExpression(null,
+                                              Constants.OPE_LT,
+                                              new JLocalVariableExpression(null, frameLoopVar),
+                                              new JIntLiteral(framesPerIter));
+
+                JStatement frameLoopIncr =
+                    new JExpressionStatement(null,
+                                             new JPostfixExpression(null,
+                                                                    Constants.OPE_POSTINC,
+                                                                    new JLocalVariableExpression(null,
+                                                                                                 frameLoopVar)),
+                                             null);
+
+                JStatement frameLoop = 
+                    new JForStatement(frameLoopInit,
+                                      frameLoopCond,
+                                      frameLoopIncr,
+                                      transfersPerFrame);
+
+                // Repeat for every steady-state iteration owned by core
+                JStatement iterLoopInit =
+                    new JExpressionStatement(
+                        new JAssignmentExpression(
+                            new JLocalVariableExpression(iterLoopVar),
+                            new JIntLiteral(0)));
+
+                JExpression iterLoopCond =
+                    new JRelationalExpression(null,
+                                              Constants.OPE_LT,
+                                              new JLocalVariableExpression(null, iterLoopVar),
+                                              new JEmittedTextExpression(
+                                                  LoadBalancer.getNumItersRef(group,
+                                                                              parent.filterNode.getParent())));
+
+                JStatement iterLoopIncr =
+                    new JExpressionStatement(null,
+                                             new JPostfixExpression(null,
+                                                                    Constants.OPE_POSTINC,
+                                                                    new JLocalVariableExpression(null,
+                                                                                                 iterLoopVar)),
+                                             null);
+
+                JStatement iterLoop =
+                    new JForStatement(iterLoopInit,
+                                      iterLoopCond,
+                                      iterLoopIncr,
+                                      frameLoop);
+
+                statements.add(iterLoop);
+
+                /*
                 // Generate loop to transfer data to destination
                 JBlock transfersPerIter = new JBlock();
                 
@@ -488,6 +671,7 @@ public class SharedBufferRemoteWritesTransfers extends BufferTransfers {
                                       transfersPerIter);
 
                 statements.add(forLoop);
+                */
             }
         }
         else {
@@ -739,12 +923,14 @@ public class SharedBufferRemoteWritesTransfers extends BufferTransfers {
                 assert LoadBalancer.isLoadBalanced(group);
 
                 JEmittedTextExpression startIterExpr =
-                    new JEmittedTextExpression(LoadBalancer.getStartIterRef(group, parent.filterNode.getParent()));
+                    new JEmittedTextExpression(
+                        LoadBalancer.getStartIterRef(group, parent.filterNode.getParent()));
                 JIntLiteral pushRate = new JIntLiteral(group.unfizzedFilterInfo.push);
 
-                return new JAddExpression(new JIntLiteral(offset),
-                                          new JMultExpression(startIterExpr,
-                                                              pushRate));
+                return new JAddExpression(
+                    new JIntLiteral(offset),
+                    new JMultExpression(startIterExpr,
+                                        pushRate));
             }
 
             return new JIntLiteral(offset);

@@ -4,6 +4,11 @@
 # Assume other symbols may or may not already be set.
 #
 
+# Variables that may need to be redefined depending on machine
+export JAVA_HOME=/afs/csail.mit.edu/group/commit/3rdparty/jdk1.6.0_21
+
+#==== Below here should not have to change ====
+
 # make sure STREAMIT_HOME is exported
 export STREAMIT_HOME
 
@@ -23,9 +28,7 @@ then
  export CLASSPATH=.
 fi
 
-# location of java
-export JAVA_HOME=~/jdk1.6.0_10
-
+# location of java binaries
 export PATH=${JAVA_HOME}/bin:$PATH
 
 # java classes
@@ -65,9 +68,6 @@ else
   PATH=${PATH}:${STREAMIT_HOME}
 fi
 
-# add java to path
-#export PATH=${JAVA_HOME}/bin:${PATH}
-
 # include extra LaTeX packages
 # (Note that this *always* DTRT: the TeX path-searching stuff interprets
 # a blank entry as "the default path".)
@@ -77,7 +77,6 @@ then
 else 
     TEXINPUTS=${STREAMIT_HOME}/include/tex:${TEXINPUTS}
 fi
-
 
 #### DEPRECATED CONFIG STUFF #####
 

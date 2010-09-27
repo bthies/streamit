@@ -12,3 +12,4 @@ streams/README          This file
 streams/README.source   README file which describes the layout of the StreamIt source tree
 streams/regtest		A regression test framework for the compiler.
 streams/src		All compiler sources -- compiler, scheduler, eclipse, Java library, etc.
+streams/uns		3rd party libraries required by the compiler

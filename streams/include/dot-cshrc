@@ -42,20 +42,12 @@ setenv CLASSPATH ${CLASSPATH}:/home/streamit/lib/xalan-j_2_7_0/xml-apis.jar
 setenv CLASSPATH ${CLASSPATH}:/home/streamit/lib/xalan-j_2_7_0/xsltc.jar      
 
 # use gcc34 as our gcc and g++
-alias gcc gcc34
-alias g++ gcc34
+#alias gcc gcc34
+#alias g++ gcc34
 
 # also need to define CXX and CC to be gcc34; otherwise make will subvert aliases
-setenv CC gcc34
-setenv CXX gcc34
-
-# the current version of starsearch we're using
-setenv TOPDIR ${STREAMIT_HOME}/misc/raw
-# the following needed to use spacetime, but can clobber Mike's research
-#setenv TOPDIR /home/bits6/mgordon/starsearch
-
-# the path to ATLAS
-setenv ATLAS_HOME /home/bits7/NO_BACKUP/streamit/ATLAS
+setenv CC gcc-3.4
+setenv CXX gcc-3.4
 
 # for running dotty
 setenv LEFTYPATH /home/bits7/NO_BACKUP/streamit/dotty
@@ -100,13 +92,6 @@ endif
 # add java to path
 setenv PATH ${JAVA_HOME}/bin:${PATH}
 
-# Perl on RHEL-3
-if ($?PERL5LIB) then
-  setenv PERL5LIB /usr/uns/encap/perl-5.8.0/lib/5.8.0/:/usr/uns/lib/site_perl/5.8.0:/home/streamit/lib/perl5/site_perl/5.8.0:/home/streamit/lib/perl5/site_perl/5.8.0/i386-linux-thread-multi:${PERL5LIB}
-else
-  setenv PERL5LIB /usr/uns/encap/perl-5.8.0/lib/5.8.0/:/usr/uns/lib/site_perl/5.8.0:/home/streamit/lib/perl5/site_perl/5.8.0:/home/streamit/lib/perl5/site_perl/5.8.0/i386-linux-thread-multi
-endif
-
 # include extra LaTeX packages
 # (Note that this *always* DTRT: the TeX path-searching stuff interprets
 # a blank entry as "the default path".)
@@ -116,8 +101,19 @@ else
   setenv TEXINPUTS ${STREAMIT_HOME}/include/tex:
 endif
 
+
+#### DEPRECATED CONFIG STUFF #####
+
+# Perl on RHEL-3
+#if ($?PERL5LIB) then
+#  setenv PERL5LIB /usr/uns/encap/perl-5.8.0/lib/5.8.0/:/usr/uns/lib/site_perl/5.8.0:/home/streamit/lib/perl5/site_perl/5.8.0:/home/streamit/lib/perl5/site_perl/5.8.0/i386-linux-thread-multi:${PERL5LIB}
+#else
+#  setenv PERL5LIB /usr/uns/encap/perl-5.8.0/lib/5.8.0/:/usr/uns/lib/site_perl/5.8.0:/home/streamit/lib/perl5/site_perl/5.8.0:/home/streamit/lib/perl5/site_perl/5.8.0/i386-linux-thread-multi
+#endif
+
+
 # for viewing dot graphs in absence of dotty
-alias mg "dot -Tps \!^ > \!^.ps; /projects/streamit/tools/gv \!^.ps&"
+#alias mg "dot -Tps \!^ > \!^.ps; /projects/streamit/tools/gv \!^.ps&"
 
 #include builtin Eclipse plugins
 #setenv ECLIPSE_PLUG /home/bits7/NO_BACKUP/streamit/eclipse/plugins
@@ -137,3 +133,11 @@ alias mg "dot -Tps \!^ > \!^.ps; /projects/streamit/tools/gv \!^.ps&"
 #setenv CLASSPATH ${CLASSPATH}:${PRE}core.resources${VER}/resources.jar
 #unset PRE
 #unset VER
+
+# the current version of starsearch we're using
+#setenv TOPDIR ${STREAMIT_HOME}/misc/raw
+# the following needed to use spacetime, but can clobber Mike's research
+#setenv TOPDIR /home/bits6/mgordon/starsearch
+
+# the path to ATLAS
+#setenv ATLAS_HOME /home/bits7/NO_BACKUP/streamit/ATLAS

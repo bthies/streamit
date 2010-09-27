@@ -56,16 +56,6 @@ alias gcc34='gcc'
 export CC=gcc
 export CXX=gcc
 
-# the current version of starsearch we're using
-export TOPDIR=${STREAMIT_HOME}/misc/raw
-# the following needed to use spacetime, but can clobber Mike's research
-#export TOPDIR=/home/bits6/mgordon/starsearch/
-
-# the path to ATLAS
-#export ATLAS_HOME=/home/bits7/NO_BACKUP/streamit/ATLAS
-
-# for running dotty
-#export LEFTYPATH=/home/bits7/NO_BACKUP/streamit/dotty
 
 # add STREAMIT_HOME to the path in order to find "strc"
 if [ -z "$PATH" ]
@@ -78,14 +68,6 @@ fi
 # add java to path
 #export PATH=${JAVA_HOME}/bin:${PATH}
 
-# Perl on RHEL-3
-if [ -z "$PERL5LIB" ]
-then
-    export PERL5LIB=/usr/uns/encap/perl-5.8.0/lib/5.8.0/:/usr/uns/lib/site_perl/5.8.0:/home/streamit/lib/perl5/site_perl/5.8.0:/home/streamit/lib/perl5/site_perl/5.8.0/i386-linux-thread-multi
-else
-    PERL5LIB=/usr/uns/encap/perl-5.8.0/lib/5.8.0/:/usr/uns/lib/site_perl/5.8.0:/home/streamit/lib/perl5/site_perl/5.8.0:/home/streamit/lib/perl5/site_perl/5.8.0/i386-linux-thread-multi:${PERL5LIB}
-fi
-
 # include extra LaTeX packages
 # (Note that this *always* DTRT: the TeX path-searching stuff interprets
 # a blank entry as "the default path".)
@@ -96,8 +78,11 @@ else
     TEXINPUTS=${STREAMIT_HOME}/include/tex:${TEXINPUTS}
 fi
 
+
+#### DEPRECATED CONFIG STUFF #####
+
 # for viewing dot graphs in absence of dotty
-mg() { dot -Tps $1 > $1.ps; /projects/streamit/tools/gv $1.ps & }
+#mg() { dot -Tps $1 > $1.ps; /projects/streamit/tools/gv $1.ps & }
 
 #include builtin Eclipse plugins
 # export ECLIPSE_PLUG=/home/bits7/NO_BACKUP/streamit/eclipse/plugins
@@ -115,3 +100,22 @@ mg() { dot -Tps $1 > $1.ps; /projects/streamit/tools/gv $1.ps & }
 # CLASSPATH=${CLASSPATH}:${PRE}jdt.core${VER}/jdtcore.jar
 # CLASSPATH=${CLASSPATH}:${PRE}jdt.ui${VER}/jdt.jar
 # CLASSPATH=${CLASSPATH}:${PRE}core.resources${VER}/resources.jar
+
+# the current version of starsearch we're using
+#export TOPDIR=${STREAMIT_HOME}/misc/raw
+# the following needed to use spacetime, but can clobber Mike's research
+#export TOPDIR=/home/bits6/mgordon/starsearch/
+
+# the path to ATLAS
+#export ATLAS_HOME=/home/bits7/NO_BACKUP/streamit/ATLAS
+
+# for running dotty
+#export LEFTYPATH=/home/bits7/NO_BACKUP/streamit/dotty
+
+# Perl on RHEL-3
+#if [ -z "$PERL5LIB" ]
+#then
+#    export PERL5LIB=/usr/uns/encap/perl-5.8.0/lib/5.8.0/:/usr/uns/lib/site_perl/5.8.0:/home/streamit/lib/perl5/site_perl/5.8.0:/home/streamit/lib/perl5/site_perl/5.8.0/i386-linux-thread-multi
+#else
+#    PERL5LIB=/usr/uns/encap/perl-5.8.0/lib/5.8.0/:/usr/uns/lib/site_perl/5.8.0:/home/streamit/lib/perl5/site_perl/5.8.0:/home/streamit/lib/perl5/site_perl/5.8.0/i386-linux-thread-multi:${PERL5LIB}
+#fi

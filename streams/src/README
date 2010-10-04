@@ -1,32 +1,43 @@
 SETTING UP STREAMIT ON CSAIL
 
 1. Login to the machine you wish to use for development
--This can be the CSAIL machines (login.csail.mit.edu) or any other linux machine with java 1.6+.
+- This can be the CSAIL machines (login.csail.mit.edu) or any other linux machine with java 1.6+.
 
 2. Choose a directory for the repository and change directory to it 
-Note: the checkout will create a "streams" directory in the current directory.
+- From now on @HOME@ represents this directory
+- Note: the checkout will create a "streamit" directory in @HOME@
+
 
 3. Checkout StreamIt source tree
 
 - Type at prompt:
-svn checkout svn+ssh://svn.csail.mit.edu/afs/csail.mit.edu/group/commit/reps/projects/streamit/streams
+svn checkout svn+ssh://svn.csail.mit.edu/afs/csail.mit.edu/group/commit/reps/projects/streamit
 
 4. Setup environment variables
 
-- For csh derivatives open ~/.cshrc (or .bashrc) and add the following lines:
+- For csh derivatives open ~/.cshrc and add the following lines:
 
- setenv STREAMIT_HOME ${HOME}/streams/trunk/streams
- source {$STREAMIT_HOME}/include/dot-cshrc
+ setenv STREAMIT_HOMsE @HOME@/streamit/trunk/streams
+ source ${STREAMIT_HOME}/include/dot-cshrc
 
+- For bash derivatives open ~/.bashrc and add the following lines:
+ 
+ export STREAMIT_HOME=@HOME@/streamit/trunk/streams
+ source ${STREAMIT_HOME}/include/dot-bashrc
 
+(Remember that @HOME@ is not a variable that we defined, but the fully-qualified parent directory 
+that contains the repository.)
 
 - Reload your environment variables:
 
- source ~/.cshrc
+ source ~/.cshrc 
+or 
+ source ~/.bashrc
+
 
 5. Build the StreamIt compiler
 
- cd streams
+ cd ${STREAMIT_HOME}/trunk/streams
  make
 
 6. Test the compiler
@@ -41,8 +52,6 @@ svn checkout svn+ssh://svn.csail.mit.edu/afs/csail.mit.edu/group/commit/reps/pro
 
 - View the stream graph for the application:
 
- mg stream-graph.dot
- OR
  dotty stream-graph.dot
 
 7. Play around
@@ -57,7 +66,7 @@ svn checkout svn+ssh://svn.csail.mit.edu/afs/csail.mit.edu/group/commit/reps/pro
 
 8. For compiler hackers, optionally setup compiler source code in Eclipse:
 
-- From your CAG login, do:
+- From your CSAIL login, do:
  cd $STREAMIT_HOME/docs/streamit_java_in_eclipse
  make
 

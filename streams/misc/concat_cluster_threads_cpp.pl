@@ -1,4 +1,4 @@
-#! /usr/uns/bin/perl
+#! /usr/bin/perl
 #
 # In fusion.cpp / master.cpp: remove "extern" from the begining of any line.
 # In threadXXX.cpp: remove any line starting with extern.

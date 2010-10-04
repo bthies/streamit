@@ -4,6 +4,13 @@
 # Assume other symbols may or may not already be set.
 #
 
+# Variables that may need to be redefined depending on machine
+
+# location of java
+setenv JAVA_HOME /afs/csail.mit.edu/group/commit/3rdparty/jdk1.6.0_21
+
+#==== Below here should not have to change ====
+
 if ($?CLASSPATH) then
 else
   setenv CLASSPATH .
@@ -19,13 +26,11 @@ else
   endif
 endif
 
-# location of java
-setenv JAVA_HOME /usr/uns/jdk1.5.0_01
 
 # java classes
 setenv CLASSPATH ${CLASSPATH}:${JAVA_HOME}/jre/lib/rt.jar
 ## antlr classes
-setenv CLASSPATH ${CLASSPATH}:/usr/uns/java/antlr.jar
+setenv CLASSPATH ${CLASSPATH}:${STREAMIT_HOME}/uns/antlr.jar
 # streamit classes
 setenv CLASSPATH ${CLASSPATH}:${STREAMIT_HOME}/src
 setenv CLASSPATH ${CLASSPATH}:${STREAMIT_HOME}/3rdparty
@@ -41,16 +46,9 @@ setenv CLASSPATH ${CLASSPATH}:/home/streamit/lib/xalan-j_2_7_0/xercesImpl.jar
 setenv CLASSPATH ${CLASSPATH}:/home/streamit/lib/xalan-j_2_7_0/xml-apis.jar
 setenv CLASSPATH ${CLASSPATH}:/home/streamit/lib/xalan-j_2_7_0/xsltc.jar      
 
-# use gcc34 as our gcc and g++
-#alias gcc gcc34
-#alias g++ gcc34
-
 # also need to define CXX and CC to be gcc34; otherwise make will subvert aliases
-setenv CC gcc-3.4
-setenv CXX gcc-3.4
-
-# for running dotty
-setenv LEFTYPATH /home/bits7/NO_BACKUP/streamit/dotty
+setenv CC gcc
+setenv CXX gcc
 
 # add STREAMIT_HOME to the path in order to find "strc"
 if ($?PATH) then
@@ -62,15 +60,15 @@ endif
 # libraries for FFTW. Different versions of Linux vary as to whether they
 # use LD_LIBRARY_PATH or LPATH.
 if ($?LD_LIBRARY_PATH) then
-  setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:/projects/streamit/3rdparty/fftw/fftw-2.1.5/rfftw/.libs:/projects/streamit/3rdparty/fftw/fftw-2.1.5/fftw/.libs
+  setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:/afs/csail.mit.edu/group/commit/3rdparty/fftw/fftw-2.1.5/rfftw/.libs:/afs/csail.mit.edu/group/commit/3rdparty/fftw/fftw-2.1.5/fftw/.libs
 else
-  setenv LD_LIBRARY_PATH /projects/streamit/3rdparty/fftw/fftw-2.1.5/rfftw/.libs:/projects/streamit/3rdparty/fftw/fftw-2.1.5/fftw/.libs
+  setenv LD_LIBRARY_PATH /afs/csail.mit.edu/group/commit/3rdparty/fftw/fftw-2.1.5/rfftw/.libs:/afs/csail.mit.edu/group/commit/3rdparty/fftw/fftw-2.1.5/fftw/.libs
 endif
 
 if ($?LPATH) then
-  setenv LPATH ${LPATH}:/projects/streamit/3rdparty/fftw/fftw-2.1.5/rfftw/.libs:/projects/streamit/3rdparty/fftw/fftw-2.1.5/fftw/.libs
+  setenv LPATH ${LPATH}:/afs/csail.mit.edu/group/commit/3rdparty/fftw/fftw-2.1.5/rfftw/.libs:/afs/csail.mit.edu/group/commit/3rdparty/fftw/fftw-2.1.5/fftw/.libs
 else
-  setenv LPATH /projects/streamit/3rdparty/fftw/fftw-2.1.5/rfftw/.libs:/projects/streamit/3rdparty/fftw/fftw-2.1.5/fftw/.libs
+  setenv LPATH /afs/csail.mit.edu/group/commit/3rdparty/fftw/fftw-2.1.5/rfftw/.libs:/afs/csail.mit.edu/group/commit/3rdparty/fftw/fftw-2.1.5/fftw/.libs
 endif
 
 # include files for FFTW.  (This variable only seems to be needed on RHEL-3).
@@ -78,15 +76,15 @@ endif
 # or CPATH.
 
 if ($?C_INCLUDE_PATH) then
-  setenv C_INCLUDE_PATH ${C_INCLUDE_PATH}:/projects/streamit/3rdparty/fftw/fftw-2.1.5/rfftw:/projects/streamit/3rdparty/fftw/fftw-2.1.5/fftw
+  setenv C_INCLUDE_PATH ${C_INCLUDE_PATH}:/afs/csail.mit.edu/group/commit/3rdparty/fftw/fftw-2.1.5/rfftw:/afs/csail.mit.edu/group/commit/3rdparty/fftw/fftw-2.1.5/fftw
 else
-  setenv C_INCLUDE_PATH /projects/streamit/3rdparty/fftw/fftw-2.1.5/rfftw:/projects/streamit/3rdparty/fftw/fftw-2.1.5/fftw
+  setenv C_INCLUDE_PATH /afs/csail.mit.edu/group/commit/3rdparty/fftw/fftw-2.1.5/rfftw:/afs/csail.mit.edu/group/commit/3rdparty/fftw/fftw-2.1.5/fftw
 endif
 
 if ($?CPATH) then
-  setenv CPATH ${CPATH}:/projects/streamit/3rdparty/fftw/fftw-2.1.5/rfftw:/projects/streamit/3rdparty/fftw/fftw-2.1.5/fftw
+  setenv CPATH ${CPATH}:/afs/csail.mit.edu/group/commit/3rdparty/fftw/fftw-2.1.5/rfftw:/afs/csail.mit.edu/group/commit/3rdparty/fftw/fftw-2.1.5/fftw
 else
-  setenv CPATH /projects/streamit/3rdparty/fftw/fftw-2.1.5/rfftw:/projects/streamit/3rdparty/fftw/fftw-2.1.5/fftw
+  setenv CPATH /afs/csail.mit.edu/group/commit/3rdparty/fftw/fftw-2.1.5/rfftw:/afs/csail.mit.edu/group/commit/3rdparty/fftw/fftw-2.1.5/fftw
 endif
 
 # add java to path

@@ -43,22 +43,12 @@ CLASSPATH=${CLASSPATH}:${STREAMIT_HOME}/3rdparty/jgraph/jgraph.jar
 CLASSPATH=${CLASSPATH}:${STREAMIT_HOME}/3rdparty/JFlex/jflex.jar
 CLASSPATH=${CLASSPATH}:${STREAMIT_HOME}/3rdparty/jcc/jcc.jar
 
-# xalan classes, for building benchmarks.html in release
-#CLASSPATH=${CLASSPATH}:/home/streamit/lib/xalan-j_2_7_0/serializer.jar 
-#CLASSPATH=${CLASSPATH}:/home/streamit/lib/xalan-j_2_7_0/xalan.jar      
-#CLASSPATH=${CLASSPATH}:/home/streamit/lib/xalan-j_2_7_0/xercesImpl.jar 
-#CLASSPATH=${CLASSPATH}:/home/streamit/lib/xalan-j_2_7_0/xml-apis.jar   
-#CLASSPATH=${CLASSPATH}:/home/streamit/lib/xalan-j_2_7_0/xsltc.jar      
-
-# use gcc34 as our gcc and g++
-#alias gcc='gcc34'
-#alias g++='gcc34'
+# gcc 3.4 is not installed on csail, so when it is called, use gcc
 alias gcc34='gcc'
 
-# also need to define CXX and CC to be gcc34; otherwise make will subvert aliases
+# also need to define CXX and CC for some makefiles
 export CC=gcc
 export CXX=gcc
-
 
 # add STREAMIT_HOME to the path in order to find "strc"
 if [ -z "$PATH" ]
@@ -112,6 +102,13 @@ else
     TEXINPUTS=${STREAMIT_HOME}/include/tex:${TEXINPUTS}
 fi
 
+# xalan classes, for building benchmarks.html in release
+CLASSPATH=${CLASSPATH}:/home/streamit/lib/xalan-j_2_7_0/serializer.jar 
+CLASSPATH=${CLASSPATH}:/home/streamit/lib/xalan-j_2_7_0/xalan.jar      
+CLASSPATH=${CLASSPATH}:/home/streamit/lib/xalan-j_2_7_0/xercesImpl.jar 
+CLASSPATH=${CLASSPATH}:/home/streamit/lib/xalan-j_2_7_0/xml-apis.jar   
+CLASSPATH=${CLASSPATH}:/home/streamit/lib/xalan-j_2_7_0/xsltc.jar      
+
 #### DEPRECATED CONFIG STUFF #####
 
 # for viewing dot graphs in absence of dotty
@@ -152,3 +149,7 @@ fi
 #else
 #    PERL5LIB=/usr/uns/encap/perl-5.8.0/lib/5.8.0/:/usr/uns/lib/site_perl/5.8.0:/home/streamit/lib/perl5/site_perl/5.8.0:/home/streamit/lib/perl5/site_perl/5.8.0/i386-linux-thread-multi:${PERL5LIB}
 #fi
+
+# use gcc34 as our gcc and g++
+#alias gcc='gcc34'
+#alias g++='gcc34'

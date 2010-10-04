@@ -68,6 +68,40 @@ else
   PATH=${PATH}:${STREAMIT_HOME}
 fi
 
+# the library locations for fftw (needed to build the cluster backend)
+# for some older linux flavors, this might have to change to LPATH
+fftw_library_path=/afs/csail.mit.edu/group/commit/3rdparty/fftw/fftw-2.1.5/rfftw/.libs:/afs/csail.mit.edu/group/commit/3rdparty/fftw/fftw-2.1.5/fftw/.libs
+if [ -z "$LD_LIBRARY_PATH" ]
+then
+  export LD_LIBRARY_PATH=$fftw_library_path
+else
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$fftw_library_path
+fi
+
+if [ -z "$LPATH" ]
+then
+  export LPATH=$fftw_library_path
+else
+  export LPATH=$LD_LIBRARY_PATH:$fftw_library_path
+fi
+
+# the c header file locations for fftw (needed to build the cluster backend)
+# for some older versions of linux may use C_INCLUDE_PATH
+fftw_header_path=afs/csail.mit.edu/group/commit/3rdparty/fftw/fftw-2.1.5/rfftw:/afs/csail.mit.edu/group/commit/3rdparty/fftw/fftw-2.1.5/fftw
+if [ -z "$CPATH" ]
+then
+  export CPATH=$fftw_header_path
+else
+  export CPATH=${CPATH}:$fftw_header_path
+fi
+
+if [ -z "$C_INCLUDE_PATH" ]
+then
+  export C_INCLUDE_PATH=$fftw_header_path
+else
+  export C_INCLUDE_PATH=${C_INCLUDE_PATH}:$fftw_header_path
+fi
+
 # include extra LaTeX packages
 # (Note that this *always* DTRT: the TeX path-searching stuff interprets
 # a blank entry as "the default path".)

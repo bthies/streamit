@@ -87,7 +87,7 @@ fi
 
 # the c header file locations for fftw (needed to build the cluster backend)
 # for some older versions of linux may use C_INCLUDE_PATH
-fftw_header_path=afs/csail.mit.edu/group/commit/3rdparty/fftw/fftw-2.1.5/rfftw:/afs/csail.mit.edu/group/commit/3rdparty/fftw/fftw-2.1.5/fftw
+fftw_header_path=/afs/csail.mit.edu/group/commit/3rdparty/fftw/fftw-2.1.5/rfftw:/afs/csail.mit.edu/group/commit/3rdparty/fftw/fftw-2.1.5/fftw
 if [ -z "$CPATH" ]
 then
   export CPATH=$fftw_header_path

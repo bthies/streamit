@@ -14,6 +14,7 @@
  * without express or implied warranty.
  */
 
+#include <string.h>
 #include <save_state.h>
 #include <netsocket.h>
 #include <init_instance.h>

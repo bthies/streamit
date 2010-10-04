@@ -96,7 +96,7 @@ static inline T FileReader_read(void *fs_ptr) {
 }
 
 template<>
-static inline unsigned char FileReader_read(void *fs_ptr) {
+ inline unsigned char FileReader_read(void *fs_ptr) {
   
     FileReader_state *fs = (FileReader_state*)fs_ptr;
 
@@ -144,7 +144,7 @@ static inline unsigned char FileReader_read(void *fs_ptr) {
 }
 
 //template<>
-static inline void FileReader_read(void *fs_ptr, void* dest, int len) {
+inline void FileReader_read(void *fs_ptr, void* dest, int len) {
   
     FileReader_state *fs = (FileReader_state*)fs_ptr;
 

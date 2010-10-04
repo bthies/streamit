@@ -49,7 +49,7 @@ extern int FileWriter_getpos(void *fs_ptr);
 extern void FileWriter_setpos(void *fs_ptr, int pos);
 
 template<class T>
-static inline void FileWriter_write(void *fs_ptr, T data) {
+ inline void FileWriter_write(void *fs_ptr, T data) {
     FileWriter_state *fs = (FileWriter_state*)fs_ptr;
 
     /*
@@ -72,7 +72,7 @@ static inline void FileWriter_write(void *fs_ptr, T data) {
 }
 
 template<>
-static inline void FileWriter_write(void *fs_ptr, unsigned char data) {
+ inline void FileWriter_write(void *fs_ptr, unsigned char data) {
     FileWriter_state *fs = (FileWriter_state*)fs_ptr;
 
     /*
@@ -91,7 +91,7 @@ static inline void FileWriter_write(void *fs_ptr, unsigned char data) {
 }
 
 //template<>
-static inline void FileWriter_write(void *fs_ptr, const void* data, int len) {
+inline void FileWriter_write(void *fs_ptr, const void* data, int len) {
     FileWriter_state *fs = (FileWriter_state*)fs_ptr;
 
     /*

@@ -128,7 +128,7 @@ public class FilterCodeGeneration extends CodeStoreHelper {
                 break;
             }
         }
-        if (KjcOptions.numbers < 1 && dsFileWriter && filterInfo.totalItemsSent(SchedulingPhase.INIT) > 0) {
+        if (dsFileWriter && filterInfo.totalItemsSent(SchedulingPhase.INIT) > 0) {
             assert filterNode.getParent().getTail().getDestSet(SchedulingPhase.INIT).size() == 1;
             FilterSliceNode fileW = 
                 filterNode.getParent().getTail().getDestList(SchedulingPhase.INIT)[0].getDest().getParent().getFirstFilter();
@@ -140,7 +140,7 @@ public class FilterCodeGeneration extends CodeStoreHelper {
             String bufferName = buf.getAddressRotation(filterNode).currentWriteBufName;
             //create the loop
             statements.addStatement(Util.toStmt(
-                    "for (int _i_ = 0; _i_ < " + outputs + "; _i_++) printf(\"" + type + "\\n\", " + cast + 
+                    "for (int _i_ = 0; _i_ < " + outputs + "; _i_++) fprintf(output, \"" + type + "\\n\", " + cast + 
                     bufferName +"[_i_])"));
             
         }

@@ -282,7 +282,14 @@ public class CoreCodeStore extends ComputeCodeStore<Core> {
             Core core = 
                 SMPBackend.scheduler.getComputeNode(firstInputFilter);
             
-            core.getComputeCode().addPrintOutputCode(buf, firstInputFilter);
+	    CoreCodeStore codeStore = core.getComputeCode();
+
+	    FileOutputContent fileOutput = (FileOutputContent)fileW.getFilter();
+
+	    codeStore.addPrintOutputCode(buf, firstInputFilter);
+	    codeStore.appendTxtToGlobal("FILE *output;\n");
+	    codeStore.addStatementFirstToBufferInit(Util.toStmt("output = fopen(\"" + fileOutput.getFileName() + "\", \"w\")"));
+            
         }
     }
     
@@ -307,7 +314,7 @@ public class CoreCodeStore extends ComputeCodeStore<Core> {
         String bufferName = buf.getAddressRotation(filter).currentWriteBufName;
         //create the loop
         addSteadyLoopStatement(Util.toStmt(
-                "for (int _i_ = 0; _i_ < " + outputs + "; _i_++) printf(\"" + type + "\\n\", " + cast + 
+                "for (int _i_ = 0; _i_ < " + outputs + "; _i_++) fprintf(output, \"" + type + "\\n\", " + cast + 
                 bufferName +"[_i_])"));
     }
     

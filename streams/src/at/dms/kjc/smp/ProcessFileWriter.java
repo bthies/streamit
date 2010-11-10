@@ -46,7 +46,7 @@ public class ProcessFileWriter {
         
         if (!allocatingCores.containsKey(fo)) {
             Core allocatingCore = nextAllocatingCore(fo);
-            System.out.println(fo + " assigned to Core " + allocatingCore.getCoreID());
+            System.out.println(fo + " assigne to Core " + allocatingCore.getCoreID());
             allocatingCores.put(fo, allocatingCore);
         }
         
@@ -68,7 +68,8 @@ public class ProcessFileWriter {
             codeStore = allocatingCore.getComputeCode();
 
             //codeStore.appendTxtToGlobal("int OUTPUT;\n");
-            codeStore.appendTxtToGlobal("FILE *output;\n");
+            //codeStore.appendTxtToGlobal("FILE *output;\n");
+	    //codeStore.addStatementFirstToBufferInit(Util.toStmt("output = fopen(\"" + fileOutput.getFileName() + "\", \"w\")"));
             //JBlock block = new JBlock();
             //codeStore.addStatementFirstToBufferInit(block);
         }
@@ -81,7 +82,7 @@ public class ProcessFileWriter {
      */
     private static Core nextAllocatingCore(FilterSliceNode fo) {
         List<Core> reverseOrder = SMPBackend.chip.getCores(); 
-        Collections.reverse(reverseOrder);
+        //Collections.reverse(reverseOrder);
         
         if(allocatingCores.get(fo) != null)
             return allocatingCores.get(fo);
@@ -90,6 +91,7 @@ public class ProcessFileWriter {
         for (Core core : reverseOrder) {
             if (!allocatingCores.containsValue(core) && core.getComputeCode().shouldGenerateCode()) {
                 allocatingCores.put(fo, core);
+		System.out.println(core);
                 return core;
             }
         }

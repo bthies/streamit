@@ -74,11 +74,12 @@ public class SMPBackend {
         // now convert to Kopi code plus communication commands
         backEndBits = new SMPBackEndFactory(chip, scheduler);
         backEndBits.getBackEndMain().run(graphSchedule, backEndBits);
-        
-        if (KjcOptions.numbers > 0)
+	
+	//generate code for file writer
+	CoreCodeStore.generatePrintOutputCode();
+      
+	if (KjcOptions.numbers > 0)
             chip.getNthComputeNode(0).getComputeCode().generateNumbersCode();
-        else
-            CoreCodeStore.generatePrintOutputCode();
         
         // emit c code for all cores
         EmitSMPCode.doit(backEndBits);

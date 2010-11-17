@@ -24,12 +24,7 @@ public class Structs_h {
         buf.append("#ifndef STRUCTS_H\n");
         buf.append("#define STRUCTS_H\n\n");
         
-        buf.append("typedef struct __Complex__ {\n");
-        buf.append("  float real;\n");
-        buf.append("  float imag;\n");
-        buf.append("} __Complex;\n");
-        buf.append("typedef __Complex Complex;\n");
-        buf.append("typedef int bit;\n");
+	buf.append("typedef int bit;\n");
 	createStructureDefs(structs);
     }
     

@@ -1,6 +1,7 @@
 package at.dms.kjc.smp;
 
 import java.io.*;
+import at.dms.kjc.sir.SIRStructure;
 
 /**
  * This class represents the structs.h file that will contain typedefs for 
@@ -17,7 +18,7 @@ public class Structs_h {
     /**
      * Create a new structs.h text file with an empty string buffer.
      */
-    public Structs_h() {
+    public Structs_h(SIRStructure[] structs) {
         buf = new StringBuffer();
 
         buf.append("#ifndef STRUCTS_H\n");
@@ -29,8 +30,22 @@ public class Structs_h {
         buf.append("} __Complex;\n");
         buf.append("typedef __Complex Complex;\n");
         buf.append("typedef int bit;\n");
+	createStructureDefs(structs);
     }
     
+     /**
+     * create a c header file with all the structure definitions as typedef'ed
+     * structs.
+     */
+    private void createStructureDefs(SIRStructure[] structs) {
+        for (int i = 0; i < structs.length; i++) {
+            SIRStructure current = structs[i];
+            // write the typedef for the struct.
+            buf.append(at.dms.kjc.common.CommonUtils.structToTypedef(current,true));
+            buf.append("\n");
+	}
+    }
+
     /**
      * Append text to structs.h 
      *  

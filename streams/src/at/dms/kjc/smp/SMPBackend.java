@@ -35,7 +35,7 @@ public class SMPBackend {
         chip = new SMPMachine(cores);
         
         // create a new structs.h file for typedefs etc.
-        structs_h = new Structs_h();
+        structs_h = new Structs_h(structs);
 
         // The usual optimizations and transformation to slice graph
         CommonPasses commonPasses = new CommonPasses();

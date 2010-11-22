@@ -42,7 +42,7 @@ public class PipelineFissioner {
         return (FilterSliceNode)slice.getTail().getPrevious();
     }
 
-    private static int[] toArray(LinkedList<Integer> list) {
+    private static int[] toArraySingleInt(LinkedList<Integer> list) {
         int[] array = new int[list.size()];
 
         for(int x = 0 ; x < array.length ; x++)
@@ -51,7 +51,7 @@ public class PipelineFissioner {
         return array;
     }
 
-    private static InterSliceEdge[] toArray(LinkedList<InterSliceEdge> list) {
+    private static InterSliceEdge[] toArraySingle(LinkedList<InterSliceEdge> list) {
         InterSliceEdge[] array = new InterSliceEdge[list.size()];
 
         for(int x = 0 ; x < array.length ; x++)
@@ -60,7 +60,7 @@ public class PipelineFissioner {
         return array;
     }
 
-    private static InterSliceEdge[][] toArray(LinkedList<LinkedList<InterSliceEdge>> list) {
+    private static InterSliceEdge[][] toArrayDouble(LinkedList<LinkedList<InterSliceEdge>> list) {
         InterSliceEdge[][] array = new InterSliceEdge[list.size()][];
 
         LinkedList<InterSliceEdge> tempList;
@@ -508,11 +508,11 @@ public class PipelineFissioner {
         edgeSetSet.add(edgeSet);
         weights.add(new Integer(1));
 	
-        sources[0].getTail().setInitWeights(toArray(weights));
-        sources[0].getTail().setInitDests(toArray(edgeSetSet));
+        sources[0].getTail().setInitWeights(toArraySingleInt(weights));
+        sources[0].getTail().setInitDests(toArrayDouble(edgeSetSet));
 
-        sliceClones[0].getHead().setInitWeights(toArray(weights));
-        sliceClones[0].getHead().setInitSources(toArray(edgeSet));
+        sliceClones[0].getHead().setInitWeights(toArraySingleInt(weights));
+        sliceClones[0].getHead().setInitSources(toArraySingle(edgeSet));
 
         for(int x = 1 ; x < sources.length ; x++) {
             sources[x].getTail().setInitWeights(null);
@@ -542,11 +542,11 @@ public class PipelineFissioner {
         edgeSetSet.add(edgeSet);
         weights.add(new Integer(1));
 	
-        sliceClones[0].getTail().setInitWeights(toArray(weights));
-        sliceClones[0].getTail().setInitDests(toArray(edgeSetSet));
+        sliceClones[0].getTail().setInitWeights(toArraySingleInt(weights));
+        sliceClones[0].getTail().setInitDests(toArrayDouble(edgeSetSet));
 
-        dests[0].getHead().setInitWeights(toArray(weights));
-        dests[0].getHead().setInitSources(toArray(edgeSet));
+        dests[0].getHead().setInitWeights(toArraySingleInt(weights));
+        dests[0].getHead().setInitSources(toArraySingle(edgeSet));
 
         for(int x = 1 ; x < fizzAmount ; x++) {
             sliceClones[x].getTail().setInitWeights(null);
@@ -645,8 +645,8 @@ public class PipelineFissioner {
                 }
             }
 
-            sources[0].getTail().setWeights(toArray(weights));
-            sources[0].getTail().setDests(toArray(edgeSetSet));
+            sources[0].getTail().setWeights(toArraySingleInt(weights));
+            sources[0].getTail().setDests(toArrayDouble(edgeSetSet));
 
             // Generate steady-state joiner schedules for Slices clones
             for(int x = 0 ; x < fizzAmount ; x++) {
@@ -656,8 +656,8 @@ public class PipelineFissioner {
                 edgeSet.add(getEdge(sources[0], sliceClones[x]));
                 weights.add(new Integer(1));
 
-                sliceClones[x].getHead().setWeights(toArray(weights));
-                sliceClones[x].getHead().setSources(toArray(edgeSet));
+                sliceClones[x].getHead().setWeights(toArraySingleInt(weights));
+                sliceClones[x].getHead().setSources(toArraySingle(edgeSet));
             }
         }
         else if(sources.length == fizzAmount) {
@@ -764,8 +764,8 @@ public class PipelineFissioner {
                     weights.add(new Integer(numSingle2));
                 }
 		
-                sources[x].getTail().setWeights(toArray(weights));
-                sources[x].getTail().setDests(toArray(edgeSetSet));
+                sources[x].getTail().setWeights(toArraySingleInt(weights));
+                sources[x].getTail().setDests(toArrayDouble(edgeSetSet));
             }
     
             // Generate steady-state joiner schedules for Slice clones
@@ -784,8 +784,8 @@ public class PipelineFissioner {
                 weights.add(new Integer(sliceCopyDown));
             }
 
-            sliceClones[0].getHead().setWeights(toArray(weights));
-            sliceClones[0].getHead().setSources(toArray(edgeSet));
+            sliceClones[0].getHead().setWeights(toArraySingleInt(weights));
+            sliceClones[0].getHead().setSources(toArraySingle(edgeSet));
 
             for(int x = 1 ; x < fizzAmount ; x++) {
                 edgeSet = new LinkedList<InterSliceEdge>();
@@ -801,8 +801,8 @@ public class PipelineFissioner {
                     weights.add(new Integer((sliceSteadyMult * slicePop) + (slicePeek - slicePop) - sliceCopyDown));
                 }
 
-                sliceClones[x].getHead().setWeights(toArray(weights));
-                sliceClones[x].getHead().setSources(toArray(edgeSet));
+                sliceClones[x].getHead().setWeights(toArraySingleInt(weights));
+                sliceClones[x].getHead().setSources(toArraySingle(edgeSet));
             }
         }
         else {
@@ -836,8 +836,8 @@ public class PipelineFissioner {
                 edgeSetSet.add(edgeSet);
                 weights.add(new Integer(1));
 		
-                sliceClones[x].getTail().setWeights(toArray(weights));
-                sliceClones[x].getTail().setDests(toArray(edgeSetSet));
+                sliceClones[x].getTail().setWeights(toArraySingleInt(weights));
+                sliceClones[x].getTail().setDests(toArrayDouble(edgeSetSet));
             }
 
             // Generate steady-state joiner schedule for destination Slice
@@ -849,8 +849,8 @@ public class PipelineFissioner {
                 weights.add(new Integer(sliceSteadyMult * slicePush));
             }
 
-            dests[0].getHead().setWeights(toArray(weights));
-            dests[0].getHead().setSources(toArray(edgeSet));
+            dests[0].getHead().setWeights(toArraySingleInt(weights));
+            dests[0].getHead().setSources(toArraySingle(edgeSet));
         }
         else if(dests.length == fizzAmount) {
             /*
@@ -939,8 +939,8 @@ public class PipelineFissioner {
                     weights.add(new Integer(numSingle2));
                 }
 		
-                sliceClones[x].getTail().setWeights(toArray(weights));
-                sliceClones[x].getTail().setDests(toArray(edgeSetSet));
+                sliceClones[x].getTail().setWeights(toArraySingleInt(weights));
+                sliceClones[x].getTail().setDests(toArrayDouble(edgeSetSet));
             }
 
             // Generate steady-state joiner schedule for destination Slice
@@ -955,8 +955,8 @@ public class PipelineFissioner {
                 weights.add(new Integer(destCopyDown));
             }
 
-            sliceClones[0].getHead().setWeights(toArray(weights));
-            sliceClones[0].getHead().setSources(toArray(edgeSet));
+            sliceClones[0].getHead().setWeights(toArraySingleInt(weights));
+            sliceClones[0].getHead().setSources(toArraySingle(edgeSet));
 
             for(int x = 1 ; x < fizzAmount ; x++) {
                 edgeSet = new LinkedList<InterSliceEdge>();
@@ -970,8 +970,8 @@ public class PipelineFissioner {
                 edgeSet.add(getEdge(sliceClones[x], dests[x]));
                 weights.add(new Integer((destPopMult * destPop) + (destPeek - destPop) - destCopyDown));
 
-                sliceClones[x].getHead().setWeights(toArray(weights));
-                sliceClones[x].getHead().setSources(toArray(edgeSet));
+                sliceClones[x].getHead().setWeights(toArraySingleInt(weights));
+                sliceClones[x].getHead().setSources(toArraySingle(edgeSet));
             }
         }
         else {

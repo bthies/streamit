@@ -5,6 +5,7 @@ struct str {
 
 void->void pipeline Struct {
    add createStr();
+   add something();
    add printStr();
 }
 
@@ -15,6 +16,18 @@ void->str filter createStr {
      c.b= 1.0;
      push(c);
  }
+}
+
+str->str filter something {
+    work push 1 pop 1 peek 2 {
+	str c;
+	str a = peek(1);
+	str b = pop();
+	
+	c.a = a.a + b.a;
+	c.b = a.b + b.b;
+	push (c);
+    }
 }
 
 str->void filter printStr {

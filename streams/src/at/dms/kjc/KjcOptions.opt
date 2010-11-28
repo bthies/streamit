@@ -772,8 +772,15 @@ longname		"nobind"
 	default		"false"
 	help		"No binding of thread to cores"
 
+longname		"sharedheap"
+	type		boolean
+	default		"false"
+	help		"For SMP: allocate all shared buffers on the heap"
+
 /* remove: now default */
 /* longname 	"noverbose" */
 /* 	   type		boolean */
 /* 	default		"false" */
 /* 	   help		"For cluster, do not print out code in ifdefs that are not true for the compiled configuration." */
+
+

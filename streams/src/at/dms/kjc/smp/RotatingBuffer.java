@@ -206,15 +206,29 @@ public abstract class RotatingBuffer extends Channel {
     			cs = ProcessFileWriter.getAllocatingCore(filterNode).getComputeCode();
     		else
     			cs = this.parent.getComputeCode();
+    		
+    		
+    		if (KjcOptions.sharedheap) {
+    			//add the declaration to the global header file of the extern variable
+    			this.parent.getMachine().getOffChipMemory().getComputeCode().appendTxtToGlobal(
+    					"extern " + this.getType().toString() + "* " + bufferNames[i] + ";\n");
+    			//add the definition to the file
+    			cs.appendTxtToGlobal(this.getType().toString() + "* " + bufferNames[i] + ";\n");
+    			//create the allocation at the beginning of the buffer and address init method
+    			cs.addStatementFirstToBufferInit(bufferNames[i] + " = (" + this.getType().toString() + 
+    					"*) malloc(" + this.getBufferSize() +
+    					" * sizeof(" + this.getType().toString() + "))"); 
+    			
+    		} else {
 
-    		this.parent.getMachine().getOffChipMemory().getComputeCode().appendTxtToGlobal(
-    				"extern " + this.getType().toString() + " " + bufferNames[i] + "[" + 
-                    this.getBufferSize() + "];\n");
+    			this.parent.getMachine().getOffChipMemory().getComputeCode().appendTxtToGlobal(
+    					"extern " + this.getType().toString() + " " + bufferNames[i] + "[" + 
+    					this.getBufferSize() + "];\n");
 
-            cs.appendTxtToGlobal(this.getType().toString() + " " + bufferNames[i] + "[" +
-                                 this.getBufferSize() + "];\n");
-
-            /*
+    			cs.appendTxtToGlobal(this.getType().toString() + " " + bufferNames[i] + "[" +
+    					this.getBufferSize() + "];\n");
+    		}
+    		/*
     		//create pointers to constituent buffers
     		this.parent.getMachine().getOffChipMemory().getComputeCode().appendTxtToGlobal(
     				"extern " + this.getType().toString() + "* " + bufferNames[i] + ";\n");

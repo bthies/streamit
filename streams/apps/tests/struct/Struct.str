@@ -1,0 +1,26 @@
+struct str {
+    int a;
+    float b;
+}
+
+void->void pipeline Struct {
+   add createStr();
+   add printStr();
+}
+
+void->str filter createStr {
+ work push 1 {
+     str c;
+     c.a = 1;
+     c.b= 1.0;
+     push(c);
+ }
+}
+
+str->void filter printStr {
+    work pop 1 {
+        str c = pop();
+        println(c.a);
+        println(c.b);
+}
+}

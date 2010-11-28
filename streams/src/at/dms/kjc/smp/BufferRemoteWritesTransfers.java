@@ -164,7 +164,7 @@ public class BufferRemoteWritesTransfers extends BufferTransfers {
     
     public JMethodDeclaration peekMethod() {
     	assert (parent instanceof InputRotatingBuffer);
-    	
+    	//System.out.println(parent.getType().toString());
         String parameterName = "__offset";
         JFormalParameter offset = new JFormalParameter(
                 CStdType.Integer,

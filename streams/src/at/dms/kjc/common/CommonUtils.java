@@ -106,7 +106,7 @@ public class CommonUtils {
                 return "char *";
             }
             // SIRStructures seem to have CCLassType in variable definitions.
-            return "__" + ((CClassType)s).toString();
+            return /*"__" +*/ ((CClassType)s).toString();
         } else {
             return s.toString();
         }

@@ -494,6 +494,7 @@ sub get_options
 			    "cluster=i",
 			    "steadymult=i",
 			    "sharedbufs",
+			    "sharedheap",
 			    "loadbalance",
 			    "loopcount=i",
 			    "noloopinput",
@@ -955,6 +956,7 @@ sub get_compiler_opts
     $opts{fixedpoint} && ($copts .= " --fixedpoint");
     $opts{steadymult} && ($copts .= " --steadymult ". $opts{steadymult});
     $opts{sharedbufs} && ($copts .= " --sharedbufs");
+    $opts{sharedheap} && ($copts .= " --sharedheap");
     $opts{loadbalance} && ($copts .= " --loadbalance");
     $opts{loopcount} && ($copts .= " --loopcount ". $opts{loopcount});
     $opts{noloopinput} && ($copts .= " --noloopinput");

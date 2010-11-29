@@ -28,6 +28,10 @@ public class SMPBackend {
     	checkArguments();
     	setScheduler();
     	
+    	if (KjcOptions.smp > 16) {
+    		setupLargeConfig();
+    	}
+    	
     	// create cores in desired amount and order
     	int[] cores = new int[KjcOptions.smp];
     	for (int x = 0 ; x < KjcOptions.smp ; x++)
@@ -337,5 +341,15 @@ public class SMPBackend {
 
         //Still need to generate the steady state schedule!
         schedule.setSchedule(DataFlowOrder.getTraversal(slicer.getTopSlices()));
+    }
+    
+    /**
+     * For chip sizes over 8 cores, use a larger core order map.
+     */
+    private static void setupLargeConfig() {
+    	assert KjcOptions.smp <= 32 && KjcOptions.smp > 8: "Only core configurations of 32 cores or less are supported!";
+    	int[] cores = {0,16,1,17,2,18,3,19,4,20,5,21,6,22,7,23,8,24,9,25,10,26,11,27,12,28,13,29,14,30,15,31};
+    	coreOrder = cores;
+    	
     }
 }

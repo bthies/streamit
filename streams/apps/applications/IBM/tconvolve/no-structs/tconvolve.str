@@ -1,0 +1,346 @@
+static {
+    int NBLOCKS = 4;   // Command line arg in SPADE version
+    int NGRIDS = 3;   // Command line arg in SPADE version
+    int SAMPLES = 1000;   // Command line arg in SPADE version
+    int KernelMatrixSize = 45;
+    int SubKernelSize = KernelMatrixSize / NGRIDS;
+
+    int WSIZE = 33;
+    float CELLSIZE = 40;
+    float BASELINE = 2000;
+    float FREQ0 = 1.4e9 / 2.998e8;
+    float WCELLSIZE = (2 * BASELINE * FREQ0) / WSIZE;
+
+    int GSIZE = 512;
+    int NCHANS = 16384;
+    int NSAMPLES = SAMPLES * NCHANS;
+    int OVERSAMPLE = 8;
+
+    int AreaLength = SubKernelSize;
+
+    int NchansInBlock = NCHANS / NBLOCKS;
+    int mgSize = 512;
+    int gridSize = mgSize * mgSize * 2;
+}
+
+//struct AntennaCoordTuple {
+//    int seq;
+//    float u;
+//    float v;
+//    float w;
+//}
+
+//struct CoordAndDataTuple {
+//    int seq;
+//    float ReData;
+//    float ImData;
+//    float u;
+//    float v;
+//    float w;
+//}
+
+//struct DataScaledAtFreqTuple {
+//    int seq;
+//    float ReData;
+//    float ImData;
+//    float[4096] uScaled;   // NchansInBlock
+//    float[4096] vScaled;   // NchansInBlock
+//    float[4096] wScaled;   // NchansInBlock
+//}
+
+//struct IndicesTuple {
+//    int seq;
+//    float ReData;
+//    float ImData;
+//    int[4096] u;   // NchansInBlock
+//    int[4096] v;   // NchansInBlock
+//    int[4096] w;   // NchansInBlock
+//}
+
+//struct GridTuple {
+//    float[524288] grid;   // gridSize
+//}
+
+void->void pipeline tconvolve() {
+//    add FileReader<AntennaCoordTuple>("antennacoord10"); <-- Doesn't work
+    add FileReader<float>("antennacoord" + SAMPLES);
+//    add AntennaCoord();
+//add AntennaCoordPrinter();
+    add CoordAndData();
+//add CoordAndDataPrinter();
+    add ConvolveBlock();
+//add ConvolveBlockPrinter();
+    add FinalGrid();
+    add GridPrinter();
+//    add SerializeForPrintln();
+//    add SerializeForFileWriter();
+//    add FileWriter<float>("grid" + SAMPLES);
+}
+
+//float->AntennaCoordTuple filter AntennaCoord() {
+//    work pop 4 push 1 {
+//        AntennaCoordTuple t;
+//        t.seq = (int)pop();
+//        t.u = pop();
+//        t.v = pop();
+//        t.w = pop();
+//        push(t);
+//    }
+//}
+
+//AntennaCoordTuple->AntennaCoordTuple filter AntennaCoordPrinter() {
+//    work pop 1 push 1 {
+//        AntennaCoordTuple t = pop();
+//        println("AntennaCoordPrinter, seq " + t.seq + ", w " + t.w);
+//        push(t);
+//    }
+//}
+
+float->float filter CoordAndData() {
+    work pop 4 push 6 {
+        push(pop()); // seq
+        push(1); // ReData
+        push(0); // ImData
+        push(pop()); // u
+        push(pop()); // v
+        push(pop()); // w
+    }
+}
+
+//CoordAndDataTuple->CoordAndDataTuple filter CoordAndDataPrinter() {
+//    work pop 1 push 1 {
+//        CoordAndDataTuple t = pop();
+//        println("CoordAndDataPrinter, seq " + t.seq);
+//        push(t);
+//    }
+//}
+
+float->float splitjoin ConvolveBlock() {
+    split duplicate;
+    for (int i = 0; i < NBLOCKS; i++) {
+        add pipeline {
+            add DataScaledAtFreq(i);
+            add GridAndKernelIndices();
+            add splitjoin {
+                split duplicate;
+                for (int j = 0; j < NGRIDS; j++) {
+                    for (int k = 0; k < NGRIDS; k++) {
+                        add ConvolveKernel(j, k, AreaLength, SAMPLES, WSIZE, i);
+                    }
+                }
+                join roundrobin;
+            }
+            add PartialGrid();
+        }
+    }
+    join roundrobin;
+}
+
+//GridTuple->GridTuple filter ConvolveBlockPrinter() {
+//    work pop 1 push 1 {
+//        println("ConvolveBlock");
+//        push(pop());
+//    }
+//}
+
+float->float filter DataScaledAtFreq(int i) {
+    float[NchansInBlock] freq;   // NchansInBlock
+    init {
+        int c = i * NchansInBlock;
+        for (int j = 0; j < NchansInBlock; j++) {
+            freq[j] = ((float)(1.4e9) - (float)(2e5) * ((float)(c + j ) / (float)(NCHANS))) / (float)(2.998e8);
+//            println("DS" + i + ": freq[" + j + "] " + freq[j]);
+        }
+    }
+    work pop 6 push (3 * NchansInBlock + 3) {
+        push(pop());
+        push(pop());
+        push(pop());
+        float u = pop();
+        float v = pop();
+        float w = pop();
+        for (int j = 0; j < NchansInBlock; j++) {
+            push(u * freq[j] / CELLSIZE);
+            push(v * freq[j] / CELLSIZE);
+            push(w * freq[j] / WCELLSIZE);
+        }
+    }
+}
+
+float->float splitjoin GridAndKernelIndices() {
+    split duplicate;
+    add GridIndices();
+    add KernelIndices();
+    join roundrobin;
+}
+
+float->float filter GridIndices() {
+    work pop (3 * NchansInBlock + 3) push (3 * NchansInBlock + 3) {
+        push(pop()); // seq
+        push(pop()); // ReData
+        push(pop()); // ImData
+        for (int j = 0; j < NchansInBlock; j++) {
+            push((int)(floor(pop()) + GSIZE / 2)); // uScaled
+            push((int)(floor(pop()) + GSIZE / 2)); // vScaled
+            push(pop()); // wScaled
+        }
+    }
+}
+
+float->float filter KernelIndices() {
+    work pop (3 * NchansInBlock + 3) push (3 * NchansInBlock + 3) {
+        push(pop()); // seq
+        push(pop()); // ReData
+        push(pop()); // ImData
+        for (int j = 0; j < NchansInBlock; j++) {
+            float uScaled = pop();
+            push((int)((float)(OVERSAMPLE) * (uScaled - floor(uScaled))));
+            float vScaled = pop();
+            push((int)((float)(OVERSAMPLE) * (vScaled - floor(vScaled))));
+            push((int)(pop() + (float)(WSIZE / 2))); // wScaled
+        }
+    }
+}
+
+float->float filter ConvolveKernel(int si, int sj, int sSize, int nsamples, int wSize, int block) {
+    int starti = si;
+    int startj = sj;
+    float[sSize * sSize * OVERSAMPLE * OVERSAMPLE * wSize] C_re;   // Convolution matrix
+    float[sSize * sSize * OVERSAMPLE * OVERSAMPLE * wSize] C_im;   // Convolution matrix
+    float[mgSize * mgSize] mgrid_re;
+    float[mgSize * mgSize] mgrid_im;
+    int msupport;
+    init {
+        msupport = (int)(1.5 * sqrt(abs(BASELINE) * CELLSIZE * FREQ0) / CELLSIZE);
+//        println(block + " " + starti + " " + startj + ": msupport " + msupport);
+//        println(block + " " + starti + " " + startj + ": WCELLSIZE " + WCELLSIZE);
+
+        int largeSsize = 2 * msupport + 1;
+        int cCenter = (largeSsize - 1) / 2;
+//        println(block + " " + starti + " " + startj + ": convolution function size " + (float)(sSize * sSize * OVERSAMPLE * OVERSAMPLE * WSIZE * 8) / (1024 * 1024) + " MB");
+//        println(block + " " + starti + " " + startj + ": convolution function shape [" + sSize + ", " + sSize + ", " + OVERSAMPLE + ", " + OVERSAMPLE + ", " + WSIZE + "]");
+
+        starti *= sSize;
+        startj *= sSize;
+
+        for (int k = 0; k < WSIZE; k++) {
+            float w = k - WSIZE / 2;
+            float fScale = sqrt(abs(w) * WCELLSIZE * FREQ0) / CELLSIZE;
+            for (int osj = 0; osj < OVERSAMPLE; osj++) {
+                for (int osi = 0; osi < OVERSAMPLE; osi++) {
+                    for (int j = 0; j < sSize; j++) {
+                        float j2 = pow((float)(j + startj - cCenter) + (float)(osj) / (float)(OVERSAMPLE), 2);
+                        for (int i = 0; i < sSize; i++) {
+                            float r2 = j2 + pow((float)(i + starti - cCenter) + (float)(osi) / (float)(OVERSAMPLE), 2);
+                            // Does this really need to be long?
+                            int cind = i + sSize * (j + sSize * (osi + OVERSAMPLE * (osj + OVERSAMPLE * k)));
+
+                            if (w != 0.0) {
+                                C_re[cind] = cos(r2 / (w * fScale));
+                            } else {
+                                C_re[cind] = exp(-r2);
+                            }
+//                            println(block + " " + starti + " " + startj + ": C_re[" + cind + "] " + C_re[cind] + ", fScale " + fScale + ", j2 " + j2 + ", r2 " + r2 + ", w " + w);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    work pop (SAMPLES * 2 * (3 * NchansInBlock + 3)) push gridSize {
+        for (int s = 0; s < SAMPLES; s++) {
+//            println(block + " " + starti + " " + startj + ": processing sample " + s);
+            pop(); // grid.seq
+            pop(); // kernel.seq
+            float grid_ReData = pop();
+            pop(); // kernel.ReData
+            pop(); // grid.ImData
+            pop(); // kernel.ImData
+
+            for (int chan = 0; chan < NchansInBlock; chan++) {
+                int iu = (int)pop();
+                int fracu = (int)pop();
+                int iv = (int)pop();
+                int fracv = (int)pop();
+                pop(); // grid.w
+                int woff = (int)pop(); // kernel.w
+
+                int cind = sSize * sSize * (fracu + OVERSAMPLE * (fracv + OVERSAMPLE * woff));
+                if (woff > WSIZE) println("woff " + woff);
+                int gind = iu + mgSize * iv - msupport;
+                for (int suppv = 0; suppv < sSize; suppv++) {
+                    for (int suppu = 0; suppu < sSize; suppu++) {
+                        mgrid_re[gind + suppu] += (grid_ReData * C_re[cind + suppu]);
+//                        int i = gind + suppu;
+//                        int j = cind + suppu;
+//                        println(block + " " + starti + " " + startj + ": mgrid_re[" + i + "] " + mgrid_re[i] + ", grid.ReData " + grid.ReData + ", C_re[" + j + "] " + C_re[j] + ", gind " + gind + ", cind " + cind + ", suppu " + suppu);
+                        if (cind + suppu > sSize * sSize * OVERSAMPLE * OVERSAMPLE * WSIZE) {
+                            println(block + " " + starti + " " + startj + ": cind " + cind + ", suppu " + suppu);
+                        }
+                    }
+                    cind += sSize;
+                    gind += mgSize;
+                }
+            }
+        }
+
+//        println(block + " " + starti + " " + startj + ": transfering grid");
+        for (int i = 0; i < mgSize * mgSize; i++) {
+            push(mgrid_re[i]);
+            push(mgrid_im[i]);
+        }
+    }
+}
+
+float->float filter PartialGrid() {
+    work pop (NGRIDS * NGRIDS * gridSize) push gridSize {
+        for (int i = 0; i < gridSize; i++) {
+            float partial = 0;
+            for (int j = 0; j < NGRIDS * NGRIDS; j++) {
+                partial += pop();
+            }
+            push(partial);
+        }
+    }
+}
+
+float->float filter FinalGrid() {
+    work pop (NBLOCKS * gridSize) push gridSize {
+        for (int i = 0; i < gridSize; i++) {
+            float f = 0;
+            for (int j = 0; j < NBLOCKS; j++) {
+                f += pop();
+            }
+            push(f);
+        }
+    }
+}
+
+float->void filter GridPrinter() {
+    work pop gridSize {
+        for (int i = 0; i < gridSize; i++) {
+            println("f[" + i + "] " + pop());
+        }
+        println("THE END");
+    }
+}
+
+//GridTuple->void filter SerializeForPrintln() {
+//    work pop 1 {
+//        GridTuple f = pop();
+//        for (int i = 0; i < gridSize; i++) {
+//            println("f[" + i + "] " + f.grid[i]);
+//        }
+//        println("THE END");
+//    }
+//}
+
+//GridTuple->float filter SerializeForFileWriter() {
+//    work pop 1 push gridSize {
+//        GridTuple f = pop();
+//        for (int i = 0; i < gridSize; i++) {
+//            push(f.grid[i]);
+//        }
+//        println("THE END");
+//    }
+//}

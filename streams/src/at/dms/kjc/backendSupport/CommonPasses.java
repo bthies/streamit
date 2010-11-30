@@ -452,11 +452,12 @@ public class CommonPasses {
         //now we require that all input and output slice nodes have separate init distribution pattern
         //for splitting and joining in the init stage (could be null or could be equal to steady or could be
         //different)
+        /*
         if (KjcOptions.nopartition) {
         	for (FilterSliceNode id : ((FlattenAndPartition)getSlicer()).generatedIds) {
         		IDSliceRemoval.doit(id.getParent());
         	}
-        }
+        }*/
         InstallInitDistributions.doit(getSlicer().getSliceGraph());
         // fix any rate skew introduced in conversion to Slice graph.
         AddBuffering.doit(slicer,false,numCores);

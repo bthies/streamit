@@ -569,6 +569,7 @@ public class FilterContent implements SIRCodeUnit, at.dms.kjc.DeepCloneable {
      * @return the number of items produced in the init stage.
      */
     public int initItemsPushed() {
+    	System.out.println(name);
         int items = steady[0].getPushInt() * initMult;
         if (isTwoStage()) {
             items -= steady[0].getPushInt();

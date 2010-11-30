@@ -244,7 +244,7 @@ class SIRToSliceNodes implements FlatVisitor {
             SIRIdentity id = new SIRIdentity(type);
             RenameAll.renameAllFilters(id);
             //content = new FilterContent(id);
-            content = new IDFilterContent();
+            content = new IDFilterContent(id);
             if (!node.isDuplicateSplitter())
                 mult = node.getTotalOutgoingWeights();
 
@@ -254,7 +254,7 @@ class SIRToSliceNodes implements FlatVisitor {
             SIRIdentity id = new SIRIdentity(type);
             RenameAll.renameAllFilters(id);
             //content = new FilterContent(id);
-            content = new IDFilterContent();
+            content = new IDFilterContent(id);
             mult = node.getTotalIncomingWeights();
 
         }

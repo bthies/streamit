@@ -1,11 +1,19 @@
 package at.dms.kjc.slicegraph;
 
 import at.dms.kjc.*;
+import at.dms.kjc.sir.SIRIdentity;
 
 public class IDFilterContent extends FilterContent {
 
     public IDFilterContent() {
         my_unique_ID = unique_ID++;
+        name = "SliceID_" + my_unique_ID;
+        peek = 1;
+    }
+    
+    public IDFilterContent(SIRIdentity f) {
+    	super(f);
+    	my_unique_ID = unique_ID++;
         name = "SliceID_" + my_unique_ID;
         peek = 1;
     }

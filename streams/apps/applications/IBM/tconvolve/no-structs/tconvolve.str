@@ -71,10 +71,10 @@ void->void pipeline tconvolve() {
     add ConvolveBlock();
 //add ConvolveBlockPrinter();
     add FinalGrid();
-    add GridPrinter();
+//    add GridPrinter();
 //    add SerializeForPrintln();
 //    add SerializeForFileWriter();
-//    add FileWriter<float>("grid" + SAMPLES);
+    add FileWriter<float>("grid" + SAMPLES);
 }
 
 //float->AntennaCoordTuple filter AntennaCoord() {

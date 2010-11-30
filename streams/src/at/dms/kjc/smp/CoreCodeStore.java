@@ -335,7 +335,7 @@ public class CoreCodeStore extends ComputeCodeStore<Core> {
         }
         appendTxtToGlobal("    fflush(stdout);\n");
         appendTxtToGlobal("  }\n");
-        appendTxtToGlobal("  __last_cycle__ = __cur_cycle__;\n");
+        appendTxtToGlobal("  __last_cycle__ = rdtsc();\n");
         appendTxtToGlobal("  __iteration__ = 0;\n");
         appendTxtToGlobal("}\n");
 

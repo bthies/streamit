@@ -173,8 +173,8 @@ public class TMDBinPackFissAll extends Scheduler {
     public void run(int tiles) {
     	
         //if we are using the SIR data parallelism pass, then don't run TMD
-        if (KjcOptions.dup == 1) {
-        	
+        if (KjcOptions.dup == 1 || KjcOptions.optfile != null) {
+        	System.out.println("***** Not using TMD scheduler since an SIR partitioner was used *****!");
         	//multiply steady multiplicity of each filter by KjcOptions.steadyMult
 		    LinkedList<Slice> slices = DataFlowOrder.getTraversal(graphSchedule.getSlicer().getTopSlices());
 

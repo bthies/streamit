@@ -14,6 +14,7 @@ import at.dms.kjc.sir.lowering.partition.WorkEstimate;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.flatgraph.*;
 import at.dms.kjc.*;
+import at.dms.kjc.backendSupport.FilterInfo;
 import at.dms.kjc.common.CommonUtils;
 
 /**
@@ -33,6 +34,8 @@ public class FlattenAndPartition extends SIRSlicer {
     private LinkedList<Slice> sliceList;
 
     private LinkedList<Slice> ioList;
+    
+    public HashSet<FilterSliceNode> generatedIds;
 
     public FlattenAndPartition(UnflatFilter[] topFilters, HashMap[] exeCounts,
             LinearAnalyzer lfa, WorkEstimate work, int maxPartitions) {
@@ -60,7 +63,12 @@ public class FlattenAndPartition extends SIRSlicer {
 
         //System.out.println("Slices: " + sliceList.size());
         //sliceGraph = sliceList.toArray(new Slice[sliceList.size()]);
+                
         io = ioList.toArray(new Slice[ioList.size()]);
+        //for (FilterSliceNode id : sliceNodes.generatedIds) {
+        //	IDSliceRemoval.doit(id.getParent());
+        //}
+        this.generatedIds = sliceNodes.generatedIds;
     }
 
     private void flattenInternal(FlatNode top) {
@@ -235,7 +243,8 @@ class SIRToSliceNodes implements FlatVisitor {
             CType type = CommonUtils.getOutputType(node);
             SIRIdentity id = new SIRIdentity(type);
             RenameAll.renameAllFilters(id);
-            content = new FilterContent(id);
+            //content = new FilterContent(id);
+            content = new IDFilterContent();
             if (!node.isDuplicateSplitter())
                 mult = node.getTotalOutgoingWeights();
 
@@ -244,7 +253,8 @@ class SIRToSliceNodes implements FlatVisitor {
             CType type = CommonUtils.getOutputType(node);
             SIRIdentity id = new SIRIdentity(type);
             RenameAll.renameAllFilters(id);
-            content = new FilterContent(id);
+            //content = new FilterContent(id);
+            content = new IDFilterContent();
             mult = node.getTotalIncomingWeights();
 
         }

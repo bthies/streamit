@@ -158,6 +158,8 @@ public class CommonPasses {
             ((SIRContainer)str).reclaimChildren();
         }
         
+        //ManualPartition.printGraph(str, "numbered.dot");
+        
 	    // if we are gathering statistics, clone the original stream graph
         // so that we can gather statictics on it, not on the modified graph
         if (KjcOptions.stats) {
@@ -244,8 +246,11 @@ public class CommonPasses {
             str = FusePipelines.fusePipelinesOfStatelessStreams(str);
             StreamItDot.printGraph(str, "after-fuse-stateless.dot");
 
-            str = at.dms.kjc.smp.SMPBackend.scheduler.SIRFusion(str, KjcOptions.smp);
-
+            //if we have a user defined partition, the user wants control
+            //otherwise, if any level is too big for the chip, then fuse
+            if (KjcOptions.optfile == null)
+            	str = at.dms.kjc.smp.SMPBackend.scheduler.SIRFusion(str, KjcOptions.smp);
+            
             if (KjcOptions.dup == 1) {
                 dup.smarterDuplicate(str, numCores);
             }
@@ -447,6 +452,11 @@ public class CommonPasses {
         //now we require that all input and output slice nodes have separate init distribution pattern
         //for splitting and joining in the init stage (could be null or could be equal to steady or could be
         //different)
+        if (KjcOptions.nopartition) {
+        	for (FilterSliceNode id : ((FlattenAndPartition)getSlicer()).generatedIds) {
+        		IDSliceRemoval.doit(id.getParent());
+        	}
+        }
         InstallInitDistributions.doit(getSlicer().getSliceGraph());
         // fix any rate skew introduced in conversion to Slice graph.
         AddBuffering.doit(slicer,false,numCores);

@@ -257,7 +257,8 @@ public class DuplicateBottleneck {
                 System.out.println("  not fissible");
                 continue;
             }
-            long commRate = ((long[])work.getExecutionCounts().get(filter))[0] * 
+            //System.out.println(((int[])work.getExecutionCounts().get(filter))[0]);
+            long commRate = ((long)((int[])work.getExecutionCounts().get(filter))[0]) * 
                  (filter.getPushInt() + filter.getPopInt());
             long filterWork = work.getWork(filter);
             if (filterWork / commRate <= 10) {

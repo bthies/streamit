@@ -1,14 +1,14 @@
 #include <math.h>
-#ifdef raw
-#include <raw.h>
-#else
+#include <omp.h>
+#include "rdtsc.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#endif
 
+#define THREADS 2
+//#define DEBUG 1
 //const int N_sim=2*1024;
-const int N_sim=2048;
+const int N_sim = 16 * 2048;
 const int N_samp=8;
 //const int N_ch=N_samp;
 const int N_ch=8;
@@ -33,12 +33,17 @@ int main(int argc, char **argv)
     }
   }
 
+#ifdef OPENMP
+  omp_set_num_threads(THREADS);
+#endif
+
   begin();
   return 0;
 }
 #endif
 
 void begin(void){
+  uint64_t start, end;
 
   float r[N_sim];
   float y[N_sim];
@@ -63,14 +68,18 @@ void begin(void){
   }
 
   while (numiters == -1 || numiters-- > 0) {
+    //timing
+    start = rdtsc();
     FBCore(N_samp,N_ch,N_col,r,y,H,F);
+    end = rdtsc();
+    
+    printf("Total Cycles: %llu, Cycles per output %llu\n", (end - start), (end - start) / (N_sim));
+    
+#ifdef DEGUG
     for (i=0;i<N_sim;i++) {
-#ifdef raw
-      print_float(y[i]);
-#else
       printf("%f\n", y[i]);
-#endif
     }
+#endif
   }
 }
 
@@ -78,9 +87,14 @@ void begin(void){
 // the FB core gets the input vector (r) , the filter responses H and F and generates the output vector(y)
 void FBCore(int N_samp,int N_ch, int N_col,float r[N_sim],float y[N_sim], float H[N_ch][N_col],float F[N_ch][N_col])
 {
+
+  //private i,j,k
+  
   int i,j,k;
-  for (i=0; i < N_sim;i++)
+  for (i=0; i < N_sim;i++) {
     y[i]=0;
+    
+  }
 
   for (i=0; i< N_ch; i++)
     {
@@ -89,25 +103,32 @@ void FBCore(int N_samp,int N_ch, int N_col,float r[N_sim],float y[N_sim], float 
       float Vect_Up[N_sim]; // output of the up sampler;
       float Vect_F[N_sim];// this is the output of the 
 
+#pragma omp parallel private(j,k) shared(i, Vect_H, Vect_Dn, Vect_Up, Vect_F)
+
+      //parallel regions starting, if shared above, might be false sharing...  
+
       //convolving H
+#pragma omp for schedule(static)
       for (j=0; j< N_sim; j++)
 	{
 	  Vect_H[j]=0;
+	  Vect_Up[j] = 0;  // just initialize this now so we don't need another loop
 	  for (k=0; ((k<N_col) & ((j-k)>=0)); k++)
 	    Vect_H[j]+=H[i][k]*r[j-k];
 	}
 
       //Down Sampling
+#pragma omp for schedule(static)
       for (j=0; j < N_sim/N_samp; j++)
 	Vect_Dn[j]=Vect_H[j*N_samp];
 
       //Up Sampling
-      for (j=0; j < N_sim;j++)
-	Vect_Up[j]=0;
+#pragma omp for schedule(static)
       for (j=0; j < N_sim/N_samp;j++)
 	Vect_Up[j*N_samp]=Vect_Dn[j];
 
       //convolving F
+#pragma omp for schedule(static)
       for (j=0; j< N_sim; j++)
 	{
 	  Vect_F[j]=0;
@@ -116,7 +137,7 @@ void FBCore(int N_samp,int N_ch, int N_col,float r[N_sim],float y[N_sim], float 
 	}
 
       //adding the results to the y matrix
-
+#pragma omp for schedule(static)
       for (j=0; j < N_sim; j++)
 	y[j]+=Vect_F[j];
     }

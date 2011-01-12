@@ -1,0 +1,5 @@
+all:
+	gcc -O3 filterbank.c -o ./filterbank
+	time ./filterbank
+clean:
+	rm -rf ./filterbank

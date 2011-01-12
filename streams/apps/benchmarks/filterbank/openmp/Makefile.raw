@@ -1,0 +1,27 @@
+# this performs linking, packaging, symbol creation for a one-tile
+# version of fft.
+#
+
+LIMIT = TRUE
+SIM-CYCLES = 5000000000000
+#SIM-COMMAND = sv(88907); sv(85057); sv(85057); 
+
+BTL-MACHINE-FILE = fileio.bc
+
+RGCCFLAGS += -O3
+
+ROOT = test
+TILES = 00
+
+include $(TOPDIR)/Makefile.include
+
+ifndef TOPDIR
+$(error TOPDIR not defined, make sure to include Makefile.include)
+endif
+
+OBJECT_FILES_00 = filterbank.o
+
+
+include $(COMMONDIR)/Makefile.all
+
+BTL-ARGS += -host

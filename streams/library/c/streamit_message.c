@@ -14,7 +14,10 @@
  * without express or implied warranty.
  */
 
+
+#if !defined(__APPLE__)
 #include <malloc.h>
+#endif
 #include <stdio.h>
 
 #include "streamit.h"

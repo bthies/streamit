@@ -1,0 +1,30 @@
+/**
+ * Adds noise to a signal by flipping bits. The filter
+ * expects that all of the input integers are either
+ * zeros or ones.
+ **/
+int->int stateful filter NoiseSource(int flipTimes) {
+
+    /**
+     * create a noise source that adds noise less than
+     * randmly -- it flips a bit every flip times
+     **/
+
+    work push 1 pop 1{
+        int currentCount = iter() % flipTimes;
+	if (currentCount == (flipTimes-1)) {
+	    push(flipBit(pop()));
+	    println("flipped bit.");
+	} else {
+	    push(pop());
+	}
+    }
+
+    int flipBit(int b) {
+	if (b == 0) {
+	    return 1;
+	} else {
+	    return 0;
+	}
+    }
+}

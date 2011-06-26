@@ -1,0 +1,25 @@
+The StreamIt beamformer follows the implementation in the reference C code
+(modeled after ../c/optimized.c).
+
+The input to the pipeline is found in ../data/str-data
+There are two input files: data1.bin and data2.bin
+Both are generated from their text counterparts in ../data/c-data/near-field
+using the conversion program in ../data
+
+The expected output for data1.bin is ../data/str-data/near-field/data1.out, and
+the expected output for data2.bin is ../data/str-data/near-field/data2.out
+
+To run data1.out, edit Audiobeam.str to select filename in top level pipeline
+./a.out -i 387 > data1.out
+  # the input file has 400 samples, and requires 13 samples for the peek buffer
+
+To run data2.out, edit Audiobeam.str to select filename in top level pipeline (default)
+./a.out -i 19987 > data2.out
+  # the input file has 20K samples, and requires 13 samples for the peek buffer
+
+To check results use either of the following respectively
+spiff -q -r .0001 data1.out ../data/str-data/near-field/data1.out
+spiff -q -r .0001 data2.out ../data/str-data/near-field/data2.out
+
+spiff is a version of diff that ignores floating point differences below the 
+specified threshold (-r threshold)

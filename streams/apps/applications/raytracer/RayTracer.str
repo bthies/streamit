@@ -30,7 +30,7 @@ struct HitInfo {
   Vector3 n;
 }
 
-void->Ray filter RaySource(int nx, int ny) {
+void->Ray stateful filter RaySource(int nx, int ny) {
   int i, j;
 
   init {

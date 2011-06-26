@@ -3,7 +3,7 @@
  * expects that all of the input integers are either
  * zeros or ones.
  **/
-int->int filter NoiseSource(int flipTimes) {
+int->int stateful filter NoiseSource(int flipTimes) {
     int currentCount;
 
     /**

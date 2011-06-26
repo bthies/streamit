@@ -26,7 +26,7 @@ void->void pipeline EchoProgram {
   add FloatPrinter();
 }
 
-void->float filter FloatSource {
+void->float stateful filter FloatSource {
   float x;
   init { x = 1; }
   work push 1 {

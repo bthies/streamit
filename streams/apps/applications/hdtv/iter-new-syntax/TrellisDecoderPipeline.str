@@ -1,0 +1,22 @@
+/** Trellis Decoder/Deinterleaver pipeline **/
+int->int splitjoin TrellisDecoderPipeline(int numTrellis) {
+    // this is a consequence of encoding an 8 bit byte
+    // with an 2/3 convolutional code, resulting in
+    // 8 * 3/2 = 12 bits being produced
+    int NUM_ENCODED_BITS_IN_BYTE = 12;
+
+    // we need to send 12 bits to each convolutional decoder to produce one
+    // byte of data
+    split roundrobin(NUM_ENCODED_BITS_IN_BYTE);
+    for (int i=0; i<numTrellis; i++) {
+        add TrellisDecoderPipelineElement();
+    }
+    join roundrobin;
+}
+
+int->int pipeline TrellisDecoderPipelineElement {
+    // decode the data that is coming in to the decoder
+    add TrellisDecoder();
+    // merge the bits back into bytes
+    add UnBitifier();
+}

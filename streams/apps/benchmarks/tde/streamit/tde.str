@@ -37,7 +37,7 @@ void->int filter start (int p) {
   }
 }
 
-int->void filter do_all (int pid, int par) {
+int->void stateful filter do_all (int pid, int par) {
 
   float[6*15*36*2] Raw = {
 	-440,6942,

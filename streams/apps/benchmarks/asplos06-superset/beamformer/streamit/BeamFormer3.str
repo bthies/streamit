@@ -67,7 +67,7 @@ void->void pipeline BeamFormer3 {
 
 }
 
-void->float filter InputGenerate (int myChannel, int numberOfSamples, int tarBeam, int targetSample, float thresh) {
+void->float stateful filter InputGenerate (int myChannel, int numberOfSamples, int tarBeam, int targetSample, float thresh) {
     int curSample;
     boolean holdsTarget;
 
@@ -106,7 +106,7 @@ float->void filter FloatPrinter {
     work pop 1 { println ( pop() ); }
 }
 
-float->float filter BeamFirFilter (int numTaps, int inputLength, int decimationRatio) {
+float->float stateful filter BeamFirFilter (int numTaps, int inputLength, int decimationRatio) {
     float[numTaps] real_weight;
     float[numTaps] imag_weight;
     int numTapsMinusOne;

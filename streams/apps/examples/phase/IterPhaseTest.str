@@ -1,0 +1,49 @@
+/*
+ * PhaseTest.str: test doing filter I/O from helper functions.
+ */
+
+/* Concept: input is a stream of integers.  The first set of n
+ * integers is data; the second set of n integers is in the range
+ * 0..n-1, and specifies which integer from the first n is
+ * selected. */
+int->int filter IntSelector(int count)
+{
+    work pop 2*count push count
+        {
+            int[count] values;
+            for (int i=0; i<count; i++)
+                values[i] = pop();
+	    for (int i=0; i<count; i++) {
+		push(values[pop()]);
+	    }
+        }
+}
+
+void->int stateful filter IntSelectorSource(int count)
+{
+    work push 2*count
+        {
+            int x = iter() * count;
+            /* First n: push values. */
+            for (int i = 0; i < count; i++)
+                push(x++);
+            /* Second n: push n-1..0. */
+            for (int i = count - 1; i >= 0; i--)
+                push(i);
+        }
+}
+
+int->void filter IntSink
+{
+    work pop 1
+        {
+            println(pop());
+        }
+}
+
+void->void pipeline IterPhaseTest
+{
+    add IntSelectorSource(9);
+    add IntSelector(9);
+    add IntSink;
+}

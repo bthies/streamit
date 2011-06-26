@@ -1,0 +1,65 @@
+void->void pipeline BubbleSort1 {
+  int SIZE = 32;
+//  add IntSource(SIZE);
+  add FileReader<int>("../input/input1");
+  add BubbleSortPipe(SIZE);
+  add FileWriter<int>("output");
+//  add IntPrinter();
+}
+
+void->int filter IntSource(int SIZE) {
+  int [SIZE]data;
+  int index = 0;
+  init {
+    data[0] = 503; data[1] = 087; data[2] = 512;
+    data[3] = 061; data[4] = 908; data[5] = 170;
+    data[6] = 897; data[7] = 275; data[8] = 653;
+    data[9] = 426; data[10] = 154; data[11] = 509;
+    data[12] = 612; data[13] = 677; data[14] = 765;
+    data[15] = 703;
+  }
+
+  work push 1 {
+    push(data[index++]);
+    if (index == SIZE)
+      index = 0;
+  }
+}
+
+int->int pipeline BubbleSortPipe(int SIZE) {
+  for(int i=0; i < SIZE; i++) {
+    add Bubble(SIZE);
+  }
+}
+
+int->int stateful filter Bubble(int SIZE) {
+  int previous;
+
+  work push 1 pop 1 peek 2 {
+    int first = iter() % SIZE;
+    int keep = 1;
+    if (first == 0) {
+      previous = peek(0);
+    } else if (first == SIZE - 1) {
+      push(previous);
+      pop();
+      keep = 0;
+    }
+    if (keep == 1) {
+      pop();
+      int current = peek(0);
+      if (previous <= current) {
+	push(previous);
+	previous = current;
+      } else {
+	push(current);
+      }
+    }
+  }
+}
+
+int->void filter IntPrinter() {
+  work pop 1 {
+    println(pop());
+  }
+}

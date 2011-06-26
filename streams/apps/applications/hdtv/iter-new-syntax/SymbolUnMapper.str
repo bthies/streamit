@@ -1,0 +1,15 @@
+/**
+ * Symbol Decoder -- maps a symbol to a sequence of 3 bits.
+ **/
+int->int filter SymbolUnMapper {
+    work pop 1 push 3 {
+	int sym = pop();
+	int index = (sym+7)/2; // easy formula to recover the data from symbol
+
+	//now, shift out the bits, msb first
+	for (int i=0; i<3; i++) {
+	    push((index & 0x04) >> 2);
+	    index = index << 1;
+	}
+    }
+}

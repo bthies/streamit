@@ -168,7 +168,7 @@ float->float filter Deconvolve() {
 }
 
 
-float->float filter DFTFilter(int DFTLen, float range) {
+float->float stateful filter DFTFilter(int DFTLen, float range) {
 
 //the rate by which to deteriorate, assuring stability
   float deter; 
@@ -315,7 +315,7 @@ float->float filter ConstMultiplier(float mult) {
 }
 
 
-float->float filter Accumulator {
+float->float stateful filter Accumulator {
 
     float val;
 
@@ -571,7 +571,7 @@ float->float pipeline MagnitudeStuff(int DFTLen_red, int newLen_red, int n_len, 
 }
 
 
-float->float filter PhaseUnwrapper() {
+float->float stateful filter PhaseUnwrapper() {
     float estimate, previous;
 
     init {

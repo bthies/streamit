@@ -9,7 +9,7 @@
 //===========================================================================
 
 void->void pipeline FileTest {
-    add void->float filter {
+    add void->float stateful filter {
         float x;
 	init {
 	    x = 0;

@@ -1,0 +1,19 @@
+/**
+ * A decoder for the trellis encoder present in
+ * the HDTV encoding system. The encoder comes directly
+ * out of the ATSC standard for HDTV:
+ * Standard A53 revision b, which can be found at:
+ * http://www.atsc.org/standards/a_53b.pdf
+ **/
+
+int->int splitjoin TrellisDecoder {
+    // set up the pipeline (see ATSC standard A53 revision b)
+    // switch between de-precoder and trellis decoder
+    split roundrobin(1,2);
+    add PreDecoder();
+    add UngerboeckDecoder();
+    // take one input from precoder, one from 2/1 trellis decoder
+    join roundrobin;
+}
+
+

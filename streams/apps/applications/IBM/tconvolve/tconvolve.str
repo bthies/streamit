@@ -211,7 +211,7 @@ DataScaledAtFreqTuple->IndicesTuple filter KernelIndices() {
     }
 }
 
-IndicesTuple->GridTuple filter ConvolveKernel(int si, int sj, int sSize, int nsamples, int wSize, int block) {
+IndicesTuple->GridTuple stateful filter ConvolveKernel(int si, int sj, int sSize, int nsamples, int wSize, int block) {
     int starti = si;
     int startj = sj;
     float[sSize * sSize * OVERSAMPLE * OVERSAMPLE * wSize] C_re;   // Convolution matrix
@@ -299,7 +299,7 @@ IndicesTuple->GridTuple filter ConvolveKernel(int si, int sj, int sSize, int nsa
     }
 }
 
-GridTuple->GridTuple filter PartialGrid() {
+GridTuple->GridTuple stateful filter PartialGrid() {
     GridTuple[NGRIDS * NGRIDS] local;
     work pop (NGRIDS * NGRIDS) push 1 {
         GridTuple partial;
@@ -315,7 +315,7 @@ GridTuple->GridTuple filter PartialGrid() {
     }
 }
 
-GridTuple->GridTuple filter FinalGrid() {
+GridTuple->GridTuple stateful filter FinalGrid() {
     GridTuple[NBLOCKS] partial;
     work pop NBLOCKS push 1 {
         GridTuple f;

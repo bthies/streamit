@@ -1,0 +1,28 @@
+void->void pipeline IterSimpleSJ {
+    add IntSource();
+    add splitjoin {
+	split duplicate;
+	add F();
+	add F();
+	join roundrobin;
+    }
+    add IntPrinter();
+}
+
+int->int filter F {
+    work push 1 pop 1 {
+	push(pop());
+    }
+}
+
+void->int stateful filter IntSource {
+    work push 1 {
+        push(iter());
+    }
+}
+
+int->void filter IntPrinter {
+    work pop 1 {
+        println(pop());
+    }
+}

@@ -17,7 +17,7 @@ float->float filter Test {
     }
 }
 
-void->float filter Source {
+void->float stateful filter Source {
     float i = 0.0;
     work push 1 { push(i); i += 1.0; }
 }

@@ -1,7 +1,7 @@
 /*
  * Data source for trellis encoder example
  */
-void->int filter DataSource {
+void->int stateful filter DataSource {
     int x = 65;  // start with letter A
 
     work push 1 {

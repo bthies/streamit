@@ -17,7 +17,7 @@ float->float pipeline FIRFilter(int N)
   };
 }
 
-float->float filter SingleMultiply(int i)
+float->float stateful filter SingleMultiply(int i)
 {
   float W, last;
   init
@@ -34,7 +34,7 @@ float->float filter SingleMultiply(int i)
   }
 }
 
-void->float filter FloatSource(float maxNum)
+void->float stateful filter FloatSource(float maxNum)
 {
   float num;
   init { num = 0; }

@@ -204,7 +204,7 @@ int->int pipeline BitonicSortKernel(int N, boolean sortdir)
 /**
  * Creates N keys and sends it out  
  */
-void->int filter KeySource(int N, int m)
+void->int stateful filter KeySource(int N, int m)
 {
    int current = 0;
    int max;	

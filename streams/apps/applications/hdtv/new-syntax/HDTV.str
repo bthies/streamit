@@ -108,7 +108,7 @@ int->int pipeline HDTVDecodePipeline(int INTERLEAVE_DEPTH, int NUM_TRELLIS_ENCOD
 /**
  * Data source for sample application
  **/
-void->int filter DataSegmentGenerator {
+void->int stateful filter DataSegmentGenerator {
     int x=0;
     work push 1 {
 	push(x);

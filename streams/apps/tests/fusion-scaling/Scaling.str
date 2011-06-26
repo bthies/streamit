@@ -8,7 +8,7 @@ void->void pipeline Scaling {
     add Sink(o,e);
 }
 
-void->int filter Source(int u) {
+void->int stateful filter Source(int u) {
     int i=0;
     work push u {
 	push(i++);

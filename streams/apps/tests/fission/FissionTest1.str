@@ -10,7 +10,7 @@ void->void pipeline FissionTest1 {
     add IntPrinter;
 }
 
-void->int filter IntSource {
+void->int stateful filter IntSource {
   int i = 0;
   work push 1 {
     push(i++);

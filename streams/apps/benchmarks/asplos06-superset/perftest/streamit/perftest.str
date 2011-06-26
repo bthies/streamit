@@ -1,5 +1,5 @@
 
-float->float filter ComplexFIRFilter(int sampFreq, int dec, int t, float freq, float g) {
+float->float stateful filter ComplexFIRFilter(int sampFreq, int dec, int t, float freq, float g) {
 
   float[t] tapsReal;
   float[t] tapsImag;

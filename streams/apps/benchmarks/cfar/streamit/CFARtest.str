@@ -34,7 +34,7 @@ complex->float filter SquareAndScale(int N_cfar)
 /* For now, a brute-force implementation.  The documentation notes a
  * straightforward way of doing this with four ops per iteration,
  * though there's some warm-up time involved. */
-float->float filter CFAR_gather(int N_rg, int N_cfar, int G)
+float->float stateful filter CFAR_gather(int N_rg, int N_cfar, int G)
 {
     int pos;
     float[N_cfar + G] poke;
@@ -74,7 +74,7 @@ void->void pipeline CFARtest
 
 /* NB: putting explicit parallelism here means that one
  * steady-state iteration of the system runs one row of the data cube. */
-void->complex filter ComplexSource(int N)
+void->complex stateful filter ComplexSource(int N)
 {
     float theta;
     init 

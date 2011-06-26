@@ -13,7 +13,7 @@ int->int filter Averager(int n) {
   }
 }
 
-void->int filter IntSource {
+void->int stateful filter IntSource {
     int x;
     init { x = 0; }
     work push 1 {

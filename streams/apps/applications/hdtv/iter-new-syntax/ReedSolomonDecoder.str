@@ -1,0 +1,22 @@
+/**
+ * Code and data used for Reed-Solomon encoding and decoding
+ * (All this code was taken from rscode.sourceforge.net)
+ * and is copyright Henry Minsky. The code in this file
+ * is directly copied, with appropriate syntax changes to make
+ * it valid java/StreamIT code.
+ *
+ * Incidentally, all of this code is in both the ReedSolomon encoder and the
+ * decoder because StreamIT doesn't yet generate code for static classes
+ * -Andrew Lamb aalamb@mit.edu 7/15/2002
+ *
+ **/
+
+int->int filter ReedSolomonDecoder {
+    int N = 207; // total number of bytes output
+    int K = 187; // total data bytes (note that N - K = T = number of ECC bytes = 20 in our example) 
+
+    work push K pop N {
+        // TODO.  Needs translation from Java file, being careful to
+        // convert pass-by reference arrays to pass-by-value arrays.
+    }
+}

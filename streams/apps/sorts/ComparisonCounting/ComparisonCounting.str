@@ -6,7 +6,7 @@ void->void pipeline ComparisonCounting {
   add IntPrinter();
 }
 
-void->int filter IntSource(int SIZE) {
+void->int stateful filter IntSource(int SIZE) {
   int [SIZE]data;
   int index = 0;
   init {

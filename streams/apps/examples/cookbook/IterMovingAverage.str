@@ -1,0 +1,25 @@
+void->void pipeline IterMovingAverage {
+  add IntSource();
+  add Averager(10);
+  add IntPrinter();
+}
+int->int filter Averager(int n) {
+  work pop 1 push 1 peek n {
+    int sum = 0;
+    for (int i = 0; i < n; i++)
+      sum += peek(i);
+    push(sum/n);
+    pop();
+  }
+}
+
+void->int stateful filter IntSource {
+    init { }
+    work push 1 {
+	push(iter());
+    }
+}
+
+int->void filter IntPrinter {
+    work pop 1 { println(pop()); }
+}

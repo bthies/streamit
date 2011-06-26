@@ -1,0 +1,133 @@
+/*
+ * MatrixMultBlock.str: block matrix multiply
+ * Translated from Jasper's old-syntax code
+ * $Id: MatrixMultBlock.str,v 1.9 2006-06-13 20:23:28 thies Exp $
+ */
+
+void->void pipeline MatrixMultBlock
+{
+    int x0 = 12;
+    int y0 = 12;
+    int x1 = 9;
+    int y1 = 12;
+    int blockDiv = 3;
+    
+    add BlockFloatSource(500);
+    add MatrixBlockMultiply(x0, y0, x1, y1, blockDiv);
+    add float->void filter { work pop 1 { println(pop()); } };
+}
+
+float->float pipeline MatrixBlockMultiply(int x0, int y0, int x1, int y1,
+                                          int blockDiv)
+{
+    // Rearrange and duplicate the matrices as necessary:
+    add splitjoin {
+        split roundrobin(x0 * y0, x1 * y1);
+        add pipeline {
+            add BlockSplit(x0, y0, blockDiv);
+            add Duplicate(x0 * y0 / blockDiv, blockDiv);
+        };
+        add pipeline {
+            add Transpose(x1, y1);
+            add BlockSplit(y1, x1, blockDiv);
+            add Duplicate(x1 * y1, blockDiv);
+        };
+        join roundrobin(x0 * y0 / (blockDiv * blockDiv),
+                        x1 * y1 / (blockDiv * blockDiv));
+    };
+    
+    add BlockMultiply(x0 / blockDiv,
+                      y0 / blockDiv,
+                      x1 / blockDiv,
+                      y1 / blockDiv);
+    add BlockAdd(x1 / blockDiv, y0 / blockDiv, blockDiv);
+    add BlockCombine(x1, y0, blockDiv);
+}
+
+float->float splitjoin BlockSplit(int x0, int y0, int blockDiv)
+{
+    split roundrobin(x0 / blockDiv);
+    for (int i = 0; i < blockDiv; i++)
+        add Identity<float>;
+    join roundrobin(x0 * y0 / (blockDiv * blockDiv));
+}
+
+float->float pipeline BlockCombine(int x0, int y0, int blockDiv)
+{
+    add BlockSplit(x0 * y0 / (blockDiv * blockDiv), y0, y0/blockDiv);
+}
+
+float->float stateful filter BlockAdd(int x, int y, int times)
+{
+    float[x][y] result;
+    work pop (x * y * times) push (x * y)
+        {
+            int a;
+            int b;
+            int c;
+            for (b = 0; b < y; b++)
+                for (a = 0; a < x; a++)
+                    result[a][b] = pop();
+            for (c = 1; c < times; c++)
+                for (b = 0; b < y; b++)
+                    for (a = 0; a < x; a++)
+                        result[a][b] += pop();
+            for (b = 0; b < y; b++)
+                for (a = 0; a < x; a++)
+                    push(result[a][b]);
+        }
+}
+
+float->float splitjoin Transpose(int x, int y)
+{
+    split roundrobin;
+    for (int i = 0; i < x; i++)
+        add Identity<float>;
+    join roundrobin(y);
+}
+
+float->float filter BlockMultiply(int x0, int y0, int x1, int y1)
+{
+    work pop (x0 * y0 + x1 * y1) push (y0 * x1)
+        {
+            int block2Start = x0 * y0;
+            int x;
+            int y;
+            int z;
+            for (y = 0; y < y0; y++)
+            {
+                for (x = 0; x < x1; x++)
+                {
+                    float sum = 0;
+                    for (z = 0; z < x0; z++)
+                    {
+                        int leftPos = z + y * x0;
+                        int rightPos = z + x * y1 + block2Start;
+                        float left = peek(leftPos);
+                        float right = peek(rightPos);
+                        sum += left * right;
+                    }
+                    push(sum);
+                }
+            }
+            for (x = 0; x < x0 * y0 + x1 * y1; x++)
+                pop();
+        }
+}
+
+float->float splitjoin Duplicate(int x, int y)
+{
+    split duplicate;
+    for (int a = 0; a < y; a++)
+        add Identity<float>;
+    join roundrobin(x);
+}
+
+void->float stateful filter BlockFloatSource(int maxNum)
+{
+    work push 1
+        {
+            float num = iter() % maxNum;
+            push(num);
+        }
+}

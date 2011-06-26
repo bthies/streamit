@@ -1,0 +1,18 @@
+/*
+ * Data source that outputs the example data string from
+ * http://pw1.netcom.com/~chip.f/viterbi/algrthms.html
+ */
+void->int filter ExampleSource {
+    int SIZE = 17;
+    int currentIndex;
+    int[SIZE] data = {0,1,0,1,1,1,0,0,1,0,1,0,0,0,1,0,0};
+
+    work push 1 {
+	push (data[currentIndex]);
+	currentIndex = (currentIndex + 1) % SIZE;
+    }
+}
+
+
+
+

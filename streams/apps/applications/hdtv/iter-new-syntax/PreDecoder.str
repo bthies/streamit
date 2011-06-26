@@ -1,0 +1,32 @@
+/**
+ * Simple decoder for the precoder used in
+ * the HDTV system.
+ * given y(t) we need to be able to find x(t) and state(t+1)
+ *   x(t) = y(t) XOR state(t)
+ *   state(t+1) = y(t)
+ *
+ * y(t) ----------> XOR -----> x(t)
+ *          |        ^
+ *          |        |
+ *          ---->D---| (state)
+ *
+ * This filter, as with the others in the encoding process,
+ * takes integers as inputs, but treats them as though they were bits.
+ **/
+int->int filter PreDecoder {
+    prework push 1 peek 1 {
+        int x = peek(0) ^ 0;
+        push(x);
+    }
+    work push 1 pop 1 peek 2 {
+	int y = peek(1);
+
+	// calculate the input of the precoder given that it 
+	// produced y as an output
+	int x = y ^ peek(0);
+        pop();
+
+	// push out the output
+	push(x);
+    }
+}

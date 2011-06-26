@@ -3,7 +3,7 @@
  * $Id: HelloWorld.str,v 1.1 2006-09-08 17:18:29 thies Exp $
  */
 
-void->int filter IntSource {
+void->int stateful filter IntSource {
     int x;
     init {
         x = 0;

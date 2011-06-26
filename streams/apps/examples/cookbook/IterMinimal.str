@@ -1,0 +1,15 @@
+void->void pipeline IterMinimal {
+  add IntSource;
+  add IntPrinter;
+}
+void->int stateful filter IntSource {
+  init { }
+  work push 1 { 
+    println(iter() * 0.1);
+    println(iter() * 0.1 / 0.8);
+    push(iter());
+  }
+}
+int->void filter IntPrinter {
+  work pop 1 { println(pop()); }
+}

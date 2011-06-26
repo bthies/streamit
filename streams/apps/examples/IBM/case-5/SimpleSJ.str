@@ -15,7 +15,7 @@ int->int filter F {
     }
 }
 
-void->int filter IntSource {
+void->int stateful filter IntSource {
     int x;
     init {
         x = 0;

@@ -171,7 +171,7 @@ float->float pipeline FFT3Kernel(int N, int logN, float[N/2] W_re2, float[N/2] W
  * Sends out real followed by imag part of each input point  
  */ 
 
-void->float filter FloatSource(int N) {
+void->float stateful filter FloatSource(int N) {
 
     float[N] A_re;
     float[N] A_im;

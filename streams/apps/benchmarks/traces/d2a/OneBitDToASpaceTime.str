@@ -130,7 +130,7 @@ float->float filter AdderFilter {
 }
 
 /** Unit delay -- delays values by one. **/
-float->float filter Delay {
+float->float stateful filter Delay {
   float state;
   init {state = 0;}
   work pop 1 push 1 {

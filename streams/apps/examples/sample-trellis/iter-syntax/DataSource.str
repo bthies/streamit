@@ -1,0 +1,13 @@
+/*
+ * Data source for trellis encoder example
+ */
+void->int stateful filter DataSource {
+
+    work push 1 {
+	//System.out.println("pushing: " + (char)x);
+        int x = (iter() % (90-65)) + 65;
+	push(x);
+    }
+}
+
+

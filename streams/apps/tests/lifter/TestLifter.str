@@ -42,7 +42,7 @@ void->void pipeline TestLifter {
     add printer();
 }
 
-void->int filter source {
+void->int stateful filter source {
     int i = 0;
     work push 1 {
 	push(i++);

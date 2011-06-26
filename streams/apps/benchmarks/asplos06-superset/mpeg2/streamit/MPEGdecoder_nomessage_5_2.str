@@ -2166,7 +2166,7 @@ int->int filter MismatchControl() {
 /**
  * @internal
  */
-int->int filter MotionVectorDecode() {
+int->int stateful filter MotionVectorDecode() {
     // Note - at first glance, this filter looks like it OUGHT to handle. only a single motion vector instead
     // of all 8, and then it would be wrapped inside an 8 way splitjoin. This is only because of currently
     // existing limitations in this code, however. More general MPEG-2 bitstreams allow for concealment
@@ -5149,7 +5149,7 @@ int->int filter iDCT8x8_1D_row_fast() {
  * @output size values representing an array of values in the signal
  *         domain, ordered by row and then column.
  */
-int->int filter iDCT8x8_1D_col_fast() {
+int->int stateful filter iDCT8x8_1D_col_fast() {
     int size = 8;
     int[8*8] buffer;
 

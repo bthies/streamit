@@ -33,7 +33,7 @@ void->void pipeline FilterBankNew
   add sink(N_sim);
 }
 
-void->float filter source() {
+void->float stateful filter source() {
     float max = 1000.0;	
     float current = 0.0;
 

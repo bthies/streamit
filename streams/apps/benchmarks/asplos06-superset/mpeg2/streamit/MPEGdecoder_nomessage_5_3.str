@@ -2166,7 +2166,7 @@ int->int filter MismatchControl() {
 /**
  * @internal
  */
-int->int filter MotionVectorDecode() {
+int->int stateful filter MotionVectorDecode() {
     // Note - at first glance, this filter looks like it OUGHT to handle. only a single motion vector instead
     // of all 8, and then it would be wrapped inside an 8 way splitjoin. This is only because of currently
     // existing limitations in this code, however. More general MPEG-2 bitstreams allow for concealment

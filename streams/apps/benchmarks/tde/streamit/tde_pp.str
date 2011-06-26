@@ -89,7 +89,7 @@ float->float filter Contract(int N, int B) {
 }
 
 // expand data for next-largest power of 2 (known to be 64)
-float->float filter Expand(int N, int B) {
+float->float stateful filter Expand(int N, int B) {
     float x;
     work pop 2*N push 2*B {
 	  for (int i = 0; i < 2*N; i++) {

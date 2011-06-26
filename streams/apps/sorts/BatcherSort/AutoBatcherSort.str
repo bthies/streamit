@@ -88,7 +88,7 @@ int->int filter BatcherStep(int SIZE, int p, int d, int r) {
 //  }  
 
 
-void->int filter IntSource(int SIZE) {
+void->int stateful filter IntSource(int SIZE) {
   int [SIZE]data;
   int index = 0;
   init {

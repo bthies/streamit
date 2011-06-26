@@ -1,0 +1,238 @@
+// NOTE: it seems this benchmark is only configured to handle 1 beam currently
+
+static {
+    int     MODE          = 0;      // 0: caclulate single position
+    boolean NEARFIELD     = true;   // true: near field | false: far field
+    boolean HAMMING       = false;
+    
+    float   SOUND_SPEED   = 342;
+    float   SAMPLING_RATE = 16000;
+
+    int   NUM_MICS = 15;
+    float[15      ][3] MIC_LOCATIONS;
+    float[3]           SOURCE_LOCATION;
+    
+    init{
+        // initialize location of source signal
+        if (NEARFIELD) {
+            // these values are derived from 
+            // ../data/c-data/near-field/REAME.txt
+            SOURCE_LOCATION[0] = 1.1677;
+            SOURCE_LOCATION[1] = 2.1677;
+            SOURCE_LOCATION[2] = 1;
+        }
+        else /*(FARFIELD)*/ {
+            // these values are derived from 
+            // ../data/c-data/far-field/REAME.txt
+            SOURCE_LOCATION[0] = 100;
+            SOURCE_LOCATION[1] = 200;
+            SOURCE_LOCATION[2] = 10;
+        }
+        
+        // initialize microphone locations 
+        for (int i = 0; i < NUM_MICS; i++) {
+            MIC_LOCATIONS[i][0] = 1.5;
+            MIC_LOCATIONS[i][1] = 2.79 + (i * 0.03);
+            MIC_LOCATIONS[i][2] = 0.0;
+        }
+    }
+}
+
+
+void->void pipeline Audiobeam
+{
+    if (NEARFIELD) {
+        // two possible input signals
+        // add FileReader<float>("../data/str-data/near-field/data1.bin");
+        add FileReader<float>("../data/str-data/near-field/data2.bin");
+    }
+    else /*(FARFIELD)*/ {
+        // two possible input signals
+        // add FileReader<float>("../data/str-data/far-field/data1.bin");
+        add FileReader<float>("../data/str-data/far-field/data2.bin");
+    }
+
+    // calculate single position
+    if (MODE == 0) {
+        int num_beams = 1;
+        add calculate_single_position(NUM_MICS, MIC_LOCATIONS, SOURCE_LOCATION);
+        add Printer(num_beams);
+        //add FileWriter<float>("output");
+    }
+    else {
+        // add other beamforming algorithms here
+    }
+}
+
+
+// the  most basic  mode  is to  process  the microphone  data and  to
+// calculate  the output  based on  one beam  focused on  a particular
+// point in space
+float->float pipeline calculate_single_position(int num_mics,
+                                                float[num_mics][3] mic_locations,
+                                                float[3] source_location)
+{
+    int num_beams = 1;
+    float[num_beams][num_mics] delays;
+
+    // calculate delay to each microphone 
+    float min_delay = 1e38;
+    
+    for (int i = 0; i < num_mics; i++) {
+        float distance = sqrt(((mic_locations[i][0] - source_location[0]) *
+                               (mic_locations[i][0] - source_location[0])) + 
+                              ((mic_locations[i][1] - source_location[1]) * 
+                               (mic_locations[i][1] - source_location[1])) + 
+                              ((mic_locations[i][2] - source_location[2]) * 
+                               (mic_locations[i][2] - source_location[2])));
+        
+        delays[0][i]  = (distance / SOUND_SPEED) * SAMPLING_RATE;
+        
+        if (delays[0][i] < min_delay) {
+            min_delay = delays[0][i];
+        }
+    }
+    
+    min_delay = floor(min_delay) - 1;
+    
+    for (int i = 0; i < NUM_MICS; i++) {
+        delays[0][i] -= min_delay;
+    }
+    
+    add process_signal(num_mics, num_beams, delays);
+}
+
+
+float->float pipeline process_signal(int num_mics, 
+                                     int num_beams, 
+                                     float[num_beams][num_mics] delays)
+{
+    float[num_mics] weights;
+ 
+    // calculate signal weights
+    if (!HAMMING) {
+        for (int i = 0; i < num_mics; i++) {
+            weights[i] = 1;
+        }
+    }
+    else if ((num_mics % 2) == 1) {
+        int index = 0;
+        int half  = num_mics / 2;
+        for (int y = -half; y <= half; y++) {
+            weights[index++] = 0.54 + 0.46 * cos(pi * y / half);
+        }
+    }
+    else {
+        int index = 0;
+        int half  = num_mics / 4;
+        for (int z = 1; z >= -1; z -= 2) {
+            for (int y = -half; y <= half; y++) {
+                weights[index++] = 0.54 + 0.46 * cos(pi * y / half);
+            }
+        }
+    }
+
+    if (num_beams>1) {
+        add float->float splitjoin {
+            // add beamformers
+            split duplicate;
+            
+            for (int beam = 0; beam < num_beams; beam++) {
+                // note: compiler doesn't support passing
+                // delays[beam] of type array directly
+                float[num_mics] _delays;
+                for (int i = 0; i < num_mics; i++) {
+                    _delays[i] = delays[beam][i];
+                }
+                add do_beamforming(num_mics, weights, _delays);
+            }
+            
+            join roundrobin;
+        }
+    } else {
+        float[num_mics] _delays;
+        for (int i = 0; i < num_mics; i++) {
+            _delays[i] = delays[0][i];
+        }
+        add do_beamforming(num_mics, weights, _delays);
+    }
+}
+
+
+// take in  a sample  and a  queue of previous  samples, and  output a
+// beamformed  one-channel  sample,  incorporating timing  information
+// from max_delay previous samples
+float->float pipeline do_beamforming(int num_mics,
+                                     float[num_mics] weights, 
+                                     float[num_mics] delays)
+{
+    add float->float splitjoin {
+        split roundrobin;
+	  
+        for (int mic = 0; mic < num_mics; mic++) {
+            add Interpolate(mic, num_mics, weights, delays[mic]);
+        }
+	  
+        join roundrobin;
+    }
+
+    add Average(num_mics);
+}
+
+float->float filter Average(int num_mics) {
+    work pop num_mics push 1 {
+        float sum = 0;
+
+        for (int i = 0; i < num_mics; i++) {
+            float val = pop();
+            sum += val;
+        }
+
+        push(sum / (float) num_mics);
+    }
+}
+
+float->float filter Interpolate(int mic, int num_mics, float[num_mics] weights, float delays_mic) {
+    int low_index, high_index;
+    float delay_offset;
+
+    init {
+        low_index    = (int) floor(delays_mic);
+        high_index   = (int) ceil (delays_mic);
+        delay_offset = delays_mic - low_index;
+    }
+
+    work peek (int) ceil(delays_mic) pop 1 push 1 {
+        // Interpolate between two sample values to avoid quantization
+        // error. The idea is that we have a fractional delay, but obviously
+        // since the signal is sampled, we can only get real values for the
+        // signal at whole delay values. So, we can use linear approximation
+        // to estimate what the value of the signal would have been at the
+        // fractional delay.
+        float low_sample  = peek(low_index - 1);
+        float high_sample = peek(high_index - 1);
+        float value       = (((high_sample - low_sample) * delay_offset) + low_sample);
+
+        push(value * weights[mic]);
+        pop();
+    }
+}
+
+float->void stateful filter Printer(int num_beams)
+{
+    float time_index_increment = 1.0 / SAMPLING_RATE;
+    
+    work pop num_beams {
+        float time_index = iter() * time_index_increment;
+
+        print(time_index);
+        
+        for (int i = 0; i < num_beams; i++) {
+            print(" ");
+            print(pop());
+        }
+        println("");
+        
+        time_index += time_index_increment;
+    }
+}

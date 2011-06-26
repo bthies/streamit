@@ -32,7 +32,7 @@ int->int pipeline BubbleSortPipe(int SIZE) {
   }
 }
 
-int->int filter Bubble(int SIZE) {
+int->int stateful filter Bubble(int SIZE) {
   int previous;
   int first = 0;
 

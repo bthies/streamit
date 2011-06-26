@@ -1,0 +1,5 @@
+int->void filter CharPrinter {
+    work pop 1 {
+	println(pop());
+    }
+}

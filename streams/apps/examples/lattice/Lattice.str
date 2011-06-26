@@ -61,7 +61,7 @@ float->void filter LastStage {
     }
 }
 
-void->float filter Counter {
+void->float stateful filter Counter {
     float i;
     init {
 	i = 1;

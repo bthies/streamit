@@ -202,7 +202,7 @@ float->float filter KernelIndices() {
     }
 }
 
-float->float filter ConvolveKernel(int si, int sj, int sSize, int nsamples, int wSize, int block) {
+float->float stateful filter ConvolveKernel(int si, int sj, int sSize, int nsamples, int wSize, int block) {
     int starti = si;
     int startj = sj;
     float[sSize * sSize * OVERSAMPLE * OVERSAMPLE * wSize] C_re;   // Convolution matrix

@@ -25,7 +25,7 @@ float->float splitjoin Cor1(int N, int NLAGS) {
   join roundrobin;
 }
 
-void->float filter OneSource {
+void->float stateful filter OneSource {
   float n;
   init { n = 0; }
   work push 1 { push(n); n += 0.01; }

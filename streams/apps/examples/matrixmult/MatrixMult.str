@@ -61,7 +61,7 @@ float->float splitjoin DuplicateRowsInternal(int times, int length) {
    join roundrobin(length);
 }
 
-void->float filter FloatSource(float maxNum) {    
+void->float stateful filter FloatSource(float maxNum) {    
     float num;
     init {
 	num = 0;

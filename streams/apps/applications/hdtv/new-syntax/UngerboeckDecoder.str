@@ -11,7 +11,7 @@
  * See the HDTV writeup for a more detailed description
  * and example worked through
  **/
-int->int filter UngerboeckDecoder {
+int->int stateful filter UngerboeckDecoder {
     int SYMBOLSIZE = 2;
     int DATASIZE = 5;
     

@@ -1,0 +1,18 @@
+/**
+ * Bitifier -- converts a byte (masquarading as an integer)
+ * into a stream of bits (also masquarading as integers).
+ * In digital systems, this is known as a shift register
+ * (MSB is shifted out first).
+ **/
+int->int filter Bitifier {
+    work push 1 pop 8 {
+	int left = pop();
+	for (int i=0; i<8; i++) {
+	    // shift out the bits one by one (msb first)
+	    push((left & 0x80) >> 7);
+	    // set up next shift
+	    left = left << 1;
+        }
+    }
+}
+

@@ -29,7 +29,7 @@
 
 /* NOTE: NOT A FAITHFUL TRANSLATION OF THE JAVA */
 /* -- only to be used for getting stream graph stats -- */
-int->int filter TrellisDecoder(int DATASIZE) {
+int->int stateful filter TrellisDecoder(int DATASIZE) {
      int SYMBOLSIZE = 2;
     // this filer is stateful in the .java version, so emulate that
     int x = 0;

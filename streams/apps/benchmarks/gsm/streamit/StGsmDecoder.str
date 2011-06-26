@@ -123,7 +123,7 @@ int -> int filter RPEDecodeFilter {
 }
 	
 
-int->int filter LTPFilter {
+int->int stateful filter LTPFilter {
 
     int[4] QLB;
     // this looks like actual state (--bft)
@@ -403,7 +403,7 @@ int->int filter IntegerTermReorder {
 }	
     
 
-int->int filter IntegerTermSynthCalc {
+int->int stateful filter IntegerTermSynthCalc {
 
 #include "Helper.str"
 #include "Mult.str"
@@ -517,7 +517,7 @@ int->int filter LARInputFilter {
     }
 }
 
-int->int filter PostProcessingFilter {
+int->int stateful filter PostProcessingFilter {
 
 #include "Helper.str"
 #include "Mult.str"

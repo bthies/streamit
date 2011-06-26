@@ -11,7 +11,7 @@ strc -library -i 2 SimpleSplit.str
 5
  */
 void->void pipeline SimpleSplit {
-    add void->int filter {
+    add void->int stateful filter {
 	int count = 0;
 	work push 1 {
 	    push(count++);

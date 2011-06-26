@@ -8,7 +8,7 @@ void->void pipeline LinearTest18 {
   add FloatSink();
 }
 
-void->float filter FloatSource {
+void->float stateful filter FloatSource {
   int x;
   init {
     x = 0;

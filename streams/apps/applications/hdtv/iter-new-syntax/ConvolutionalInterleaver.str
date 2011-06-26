@@ -1,0 +1,10 @@
+/**
+ * Convolutionally Interleaves data.
+ **/
+int->int splitjoin ConvolutionalInterleaver(int size) {
+    split roundrobin;
+    for (int i=0; i<size; i++) {
+        add Delay(i+1);
+    }
+    join roundrobin;
+}

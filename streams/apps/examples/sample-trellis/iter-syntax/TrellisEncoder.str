@@ -1,0 +1,30 @@
+/*
+ * Simple 1/2 trellis encoder
+ * See http://www.mit.edu/~6.450/handouts.html Lecture 24
+ * 
+ */
+int->int pipeline TrellisEncoderPipeline {
+    add Delay(2);
+    add TrellisEncoder();
+}
+
+int->int filter TrellisEncoder {
+    work pop 1 peek 3 push 2 {
+	int currentData;
+        // in Lecture 24, state0 corresponds to Dj-1
+        // and state1 corresponds to Dj-2
+        int state0, state1;
+
+	// grab the data from the input stream (eg Dj) 
+        state1 = peek(0);
+        state0 = peek(1);
+	currentData = peek(2);
+
+	// push out Uj,1 (msb)
+	push(currentData ^ state0 ^ state1);
+	// push out Uj,0 (lsb)
+	push(currentData ^ state1);
+
+        pop();
+    }
+}

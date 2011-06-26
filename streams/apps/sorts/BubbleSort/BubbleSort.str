@@ -5,7 +5,7 @@ void->void pipeline BubbleSort {
   add IntPrinter();
 }
 
-void->int filter IntSource(int SIZE) {
+void->int stateful filter IntSource(int SIZE) {
   int [SIZE]data;
   int index = 0;
   init {
@@ -30,7 +30,7 @@ int->int pipeline BubbleSortPipe(int SIZE) {
   }
 }
 
-int->int filter Bubble(int SIZE) {
+int->int stateful filter Bubble(int SIZE) {
   int previous;
   int first = 0;
 

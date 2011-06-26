@@ -23,7 +23,7 @@ void->void pipeline PreworkTest1 {
     }
 }
 
-int->int filter Times() {
+int->int stateful filter Times() {
     int factor = 0;
     prework push 1 pop 1 {
         factor = 1;

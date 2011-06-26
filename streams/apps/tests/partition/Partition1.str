@@ -16,7 +16,7 @@ int->int splitjoin BigSJ {
     join roundrobin;
 }
 
-void->int filter Source {
+void->int stateful filter Source {
     int i = 0;
     work push 1 {
 	push(i++);

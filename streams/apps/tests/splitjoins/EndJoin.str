@@ -11,7 +11,7 @@ strc -library -i 2 EndJoin.str
 3
  */
 void->void pipeline EndJoin {
-    add void->int filter {
+    add void->int stateful filter {
 	int i = 0;
 	work push 1 {
 	    push(i++);

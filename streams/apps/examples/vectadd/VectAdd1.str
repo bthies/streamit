@@ -20,7 +20,7 @@ int->int filter VectAddKernel {
 /** 
  * A simple source that sends out elements from a vector repeatedly.  
  */
-void->int filter VectSource(int N, int selsrc) {
+void->int stateful filter VectSource(int N, int selsrc) {
     int idx;  
     int[N] Z;
 

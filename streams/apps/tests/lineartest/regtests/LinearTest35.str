@@ -11,7 +11,7 @@ void->void pipeline LinearTest35 {
   add FloatSink();
 }
 
-void->float filter FloatSource {
+void->float stateful filter FloatSource {
   int x;
   init {
     x = 0;

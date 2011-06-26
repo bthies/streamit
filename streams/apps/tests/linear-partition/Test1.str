@@ -7,7 +7,7 @@ void->void pipeline Test1 {
   add Sink();
 }
 
-void->float filter Source {
+void->float stateful filter Source {
   int x;
   init {x = 0;}
   work push 1 {

@@ -218,7 +218,7 @@ float->float filter Interpolate(int mic, int num_mics, float[num_mics] weights, 
     }
 }
 
-float->void filter Printer(int num_beams)
+float->void stateful filter Printer(int num_beams)
 {
     float time_index = 0;
     float time_index_increment = 1.0 / SAMPLING_RATE;

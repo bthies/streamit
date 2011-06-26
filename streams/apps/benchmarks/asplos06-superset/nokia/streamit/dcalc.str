@@ -186,7 +186,7 @@ float->float pipeline GenA(int W,int Q, int N, int K, float[Q][K] C) {
 
 
 // this Filter performs back substition LTd=y. 
-float->float filter backs(int N){ 
+float->float stateful filter backs(int N){ 
    
  
     float[N][N]  LT; // L is the input matrix 
@@ -226,7 +226,7 @@ float->float pipeline DelayPipeline(int delay) {
 
 
 /** Character Unit delay **/
-float->float filter Delay() {
+float->float stateful filter Delay() {
 
   float state;
 
@@ -255,7 +255,7 @@ float->float filter FirFilter(int N, float[N] COEFF) {
 }
 
 
-float->float filter forw(int N) {
+float->float stateful filter forw(int N) {
 
   float[N][N] L;  // L is the input matrix 
   float[N] y; // y is the output result
@@ -460,7 +460,7 @@ float->void filter SinkD(int N) {
 
 
 // this class estimates the error in signal detection
-float->float filter error_est(int N) {
+float->float stateful filter error_est(int N) {
 
   float[N] Ahr,d;
  
@@ -484,7 +484,7 @@ float->float filter error_est(int N) {
 
 
 // this Filter performs the cholesky decomposition through 
-float->float filter choldsigma(int N) {
+float->float stateful filter choldsigma(int N) {
 
   float[N][N] A;
   float[N] p;

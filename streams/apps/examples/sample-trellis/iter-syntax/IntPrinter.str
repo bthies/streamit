@@ -1,0 +1,8 @@
+/*
+ * Outputs data to stdout
+ */
+int->void filter IntPrinter {
+    work pop 1 {
+	println(pop());
+    }
+}

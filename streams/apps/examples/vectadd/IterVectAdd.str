@@ -1,0 +1,69 @@
+/** 
+ * VectAdd.str - a very simple program -> add two vectors (C[] = A[] + B[])  
+ */ 
+
+/**
+ * The main kernel: i1 + i2 -> o1 (add two numbers to produce an output)  
+ */
+int->int filter VectAddKernel {
+    work pop 2 push 1 {
+	int t1, t2; 
+	t1 = pop();
+	t2 = pop();
+	push(t1 + t2);
+    } 
+} 
+
+/** 
+ * A simple source that sends out elements from a vector repeatedly.  
+ */
+void->int stateful filter VectSource(int N) {
+    work push 1 {
+        int idx = iter();
+	push(idx % N);
+    } 
+}
+
+/** 
+ * Sends out elements from the two input vectors 
+ */ 
+void->int splitjoin TwoVectSource(int N) {
+    /* generate and mix the two streams */ 
+    split roundrobin(0);
+    add VectSource(N);
+    add VectSource(N);
+    join roundrobin;
+} 
+
+/** 
+ * Prints the output vector  
+ */
+int->void filter VectPrinter {
+    work pop 1 {
+	println(pop());
+    } 
+} 
+
+/** 
+ * The driver class 
+ */
+void->void pipeline IterVectAdd {
+    int N = 10;  
+
+    //OptionA: Use a single source 
+    //int[2*N] I;
+    //for (int i = 0; i < N; i++) {
+    //	I[2*i] = 2*i; 
+    //	I[2*i+1] = 2*i+1;  
+    //}
+    //add VectSource(2*N, I);
+   
+    //OptionB: Use a splitjoin of two sources  
+    //(the O/Ps are different in the two options) 
+    add TwoVectSource(N);  
+
+    add VectAddKernel();
+    add VectPrinter();
+} 
+
+

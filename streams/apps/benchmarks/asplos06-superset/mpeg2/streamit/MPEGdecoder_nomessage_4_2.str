@@ -5155,7 +5155,7 @@ int->int filter iDCT8x8_1D_row_fast() {
  * @output size values representing an array of values in the signal
  *         domain, ordered by row and then column.
  */
-int->int filter iDCT8x8_1D_col_fast() {
+int->int stateful filter iDCT8x8_1D_col_fast() {
     int size = 8;
     int[8*8] buffer;
 

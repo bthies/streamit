@@ -4,7 +4,7 @@ void->void pipeline FIRcoarse {
     add FloatPrinter(10000);
 }
 
-void->float filter FloatSource (float maxNum) {
+void->float stateful filter FloatSource (float maxNum) {
     float num;
     init { num=0.0; }
     work push 1 {

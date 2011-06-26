@@ -57,7 +57,7 @@ float->float pipeline BlockCombine(int x0, int y0, int blockDiv)
     add BlockSplit(x0 * y0 / (blockDiv * blockDiv), y0, y0/blockDiv);
 }
 
-float->float filter BlockAdd(int x, int y, int times)
+float->float stateful filter BlockAdd(int x, int y, int times)
 {
     float[x][y] result;
     work pop (x * y * times) push (x * y)
@@ -123,7 +123,7 @@ float->float splitjoin Duplicate(int x, int y)
     join roundrobin(x);
 }
 
-void->float filter BlockFloatSource(float maxNum)
+void->float stateful filter BlockFloatSource(float maxNum)
 {
     float num;
     init { num = 0; }

@@ -1,0 +1,21 @@
+/*
+ * HelloWorld.str: a serial integer printer
+ * $Id: HelloWorld.str,v 1.1 2006-09-08 17:18:29 thies Exp $
+ */
+
+void->int stateful filter IntSource {
+    work push 1 {
+        push(iter());
+    }
+}
+
+int->void filter IntPrinter {
+    work pop 1 {
+        println(pop());
+    }
+}
+
+void->void pipeline IterHelloWorld {
+    add IntSource();
+    add IntPrinter();
+}

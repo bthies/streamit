@@ -7,7 +7,7 @@ void->void pipeline TestMacro {
   add sink();
 }
 
-void->float filter gen() {
+void->float stateful filter gen() {
     float i;
     work push 1 {
 	push(i);

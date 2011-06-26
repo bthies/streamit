@@ -1,0 +1,22 @@
+/**
+ * Filter which produces parameterized noise in the
+ * form of flipping a bit (eg this is stuck in the HDTV
+ * encode pipeline before the symbol mapper.
+ **/
+
+int->int filter NoiseSource(int noisePeriod) {
+    int currentCount = 0; // keep track of what element we have seen
+    /** create a new noise source witht the period specified **/
+
+    work push 1 pop 1 {
+	int t = pop();
+	// if we are ready to flip a bit...
+	if (currentCount >= noisePeriod) {
+	    //System.out.println("Changing bit");
+	    t = t ^ 1;
+	    currentCount = 0;
+	}
+	push(t);
+	currentCount++;
+    }
+}

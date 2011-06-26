@@ -1,0 +1,38 @@
+NOTE: This benchmark was replaced by TDE.  If this is of any interest,
+it is because the FIRBank and FIRBankPipeline changed from
+column-major to row-major ordering, eliminating the need for a
+transpose.  Also, FIRBank has explicit data parallelism.  Finally,
+there is matlab reference code for this benchmark (which might also
+apply to TDE).  If you ware looking for the most up-to-date and
+realistic benchmark, use TDE instead.
+
+*** NOTE *** -- Outputs will not verify unless real coefficients are
+used (see program text).
+
+-----------
+
+This code was based off of a Matlab precursor provided by a third
+party; see ../matlab for details.
+
+Contents of this directory:
+
+FIRBank.str - Bank of FIR filters from PCA kernel apps.
+
+FIRBankColumn.str - Same as above but assume column-major array layout
+		on input and output.  This is probably lower
+		performance due to more synchronization in splitjoin.
+
+input.txt - Input for benchmark in text form.
+
+input.dat - Input for benchmark in binary form.  This represents two cycles 
+		of the textual input to correspond to a single steady state.
+
+input-columnmajor.txt - Input for benchmark in text form (column-major array layout).
+
+input-columnmajor.dat - Input used by benchmark in binary form (column-major array
+		layout).
+
+output.txt - Output of Matlab code (might have different rounding
+		than StreamIt code).
+
+output-columnmajor.dat - Same as above in column-major format.

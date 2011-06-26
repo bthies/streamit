@@ -47,7 +47,7 @@ void->void pipeline BPFProgram {
   add FloatPrinter();
 }
 
-void->float filter FloatSource {
+void->float stateful filter FloatSource {
   float x;
   init { x = 0; }
   work push 1 {

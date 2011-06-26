@@ -1,0 +1,81 @@
+/* Single-element delay in a single filter.  The work function pushes
+ * the item it received on the previous iteration, and then saves
+ * the input item for the next iteration.
+ */
+float->float filter DelayOne {
+    prework push 1 {
+        push(0);
+    }
+    work pop 1 push 1 { 
+        push(pop());
+    }
+}
+// this generates the delays in the lattice structure
+float->float splitjoin LatDel {
+    // split duplicate
+    // originally written as duplicate by saadat, but this doesn't
+    // make sense because lower stages would do much more work than
+    // upper stages.  a round-robin gives the right behavior according
+    // to this description of lattice filters:
+    // http://www.ensc.sfu.ca/people/faculty/cavers/ENSC810/classnotes/n4p5.pdf
+    // --bill
+    split roundrobin;
+    add Identity<float>();
+    add DelayOne();
+    join roundrobin;
+}
+
+// this is the intermediate stage of the lattice filter
+float->float filter LatFilt(float k_par) {
+    work pop 2 peek 2 push 2 {
+	float e_i = 0;
+	float e_bar_i = 0;
+	e_i = peek(0) - k_par*peek(1);
+	e_bar_i = peek(1) - k_par*peek(0);
+	push(e_i);
+	push(e_bar_i);
+	pop();
+	pop();
+    }
+}
+
+//this stage is the first stage of a lattice filter
+float->float splitjoin ZeroStage {
+    split duplicate;
+    add Identity<float>();
+    add Identity<float>();
+    join roundrobin;
+}
+
+// this class combines the delaying phase and coefficients
+float->float pipeline CompStage(float k_par) {
+    add LatDel();
+    add LatFilt(k_par);
+}
+
+// this class is the last stage of a lattice filter
+float->void filter LastStage {
+    work pop 2 {
+	println(pop());
+	pop();
+    }
+}
+
+void->float stateful filter Counter {
+    work push 1 {
+        float i = 1;
+        if (iter() == 0) {
+          
+        } else {
+          i = 0;
+        }
+	push(i);
+    }
+}
+
+void->void pipeline IterLattice {
+    add Counter();
+    add ZeroStage();
+    for (int i = 2; i < 10; i++) add CompStage(i);
+    add LastStage();
+}

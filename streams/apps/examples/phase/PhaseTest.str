@@ -6,7 +6,7 @@
  * integers is data; the second set of n integers is in the range
  * 0..n-1, and specifies which integer from the first n is
  * selected. */
-int->int filter IntSelector(int count)
+int->int stateful filter IntSelector(int count)
 {
     int[count] values;
     work pop 2*count push count
@@ -30,7 +30,7 @@ int->int filter IntSelector(int count)
         }
 }
 
-void->int filter IntSelectorSource(int count)
+void->int stateful filter IntSelectorSource(int count)
 {
     int x;
     work push 2*count

@@ -1,0 +1,83 @@
+/*
+ * CFAR: Constant False Alarm Rate detection
+ * From "PCA Kernel-Level Benchmarks", item 3.3
+ * David Maze <dmaze@cag.lcs.mit.edu>
+ * $Id: CFARtest.str,v 1.2 2005-11-04 01:06:12 dimock Exp $
+ */
+
+/* Implementation of the CFAR algorithm.  The documentation talks
+ * about a data cube of cells C(i,j,k), but on a given iteration only
+ * cells with fixed i and k are considered.  Assume that the cube has
+ * been transformed to run over range gates.  Then each row is
+ * independent, and the processing comes down to these three
+ * parameters.  N_rg is the length of a row.  Around a particular
+ * element, the first G gates either way are ignored, and then the
+ * next N_cfar gates are considered. */
+complex->float pipeline CFAR(int N_rg, int N_cfar, int G)
+{
+    /* Some of the processing can be pulled out of the summation: */
+    add SquareAndScale(N_cfar);
+    /* Do the summation. */
+    add CFAR_gather(N_rg, N_cfar, G);
+}
+
+complex->float filter SquareAndScale(int N_cfar)
+{
+    work pop 1 push 1
+        {
+	    complex c = pop();
+            float mag = abs(c);
+            push(mag * mag / (2 * N_cfar));
+        }
+}
+
+/* For now, a brute-force implementation.  The documentation notes a
+ * straightforward way of doing this with four ops per iteration,
+ * though there's some warm-up time involved. */
+float->float stateful filter CFAR_gather(int N_rg, int N_cfar, int G)
+{
+    float[N_cfar + G] poke;
+    work pop 1 push 1 peek N_cfar + G + 1
+        {
+            int pos = iter() % N_rg;
+            float sum = 0;
+            // Take any elements we've seen and, up to N_cfar + G of them:
+            for (int i = 0; i < N_cfar && i + pos - N_cfar >= 0; i++)
+                sum += poke[N_cfar - i - 1];
+            // Also take items ahead of us, if they're not too far ahead.
+            for (int i = G + 1; i <= N_cfar + G && i + pos < N_rg; i++)
+                sum += peek(i);
+            // Push the result now.
+            push(sum);
+            // Now rotate the items in the buffer.
+            for (int i = 1; i < N_cfar + G; i++)
+                poke[i-1] = poke[i];
+            poke[N_cfar + G - 1] = pop();
+        }
+}
+
+/********************************************************************/
+// Test code:
+void->void pipeline CFARtest
+{
+    add ComplexSource(64);
+    add CFAR(64, 5, 4);
+    add float->void filter { work pop 1 { println(pop()); } };
+}
+
+/* NB: putting explicit parallelism here means that one
+ * steady-state iteration of the system runs one row of the data cube. */
+void->complex stateful filter ComplexSource(int N)
+{
+    work push N
+        {
+            float theta = iter() * (pi/16) * N;
+            for (int i = 0; i < N; i++)
+            {
+                theta += pi/16;
+                complex c = sin(theta) * (cos(theta) + 1i * sin(theta));
+                // complex c = 0.5 * (cos(theta) + 1i * sin(theta));
+                push(c);
+            }
+        }
+}

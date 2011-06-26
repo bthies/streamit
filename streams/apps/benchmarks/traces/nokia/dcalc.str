@@ -226,7 +226,7 @@ float->float pipeline DelayPipeline(int delay) {
 
 
 /** Character Unit delay **/
-float->float filter Delay() {
+float->float stateful filter Delay() {
 
   float state;
 

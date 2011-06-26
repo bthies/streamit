@@ -67,7 +67,7 @@ float->void filter Printer {
     }
 }
 
-float->float filter Multiply(int M, int B) {
+float->float stateful filter Multiply(int M, int B) {
     int row = 0;
 
     init {

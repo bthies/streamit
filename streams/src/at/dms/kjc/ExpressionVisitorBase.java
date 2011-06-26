@@ -6,6 +6,7 @@ package at.dms.kjc;
 import at.dms.kjc.sir.SIRCreatePortal;
 import at.dms.kjc.sir.SIRDynamicToken;
 import at.dms.kjc.sir.SIRInterfaceTable;
+import at.dms.kjc.sir.SIRIterationExpression;
 import at.dms.kjc.sir.SIRPeekExpression;
 import at.dms.kjc.sir.SIRPopExpression;
 import at.dms.kjc.sir.SIRPortal;
@@ -433,6 +434,11 @@ public class ExpressionVisitorBase<S,T> implements ExpressionVisitor<S,T> {
         throw new UnsupportedOperationException(this.toString());
          
     }
+    
+	public S visitIter(SIRIterationExpression self, T otherData) {
+        throw new UnsupportedOperationException(this.toString());
+    
+	}
 
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitPeek(at.dms.kjc.sir.SIRPeekExpression, java.lang.Object)

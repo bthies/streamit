@@ -172,16 +172,17 @@ global_statement returns [Statement s] { s = null; }
 	;	
 
 filter_decl[StreamType st] returns [StreamSpec ss]
-{ ss = null; List params = Collections.EMPTY_LIST; FEContext context = null; }
-	:	tf:TK_filter
+{ ss = null; List params = Collections.EMPTY_LIST; FEContext context = null; boolean isStateful = false;}
+	:	(isStateful=stateful_decl)?
+		 tf:TK_filter
 		{ if (st != null) context = st.getContext();
 			else context = getContext(tf); }
 		id:ID
 		(params=param_decl_list)?
-		ss=filter_body[context, st, id.getText(), params]
+		ss=filter_body[context, st, id.getText(), params, isStateful]
 	;
 
-filter_body[FEContext context, StreamType st, String name, List params]
+filter_body[FEContext context, StreamType st, String name, List params, boolean stateful]
 returns [StreamSpec ss]
 { ss = null; List vars = new ArrayList(); List funcs = new ArrayList();
 	Function fn; FieldDecl decl; }
@@ -194,7 +195,7 @@ returns [StreamSpec ss]
 		)*
 		RCURLY
 		{ ss = new StreamSpec(context, StreamSpec.STREAM_FILTER,
-				st, name, params, vars, funcs); }
+				st, name, params, vars, funcs, stateful); }
 	;
 
 field_decl returns [FieldDecl f] { f = null; Type t; Expression x = null;
@@ -376,10 +377,11 @@ portal_spec returns [List p] { p = new ArrayList(); Expression pn; }
 anonymous_stream returns [StreamCreator sc]
 { sc = null; StreamType st = null; List params = new ArrayList();
 Statement body; List types = new ArrayList(); Type t; StreamSpec ss = null;
-List p = null; int sst = 0; FEContext ctx = null; }
+List p = null; int sst = 0; FEContext ctx = null; boolean isStateful = false;}
 	: (st=stream_type_decl)?
-		( tf:TK_filter
-			ss=filter_body[getContext(tf), st, null, Collections.EMPTY_LIST]
+		( (isStateful=stateful_decl)?
+ 		  tf:TK_filter
+			ss=filter_body[getContext(tf), st, null, Collections.EMPTY_LIST, isStateful]
 			((p=portal_spec)? SEMI)?
 			{ sc = new SCAnon(getContext(tf), ss, p); }
 		|	( tp:TK_pipeline
@@ -463,6 +465,9 @@ primitive_type returns [Type t] { t = null; }
 	|	TK_float3 { t = new TypePrimitive(TypePrimitive.TYPE_FLOAT3); }
 	|	TK_float4 { t = new TypePrimitive(TypePrimitive.TYPE_FLOAT4); }
 	;
+
+stateful_decl returns [boolean b] { b = true; }
+       :       TK_stateful;
 
 variable_decl returns [Statement s] { s = null; Type t; Expression x = null; 
 	List<Type> ts = new ArrayList<Type>(); List<String> ns = new ArrayList<String>();
@@ -760,6 +765,9 @@ streamit_value_expr returns [Expression x] { x = null; }
 			{ x = new ExprPop(getContext(t)); }
 	|	u:TK_peek LPAREN x=right_expr RPAREN
 			{ x = new ExprPeek(getContext(u), x); }
+	|       v:TK_iter LPAREN RPAREN
+			{ x = new ExprIter(getContext(v)); }
+			
 	;
 
 minic_value_expr returns [Expression x] { x = null; }

@@ -916,6 +916,11 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor implements SLIRAttri
 
 
     ///// SIR Constructs that are interesting for linear analysis (eg push, pop, and peek expressions)
+    public Object visitIterationExpression(SIRIterationExpression self) {
+        assert false : "This feature is unsupported for iteration count";
+    	return null;
+    }
+    
     
     /**
      * Visit a push expression. When we visit a push expression, we are basically going to try and

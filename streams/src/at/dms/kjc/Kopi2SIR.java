@@ -360,6 +360,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
         if (matchesPrefix(exp.getIdent(), "push") ||
             matchesPrefix(exp.getIdent(), "pop")  ||
             matchesPrefix(exp.getIdent(), "peek") ||
+            matchesPrefix(exp.getIdent(), "iter")  ||
             exp.getIdent().equals("print") ||
             exp.getIdent().equals("println"))
             return true;
@@ -417,6 +418,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
         if (matchesPrefix(exp.getIdent(), "peek")) {
             newExp = new SIRPeekExpression(args[0]);
             ((SIRPeekExpression)newExp).setTapeType(parentStream.getInputType()); 
+        }
+        if (matchesPrefix(exp.getIdent(), "iter")) {
+        	newExp = new SIRIterationExpression();
         }
         if (exp.getIdent().equals("print")) {
             newExp = new SIRPrintStatement(null, args[0], false, null);
@@ -1925,12 +1929,20 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
         //Set currentMethod to this method, we are processing it!
         currentMethod = self.getIdent();
     
-    
         if (isSIRExp(self)) {
             printMe("SIR Expression " + ident);
             // reset currentMethod on all returns
             currentMethod = parentMethod;
             return newSIRExp(self, args);
+        } else if (ident.equals("setStateful")) {
+            assert parentStream instanceof SIRFilter 
+                : "setStateful should only be called for filters";
+
+	    if (parentStream instanceof SIRFilter) {
+	      ((SIRFilter)parentStream).setStateful(args[0].booleanValue());
+	    }
+	
+	    return null;
         } else if (ident.equals("regReceiver")) {
             if (args.length > 1)
                 at.dms.util.Utils.fail(printLine(self)

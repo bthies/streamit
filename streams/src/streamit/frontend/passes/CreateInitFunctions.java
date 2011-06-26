@@ -50,7 +50,8 @@ public class CreateInitFunctions extends FEReplacer
                 newFuncs.add(Function.newInit(ss.getContext(), body));
                 ss = new StreamSpec(ss.getContext(), ss.getType(),
                                     ss.getStreamType(), ss.getName(),
-                                    ss.getParams(), ss.getVars(), newFuncs);
+                                    ss.getParams(), ss.getVars(), 
+                                    newFuncs, ss.isStateful());
             }
         // might have anonymous child filters with no init functions
         return super.visitStreamSpec(ss);

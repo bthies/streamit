@@ -523,6 +523,13 @@ public class ThreeAddressExpressionCheck extends ExpressionVisitorBase<Object,St
     }
 
     @Override
+    public Object visitIter(SIRIterationExpression self, Stack<JExpression> context) {
+        preCheck(context, self);
+        postCheck(context, self);
+    	return null;
+    }
+
+    @Override
     public Object visitPeek(SIRPeekExpression self, Stack<JExpression> context) {
         preCheck(context, self);
         context.push(self);

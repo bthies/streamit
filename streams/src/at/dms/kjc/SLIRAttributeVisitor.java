@@ -70,6 +70,11 @@ public interface SLIRAttributeVisitor<T> extends AttributeVisitor<T> {
      * Visits a dynamic token.
      */
     T visitDynamicToken(SIRDynamicToken self);
+    
+    /**
+     * Visits a pop expression.
+     */
+    T visitIterationExpression(SIRIterationExpression self);
 
     /**
      * Visits a peek expression.

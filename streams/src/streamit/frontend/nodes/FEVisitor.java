@@ -46,6 +46,7 @@ public interface FEVisitor
     public Object visitExprField(ExprField exp);
     public Object visitExprFunCall(ExprFunCall exp);
     public Object visitExprHelperCall(ExprHelperCall exp);
+	public Object visitExprIter(ExprIter exprIter);
     public Object visitExprPeek(ExprPeek exp);
     public Object visitExprPop(ExprPop exp);
     public Object visitExprRange(ExprRange exp);

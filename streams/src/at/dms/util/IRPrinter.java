@@ -1560,6 +1560,12 @@ public class IRPrinter extends Utils implements SLIRVisitor
         blockEnd();
     }
 
+    @Override
+    public void visitIterationExpression(
+		SIRIterationExpression sirIterationExpression) {
+	blockStart("SIRIterationExpression");
+	blockEnd();
+    }
 
     /**
      * Visits a pop expression.

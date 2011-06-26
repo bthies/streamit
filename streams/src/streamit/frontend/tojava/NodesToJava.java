@@ -733,6 +733,11 @@ public class NodesToJava implements FEVisitor
         System.exit(1);
         return null;
     }
+    
+	@Override
+	public Object visitExprIter(ExprIter exprIter) {
+		return "iter()";
+	}
 
     public Object visitExprPeek(ExprPeek exp)
     {
@@ -868,7 +873,16 @@ public class NodesToJava implements FEVisitor
     public Object visitFuncWork(FuncWork func)
     {
         // Nothing special here; we get to ignore the I/O rates.
-        return visitFunction(func);
+        String result = (String) visitFunction(func);
+
+        // Retroactively inject an iteration addition to work body.
+        String insert = 
+            indent + "iterationCount++; // filter count update\n";
+
+        int finalBraceIndex = result.lastIndexOf("}");
+        String firstSegment = result.substring(0, finalBraceIndex);
+        String finalSegment = indent + result.substring(finalBraceIndex);
+        return firstSegment + insert + finalSegment;
     }
 
     public Object visitProgram(Program prog) {
@@ -1514,7 +1528,8 @@ public class NodesToJava implements FEVisitor
                         result.append(convertType(param.getType()) + " " +
                                       param.getName());
                     }
-                result.append(")\n" + indent + "{\n" + indent + "}\n");
+                String stateful = (spec.isStateful()) ? indent + indent + "setStateful(true);\n" : "";
+                result.append(")\n" + indent + "{\n" + stateful + indent + "}\n");
             }
         
         return result.toString();

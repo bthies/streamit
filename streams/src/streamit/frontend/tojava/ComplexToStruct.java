@@ -167,7 +167,8 @@ public class ComplexToStruct extends FEReplacer
                                                     ss.getName(),
                                                     newParams,
                                                     ss.getVars(),
-                                                    ss.getFuncs()));
+                                                    ss.getFuncs(),
+                                                    ss.isStateful()));
     }
 
     public Object visitStreamType(StreamType st)

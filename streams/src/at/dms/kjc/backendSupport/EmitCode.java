@@ -240,6 +240,12 @@ backendbits.getComputeNodes().getNthComputeNode(0).getComputeCode().getMainFunct
         hasBoolType = false;
     }
         
+	@Override
+	public void visitIterationExpression(
+			SIRIterationExpression sirIterationExpression) {
+assert false : "This feature is unsupported for iteration count";
+	}
+
     @Override
     public void visitPeekExpression(SIRPeekExpression self,
             CType tapeType,

@@ -218,7 +218,7 @@ public class MoveStreamParameters extends InitMunger
                 // And create the new stream spec.
                 spec = new StreamSpec(spec.getContext(), spec.getType(),
                                       spec.getStreamType(), spec.getName(),
-                                      Collections.EMPTY_LIST, newVars, newFuncs);
+                                      Collections.EMPTY_LIST, newVars, newFuncs, spec.isStateful());
             }
         return spec;
     }

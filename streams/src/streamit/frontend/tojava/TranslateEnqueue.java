@@ -122,7 +122,8 @@ public class TranslateEnqueue extends FEReplacer
                 fns.add(makeInitPath(ss));
                 ssNew = new StreamSpec(ssNew.getContext(), ssNew.getType(),
                                        ssNew.getStreamType(), ssNew.getName(),
-                                       ssNew.getParams(), ssNew.getVars(), fns);
+                                       ssNew.getParams(), ssNew.getVars(), 
+                                       fns, ssNew.isStateful());
             }
         vals = lastVals;
         return ssNew;

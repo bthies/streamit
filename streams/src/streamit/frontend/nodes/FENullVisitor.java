@@ -43,6 +43,7 @@ public class FENullVisitor implements FEVisitor
     public Object visitExprField(ExprField exp) { return null; }
     public Object visitExprFunCall(ExprFunCall exp) { return null; }
     public Object visitExprHelperCall(ExprHelperCall exp) { return null; }
+	public Object visitExprIter(ExprIter exprIter) { return null; }
     public Object visitExprPeek(ExprPeek exp) { return null; }
     public Object visitExprPop(ExprPop exp) { return null; }
     public Object visitExprRange(ExprRange exp) { return null; }

@@ -2000,6 +2000,11 @@ public class FlatIRToCluster extends InsertTimers implements
     public void visitRangeExpression(SIRRangeExpression self) {
         Utils.fail("Dynamic rates not yet supported in cluster backend.");
     }
+    
+	public void visitIterationExpression(
+			SIRIterationExpression sirIterationExpression) {
+            assert false : "This feature is unsupported for iteration count";
+	}
 
     public void visitPeekExpression(SIRPeekExpression self, CType tapeType,
                                     JExpression num) {

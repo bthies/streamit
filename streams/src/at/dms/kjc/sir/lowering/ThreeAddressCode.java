@@ -1059,6 +1059,12 @@ public class ThreeAddressCode {
         }
 
         @Override
+        public List<JStatement> visitIter(SIRIterationExpression self, JLocalVariableExpression tmp) {
+            assert false : "This feature is unsupported for iteration count";
+            return null;
+        }
+        
+        @Override
         public List<JStatement> visitPeek(SIRPeekExpression self, JLocalVariableExpression tmp) {
             return recurrOneExpr(tmp,self.getArg(),self,
                     new C1(){public JExpression mk(JExpression self, JExpression v) {return new SIRPeekExpression(v);}});
@@ -1431,6 +1437,12 @@ public class ThreeAddressCode {
             assert false : "ThreeAddressCode does not accept LIRNode";
             return Collections.emptyList();
         }
+        
+		public List<JStatement> visitIterationExpression(
+				SIRIterationExpression self) {
+            assert false : "Not a statement";
+        	return Collections.emptyList();
+		}
 
         public List<JStatement> visitPeekExpression(SIRPeekExpression self, CType tapeType, JExpression arg) {
             assert false : "Not a statement";
@@ -2300,6 +2312,5 @@ public class ThreeAddressCode {
             assert false: "Not a statement";
             return null;
         }
-
     }
 }

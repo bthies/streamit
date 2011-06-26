@@ -2236,6 +2236,11 @@ public class SIRToStreamIt
         p.print("*");
     }
 
+	public void visitIterationExpression(
+			SIRIterationExpression sirIterationExpression) {
+		p.print("iter()");
+	}
+	
     public void visitPeekExpression(SIRPeekExpression self,
                                     CType tapeType,
                                     JExpression num)
@@ -2926,4 +2931,5 @@ public class SIRToStreamIt
             }
         }
     }
+
 }

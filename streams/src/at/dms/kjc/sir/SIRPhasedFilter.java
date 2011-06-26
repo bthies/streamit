@@ -26,6 +26,12 @@ public class SIRPhasedFilter extends SIRStream implements Cloneable
     private CType inputType, outputType;
 
     /**
+     * Indicates whether the filter is stateful or not.  Initially set
+     * according to user definition.
+     */
+    private boolean stateful;
+
+    /**
      * Array of phases run by the filter.
      */
     private JMethodDeclaration[] initPhases, phases;
@@ -86,6 +92,7 @@ public class SIRPhasedFilter extends SIRStream implements Cloneable
         this.initPhases = other.initPhases;
         this.phases = other.phases;
         this.ident = other.ident;
+        this.stateful = other.stateful;
     }
     
     /**
@@ -116,6 +123,13 @@ public class SIRPhasedFilter extends SIRStream implements Cloneable
     }
     public CType getOutputType() {
         return this.outputType;
+    }
+
+    public boolean isStateful() {
+        return stateful;
+    }
+    public void setStateful(boolean stateful) {
+        this.stateful = stateful;
     }
 
     public JMethodDeclaration[] getInitPhases() {
@@ -167,6 +181,7 @@ public class SIRPhasedFilter extends SIRStream implements Cloneable
     /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.sir.SIRPhasedFilter other) {
         super.deepCloneInto(other);
+        other.stateful = this.stateful;
         other.inputType = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.inputType);
         other.outputType = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.outputType);
         other.initPhases = (at.dms.kjc.JMethodDeclaration[])at.dms.kjc.AutoCloner.cloneToplevel(this.initPhases);

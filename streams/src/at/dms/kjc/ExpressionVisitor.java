@@ -3,6 +3,7 @@ package at.dms.kjc;
 import at.dms.kjc.sir.SIRCreatePortal;
 import at.dms.kjc.sir.SIRDynamicToken;
 import at.dms.kjc.sir.SIRInterfaceTable;
+import at.dms.kjc.sir.SIRIterationExpression;
 import at.dms.kjc.sir.SIRPeekExpression;
 import at.dms.kjc.sir.SIRPopExpression;
 import at.dms.kjc.sir.SIRPortal;
@@ -88,6 +89,7 @@ public interface ExpressionVisitor<S,T> {
     S visitCreatePortal(SIRCreatePortal self, T otherData);
     S visitDynamicToken(SIRDynamicToken self, T otherData);
     S visitInterfaceTable(SIRInterfaceTable self, T otherData);
+    S visitIter(SIRIterationExpression self, T otherData);
     S visitPeek(SIRPeekExpression self, T otherData);
     S visitPop(SIRPopExpression self, T otherData);
     S visitPush(SIRPushExpression self, T otherData);

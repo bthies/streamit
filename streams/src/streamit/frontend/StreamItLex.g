@@ -40,6 +40,10 @@ tokens {
 	"filter"; "pipeline"; "splitjoin"; "feedbackloop";
 	// Messaging:
 	"portal"; "to"; "handler";
+        // Stateful filter keyword:
+        "stateful";
+        // Iteration counting:
+        "iter";
 	// Composite streams:
 	"add";
 	// Splitters and joiners:

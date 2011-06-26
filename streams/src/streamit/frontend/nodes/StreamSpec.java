@@ -40,6 +40,7 @@ public class StreamSpec extends FENode
 {
     private int type;
     private StreamType st;
+    private boolean stateful;
     private String name;
     private List params;
     private List<FieldDecl> vars;
@@ -77,13 +78,7 @@ public class StreamSpec extends FENode
     public StreamSpec(FEContext context, int type, StreamType st,
                       String name, List params, List<FieldDecl> vars, List<Function> funcs)
     {
-        super(context);
-        this.type = type;
-        this.st = st;
-        this.name = name;
-        this.params = params;
-        this.vars = vars;
-        this.funcs = funcs;
+        this(context, type, st, name, params, vars, funcs, false);
     }
     
     /**
@@ -108,8 +103,42 @@ public class StreamSpec extends FENode
     {
         this(context, type, st, name, params, Collections.EMPTY_LIST,
              Collections.singletonList(Function.newInit(init.getContext(),
-                                                        init)));
+                                                        init)), false);
     }
+    
+    /**
+     * Creates a new stream specification given its name, a list of
+     * variables, and a list of functions.
+     *
+     * @param context  front-end context indicating file and line
+     *                 number for the specification
+     * @param type     STREAM_* constant indicating the type of
+     *                 stream object
+     * @param st       stream type giving input and output types of
+     *                 the stream object
+     * @param name     string name of the object
+     * @param params   list of <code>Parameter</code> that are formal
+     *                 parameters to the stream object
+     * @param vars     list of <code>StmtVarDecl</code> that are
+     *                 fields of a filter stream
+     * @param funcs    list of <code>Function</code> that are member
+     *                 functions of the stream object
+     * @param stateful boolean indicating whether the stream object is
+     *                 stateful
+     */
+    public StreamSpec(FEContext context, int type, StreamType st,
+                      String name, List params, List<FieldDecl> vars, List<Function> funcs, boolean stateful)
+    {
+        super(context);
+        this.type = type;
+        this.st = st;
+        this.name = name;
+        this.params = params;
+        this.vars = vars;
+        this.funcs = funcs;
+        this.stateful = stateful;
+    }
+
 
     /**
      * Returns the type of this, as one of the integer constants above.
@@ -150,6 +179,16 @@ public class StreamSpec extends FENode
     public StreamType getStreamType()
     {
         return st;
+    }
+
+    /**
+     * Returns the stateful status of this stream.
+     *
+     * @return  boolean for statefulness of stream
+     */
+    public boolean isStateful()
+    {
+        return stateful;
     }
 
     /**

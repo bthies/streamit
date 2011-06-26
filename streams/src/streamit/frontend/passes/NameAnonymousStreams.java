@@ -132,7 +132,8 @@ public class NameAnonymousStreams extends SymbolTableVisitor
                                               specName,
                                               formals,
                                               newSpec.getVars(),
-                                              newSpec.getFuncs());
+                                              newSpec.getFuncs(),
+                                              newSpec.isStateful());
         newStreams.add(namedSpec);
         
         // Also replace the stream creator.  The only thing we

@@ -356,6 +356,8 @@ public abstract class Filter extends Stream
     int peekAmount = -1, popAmount = -1, pushAmount = -1;
     Class inputType = null, outputType = null;
     boolean ccStyleInit = false;
+    boolean stateful = false;
+    public int iterationCount = 0;
 
     // functions for support of syntax in the CC paper
     public void setPeek(int peek)
@@ -386,6 +388,19 @@ public abstract class Filter extends Stream
     {
         inputType = type;
         ccStyleInit = true;
+    }
+    
+    public boolean isStateful() {
+        return stateful;
+    }
+
+    public void setStateful(boolean stateful) {
+        this.stateful = stateful;
+    }
+    
+    // returns current iteration value
+    public int iter() {
+    	return iterationCount;
     }
 
     // data and functions for support of multi-stage/multi-phase filters:

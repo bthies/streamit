@@ -271,6 +271,11 @@ public class GetExprType extends FENullVisitor
     {
         return streamType.getIn();
     }
+
+    public Object visitExprIter(ExprIter exp) 
+    {
+        return new TypePrimitive(TypePrimitive.TYPE_INT);
+    }
     
     public Object visitExprRange(ExprRange exp)
     {

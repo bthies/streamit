@@ -93,7 +93,14 @@ public class SLIREmptyVisitor extends KjcEmptyVisitor
      */
     public void visitDynamicToken(SIRDynamicToken self) {
     }
-
+    
+    /**
+     * Visits an iteration count expression.
+     */
+	public void visitIterationExpression(
+			SIRIterationExpression sirIterationExpression) {
+	}
+    
     /**
      * Visits a peek expression.
      */
@@ -420,5 +427,6 @@ public class SLIREmptyVisitor extends KjcEmptyVisitor
     public void visitVectorLiteral(JVectorLiteral self, JLiteral scalar) {
         scalar.accept(this);
     }
+
 }
 

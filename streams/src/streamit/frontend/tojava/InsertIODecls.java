@@ -86,7 +86,8 @@ public class InsertIODecls extends InitMunger
         
         return new StreamSpec(spec.getContext(), spec.getType(),
                               spec.getStreamType(), spec.getName(),
-                              spec.getParams(), spec.getVars(), fns);
+                              spec.getParams(), spec.getVars(),
+                              fns, spec.isStateful());
     }
 
     private void translateWork(FuncWork work, boolean init, List newStmts)

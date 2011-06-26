@@ -1391,6 +1391,11 @@ public class LIRToC
         assert false : "Do not yet support dynamic rates in uniprocessor backend.";
     }
 
+	public void visitIterationExpression(
+			SIRIterationExpression sirIterationExpression) {
+assert false : "This feature is unsupported for iteration count";
+	}
+    
     public void visitPeekExpression(SIRPeekExpression self,
                                     CType tapeType,
                                     JExpression num)

@@ -126,7 +126,7 @@ public class AssignLoopTypes extends FEReplacer
                             enqType);
         ss = new StreamSpec(ss.getContext(), ss.getType(), st,
                             ss.getName(), ss.getParams(), ss.getVars(),
-                            ss.getFuncs());
+                            ss.getFuncs(), ss.isStateful());
         return ss;
     }
 

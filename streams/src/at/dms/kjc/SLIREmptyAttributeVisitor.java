@@ -149,6 +149,14 @@ public class SLIREmptyAttributeVisitor extends EmptyAttributeVisitor
         return self;
     }
     
+
+    /**
+     * Visits an iteration expression.
+     */
+	public Object visitIterationExpression(SIRIterationExpression self) {
+		return self;
+	}
+    
     /**
      * Visits a pop expression.
      */

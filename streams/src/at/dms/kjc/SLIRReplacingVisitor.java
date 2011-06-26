@@ -142,6 +142,13 @@ public class SLIRReplacingVisitor extends ReplacingVisitor
     }
 
     /**
+     * Visits an iteration expression.
+     */
+	public Object visitIterationExpression(SIRIterationExpression self) {
+		return self;
+	}
+
+    /**
      * Visits a peek expression.
      */
     public Object visitPeekExpression(SIRPeekExpression self,

@@ -559,6 +559,7 @@ public class CloneGenerator {
         "at.dms.kjc.sir.SIRIdentity",
         "at.dms.kjc.sir.SIRInitStatement",
         "at.dms.kjc.sir.SIRInterfaceTable",
+        "at.dms.kjc.sir.SIRIterationExpression",
         "at.dms.kjc.sir.SIRJoiner",
         "at.dms.kjc.sir.SIRJoinType",
         "at.dms.kjc.sir.SIRLatency",

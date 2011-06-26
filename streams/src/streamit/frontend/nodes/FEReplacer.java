@@ -245,6 +245,10 @@ public class FEReplacer implements FEVisitor
         return new ExprHelperCall(exp.getContext(), exp.getHelperPackage(), 
                                   exp.getName(), newParams);
     }
+    
+	public Object visitExprIter(ExprIter exp) {
+		return exp;
+	}
 
     public Object visitExprPeek(ExprPeek exp)
     {
@@ -655,7 +659,7 @@ public class FEReplacer implements FEVisitor
         if (!changed && newST == spec.getStreamType()) return spec;
         return new StreamSpec(spec.getContext(), spec.getType(),
                               newST, spec.getName(), spec.getParams(),
-                              newVars, newFuncs);
+                              newVars, newFuncs, spec.isStateful());
         
     }
     

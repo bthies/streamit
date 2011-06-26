@@ -661,6 +661,11 @@ public class FEIRToSIR implements FEVisitor, Constants {
         return null;
     }
 
+	public Object visitExprIter(ExprIter exprIter) {
+		debug("In visitExprIter\n");
+		return new SIRIterationExpression();
+	}
+
     public Object visitExprPeek(ExprPeek exp) {
         debug("In visitExprPeek\n");
         return new SIRPeekExpression((JExpression) exp.getExpr().accept(this),

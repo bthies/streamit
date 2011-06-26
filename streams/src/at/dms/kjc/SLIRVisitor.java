@@ -78,6 +78,11 @@ public interface SLIRVisitor extends KjcVisitor
     void visitDynamicToken(SIRDynamicToken self);
 
     /**
+     * Visits a iteration expression.
+     */
+	void visitIterationExpression(SIRIterationExpression sirIterationExpression);
+    
+    /**
      * Visits a peek expression.
      */
     void visitPeekExpression(SIRPeekExpression self,

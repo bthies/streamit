@@ -12,10 +12,11 @@ import at.dms.kjc.JInterfaceDeclaration;
 import at.dms.kjc.KjcOptions;
 import at.dms.kjc.ObjectDeepCloner;
 import at.dms.kjc.StreamItDot;
+import at.dms.kjc.common.CheckStatefulFilters;
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.common.ConvertLocalsToFields;
+import at.dms.kjc.iterator.IterFactory;
 import at.dms.kjc.sir.SIRContainer;
-import at.dms.kjc.sir.SIRFilter;
 import at.dms.kjc.sir.SIRGlobal;
 import at.dms.kjc.sir.SIRHelper;
 import at.dms.kjc.sir.SIRInterfaceTable;
@@ -23,9 +24,6 @@ import at.dms.kjc.sir.SIRPortal;
 import at.dms.kjc.sir.SIRStream;
 import at.dms.kjc.sir.SIRStructure;
 import at.dms.kjc.sir.linear.LinearAnalyzer;
-import at.dms.kjc.sir.linear.LinearDirectReplacer;
-import at.dms.kjc.sir.linear.LinearDot;
-import at.dms.kjc.sir.linear.LinearDotSimple;
 import at.dms.kjc.sir.lowering.ArrayInitExpander;
 import at.dms.kjc.sir.lowering.ConstantProp;
 import at.dms.kjc.sir.lowering.ConstructSIRTree;
@@ -42,15 +40,23 @@ import at.dms.kjc.sir.lowering.StaticsProp;
 import at.dms.kjc.sir.lowering.VarDeclRaiser;
 import at.dms.kjc.sir.lowering.VectorizeEnable;
 import at.dms.kjc.sir.lowering.fission.FissionReplacer;
-import at.dms.kjc.sir.lowering.fission.StatelessDuplicate;
 import at.dms.kjc.sir.lowering.fusion.FuseAll;
 import at.dms.kjc.sir.lowering.fusion.FusePipelines;
 import at.dms.kjc.sir.lowering.fusion.Lifter;
 import at.dms.kjc.sir.lowering.partition.ManualPartition;
 import at.dms.kjc.sir.lowering.partition.SJToPipe;
 import at.dms.kjc.sir.lowering.partition.WorkEstimate;
-import at.dms.kjc.sir.lowering.partition.WorkList;
-import at.dms.kjc.slicegraph.*;
+import at.dms.kjc.slicegraph.AdaptivePartitioner;
+import at.dms.kjc.slicegraph.DataFlowOrder;
+import at.dms.kjc.slicegraph.FlattenAndPartition;
+import at.dms.kjc.slicegraph.FlattenGraph;
+import at.dms.kjc.slicegraph.InstallInitDistributions;
+import at.dms.kjc.slicegraph.OneFilterSlicer;
+import at.dms.kjc.slicegraph.SIRSlicer;
+import at.dms.kjc.slicegraph.SimpleSlicer;
+import at.dms.kjc.slicegraph.Slice;
+import at.dms.kjc.slicegraph.Slicer;
+import at.dms.kjc.slicegraph.UnflatFilter;
 import at.dms.kjc.spacetime.AddBuffering;
 import at.dms.kjc.spacetime.BasicGenerateSteadyStateSchedule;
 import at.dms.kjc.spacetime.CalculateParams;
@@ -59,7 +65,6 @@ import at.dms.kjc.spacetime.DuplicateBottleneck;
 import at.dms.kjc.spacetime.GranularityAdjust;
 import at.dms.kjc.spacetime.GreedyBinPacking;
 import at.dms.kjc.spacetime.StreamlinedDuplicate;
-import at.dms.kjc.tilera.TileraBackend;
 
 /**
  * Common passes, useful in new back ends.
@@ -171,6 +176,9 @@ public class CommonPasses {
         // pipelines, so do it here.
         Lifter.liftAggressiveSync(str);
         
+        // Checks that all filters with mutable states are labeled with
+        // stateful keyword
+        CheckStatefulFilters.doit(str);
         
         double CCRatioOrig = CompCommRatio.ratio(str, WorkEstimate.getWorkEstimate(str),
                 SIRScheduler.getExecutionCounts(str)[1]);

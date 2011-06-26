@@ -286,7 +286,7 @@ public class InsertInitConstructors extends InitMunger
         return new StreamSpec(spec.getContext(), spec.getType(),
                               spec.getStreamType(), spec.getName(),
                               spec.getParams(), spec.getVars(),
-                              newFuncs);
+                              newFuncs, spec.isStateful());
     }
 
     public Object visitStmtVarDecl(StmtVarDecl decl)

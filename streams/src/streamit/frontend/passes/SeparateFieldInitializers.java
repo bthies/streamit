@@ -78,7 +78,8 @@ public class SeparateFieldInitializers extends streamit.frontend.tojava.InitMung
         // And create the new stream spec.
         spec = new StreamSpec(spec.getContext(), spec.getType(),
                               spec.getStreamType(), spec.getName(),
-                              spec.getParams(), spec.getVars(), fns);
+                              spec.getParams(), spec.getVars(), 
+                              fns, spec.isStateful());
 
         // restore old field inits for parent stream
         fieldInits = oldFieldInits;

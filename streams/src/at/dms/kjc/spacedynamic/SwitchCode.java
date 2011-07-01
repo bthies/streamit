@@ -14,7 +14,7 @@ import java.util.Arrays;
 import java.util.StringTokenizer;
 import java.io.*;
 
-import sun.java2d.pipe.LoopPipe;
+//import sun.java2d.pipe.LoopPipe;
 
 /**
  * This class generates the switch code for each tile and writes it to a file

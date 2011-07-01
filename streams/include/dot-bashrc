@@ -5,7 +5,7 @@
 #
 
 # Variables that may need to be redefined depending on machine
-export JAVA_HOME=/Library/Java/Home
+export JAVA_HOME=/afs/csail.mit.edu/group/commit/3rdparty/jdk1.6.0_21
 
 #==== Below here should not have to change ====
 
@@ -60,7 +60,7 @@ fi
 
 # the library locations for fftw (needed to build the cluster backend)
 # for some older linux flavors, this might have to change to LPATH
-fftw_library_path=/usr/lib:/usr/local/lib
+fftw_library_path=/afs/csail.mit.edu/group/commit/3rdparty/fftw/fftw-2.1.5/rfftw/.libs:/afs/csail.mit.edu/group/commit/3rdparty/fftw/fftw-2.1.5/fftw/.libs
 if [ -z "$LD_LIBRARY_PATH" ]
 then
   export LD_LIBRARY_PATH=$fftw_library_path
@@ -77,7 +77,7 @@ fi
 
 # the c header file locations for fftw (needed to build the cluster backend)
 # for some older versions of linux may use C_INCLUDE_PATH
-fftw_header_path=/usr/include:/usr/local/include
+fftw_header_path=/afs/csail.mit.edu/group/commit/3rdparty/fftw/fftw-2.1.5/rfftw:/afs/csail.mit.edu/group/commit/3rdparty/fftw/fftw-2.1.5/fftw
 if [ -z "$CPATH" ]
 then
   export CPATH=$fftw_header_path

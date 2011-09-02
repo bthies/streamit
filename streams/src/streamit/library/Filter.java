@@ -767,6 +767,7 @@ public abstract class Filter extends Stream
             prework();
         } else if (phase.name.equals("work")) {
             work();
+            iterationCount++;
         } else {
             throw new RuntimeException("Unrecognized phase name: " + phase.name);
         }

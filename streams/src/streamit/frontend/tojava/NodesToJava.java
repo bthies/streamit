@@ -873,16 +873,7 @@ public class NodesToJava implements FEVisitor
     public Object visitFuncWork(FuncWork func)
     {
         // Nothing special here; we get to ignore the I/O rates.
-        String result = (String) visitFunction(func);
-
-        // Retroactively inject an iteration addition to work body.
-        String insert = 
-            indent + "iterationCount++; // filter count update\n";
-
-        int finalBraceIndex = result.lastIndexOf("}");
-        String firstSegment = result.substring(0, finalBraceIndex);
-        String finalSegment = indent + result.substring(finalBraceIndex);
-        return firstSegment + insert + finalSegment;
+        return visitFunction(func);
     }
 
     public Object visitProgram(Program prog) {

@@ -902,7 +902,7 @@ public class FuseSimpleSplit {
     private static JStatement popToPeek(JStatement orig, final boolean popBeforePeek, final int offset, final int scaling) {
         // remove unused pop statements from <orig>.  they will be
         // replaced by an automatic assignment to the pop counter
-        orig = Utils.removeUnusedPops(orig);
+        //orig = Utils.removeUnusedPops(orig);
         
         // if there is popping before peeking, then we need to keep
         // track of the pop index.  define a variable to be our

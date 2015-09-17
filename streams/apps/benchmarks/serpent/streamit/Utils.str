@@ -38,10 +38,10 @@ int->bit filter IntoBits()
       int m = 1;
 
       for (int i = 0; i < 32; i++) {
+	  bit x = 0;
           if (((v & m) >> i) != 0)
-              push(1);
-          else
-              push(0);
+              x = 1;
+          push(x);
           m = m << 1;
       }
   }

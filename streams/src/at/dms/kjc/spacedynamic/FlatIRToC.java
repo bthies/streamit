@@ -86,13 +86,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
         //    ("Optimizing "+
         //     ((SIRFilter)node.contents).getName()+"...");
 
-        (new FinalUnitOptimize(){
-            protected boolean optimizeThisMethod(SIRCodeUnit unit, JMethodDeclaration method) {
-                //don't do anything for the work function if it is inlined or for the init work
-                return !((RawExecutionCode.INLINE_WORK && method.getName().startsWith("work")) || 
-                        method.getName().startsWith("initWork"));
-            }
-        }).optimize((SIRFilter)node.contents);
+        (new FinalUnitOptimize()).optimize((SIRFilter)node.contents);
         
         //convert pop() statements that aren't assigned to anything to be 
         //assigned to a dummy variable

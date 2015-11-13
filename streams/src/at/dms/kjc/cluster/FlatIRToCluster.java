@@ -127,12 +127,7 @@ public class FlatIRToCluster extends InsertTimers implements
             System.out.println("Optimizing "
                                + filter.getName() + "...");
         
-        (new FinalUnitOptimize(){
-            protected boolean optimizeThisMethod(SIRCodeUnit unit, JMethodDeclaration method) {
-                return !(unit instanceof SIRTwoStageFilter 
-                        && method == ((SIRTwoStageFilter)unit).getInitWork());
-            }
-        }).optimize(filter);
+        (new FinalUnitOptimize()).optimize(filter);
         
         IterFactory.createFactory().createIter(filter).accept(toC);        
     }
@@ -150,12 +145,7 @@ public class FlatIRToCluster extends InsertTimers implements
             System.out.println("Optimizing "
                                + filter.getName() + "...");
         
-        (new FinalUnitOptimize(){
-            protected boolean optimizeThisMethod(SIRCodeUnit unit, JMethodDeclaration method) {
-                return !(unit instanceof SIRTwoStageFilter 
-                        && method == ((SIRTwoStageFilter)unit).getInitWork());
-            }
-        }).optimize(filter);
+        (new FinalUnitOptimize()).optimize(filter);
         
         IterFactory.createFactory().createIter(filter).accept(toC);        
     }
@@ -196,12 +186,7 @@ public class FlatIRToCluster extends InsertTimers implements
 //                new SIRStructure[0],
 //                new SIRGlobal[0]);
 
-        (new FinalUnitOptimize(){
-            protected boolean optimizeThisMethod(SIRCodeUnit unit, JMethodDeclaration method) {
-                return !(unit instanceof SIRTwoStageFilter 
-                        && method == ((SIRTwoStageFilter)unit).getInitWork());
-            }
-        }).optimize(filter);
+        (new FinalUnitOptimize()).optimize(filter);
 
 //        System.err.println("Filter after DCE");
 //        SIRToStreamIt.run(contentsAsFilter,

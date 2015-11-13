@@ -61,11 +61,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
                 ("Optimizing "+
                  ((SIRFilter)node.contents).getName()+"...");
 
-            (new FinalUnitOptimize(){
-                protected boolean optimizeThisMethod(SIRCodeUnit unit, JMethodDeclaration method) {
-                    return !(method.getName().startsWith("work")||method.getName().startsWith("initWork"));
-                }
-            }).optimize((SIRFilter)node.contents);
+            (new FinalUnitOptimize()).optimize((SIRFilter)node.contents);
 
         IterFactory.createFactory().createIter((SIRFilter)node.contents).accept(toC);
     }

@@ -35,15 +35,8 @@ public class FinalUnitOptimize {
 
         ArrayDestroyer arrayDest=new ArrayDestroyer();
         for (JMethodDeclaration method : unit.getMethods()) {
+
             if (! optimizeThisMethod(unit,method)) {
-                // even if not optimizing this method otherwise,
-                // if we are going to destroy field arrays for the
-                // filter, we need to have information about all
-                // methods, which can only be accomplished currently
-                // by destroying local arrays in all the methods.
-                if (KjcOptions.destroyfieldarray) {
-                    method.accept(arrayDest);
-                }
                 continue;
             }
             Unroller unroller;
@@ -61,10 +54,11 @@ public class FinalUnitOptimize {
             method.accept(arrayDest);
             method.accept(new VarDeclRaiser());
         }
-        // Global optimizations over all methods.
+        // Global optimizations over all methods.  Do array destroying fresh since some constants could have been resolved above.
+	arrayDest = new ArrayDestroyer();
         if (KjcOptions.destroyfieldarray) {
-            for (JFieldDeclaration field : unit.getFields()) {
-                field.accept(arrayDest);
+            for (JMethodDeclaration method : unit.getMethods()) {
+                method.accept(arrayDest);
             }
             arrayDest.destroyFieldArrays(unit);
         }

@@ -178,6 +178,12 @@ public class Propagator extends SLIRReplacingVisitor {
     public Object visitWhileStatement(JWhileStatement self,
                                       JExpression cond,
                                       JStatement body) {
+	// propagator requires body to be a block so that it can insert updates to postfix and prefix expressions (--bft)
+	if (body !=null && !(body instanceof JBlock)) {
+	    body = new JBlock(new JStatement[] { body });
+	    self.setBody(body);
+	}
+
         loopDepth++;
         if(!write) {
             cond.accept(this);
@@ -216,6 +222,12 @@ public class Propagator extends SLIRReplacingVisitor {
     public Object visitDoStatement(JDoStatement self,
                                    JExpression cond,
                                    JStatement body) {
+	// propagator requires body to be a block so that it can insert updates to postfix and prefix expressions (--bft)
+	if (body !=null && !(body instanceof JBlock)) {
+	    body = new JBlock(new JStatement[] { body });
+	    self.setBody(body);
+	}
+
         loopDepth++;
         if(!write) {
             cond.accept(this);
@@ -574,6 +586,16 @@ public class Propagator extends SLIRReplacingVisitor {
                                    JExpression cond,
                                    JStatement thenClause,
                                    JStatement elseClause) {
+	// propagator requires then and else clauses to be blocks so that it can insert updates to postfix and prefix expressions (--bft)
+	if (thenClause!=null && !(thenClause instanceof JBlock)) {
+	    thenClause = new JBlock(new JStatement[] { thenClause });
+	    self.setThenClause(thenClause);
+	}
+	if (elseClause!=null && !(elseClause instanceof JBlock)) {
+	    elseClause = new JBlock(new JStatement[] { elseClause });
+	    self.setElseClause(elseClause);
+	}
+
         if(!write) {
             cond.accept(this);
             //Hashtable saveConstants=(Hashtable)constants.clone();
@@ -734,6 +756,12 @@ public class Propagator extends SLIRReplacingVisitor {
                                     JExpression cond,
                                     JStatement incr,
                                     JStatement body) {
+	// propagator requires body to be a block so that it can insert updates to postfix and prefix expressions (--bft)
+	if (body !=null && !(body instanceof JBlock)) {
+	    body = new JBlock(new JStatement[] { body });
+	    self.setBody(body);
+	}
+
         //Saving constants to restore them after loop analyzed
         //Hashtable saveConstants=(Hashtable)constants.clone();
         //Recurse first to see if variables are assigned in the loop

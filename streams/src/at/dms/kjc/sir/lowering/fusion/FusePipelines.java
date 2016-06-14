@@ -198,6 +198,11 @@ public class FusePipelines {
             // first visit children
             self = (SIRPipeline)super.visitPipeline(self, fields, methods, init);
 
+	    // if only child is a filter, then there's nothing to fuse
+	    if (self.size()==1 && self.get(0) instanceof SIRFilter) {
+		return self;
+	    }
+
             // 1. DETERMINE WHERE TO FUSE:
             // walk through pipeline, determining who should be fused.
             // We fuse anyone where the result will be stateless 

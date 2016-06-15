@@ -198,9 +198,11 @@ public class FuseSimpleSplit {
 
         // do not make a filter for a splitter if:
         //  - it's a duplicate
+	//  - it's a unary round robin with a non-identity filter (in which case we adjusted the indexing inside the filter's peek statements)
         //  - it's a null split
         //  - it only executes once
         if (!(sj.getSplitter().getType()==SIRSplitType.DUPLICATE ||
+	      (sj.getSplitter().isUnaryRoundRobin() && !(newFilter instanceof SIRIdentity)) ||
               rep.splitter==0 ||
               // don't need a splitter filter if the splitter only
               // executes once, since it would preserve the order of the items

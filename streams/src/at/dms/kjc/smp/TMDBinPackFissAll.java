@@ -371,7 +371,7 @@ public class TMDBinPackFissAll extends Scheduler {
         //the percentage change
         double workChange;
 
-        if(StatefulFusion.countStatefulFilters(str) < KjcOptions.smp) {
+        if(StatefulFusion.countStatefulFilters(str) <= KjcOptions.smp) {
             return str;
         }
         

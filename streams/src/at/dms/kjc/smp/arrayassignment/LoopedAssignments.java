@@ -107,9 +107,9 @@ public class LoopedAssignments implements AAStatement {
                 String iv = "__ias__";
                 String srcStrideStr = (srcStride == 1 ? iv : iv + " * " + srcStride);
                 String dstStrideStr = (dstStride == 1 ? iv : iv + " * " + dstStride);
-                String loop = "for (int " + iv + " = 0; " + iv + " < " + iterations + "; " + iv + "++) ";
+                String loop = "{int " + iv + " = 0; for (; " + iv + " < " + iterations + "; " + iv + "++) ";
                 loop += dstBufName + "[" + dstOffset + dstStartIndex + " + " + dstStrideStr + "] = " + 
-                    srcBufName + "[" + srcOffset + srcStartIndex + " + " + srcStrideStr + "]";
+                    srcBufName + "[" + srcOffset + srcStartIndex + " + " + srcStrideStr + "]; }";
                 return Util.toStmt(loop);
             }
         } else {

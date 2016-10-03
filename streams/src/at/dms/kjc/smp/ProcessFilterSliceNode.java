@@ -267,11 +267,19 @@ public class ProcessFilterSliceNode {
                 public Object visitPopExpression(SIRPopExpression self,
                         CType tapeType) {
                     if (self.getNumPop() > 1) {
-                        return new JMethodCallExpression(popManyName, 
+			JMethodCallExpression methodCall = 
+			    new JMethodCallExpression(popManyName, 
                                 new JExpression[]{new JIntLiteral(self.getNumPop())});
+			methodCall.setType(tapeType);
+			methodCall.setTapeType(tapeType);
+			return methodCall;
                     } else {
-                        return new JMethodCallExpression(popName, 
-                                new JExpression[0]);
+			JMethodCallExpression methodCall = 
+			    new JMethodCallExpression(popName, 
+						      new JExpression[0]);
+			methodCall.setType(tapeType);
+			methodCall.setTapeType(tapeType);
+			return methodCall;
                     }
                 }
                 
@@ -280,7 +288,11 @@ public class ProcessFilterSliceNode {
                         CType tapeType,
                         JExpression arg) {
                     JExpression newArg = (JExpression)arg.accept(this);
-                    return new JMethodCallExpression(peekName, new JExpression[]{newArg});
+		    JMethodCallExpression methodCall =
+			new JMethodCallExpression(peekName, new JExpression[]{newArg});
+		    methodCall.setType(tapeType);
+		    methodCall.setTapeType(tapeType);
+		    return methodCall;
                 }
                 
                 @Override

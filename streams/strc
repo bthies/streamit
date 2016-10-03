@@ -158,6 +158,8 @@ if (! $opts{noexecutable}) {
 	$fns = c_to_out($fns, $executablename);
     } elsif ($opts{cluster}) {
 	$fns = cluster_to_out($fns, $executablename);
+    } elsif ($opts{smp}) {
+	$fns = smp_to_out();
     } else { print %opts; print "\n"; }
 }
 exit(1) if !$fns;
@@ -521,8 +523,15 @@ sub get_options
 
     # determine back-end:
     
-    # if no backend specified, then --cluster=1
-    backend_defined() || ($opts{cluster} = 1 && $opts{standalone} = 1);
+    # if no backend specified, use smp for -O2 and cluster otherwise
+    if (! backend_defined()) {
+	if (exists $opts{optimize} && $opts{optimize} >= 2) {
+	    $opts{smp} = 1;
+	} else {
+	    $opts{cluster} = 1;
+	    $opts{standalone} = 1;
+	}
+    }
 
     # if simpleC specified then rstream, ignoring ignore doloops, absarray
     if ($opts{simpleC}) {
@@ -563,6 +572,9 @@ sub get_options
     
     $opts{vectorize} = 16 if exists $opts{vectorize} && $opts{vectorize}==0;
 
+    # destroy field arrays by default
+    $opts{destroyfieldarray} = 1 unless exists $opts{destroyfieldarray};
+
     # If the user specified -O#, transform that into appropriate options,
     # but don't override things otherwise on the command line.
     
@@ -574,13 +586,13 @@ sub get_options
 	    $opts{partition} = "dp" unless $opts{partition};
             # macros don't work yet in the cluster backend
             $opts{macros} = 1 unless (exists $opts{macros} || exists $opts{cluster});
+	    # if compiling for smp 1, then also turn on fusion
+	    $opts{fusion} = 1 unless (exists $opts{fusion} || !exists $opts{smp} || $opts{smp} != 1);
 	  }
 	if ($opts{optimize} >= 1)
 	  {
 	    $opts{unroll} = 16 unless exists $opts{unroll};
 	    $opts{wbs} = 1 unless exists $opts{wbs};
-	    $opts{destroyfieldarray} = 1 unless
-	      exists $opts{destroyfieldarray};
 	    $opts{partition} = "dp" unless $opts{partition};
 	  }
 	if ($opts{optimize} >= 0)
@@ -854,6 +866,18 @@ sub cluster_to_out {
     return undef if $result != 0;
     return undef unless -e $target;
     return [$target];
+}
+
+###
+#
+# Take output of --smp and create executable.
+#
+###
+
+sub smp_to_out {
+    my $result = call("$make");
+    return undef if $result != 0;
+    return 1;
 }
 
 ###

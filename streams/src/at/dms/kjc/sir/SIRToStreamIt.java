@@ -187,6 +187,23 @@ public class SIRToStreamIt
         System.err.println(s2s.getPrinter().getString());
         s2s.close();
     }
+
+    // just run over the fields and methods of <unit>
+    public static void run(SIRCodeUnit unit) {
+	SIRToStreamIt visitor = new SIRToStreamIt();
+	JFieldDeclaration[] fields = unit.getFields();
+	JMethodDeclaration[] methods = unit.getMethods();
+
+	for (int i=0; i<fields.length; i++) {
+	    fields[i].accept(visitor);
+	}
+	for (int i=0; i<methods.length; i++) {
+	    methods[i].accept(visitor);
+	}
+	System.err.println(visitor.getPrinter().getString());
+	visitor.close();
+    }
+
     // ----------------------------------------------------------------------
     // CONSTRUCTORS
     // ----------------------------------------------------------------------

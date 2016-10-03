@@ -231,9 +231,9 @@ void init_instance::initialize_sockets() {
 
     if (sd.type != DATA_SOCKET) continue;
 
-    map<sock_dscr, bool>::iterator i = in_done.find(sd);
+    map<sock_dscr, bool>::iterator i2 = in_done.find(sd);
 
-    if (i != in_done.end()) {
+    if (i2 != in_done.end()) {
     
       // connection is both in the list of 'out connections' 
       // and in the list of 'in connections'

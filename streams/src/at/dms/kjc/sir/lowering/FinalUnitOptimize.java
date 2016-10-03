@@ -33,9 +33,7 @@ public class FinalUnitOptimize {
         // remove multiple copies of propagated static variables.
         StaticsProp.shareStaticVars(unit,null);
 
-        ArrayDestroyer arrayDest=new ArrayDestroyer();
         for (JMethodDeclaration method : unit.getMethods()) {
-
             if (! optimizeThisMethod(unit,method)) {
                 continue;
             }
@@ -49,20 +47,28 @@ public class FinalUnitOptimize {
                 unroller = new Unroller(new Hashtable<JLocalVariable,JLiteral>());
                 method.accept(unroller);
             } while (unroller.hasUnrolled());
-            method.accept(new BlockFlattener());
-            method.accept(new Propagator(new Hashtable<JLocalVariable,Object>()));
-            method.accept(arrayDest);
-            method.accept(new VarDeclRaiser());
-        }
-        // Global optimizations over all methods.  Do array destroying fresh since some constants could have been resolved above.
-	arrayDest = new ArrayDestroyer();
-        if (KjcOptions.destroyfieldarray) {
-            for (JMethodDeclaration method : unit.getMethods()) {
-                method.accept(arrayDest);
-            }
-            arrayDest.destroyFieldArrays(unit);
-        }
-        DeadCodeElimination.doit(unit);
+	}
+
+	// could iterate to fixed point, but field prop slow in current form
+	for (int i=0; i<2; i++) {
+	    ArrayDestroyer arrayDest=new ArrayDestroyer();
+	    for (JMethodDeclaration method : unit.getMethods() ) {
+		if (! optimizeThisMethod(unit,method)) {
+		    continue;
+		}
+		method.accept(new BlockFlattener());
+		method.accept(new Propagator(new Hashtable<JLocalVariable,Object>()));
+		method.accept(arrayDest);
+		method.accept(new VarDeclRaiser());
+	    }
+	    if (KjcOptions.destroyfieldarray) {
+		arrayDest.destroyFieldArrays(unit);
+	    }
+	    // only field prop the first time, and only repeat the loop if something was propagated
+	    if (i==1 || !FieldProp.propagateWithoutUnrolling(unit)) { break; }
+	}
+
+	DeadCodeElimination.doit(unit);
     }
             
     /**

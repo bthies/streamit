@@ -52,6 +52,13 @@ public class FieldProp implements Constants
         noarrays = new HashMap<String, boolean[]>();
     }
 
+    // do propagation for a code unit.  Unlike calls below, this is
+    // intended as a post-pass later in the optimization process, as
+    // opposed to unrolling the init functions of streams.
+    public static boolean propagateWithoutUnrolling(SIRCodeUnit unit) {
+        return new FieldProp().propagate(unit);
+    }
+
     /**
      * Performs a depth-first traversal of an SIRStream tree, and
      * calls propagate() on any SIRSplitJoins as a post-pass.
@@ -260,7 +267,7 @@ public class FieldProp implements Constants
      * this filter to a fixed point.  Returns whether or not anything
      * was propagated.
      */
-    private boolean propagate(SIRStream filter) {
+    private boolean propagate(SIRCodeUnit filter) {
         boolean didPropagation = false;
         // so that our first hash does not include garbage code
         DeadCodeElimination.removeDeadLocalDecls(filter);
@@ -324,7 +331,6 @@ public class FieldProp implements Constants
      */
     private void invalidateField(String name)
     {
-        // System.out.println("Invalidating field: " + name);
         nofields.add(name);
         fields.remove(name);
     }
@@ -432,24 +438,24 @@ public class FieldProp implements Constants
     }
 
     /** Notice that a field variable has a constant assignment. 
-     * 
-     * in fact, does not live up to the coment above:
-     * if field already has been noticed to have an assignment
-     * then it is invalidated.  So we are tracking single assignment
-     * to a field, not all assignments to field being the same value.
      */
     private void noticeFieldAssignment(String name, JExpression value)
     {
+	// looks like the SMP backend generates some fields without types, but those shouldn't be propagated anyway
+	if (types.get(name) == null) {
+                invalidateField(name);
+		return;
+	}
+        value = forceLiteralType(value, types.get(name));
+
         // If the field has already been invalidated, stop now.
         if (isFieldInvalidated(name)) return;
-        // If the field has a value, invalidate it.
-        if (canFieldPropagate(name))
-            {
+        // If the field has a different value, invalidate it.
+        if (canFieldPropagate(name) && !fields.get(name).equals(value)) {
                 invalidateField(name);
                 return;
             }
         // Otherwise, add the name/value pair to the hash table.
-        value = forceLiteralType(value, types.get(name));
         fields.put(name, value);
     }
 
@@ -457,18 +463,19 @@ public class FieldProp implements Constants
     private void noticeArrayAssignment(String name, int slot,
                                        JExpression value)
     {
+        CType atype = types.get(name);
+        value = forceLiteralType(value, ((CArrayType)atype).getBaseType());
+        JExpression[] exprs = arrays.get(name);
+
         // Same as before...
         if (isArrayInvalidated(name, slot)) return;
-        if (canArrayPropagate(name, slot))
+        if (canArrayPropagate(name, slot) && !exprs[slot].equals(value))
             {
                 invalidateArray(name, slot);
                 return;
             }
         // Okay, populate the array slot.  The expression array
         // needs to already exist.
-        CType atype = types.get(name);
-        value = forceLiteralType(value, ((CArrayType)atype).getBaseType());
-        JExpression[] exprs = arrays.get(name);
         if(exprs!=null) exprs[slot] = value;
     }
 
@@ -506,7 +513,7 @@ public class FieldProp implements Constants
      * the fields being immediately invalidated.
      *
      */
-    private void findCandidates(SIRStream filter)
+    private void findCandidates(SIRCodeUnit filter)
     {
         JFieldDeclaration[] fields = filter.getFields();
         for (int i = 0; i < fields.length; i++)
@@ -531,6 +538,15 @@ public class FieldProp implements Constants
                                     noticeArrayCreation
                                         (ident,
                                          ((JIntLiteral)dims[0]).intValue());
+				    if (expr instanceof JArrayInitializer) {
+					JExpression[] elems = ((JArrayInitializer)expr).getElems();
+					for (int j=0; j<elems.length; j++) {
+					    // only proceed if we have the type info -- some auto-generated fields in SMP backend don't have
+					    if (elems[j] instanceof JLiteral && types.get(ident)!=null) {
+						noticeArrayAssignment(ident, j, elems[j]);
+					    }
+					}
+				    }
                                 } else {
                                     invalidateField(ident);
                                 }
@@ -556,8 +572,9 @@ public class FieldProp implements Constants
                                     String name = fae.getIdent();
                                     // Look inside of fae; the left-hand side should
                                     // be this.
-                                    if (!(fae.getPrefix() instanceof JThisExpression))
+                                    if (!(fae.getPrefix() instanceof JThisExpression)) {
                                         return;
+				    }
                                     // Okay; what's the right hand side?  Notice
                                     // if it's a literal or (new type[]); invalidate
                                     // otherwise.
@@ -590,7 +607,7 @@ public class FieldProp implements Constants
                                         }
                                     int slot = ((JIntLiteral)accessor).intValue();
                                     // Now look at the right-hand side.
-                                    if (right instanceof JLiteral)
+                                    if (right instanceof JLiteral && types.get(name)!=null)
                                         noticeArrayAssignment(name, slot, right);
                                     else
                                         invalidateArray(name, slot);
@@ -644,7 +661,7 @@ public class FieldProp implements Constants
      *
      * Returns whether or not any field was propagated.
      */
-    private void doPropagation(SIRStream filter) {
+    private void doPropagation(SIRCodeUnit filter) {
         JMethodDeclaration[] meths = filter.getMethods();
         // Do not propagate fields on lhs of assignment
         // unless involved in array offest calculation
@@ -702,14 +719,17 @@ public class FieldProp implements Constants
                     // RMR { progagate into the dims since they may have references
                     // to fields which should now be resolved; this is done so that
                     // the field arraytype is fully resolved for later passes
-                    JExpression[] dims = ((CArrayType) fae.getType()).getDims();
-                    for (int i = 0; i < dims.length; i++) {
-                        if (!(dims[i] instanceof JLiteral)) {
-                            // eventually dims[i] will be a JLiteral; requires
-                            // a few passes of the propagator
-                            dims[i] = (JExpression) (dims[i]).accept(this);
-                        }
-                    }
+		    if (fae.getType()!=null) {
+			// compiler-generated field access expressions sometimes don't have types, but their dims are already constants
+			JExpression[] dims = ((CArrayType) fae.getType()).getDims();
+			for (int i = 0; i < dims.length; i++) {
+			    if (!(dims[i] instanceof JLiteral)) {
+				// eventually dims[i] will be a JLiteral; requires
+				// a few passes of the propagator
+				dims[i] = (JExpression) (dims[i]).accept(this);
+			    }
+			}
+		    }
                     // } RMR
                     
                     // Save its name.

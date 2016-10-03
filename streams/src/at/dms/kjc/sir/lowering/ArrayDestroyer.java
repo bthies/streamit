@@ -6,7 +6,7 @@ import at.dms.kjc.*;
 //import at.dms.util.*;
 import at.dms.kjc.sir.*;
 //import at.dms.kjc.lir.*;
-//import at.dms.compiler.JavaStyleComment;
+import at.dms.compiler.JavaStyleComment;
 //import at.dms.compiler.JavadocComment;
 
 import java.io.Serializable;
@@ -94,7 +94,7 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
         return retval;
     }
     
-    
+    JBlock currentBlock;
     public Object visitMethodDeclaration(JMethodDeclaration self,
                                          int modifiers,
                                          CType returnType,
@@ -102,6 +102,7 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
                                          JFormalParameter[] parameters,
                                          CClassType[] exceptions,
                                          JBlock body) {
+	currentBlock = body;
         replaced.clear();
         final boolean init=ident.startsWith("init");
         // A.D.  WTF: could detect that parameters are arrays and eliminate them from
@@ -114,9 +115,18 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
         if (body != null) {
             // XXX: seems to reuse targets with multiple key types: Integer, JLocalVariable, JExpression...
             final Map<JLocalVariable, HashMap<Integer, Boolean>> targets=new HashMap<JLocalVariable, HashMap<Integer, Boolean>>();
+            final Map<JLocalVariable, JBlock> targetBlock=new HashMap<JLocalVariable, JBlock>();
             final Set<String> unsafe=new HashSet<String>();
             body.accept(new SLIRReplacingVisitor() {
                     HashMap<JLocalVariable, Boolean> declared=new HashMap<JLocalVariable, Boolean>();
+
+		    public Object visitBlockStatement(JBlock body, JavaStyleComment[] comments) {
+			JBlock oldCurrentBlock = currentBlock;
+			currentBlock = body;
+			Object retVal = super.visitBlockStatement(body, comments);
+			currentBlock = oldCurrentBlock;
+			return retVal;
+		    }
 
                     /**
                      * Eliminate all multidimensional arrays from consideration since
@@ -127,6 +137,7 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
                             CType type,
                             String ident,
                             JExpression expr) {
+			targetBlock.put(self, currentBlock);
                         Object retval = super.visitVariableDefinition(self,modifiers,type,ident,expr);
                         if (type.isArrayType() && ((CArrayType)type).getDims().length != 1) {
                             unsafe.add(ident);
@@ -274,7 +285,7 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
                 for(int j=0;j<ints.length;j++) {
                     int newInt=ints[j].intValue();
                     JVariableDefinition varDef=toVar(var,newInt);
-                    body.addStatementFirst(new JVariableDeclarationStatement(null,varDef,null));
+                    targetBlock.get(var).addStatementFirst(new JVariableDeclarationStatement(null,varDef,null));
                     newVars[newInt]=varDef;
                 }
                 replaced.put(var,newVars);

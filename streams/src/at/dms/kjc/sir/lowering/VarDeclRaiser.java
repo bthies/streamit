@@ -18,22 +18,9 @@ import at.dms.compiler.TokenReference;
  */
 public class VarDeclRaiser extends SLIRReplacingVisitor {
     /**
-     * List of variableDeclarations to move to the front of the block
-     */
-    private LinkedList<Object> varDefs;
-    /**
-     * List of JNewArrayExpression to move to the front of the block
-     */
-    private LinkedList<Object> newArrays;
-    /**
      * Int used to rename conflicting variable names
      */
     private int conflict;
-
-    /**
-     * Top level block of current analysis
-     */
-    private JBlock parent;
 
     public VarDeclRaiser() {
         super();
@@ -85,12 +72,11 @@ public class VarDeclRaiser extends SLIRReplacingVisitor {
 
     public Object visitBlockStatement(JBlock self,
                                       JavaStyleComment[] comments) {
-        if(parent==null) {
-            parent=self;
-            varDefs=new LinkedList<Object>();
-            newArrays=new LinkedList<Object>();
-        }
-        //LinkedList saveDefs=varDefs;
+	// List of variableDeclarations to move to the front of the block
+	final LinkedList<Object> varDefs = new LinkedList<Object>();
+	// List of JNewArrayExpression to move to the front of the block
+	final LinkedList<Object> newArrays = new LinkedList<Object>();
+
         int size=self.size();
         for (int i=0;i<size;i++) {
             boolean neg=false;
@@ -171,87 +157,54 @@ public class VarDeclRaiser extends SLIRReplacingVisitor {
             } else if (newBody!=null && newBody!=oldBody) {
                 self.setStatement(i,(JStatement)newBody);
             }
-            if(neg)
+
+	    if(newBody instanceof JForStatement && ((JForStatement)newBody).getInit() instanceof JVariableDeclarationStatement) {
+		JForStatement forBody = (JForStatement)newBody;
+		JVariableDefinition[] vars=((JVariableDeclarationStatement)forBody.getInit()).getVars();
+		if(vars.length>1)
+		    System.err.println("Warning: Compound Variable Declaration in for loop (not handled)"); //Not handled
+		JVariableDefinition def=(JVariableDefinition)vars[0];
+		JExpression val=def.getValue();
+		varDefs.add(forBody.getInit());
+		if(val!=null) {
+		    def.setValue(null);
+		    forBody.setInit(new JExpressionListStatement(new JExpression[] {
+				new JAssignmentExpression(new JLocalVariableExpression(def),val)}));
+		} else {
+		    forBody.setInit(new JEmptyStatement(null, null));
+		}
+	    }
+	    
+	    if(neg)
                 i--;
         }
-        if(parent==self) {
-            for(int i=newArrays.size()-1;i>=0;i--) {
-                JStatement newState=(JStatement)newArrays.get(i);
-                self.addStatementFirst(newState);
-            }
-            Hashtable<String, Boolean> visitedVars=new Hashtable<String, Boolean>();
-            for(int i=varDefs.size()-1;i>=0;i--) {
-                JVariableDeclarationStatement varDec=(JVariableDeclarationStatement)varDefs.get(i);
-                self.addStatementFirst(varDec);
-                JVariableDefinition[] varArray=varDec.getVars();
-                LinkedList<JLocalVariable> newVars=new LinkedList<JLocalVariable>();
-                for(int j=0;j<varArray.length;j++) {
-                    JLocalVariable var=(JLocalVariable)varArray[j];
-                    if(!visitedVars.containsKey(var.getIdent())) {
-                        visitedVars.put(var.getIdent(),Boolean.TRUE);
-                        newVars.add(var);
-                    } else {
-                        var.setIdent(var.getIdent()+"__conflict__"+conflict++);
-                        visitedVars.put(var.getIdent(),Boolean.TRUE);
-                        //System.err.println("Conflict:"+var.getIdent());
-                        newVars.add(var);
-                    }
-                }
-                varDec.setVars(newVars.toArray(new JVariableDefinition[0]));
-            }
-            parent=null;
-        }
-        //varDefs=saveDefs;
-        visitComments(comments);
-        return self;
-    }
-
-    /**
-     * Visits a for statement
-     */
-    public Object visitForStatement(JForStatement self,
-                                    JStatement init,
-                                    JExpression cond,
-                                    JStatement incr,
-                                    JStatement body) {
-        // cond should never be a constant, or else we have an
-        // infinite or empty loop.  Thus I won't check for it... 
-        // recurse into init
-        JStatement newInit = (JStatement)init.accept(this);
-        if (newInit!=null && newInit!=init) {
-            self.setInit(newInit);
-        }
-    
-        // recurse into incr
-        JStatement newIncr = (JStatement)incr.accept(this);
-        if (newIncr!=null && newIncr!=incr) {
-            self.setIncr(newIncr);
-        }
-
-        JExpression newExp = (JExpression)cond.accept(this);
-        if (newExp!=null && newExp!=cond) {
-            self.setCond(newExp);
-        }
-    
-        // recurse into body
-        JStatement newBody = (JStatement)body.accept(this);
-        if (newBody!=null && newBody!=body) {
-            self.setBody(newBody);
-        }
-        if(newInit instanceof JVariableDeclarationStatement) {
-            JVariableDefinition[] vars=((JVariableDeclarationStatement)newInit).getVars();
-            if(vars.length>1)
-                System.err.println("Warning: Compound Variable Declaration in for loop (not handled)"); //Not handled
-            JVariableDefinition def=(JVariableDefinition)vars[0];
-            JExpression val=def.getValue();
-            varDefs.add(newInit);
-            if(val!=null) {
-                def.setValue(null);
-                TokenReference ref=((JVariableDeclarationStatement)newInit).getTokenReference();
-                self.setInit(new JExpressionListStatement(ref,new JExpression[] {new JAssignmentExpression(ref,new JLocalVariableExpression(ref,def),val)},null));
-            } else
-                self.setInit(new JEmptyStatement(null, null));
-        }
+	
+	for(int i=newArrays.size()-1;i>=0;i--) {
+	    JStatement newState=(JStatement)newArrays.get(i);
+	    self.addStatementFirst(newState);
+	}
+	Hashtable<String, Boolean> visitedVars=new Hashtable<String, Boolean>();
+	for(int i=varDefs.size()-1;i>=0;i--) {
+	    JVariableDeclarationStatement varDec=(JVariableDeclarationStatement)varDefs.get(i);
+	    self.addStatementFirst(varDec);
+	    JVariableDefinition[] varArray=varDec.getVars();
+	    LinkedList<JLocalVariable> newVars=new LinkedList<JLocalVariable>();
+	    for(int j=0;j<varArray.length;j++) {
+		JLocalVariable var=(JLocalVariable)varArray[j];
+		if(!visitedVars.containsKey(var.getIdent())) {
+		    visitedVars.put(var.getIdent(),Boolean.TRUE);
+		    newVars.add(var);
+		} else {
+		    var.setIdent(var.getIdent()+"__conflict__"+conflict++);
+		    visitedVars.put(var.getIdent(),Boolean.TRUE);
+		    //System.err.println("Conflict:"+var.getIdent());
+		    newVars.add(var);
+		}
+	    }
+	    varDec.setVars(newVars.toArray(new JVariableDefinition[0]));
+	}
+	
+	visitComments(comments);
         return self;
     }
 }

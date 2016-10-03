@@ -29,7 +29,7 @@ class HashLiterals extends SLIREmptyVisitor {
      * field declarations of 'str'.  Note that this does NOT recurse
      * into the children of 'str'.
      */
-    public static long doit(SIRStream str) {
+    public static long doit(SIRCodeUnit str) {
         HashLiterals hasher = new HashLiterals();
         // visit methods and I/O rates
         JMethodDeclaration[] methods = str.getMethods();

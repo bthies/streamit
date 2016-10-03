@@ -369,6 +369,20 @@ public class Propagator extends SLIRReplacingVisitor {
                 constants.remove(self);
         }
 
+	// StreamIt initializes all variables to zero.  Not thinking about arrays right now (are they handled separately?)
+	if (expr == null) {
+	    if (type.equals(CStdType.Integer)) { self.setExpression(new JIntLiteral(null, 0)); }
+	    if (type.equals(CStdType.Float)) { self.setExpression(new JFloatLiteral(null, 0)); }
+	    if (type.equals(CStdType.Double)) { self.setExpression(new JDoubleLiteral(null, 0)); }
+	    if (type.equals(CStdType.Boolean)) { self.setExpression(new JBooleanLiteral(null, false)); }
+	    if (type.equals(CStdType.Byte)) { self.setExpression(new JByteLiteral(null, (byte)0)); }
+	    if (type.equals(CStdType.Char)) { self.setExpression(new JCharLiteral(null, (char)0)); }
+	    if (type.equals(CStdType.Long)) { self.setExpression(new JLongLiteral(null, 0)); }
+	    if (type.equals(CStdType.Bit)) { self.setExpression(new JIntLiteral(null, 0)); /* no bit literal, will this do? */ }
+	    if (type.equals(CStdType.Short)) { self.setExpression(new JShortLiteral(null, (short)0)); }
+	    expr = self.getValue();
+	}
+
         // inspect initializer
         if (expr != null) {
             JExpression newExp = (JExpression)expr.accept(this);
@@ -1102,11 +1116,31 @@ public class Propagator extends SLIRReplacingVisitor {
                 if(pre instanceof JLocalVariableExpression) {
                     JLocalVariable var=((JLocalVariableExpression)pre).getVariable();
                     changed.put(var,Boolean.TRUE);
+		    JExpression accessor=((JArrayAccessExpression)expr).getAccessor();
+		    JExpression accessor2=((JArrayAccessExpression)left).getAccessor();
+		    Object val=constants.get(var);
+		    if(val instanceof Object[][]) {
+			Object[][] array=(Object[][])val;
+			if(array!=null)
+			    if((accessor instanceof JIntLiteral)&&(accessor2 instanceof JIntLiteral)) {
+				if (self.getCopyVar()!=null) {
+				    array[((JIntLiteral)accessor).intValue()][((JIntLiteral)accessor2).intValue()]=self.getCopyVar();
+				} else {
+				    array[((JIntLiteral)accessor).intValue()][((JIntLiteral)accessor2).intValue()]=null;
+				}
+			    } else
+				constants.remove(var);
+			else
+			    constants.remove(var);
+		    } else
+			constants.remove(var);
                 }
             } else if(expr instanceof JLocalVariableExpression) {
                 JLocalVariable var=((JLocalVariableExpression)expr).getVariable();
                 JExpression accessor=((JArrayAccessExpression)left).getAccessor();
                 changed.put(var,Boolean.TRUE);
+                if(constants.get(var) instanceof Object[][]) {
+		}
                 if(constants.get(var) instanceof Object[]) {
                     Object[] array=(Object[])constants.get(var);
                     if(array!=null)
@@ -1117,12 +1151,14 @@ public class Propagator extends SLIRReplacingVisitor {
                             //System.err.println("Assign:"+var+"["+accessor+"]="+newRight);
                             } else*/
                             int index=((JIntLiteral)accessor).intValue();
-                            if(self.getCopyVar()!=null&&index<array.length) {
-                                array[index]=self.getCopyVar();
+			    if (index<array.length) {
+				if(self.getCopyVar()!=null) {
+				    array[index]=self.getCopyVar();
                                 /*if(newRight instanceof JLocalVariableExpression) {
                                   constants.put(((JLocalVariableExpression)newRight).getVariable(),newRight);
                                   changed.put(var,Boolean.TRUE);
                                   }*/
+				} else array[index] = null;
                             }
                         } else {
                             constants.remove(var);

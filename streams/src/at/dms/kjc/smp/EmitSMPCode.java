@@ -371,10 +371,10 @@ public class EmitSMPCode extends EmitCode {
     private static void generateMakefile() throws IOException {
         CodegenPrintWriter p = new CodegenPrintWriter(new BufferedWriter(new FileWriter("Makefile", false)));
 
-        p.println("CC = icc");
-        p.println("CFLAGS = -O2 -vec-report0");
+        p.println("CC = gcc");
+        p.println("CFLAGS = -O2");
         p.println("INCLUDES = ");
-        p.println("LIBS = -pthread -lstdc++");
+        p.println("LIBS = -pthread -lstdc++ -lm");
         p.print("OBJS = main.o barrier.o ");
         if(KjcOptions.loadbalance) p.print("load_balancer.o ");
         for(Core core : SMPBackend.chip.getCores()) {

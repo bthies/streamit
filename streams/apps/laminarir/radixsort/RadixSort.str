@@ -1,0 +1,76 @@
+void->void pipeline RadixSort {
+  int SIZE = 16;
+  int MAX_VALUE = 2048;
+  //add IntSource(SIZE);
+  add RandomSource();
+  add SortPipe(SIZE, MAX_VALUE);
+  add IntPrinter();
+}
+
+void->int stateful filter RandomSource() {
+    int seed = 0;
+    work push 1 {
+        push(seed);
+        seed = (65793 * seed + 4282663) % 8388608;
+    }
+}
+
+int->int pipeline SortPipe(int SIZE, int MAX_VALUE) {
+  for(int i=1; i < MAX_VALUE; i = i * 2) {
+    add Sort(SIZE, i);
+  }
+}
+
+int->int filter Sort(int SIZE, int radix) {
+  work push SIZE pop SIZE {
+    int [SIZE]ordering;
+
+    int j = 0;
+    for(int i=0; i < SIZE; i++) {
+      int current = pop();
+      if ((current & radix) == 0) {
+	push(current);
+      } else {
+	ordering[j] = current;
+	j = j+1;
+      }
+    }
+    for(int i=0; i < j; i++) {
+      push(ordering[i]);
+    }
+  }
+}
+
+/** IntSource.  Just used to test with the same 16 "random" numbers as
+ * in Knuth.  Eventually, probably use a fileReader reading actual
+ * random numbers.
+ **/
+void->int stateful filter IntSource(int SIZE) {
+  int [SIZE]data;
+  int index = 0;
+  init {
+    data[0] = 503; data[1] = 087; data[2] = 512;
+    data[3] = 061; data[4] = 908; data[5] = 170;
+    data[6] = 897; data[7] = 275; data[8] = 653;
+    data[9] = 426; data[10] = 154; data[11] = 509;
+    data[12] = 612; data[13] = 677; data[14] = 765;
+    data[15] = 703;
+  }
+
+  work push 1 {
+    push(data[index++]);
+    if (index == SIZE)
+      index = 0;
+  }
+}
+
+/** IntPrinter utility
+ **/
+int->void stateful filter IntPrinter() {
+    int x;
+  work pop 1 {
+        x = pop();
+    println(x);
+  }
+}
+

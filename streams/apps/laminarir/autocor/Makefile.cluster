@@ -1,0 +1,186 @@
+
+LIB_CLUSTER = $(STREAMIT_HOME)/library/cluster
+
+CCFLAGS = -O3
+
+# Unsupported target machines
+CC_IA64 = ecc
+CC_ARM = arm343 #arm-linux-gcc
+CCFLAGS_IA64 = -O3
+CCFLAGS_ARM = -O3
+
+NAMES = \
+	thread0 \
+	thread1 \
+	thread2 \
+	thread3 \
+	thread4 \
+	thread5 \
+	thread6 \
+	thread7 \
+	thread8 \
+	thread9 \
+	thread10 \
+	thread11 \
+	thread12 \
+	thread13 \
+	thread14 \
+	thread15 \
+	thread16 \
+	thread17 \
+	thread18 \
+	thread19 \
+	thread20 \
+	thread21 \
+	thread22 \
+	thread23 \
+	thread24 \
+	thread25 \
+	thread26 \
+	thread27 \
+	thread28 \
+	thread29 \
+	thread30 \
+	thread31 \
+	thread32 \
+	thread33 \
+	thread34 \
+	thread35 \
+	thread36 \
+	thread37 \
+	thread38 \
+	thread39 \
+	thread40 \
+	thread41 \
+	thread42 \
+	thread43 \
+	thread44 \
+	thread45 \
+	thread46 \
+	thread47 \
+	thread48 \
+	thread49 \
+	thread50 \
+	thread51 \
+	thread52 \
+	thread53 \
+	thread54 \
+	thread55 \
+	thread56 \
+	thread57 \
+	thread58 \
+	thread59 \
+	thread60 \
+	thread61 \
+	thread62 \
+	thread63 \
+	thread64 \
+	thread65 \
+	thread66 \
+	thread67 \
+	thread68 \
+	thread69 \
+	thread70 \
+	thread71 \
+	thread72 \
+	thread73 \
+	thread74 \
+	thread75 \
+	thread76 \
+	thread77 \
+	thread78 \
+	thread79 \
+	thread80 \
+	thread81 \
+	thread82 \
+	thread83 \
+	thread84 \
+	thread85 \
+	thread86 \
+	thread87 \
+	thread88 \
+	thread89 \
+	thread90 \
+	thread91 \
+	thread92 \
+	thread93 \
+	thread94 \
+	thread95 \
+	thread96 \
+	thread97 \
+	thread98 \
+	thread99 \
+	thread100 \
+	thread101 \
+	thread102 \
+	thread103 \
+	thread104 \
+	thread105 \
+	thread106 \
+	thread107 \
+	thread108 \
+	thread109 \
+	thread110 \
+	thread111 \
+	thread112 \
+	thread113 \
+	thread114 \
+	thread115 \
+	thread116 \
+	thread117 \
+	thread118 \
+	thread119 \
+	thread120 \
+	thread121 \
+	thread122 \
+	thread123 \
+	thread124 \
+	thread125 \
+	thread126 \
+	thread127 \
+	thread128 \
+	thread129 \
+	thread130 \
+	thread131 \
+
+
+SOURCES = $(NAMES:%=%.cpp)
+OBJS = $(NAMES:%=%.o)
+
+OBJS_IA64 = $(NAMES:%=%_ia64.o)
+OBJS_ARM = $(NAMES:%=%_arm.o)
+
+all: a.out
+
+clean:
+	rm -f master*.o fusion*.o global*.o thread*.o combined_threads.o a.out
+
+combined_threads.cpp : fusion.cpp  ${SOURCES}
+	@${STREAMIT_HOME}/misc/concat_cluster_threads_cpp.pl $^
+
+a.out : combined_threads.o 
+	$(CXX) $(CCFLAGS) -o $@ $^ -L$(LIB_CLUSTER) -lpthread -lcluster -lstdc++
+
+%.o: %.cpp fusion.h cluster.h global.h
+	$(CXX) $(CCFLAGS) -I$(LIB_CLUSTER) -c -o $@ $<
+
+
+# Unsupported target machines
+ia64: a.out_ia64
+
+arm: a.out_arm
+
+a.out_ia64: fusion_ia64.o $(OBJS_IA64)
+	$(CC_IA64) $(CCFLAGS_IA64) -o $@ $^ -L$(LIB_CLUSTER) -lpthread -lcluster_ia64
+
+%_ia64.o: %.cpp fusion.h cluster.h
+	$(CC_IA64) $(CCFLAGS_IA64) -I$(LIB_CLUSTER) -c -o $@ $<
+
+a.out_arm: fusion_arm.o $(OBJS_ARM)
+	ar r objects_arm.a $^
+	ranlib objects_arm.a
+	$(CC_ARM) $(CCFLAGS_ARM) -o $@ objects_arm.a -L$(LIB_CLUSTER) -lstdc++ -lm -lcluster_arm #-lpthread
+
+%_arm.o: %.cpp fusion.h cluster.h
+	$(CC_ARM) $(CCFLAGS_ARM) -I$(LIB_CLUSTER) -c -o $@ $<
+

@@ -1,0 +1,180 @@
+digraph streamit {
+size="7.5,10";subgraph cluster_JPEGFilt_0 {
+label = "JPEGFilt";
+RandomSource_pop_0_push_1_1 -> Int2Float_pop_1_push_1_2
+Int2Float_pop_1_push_1_2 -> Add_pop_1_push_1_3
+Add_pop_1_push_1_3 -> helper_Parallel_8_DCT_1D_X_17_split
+helper_Parallel_8_DCT_1D_Y_18_join -> staticQuantization_pop_64_push_64_37
+staticQuantization_pop_64_push_64_37 -> BlockDCDifferenceEncoder_6_split
+BlockDCDifferenceEncoder_6_join -> ZigZagOrdering_pop_64_push_64_7
+ZigZagOrdering_pop_64_push_64_7 -> ZigZagUnordering_pop_64_push_64_8
+ZigZagUnordering_pop_64_push_64_8 -> BlockDCDifferenceDecoder_9_split
+BlockDCDifferenceDecoder_9_join -> staticDeQuantization_pop_64_push_64_47
+staticDeQuantization_pop_64_push_64_47 -> helper_Parallel_8_iDCT_1D_X_49_split
+helper_Parallel_8_iDCT_1D_Y_50_join -> Add_pop_1_push_1_12
+Add_pop_1_push_1_12 -> Float2Int_pop_1_push_1_13
+Float2Int_pop_1_push_1_13 -> Display8BitIntBlock_pop_8_push_0_14
+RandomSource_pop_0_push_1_1 [ label="RandomSource_pop_0_push_1" ]
+Int2Float_pop_1_push_1_2 [ label="Int2Float_pop_1_push_1" ]
+Add_pop_1_push_1_3 [ label="Add_pop_1_push_1" ]
+subgraph cluster_DCT_2D_4 {
+label = "DCT_2D";
+helper_Parallel_8_DCT_1D_X_17_join -> helper_Parallel_8_DCT_1D_Y_18_split
+subgraph cluster_helper_Parallel_8_DCT_1D_X_17 {
+label = "helper_Parallel_8_DCT_1D_X";
+helper_Parallel_8_DCT_1D_X_17_split [ label="roundrobin(8, 8, 8, 8, 8, 8, 8, 8)" ]
+helper_Parallel_8_DCT_1D_X_17_join [ label="roundrobin(8, 8, 8, 8, 8, 8, 8, 8)" ]
+DCT_1D_pop_8_push_8_19 [ label="DCT_1D_pop_8_push_8" ]
+helper_Parallel_8_DCT_1D_X_17_split -> DCT_1D_pop_8_push_8_19
+DCT_1D_pop_8_push_8_19 -> helper_Parallel_8_DCT_1D_X_17_join
+DCT_1D_pop_8_push_8_20 [ label="DCT_1D_pop_8_push_8" ]
+helper_Parallel_8_DCT_1D_X_17_split -> DCT_1D_pop_8_push_8_20
+DCT_1D_pop_8_push_8_20 -> helper_Parallel_8_DCT_1D_X_17_join
+DCT_1D_pop_8_push_8_21 [ label="DCT_1D_pop_8_push_8" ]
+helper_Parallel_8_DCT_1D_X_17_split -> DCT_1D_pop_8_push_8_21
+DCT_1D_pop_8_push_8_21 -> helper_Parallel_8_DCT_1D_X_17_join
+DCT_1D_pop_8_push_8_22 [ label="DCT_1D_pop_8_push_8" ]
+helper_Parallel_8_DCT_1D_X_17_split -> DCT_1D_pop_8_push_8_22
+DCT_1D_pop_8_push_8_22 -> helper_Parallel_8_DCT_1D_X_17_join
+DCT_1D_pop_8_push_8_23 [ label="DCT_1D_pop_8_push_8" ]
+helper_Parallel_8_DCT_1D_X_17_split -> DCT_1D_pop_8_push_8_23
+DCT_1D_pop_8_push_8_23 -> helper_Parallel_8_DCT_1D_X_17_join
+DCT_1D_pop_8_push_8_24 [ label="DCT_1D_pop_8_push_8" ]
+helper_Parallel_8_DCT_1D_X_17_split -> DCT_1D_pop_8_push_8_24
+DCT_1D_pop_8_push_8_24 -> helper_Parallel_8_DCT_1D_X_17_join
+DCT_1D_pop_8_push_8_25 [ label="DCT_1D_pop_8_push_8" ]
+helper_Parallel_8_DCT_1D_X_17_split -> DCT_1D_pop_8_push_8_25
+DCT_1D_pop_8_push_8_25 -> helper_Parallel_8_DCT_1D_X_17_join
+DCT_1D_pop_8_push_8_26 [ label="DCT_1D_pop_8_push_8" ]
+helper_Parallel_8_DCT_1D_X_17_split -> DCT_1D_pop_8_push_8_26
+DCT_1D_pop_8_push_8_26 -> helper_Parallel_8_DCT_1D_X_17_join
+}
+subgraph cluster_helper_Parallel_8_DCT_1D_Y_18 {
+label = "helper_Parallel_8_DCT_1D_Y";
+helper_Parallel_8_DCT_1D_Y_18_split [ label="roundrobin(1, 1, 1, 1, 1, 1, 1, 1)" ]
+helper_Parallel_8_DCT_1D_Y_18_join [ label="roundrobin(1, 1, 1, 1, 1, 1, 1, 1)" ]
+DCT_1D_pop_8_push_8_27 [ label="DCT_1D_pop_8_push_8" ]
+helper_Parallel_8_DCT_1D_Y_18_split -> DCT_1D_pop_8_push_8_27
+DCT_1D_pop_8_push_8_27 -> helper_Parallel_8_DCT_1D_Y_18_join
+DCT_1D_pop_8_push_8_28 [ label="DCT_1D_pop_8_push_8" ]
+helper_Parallel_8_DCT_1D_Y_18_split -> DCT_1D_pop_8_push_8_28
+DCT_1D_pop_8_push_8_28 -> helper_Parallel_8_DCT_1D_Y_18_join
+DCT_1D_pop_8_push_8_29 [ label="DCT_1D_pop_8_push_8" ]
+helper_Parallel_8_DCT_1D_Y_18_split -> DCT_1D_pop_8_push_8_29
+DCT_1D_pop_8_push_8_29 -> helper_Parallel_8_DCT_1D_Y_18_join
+DCT_1D_pop_8_push_8_30 [ label="DCT_1D_pop_8_push_8" ]
+helper_Parallel_8_DCT_1D_Y_18_split -> DCT_1D_pop_8_push_8_30
+DCT_1D_pop_8_push_8_30 -> helper_Parallel_8_DCT_1D_Y_18_join
+DCT_1D_pop_8_push_8_31 [ label="DCT_1D_pop_8_push_8" ]
+helper_Parallel_8_DCT_1D_Y_18_split -> DCT_1D_pop_8_push_8_31
+DCT_1D_pop_8_push_8_31 -> helper_Parallel_8_DCT_1D_Y_18_join
+DCT_1D_pop_8_push_8_32 [ label="DCT_1D_pop_8_push_8" ]
+helper_Parallel_8_DCT_1D_Y_18_split -> DCT_1D_pop_8_push_8_32
+DCT_1D_pop_8_push_8_32 -> helper_Parallel_8_DCT_1D_Y_18_join
+DCT_1D_pop_8_push_8_33 [ label="DCT_1D_pop_8_push_8" ]
+helper_Parallel_8_DCT_1D_Y_18_split -> DCT_1D_pop_8_push_8_33
+DCT_1D_pop_8_push_8_33 -> helper_Parallel_8_DCT_1D_Y_18_join
+DCT_1D_pop_8_push_8_34 [ label="DCT_1D_pop_8_push_8" ]
+helper_Parallel_8_DCT_1D_Y_18_split -> DCT_1D_pop_8_push_8_34
+DCT_1D_pop_8_push_8_34 -> helper_Parallel_8_DCT_1D_Y_18_join
+}
+}
+subgraph cluster_staticExampleLuminanceQauntization_5 {
+label = "staticExampleLuminanceQauntization";
+staticQuantization_pop_64_push_64_37 [ label="staticQuantization_pop_64_push_64" ]
+}
+subgraph cluster_BlockDCDifferenceEncoder_6 {
+label = "BlockDCDifferenceEncoder";
+BlockDCDifferenceEncoder_6_split [ label="roundrobin(1, 63)" ]
+BlockDCDifferenceEncoder_6_join [ label="roundrobin(1, 63)" ]
+IntegerDifferenceEncoder_pop_1_push_1_39 [ label="IntegerDifferenceEncoder_pop_1_push_1" ]
+BlockDCDifferenceEncoder_6_split -> IntegerDifferenceEncoder_pop_1_push_1_39
+IntegerDifferenceEncoder_pop_1_push_1_39 -> BlockDCDifferenceEncoder_6_join
+streamit_library_Identity_pop_1_push_1_40 [ label="streamit_library_Identity_pop_1_push_1" ]
+BlockDCDifferenceEncoder_6_split -> streamit_library_Identity_pop_1_push_1_40
+streamit_library_Identity_pop_1_push_1_40 -> BlockDCDifferenceEncoder_6_join
+}
+ZigZagOrdering_pop_64_push_64_7 [ label="ZigZagOrdering_pop_64_push_64" ]
+ZigZagUnordering_pop_64_push_64_8 [ label="ZigZagUnordering_pop_64_push_64" ]
+subgraph cluster_BlockDCDifferenceDecoder_9 {
+label = "BlockDCDifferenceDecoder";
+BlockDCDifferenceDecoder_9_split [ label="roundrobin(1, 63)" ]
+BlockDCDifferenceDecoder_9_join [ label="roundrobin(1, 63)" ]
+IntegerDifferenceDecoder_pop_1_push_1_44 [ label="IntegerDifferenceDecoder_pop_1_push_1" ]
+BlockDCDifferenceDecoder_9_split -> IntegerDifferenceDecoder_pop_1_push_1_44
+IntegerDifferenceDecoder_pop_1_push_1_44 -> BlockDCDifferenceDecoder_9_join
+streamit_library_Identity_pop_1_push_1_45 [ label="streamit_library_Identity_pop_1_push_1" ]
+BlockDCDifferenceDecoder_9_split -> streamit_library_Identity_pop_1_push_1_45
+streamit_library_Identity_pop_1_push_1_45 -> BlockDCDifferenceDecoder_9_join
+}
+subgraph cluster_staticExampleLuminanceDeQauntization_10 {
+label = "staticExampleLuminanceDeQauntization";
+staticDeQuantization_pop_64_push_64_47 [ label="staticDeQuantization_pop_64_push_64" ]
+}
+subgraph cluster_iDCT_2D_11 {
+label = "iDCT_2D";
+helper_Parallel_8_iDCT_1D_X_49_join -> helper_Parallel_8_iDCT_1D_Y_50_split
+subgraph cluster_helper_Parallel_8_iDCT_1D_X_49 {
+label = "helper_Parallel_8_iDCT_1D_X";
+helper_Parallel_8_iDCT_1D_X_49_split [ label="roundrobin(8, 8, 8, 8, 8, 8, 8, 8)" ]
+helper_Parallel_8_iDCT_1D_X_49_join [ label="roundrobin(8, 8, 8, 8, 8, 8, 8, 8)" ]
+iDCT_1D_pop_8_push_8_51 [ label="iDCT_1D_pop_8_push_8" ]
+helper_Parallel_8_iDCT_1D_X_49_split -> iDCT_1D_pop_8_push_8_51
+iDCT_1D_pop_8_push_8_51 -> helper_Parallel_8_iDCT_1D_X_49_join
+iDCT_1D_pop_8_push_8_52 [ label="iDCT_1D_pop_8_push_8" ]
+helper_Parallel_8_iDCT_1D_X_49_split -> iDCT_1D_pop_8_push_8_52
+iDCT_1D_pop_8_push_8_52 -> helper_Parallel_8_iDCT_1D_X_49_join
+iDCT_1D_pop_8_push_8_53 [ label="iDCT_1D_pop_8_push_8" ]
+helper_Parallel_8_iDCT_1D_X_49_split -> iDCT_1D_pop_8_push_8_53
+iDCT_1D_pop_8_push_8_53 -> helper_Parallel_8_iDCT_1D_X_49_join
+iDCT_1D_pop_8_push_8_54 [ label="iDCT_1D_pop_8_push_8" ]
+helper_Parallel_8_iDCT_1D_X_49_split -> iDCT_1D_pop_8_push_8_54
+iDCT_1D_pop_8_push_8_54 -> helper_Parallel_8_iDCT_1D_X_49_join
+iDCT_1D_pop_8_push_8_55 [ label="iDCT_1D_pop_8_push_8" ]
+helper_Parallel_8_iDCT_1D_X_49_split -> iDCT_1D_pop_8_push_8_55
+iDCT_1D_pop_8_push_8_55 -> helper_Parallel_8_iDCT_1D_X_49_join
+iDCT_1D_pop_8_push_8_56 [ label="iDCT_1D_pop_8_push_8" ]
+helper_Parallel_8_iDCT_1D_X_49_split -> iDCT_1D_pop_8_push_8_56
+iDCT_1D_pop_8_push_8_56 -> helper_Parallel_8_iDCT_1D_X_49_join
+iDCT_1D_pop_8_push_8_57 [ label="iDCT_1D_pop_8_push_8" ]
+helper_Parallel_8_iDCT_1D_X_49_split -> iDCT_1D_pop_8_push_8_57
+iDCT_1D_pop_8_push_8_57 -> helper_Parallel_8_iDCT_1D_X_49_join
+iDCT_1D_pop_8_push_8_58 [ label="iDCT_1D_pop_8_push_8" ]
+helper_Parallel_8_iDCT_1D_X_49_split -> iDCT_1D_pop_8_push_8_58
+iDCT_1D_pop_8_push_8_58 -> helper_Parallel_8_iDCT_1D_X_49_join
+}
+subgraph cluster_helper_Parallel_8_iDCT_1D_Y_50 {
+label = "helper_Parallel_8_iDCT_1D_Y";
+helper_Parallel_8_iDCT_1D_Y_50_split [ label="roundrobin(1, 1, 1, 1, 1, 1, 1, 1)" ]
+helper_Parallel_8_iDCT_1D_Y_50_join [ label="roundrobin(1, 1, 1, 1, 1, 1, 1, 1)" ]
+iDCT_1D_pop_8_push_8_59 [ label="iDCT_1D_pop_8_push_8" ]
+helper_Parallel_8_iDCT_1D_Y_50_split -> iDCT_1D_pop_8_push_8_59
+iDCT_1D_pop_8_push_8_59 -> helper_Parallel_8_iDCT_1D_Y_50_join
+iDCT_1D_pop_8_push_8_60 [ label="iDCT_1D_pop_8_push_8" ]
+helper_Parallel_8_iDCT_1D_Y_50_split -> iDCT_1D_pop_8_push_8_60
+iDCT_1D_pop_8_push_8_60 -> helper_Parallel_8_iDCT_1D_Y_50_join
+iDCT_1D_pop_8_push_8_61 [ label="iDCT_1D_pop_8_push_8" ]
+helper_Parallel_8_iDCT_1D_Y_50_split -> iDCT_1D_pop_8_push_8_61
+iDCT_1D_pop_8_push_8_61 -> helper_Parallel_8_iDCT_1D_Y_50_join
+iDCT_1D_pop_8_push_8_62 [ label="iDCT_1D_pop_8_push_8" ]
+helper_Parallel_8_iDCT_1D_Y_50_split -> iDCT_1D_pop_8_push_8_62
+iDCT_1D_pop_8_push_8_62 -> helper_Parallel_8_iDCT_1D_Y_50_join
+iDCT_1D_pop_8_push_8_63 [ label="iDCT_1D_pop_8_push_8" ]
+helper_Parallel_8_iDCT_1D_Y_50_split -> iDCT_1D_pop_8_push_8_63
+iDCT_1D_pop_8_push_8_63 -> helper_Parallel_8_iDCT_1D_Y_50_join
+iDCT_1D_pop_8_push_8_64 [ label="iDCT_1D_pop_8_push_8" ]
+helper_Parallel_8_iDCT_1D_Y_50_split -> iDCT_1D_pop_8_push_8_64
+iDCT_1D_pop_8_push_8_64 -> helper_Parallel_8_iDCT_1D_Y_50_join
+iDCT_1D_pop_8_push_8_65 [ label="iDCT_1D_pop_8_push_8" ]
+helper_Parallel_8_iDCT_1D_Y_50_split -> iDCT_1D_pop_8_push_8_65
+iDCT_1D_pop_8_push_8_65 -> helper_Parallel_8_iDCT_1D_Y_50_join
+iDCT_1D_pop_8_push_8_66 [ label="iDCT_1D_pop_8_push_8" ]
+helper_Parallel_8_iDCT_1D_Y_50_split -> iDCT_1D_pop_8_push_8_66
+iDCT_1D_pop_8_push_8_66 -> helper_Parallel_8_iDCT_1D_Y_50_join
+}
+}
+Add_pop_1_push_1_12 [ label="Add_pop_1_push_1" ]
+Float2Int_pop_1_push_1_13 [ label="Float2Int_pop_1_push_1" ]
+Display8BitIntBlock_pop_8_push_0_14 [ label="Display8BitIntBlock_pop_8_push_0" ]
+}
+}

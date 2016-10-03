@@ -1,0 +1,191 @@
+digraph streamit {
+size="7.5,10";subgraph cluster_BeamFormer_0 {
+label = "BeamFormer";
+RandomSource_1 -> AnonFilter_a1_4_split
+AnonFilter_a3_5_join -> FloatPrinter_3
+RandomSource_1 [ label="RandomSource" ]
+subgraph cluster_BeamFormerMain_2 {
+label = "BeamFormerMain";
+AnonFilter_a1_4_join -> AnonFilter_a3_5_split
+subgraph cluster_AnonFilter_a1_4 {
+label = "AnonFilter_a1";
+AnonFilter_a1_4_split [ label="roundrobin(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)" ]
+AnonFilter_a1_4_join [ label="roundrobin(2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2)" ]
+subgraph cluster_AnonFilter_a0_6 {
+label = "AnonFilter_a0";
+InputGenerate_18 -> BeamFirFilter_19
+BeamFirFilter_19 -> BeamFirFilter_20
+InputGenerate_18 [ label="InputGenerate" ]
+BeamFirFilter_19 [ label="BeamFirFilter" ]
+BeamFirFilter_20 [ label="BeamFirFilter" ]
+}
+AnonFilter_a1_4_split -> InputGenerate_18
+BeamFirFilter_20 -> AnonFilter_a1_4_join
+subgraph cluster_AnonFilter_a0_7 {
+label = "AnonFilter_a0";
+InputGenerate_23 -> BeamFirFilter_24
+BeamFirFilter_24 -> BeamFirFilter_25
+InputGenerate_23 [ label="InputGenerate" ]
+BeamFirFilter_24 [ label="BeamFirFilter" ]
+BeamFirFilter_25 [ label="BeamFirFilter" ]
+}
+AnonFilter_a1_4_split -> InputGenerate_23
+BeamFirFilter_25 -> AnonFilter_a1_4_join
+subgraph cluster_AnonFilter_a0_8 {
+label = "AnonFilter_a0";
+InputGenerate_28 -> BeamFirFilter_29
+BeamFirFilter_29 -> BeamFirFilter_30
+InputGenerate_28 [ label="InputGenerate" ]
+BeamFirFilter_29 [ label="BeamFirFilter" ]
+BeamFirFilter_30 [ label="BeamFirFilter" ]
+}
+AnonFilter_a1_4_split -> InputGenerate_28
+BeamFirFilter_30 -> AnonFilter_a1_4_join
+subgraph cluster_AnonFilter_a0_9 {
+label = "AnonFilter_a0";
+InputGenerate_33 -> BeamFirFilter_34
+BeamFirFilter_34 -> BeamFirFilter_35
+InputGenerate_33 [ label="InputGenerate" ]
+BeamFirFilter_34 [ label="BeamFirFilter" ]
+BeamFirFilter_35 [ label="BeamFirFilter" ]
+}
+AnonFilter_a1_4_split -> InputGenerate_33
+BeamFirFilter_35 -> AnonFilter_a1_4_join
+subgraph cluster_AnonFilter_a0_10 {
+label = "AnonFilter_a0";
+InputGenerate_38 -> BeamFirFilter_39
+BeamFirFilter_39 -> BeamFirFilter_40
+InputGenerate_38 [ label="InputGenerate" ]
+BeamFirFilter_39 [ label="BeamFirFilter" ]
+BeamFirFilter_40 [ label="BeamFirFilter" ]
+}
+AnonFilter_a1_4_split -> InputGenerate_38
+BeamFirFilter_40 -> AnonFilter_a1_4_join
+subgraph cluster_AnonFilter_a0_11 {
+label = "AnonFilter_a0";
+InputGenerate_43 -> BeamFirFilter_44
+BeamFirFilter_44 -> BeamFirFilter_45
+InputGenerate_43 [ label="InputGenerate" ]
+BeamFirFilter_44 [ label="BeamFirFilter" ]
+BeamFirFilter_45 [ label="BeamFirFilter" ]
+}
+AnonFilter_a1_4_split -> InputGenerate_43
+BeamFirFilter_45 -> AnonFilter_a1_4_join
+subgraph cluster_AnonFilter_a0_12 {
+label = "AnonFilter_a0";
+InputGenerate_48 -> BeamFirFilter_49
+BeamFirFilter_49 -> BeamFirFilter_50
+InputGenerate_48 [ label="InputGenerate" ]
+BeamFirFilter_49 [ label="BeamFirFilter" ]
+BeamFirFilter_50 [ label="BeamFirFilter" ]
+}
+AnonFilter_a1_4_split -> InputGenerate_48
+BeamFirFilter_50 -> AnonFilter_a1_4_join
+subgraph cluster_AnonFilter_a0_13 {
+label = "AnonFilter_a0";
+InputGenerate_53 -> BeamFirFilter_54
+BeamFirFilter_54 -> BeamFirFilter_55
+InputGenerate_53 [ label="InputGenerate" ]
+BeamFirFilter_54 [ label="BeamFirFilter" ]
+BeamFirFilter_55 [ label="BeamFirFilter" ]
+}
+AnonFilter_a1_4_split -> InputGenerate_53
+BeamFirFilter_55 -> AnonFilter_a1_4_join
+subgraph cluster_AnonFilter_a0_14 {
+label = "AnonFilter_a0";
+InputGenerate_58 -> BeamFirFilter_59
+BeamFirFilter_59 -> BeamFirFilter_60
+InputGenerate_58 [ label="InputGenerate" ]
+BeamFirFilter_59 [ label="BeamFirFilter" ]
+BeamFirFilter_60 [ label="BeamFirFilter" ]
+}
+AnonFilter_a1_4_split -> InputGenerate_58
+BeamFirFilter_60 -> AnonFilter_a1_4_join
+subgraph cluster_AnonFilter_a0_15 {
+label = "AnonFilter_a0";
+InputGenerate_63 -> BeamFirFilter_64
+BeamFirFilter_64 -> BeamFirFilter_65
+InputGenerate_63 [ label="InputGenerate" ]
+BeamFirFilter_64 [ label="BeamFirFilter" ]
+BeamFirFilter_65 [ label="BeamFirFilter" ]
+}
+AnonFilter_a1_4_split -> InputGenerate_63
+BeamFirFilter_65 -> AnonFilter_a1_4_join
+subgraph cluster_AnonFilter_a0_16 {
+label = "AnonFilter_a0";
+InputGenerate_68 -> BeamFirFilter_69
+BeamFirFilter_69 -> BeamFirFilter_70
+InputGenerate_68 [ label="InputGenerate" ]
+BeamFirFilter_69 [ label="BeamFirFilter" ]
+BeamFirFilter_70 [ label="BeamFirFilter" ]
+}
+AnonFilter_a1_4_split -> InputGenerate_68
+BeamFirFilter_70 -> AnonFilter_a1_4_join
+subgraph cluster_AnonFilter_a0_17 {
+label = "AnonFilter_a0";
+InputGenerate_73 -> BeamFirFilter_74
+BeamFirFilter_74 -> BeamFirFilter_75
+InputGenerate_73 [ label="InputGenerate" ]
+BeamFirFilter_74 [ label="BeamFirFilter" ]
+BeamFirFilter_75 [ label="BeamFirFilter" ]
+}
+AnonFilter_a1_4_split -> InputGenerate_73
+BeamFirFilter_75 -> AnonFilter_a1_4_join
+}
+subgraph cluster_AnonFilter_a3_5 {
+label = "AnonFilter_a3";
+AnonFilter_a3_5_split [ label="duplicate" ]
+AnonFilter_a3_5_join [ label="roundrobin(1, 1, 1, 1)" ]
+subgraph cluster_AnonFilter_a2_78 {
+label = "AnonFilter_a2";
+BeamForm_82 -> BeamFirFilter_83
+BeamFirFilter_83 -> Magnitude_84
+Magnitude_84 -> Detector_85
+BeamForm_82 [ label="BeamForm" ]
+BeamFirFilter_83 [ label="BeamFirFilter" ]
+Magnitude_84 [ label="Magnitude" ]
+Detector_85 [ label="Detector" ]
+}
+AnonFilter_a3_5_split -> BeamForm_82
+Detector_85 -> AnonFilter_a3_5_join
+subgraph cluster_AnonFilter_a2_79 {
+label = "AnonFilter_a2";
+BeamForm_89 -> BeamFirFilter_90
+BeamFirFilter_90 -> Magnitude_91
+Magnitude_91 -> Detector_92
+BeamForm_89 [ label="BeamForm" ]
+BeamFirFilter_90 [ label="BeamFirFilter" ]
+Magnitude_91 [ label="Magnitude" ]
+Detector_92 [ label="Detector" ]
+}
+AnonFilter_a3_5_split -> BeamForm_89
+Detector_92 -> AnonFilter_a3_5_join
+subgraph cluster_AnonFilter_a2_80 {
+label = "AnonFilter_a2";
+BeamForm_96 -> BeamFirFilter_97
+BeamFirFilter_97 -> Magnitude_98
+Magnitude_98 -> Detector_99
+BeamForm_96 [ label="BeamForm" ]
+BeamFirFilter_97 [ label="BeamFirFilter" ]
+Magnitude_98 [ label="Magnitude" ]
+Detector_99 [ label="Detector" ]
+}
+AnonFilter_a3_5_split -> BeamForm_96
+Detector_99 -> AnonFilter_a3_5_join
+subgraph cluster_AnonFilter_a2_81 {
+label = "AnonFilter_a2";
+BeamForm_103 -> BeamFirFilter_104
+BeamFirFilter_104 -> Magnitude_105
+Magnitude_105 -> Detector_106
+BeamForm_103 [ label="BeamForm" ]
+BeamFirFilter_104 [ label="BeamFirFilter" ]
+Magnitude_105 [ label="Magnitude" ]
+Detector_106 [ label="Detector" ]
+}
+AnonFilter_a3_5_split -> BeamForm_103
+Detector_106 -> AnonFilter_a3_5_join
+}
+}
+FloatPrinter_3 [ label="FloatPrinter" ]
+}
+}

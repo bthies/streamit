@@ -1,0 +1,172 @@
+digraph streamit {
+size="7.5,10";subgraph cluster_MatrixMult_0 {
+label = "MatrixMult";
+RandomSource_1 -> RearrangeDuplicateBoth_4_split
+MultiplyAccumulateParallel_5_join -> FloatPrinter_3
+RandomSource_1 [ label="RandomSource" ]
+subgraph cluster_MatrixMultiply_2 {
+label = "MatrixMultiply";
+RearrangeDuplicateBoth_4_join -> MultiplyAccumulateParallel_5_split
+subgraph cluster_RearrangeDuplicateBoth_4 {
+label = "RearrangeDuplicateBoth";
+RearrangeDuplicateBoth_4_split [ label="roundrobin(100, 100)" ]
+RearrangeDuplicateBoth_4_join [ label="roundrobin(1, 1)" ]
+subgraph cluster_DuplicateRows_6 {
+label = "DuplicateRows";
+subgraph cluster_DuplicateRowsInternal_8 {
+label = "DuplicateRowsInternal";
+DuplicateRowsInternal_8_split [ label="duplicate" ]
+DuplicateRowsInternal_8_join [ label="roundrobin(10, 10, 10, 10, 10, 10, 10, 10, 10, 10)" ]
+streamit_library_Identity_9 [ label="streamit_library_Identity" ]
+DuplicateRowsInternal_8_split -> streamit_library_Identity_9
+streamit_library_Identity_9 -> DuplicateRowsInternal_8_join
+streamit_library_Identity_10 [ label="streamit_library_Identity" ]
+DuplicateRowsInternal_8_split -> streamit_library_Identity_10
+streamit_library_Identity_10 -> DuplicateRowsInternal_8_join
+streamit_library_Identity_11 [ label="streamit_library_Identity" ]
+DuplicateRowsInternal_8_split -> streamit_library_Identity_11
+streamit_library_Identity_11 -> DuplicateRowsInternal_8_join
+streamit_library_Identity_12 [ label="streamit_library_Identity" ]
+DuplicateRowsInternal_8_split -> streamit_library_Identity_12
+streamit_library_Identity_12 -> DuplicateRowsInternal_8_join
+streamit_library_Identity_13 [ label="streamit_library_Identity" ]
+DuplicateRowsInternal_8_split -> streamit_library_Identity_13
+streamit_library_Identity_13 -> DuplicateRowsInternal_8_join
+streamit_library_Identity_14 [ label="streamit_library_Identity" ]
+DuplicateRowsInternal_8_split -> streamit_library_Identity_14
+streamit_library_Identity_14 -> DuplicateRowsInternal_8_join
+streamit_library_Identity_15 [ label="streamit_library_Identity" ]
+DuplicateRowsInternal_8_split -> streamit_library_Identity_15
+streamit_library_Identity_15 -> DuplicateRowsInternal_8_join
+streamit_library_Identity_16 [ label="streamit_library_Identity" ]
+DuplicateRowsInternal_8_split -> streamit_library_Identity_16
+streamit_library_Identity_16 -> DuplicateRowsInternal_8_join
+streamit_library_Identity_17 [ label="streamit_library_Identity" ]
+DuplicateRowsInternal_8_split -> streamit_library_Identity_17
+streamit_library_Identity_17 -> DuplicateRowsInternal_8_join
+streamit_library_Identity_18 [ label="streamit_library_Identity" ]
+DuplicateRowsInternal_8_split -> streamit_library_Identity_18
+streamit_library_Identity_18 -> DuplicateRowsInternal_8_join
+}
+}
+RearrangeDuplicateBoth_4_split -> DuplicateRowsInternal_8_split
+DuplicateRowsInternal_8_join -> RearrangeDuplicateBoth_4_join
+subgraph cluster_RearrangeDuplicate_7 {
+label = "RearrangeDuplicate";
+Transpose_19_join -> DuplicateRowsInternal_31_split
+subgraph cluster_Transpose_19 {
+label = "Transpose";
+Transpose_19_split [ label="roundrobin(1, 1, 1, 1, 1, 1, 1, 1, 1, 1)" ]
+Transpose_19_join [ label="roundrobin(10, 10, 10, 10, 10, 10, 10, 10, 10, 10)" ]
+streamit_library_Identity_21 [ label="streamit_library_Identity" ]
+Transpose_19_split -> streamit_library_Identity_21
+streamit_library_Identity_21 -> Transpose_19_join
+streamit_library_Identity_22 [ label="streamit_library_Identity" ]
+Transpose_19_split -> streamit_library_Identity_22
+streamit_library_Identity_22 -> Transpose_19_join
+streamit_library_Identity_23 [ label="streamit_library_Identity" ]
+Transpose_19_split -> streamit_library_Identity_23
+streamit_library_Identity_23 -> Transpose_19_join
+streamit_library_Identity_24 [ label="streamit_library_Identity" ]
+Transpose_19_split -> streamit_library_Identity_24
+streamit_library_Identity_24 -> Transpose_19_join
+streamit_library_Identity_25 [ label="streamit_library_Identity" ]
+Transpose_19_split -> streamit_library_Identity_25
+streamit_library_Identity_25 -> Transpose_19_join
+streamit_library_Identity_26 [ label="streamit_library_Identity" ]
+Transpose_19_split -> streamit_library_Identity_26
+streamit_library_Identity_26 -> Transpose_19_join
+streamit_library_Identity_27 [ label="streamit_library_Identity" ]
+Transpose_19_split -> streamit_library_Identity_27
+streamit_library_Identity_27 -> Transpose_19_join
+streamit_library_Identity_28 [ label="streamit_library_Identity" ]
+Transpose_19_split -> streamit_library_Identity_28
+streamit_library_Identity_28 -> Transpose_19_join
+streamit_library_Identity_29 [ label="streamit_library_Identity" ]
+Transpose_19_split -> streamit_library_Identity_29
+streamit_library_Identity_29 -> Transpose_19_join
+streamit_library_Identity_30 [ label="streamit_library_Identity" ]
+Transpose_19_split -> streamit_library_Identity_30
+streamit_library_Identity_30 -> Transpose_19_join
+}
+subgraph cluster_DuplicateRows_20 {
+label = "DuplicateRows";
+subgraph cluster_DuplicateRowsInternal_31 {
+label = "DuplicateRowsInternal";
+DuplicateRowsInternal_31_split [ label="duplicate" ]
+DuplicateRowsInternal_31_join [ label="roundrobin(100, 100, 100, 100, 100, 100, 100, 100, 100, 100)" ]
+streamit_library_Identity_32 [ label="streamit_library_Identity" ]
+DuplicateRowsInternal_31_split -> streamit_library_Identity_32
+streamit_library_Identity_32 -> DuplicateRowsInternal_31_join
+streamit_library_Identity_33 [ label="streamit_library_Identity" ]
+DuplicateRowsInternal_31_split -> streamit_library_Identity_33
+streamit_library_Identity_33 -> DuplicateRowsInternal_31_join
+streamit_library_Identity_34 [ label="streamit_library_Identity" ]
+DuplicateRowsInternal_31_split -> streamit_library_Identity_34
+streamit_library_Identity_34 -> DuplicateRowsInternal_31_join
+streamit_library_Identity_35 [ label="streamit_library_Identity" ]
+DuplicateRowsInternal_31_split -> streamit_library_Identity_35
+streamit_library_Identity_35 -> DuplicateRowsInternal_31_join
+streamit_library_Identity_36 [ label="streamit_library_Identity" ]
+DuplicateRowsInternal_31_split -> streamit_library_Identity_36
+streamit_library_Identity_36 -> DuplicateRowsInternal_31_join
+streamit_library_Identity_37 [ label="streamit_library_Identity" ]
+DuplicateRowsInternal_31_split -> streamit_library_Identity_37
+streamit_library_Identity_37 -> DuplicateRowsInternal_31_join
+streamit_library_Identity_38 [ label="streamit_library_Identity" ]
+DuplicateRowsInternal_31_split -> streamit_library_Identity_38
+streamit_library_Identity_38 -> DuplicateRowsInternal_31_join
+streamit_library_Identity_39 [ label="streamit_library_Identity" ]
+DuplicateRowsInternal_31_split -> streamit_library_Identity_39
+streamit_library_Identity_39 -> DuplicateRowsInternal_31_join
+streamit_library_Identity_40 [ label="streamit_library_Identity" ]
+DuplicateRowsInternal_31_split -> streamit_library_Identity_40
+streamit_library_Identity_40 -> DuplicateRowsInternal_31_join
+streamit_library_Identity_41 [ label="streamit_library_Identity" ]
+DuplicateRowsInternal_31_split -> streamit_library_Identity_41
+streamit_library_Identity_41 -> DuplicateRowsInternal_31_join
+}
+}
+}
+RearrangeDuplicateBoth_4_split -> Transpose_19_split
+DuplicateRowsInternal_31_join -> RearrangeDuplicateBoth_4_join
+}
+subgraph cluster_MultiplyAccumulateParallel_5 {
+label = "MultiplyAccumulateParallel";
+MultiplyAccumulateParallel_5_split [ label="roundrobin(20, 20, 20, 20, 20, 20, 20, 20, 20, 20)" ]
+MultiplyAccumulateParallel_5_join [ label="roundrobin(1, 1, 1, 1, 1, 1, 1, 1, 1, 1)" ]
+MultiplyAccumulate_43 [ label="MultiplyAccumulate" ]
+MultiplyAccumulateParallel_5_split -> MultiplyAccumulate_43
+MultiplyAccumulate_43 -> MultiplyAccumulateParallel_5_join
+MultiplyAccumulate_44 [ label="MultiplyAccumulate" ]
+MultiplyAccumulateParallel_5_split -> MultiplyAccumulate_44
+MultiplyAccumulate_44 -> MultiplyAccumulateParallel_5_join
+MultiplyAccumulate_45 [ label="MultiplyAccumulate" ]
+MultiplyAccumulateParallel_5_split -> MultiplyAccumulate_45
+MultiplyAccumulate_45 -> MultiplyAccumulateParallel_5_join
+MultiplyAccumulate_46 [ label="MultiplyAccumulate" ]
+MultiplyAccumulateParallel_5_split -> MultiplyAccumulate_46
+MultiplyAccumulate_46 -> MultiplyAccumulateParallel_5_join
+MultiplyAccumulate_47 [ label="MultiplyAccumulate" ]
+MultiplyAccumulateParallel_5_split -> MultiplyAccumulate_47
+MultiplyAccumulate_47 -> MultiplyAccumulateParallel_5_join
+MultiplyAccumulate_48 [ label="MultiplyAccumulate" ]
+MultiplyAccumulateParallel_5_split -> MultiplyAccumulate_48
+MultiplyAccumulate_48 -> MultiplyAccumulateParallel_5_join
+MultiplyAccumulate_49 [ label="MultiplyAccumulate" ]
+MultiplyAccumulateParallel_5_split -> MultiplyAccumulate_49
+MultiplyAccumulate_49 -> MultiplyAccumulateParallel_5_join
+MultiplyAccumulate_50 [ label="MultiplyAccumulate" ]
+MultiplyAccumulateParallel_5_split -> MultiplyAccumulate_50
+MultiplyAccumulate_50 -> MultiplyAccumulateParallel_5_join
+MultiplyAccumulate_51 [ label="MultiplyAccumulate" ]
+MultiplyAccumulateParallel_5_split -> MultiplyAccumulate_51
+MultiplyAccumulate_51 -> MultiplyAccumulateParallel_5_join
+MultiplyAccumulate_52 [ label="MultiplyAccumulate" ]
+MultiplyAccumulateParallel_5_split -> MultiplyAccumulate_52
+MultiplyAccumulate_52 -> MultiplyAccumulateParallel_5_join
+}
+}
+FloatPrinter_3 [ label="FloatPrinter" ]
+}
+}

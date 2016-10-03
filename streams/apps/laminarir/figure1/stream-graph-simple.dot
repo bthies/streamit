@@ -1,0 +1,20 @@
+digraph streamit {
+subgraph cluster_node1 {
+ label="Figure1";
+node2 [ label="A" ]
+subgraph cluster_node3 {
+ label="AnonFilter_a4";
+node4 [ label="duplicate" ]
+node5 [ label="roundrobin(1,1)" ]
+node6 [ label="B" ]
+node4 -> node6
+node6 -> node5
+node7 [ label="C" ]
+node4 -> node7
+node7 -> node5
+}
+node2 -> node4
+node8 [ label="D" ]
+node5 -> node8
+}
+}

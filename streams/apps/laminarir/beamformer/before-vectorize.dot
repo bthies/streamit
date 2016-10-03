@@ -1,0 +1,188 @@
+digraph streamit {
+subgraph cluster_node1 {
+ label="BeamFormer_1";
+node2 [ label="RandomSource_59\npush=1\npop=0\npeek =0" ]
+subgraph cluster_node3 {
+ label="AnonFilter_a1_52";
+node4 [ label="WEIGHTED_ROUND_ROBIN(1,1,1,1,1,1,1,1,1,1,1,1)" ]
+node5 [ label="WEIGHTED_ROUND_ROBIN(2,2,2,2,2,2,2,2,2,2,2,2)" ]
+subgraph cluster_node6 {
+ label="AnonFilter_a0_61";
+node7 [ label="InputGenerate_62\npush=2\npop=1\npeek =1" ]
+node8 [ label="BeamFirFilter_63\npush=2\npop=4\npeek =4" ]
+node7 -> node8
+node9 [ label="BeamFirFilter_64\npush=2\npop=6\npeek =6" ]
+node8 -> node9
+}
+node4 -> node7
+node9 -> node5
+subgraph cluster_node10 {
+ label="AnonFilter_a0_65";
+node11 [ label="InputGenerate_66\npush=2\npop=1\npeek =1" ]
+node12 [ label="BeamFirFilter_67\npush=2\npop=4\npeek =4" ]
+node11 -> node12
+node13 [ label="BeamFirFilter_68\npush=2\npop=6\npeek =6" ]
+node12 -> node13
+}
+node4 -> node11
+node13 -> node5
+subgraph cluster_node14 {
+ label="AnonFilter_a0_69";
+node15 [ label="InputGenerate_70\npush=2\npop=1\npeek =1" ]
+node16 [ label="BeamFirFilter_71\npush=2\npop=4\npeek =4" ]
+node15 -> node16
+node17 [ label="BeamFirFilter_72\npush=2\npop=6\npeek =6" ]
+node16 -> node17
+}
+node4 -> node15
+node17 -> node5
+subgraph cluster_node18 {
+ label="AnonFilter_a0_73";
+node19 [ label="InputGenerate_74\npush=2\npop=1\npeek =1" ]
+node20 [ label="BeamFirFilter_75\npush=2\npop=4\npeek =4" ]
+node19 -> node20
+node21 [ label="BeamFirFilter_76\npush=2\npop=6\npeek =6" ]
+node20 -> node21
+}
+node4 -> node19
+node21 -> node5
+subgraph cluster_node22 {
+ label="AnonFilter_a0_77";
+node23 [ label="InputGenerate_78\npush=2\npop=1\npeek =1" ]
+node24 [ label="BeamFirFilter_79\npush=2\npop=4\npeek =4" ]
+node23 -> node24
+node25 [ label="BeamFirFilter_80\npush=2\npop=6\npeek =6" ]
+node24 -> node25
+}
+node4 -> node23
+node25 -> node5
+subgraph cluster_node26 {
+ label="AnonFilter_a0_81";
+node27 [ label="InputGenerate_82\npush=2\npop=1\npeek =1" ]
+node28 [ label="BeamFirFilter_83\npush=2\npop=4\npeek =4" ]
+node27 -> node28
+node29 [ label="BeamFirFilter_84\npush=2\npop=6\npeek =6" ]
+node28 -> node29
+}
+node4 -> node27
+node29 -> node5
+subgraph cluster_node30 {
+ label="AnonFilter_a0_85";
+node31 [ label="InputGenerate_86\npush=2\npop=1\npeek =1" ]
+node32 [ label="BeamFirFilter_87\npush=2\npop=4\npeek =4" ]
+node31 -> node32
+node33 [ label="BeamFirFilter_88\npush=2\npop=6\npeek =6" ]
+node32 -> node33
+}
+node4 -> node31
+node33 -> node5
+subgraph cluster_node34 {
+ label="AnonFilter_a0_89";
+node35 [ label="InputGenerate_90\npush=2\npop=1\npeek =1" ]
+node36 [ label="BeamFirFilter_91\npush=2\npop=4\npeek =4" ]
+node35 -> node36
+node37 [ label="BeamFirFilter_92\npush=2\npop=6\npeek =6" ]
+node36 -> node37
+}
+node4 -> node35
+node37 -> node5
+subgraph cluster_node38 {
+ label="AnonFilter_a0_93";
+node39 [ label="InputGenerate_94\npush=2\npop=1\npeek =1" ]
+node40 [ label="BeamFirFilter_95\npush=2\npop=4\npeek =4" ]
+node39 -> node40
+node41 [ label="BeamFirFilter_96\npush=2\npop=6\npeek =6" ]
+node40 -> node41
+}
+node4 -> node39
+node41 -> node5
+subgraph cluster_node42 {
+ label="AnonFilter_a0_97";
+node43 [ label="InputGenerate_98\npush=2\npop=1\npeek =1" ]
+node44 [ label="BeamFirFilter_99\npush=2\npop=4\npeek =4" ]
+node43 -> node44
+node45 [ label="BeamFirFilter_100\npush=2\npop=6\npeek =6" ]
+node44 -> node45
+}
+node4 -> node43
+node45 -> node5
+subgraph cluster_node46 {
+ label="AnonFilter_a0_101";
+node47 [ label="InputGenerate_102\npush=2\npop=1\npeek =1" ]
+node48 [ label="BeamFirFilter_103\npush=2\npop=4\npeek =4" ]
+node47 -> node48
+node49 [ label="BeamFirFilter_104\npush=2\npop=6\npeek =6" ]
+node48 -> node49
+}
+node4 -> node47
+node49 -> node5
+subgraph cluster_node50 {
+ label="AnonFilter_a0_105";
+node51 [ label="InputGenerate_106\npush=2\npop=1\npeek =1" ]
+node52 [ label="BeamFirFilter_107\npush=2\npop=4\npeek =4" ]
+node51 -> node52
+node53 [ label="BeamFirFilter_108\npush=2\npop=6\npeek =6" ]
+node52 -> node53
+}
+node4 -> node51
+node53 -> node5
+}
+node2 -> node4
+subgraph cluster_node54 {
+ label="AnonFilter_a3_58";
+node55 [ label="DUPLICATE(1,1,1,1)" ]
+node56 [ label="WEIGHTED_ROUND_ROBIN(1,1,1,1)" ]
+subgraph cluster_node57 {
+ label="AnonFilter_a2_109";
+node58 [ label="BeamForm_110\npush=2\npop=24\npeek =24" ]
+node59 [ label="BeamFirFilter_111\npush=2\npop=2\npeek =2" ]
+node58 -> node59
+node60 [ label="Magnitude_112\npush=1\npop=2\npeek =2" ]
+node59 -> node60
+node61 [ label="Detector_113\npush=1\npop=1\npeek =1" ]
+node60 -> node61
+}
+node55 -> node58
+node61 -> node56
+subgraph cluster_node62 {
+ label="AnonFilter_a2_114";
+node63 [ label="BeamForm_115\npush=2\npop=24\npeek =24" ]
+node64 [ label="BeamFirFilter_116\npush=2\npop=2\npeek =2" ]
+node63 -> node64
+node65 [ label="Magnitude_117\npush=1\npop=2\npeek =2" ]
+node64 -> node65
+node66 [ label="Detector_118\npush=1\npop=1\npeek =1" ]
+node65 -> node66
+}
+node55 -> node63
+node66 -> node56
+subgraph cluster_node67 {
+ label="AnonFilter_a2_119";
+node68 [ label="BeamForm_120\npush=2\npop=24\npeek =24" ]
+node69 [ label="BeamFirFilter_121\npush=2\npop=2\npeek =2" ]
+node68 -> node69
+node70 [ label="Magnitude_122\npush=1\npop=2\npeek =2" ]
+node69 -> node70
+node71 [ label="Detector_123\npush=1\npop=1\npeek =1" ]
+node70 -> node71
+}
+node55 -> node68
+node71 -> node56
+subgraph cluster_node72 {
+ label="AnonFilter_a2_124";
+node73 [ label="BeamForm_125\npush=2\npop=24\npeek =24" ]
+node74 [ label="BeamFirFilter_126\npush=2\npop=2\npeek =2" ]
+node73 -> node74
+node75 [ label="Magnitude_127\npush=1\npop=2\npeek =2" ]
+node74 -> node75
+node76 [ label="Detector_128\npush=1\npop=1\npeek =1" ]
+node75 -> node76
+}
+node55 -> node73
+node76 -> node56
+}
+node5 -> node55
+node77 [ label="FloatPrinter_129\npush=0\npop=1\npeek =1" ]
+node56 -> node77
+}
+}

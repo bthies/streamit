@@ -1,0 +1,172 @@
+digraph streamit {
+size="7.5,10";subgraph cluster_MatrixMult_0 {
+label = "MatrixMult";
+RandomSource_pop_0_push_1_1 -> RearrangeDuplicateBoth_4_split
+MultiplyAccumulateParallel_5_join -> FloatPrinter_pop_1_push_0_3
+RandomSource_pop_0_push_1_1 [ label="RandomSource_pop_0_push_1" ]
+subgraph cluster_MatrixMultiply_2 {
+label = "MatrixMultiply";
+RearrangeDuplicateBoth_4_join -> MultiplyAccumulateParallel_5_split
+subgraph cluster_RearrangeDuplicateBoth_4 {
+label = "RearrangeDuplicateBoth";
+RearrangeDuplicateBoth_4_split [ label="roundrobin(100, 100)" ]
+RearrangeDuplicateBoth_4_join [ label="roundrobin(1, 1)" ]
+subgraph cluster_DuplicateRows_6 {
+label = "DuplicateRows";
+subgraph cluster_DuplicateRowsInternal_8 {
+label = "DuplicateRowsInternal";
+DuplicateRowsInternal_8_split [ label="duplicate" ]
+DuplicateRowsInternal_8_join [ label="roundrobin(10, 10, 10, 10, 10, 10, 10, 10, 10, 10)" ]
+streamit_library_Identity_pop_1_push_1_9 [ label="streamit_library_Identity_pop_1_push_1" ]
+DuplicateRowsInternal_8_split -> streamit_library_Identity_pop_1_push_1_9
+streamit_library_Identity_pop_1_push_1_9 -> DuplicateRowsInternal_8_join
+streamit_library_Identity_pop_1_push_1_10 [ label="streamit_library_Identity_pop_1_push_1" ]
+DuplicateRowsInternal_8_split -> streamit_library_Identity_pop_1_push_1_10
+streamit_library_Identity_pop_1_push_1_10 -> DuplicateRowsInternal_8_join
+streamit_library_Identity_pop_1_push_1_11 [ label="streamit_library_Identity_pop_1_push_1" ]
+DuplicateRowsInternal_8_split -> streamit_library_Identity_pop_1_push_1_11
+streamit_library_Identity_pop_1_push_1_11 -> DuplicateRowsInternal_8_join
+streamit_library_Identity_pop_1_push_1_12 [ label="streamit_library_Identity_pop_1_push_1" ]
+DuplicateRowsInternal_8_split -> streamit_library_Identity_pop_1_push_1_12
+streamit_library_Identity_pop_1_push_1_12 -> DuplicateRowsInternal_8_join
+streamit_library_Identity_pop_1_push_1_13 [ label="streamit_library_Identity_pop_1_push_1" ]
+DuplicateRowsInternal_8_split -> streamit_library_Identity_pop_1_push_1_13
+streamit_library_Identity_pop_1_push_1_13 -> DuplicateRowsInternal_8_join
+streamit_library_Identity_pop_1_push_1_14 [ label="streamit_library_Identity_pop_1_push_1" ]
+DuplicateRowsInternal_8_split -> streamit_library_Identity_pop_1_push_1_14
+streamit_library_Identity_pop_1_push_1_14 -> DuplicateRowsInternal_8_join
+streamit_library_Identity_pop_1_push_1_15 [ label="streamit_library_Identity_pop_1_push_1" ]
+DuplicateRowsInternal_8_split -> streamit_library_Identity_pop_1_push_1_15
+streamit_library_Identity_pop_1_push_1_15 -> DuplicateRowsInternal_8_join
+streamit_library_Identity_pop_1_push_1_16 [ label="streamit_library_Identity_pop_1_push_1" ]
+DuplicateRowsInternal_8_split -> streamit_library_Identity_pop_1_push_1_16
+streamit_library_Identity_pop_1_push_1_16 -> DuplicateRowsInternal_8_join
+streamit_library_Identity_pop_1_push_1_17 [ label="streamit_library_Identity_pop_1_push_1" ]
+DuplicateRowsInternal_8_split -> streamit_library_Identity_pop_1_push_1_17
+streamit_library_Identity_pop_1_push_1_17 -> DuplicateRowsInternal_8_join
+streamit_library_Identity_pop_1_push_1_18 [ label="streamit_library_Identity_pop_1_push_1" ]
+DuplicateRowsInternal_8_split -> streamit_library_Identity_pop_1_push_1_18
+streamit_library_Identity_pop_1_push_1_18 -> DuplicateRowsInternal_8_join
+}
+}
+RearrangeDuplicateBoth_4_split -> DuplicateRowsInternal_8_split
+DuplicateRowsInternal_8_join -> RearrangeDuplicateBoth_4_join
+subgraph cluster_RearrangeDuplicate_7 {
+label = "RearrangeDuplicate";
+Transpose_19_join -> DuplicateRowsInternal_31_split
+subgraph cluster_Transpose_19 {
+label = "Transpose";
+Transpose_19_split [ label="roundrobin(1, 1, 1, 1, 1, 1, 1, 1, 1, 1)" ]
+Transpose_19_join [ label="roundrobin(10, 10, 10, 10, 10, 10, 10, 10, 10, 10)" ]
+streamit_library_Identity_pop_1_push_1_21 [ label="streamit_library_Identity_pop_1_push_1" ]
+Transpose_19_split -> streamit_library_Identity_pop_1_push_1_21
+streamit_library_Identity_pop_1_push_1_21 -> Transpose_19_join
+streamit_library_Identity_pop_1_push_1_22 [ label="streamit_library_Identity_pop_1_push_1" ]
+Transpose_19_split -> streamit_library_Identity_pop_1_push_1_22
+streamit_library_Identity_pop_1_push_1_22 -> Transpose_19_join
+streamit_library_Identity_pop_1_push_1_23 [ label="streamit_library_Identity_pop_1_push_1" ]
+Transpose_19_split -> streamit_library_Identity_pop_1_push_1_23
+streamit_library_Identity_pop_1_push_1_23 -> Transpose_19_join
+streamit_library_Identity_pop_1_push_1_24 [ label="streamit_library_Identity_pop_1_push_1" ]
+Transpose_19_split -> streamit_library_Identity_pop_1_push_1_24
+streamit_library_Identity_pop_1_push_1_24 -> Transpose_19_join
+streamit_library_Identity_pop_1_push_1_25 [ label="streamit_library_Identity_pop_1_push_1" ]
+Transpose_19_split -> streamit_library_Identity_pop_1_push_1_25
+streamit_library_Identity_pop_1_push_1_25 -> Transpose_19_join
+streamit_library_Identity_pop_1_push_1_26 [ label="streamit_library_Identity_pop_1_push_1" ]
+Transpose_19_split -> streamit_library_Identity_pop_1_push_1_26
+streamit_library_Identity_pop_1_push_1_26 -> Transpose_19_join
+streamit_library_Identity_pop_1_push_1_27 [ label="streamit_library_Identity_pop_1_push_1" ]
+Transpose_19_split -> streamit_library_Identity_pop_1_push_1_27
+streamit_library_Identity_pop_1_push_1_27 -> Transpose_19_join
+streamit_library_Identity_pop_1_push_1_28 [ label="streamit_library_Identity_pop_1_push_1" ]
+Transpose_19_split -> streamit_library_Identity_pop_1_push_1_28
+streamit_library_Identity_pop_1_push_1_28 -> Transpose_19_join
+streamit_library_Identity_pop_1_push_1_29 [ label="streamit_library_Identity_pop_1_push_1" ]
+Transpose_19_split -> streamit_library_Identity_pop_1_push_1_29
+streamit_library_Identity_pop_1_push_1_29 -> Transpose_19_join
+streamit_library_Identity_pop_1_push_1_30 [ label="streamit_library_Identity_pop_1_push_1" ]
+Transpose_19_split -> streamit_library_Identity_pop_1_push_1_30
+streamit_library_Identity_pop_1_push_1_30 -> Transpose_19_join
+}
+subgraph cluster_DuplicateRows_20 {
+label = "DuplicateRows";
+subgraph cluster_DuplicateRowsInternal_31 {
+label = "DuplicateRowsInternal";
+DuplicateRowsInternal_31_split [ label="duplicate" ]
+DuplicateRowsInternal_31_join [ label="roundrobin(100, 100, 100, 100, 100, 100, 100, 100, 100, 100)" ]
+streamit_library_Identity_pop_1_push_1_32 [ label="streamit_library_Identity_pop_1_push_1" ]
+DuplicateRowsInternal_31_split -> streamit_library_Identity_pop_1_push_1_32
+streamit_library_Identity_pop_1_push_1_32 -> DuplicateRowsInternal_31_join
+streamit_library_Identity_pop_1_push_1_33 [ label="streamit_library_Identity_pop_1_push_1" ]
+DuplicateRowsInternal_31_split -> streamit_library_Identity_pop_1_push_1_33
+streamit_library_Identity_pop_1_push_1_33 -> DuplicateRowsInternal_31_join
+streamit_library_Identity_pop_1_push_1_34 [ label="streamit_library_Identity_pop_1_push_1" ]
+DuplicateRowsInternal_31_split -> streamit_library_Identity_pop_1_push_1_34
+streamit_library_Identity_pop_1_push_1_34 -> DuplicateRowsInternal_31_join
+streamit_library_Identity_pop_1_push_1_35 [ label="streamit_library_Identity_pop_1_push_1" ]
+DuplicateRowsInternal_31_split -> streamit_library_Identity_pop_1_push_1_35
+streamit_library_Identity_pop_1_push_1_35 -> DuplicateRowsInternal_31_join
+streamit_library_Identity_pop_1_push_1_36 [ label="streamit_library_Identity_pop_1_push_1" ]
+DuplicateRowsInternal_31_split -> streamit_library_Identity_pop_1_push_1_36
+streamit_library_Identity_pop_1_push_1_36 -> DuplicateRowsInternal_31_join
+streamit_library_Identity_pop_1_push_1_37 [ label="streamit_library_Identity_pop_1_push_1" ]
+DuplicateRowsInternal_31_split -> streamit_library_Identity_pop_1_push_1_37
+streamit_library_Identity_pop_1_push_1_37 -> DuplicateRowsInternal_31_join
+streamit_library_Identity_pop_1_push_1_38 [ label="streamit_library_Identity_pop_1_push_1" ]
+DuplicateRowsInternal_31_split -> streamit_library_Identity_pop_1_push_1_38
+streamit_library_Identity_pop_1_push_1_38 -> DuplicateRowsInternal_31_join
+streamit_library_Identity_pop_1_push_1_39 [ label="streamit_library_Identity_pop_1_push_1" ]
+DuplicateRowsInternal_31_split -> streamit_library_Identity_pop_1_push_1_39
+streamit_library_Identity_pop_1_push_1_39 -> DuplicateRowsInternal_31_join
+streamit_library_Identity_pop_1_push_1_40 [ label="streamit_library_Identity_pop_1_push_1" ]
+DuplicateRowsInternal_31_split -> streamit_library_Identity_pop_1_push_1_40
+streamit_library_Identity_pop_1_push_1_40 -> DuplicateRowsInternal_31_join
+streamit_library_Identity_pop_1_push_1_41 [ label="streamit_library_Identity_pop_1_push_1" ]
+DuplicateRowsInternal_31_split -> streamit_library_Identity_pop_1_push_1_41
+streamit_library_Identity_pop_1_push_1_41 -> DuplicateRowsInternal_31_join
+}
+}
+}
+RearrangeDuplicateBoth_4_split -> Transpose_19_split
+DuplicateRowsInternal_31_join -> RearrangeDuplicateBoth_4_join
+}
+subgraph cluster_MultiplyAccumulateParallel_5 {
+label = "MultiplyAccumulateParallel";
+MultiplyAccumulateParallel_5_split [ label="roundrobin(20, 20, 20, 20, 20, 20, 20, 20, 20, 20)" ]
+MultiplyAccumulateParallel_5_join [ label="roundrobin(1, 1, 1, 1, 1, 1, 1, 1, 1, 1)" ]
+MultiplyAccumulate_pop_20_push_1_43 [ label="MultiplyAccumulate_pop_20_push_1" ]
+MultiplyAccumulateParallel_5_split -> MultiplyAccumulate_pop_20_push_1_43
+MultiplyAccumulate_pop_20_push_1_43 -> MultiplyAccumulateParallel_5_join
+MultiplyAccumulate_pop_20_push_1_44 [ label="MultiplyAccumulate_pop_20_push_1" ]
+MultiplyAccumulateParallel_5_split -> MultiplyAccumulate_pop_20_push_1_44
+MultiplyAccumulate_pop_20_push_1_44 -> MultiplyAccumulateParallel_5_join
+MultiplyAccumulate_pop_20_push_1_45 [ label="MultiplyAccumulate_pop_20_push_1" ]
+MultiplyAccumulateParallel_5_split -> MultiplyAccumulate_pop_20_push_1_45
+MultiplyAccumulate_pop_20_push_1_45 -> MultiplyAccumulateParallel_5_join
+MultiplyAccumulate_pop_20_push_1_46 [ label="MultiplyAccumulate_pop_20_push_1" ]
+MultiplyAccumulateParallel_5_split -> MultiplyAccumulate_pop_20_push_1_46
+MultiplyAccumulate_pop_20_push_1_46 -> MultiplyAccumulateParallel_5_join
+MultiplyAccumulate_pop_20_push_1_47 [ label="MultiplyAccumulate_pop_20_push_1" ]
+MultiplyAccumulateParallel_5_split -> MultiplyAccumulate_pop_20_push_1_47
+MultiplyAccumulate_pop_20_push_1_47 -> MultiplyAccumulateParallel_5_join
+MultiplyAccumulate_pop_20_push_1_48 [ label="MultiplyAccumulate_pop_20_push_1" ]
+MultiplyAccumulateParallel_5_split -> MultiplyAccumulate_pop_20_push_1_48
+MultiplyAccumulate_pop_20_push_1_48 -> MultiplyAccumulateParallel_5_join
+MultiplyAccumulate_pop_20_push_1_49 [ label="MultiplyAccumulate_pop_20_push_1" ]
+MultiplyAccumulateParallel_5_split -> MultiplyAccumulate_pop_20_push_1_49
+MultiplyAccumulate_pop_20_push_1_49 -> MultiplyAccumulateParallel_5_join
+MultiplyAccumulate_pop_20_push_1_50 [ label="MultiplyAccumulate_pop_20_push_1" ]
+MultiplyAccumulateParallel_5_split -> MultiplyAccumulate_pop_20_push_1_50
+MultiplyAccumulate_pop_20_push_1_50 -> MultiplyAccumulateParallel_5_join
+MultiplyAccumulate_pop_20_push_1_51 [ label="MultiplyAccumulate_pop_20_push_1" ]
+MultiplyAccumulateParallel_5_split -> MultiplyAccumulate_pop_20_push_1_51
+MultiplyAccumulate_pop_20_push_1_51 -> MultiplyAccumulateParallel_5_join
+MultiplyAccumulate_pop_20_push_1_52 [ label="MultiplyAccumulate_pop_20_push_1" ]
+MultiplyAccumulateParallel_5_split -> MultiplyAccumulate_pop_20_push_1_52
+MultiplyAccumulate_pop_20_push_1_52 -> MultiplyAccumulateParallel_5_join
+}
+}
+FloatPrinter_pop_1_push_0_3 [ label="FloatPrinter_pop_1_push_0" ]
+}
+}

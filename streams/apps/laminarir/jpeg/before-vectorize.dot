@@ -1,0 +1,64 @@
+digraph streamit {
+subgraph cluster_node1 {
+ label="JPEGFilt_1";
+node2 [ label="RandomSource_71\npush=1\npop=0\npeek =0" ]
+node3 [ label="Int2Float_72\npush=1\npop=1\npeek =1" ]
+node2 -> node3
+node4 [ label="Add_73\npush=1\npop=1\npeek =1" ]
+node3 -> node4
+node5 [ label="DCT_1D_75\npush=8\npop=8\npeek =8" ]
+node4 -> node5
+node6 [ label="Pre_CollapsedDataParallel_1_211\npush=64\npop=64\npeek =64" ]
+node5 -> node6
+node7 [ label="DCT_1D_83\npush=8\npop=8\npeek =8" ]
+node6 -> node7
+node8 [ label="Post_CollapsedDataParallel_2_212\npush=64\npop=64\npeek =64" ]
+node7 -> node8
+node9 [ label="staticQuantization_92\npush=64\npop=64\npeek =64" ]
+node8 -> node9
+subgraph cluster_node10 {
+ label="BlockDCDifferenceEncoder_93";
+node11 [ label="WEIGHTED_ROUND_ROBIN(1,63)" ]
+node12 [ label="WEIGHTED_ROUND_ROBIN(1,63)" ]
+node13 [ label="IntegerDifferenceEncoder_94\npush=1\npop=1\npeek =1" ]
+node11 -> node13
+node13 -> node12
+node14 [ label="Identity_95\npush=1\npop=1\npeek =1" ]
+node11 -> node14
+node14 -> node12
+}
+node9 -> node11
+node15 [ label="ZigZagOrdering_96\npush=64\npop=64\npeek =64" ]
+node12 -> node15
+node16 [ label="ZigZagUnordering_97\npush=64\npop=64\npeek =64" ]
+node15 -> node16
+subgraph cluster_node17 {
+ label="BlockDCDifferenceDecoder_98";
+node18 [ label="WEIGHTED_ROUND_ROBIN(1,63)" ]
+node19 [ label="WEIGHTED_ROUND_ROBIN(1,63)" ]
+node20 [ label="IntegerDifferenceDecoder_99\npush=1\npop=1\npeek =1" ]
+node18 -> node20
+node20 -> node19
+node21 [ label="Identity_100\npush=1\npop=1\npeek =1" ]
+node18 -> node21
+node21 -> node19
+}
+node16 -> node18
+node22 [ label="staticDeQuantization_102\npush=64\npop=64\npeek =64" ]
+node19 -> node22
+node23 [ label="iDCT_1D_104\npush=8\npop=8\npeek =8" ]
+node22 -> node23
+node24 [ label="Pre_CollapsedDataParallel_1_213\npush=64\npop=64\npeek =64" ]
+node23 -> node24
+node25 [ label="iDCT_1D_112\npush=8\npop=8\npeek =8" ]
+node24 -> node25
+node26 [ label="Post_CollapsedDataParallel_2_214\npush=64\npop=64\npeek =64" ]
+node25 -> node26
+node27 [ label="Add_120\npush=1\npop=1\npeek =1" ]
+node26 -> node27
+node28 [ label="Float2Int_121\npush=1\npop=1\npeek =1" ]
+node27 -> node28
+node29 [ label="Display8BitIntBlock_122\npush=0\npop=8\npeek =8" ]
+node28 -> node29
+}
+}

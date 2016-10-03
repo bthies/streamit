@@ -1,0 +1,72 @@
+digraph streamit {
+size="7.5,10";subgraph cluster_FFT2_256_0 {
+label = "FFT2_256";
+RandomSource_1 -> FFTKernel2_2_split
+FFTKernel2_2_join -> FloatPrinter_3
+RandomSource_1 [ label="RandomSource" ]
+subgraph cluster_FFTKernel2_2 {
+label = "FFTKernel2";
+FFTKernel2_2_split [ label="roundrobin(128, 128)" ]
+FFTKernel2_2_join [ label="roundrobin(128, 128)" ]
+subgraph cluster_AnonFilter_a1_4 {
+label = "AnonFilter_a1";
+FFTReorderSimple_17 -> CombineDFT_7
+CombineDFT_7 -> CombineDFT_8
+CombineDFT_8 -> CombineDFT_9
+CombineDFT_9 -> CombineDFT_10
+CombineDFT_10 -> CombineDFT_11
+CombineDFT_11 -> CombineDFT_12
+subgraph cluster_FFTReorder_6 {
+label = "FFTReorder";
+FFTReorderSimple_13 -> FFTReorderSimple_14
+FFTReorderSimple_14 -> FFTReorderSimple_15
+FFTReorderSimple_15 -> FFTReorderSimple_16
+FFTReorderSimple_16 -> FFTReorderSimple_17
+FFTReorderSimple_13 [ label="FFTReorderSimple" ]
+FFTReorderSimple_14 [ label="FFTReorderSimple" ]
+FFTReorderSimple_15 [ label="FFTReorderSimple" ]
+FFTReorderSimple_16 [ label="FFTReorderSimple" ]
+FFTReorderSimple_17 [ label="FFTReorderSimple" ]
+}
+CombineDFT_7 [ label="CombineDFT" ]
+CombineDFT_8 [ label="CombineDFT" ]
+CombineDFT_9 [ label="CombineDFT" ]
+CombineDFT_10 [ label="CombineDFT" ]
+CombineDFT_11 [ label="CombineDFT" ]
+CombineDFT_12 [ label="CombineDFT" ]
+}
+FFTKernel2_2_split -> FFTReorderSimple_13
+CombineDFT_12 -> FFTKernel2_2_join
+subgraph cluster_AnonFilter_a1_5 {
+label = "AnonFilter_a1";
+FFTReorderSimple_39 -> CombineDFT_29
+CombineDFT_29 -> CombineDFT_30
+CombineDFT_30 -> CombineDFT_31
+CombineDFT_31 -> CombineDFT_32
+CombineDFT_32 -> CombineDFT_33
+CombineDFT_33 -> CombineDFT_34
+subgraph cluster_FFTReorder_28 {
+label = "FFTReorder";
+FFTReorderSimple_35 -> FFTReorderSimple_36
+FFTReorderSimple_36 -> FFTReorderSimple_37
+FFTReorderSimple_37 -> FFTReorderSimple_38
+FFTReorderSimple_38 -> FFTReorderSimple_39
+FFTReorderSimple_35 [ label="FFTReorderSimple" ]
+FFTReorderSimple_36 [ label="FFTReorderSimple" ]
+FFTReorderSimple_37 [ label="FFTReorderSimple" ]
+FFTReorderSimple_38 [ label="FFTReorderSimple" ]
+FFTReorderSimple_39 [ label="FFTReorderSimple" ]
+}
+CombineDFT_29 [ label="CombineDFT" ]
+CombineDFT_30 [ label="CombineDFT" ]
+CombineDFT_31 [ label="CombineDFT" ]
+CombineDFT_32 [ label="CombineDFT" ]
+CombineDFT_33 [ label="CombineDFT" ]
+CombineDFT_34 [ label="CombineDFT" ]
+}
+FFTKernel2_2_split -> FFTReorderSimple_35
+CombineDFT_34 -> FFTKernel2_2_join
+}
+FloatPrinter_3 [ label="FloatPrinter" ]
+}
+}

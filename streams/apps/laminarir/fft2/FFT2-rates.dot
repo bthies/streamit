@@ -1,0 +1,56 @@
+digraph streamit {
+size="7.5,10";subgraph cluster_FFT2_0 {
+label = "FFT2";
+RandomSource_pop_0_push_1_1 -> FFTKernel2_2_split
+FFTKernel2_2_join -> FloatPrinter_pop_1_push_0_3
+RandomSource_pop_0_push_1_1 [ label="RandomSource_pop_0_push_1" ]
+subgraph cluster_FFTKernel2_2 {
+label = "FFTKernel2";
+FFTKernel2_2_split [ label="roundrobin(32, 32)" ]
+FFTKernel2_2_join [ label="roundrobin(32, 32)" ]
+subgraph cluster_AnonFilter_a1_4 {
+label = "AnonFilter_a1";
+FFTReorderSimple_pop_8_push_8_13 -> CombineDFT_pop_4_push_4_7
+CombineDFT_pop_4_push_4_7 -> CombineDFT_pop_8_push_8_8
+CombineDFT_pop_8_push_8_8 -> CombineDFT_pop_16_push_16_9
+CombineDFT_pop_16_push_16_9 -> CombineDFT_pop_32_push_32_10
+subgraph cluster_FFTReorder_6 {
+label = "FFTReorder";
+FFTReorderSimple_pop_32_push_32_11 -> FFTReorderSimple_pop_16_push_16_12
+FFTReorderSimple_pop_16_push_16_12 -> FFTReorderSimple_pop_8_push_8_13
+FFTReorderSimple_pop_32_push_32_11 [ label="FFTReorderSimple_pop_32_push_32" ]
+FFTReorderSimple_pop_16_push_16_12 [ label="FFTReorderSimple_pop_16_push_16" ]
+FFTReorderSimple_pop_8_push_8_13 [ label="FFTReorderSimple_pop_8_push_8" ]
+}
+CombineDFT_pop_4_push_4_7 [ label="CombineDFT_pop_4_push_4" ]
+CombineDFT_pop_8_push_8_8 [ label="CombineDFT_pop_8_push_8" ]
+CombineDFT_pop_16_push_16_9 [ label="CombineDFT_pop_16_push_16" ]
+CombineDFT_pop_32_push_32_10 [ label="CombineDFT_pop_32_push_32" ]
+}
+FFTKernel2_2_split -> FFTReorderSimple_pop_32_push_32_11
+CombineDFT_pop_32_push_32_10 -> FFTKernel2_2_join
+subgraph cluster_AnonFilter_a1_5 {
+label = "AnonFilter_a1";
+FFTReorderSimple_pop_8_push_8_27 -> CombineDFT_pop_4_push_4_21
+CombineDFT_pop_4_push_4_21 -> CombineDFT_pop_8_push_8_22
+CombineDFT_pop_8_push_8_22 -> CombineDFT_pop_16_push_16_23
+CombineDFT_pop_16_push_16_23 -> CombineDFT_pop_32_push_32_24
+subgraph cluster_FFTReorder_20 {
+label = "FFTReorder";
+FFTReorderSimple_pop_32_push_32_25 -> FFTReorderSimple_pop_16_push_16_26
+FFTReorderSimple_pop_16_push_16_26 -> FFTReorderSimple_pop_8_push_8_27
+FFTReorderSimple_pop_32_push_32_25 [ label="FFTReorderSimple_pop_32_push_32" ]
+FFTReorderSimple_pop_16_push_16_26 [ label="FFTReorderSimple_pop_16_push_16" ]
+FFTReorderSimple_pop_8_push_8_27 [ label="FFTReorderSimple_pop_8_push_8" ]
+}
+CombineDFT_pop_4_push_4_21 [ label="CombineDFT_pop_4_push_4" ]
+CombineDFT_pop_8_push_8_22 [ label="CombineDFT_pop_8_push_8" ]
+CombineDFT_pop_16_push_16_23 [ label="CombineDFT_pop_16_push_16" ]
+CombineDFT_pop_32_push_32_24 [ label="CombineDFT_pop_32_push_32" ]
+}
+FFTKernel2_2_split -> FFTReorderSimple_pop_32_push_32_25
+CombineDFT_pop_32_push_32_24 -> FFTKernel2_2_join
+}
+FloatPrinter_pop_1_push_0_3 [ label="FloatPrinter_pop_1_push_0" ]
+}
+}

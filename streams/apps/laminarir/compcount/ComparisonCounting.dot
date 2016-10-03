@@ -1,0 +1,74 @@
+digraph streamit {
+size="7.5,10";subgraph cluster_ComparisonCounting_0 {
+label = "ComparisonCounting";
+RandomSource_1 -> CountSortSplit_2_split
+CountSortSplit_2_join -> RearrangeIndices_3
+RearrangeIndices_3 -> IntPrinter_4
+RandomSource_1 [ label="RandomSource" ]
+subgraph cluster_CountSortSplit_2 {
+label = "CountSortSplit";
+CountSortSplit_2_split [ label="duplicate" ]
+CountSortSplit_2_join [ label="roundrobin(16, 16)" ]
+subgraph cluster_CountSplit_5 {
+label = "CountSplit";
+CountSplit_5_split [ label="duplicate" ]
+CountSplit_5_join [ label="roundrobin(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)" ]
+Counter_7 [ label="Counter" ]
+CountSplit_5_split -> Counter_7
+Counter_7 -> CountSplit_5_join
+Counter_8 [ label="Counter" ]
+CountSplit_5_split -> Counter_8
+Counter_8 -> CountSplit_5_join
+Counter_9 [ label="Counter" ]
+CountSplit_5_split -> Counter_9
+Counter_9 -> CountSplit_5_join
+Counter_10 [ label="Counter" ]
+CountSplit_5_split -> Counter_10
+Counter_10 -> CountSplit_5_join
+Counter_11 [ label="Counter" ]
+CountSplit_5_split -> Counter_11
+Counter_11 -> CountSplit_5_join
+Counter_12 [ label="Counter" ]
+CountSplit_5_split -> Counter_12
+Counter_12 -> CountSplit_5_join
+Counter_13 [ label="Counter" ]
+CountSplit_5_split -> Counter_13
+Counter_13 -> CountSplit_5_join
+Counter_14 [ label="Counter" ]
+CountSplit_5_split -> Counter_14
+Counter_14 -> CountSplit_5_join
+Counter_15 [ label="Counter" ]
+CountSplit_5_split -> Counter_15
+Counter_15 -> CountSplit_5_join
+Counter_16 [ label="Counter" ]
+CountSplit_5_split -> Counter_16
+Counter_16 -> CountSplit_5_join
+Counter_17 [ label="Counter" ]
+CountSplit_5_split -> Counter_17
+Counter_17 -> CountSplit_5_join
+Counter_18 [ label="Counter" ]
+CountSplit_5_split -> Counter_18
+Counter_18 -> CountSplit_5_join
+Counter_19 [ label="Counter" ]
+CountSplit_5_split -> Counter_19
+Counter_19 -> CountSplit_5_join
+Counter_20 [ label="Counter" ]
+CountSplit_5_split -> Counter_20
+Counter_20 -> CountSplit_5_join
+Counter_21 [ label="Counter" ]
+CountSplit_5_split -> Counter_21
+Counter_21 -> CountSplit_5_join
+Counter_22 [ label="Counter" ]
+CountSplit_5_split -> Counter_22
+Counter_22 -> CountSplit_5_join
+}
+CountSortSplit_2_split -> CountSplit_5_split
+CountSplit_5_join -> CountSortSplit_2_join
+streamit_library_Identity_6 [ label="streamit_library_Identity" ]
+CountSortSplit_2_split -> streamit_library_Identity_6
+streamit_library_Identity_6 -> CountSortSplit_2_join
+}
+RearrangeIndices_3 [ label="RearrangeIndices" ]
+IntPrinter_4 [ label="IntPrinter" ]
+}
+}

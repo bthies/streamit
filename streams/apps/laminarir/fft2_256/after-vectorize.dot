@@ -1,0 +1,66 @@
+digraph streamit {
+subgraph cluster_node1 {
+ label="FFT2_256_1";
+node2 [ label="RandomSource_31\npush=1\npop=0\npeek =0" ]
+subgraph cluster_node3 {
+ label="FFTKernel2_22";
+node4 [ label="WEIGHTED_ROUND_ROBIN(128,128)" ]
+node5 [ label="WEIGHTED_ROUND_ROBIN(128,128)" ]
+subgraph cluster_node6 {
+ label="AnonFilter_a1_24";
+node7 [ label="FFTReorderSimple_32\npush=128\npop=128\npeek =128" ]
+node8 [ label="FFTReorderSimple_33\npush=64\npop=64\npeek =64" ]
+node7 -> node8
+node9 [ label="FFTReorderSimple_34\npush=32\npop=32\npeek =32" ]
+node8 -> node9
+node10 [ label="FFTReorderSimple_35\npush=16\npop=16\npeek =16" ]
+node9 -> node10
+node11 [ label="FFTReorderSimple_36\npush=8\npop=8\npeek =8" ]
+node10 -> node11
+node12 [ label="CombineDFT_37\npush=4\npop=4\npeek =4" ]
+node11 -> node12
+node13 [ label="CombineDFT_38\npush=8\npop=8\npeek =8" ]
+node12 -> node13
+node14 [ label="CombineDFT_39\npush=16\npop=16\npeek =16" ]
+node13 -> node14
+node15 [ label="CombineDFT_40\npush=32\npop=32\npeek =32" ]
+node14 -> node15
+node16 [ label="CombineDFT_41\npush=64\npop=64\npeek =64" ]
+node15 -> node16
+node17 [ label="CombineDFT_42\npush=128\npop=128\npeek =128" ]
+node16 -> node17
+}
+node4 -> node7
+node17 -> node5
+subgraph cluster_node18 {
+ label="AnonFilter_a1_28";
+node19 [ label="FFTReorderSimple_43\npush=128\npop=128\npeek =128" ]
+node20 [ label="FFTReorderSimple_44\npush=64\npop=64\npeek =64" ]
+node19 -> node20
+node21 [ label="FFTReorderSimple_45\npush=32\npop=32\npeek =32" ]
+node20 -> node21
+node22 [ label="FFTReorderSimple_46\npush=16\npop=16\npeek =16" ]
+node21 -> node22
+node23 [ label="FFTReorderSimple_47\npush=8\npop=8\npeek =8" ]
+node22 -> node23
+node24 [ label="CombineDFT_48\npush=4\npop=4\npeek =4" ]
+node23 -> node24
+node25 [ label="CombineDFT_49\npush=8\npop=8\npeek =8" ]
+node24 -> node25
+node26 [ label="CombineDFT_50\npush=16\npop=16\npeek =16" ]
+node25 -> node26
+node27 [ label="CombineDFT_51\npush=32\npop=32\npeek =32" ]
+node26 -> node27
+node28 [ label="CombineDFT_52\npush=64\npop=64\npeek =64" ]
+node27 -> node28
+node29 [ label="CombineDFT_53\npush=128\npop=128\npeek =128" ]
+node28 -> node29
+}
+node4 -> node19
+node29 -> node5
+}
+node2 -> node4
+node30 [ label="FloatPrinter_54\npush=0\npop=1\npeek =1" ]
+node5 -> node30
+}
+}

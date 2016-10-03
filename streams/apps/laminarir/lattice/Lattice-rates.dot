@@ -1,0 +1,156 @@
+digraph streamit {
+size="7.5,10";subgraph cluster_Lattice_0 {
+label = "Lattice";
+RandomSource_pop_0_push_1_1 -> ZeroStage_2_split
+ZeroStage_2_join -> LatDel_15_split
+LatFilt_pop_2_push_2_16 -> LatDel_21_split
+LatFilt_pop_2_push_2_22 -> LatDel_27_split
+LatFilt_pop_2_push_2_28 -> LatDel_33_split
+LatFilt_pop_2_push_2_34 -> LatDel_39_split
+LatFilt_pop_2_push_2_40 -> LatDel_45_split
+LatFilt_pop_2_push_2_46 -> LatDel_51_split
+LatFilt_pop_2_push_2_52 -> LatDel_57_split
+LatFilt_pop_2_push_2_58 -> LastStage_pop_2_push_0_11
+RandomSource_pop_0_push_1_1 [ label="RandomSource_pop_0_push_1" ]
+subgraph cluster_ZeroStage_2 {
+label = "ZeroStage";
+ZeroStage_2_split [ label="duplicate" ]
+ZeroStage_2_join [ label="roundrobin(1, 1)" ]
+streamit_library_Identity_pop_1_push_1_12 [ label="streamit_library_Identity_pop_1_push_1" ]
+ZeroStage_2_split -> streamit_library_Identity_pop_1_push_1_12
+streamit_library_Identity_pop_1_push_1_12 -> ZeroStage_2_join
+streamit_library_Identity_pop_1_push_1_13 [ label="streamit_library_Identity_pop_1_push_1" ]
+ZeroStage_2_split -> streamit_library_Identity_pop_1_push_1_13
+streamit_library_Identity_pop_1_push_1_13 -> ZeroStage_2_join
+}
+subgraph cluster_CompStage_3 {
+label = "CompStage";
+LatDel_15_join -> LatFilt_pop_2_push_2_16
+subgraph cluster_LatDel_15 {
+label = "LatDel";
+LatDel_15_split [ label="duplicate" ]
+LatDel_15_join [ label="roundrobin(1, 1)" ]
+streamit_library_Identity_pop_1_push_1_17 [ label="streamit_library_Identity_pop_1_push_1" ]
+LatDel_15_split -> streamit_library_Identity_pop_1_push_1_17
+streamit_library_Identity_pop_1_push_1_17 -> LatDel_15_join
+DelayOne_pop_1_push_1_18 [ label="DelayOne_pop_1_push_1" ]
+LatDel_15_split -> DelayOne_pop_1_push_1_18
+DelayOne_pop_1_push_1_18 -> LatDel_15_join
+}
+LatFilt_pop_2_push_2_16 [ label="LatFilt_pop_2_push_2" ]
+}
+subgraph cluster_CompStage_4 {
+label = "CompStage";
+LatDel_21_join -> LatFilt_pop_2_push_2_22
+subgraph cluster_LatDel_21 {
+label = "LatDel";
+LatDel_21_split [ label="duplicate" ]
+LatDel_21_join [ label="roundrobin(1, 1)" ]
+streamit_library_Identity_pop_1_push_1_23 [ label="streamit_library_Identity_pop_1_push_1" ]
+LatDel_21_split -> streamit_library_Identity_pop_1_push_1_23
+streamit_library_Identity_pop_1_push_1_23 -> LatDel_21_join
+DelayOne_pop_1_push_1_24 [ label="DelayOne_pop_1_push_1" ]
+LatDel_21_split -> DelayOne_pop_1_push_1_24
+DelayOne_pop_1_push_1_24 -> LatDel_21_join
+}
+LatFilt_pop_2_push_2_22 [ label="LatFilt_pop_2_push_2" ]
+}
+subgraph cluster_CompStage_5 {
+label = "CompStage";
+LatDel_27_join -> LatFilt_pop_2_push_2_28
+subgraph cluster_LatDel_27 {
+label = "LatDel";
+LatDel_27_split [ label="duplicate" ]
+LatDel_27_join [ label="roundrobin(1, 1)" ]
+streamit_library_Identity_pop_1_push_1_29 [ label="streamit_library_Identity_pop_1_push_1" ]
+LatDel_27_split -> streamit_library_Identity_pop_1_push_1_29
+streamit_library_Identity_pop_1_push_1_29 -> LatDel_27_join
+DelayOne_pop_1_push_1_30 [ label="DelayOne_pop_1_push_1" ]
+LatDel_27_split -> DelayOne_pop_1_push_1_30
+DelayOne_pop_1_push_1_30 -> LatDel_27_join
+}
+LatFilt_pop_2_push_2_28 [ label="LatFilt_pop_2_push_2" ]
+}
+subgraph cluster_CompStage_6 {
+label = "CompStage";
+LatDel_33_join -> LatFilt_pop_2_push_2_34
+subgraph cluster_LatDel_33 {
+label = "LatDel";
+LatDel_33_split [ label="duplicate" ]
+LatDel_33_join [ label="roundrobin(1, 1)" ]
+streamit_library_Identity_pop_1_push_1_35 [ label="streamit_library_Identity_pop_1_push_1" ]
+LatDel_33_split -> streamit_library_Identity_pop_1_push_1_35
+streamit_library_Identity_pop_1_push_1_35 -> LatDel_33_join
+DelayOne_pop_1_push_1_36 [ label="DelayOne_pop_1_push_1" ]
+LatDel_33_split -> DelayOne_pop_1_push_1_36
+DelayOne_pop_1_push_1_36 -> LatDel_33_join
+}
+LatFilt_pop_2_push_2_34 [ label="LatFilt_pop_2_push_2" ]
+}
+subgraph cluster_CompStage_7 {
+label = "CompStage";
+LatDel_39_join -> LatFilt_pop_2_push_2_40
+subgraph cluster_LatDel_39 {
+label = "LatDel";
+LatDel_39_split [ label="duplicate" ]
+LatDel_39_join [ label="roundrobin(1, 1)" ]
+streamit_library_Identity_pop_1_push_1_41 [ label="streamit_library_Identity_pop_1_push_1" ]
+LatDel_39_split -> streamit_library_Identity_pop_1_push_1_41
+streamit_library_Identity_pop_1_push_1_41 -> LatDel_39_join
+DelayOne_pop_1_push_1_42 [ label="DelayOne_pop_1_push_1" ]
+LatDel_39_split -> DelayOne_pop_1_push_1_42
+DelayOne_pop_1_push_1_42 -> LatDel_39_join
+}
+LatFilt_pop_2_push_2_40 [ label="LatFilt_pop_2_push_2" ]
+}
+subgraph cluster_CompStage_8 {
+label = "CompStage";
+LatDel_45_join -> LatFilt_pop_2_push_2_46
+subgraph cluster_LatDel_45 {
+label = "LatDel";
+LatDel_45_split [ label="duplicate" ]
+LatDel_45_join [ label="roundrobin(1, 1)" ]
+streamit_library_Identity_pop_1_push_1_47 [ label="streamit_library_Identity_pop_1_push_1" ]
+LatDel_45_split -> streamit_library_Identity_pop_1_push_1_47
+streamit_library_Identity_pop_1_push_1_47 -> LatDel_45_join
+DelayOne_pop_1_push_1_48 [ label="DelayOne_pop_1_push_1" ]
+LatDel_45_split -> DelayOne_pop_1_push_1_48
+DelayOne_pop_1_push_1_48 -> LatDel_45_join
+}
+LatFilt_pop_2_push_2_46 [ label="LatFilt_pop_2_push_2" ]
+}
+subgraph cluster_CompStage_9 {
+label = "CompStage";
+LatDel_51_join -> LatFilt_pop_2_push_2_52
+subgraph cluster_LatDel_51 {
+label = "LatDel";
+LatDel_51_split [ label="duplicate" ]
+LatDel_51_join [ label="roundrobin(1, 1)" ]
+streamit_library_Identity_pop_1_push_1_53 [ label="streamit_library_Identity_pop_1_push_1" ]
+LatDel_51_split -> streamit_library_Identity_pop_1_push_1_53
+streamit_library_Identity_pop_1_push_1_53 -> LatDel_51_join
+DelayOne_pop_1_push_1_54 [ label="DelayOne_pop_1_push_1" ]
+LatDel_51_split -> DelayOne_pop_1_push_1_54
+DelayOne_pop_1_push_1_54 -> LatDel_51_join
+}
+LatFilt_pop_2_push_2_52 [ label="LatFilt_pop_2_push_2" ]
+}
+subgraph cluster_CompStage_10 {
+label = "CompStage";
+LatDel_57_join -> LatFilt_pop_2_push_2_58
+subgraph cluster_LatDel_57 {
+label = "LatDel";
+LatDel_57_split [ label="duplicate" ]
+LatDel_57_join [ label="roundrobin(1, 1)" ]
+streamit_library_Identity_pop_1_push_1_59 [ label="streamit_library_Identity_pop_1_push_1" ]
+LatDel_57_split -> streamit_library_Identity_pop_1_push_1_59
+streamit_library_Identity_pop_1_push_1_59 -> LatDel_57_join
+DelayOne_pop_1_push_1_60 [ label="DelayOne_pop_1_push_1" ]
+LatDel_57_split -> DelayOne_pop_1_push_1_60
+DelayOne_pop_1_push_1_60 -> LatDel_57_join
+}
+LatFilt_pop_2_push_2_58 [ label="LatFilt_pop_2_push_2" ]
+}
+LastStage_pop_2_push_0_11 [ label="LastStage_pop_2_push_0" ]
+}
+}

@@ -1,0 +1,172 @@
+digraph streamit {
+subgraph cluster_node1 {
+ label="MatrixMult";
+node2 [ label="RandomSource" ]
+subgraph cluster_node3 {
+ label="MatrixMultiply";
+subgraph cluster_node4 {
+ label="RearrangeDuplicateBoth";
+node5 [ label="roundrobin(100,100)" ]
+node6 [ label="roundrobin(1,1)" ]
+subgraph cluster_node7 {
+ label="DuplicateRows";
+subgraph cluster_node8 {
+ label="DuplicateRowsInternal";
+node9 [ label="duplicate" ]
+node10 [ label="roundrobin(10,10,10,10,10,10,10,10,10,10)" ]
+node11 [ label="Identity" ]
+node9 -> node11
+node11 -> node10
+node12 [ label="Identity" ]
+node9 -> node12
+node12 -> node10
+node13 [ label="Identity" ]
+node9 -> node13
+node13 -> node10
+node14 [ label="Identity" ]
+node9 -> node14
+node14 -> node10
+node15 [ label="Identity" ]
+node9 -> node15
+node15 -> node10
+node16 [ label="Identity" ]
+node9 -> node16
+node16 -> node10
+node17 [ label="Identity" ]
+node9 -> node17
+node17 -> node10
+node18 [ label="Identity" ]
+node9 -> node18
+node18 -> node10
+node19 [ label="Identity" ]
+node9 -> node19
+node19 -> node10
+node20 [ label="Identity" ]
+node9 -> node20
+node20 -> node10
+}
+}
+node5 -> node9
+node10 -> node6
+subgraph cluster_node21 {
+ label="RearrangeDuplicate";
+subgraph cluster_node22 {
+ label="Transpose";
+node23 [ label="roundrobin(1,1,1,1,1,1,1,1,1,1)" ]
+node24 [ label="roundrobin(10,10,10,10,10,10,10,10,10,10)" ]
+node25 [ label="Identity" ]
+node23 -> node25
+node25 -> node24
+node26 [ label="Identity" ]
+node23 -> node26
+node26 -> node24
+node27 [ label="Identity" ]
+node23 -> node27
+node27 -> node24
+node28 [ label="Identity" ]
+node23 -> node28
+node28 -> node24
+node29 [ label="Identity" ]
+node23 -> node29
+node29 -> node24
+node30 [ label="Identity" ]
+node23 -> node30
+node30 -> node24
+node31 [ label="Identity" ]
+node23 -> node31
+node31 -> node24
+node32 [ label="Identity" ]
+node23 -> node32
+node32 -> node24
+node33 [ label="Identity" ]
+node23 -> node33
+node33 -> node24
+node34 [ label="Identity" ]
+node23 -> node34
+node34 -> node24
+}
+subgraph cluster_node35 {
+ label="DuplicateRows";
+subgraph cluster_node36 {
+ label="DuplicateRowsInternal";
+node37 [ label="duplicate" ]
+node38 [ label="roundrobin(100,100,100,100,100,100,100,100,100,100)" ]
+node39 [ label="Identity" ]
+node37 -> node39
+node39 -> node38
+node40 [ label="Identity" ]
+node37 -> node40
+node40 -> node38
+node41 [ label="Identity" ]
+node37 -> node41
+node41 -> node38
+node42 [ label="Identity" ]
+node37 -> node42
+node42 -> node38
+node43 [ label="Identity" ]
+node37 -> node43
+node43 -> node38
+node44 [ label="Identity" ]
+node37 -> node44
+node44 -> node38
+node45 [ label="Identity" ]
+node37 -> node45
+node45 -> node38
+node46 [ label="Identity" ]
+node37 -> node46
+node46 -> node38
+node47 [ label="Identity" ]
+node37 -> node47
+node47 -> node38
+node48 [ label="Identity" ]
+node37 -> node48
+node48 -> node38
+}
+}
+node24 -> node37
+}
+node5 -> node23
+node38 -> node6
+}
+subgraph cluster_node49 {
+ label="MultiplyAccumulateParallel";
+node50 [ label="roundrobin(20,20,20,20,20,20,20,20,20,20)" ]
+node51 [ label="roundrobin(1,1,1,1,1,1,1,1,1,1)" ]
+node52 [ label="MultiplyAccumulate" ]
+node50 -> node52
+node52 -> node51
+node53 [ label="MultiplyAccumulate" ]
+node50 -> node53
+node53 -> node51
+node54 [ label="MultiplyAccumulate" ]
+node50 -> node54
+node54 -> node51
+node55 [ label="MultiplyAccumulate" ]
+node50 -> node55
+node55 -> node51
+node56 [ label="MultiplyAccumulate" ]
+node50 -> node56
+node56 -> node51
+node57 [ label="MultiplyAccumulate" ]
+node50 -> node57
+node57 -> node51
+node58 [ label="MultiplyAccumulate" ]
+node50 -> node58
+node58 -> node51
+node59 [ label="MultiplyAccumulate" ]
+node50 -> node59
+node59 -> node51
+node60 [ label="MultiplyAccumulate" ]
+node50 -> node60
+node60 -> node51
+node61 [ label="MultiplyAccumulate" ]
+node50 -> node61
+node61 -> node51
+}
+node6 -> node50
+}
+node2 -> node5
+node62 [ label="FloatPrinter" ]
+node51 -> node62
+}
+}

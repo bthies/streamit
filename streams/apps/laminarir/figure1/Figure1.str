@@ -1,0 +1,34 @@
+void->void pipeline Figure1 {
+    add A();
+    add float->float splitjoin
+    {
+	split duplicate;
+	add B();
+	add C();
+	join roundrobin;
+    }
+    add D();
+}
+void->float stateful filter A(){
+    int seed = 0;
+    work push 1
+    {push(frand());}
+    float frand() { 
+	seed = (65793 * seed + 4282663) % 8388608;
+	return seed < 0 ? -seed : seed; // positive numbers to avoid NaN later
+    }
+}
+float->float filter B(){
+    work push 1 pop 2{
+	push(pop()+pop()/2);}
+}
+float->float filter C() {
+    work push 1 pop 2{
+	push(sqrt(pop()*pop()));}
+}
+float->void filter D(){
+    work pop 2{
+	println(pop());
+	println(pop());}
+}
+

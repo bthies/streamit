@@ -1,0 +1,628 @@
+// Right now this file supports a lot of "jpeg like" functions.
+// Conceptually, all the pieces and algorithms are here for building an actual JPEG implementation.
+// - Matthew Drake (madrake@gmail.com)
+
+/* If #include support works, uncomment the next line and remove the next set
+   of library functions and put them in JPEG.lib */
+// #include "JPEG.lib"
+/* ----- START OF JPEG.lib FUNCTIONS ----- */
+/* ----- These are functions generally useful for JPEG encoding/decoding */
+
+/* Input:  3 integers between 0 and 255 which represent an RGB value
+   Output: 3 float values between 0 and 255 which represent a YUV value */
+int->float filter RGBtoYUV {
+  work pop 3 push 3 {
+    int R = pop();
+    int G = pop();
+    int B = pop();
+    float Y_float = 0.299*R+0.587*G+0.114*B;
+    float U_float = 0.492*(B-Y_float);
+    float V_float = 0.877*(R-Y_float);
+ 
+    // Y/255 ranges from 0 to 1, U from -.436 to + .436, V from -.515 to .715
+    // This shifts them to be between 0 and 1;
+    U_float = (U_float+111.18)*(1/0.872);
+    V_float = (V_float+131.325)*(1/1.23);
+
+    push(Y_float*255);
+    push(U_float*255);
+    push(V_float*255);
+  }
+}
+
+/* Input:  3 float values between 0 and 255 which represent a YUV value
+   Output: 3 integers between 0 and 255 which represent an RGB value */
+float->int filter YUVtoRGB {
+  work pop 3 push 3 {
+    float Y = pop()/255;
+    float U = pop()/255;
+    float V = pop()/255;
+    float Y_float = Y;
+    float U_float = (U*0.872)-111.18;
+    float V_float = (V*1.23)-131.325;
+    float R_float = Y_float+1.140*V_float;
+    float G_float = Y_float-0.394*U_float-0.581*V_float;
+    float B_float = Y_float+2.032*U_float;
+    int R = (int) R_float;
+    int G = (int) G_float;
+    int B = (int) B_float;
+    push(R);
+    push(G);
+    push(B);
+  }
+}
+
+// Matt's NOTE - The following are DCT functions. They don't appear to produce exactly the same results as 
+// as the DCT performed in the "JPEG Still Picture Compression Standard" example on P. 12 (between a and b).
+// I should get rid of these functions and just use the already optimized StreamIt DCT functions, but I want
+// to make sure that the DCT is done exactly the same way first.
+
+/* Parameters: size means that the DCT will assume the input will be 
+               interpreted as a size array of values.
+/* Input:      size floating point values which represent a signal
+/* Output:     size floating point values representing the 
+               1-Dimensional Discrete Cosine Transformation of the signal. */
+float->float filter DCT_1D(int size) {
+  work pop size push size {
+    float Cu;
+    for (int u = 0; u < size; u++) {
+      if (u == 0) 
+        Cu = 1/sqrt(2);
+      else
+        Cu = 1;
+      float tempsum = 0;
+      for (int x = 0; x < size; x++) {
+        tempsum += peek(x)*cos(u*pi*(2.0*x+1)/(2.0*size));
+      }
+      push((1.0/2.0)*Cu*tempsum);
+    }
+    for (int x = 0; x < size; x++) {
+      pop();
+    }
+  }
+}
+
+/* Parameters: size means that the DCT will assume the input will be 
+               interpreted as a size * size array of values.
+/* Input:      size * size floating point values which represent a signal
+/* Output:     size * size floating point values representing the 
+               2-Dimensional Discrete Cosine Transformation of the signal.*/
+float->float pipeline DCT_2D(int size) {
+  add helper_Parallel_8_DCT_1D_X(size);
+  add helper_Parallel_8_DCT_1D_Y(size); 
+}
+
+/* Parameters: size means that the iDCT will assume the input will be 
+               interpreted as a size array of values.
+/* Input:      size floating point values which represent
+               the 1-D DCT of the signal.
+/* Output:     size floating point values representing the signal.*/
+float->float filter iDCT_1D(int size) {
+  work pop size push size {
+    float Cu;
+    for (int x = 0; x < size; x++) {
+      float tempsum = 0;
+      for (int u = 0; u < size; u++) {
+        if (u == 0)
+          Cu = 1/sqrt(2);
+        else
+          Cu = 1;
+        tempsum += Cu*peek(u)*cos(u*pi*(2.0*x+1)/(2.0*size));
+      }
+    push((1.0/2.0)*tempsum);
+    }
+    for (int x = 0; x < size; x++) {
+      pop();
+    }
+  }
+}
+
+/* Parameters: size means that the iDCT will assume the input will be 
+               interpreted as a size * size array of values.
+/* Input:      size * size floating point values which represent
+               the 2-D DCT of the signal.
+/* Output:     size * size floating point values representing the signal.*/
+float->float pipeline iDCT_2D(int size) {
+  add helper_Parallel_8_iDCT_1D_X(size);
+  add helper_Parallel_8_iDCT_1D_Y(size); 
+}
+
+/* -- Internally Used Function -- */
+float->float splitjoin helper_Parallel_8_DCT_1D_X(int size) {
+  split roundrobin(size);
+  for (int i = 0; i < size; i++) {
+    add DCT_1D(size);
+  }
+  join roundrobin(size);
+}
+
+/* -- Internally Used Function -- */
+float->float splitjoin helper_Parallel_8_DCT_1D_Y(int size) {
+  split roundrobin(1);
+  for (int i = 0; i < size; i++) {
+    add DCT_1D(size);
+  }
+  join roundrobin(1);
+}
+
+/* -- Internally Used Function -- */
+float->float splitjoin helper_Parallel_8_iDCT_1D_X(int size) {
+  split roundrobin(size);
+  for (int i = 0; i < size; i++) {
+    add iDCT_1D(size);
+  }
+  join roundrobin(size);
+}
+
+/* -- Internally Used Function -- */
+float->float splitjoin helper_Parallel_8_iDCT_1D_Y(int size) {
+  split roundrobin(1);
+  for (int i = 0; i < size; i++) {
+    add iDCT_1D(size);
+  }
+  join roundrobin(1);
+}
+
+/* Parameters: quantizationTable is an array containing the quantization constants 
+               which the input data will be scaled by.
+   Input: A 64 entry array of floats representing an 8x8 array of DCT frequency values.
+   Output: The frequencies divided by the values in the quantizationTable and then rounded
+           to the nearest integer. */
+float->int filter staticQuantization(int[64] quantizationTable) {
+  work pop 64 push 64 {
+    for (int i = 0; i < 64; i++) {
+      float val = pop() / quantizationTable[i];
+      push((int) (round(val)));
+    }
+  }
+}
+
+/* Parameters: quantizationTable is an array containing the quantization constants 
+               which the input data will be scaled by.
+   Input: A 64 entry array of floats representing an 8x8 array of normalized DCT frequency values.
+   Output: The frequencies multiplied by the values in the quantizationTable and then rounded
+           to the nearest integer. */
+int->float filter staticDeQuantization(int[64] quantizationTable) {
+  work pop 64 push 64 {
+    for (int i = 0; i < 64; i++) {
+      int val = pop() * quantizationTable[i];
+      push((float) val);
+    }
+  }
+}
+
+float->int pipeline staticExampleLuminanceQauntization {
+/* Example quantization table for luminance (grayscale) components 
+   included in the informational annex of the draft JPEG standard part 1. */ 
+  int[64] table_ExampleLuminanceQuantizationTable = {16, 11, 10, 16, 24, 40, 51, 61,
+                                                     12, 12, 14, 19, 26, 58, 60, 55,
+						     14, 13, 16, 24, 40, 57, 69, 56,
+						     14, 17, 22, 29, 51, 87, 80, 62,
+						     18, 22, 37, 56, 68, 109, 103, 77,
+						     24, 35, 55, 64, 81, 104, 113, 92,
+						     49, 64, 78, 87, 103, 121, 120, 101,
+						     72, 92, 95, 98, 112, 100, 103, 99};
+  add staticQuantization(table_ExampleLuminanceQuantizationTable);
+}
+
+int->float pipeline staticExampleLuminanceDeQauntization {
+/* Example quantization table for luminance (grayscale) components 
+   included in the informational annex of the draft JPEG standard part 1. */ 
+  int[64] table_ExampleLuminanceQuantizationTable = {16, 11, 10, 16, 24, 40, 51, 61,
+                                                     12, 12, 14, 19, 26, 58, 60, 55,
+						     14, 13, 16, 24, 40, 57, 69, 56,
+						     14, 17, 22, 29, 51, 87, 80, 62,
+						     18, 22, 37, 56, 68, 109, 103, 77,
+						     24, 35, 55, 64, 81, 104, 113, 92,
+						     49, 64, 78, 87, 103, 121, 120, 101,
+						     72, 92, 95, 98, 112, 100, 103, 99};
+  add staticDeQuantization(table_ExampleLuminanceQuantizationTable);
+}
+
+/* Input: An 8x8 integer block represented by 64 integers.
+   Output: The first integer of the block represents the DC component of an 8x8 block.
+           the DC component is treated specially and is encoded as the difference
+           from the previous block, rather than storing it directly. */
+int->int splitjoin BlockDCDifferenceEncoder {
+  split roundrobin(1,63);
+  add IntegerDifferenceEncoder;
+  add Identity<int>;
+  join roundrobin(1,63);
+}
+
+/* Performs the reverse operation as BlockDCDifferenceEncoder */
+int->int splitjoin BlockDCDifferenceDecoder {
+  split roundrobin(1, 63);
+  add IntegerDifferenceDecoder;
+  add Identity<int>;
+  join roundrobin(1, 63);
+}
+
+/* Input: A series of integers.
+   Output: The first integer input is output unchanged. Each subsequent 
+           value output is the difference between the input and the previous
+           input. */
+/*
+int->int filter IntegerDifferenceEncoder {
+  boolean first;
+  int previous;
+  init {
+    first = true;
+  }
+  work pop 1 push 1 {
+    int temp = pop();
+    if (first) {
+      first = false;
+      push(temp);
+    } else {
+      push(temp - previous);
+    }
+    previous = temp;
+  }
+}
+*/
+/*
+int->int feedbackloop IntegerDifferenceEncoder{
+  join roundrobin;
+  body int->int filter {
+    work pop 2 push 2 {
+      push(peek(1) - peek(0));
+      push(peek(0));
+      pop(); pop();
+    }
+  }
+  loop Identity<int>;
+  split roundrobin;
+  enqueue 0;
+}
+*/
+int->int feedbackloop EncoderFeed{
+  join roundrobin;
+  body int->int filter {
+    work pop 2 push 2 {
+      push(peek(0) - peek(1));
+      push(peek(0));
+      pop(); pop();
+    }
+  }
+  loop Identity<int>;
+  split roundrobin;
+  enqueue 0;
+}
+
+int->int pipeline IntegerDifferenceEncoder{
+  add EncoderFeed;
+  add IDforNothing;
+}
+
+int->int filter IDforNothing{
+    work pop 1 push 1{
+        push(pop());
+    }
+}
+
+/* Performs the reverse operation as BlockDCDifferenceEncoder */
+/*
+int->int filter IntegerDifferenceDecoder {
+  boolean first;
+  int previous;
+  init {
+    first = true;
+  }
+  work pop 1 push 1 {
+    int temp = pop();
+    if (first) {
+      first = false;
+      push(temp);
+    } else {
+      push(temp + previous);
+    }
+    previous = temp;
+  }
+}
+*/
+
+int->int feedbackloop DecoderFeed{
+  join roundrobin;
+  body int->int filter {
+    work pop 2 push 2 {
+      push(peek(0) + peek(1));
+      push(peek(1));
+      pop(); pop();
+    }
+  }
+  loop Identity<int>;
+  split roundrobin;
+  enqueue 0;
+}
+
+int->int pipeline IntegerDifferenceDecoder{
+  add DecoderFeed;
+  add IDforNothing;
+}
+
+/*
+int->int feedbackloop IntegerDifferenceDecoder {
+  join roundrobin;
+  body int->int filter {
+    work pop 2 push 1 {
+      push(peek(0) + peek(1));
+      pop(); pop();
+    }
+  }
+  loop Identity<int>;
+  split duplicate;
+  enqueue 0;
+}
+*/
+
+
+/* Input: A sequence of 64 integers representing an 8x8 block.
+   Output: Outputs the integers in a diagonalized ordering (starting
+           in the top left corner, and then, starting with a move to the 
+           right, working back and forth along diagonals down to the 
+           bottom right corner.) */
+int->int filter ZigZagOrdering {
+  int[64] Ordering = {00, 01, 08, 16, 09, 02, 03, 10, 
+                      17, 24, 32, 25, 18, 11, 04, 05,
+                      12, 19, 26, 33, 40, 48, 41, 34,
+                      27, 20, 13, 06, 07, 14, 21, 28,
+                      35, 42, 49, 56, 57, 50, 43, 36, 
+                      29, 22, 15, 23, 30, 37, 44, 51, 
+                      58, 59, 52, 45, 38, 31, 39, 46,
+                      53, 60, 61, 54, 47, 55, 62, 63};
+  work pop 64 push 64 {
+    for (int i = 0; i < 64; i++)
+      push(peek(Ordering[i]));
+    for (int i = 0; i < 64; i++)
+      pop();
+  }
+}
+
+/* Input: A sequence of 64 integers in a diagonalized order.
+   Output: A sequence of 64 integers representing an 8x8 block. */
+int->int filter ZigZagUnordering {
+  int[64] Ordering = {00, 01, 05, 06, 14, 15, 27, 28,
+                      02, 04, 07, 13, 16, 26, 29, 42,
+                      03, 08, 12, 17, 25, 30, 41, 43,
+                      09, 11, 18, 24, 31, 40, 44, 53,
+                      10, 19, 23, 32, 39, 45, 52, 54,
+                      20, 22, 33, 38, 46, 51, 55, 60,
+                      21, 34, 37, 47, 50, 56, 59, 61,
+                      35, 36, 48, 49, 57, 58, 62, 63};
+  work pop 64 push 64 {
+    for (int i = 0; i < 64; i++)
+      push(peek(Ordering[i]));
+    for (int i = 0; i < 64; i++)
+      pop();
+  }
+}
+
+// NOTE: This function requires the use of -nosched option
+// Its true pop rate is 64 and its push rate is between 2 and 128, and when used in the
+// context of the JPEG Encoder, should be around 4 to 8
+/* Input: Takes in a stream if 64 integers
+   Output: Outputs a run length encoded version of the integers. In each pair of integers,
+           the first integer output is the count, and the second integer is the actual integer.
+           There is no special symbol that represents a premature end of the list.
+   Example: 1 2 2 2 -1 -1 0 0 0 0 0 0 0 becomes 1 1 3 2 2 -1 7 0 */ 
+int->int filter RunLengthEncoder() {
+  work pop 64 push 64 {
+    int i;
+    int lastInt = 0;
+    int count = 0;
+    int push_count = 0;
+    boolean starting = true;
+    for (int i = 0; i < 64; i++) {
+      int curPosition = i;
+      int curInt = peek(i);
+      if (starting) {
+	lastInt = curInt;
+        count = 1;
+        starting = false;
+      } else {
+        if (curInt == lastInt) {
+          count++;
+        } else {
+          push(count);
+          push_count++;
+          push(lastInt);
+          push_count++;
+          lastInt = curInt;
+          count = 1;
+        }
+      }
+    }
+    push(count);
+    push_count++;
+    push(lastInt); 
+    push_count++;
+
+    for(i = 0; i < 64-push_count+1; i++){
+        push(0);
+    }
+
+    for (int i = 0; i < 64; i++) {
+      pop();
+    }
+  }
+}
+
+// NOTE: This function requires the use of -nosched option
+// Its true pop rate is 2 and its push rate is anything
+/* Input: Takes in a stream of 2 integers. The first representing a count and the second represent 
+          an actual integer.
+   Output: Outputs the integer count times.
+   Example: 1 1 3 2 2 -1 7 0 becomes 1 2 2 2 -1 -1 0 0 0 0 0 0 0 */ 
+int->int filter RunLengthDecoder() {
+  work pop 2 push 2 {
+    int count = pop();
+    int curInt = pop();
+    for (int i = 0; i < count; i++) {
+      push(curInt);
+    }
+  }
+}
+
+// Assumes that the image width and height are a multiple of eight pixels.
+// Assumes that each pixel consists of three sequential integers.
+// blockswise specifies how many blocks wide the image is, i.e. pixelwidth/8
+/* Input: All the pixels in an image, as a left to right, top to bottom list of pixels,
+          with three bytes per pixel.
+   Output: Reorders the pixels so that integers are output in block order, with each block listed
+           left to right, top to bottom, and the blocks in a left to right, top to bottom order.
+int->int filter ReorderToBlocks(int blockswide) {
+  work pop (blockswide*8*8*3) push (blockswide*8*8*3) {
+    int[blockswide][8][8][3] Blocks;
+    int block = 0;
+    int w = 0;
+    int h = 0; 
+    int p = 0;      
+    while (h < 8) {
+      Blocks[block][w][h][p] = pop();
+      p++;
+      if (p == 3) {
+        p = 0;
+        w++;
+      }
+      if (w == 8) {
+        w = 0;
+        block++;
+      }
+      if (block == blockswide) {
+        block = 0;
+        h++;
+      }
+    }
+    for (block = 0; block < blockswide; block++) {
+      for (h = 0; h < 8; h++) {
+        for (w = 0; w < 8; w++) {
+          for (p = 0; p < 3; p++) {
+            push(Blocks[block][w][h][p]);
+          }
+        }
+      }
+    }
+  }
+}
+
+
+/* ----- END OF JPEG.lib FUNCTIONS ------- */
+
+/* ----- GENERALLY USEFUL FUNCTIONS ------ */
+/* At some point it might be nice to move these out to some library that any program can call. Functions
+   I stick in here are things that would go in the StreamIt equivalent of math.h, iostream.h, etc */
+
+int->float filter Int2Float {
+  work pop 1 push 1 {
+    push((float) pop());
+  }
+}
+
+float->int filter Float2Int {
+  work pop 1 push 1 {
+    push((int) round(pop()));
+  }
+}
+
+float->float filter Add(float n) {
+  work pop 1 push 1 {
+    push(pop() + n);
+  }
+}
+
+/* ----- END OF GENERALLY USEFUL FUNCTIONS ----- */
+
+void->void pipeline JPEGFeed {
+  add ACMSample8BitBlock;
+  add Int2Float;
+  add Add(-128);
+  add DCT_2D(8);
+  add staticExampleLuminanceQauntization;
+  add BlockDCDifferenceEncoder;
+  add ZigZagOrdering;  
+  add RunLengthEncoder;
+
+  add RunLengthDecoder;
+  add ZigZagUnordering;
+  add BlockDCDifferenceDecoder;
+  add staticExampleLuminanceDeQauntization;
+  add iDCT_2D(8);
+  add Add(128);
+  add Float2Int; 
+
+  add Display8BitIntBlock;
+}
+
+int->void filter Display8BitIntBlock {
+  work pop 8 {
+    int[8] x;
+    x[0] = pop();
+    x[1] = pop();
+    x[2] = pop();
+    x[3] = pop();
+    x[4] = pop();
+    x[5] = pop();
+    x[6] = pop();
+    x[7] = pop();
+    println("NEWLINE");
+    for (int i = 0; i < 8; i++) {
+      println(x[i]);
+    }
+  }
+}
+
+float->void filter Display8BitFloatBlock {
+  work pop 8 {
+    float[8] x;
+    x[0] = pop();
+    x[1] = pop();
+    x[2] = pop();
+    x[3] = pop();
+    x[4] = pop();
+    x[5] = pop();
+    x[6] = pop();
+    x[7] = pop();
+    println("NEWLINE");
+    for (int i = 0; i < 8; i++) {
+      if (x[i] < 0.0001 && x[i] > -0.0001)
+        println("0");
+      else
+        println(x[i]);
+    }
+  }
+}
+
+float->void filter OutputFloat {
+  work pop 1 {
+    float x = pop();
+    if (x < 0.0001 && x > -0.0001)
+      println("0");
+    else
+      println(x);
+  }
+}
+
+/* From Page 12 of the "The JPEG Still Compression Standard"
+   by Gregory Wallace, revised from an April 1991 Communications of the ACM */
+void->int filter ACMSample8BitBlock {
+  int[64] out = {139, 144, 149, 153, 155, 155, 155, 155,
+                 144, 151, 153, 156, 149, 156, 156, 156,
+                 150, 155, 160, 163, 158, 156, 156, 156,
+                 159, 161, 162, 160, 160, 159, 159, 159,
+                 159, 160, 161, 162, 162, 155, 155, 155,
+                 161, 161, 161, 161, 160, 157, 157, 157,
+                 162, 162, 161, 163, 162, 157, 157, 157,
+                 162, 162, 161, 161, 163, 158, 158, 158};
+  work push 64 {
+    for (int i = 0; i < 64; i++) {
+      push(out[i]);
+    }
+  }
+}
+
+
+
+
+
+

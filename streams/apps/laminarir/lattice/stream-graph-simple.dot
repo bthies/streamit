@@ -1,0 +1,156 @@
+digraph streamit {
+subgraph cluster_node1 {
+ label="Lattice";
+node2 [ label="RandomSource" ]
+subgraph cluster_node3 {
+ label="ZeroStage";
+node4 [ label="duplicate" ]
+node5 [ label="roundrobin(1,1)" ]
+node6 [ label="Identity" ]
+node4 -> node6
+node6 -> node5
+node7 [ label="Identity" ]
+node4 -> node7
+node7 -> node5
+}
+node2 -> node4
+subgraph cluster_node8 {
+ label="CompStage";
+subgraph cluster_node9 {
+ label="LatDel";
+node10 [ label="duplicate" ]
+node11 [ label="roundrobin(1,1)" ]
+node12 [ label="Identity" ]
+node10 -> node12
+node12 -> node11
+node13 [ label="DelayOne" ]
+node10 -> node13
+node13 -> node11
+}
+node14 [ label="LatFilt" ]
+node11 -> node14
+}
+node5 -> node10
+subgraph cluster_node15 {
+ label="CompStage";
+subgraph cluster_node16 {
+ label="LatDel";
+node17 [ label="duplicate" ]
+node18 [ label="roundrobin(1,1)" ]
+node19 [ label="Identity" ]
+node17 -> node19
+node19 -> node18
+node20 [ label="DelayOne" ]
+node17 -> node20
+node20 -> node18
+}
+node21 [ label="LatFilt" ]
+node18 -> node21
+}
+node14 -> node17
+subgraph cluster_node22 {
+ label="CompStage";
+subgraph cluster_node23 {
+ label="LatDel";
+node24 [ label="duplicate" ]
+node25 [ label="roundrobin(1,1)" ]
+node26 [ label="Identity" ]
+node24 -> node26
+node26 -> node25
+node27 [ label="DelayOne" ]
+node24 -> node27
+node27 -> node25
+}
+node28 [ label="LatFilt" ]
+node25 -> node28
+}
+node21 -> node24
+subgraph cluster_node29 {
+ label="CompStage";
+subgraph cluster_node30 {
+ label="LatDel";
+node31 [ label="duplicate" ]
+node32 [ label="roundrobin(1,1)" ]
+node33 [ label="Identity" ]
+node31 -> node33
+node33 -> node32
+node34 [ label="DelayOne" ]
+node31 -> node34
+node34 -> node32
+}
+node35 [ label="LatFilt" ]
+node32 -> node35
+}
+node28 -> node31
+subgraph cluster_node36 {
+ label="CompStage";
+subgraph cluster_node37 {
+ label="LatDel";
+node38 [ label="duplicate" ]
+node39 [ label="roundrobin(1,1)" ]
+node40 [ label="Identity" ]
+node38 -> node40
+node40 -> node39
+node41 [ label="DelayOne" ]
+node38 -> node41
+node41 -> node39
+}
+node42 [ label="LatFilt" ]
+node39 -> node42
+}
+node35 -> node38
+subgraph cluster_node43 {
+ label="CompStage";
+subgraph cluster_node44 {
+ label="LatDel";
+node45 [ label="duplicate" ]
+node46 [ label="roundrobin(1,1)" ]
+node47 [ label="Identity" ]
+node45 -> node47
+node47 -> node46
+node48 [ label="DelayOne" ]
+node45 -> node48
+node48 -> node46
+}
+node49 [ label="LatFilt" ]
+node46 -> node49
+}
+node42 -> node45
+subgraph cluster_node50 {
+ label="CompStage";
+subgraph cluster_node51 {
+ label="LatDel";
+node52 [ label="duplicate" ]
+node53 [ label="roundrobin(1,1)" ]
+node54 [ label="Identity" ]
+node52 -> node54
+node54 -> node53
+node55 [ label="DelayOne" ]
+node52 -> node55
+node55 -> node53
+}
+node56 [ label="LatFilt" ]
+node53 -> node56
+}
+node49 -> node52
+subgraph cluster_node57 {
+ label="CompStage";
+subgraph cluster_node58 {
+ label="LatDel";
+node59 [ label="duplicate" ]
+node60 [ label="roundrobin(1,1)" ]
+node61 [ label="Identity" ]
+node59 -> node61
+node61 -> node60
+node62 [ label="DelayOne" ]
+node59 -> node62
+node62 -> node60
+}
+node63 [ label="LatFilt" ]
+node60 -> node63
+}
+node56 -> node59
+node64 [ label="LastStage" ]
+node63 -> node64
+}
+}

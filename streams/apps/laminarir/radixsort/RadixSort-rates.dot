@@ -1,0 +1,33 @@
+digraph streamit {
+size="7.5,10";subgraph cluster_RadixSort_0 {
+label = "RadixSort";
+RandomSource_pop_0_push_1_1 -> Sort_pop_16_push_16_4
+Sort_pop_16_push_16_14 -> IntPrinter_pop_1_push_0_3
+RandomSource_pop_0_push_1_1 [ label="RandomSource_pop_0_push_1" ]
+subgraph cluster_SortPipe_2 {
+label = "SortPipe";
+Sort_pop_16_push_16_4 -> Sort_pop_16_push_16_5
+Sort_pop_16_push_16_5 -> Sort_pop_16_push_16_6
+Sort_pop_16_push_16_6 -> Sort_pop_16_push_16_7
+Sort_pop_16_push_16_7 -> Sort_pop_16_push_16_8
+Sort_pop_16_push_16_8 -> Sort_pop_16_push_16_9
+Sort_pop_16_push_16_9 -> Sort_pop_16_push_16_10
+Sort_pop_16_push_16_10 -> Sort_pop_16_push_16_11
+Sort_pop_16_push_16_11 -> Sort_pop_16_push_16_12
+Sort_pop_16_push_16_12 -> Sort_pop_16_push_16_13
+Sort_pop_16_push_16_13 -> Sort_pop_16_push_16_14
+Sort_pop_16_push_16_4 [ label="Sort_pop_16_push_16" ]
+Sort_pop_16_push_16_5 [ label="Sort_pop_16_push_16" ]
+Sort_pop_16_push_16_6 [ label="Sort_pop_16_push_16" ]
+Sort_pop_16_push_16_7 [ label="Sort_pop_16_push_16" ]
+Sort_pop_16_push_16_8 [ label="Sort_pop_16_push_16" ]
+Sort_pop_16_push_16_9 [ label="Sort_pop_16_push_16" ]
+Sort_pop_16_push_16_10 [ label="Sort_pop_16_push_16" ]
+Sort_pop_16_push_16_11 [ label="Sort_pop_16_push_16" ]
+Sort_pop_16_push_16_12 [ label="Sort_pop_16_push_16" ]
+Sort_pop_16_push_16_13 [ label="Sort_pop_16_push_16" ]
+Sort_pop_16_push_16_14 [ label="Sort_pop_16_push_16" ]
+}
+IntPrinter_pop_1_push_0_3 [ label="IntPrinter_pop_1_push_0" ]
+}
+}

@@ -1,0 +1,56 @@
+digraph streamit {
+size="7.5,10";subgraph cluster_FFT2_0 {
+label = "FFT2";
+RandomSource_1 -> FFTKernel2_2_split
+FFTKernel2_2_join -> FloatPrinter_3
+RandomSource_1 [ label="RandomSource" ]
+subgraph cluster_FFTKernel2_2 {
+label = "FFTKernel2";
+FFTKernel2_2_split [ label="roundrobin(32, 32)" ]
+FFTKernel2_2_join [ label="roundrobin(32, 32)" ]
+subgraph cluster_AnonFilter_a1_4 {
+label = "AnonFilter_a1";
+FFTReorderSimple_13 -> CombineDFT_7
+CombineDFT_7 -> CombineDFT_8
+CombineDFT_8 -> CombineDFT_9
+CombineDFT_9 -> CombineDFT_10
+subgraph cluster_FFTReorder_6 {
+label = "FFTReorder";
+FFTReorderSimple_11 -> FFTReorderSimple_12
+FFTReorderSimple_12 -> FFTReorderSimple_13
+FFTReorderSimple_11 [ label="FFTReorderSimple" ]
+FFTReorderSimple_12 [ label="FFTReorderSimple" ]
+FFTReorderSimple_13 [ label="FFTReorderSimple" ]
+}
+CombineDFT_7 [ label="CombineDFT" ]
+CombineDFT_8 [ label="CombineDFT" ]
+CombineDFT_9 [ label="CombineDFT" ]
+CombineDFT_10 [ label="CombineDFT" ]
+}
+FFTKernel2_2_split -> FFTReorderSimple_11
+CombineDFT_10 -> FFTKernel2_2_join
+subgraph cluster_AnonFilter_a1_5 {
+label = "AnonFilter_a1";
+FFTReorderSimple_27 -> CombineDFT_21
+CombineDFT_21 -> CombineDFT_22
+CombineDFT_22 -> CombineDFT_23
+CombineDFT_23 -> CombineDFT_24
+subgraph cluster_FFTReorder_20 {
+label = "FFTReorder";
+FFTReorderSimple_25 -> FFTReorderSimple_26
+FFTReorderSimple_26 -> FFTReorderSimple_27
+FFTReorderSimple_25 [ label="FFTReorderSimple" ]
+FFTReorderSimple_26 [ label="FFTReorderSimple" ]
+FFTReorderSimple_27 [ label="FFTReorderSimple" ]
+}
+CombineDFT_21 [ label="CombineDFT" ]
+CombineDFT_22 [ label="CombineDFT" ]
+CombineDFT_23 [ label="CombineDFT" ]
+CombineDFT_24 [ label="CombineDFT" ]
+}
+FFTKernel2_2_split -> FFTReorderSimple_25
+CombineDFT_24 -> FFTKernel2_2_join
+}
+FloatPrinter_3 [ label="FloatPrinter" ]
+}
+}

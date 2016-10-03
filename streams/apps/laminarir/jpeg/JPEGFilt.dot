@@ -1,0 +1,180 @@
+digraph streamit {
+size="7.5,10";subgraph cluster_JPEGFilt_0 {
+label = "JPEGFilt";
+RandomSource_1 -> Int2Float_2
+Int2Float_2 -> Add_3
+Add_3 -> helper_Parallel_8_DCT_1D_X_17_split
+helper_Parallel_8_DCT_1D_Y_18_join -> staticQuantization_37
+staticQuantization_37 -> BlockDCDifferenceEncoder_6_split
+BlockDCDifferenceEncoder_6_join -> ZigZagOrdering_7
+ZigZagOrdering_7 -> ZigZagUnordering_8
+ZigZagUnordering_8 -> BlockDCDifferenceDecoder_9_split
+BlockDCDifferenceDecoder_9_join -> staticDeQuantization_47
+staticDeQuantization_47 -> helper_Parallel_8_iDCT_1D_X_49_split
+helper_Parallel_8_iDCT_1D_Y_50_join -> Add_12
+Add_12 -> Float2Int_13
+Float2Int_13 -> Display8BitIntBlock_14
+RandomSource_1 [ label="RandomSource" ]
+Int2Float_2 [ label="Int2Float" ]
+Add_3 [ label="Add" ]
+subgraph cluster_DCT_2D_4 {
+label = "DCT_2D";
+helper_Parallel_8_DCT_1D_X_17_join -> helper_Parallel_8_DCT_1D_Y_18_split
+subgraph cluster_helper_Parallel_8_DCT_1D_X_17 {
+label = "helper_Parallel_8_DCT_1D_X";
+helper_Parallel_8_DCT_1D_X_17_split [ label="roundrobin(8, 8, 8, 8, 8, 8, 8, 8)" ]
+helper_Parallel_8_DCT_1D_X_17_join [ label="roundrobin(8, 8, 8, 8, 8, 8, 8, 8)" ]
+DCT_1D_19 [ label="DCT_1D" ]
+helper_Parallel_8_DCT_1D_X_17_split -> DCT_1D_19
+DCT_1D_19 -> helper_Parallel_8_DCT_1D_X_17_join
+DCT_1D_20 [ label="DCT_1D" ]
+helper_Parallel_8_DCT_1D_X_17_split -> DCT_1D_20
+DCT_1D_20 -> helper_Parallel_8_DCT_1D_X_17_join
+DCT_1D_21 [ label="DCT_1D" ]
+helper_Parallel_8_DCT_1D_X_17_split -> DCT_1D_21
+DCT_1D_21 -> helper_Parallel_8_DCT_1D_X_17_join
+DCT_1D_22 [ label="DCT_1D" ]
+helper_Parallel_8_DCT_1D_X_17_split -> DCT_1D_22
+DCT_1D_22 -> helper_Parallel_8_DCT_1D_X_17_join
+DCT_1D_23 [ label="DCT_1D" ]
+helper_Parallel_8_DCT_1D_X_17_split -> DCT_1D_23
+DCT_1D_23 -> helper_Parallel_8_DCT_1D_X_17_join
+DCT_1D_24 [ label="DCT_1D" ]
+helper_Parallel_8_DCT_1D_X_17_split -> DCT_1D_24
+DCT_1D_24 -> helper_Parallel_8_DCT_1D_X_17_join
+DCT_1D_25 [ label="DCT_1D" ]
+helper_Parallel_8_DCT_1D_X_17_split -> DCT_1D_25
+DCT_1D_25 -> helper_Parallel_8_DCT_1D_X_17_join
+DCT_1D_26 [ label="DCT_1D" ]
+helper_Parallel_8_DCT_1D_X_17_split -> DCT_1D_26
+DCT_1D_26 -> helper_Parallel_8_DCT_1D_X_17_join
+}
+subgraph cluster_helper_Parallel_8_DCT_1D_Y_18 {
+label = "helper_Parallel_8_DCT_1D_Y";
+helper_Parallel_8_DCT_1D_Y_18_split [ label="roundrobin(1, 1, 1, 1, 1, 1, 1, 1)" ]
+helper_Parallel_8_DCT_1D_Y_18_join [ label="roundrobin(1, 1, 1, 1, 1, 1, 1, 1)" ]
+DCT_1D_27 [ label="DCT_1D" ]
+helper_Parallel_8_DCT_1D_Y_18_split -> DCT_1D_27
+DCT_1D_27 -> helper_Parallel_8_DCT_1D_Y_18_join
+DCT_1D_28 [ label="DCT_1D" ]
+helper_Parallel_8_DCT_1D_Y_18_split -> DCT_1D_28
+DCT_1D_28 -> helper_Parallel_8_DCT_1D_Y_18_join
+DCT_1D_29 [ label="DCT_1D" ]
+helper_Parallel_8_DCT_1D_Y_18_split -> DCT_1D_29
+DCT_1D_29 -> helper_Parallel_8_DCT_1D_Y_18_join
+DCT_1D_30 [ label="DCT_1D" ]
+helper_Parallel_8_DCT_1D_Y_18_split -> DCT_1D_30
+DCT_1D_30 -> helper_Parallel_8_DCT_1D_Y_18_join
+DCT_1D_31 [ label="DCT_1D" ]
+helper_Parallel_8_DCT_1D_Y_18_split -> DCT_1D_31
+DCT_1D_31 -> helper_Parallel_8_DCT_1D_Y_18_join
+DCT_1D_32 [ label="DCT_1D" ]
+helper_Parallel_8_DCT_1D_Y_18_split -> DCT_1D_32
+DCT_1D_32 -> helper_Parallel_8_DCT_1D_Y_18_join
+DCT_1D_33 [ label="DCT_1D" ]
+helper_Parallel_8_DCT_1D_Y_18_split -> DCT_1D_33
+DCT_1D_33 -> helper_Parallel_8_DCT_1D_Y_18_join
+DCT_1D_34 [ label="DCT_1D" ]
+helper_Parallel_8_DCT_1D_Y_18_split -> DCT_1D_34
+DCT_1D_34 -> helper_Parallel_8_DCT_1D_Y_18_join
+}
+}
+subgraph cluster_staticExampleLuminanceQauntization_5 {
+label = "staticExampleLuminanceQauntization";
+staticQuantization_37 [ label="staticQuantization" ]
+}
+subgraph cluster_BlockDCDifferenceEncoder_6 {
+label = "BlockDCDifferenceEncoder";
+BlockDCDifferenceEncoder_6_split [ label="roundrobin(1, 63)" ]
+BlockDCDifferenceEncoder_6_join [ label="roundrobin(1, 63)" ]
+IntegerDifferenceEncoder_39 [ label="IntegerDifferenceEncoder" ]
+BlockDCDifferenceEncoder_6_split -> IntegerDifferenceEncoder_39
+IntegerDifferenceEncoder_39 -> BlockDCDifferenceEncoder_6_join
+streamit_library_Identity_40 [ label="streamit_library_Identity" ]
+BlockDCDifferenceEncoder_6_split -> streamit_library_Identity_40
+streamit_library_Identity_40 -> BlockDCDifferenceEncoder_6_join
+}
+ZigZagOrdering_7 [ label="ZigZagOrdering" ]
+ZigZagUnordering_8 [ label="ZigZagUnordering" ]
+subgraph cluster_BlockDCDifferenceDecoder_9 {
+label = "BlockDCDifferenceDecoder";
+BlockDCDifferenceDecoder_9_split [ label="roundrobin(1, 63)" ]
+BlockDCDifferenceDecoder_9_join [ label="roundrobin(1, 63)" ]
+IntegerDifferenceDecoder_44 [ label="IntegerDifferenceDecoder" ]
+BlockDCDifferenceDecoder_9_split -> IntegerDifferenceDecoder_44
+IntegerDifferenceDecoder_44 -> BlockDCDifferenceDecoder_9_join
+streamit_library_Identity_45 [ label="streamit_library_Identity" ]
+BlockDCDifferenceDecoder_9_split -> streamit_library_Identity_45
+streamit_library_Identity_45 -> BlockDCDifferenceDecoder_9_join
+}
+subgraph cluster_staticExampleLuminanceDeQauntization_10 {
+label = "staticExampleLuminanceDeQauntization";
+staticDeQuantization_47 [ label="staticDeQuantization" ]
+}
+subgraph cluster_iDCT_2D_11 {
+label = "iDCT_2D";
+helper_Parallel_8_iDCT_1D_X_49_join -> helper_Parallel_8_iDCT_1D_Y_50_split
+subgraph cluster_helper_Parallel_8_iDCT_1D_X_49 {
+label = "helper_Parallel_8_iDCT_1D_X";
+helper_Parallel_8_iDCT_1D_X_49_split [ label="roundrobin(8, 8, 8, 8, 8, 8, 8, 8)" ]
+helper_Parallel_8_iDCT_1D_X_49_join [ label="roundrobin(8, 8, 8, 8, 8, 8, 8, 8)" ]
+iDCT_1D_51 [ label="iDCT_1D" ]
+helper_Parallel_8_iDCT_1D_X_49_split -> iDCT_1D_51
+iDCT_1D_51 -> helper_Parallel_8_iDCT_1D_X_49_join
+iDCT_1D_52 [ label="iDCT_1D" ]
+helper_Parallel_8_iDCT_1D_X_49_split -> iDCT_1D_52
+iDCT_1D_52 -> helper_Parallel_8_iDCT_1D_X_49_join
+iDCT_1D_53 [ label="iDCT_1D" ]
+helper_Parallel_8_iDCT_1D_X_49_split -> iDCT_1D_53
+iDCT_1D_53 -> helper_Parallel_8_iDCT_1D_X_49_join
+iDCT_1D_54 [ label="iDCT_1D" ]
+helper_Parallel_8_iDCT_1D_X_49_split -> iDCT_1D_54
+iDCT_1D_54 -> helper_Parallel_8_iDCT_1D_X_49_join
+iDCT_1D_55 [ label="iDCT_1D" ]
+helper_Parallel_8_iDCT_1D_X_49_split -> iDCT_1D_55
+iDCT_1D_55 -> helper_Parallel_8_iDCT_1D_X_49_join
+iDCT_1D_56 [ label="iDCT_1D" ]
+helper_Parallel_8_iDCT_1D_X_49_split -> iDCT_1D_56
+iDCT_1D_56 -> helper_Parallel_8_iDCT_1D_X_49_join
+iDCT_1D_57 [ label="iDCT_1D" ]
+helper_Parallel_8_iDCT_1D_X_49_split -> iDCT_1D_57
+iDCT_1D_57 -> helper_Parallel_8_iDCT_1D_X_49_join
+iDCT_1D_58 [ label="iDCT_1D" ]
+helper_Parallel_8_iDCT_1D_X_49_split -> iDCT_1D_58
+iDCT_1D_58 -> helper_Parallel_8_iDCT_1D_X_49_join
+}
+subgraph cluster_helper_Parallel_8_iDCT_1D_Y_50 {
+label = "helper_Parallel_8_iDCT_1D_Y";
+helper_Parallel_8_iDCT_1D_Y_50_split [ label="roundrobin(1, 1, 1, 1, 1, 1, 1, 1)" ]
+helper_Parallel_8_iDCT_1D_Y_50_join [ label="roundrobin(1, 1, 1, 1, 1, 1, 1, 1)" ]
+iDCT_1D_59 [ label="iDCT_1D" ]
+helper_Parallel_8_iDCT_1D_Y_50_split -> iDCT_1D_59
+iDCT_1D_59 -> helper_Parallel_8_iDCT_1D_Y_50_join
+iDCT_1D_60 [ label="iDCT_1D" ]
+helper_Parallel_8_iDCT_1D_Y_50_split -> iDCT_1D_60
+iDCT_1D_60 -> helper_Parallel_8_iDCT_1D_Y_50_join
+iDCT_1D_61 [ label="iDCT_1D" ]
+helper_Parallel_8_iDCT_1D_Y_50_split -> iDCT_1D_61
+iDCT_1D_61 -> helper_Parallel_8_iDCT_1D_Y_50_join
+iDCT_1D_62 [ label="iDCT_1D" ]
+helper_Parallel_8_iDCT_1D_Y_50_split -> iDCT_1D_62
+iDCT_1D_62 -> helper_Parallel_8_iDCT_1D_Y_50_join
+iDCT_1D_63 [ label="iDCT_1D" ]
+helper_Parallel_8_iDCT_1D_Y_50_split -> iDCT_1D_63
+iDCT_1D_63 -> helper_Parallel_8_iDCT_1D_Y_50_join
+iDCT_1D_64 [ label="iDCT_1D" ]
+helper_Parallel_8_iDCT_1D_Y_50_split -> iDCT_1D_64
+iDCT_1D_64 -> helper_Parallel_8_iDCT_1D_Y_50_join
+iDCT_1D_65 [ label="iDCT_1D" ]
+helper_Parallel_8_iDCT_1D_Y_50_split -> iDCT_1D_65
+iDCT_1D_65 -> helper_Parallel_8_iDCT_1D_Y_50_join
+iDCT_1D_66 [ label="iDCT_1D" ]
+helper_Parallel_8_iDCT_1D_Y_50_split -> iDCT_1D_66
+iDCT_1D_66 -> helper_Parallel_8_iDCT_1D_Y_50_join
+}
+}
+Add_12 [ label="Add" ]
+Float2Int_13 [ label="Float2Int" ]
+Display8BitIntBlock_14 [ label="Display8BitIntBlock" ]
+}
+}

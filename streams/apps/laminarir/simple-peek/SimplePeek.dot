@@ -1,0 +1,10 @@
+digraph streamit {
+size="7.5,10";subgraph cluster_SimplePeek_0 {
+label = "SimplePeek";
+RandomSource_1 -> MovingAverage_2
+MovingAverage_2 -> Printer_3
+RandomSource_1 [ label="RandomSource" ]
+MovingAverage_2 [ label="MovingAverage" ]
+Printer_3 [ label="Printer" ]
+}
+}

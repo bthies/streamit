@@ -1,0 +1,191 @@
+digraph streamit {
+subgraph cluster_node1 {
+ label="BeamFormer";
+node2 [ label="RandomSource" ]
+subgraph cluster_node3 {
+ label="BeamFormerMain";
+subgraph cluster_node4 {
+ label="AnonFilter_a1";
+node5 [ label="roundrobin(1,1,1,1,1,1,1,1,1,1,1,1)" ]
+node6 [ label="roundrobin(2,2,2,2,2,2,2,2,2,2,2,2)" ]
+subgraph cluster_node7 {
+ label="AnonFilter_a0";
+node8 [ label="InputGenerate" ]
+node9 [ label="BeamFirFilter" ]
+node8 -> node9
+node10 [ label="BeamFirFilter" ]
+node9 -> node10
+}
+node5 -> node8
+node10 -> node6
+subgraph cluster_node11 {
+ label="AnonFilter_a0";
+node12 [ label="InputGenerate" ]
+node13 [ label="BeamFirFilter" ]
+node12 -> node13
+node14 [ label="BeamFirFilter" ]
+node13 -> node14
+}
+node5 -> node12
+node14 -> node6
+subgraph cluster_node15 {
+ label="AnonFilter_a0";
+node16 [ label="InputGenerate" ]
+node17 [ label="BeamFirFilter" ]
+node16 -> node17
+node18 [ label="BeamFirFilter" ]
+node17 -> node18
+}
+node5 -> node16
+node18 -> node6
+subgraph cluster_node19 {
+ label="AnonFilter_a0";
+node20 [ label="InputGenerate" ]
+node21 [ label="BeamFirFilter" ]
+node20 -> node21
+node22 [ label="BeamFirFilter" ]
+node21 -> node22
+}
+node5 -> node20
+node22 -> node6
+subgraph cluster_node23 {
+ label="AnonFilter_a0";
+node24 [ label="InputGenerate" ]
+node25 [ label="BeamFirFilter" ]
+node24 -> node25
+node26 [ label="BeamFirFilter" ]
+node25 -> node26
+}
+node5 -> node24
+node26 -> node6
+subgraph cluster_node27 {
+ label="AnonFilter_a0";
+node28 [ label="InputGenerate" ]
+node29 [ label="BeamFirFilter" ]
+node28 -> node29
+node30 [ label="BeamFirFilter" ]
+node29 -> node30
+}
+node5 -> node28
+node30 -> node6
+subgraph cluster_node31 {
+ label="AnonFilter_a0";
+node32 [ label="InputGenerate" ]
+node33 [ label="BeamFirFilter" ]
+node32 -> node33
+node34 [ label="BeamFirFilter" ]
+node33 -> node34
+}
+node5 -> node32
+node34 -> node6
+subgraph cluster_node35 {
+ label="AnonFilter_a0";
+node36 [ label="InputGenerate" ]
+node37 [ label="BeamFirFilter" ]
+node36 -> node37
+node38 [ label="BeamFirFilter" ]
+node37 -> node38
+}
+node5 -> node36
+node38 -> node6
+subgraph cluster_node39 {
+ label="AnonFilter_a0";
+node40 [ label="InputGenerate" ]
+node41 [ label="BeamFirFilter" ]
+node40 -> node41
+node42 [ label="BeamFirFilter" ]
+node41 -> node42
+}
+node5 -> node40
+node42 -> node6
+subgraph cluster_node43 {
+ label="AnonFilter_a0";
+node44 [ label="InputGenerate" ]
+node45 [ label="BeamFirFilter" ]
+node44 -> node45
+node46 [ label="BeamFirFilter" ]
+node45 -> node46
+}
+node5 -> node44
+node46 -> node6
+subgraph cluster_node47 {
+ label="AnonFilter_a0";
+node48 [ label="InputGenerate" ]
+node49 [ label="BeamFirFilter" ]
+node48 -> node49
+node50 [ label="BeamFirFilter" ]
+node49 -> node50
+}
+node5 -> node48
+node50 -> node6
+subgraph cluster_node51 {
+ label="AnonFilter_a0";
+node52 [ label="InputGenerate" ]
+node53 [ label="BeamFirFilter" ]
+node52 -> node53
+node54 [ label="BeamFirFilter" ]
+node53 -> node54
+}
+node5 -> node52
+node54 -> node6
+}
+subgraph cluster_node55 {
+ label="AnonFilter_a3";
+node56 [ label="duplicate" ]
+node57 [ label="roundrobin(1,1,1,1)" ]
+subgraph cluster_node58 {
+ label="AnonFilter_a2";
+node59 [ label="BeamForm" ]
+node60 [ label="BeamFirFilter" ]
+node59 -> node60
+node61 [ label="Magnitude" ]
+node60 -> node61
+node62 [ label="Detector" ]
+node61 -> node62
+}
+node56 -> node59
+node62 -> node57
+subgraph cluster_node63 {
+ label="AnonFilter_a2";
+node64 [ label="BeamForm" ]
+node65 [ label="BeamFirFilter" ]
+node64 -> node65
+node66 [ label="Magnitude" ]
+node65 -> node66
+node67 [ label="Detector" ]
+node66 -> node67
+}
+node56 -> node64
+node67 -> node57
+subgraph cluster_node68 {
+ label="AnonFilter_a2";
+node69 [ label="BeamForm" ]
+node70 [ label="BeamFirFilter" ]
+node69 -> node70
+node71 [ label="Magnitude" ]
+node70 -> node71
+node72 [ label="Detector" ]
+node71 -> node72
+}
+node56 -> node69
+node72 -> node57
+subgraph cluster_node73 {
+ label="AnonFilter_a2";
+node74 [ label="BeamForm" ]
+node75 [ label="BeamFirFilter" ]
+node74 -> node75
+node76 [ label="Magnitude" ]
+node75 -> node76
+node77 [ label="Detector" ]
+node76 -> node77
+}
+node56 -> node74
+node77 -> node57
+}
+node6 -> node56
+}
+node2 -> node5
+node78 [ label="FloatPrinter" ]
+node57 -> node78
+}
+}

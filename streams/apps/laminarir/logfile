@@ -1,0 +1,1421 @@
+----------------------------------------------------------------------
+autocor
+
+Compile and run autocor:
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Starting Kopi2SIR... done.
+Entry to SMP Backend...
+Running Constant Prop and Unroll...
+Done Constant Prop and Unroll...
+Running Constant Field Propagation...
+Done Constant Field Propagation...
+Comp/Comm Ratio of original SIR graph: 59.78294573643411
+SIR Peeking Work: 0,  SIR Total Work: 7712
+SIR Filters: 1
+SIR Peeking Filters: 0
+ stateful work / total work = 1.0
+Performing fusion of stateful filters
+Packed 1 stateful filters.
+Comp/Comm Ratio of SIR graph: Infinity
+Flattening Graph..
+Done Flattening, Starting Sync Removal..
+Done Sync Removal..
+Slice Work Threshold: 1.01(101)
+Traces: 1
+Equalizing splits and joins by buffering...
+Fused_Ran_Cor_Flo__7368_143
+Slice: at.dms.kjc.slicegraph.InputSliceNode@220a5163->Fused_Ran_Cor_Flo__7368_143->...: 7201
+Cannot fiss: Fused_Ran_Cor_Flo__7368_143
+Using fission steady multiplicity factor: 1
+Max fission amount: 0
+Slice: at.dms.kjc.slicegraph.InputSliceNode@220a5163->Fused_Ran_Cor_Flo__7368_143->...: 7201
+Number of fizzed slices: 0
+Number of unfizzed slices: 1
+Core 0 has work: 7201
+Optimizing core 0...
+Final filter assignments:
+========================================
+Core 0: 
+Slice: at.dms.kjc.slicegraph.InputSliceNode@220a5163->Fused_Ran_Cor_Flo__7368_143->...: 7201
+            7201 | Fused_Ran_Cor_Flo__7368_143
+            7201 | Total
+gcc -O2  -c main.c
+gcc -O2  -c barrier.c
+gcc -O2  -c core0.c
+gcc -O2 -pthread -lstdc++ -lm main.o barrier.o core0.o  -o smp1
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+
+Check output of autocor (100000 lines):
+
++++  Files "compiler-output" and "library-output" are equal
+
+Check for FIFOs in autocor:
+Found nothing
+
+----------------------------------------------------------------------
+beamformer
+
+Compile and run beamformer:
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Starting Kopi2SIR... done.
+Entry to SMP Backend...
+Running Constant Prop and Unroll...
+Done Constant Prop and Unroll...
+Running Constant Field Propagation...
+Done Constant Field Propagation...
+Comp/Comm Ratio of original SIR graph: 1621.6907216494844
+SIR Peeking Work: 0,  SIR Total Work: 157304
+SIR Filters: 1
+SIR Peeking Filters: 0
+ stateful work / total work = 1.0
+Performing fusion of stateful filters
+Packed 1 stateful filters.
+Comp/Comm Ratio of SIR graph: Infinity
+Flattening Graph..
+Done Flattening, Starting Sync Removal..
+Done Sync Removal..
+Slice Work Threshold: 1.01(101)
+Traces: 1
+Equalizing splits and joins by buffering...
+Fused_Ran_Ano_Ano_Flo__3920_152
+Slice: at.dms.kjc.slicegraph.InputSliceNode@141d863a->Fused_Ran_Ano_Ano_Flo__3920_152->...: 156618
+Cannot fiss: Fused_Ran_Ano_Ano_Flo__3920_152
+Using fission steady multiplicity factor: 1
+Max fission amount: 0
+Slice: at.dms.kjc.slicegraph.InputSliceNode@141d863a->Fused_Ran_Ano_Ano_Flo__3920_152->...: 156618
+Number of fizzed slices: 0
+Number of unfizzed slices: 1
+Core 0 has work: 156618
+Optimizing core 0...
+Final filter assignments:
+========================================
+Core 0: 
+Slice: at.dms.kjc.slicegraph.InputSliceNode@141d863a->Fused_Ran_Ano_Ano_Flo__3920_152->...: 156618
+          156618 | Fused_Ran_Ano_Ano_Flo__3920_152
+          156618 | Total
+gcc -O2  -c main.c
+gcc -O2  -c barrier.c
+gcc -O2  -c core0.c
+gcc -O2 -pthread -lstdc++ -lm main.o barrier.o core0.o  -o smp1
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+
+Check output of beamformer (100000 lines):
+
++++  Files "compiler-output" and "library-output" are equal
+
+Check for FIFOs in beamformer:
+    (((realBuffer__22__555__1847__2876__4530)[(int)(63 - (pos__25__558__1850__2879__4533))]) = ___POP_BUFFER_1_1__576__2057__3175__destroyed_0__4800);
+    (((imagBuffer__23__556__1848__2877__4531)[(int)(63 - (pos__25__558__1850__2879__4533))]) = ___POP_BUFFER_1_1__576__2057__3175__destroyed_1__4799);
+    (((realBuffer__22__555__1847__2876__4530)[(int)(63 - (pos__25__558__1850__2879__4533))]) = ___POP_BUFFER_1_1__576__2057__3175__destroyed_4__4798);
+    (((imagBuffer__23__556__1848__2877__4531)[(int)(63 - (pos__25__558__1850__2879__4533))]) = ___POP_BUFFER_1_1__576__2057__3175__destroyed_5__4797);
+    (((realBuffer__22__555__1847__2876__4530)[(int)(63 - (pos__25__558__1850__2879__4533))]) = ___POP_BUFFER_1_1__576__2057__3175__destroyed_8__4796);
+    (((imagBuffer__23__556__1848__2877__4531)[(int)(63 - (pos__25__558__1850__2879__4533))]) = ___POP_BUFFER_1_1__576__2057__3175__destroyed_9__4795);
+    (((realBuffer__34__561__1853__2882__4534)[(int)(63 - (pos__37__564__1856__2885__4537))]) = ___POP_BUFFER_2_1__582__2063__3181__destroyed_0__4864);
+    (((imagBuffer__35__562__1854__2883__4535)[(int)(63 - (pos__37__564__1856__2885__4537))]) = ___POP_BUFFER_2_1__582__2063__3181__destroyed_1__4863);
+    (((realBuffer__68__614__1860__2889__4539)[(int)(63 - (pos__71__617__1863__2892__4542))]) = ___POP_BUFFER_1_1__635__2098__3216__destroyed_0__4781);
+    (((imagBuffer__69__615__1861__2890__4540)[(int)(63 - (pos__71__617__1863__2892__4542))]) = ___POP_BUFFER_1_1__635__2098__3216__destroyed_1__4780);
+    (((realBuffer__68__614__1860__2889__4539)[(int)(63 - (pos__71__617__1863__2892__4542))]) = ___POP_BUFFER_1_1__635__2098__3216__destroyed_4__4779);
+    (((imagBuffer__69__615__1861__2890__4540)[(int)(63 - (pos__71__617__1863__2892__4542))]) = ___POP_BUFFER_1_1__635__2098__3216__destroyed_5__4778);
+    (((realBuffer__68__614__1860__2889__4539)[(int)(63 - (pos__71__617__1863__2892__4542))]) = ___POP_BUFFER_1_1__635__2098__3216__destroyed_8__4777);
+    (((imagBuffer__69__615__1861__2890__4540)[(int)(63 - (pos__71__617__1863__2892__4542))]) = ___POP_BUFFER_1_1__635__2098__3216__destroyed_9__4776);
+    (((realBuffer__80__620__1866__2895__4543)[(int)(63 - (pos__83__623__1869__2898__4546))]) = ___POP_BUFFER_2_1__641__2104__3222__destroyed_0__4774);
+    (((imagBuffer__81__621__1867__2896__4544)[(int)(63 - (pos__83__623__1869__2898__4546))]) = ___POP_BUFFER_2_1__641__2104__3222__destroyed_1__4773);
+    (((realBuffer__114__673__1873__2902__4548)[(int)(63 - (pos__117__676__1876__2905__4551))]) = ___POP_BUFFER_1_1__694__2139__3257__destroyed_0__4810);
+    (((imagBuffer__115__674__1874__2903__4549)[(int)(63 - (pos__117__676__1876__2905__4551))]) = ___POP_BUFFER_1_1__694__2139__3257__destroyed_1__4809);
+    (((realBuffer__114__673__1873__2902__4548)[(int)(63 - (pos__117__676__1876__2905__4551))]) = ___POP_BUFFER_1_1__694__2139__3257__destroyed_4__4808);
+    (((imagBuffer__115__674__1874__2903__4549)[(int)(63 - (pos__117__676__1876__2905__4551))]) = ___POP_BUFFER_1_1__694__2139__3257__destroyed_5__4807);
+    (((realBuffer__114__673__1873__2902__4548)[(int)(63 - (pos__117__676__1876__2905__4551))]) = ___POP_BUFFER_1_1__694__2139__3257__destroyed_8__4806);
+    (((imagBuffer__115__674__1874__2903__4549)[(int)(63 - (pos__117__676__1876__2905__4551))]) = ___POP_BUFFER_1_1__694__2139__3257__destroyed_9__4805);
+    (((realBuffer__126__679__1879__2908__4552)[(int)(63 - (pos__129__682__1882__2911__4555))]) = ___POP_BUFFER_2_1__700__2145__3263__destroyed_0__4766);
+    (((imagBuffer__127__680__1880__2909__4553)[(int)(63 - (pos__129__682__1882__2911__4555))]) = ___POP_BUFFER_2_1__700__2145__3263__destroyed_1__4765);
+    (((realBuffer__160__732__1886__2915__4557)[(int)(63 - (pos__163__735__1889__2918__4560))]) = ___POP_BUFFER_1_1__753__2180__3298__destroyed_0__4751);
+    (((imagBuffer__161__733__1887__2916__4558)[(int)(63 - (pos__163__735__1889__2918__4560))]) = ___POP_BUFFER_1_1__753__2180__3298__destroyed_1__4750);
+    (((realBuffer__160__732__1886__2915__4557)[(int)(63 - (pos__163__735__1889__2918__4560))]) = ___POP_BUFFER_1_1__753__2180__3298__destroyed_4__4749);
+    (((imagBuffer__161__733__1887__2916__4558)[(int)(63 - (pos__163__735__1889__2918__4560))]) = ___POP_BUFFER_1_1__753__2180__3298__destroyed_5__4748);
+    (((realBuffer__160__732__1886__2915__4557)[(int)(63 - (pos__163__735__1889__2918__4560))]) = ___POP_BUFFER_1_1__753__2180__3298__destroyed_8__4747);
+    (((imagBuffer__161__733__1887__2916__4558)[(int)(63 - (pos__163__735__1889__2918__4560))]) = ___POP_BUFFER_1_1__753__2180__3298__destroyed_9__4746);
+    (((realBuffer__172__738__1892__2921__4561)[(int)(63 - (pos__175__741__1895__2924__4564))]) = ___POP_BUFFER_2_1__759__2186__3304__destroyed_0__4760);
+    (((imagBuffer__173__739__1893__2922__4562)[(int)(63 - (pos__175__741__1895__2924__4564))]) = ___POP_BUFFER_2_1__759__2186__3304__destroyed_1__4759);
+    (((realBuffer__206__791__1899__2928__4566)[(int)(63 - (pos__209__794__1902__2931__4569))]) = ___POP_BUFFER_1_1__812__2221__3339__destroyed_0__4878);
+    (((imagBuffer__207__792__1900__2929__4567)[(int)(63 - (pos__209__794__1902__2931__4569))]) = ___POP_BUFFER_1_1__812__2221__3339__destroyed_1__4877);
+    (((realBuffer__206__791__1899__2928__4566)[(int)(63 - (pos__209__794__1902__2931__4569))]) = ___POP_BUFFER_1_1__812__2221__3339__destroyed_4__4876);
+    (((imagBuffer__207__792__1900__2929__4567)[(int)(63 - (pos__209__794__1902__2931__4569))]) = ___POP_BUFFER_1_1__812__2221__3339__destroyed_5__4875);
+    (((realBuffer__206__791__1899__2928__4566)[(int)(63 - (pos__209__794__1902__2931__4569))]) = ___POP_BUFFER_1_1__812__2221__3339__destroyed_8__4874);
+    (((imagBuffer__207__792__1900__2929__4567)[(int)(63 - (pos__209__794__1902__2931__4569))]) = ___POP_BUFFER_1_1__812__2221__3339__destroyed_9__4873);
+    (((realBuffer__218__797__1905__2934__4570)[(int)(63 - (pos__221__800__1908__2937__4573))]) = ___POP_BUFFER_2_1__818__2227__3345__destroyed_0__4791);
+    (((imagBuffer__219__798__1906__2935__4571)[(int)(63 - (pos__221__800__1908__2937__4573))]) = ___POP_BUFFER_2_1__818__2227__3345__destroyed_1__4790);
+    (((realBuffer__252__850__1912__2941__4575)[(int)(63 - (pos__255__853__1915__2944__4578))]) = ___POP_BUFFER_1_1__871__2262__3380__destroyed_0__4850);
+    (((imagBuffer__253__851__1913__2942__4576)[(int)(63 - (pos__255__853__1915__2944__4578))]) = ___POP_BUFFER_1_1__871__2262__3380__destroyed_1__4849);
+    (((realBuffer__252__850__1912__2941__4575)[(int)(63 - (pos__255__853__1915__2944__4578))]) = ___POP_BUFFER_1_1__871__2262__3380__destroyed_4__4848);
+    (((imagBuffer__253__851__1913__2942__4576)[(int)(63 - (pos__255__853__1915__2944__4578))]) = ___POP_BUFFER_1_1__871__2262__3380__destroyed_5__4847);
+    (((realBuffer__252__850__1912__2941__4575)[(int)(63 - (pos__255__853__1915__2944__4578))]) = ___POP_BUFFER_1_1__871__2262__3380__destroyed_8__4846);
+    (((imagBuffer__253__851__1913__2942__4576)[(int)(63 - (pos__255__853__1915__2944__4578))]) = ___POP_BUFFER_1_1__871__2262__3380__destroyed_9__4845);
+    (((realBuffer__264__856__1918__2947__4579)[(int)(63 - (pos__267__859__1921__2950__4582))]) = ___POP_BUFFER_2_1__877__2268__3386__destroyed_0__4804);
+    (((imagBuffer__265__857__1919__2948__4580)[(int)(63 - (pos__267__859__1921__2950__4582))]) = ___POP_BUFFER_2_1__877__2268__3386__destroyed_1__4803);
+    (((realBuffer__298__909__1925__2954__4584)[(int)(63 - (pos__301__912__1928__2957__4587))]) = ___POP_BUFFER_1_1__930__2303__3421__destroyed_0__4745);
+    (((imagBuffer__299__910__1926__2955__4585)[(int)(63 - (pos__301__912__1928__2957__4587))]) = ___POP_BUFFER_1_1__930__2303__3421__destroyed_1__4744);
+    (((realBuffer__298__909__1925__2954__4584)[(int)(63 - (pos__301__912__1928__2957__4587))]) = ___POP_BUFFER_1_1__930__2303__3421__destroyed_4__4743);
+    (((imagBuffer__299__910__1926__2955__4585)[(int)(63 - (pos__301__912__1928__2957__4587))]) = ___POP_BUFFER_1_1__930__2303__3421__destroyed_5__4742);
+    (((realBuffer__298__909__1925__2954__4584)[(int)(63 - (pos__301__912__1928__2957__4587))]) = ___POP_BUFFER_1_1__930__2303__3421__destroyed_8__4741);
+    (((imagBuffer__299__910__1926__2955__4585)[(int)(63 - (pos__301__912__1928__2957__4587))]) = ___POP_BUFFER_1_1__930__2303__3421__destroyed_9__4740);
+    (((realBuffer__310__915__1931__2960__4588)[(int)(63 - (pos__313__918__1934__2963__4591))]) = ___POP_BUFFER_2_1__936__2309__3427__destroyed_0__4866);
+    (((imagBuffer__311__916__1932__2961__4589)[(int)(63 - (pos__313__918__1934__2963__4591))]) = ___POP_BUFFER_2_1__936__2309__3427__destroyed_1__4865);
+    (((realBuffer__344__968__1938__2967__4593)[(int)(63 - (pos__347__971__1941__2970__4596))]) = ___POP_BUFFER_1_1__989__2344__3462__destroyed_0__4872);
+    (((imagBuffer__345__969__1939__2968__4594)[(int)(63 - (pos__347__971__1941__2970__4596))]) = ___POP_BUFFER_1_1__989__2344__3462__destroyed_1__4871);
+    (((realBuffer__344__968__1938__2967__4593)[(int)(63 - (pos__347__971__1941__2970__4596))]) = ___POP_BUFFER_1_1__989__2344__3462__destroyed_4__4870);
+    (((imagBuffer__345__969__1939__2968__4594)[(int)(63 - (pos__347__971__1941__2970__4596))]) = ___POP_BUFFER_1_1__989__2344__3462__destroyed_5__4869);
+    (((realBuffer__344__968__1938__2967__4593)[(int)(63 - (pos__347__971__1941__2970__4596))]) = ___POP_BUFFER_1_1__989__2344__3462__destroyed_8__4868);
+    (((imagBuffer__345__969__1939__2968__4594)[(int)(63 - (pos__347__971__1941__2970__4596))]) = ___POP_BUFFER_1_1__989__2344__3462__destroyed_9__4867);
+    (((realBuffer__356__974__1944__2973__4597)[(int)(63 - (pos__359__977__1947__2976__4600))]) = ___POP_BUFFER_2_1__995__2350__3468__destroyed_0__4812);
+    (((imagBuffer__357__975__1945__2974__4598)[(int)(63 - (pos__359__977__1947__2976__4600))]) = ___POP_BUFFER_2_1__995__2350__3468__destroyed_1__4811);
+    (((realBuffer__390__1027__1951__2980__4602)[(int)(63 - (pos__393__1030__1954__2983__4605))]) = ___POP_BUFFER_1_1__1048__2385__3503__destroyed_0__4789);
+    (((imagBuffer__391__1028__1952__2981__4603)[(int)(63 - (pos__393__1030__1954__2983__4605))]) = ___POP_BUFFER_1_1__1048__2385__3503__destroyed_1__4788);
+    (((realBuffer__390__1027__1951__2980__4602)[(int)(63 - (pos__393__1030__1954__2983__4605))]) = ___POP_BUFFER_1_1__1048__2385__3503__destroyed_4__4787);
+    (((imagBuffer__391__1028__1952__2981__4603)[(int)(63 - (pos__393__1030__1954__2983__4605))]) = ___POP_BUFFER_1_1__1048__2385__3503__destroyed_5__4786);
+    (((realBuffer__390__1027__1951__2980__4602)[(int)(63 - (pos__393__1030__1954__2983__4605))]) = ___POP_BUFFER_1_1__1048__2385__3503__destroyed_8__4785);
+    (((imagBuffer__391__1028__1952__2981__4603)[(int)(63 - (pos__393__1030__1954__2983__4605))]) = ___POP_BUFFER_1_1__1048__2385__3503__destroyed_9__4784);
+    (((realBuffer__402__1033__1957__2986__4606)[(int)(63 - (pos__405__1036__1960__2989__4609))]) = ___POP_BUFFER_2_1__1054__2391__3509__destroyed_0__4880);
+    (((imagBuffer__403__1034__1958__2987__4607)[(int)(63 - (pos__405__1036__1960__2989__4609))]) = ___POP_BUFFER_2_1__1054__2391__3509__destroyed_1__4879);
+    (((realBuffer__436__1086__1964__2993__4611)[(int)(63 - (pos__439__1089__1967__2996__4614))]) = ___POP_BUFFER_1_1__1107__2426__3544__destroyed_0__4757);
+    (((imagBuffer__437__1087__1965__2994__4612)[(int)(63 - (pos__439__1089__1967__2996__4614))]) = ___POP_BUFFER_1_1__1107__2426__3544__destroyed_1__4756);
+    (((realBuffer__436__1086__1964__2993__4611)[(int)(63 - (pos__439__1089__1967__2996__4614))]) = ___POP_BUFFER_1_1__1107__2426__3544__destroyed_4__4755);
+    (((imagBuffer__437__1087__1965__2994__4612)[(int)(63 - (pos__439__1089__1967__2996__4614))]) = ___POP_BUFFER_1_1__1107__2426__3544__destroyed_5__4754);
+    (((realBuffer__436__1086__1964__2993__4611)[(int)(63 - (pos__439__1089__1967__2996__4614))]) = ___POP_BUFFER_1_1__1107__2426__3544__destroyed_8__4753);
+    (((imagBuffer__437__1087__1965__2994__4612)[(int)(63 - (pos__439__1089__1967__2996__4614))]) = ___POP_BUFFER_1_1__1107__2426__3544__destroyed_9__4752);
+    (((realBuffer__448__1092__1970__2999__4615)[(int)(63 - (pos__451__1095__1973__3002__4618))]) = ___POP_BUFFER_2_1__1113__2432__3550__destroyed_0__4854);
+    (((imagBuffer__449__1093__1971__3000__4616)[(int)(63 - (pos__451__1095__1973__3002__4618))]) = ___POP_BUFFER_2_1__1113__2432__3550__destroyed_1__4853);
+    (((realBuffer__482__1145__1977__3006__4620)[(int)(63 - (pos__485__1148__1980__3009__4623))]) = ___POP_BUFFER_1_1__1166__2467__3585__destroyed_0__4772);
+    (((imagBuffer__483__1146__1978__3007__4621)[(int)(63 - (pos__485__1148__1980__3009__4623))]) = ___POP_BUFFER_1_1__1166__2467__3585__destroyed_1__4771);
+    (((realBuffer__482__1145__1977__3006__4620)[(int)(63 - (pos__485__1148__1980__3009__4623))]) = ___POP_BUFFER_1_1__1166__2467__3585__destroyed_4__4770);
+    (((imagBuffer__483__1146__1978__3007__4621)[(int)(63 - (pos__485__1148__1980__3009__4623))]) = ___POP_BUFFER_1_1__1166__2467__3585__destroyed_5__4769);
+    (((realBuffer__482__1145__1977__3006__4620)[(int)(63 - (pos__485__1148__1980__3009__4623))]) = ___POP_BUFFER_1_1__1166__2467__3585__destroyed_8__4768);
+    (((imagBuffer__483__1146__1978__3007__4621)[(int)(63 - (pos__485__1148__1980__3009__4623))]) = ___POP_BUFFER_1_1__1166__2467__3585__destroyed_9__4767);
+    (((realBuffer__494__1151__1983__3012__4624)[(int)(63 - (pos__497__1154__1986__3015__4627))]) = ___POP_BUFFER_2_1__1172__2473__3591__destroyed_0__4844);
+    (((imagBuffer__495__1152__1984__3013__4625)[(int)(63 - (pos__497__1154__1986__3015__4627))]) = ___POP_BUFFER_2_1__1172__2473__3591__destroyed_1__4843);
+    (((realBuffer__528__1204__1990__3019__4629)[(int)(63 - (pos__531__1207__1993__3022__4632))]) = ___POP_BUFFER_1_1__1225__2508__3626__destroyed_0__4818);
+    (((imagBuffer__529__1205__1991__3020__4630)[(int)(63 - (pos__531__1207__1993__3022__4632))]) = ___POP_BUFFER_1_1__1225__2508__3626__destroyed_1__4817);
+    (((realBuffer__528__1204__1990__3019__4629)[(int)(63 - (pos__531__1207__1993__3022__4632))]) = ___POP_BUFFER_1_1__1225__2508__3626__destroyed_4__4816);
+    (((imagBuffer__529__1205__1991__3020__4630)[(int)(63 - (pos__531__1207__1993__3022__4632))]) = ___POP_BUFFER_1_1__1225__2508__3626__destroyed_5__4815);
+    (((realBuffer__528__1204__1990__3019__4629)[(int)(63 - (pos__531__1207__1993__3022__4632))]) = ___POP_BUFFER_1_1__1225__2508__3626__destroyed_8__4814);
+    (((imagBuffer__529__1205__1991__3020__4630)[(int)(63 - (pos__531__1207__1993__3022__4632))]) = ___POP_BUFFER_1_1__1225__2508__3626__destroyed_9__4813);
+    (((realBuffer__540__1210__1996__3025__4633)[(int)(63 - (pos__543__1213__1999__3028__4636))]) = ___POP_BUFFER_2_1__1231__2514__3632__destroyed_0__4852);
+    (((imagBuffer__541__1211__1997__3026__4634)[(int)(63 - (pos__543__1213__1999__3028__4636))]) = ___POP_BUFFER_2_1__1231__2514__3632__destroyed_1__4851);
+    (((realBuffer__1293__1520__2547__3033__4637)[(int)(169 - (pos__1296__1523__2550__3036__4640))]) = ___POP_BUFFER_1_1__1538__2612__3667__destroyed_0__4739);
+    (((imagBuffer__1294__1521__2548__3034__4638)[(int)(169 - (pos__1296__1523__2550__3036__4640))]) = ___POP_BUFFER_1_1__1538__2612__3667__destroyed_1__4738);
+    (((realBuffer__1357__1601__2556__3042__4642)[(int)(169 - (pos__1360__1604__2559__3045__4645))]) = ___POP_BUFFER_1_1__1619__2671__3726__destroyed_0__4783);
+    (((imagBuffer__1358__1602__2557__3043__4643)[(int)(169 - (pos__1360__1604__2559__3045__4645))]) = ___POP_BUFFER_1_1__1619__2671__3726__destroyed_1__4782);
+    (((realBuffer__1421__1682__2565__3051__4647)[(int)(169 - (pos__1424__1685__2568__3054__4650))]) = ___POP_BUFFER_1_1__1700__2730__3785__destroyed_0__4764);
+    (((imagBuffer__1422__1683__2566__3052__4648)[(int)(169 - (pos__1424__1685__2568__3054__4650))]) = ___POP_BUFFER_1_1__1700__2730__3785__destroyed_1__4763);
+    (((realBuffer__1485__1763__2574__3060__4652)[(int)(169 - (pos__1488__1766__2577__3063__4655))]) = ___POP_BUFFER_1_1__1781__2789__3844__destroyed_0__4802);
+    (((imagBuffer__1486__1764__2575__3061__4653)[(int)(169 - (pos__1488__1766__2577__3063__4655))]) = ___POP_BUFFER_1_1__1781__2789__3844__destroyed_1__4801);
+
+----------------------------------------------------------------------
+compcount
+
+Compile and run compcount:
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Starting Kopi2SIR... done.
+Entry to SMP Backend...
+Running Constant Prop and Unroll...
+Done Constant Prop and Unroll...
+Running Constant Field Propagation...
+Done Constant Field Propagation...
+Comp/Comm Ratio of original SIR graph: 60.705882352941174
+SIR Peeking Work: 0,  SIR Total Work: 2064
+SIR Filters: 1
+SIR Peeking Filters: 0
+ stateful work / total work = 1.0
+Performing fusion of stateful filters
+Packed 1 stateful filters.
+Comp/Comm Ratio of SIR graph: Infinity
+Flattening Graph..
+Done Flattening, Starting Sync Removal..
+Done Sync Removal..
+Slice Work Threshold: 1.01(101)
+Traces: 1
+Equalizing splits and joins by buffering...
+Fused_Ran_Cou_Rea_Int__1838_44
+Slice: at.dms.kjc.slicegraph.InputSliceNode@6d469831->Fused_Ran_Cou_Rea_Int__1838_44->...: 1921
+Cannot fiss: Fused_Ran_Cou_Rea_Int__1838_44
+Using fission steady multiplicity factor: 1
+Max fission amount: 0
+Slice: at.dms.kjc.slicegraph.InputSliceNode@6d469831->Fused_Ran_Cou_Rea_Int__1838_44->...: 1921
+Number of fizzed slices: 0
+Number of unfizzed slices: 1
+Core 0 has work: 1921
+Optimizing core 0...
+Final filter assignments:
+========================================
+Core 0: 
+Slice: at.dms.kjc.slicegraph.InputSliceNode@6d469831->Fused_Ran_Cou_Rea_Int__1838_44->...: 1921
+            1921 | Fused_Ran_Cou_Rea_Int__1838_44
+            1921 | Total
+gcc -O2  -c main.c
+gcc -O2  -c barrier.c
+gcc -O2  -c core0.c
+gcc -O2 -pthread -lstdc++ -lm main.o barrier.o core0.o  -o smp1
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+
+Check output of compcount (100000 lines):
+
++++  Files "compiler-output" and "library-output" are equal
+
+Check for FIFOs in compcount:
+    ((outputArray__1185__1821__651[(int)__tmp516__1186__1822__652]) = ___POP_BUFFER_2_1__1246__destroyed_16__74);
+    ((outputArray__1185__1821__651[(int)__tmp517__1187__1823__653]) = ___POP_BUFFER_2_1__1246__destroyed_17__73);
+    ((outputArray__1185__1821__651[(int)__tmp518__1188__1824__654]) = ___POP_BUFFER_2_1__1246__destroyed_18__72);
+    ((outputArray__1185__1821__651[(int)__tmp519__1189__1825__655]) = ___POP_BUFFER_2_1__1246__destroyed_19__71);
+    ((outputArray__1185__1821__651[(int)__tmp520__1190__1826__656]) = ___POP_BUFFER_2_1__1246__destroyed_20__70);
+    ((outputArray__1185__1821__651[(int)__tmp521__1191__1827__657]) = ___POP_BUFFER_2_1__1246__destroyed_21__69);
+    ((outputArray__1185__1821__651[(int)__tmp522__1192__1828__658]) = ___POP_BUFFER_2_1__1246__destroyed_22__68);
+    ((outputArray__1185__1821__651[(int)__tmp523__1193__1829__659]) = ___POP_BUFFER_2_1__1246__destroyed_23__67);
+    ((outputArray__1185__1821__651[(int)__tmp524__1194__1830__660]) = ___POP_BUFFER_2_1__1246__destroyed_24__66);
+    ((outputArray__1185__1821__651[(int)__tmp525__1195__1831__661]) = ___POP_BUFFER_2_1__1246__destroyed_25__65);
+    ((outputArray__1185__1821__651[(int)__tmp526__1196__1832__662]) = ___POP_BUFFER_2_1__1246__destroyed_26__64);
+    ((outputArray__1185__1821__651[(int)__tmp527__1197__1833__663]) = ___POP_BUFFER_2_1__1246__destroyed_27__63);
+    ((outputArray__1185__1821__651[(int)__tmp528__1198__1834__664]) = ___POP_BUFFER_2_1__1246__destroyed_28__62);
+    ((outputArray__1185__1821__651[(int)__tmp529__1199__1835__665]) = ___POP_BUFFER_2_1__1246__destroyed_29__61);
+    ((outputArray__1185__1821__651[(int)__tmp530__1200__1836__666]) = ___POP_BUFFER_2_1__1246__destroyed_30__60);
+    ((outputArray__1185__1821__651[(int)__tmp531__1201__1837__667]) = ___POP_BUFFER_2_1__1246__destroyed_31__59);
+    (___POP_BUFFER_3_1__1252__destroyed_0__58 = (outputArray__1185__1821__651[(int)0]));
+    (___POP_BUFFER_3_1__1252__destroyed_1__57 = (outputArray__1185__1821__651[(int)1]));
+    (___POP_BUFFER_3_1__1252__destroyed_2__56 = (outputArray__1185__1821__651[(int)2]));
+    (___POP_BUFFER_3_1__1252__destroyed_3__55 = (outputArray__1185__1821__651[(int)3]));
+    (___POP_BUFFER_3_1__1252__destroyed_4__54 = (outputArray__1185__1821__651[(int)4]));
+    (___POP_BUFFER_3_1__1252__destroyed_5__53 = (outputArray__1185__1821__651[(int)5]));
+    (___POP_BUFFER_3_1__1252__destroyed_6__52 = (outputArray__1185__1821__651[(int)6]));
+    (___POP_BUFFER_3_1__1252__destroyed_7__51 = (outputArray__1185__1821__651[(int)7]));
+    (___POP_BUFFER_3_1__1252__destroyed_8__50 = (outputArray__1185__1821__651[(int)8]));
+    (___POP_BUFFER_3_1__1252__destroyed_9__49 = (outputArray__1185__1821__651[(int)9]));
+    (___POP_BUFFER_3_1__1252__destroyed_10__48 = (outputArray__1185__1821__651[(int)10]));
+    (___POP_BUFFER_3_1__1252__destroyed_11__47 = (outputArray__1185__1821__651[(int)11]));
+    (___POP_BUFFER_3_1__1252__destroyed_12__46 = (outputArray__1185__1821__651[(int)12]));
+    (___POP_BUFFER_3_1__1252__destroyed_13__45 = (outputArray__1185__1821__651[(int)13]));
+    (___POP_BUFFER_3_1__1252__destroyed_14__44 = (outputArray__1185__1821__651[(int)14]));
+    (___POP_BUFFER_3_1__1252__destroyed_15__43 = (outputArray__1185__1821__651[(int)15]));
+
+----------------------------------------------------------------------
+dct
+
+Compile and run dct:
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Starting Kopi2SIR... done.
+Entry to SMP Backend...
+Running Constant Prop and Unroll...
+Done Constant Prop and Unroll...
+Running Constant Field Propagation...
+Done Constant Field Propagation...
+Comp/Comm Ratio of original SIR graph: 207.8
+SIR Peeking Work: 0,  SIR Total Work: 13507
+SIR Filters: 1
+SIR Peeking Filters: 0
+ stateful work / total work = 1.0
+Performing fusion of stateful filters
+Packed 1 stateful filters.
+Comp/Comm Ratio of SIR graph: Infinity
+Flattening Graph..
+Done Flattening, Starting Sync Removal..
+Done Sync Removal..
+Slice Work Threshold: 1.01(101)
+Traces: 1
+Equalizing splits and joins by buffering...
+Fused_Ran_iDC_Flo__4778_78
+Slice: at.dms.kjc.slicegraph.InputSliceNode@6279bfe->Fused_Ran_iDC_Flo__4778_78->...: 12745
+Cannot fiss: Fused_Ran_iDC_Flo__4778_78
+Using fission steady multiplicity factor: 1
+Max fission amount: 0
+Slice: at.dms.kjc.slicegraph.InputSliceNode@6279bfe->Fused_Ran_iDC_Flo__4778_78->...: 12745
+Number of fizzed slices: 0
+Number of unfizzed slices: 1
+Core 0 has work: 12745
+Optimizing core 0...
+Final filter assignments:
+========================================
+Core 0: 
+Slice: at.dms.kjc.slicegraph.InputSliceNode@6279bfe->Fused_Ran_iDC_Flo__4778_78->...: 12745
+           12745 | Fused_Ran_iDC_Flo__4778_78
+           12745 | Total
+gcc -O2  -c main.c
+gcc -O2  -c barrier.c
+gcc -O2  -c core0.c
+gcc -O2 -pthread -lstdc++ -lm main.o barrier.o core0.o  -o smp1
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+
+Check output of dct (100000 lines):
+
++++  Files "compiler-output" and "library-output" are equal
+
+Check for FIFOs in dct:
+Found nothing
+
+----------------------------------------------------------------------
+des
+
+Compile and run des:
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Starting Kopi2SIR... done.
+Entry to SMP Backend...
+Running Constant Prop and Unroll...
+Done Constant Prop and Unroll...
+Running Constant Field Propagation...
+Done Constant Field Propagation...
+Comp/Comm Ratio of original SIR graph: 11.642857142857142
+SIR Peeking Work: 0,  SIR Total Work: 38957
+SIR Filters: 1
+SIR Peeking Filters: 0
+ stateful work / total work = 1.0
+Performing fusion of stateful filters
+Packed 1 stateful filters.
+Comp/Comm Ratio of SIR graph: Infinity
+Flattening Graph..
+Done Flattening, Starting Sync Removal..
+Done Sync Removal..
+Slice Work Threshold: 1.01(101)
+Traces: 1
+Equalizing splits and joins by buffering...
+Fused_Ran_Int_doI_SP__SP__SP__SP__SP__SP__SP__SP__SP__SP__SP__SP__SP__SP__SP__SP__Cri_doI_Bit_F_H__43772_1083
+Slice: at.dms.kjc.slicegraph.InputSliceNode@756c41a6->Fused_Ran_Int_doI_SP__SP__SP__SP__SP__SP__SP__SP__SP__SP__SP__SP__SP__SP__SP__SP__Cri_doI_Bit_F_H__43772_1083->...: 34165
+Cannot fiss: Fused_Ran_Int_doI_SP__SP__SP__SP__SP__SP__SP__SP__SP__SP__SP__SP__SP__SP__SP__SP__Cri_doI_Bit_F_H__43772_1083
+Using fission steady multiplicity factor: 1
+Max fission amount: 0
+Slice: at.dms.kjc.slicegraph.InputSliceNode@756c41a6->Fused_Ran_Int_doI_SP__SP__SP__SP__SP__SP__SP__SP__SP__SP__SP__SP__SP__SP__SP__SP__Cri_doI_Bit_F_H__43772_1083->...: 34165
+Number of fizzed slices: 0
+Number of unfizzed slices: 1
+Core 0 has work: 34165
+Optimizing core 0...
+Final filter assignments:
+========================================
+Core 0: 
+Slice: at.dms.kjc.slicegraph.InputSliceNode@756c41a6->Fused_Ran_Int_doI_SP__SP__SP__SP__SP__SP__SP__SP__SP__SP__SP__SP__SP__SP__SP__SP__Cri_doI_Bit_F_H__43772_1083->...: 34165
+           34165 | Fused_Ran_Int_doI_SP__SP__SP__SP__SP__SP__SP__SP__SP__SP__SP__SP__SP__SP__SP__SP__Cri_doI_Bit_F_H__43772_1083
+           34165 | Total
+gcc -O2  -c main.c
+gcc -O2  -c barrier.c
+gcc -O2  -c core0.c
+gcc -O2 -pthread -lstdc++ -lm main.o barrier.o core0.o  -o smp1
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+
+Check output of des (100000 lines):
+No differences found
+
+Check for FIFOs in des:
+Found nothing
+
+----------------------------------------------------------------------
+fft2
+
+Compile and run fft2:
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Starting Kopi2SIR... done.
+Entry to SMP Backend...
+Running Constant Prop and Unroll...
+Done Constant Prop and Unroll...
+Running Constant Field Propagation...
+Done Constant Field Propagation...
+Comp/Comm Ratio of original SIR graph: 26.549356223175966
+SIR Peeking Work: 0,  SIR Total Work: 6186
+SIR Filters: 1
+SIR Peeking Filters: 0
+ stateful work / total work = 1.0
+Performing fusion of stateful filters
+Packed 1 stateful filters.
+Comp/Comm Ratio of SIR graph: Infinity
+Flattening Graph..
+Done Flattening, Starting Sync Removal..
+Done Sync Removal..
+Slice Work Threshold: 1.01(101)
+Traces: 1
+Equalizing splits and joins by buffering...
+Fused_Ran_FFT_Flo__1622_52
+Slice: at.dms.kjc.slicegraph.InputSliceNode@f591271->Fused_Ran_FFT_Flo__1622_52->...: 4382
+Cannot fiss: Fused_Ran_FFT_Flo__1622_52
+Using fission steady multiplicity factor: 1
+Max fission amount: 0
+Slice: at.dms.kjc.slicegraph.InputSliceNode@f591271->Fused_Ran_FFT_Flo__1622_52->...: 4382
+Number of fizzed slices: 0
+Number of unfizzed slices: 1
+Core 0 has work: 4382
+Optimizing core 0...
+Final filter assignments:
+========================================
+Core 0: 
+Slice: at.dms.kjc.slicegraph.InputSliceNode@f591271->Fused_Ran_FFT_Flo__1622_52->...: 4382
+            4382 | Fused_Ran_FFT_Flo__1622_52
+            4382 | Total
+gcc -O2  -c main.c
+gcc -O2  -c barrier.c
+gcc -O2  -c core0.c
+gcc -O2 -pthread -lstdc++ -lm main.o barrier.o core0.o  -o smp1
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+
+Check output of fft2 (100000 lines):
+
++++  Files "compiler-output" and "library-output" are equal
+
+Check for FIFOs in fft2:
+Found nothing
+
+----------------------------------------------------------------------
+fft2_256
+
+Compile and run fft2_256:
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Starting Kopi2SIR... done.
+Entry to SMP Backend...
+Running Constant Prop and Unroll...
+Done Constant Prop and Unroll...
+Running Constant Field Propagation...
+Done Constant Field Propagation...
+Comp/Comm Ratio of original SIR graph: 34.967032967032964
+SIR Peeking Work: 0,  SIR Total Work: 35002
+SIR Filters: 1
+SIR Peeking Filters: 0
+ stateful work / total work = 1.0
+Performing fusion of stateful filters
+Packed 1 stateful filters.
+Comp/Comm Ratio of SIR graph: Infinity
+Flattening Graph..
+Done Flattening, Starting Sync Removal..
+Done Sync Removal..
+Slice Work Threshold: 1.01(101)
+Traces: 1
+Equalizing splits and joins by buffering...
+Fused_Ran_FFT_Flo__5686_60
+Slice: at.dms.kjc.slicegraph.InputSliceNode@693089ab->Fused_Ran_FFT_Flo__5686_60->...: 23726
+Cannot fiss: Fused_Ran_FFT_Flo__5686_60
+Using fission steady multiplicity factor: 1
+Max fission amount: 0
+Slice: at.dms.kjc.slicegraph.InputSliceNode@693089ab->Fused_Ran_FFT_Flo__5686_60->...: 23726
+Number of fizzed slices: 0
+Number of unfizzed slices: 1
+Core 0 has work: 23726
+Optimizing core 0...
+Final filter assignments:
+========================================
+Core 0: 
+Slice: at.dms.kjc.slicegraph.InputSliceNode@693089ab->Fused_Ran_FFT_Flo__5686_60->...: 23726
+           23726 | Fused_Ran_FFT_Flo__5686_60
+           23726 | Total
+gcc -O2  -c main.c
+gcc -O2  -c barrier.c
+gcc -O2  -c core0.c
+gcc -O2 -pthread -lstdc++ -lm main.o barrier.o core0.o  -o smp1
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+
+Check output of fft2_256 (100000 lines):
+
++++  Files "compiler-output" and "library-output" are equal
+
+Check for FIFOs in fft2_256:
+Found nothing
+
+----------------------------------------------------------------------
+jpeg
+
+Compile and run jpeg:
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Starting Kopi2SIR... done.
+Entry to SMP Backend...
+Running Constant Prop and Unroll...
+Done Constant Prop and Unroll...
+Running Constant Field Propagation...
+Done Constant Field Propagation...
+Comp/Comm Ratio of original SIR graph: 64.50632911392405
+SIR Peeking Work: 0,  SIR Total Work: 35672
+SIR Filters: 1
+SIR Peeking Filters: 0
+ stateful work / total work = 1.0
+Performing fusion of stateful filters
+Packed 1 stateful filters.
+Comp/Comm Ratio of SIR graph: Infinity
+Flattening Graph..
+Done Flattening, Starting Sync Removal..
+Done Sync Removal..
+Slice Work Threshold: 1.01(101)
+Traces: 1
+Equalizing splits and joins by buffering...
+Fused_Ran_Int_Add_DCT_Pre_DCT_Pos_sta_Blo_Zig_Zig_Blo_sta_iDC_Pre_iDC_Pos_Add_Flo_Dis__4254_221
+Slice: at.dms.kjc.slicegraph.InputSliceNode@26ffe94e->Fused_Ran_Int_Add_DCT_Pre_DCT_Pos_sta_Blo_Zig_Zig_Blo_sta_iDC_Pre_iDC_Pos_Add_Flo_Dis__4254_221->...: 30552
+Cannot fiss: Fused_Ran_Int_Add_DCT_Pre_DCT_Pos_sta_Blo_Zig_Zig_Blo_sta_iDC_Pre_iDC_Pos_Add_Flo_Dis__4254_221
+Using fission steady multiplicity factor: 1
+Max fission amount: 0
+Slice: at.dms.kjc.slicegraph.InputSliceNode@26ffe94e->Fused_Ran_Int_Add_DCT_Pre_DCT_Pos_sta_Blo_Zig_Zig_Blo_sta_iDC_Pre_iDC_Pos_Add_Flo_Dis__4254_221->...: 30552
+Number of fizzed slices: 0
+Number of unfizzed slices: 1
+Core 0 has work: 30552
+Optimizing core 0...
+Final filter assignments:
+========================================
+Core 0: 
+Slice: at.dms.kjc.slicegraph.InputSliceNode@26ffe94e->Fused_Ran_Int_Add_DCT_Pre_DCT_Pos_sta_Blo_Zig_Zig_Blo_sta_iDC_Pre_iDC_Pos_Add_Flo_Dis__4254_221->...: 30552
+           30552 | Fused_Ran_Int_Add_DCT_Pre_DCT_Pos_sta_Blo_Zig_Zig_Blo_sta_iDC_Pre_iDC_Pos_Add_Flo_Dis__4254_221
+           30552 | Total
+gcc -O2  -c main.c
+gcc -O2  -c barrier.c
+gcc -O2  -c core0.c
+gcc -O2 -pthread -lstdc++ -lm main.o barrier.o core0.o  -o smp1
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+
+Check output of jpeg (100000 lines):
+
++++  Files "compiler-output" and "library-output" are equal
+
+Check for FIFOs in jpeg:
+Found nothing
+
+----------------------------------------------------------------------
+lattice
+
+Compile and run lattice:
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Starting Kopi2SIR... done.
+Entry to SMP Backend...
+Running Constant Prop and Unroll...
+Done Constant Prop and Unroll...
+Running Constant Field Propagation...
+Done Constant Field Propagation...
+Comp/Comm Ratio of original SIR graph: 745.25
+SIR Peeking Work: 0,  SIR Total Work: 26829
+SIR Filters: 1
+SIR Peeking Filters: 0
+ stateful work / total work = 1.0
+Performing fusion of stateful filters
+Packed 1 stateful filters.
+Comp/Comm Ratio of SIR graph: Infinity
+Flattening Graph..
+Done Flattening, Starting Sync Removal..
+Done Sync Removal..
+Slice Work Threshold: 1.01(101)
+Traces: 1
+Equalizing splits and joins by buffering...
+Fused_Ran_Aut_Ide_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Las__552_109
+Slice: at.dms.kjc.slicegraph.InputSliceNode@10e92f8f->Fused_Ran_Aut_Ide_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Las__552_109->...: 22733
+Cannot fiss: Fused_Ran_Aut_Ide_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Las__552_109
+Using fission steady multiplicity factor: 1
+Max fission amount: 0
+Slice: at.dms.kjc.slicegraph.InputSliceNode@10e92f8f->Fused_Ran_Aut_Ide_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Las__552_109->...: 22733
+Number of fizzed slices: 0
+Number of unfizzed slices: 1
+Core 0 has work: 22733
+Optimizing core 0...
+Final filter assignments:
+========================================
+Core 0: 
+Slice: at.dms.kjc.slicegraph.InputSliceNode@10e92f8f->Fused_Ran_Aut_Ide_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Las__552_109->...: 22733
+           22733 | Fused_Ran_Aut_Ide_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Lat_Las__552_109
+           22733 | Total
+gcc -O2  -c main.c
+gcc -O2  -c barrier.c
+gcc -O2  -c core0.c
+gcc -O2 -pthread -lstdc++ -lm main.o barrier.o core0.o  -o smp1
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+
+Check output of lattice (100000 lines):
+
++++  Files "compiler-output" and "library-output" are equal
+
+Check for FIFOs in lattice:
+Found nothing
+
+----------------------------------------------------------------------
+matmul
+
+Compile and run matmul:
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Starting Kopi2SIR... done.
+Entry to SMP Backend...
+Running Constant Prop and Unroll...
+Done Constant Prop and Unroll...
+Running Constant Field Propagation...
+Done Constant Field Propagation...
+Comp/Comm Ratio of original SIR graph: 44.519183673469385
+SIR Peeking Work: 0,  SIR Total Work: 54536
+SIR Filters: 1
+SIR Peeking Filters: 0
+ stateful work / total work = 1.0
+Performing fusion of stateful filters
+Packed 1 stateful filters.
+Comp/Comm Ratio of SIR graph: Infinity
+Flattening Graph..
+Done Flattening, Starting Sync Removal..
+Done Sync Removal..
+Slice Work Threshold: 1.01(101)
+Traces: 1
+Equalizing splits and joins by buffering...
+Fused_Ran_Rea_Pos_Mul_Flo__5562_242
+Slice: at.dms.kjc.slicegraph.InputSliceNode@328a1843->Fused_Ran_Rea_Pos_Mul_Flo__5562_242->...: 40033
+Cannot fiss: Fused_Ran_Rea_Pos_Mul_Flo__5562_242
+Using fission steady multiplicity factor: 1
+Max fission amount: 0
+Slice: at.dms.kjc.slicegraph.InputSliceNode@328a1843->Fused_Ran_Rea_Pos_Mul_Flo__5562_242->...: 40033
+Number of fizzed slices: 0
+Number of unfizzed slices: 1
+Core 0 has work: 40033
+Optimizing core 0...
+Final filter assignments:
+========================================
+Core 0: 
+Slice: at.dms.kjc.slicegraph.InputSliceNode@328a1843->Fused_Ran_Rea_Pos_Mul_Flo__5562_242->...: 40033
+           40033 | Fused_Ran_Rea_Pos_Mul_Flo__5562_242
+           40033 | Total
+gcc -O2  -c main.c
+gcc -O2  -c barrier.c
+gcc -O2  -c core0.c
+gcc -O2 -pthread -lstdc++ -lm main.o barrier.o core0.o  -o smp1
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+
+Check output of matmul (100000 lines):
+
++++  Files "compiler-output" and "library-output" are equal
+
+Check for FIFOs in matmul:
+Found nothing
+
+----------------------------------------------------------------------
+radixsort
+
+Compile and run radixsort:
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Starting Kopi2SIR... done.
+Entry to SMP Backend...
+Running Constant Prop and Unroll...
+Done Constant Prop and Unroll...
+Running Constant Field Propagation...
+Done Constant Field Propagation...
+WARNING:  Estimating work in for loop, assume N=5 (in filter Sort)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Sort)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Sort)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Sort)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Sort)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Sort)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Sort)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Sort)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Sort)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Sort)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Sort)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Sort)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Sort)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Sort)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Sort)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Sort)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Sort)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Sort)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Sort)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Sort)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Sort)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Sort)
+Comp/Comm Ratio of original SIR graph: 11.435028248587571
+WARNING:  Estimating work in for loop, assume N=5 (in filter Sort)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Sort)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Sort)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Sort)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Sort)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Sort)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Sort)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Sort)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Sort)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Sort)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Sort)
+SIR Peeking Work: 0,  SIR Total Work: 2024
+WARNING:  Estimating work in for loop, assume N=5 (in filter Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int)
+SIR Filters: 1
+SIR Peeking Filters: 0
+WARNING:  Estimating work in for loop, assume N=5 (in filter Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int)
+ stateful work / total work = 1.0
+Performing fusion of stateful filters
+WARNING:  Estimating work in for loop, assume N=5 (in filter Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int)
+Packed 1 stateful filters.
+WARNING:  Estimating work in for loop, assume N=5 (in filter Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int__556)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int__556)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int__556)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int__556)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int__556)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int__556)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int__556)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int__556)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int__556)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int__556)
+WARNING:  Estimating work in for loop, assume N=5 (in filter Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int__556)
+Comp/Comm Ratio of SIR graph: Infinity
+Flattening Graph..
+Done Flattening, Starting Sync Removal..
+Done Sync Removal..
+Slice Work Threshold: 1.01(101)
+Traces: 1
+Equalizing splits and joins by buffering...
+Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int__556_21
+Slice: at.dms.kjc.slicegraph.InputSliceNode@5baaae4c->Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int__556_21->...: 1386
+Cannot fiss: Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int__556_21
+Using fission steady multiplicity factor: 1
+Max fission amount: 0
+Slice: at.dms.kjc.slicegraph.InputSliceNode@5baaae4c->Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int__556_21->...: 1386
+Number of fizzed slices: 0
+Number of unfizzed slices: 1
+Core 0 has work: 1386
+Optimizing core 0...
+Final filter assignments:
+========================================
+Core 0: 
+Slice: at.dms.kjc.slicegraph.InputSliceNode@5baaae4c->Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int__556_21->...: 1386
+            1386 | Fused_Ran_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Sor_Int__556_21
+            1386 | Total
+gcc -O2  -c main.c
+gcc -O2  -c barrier.c
+gcc -O2  -c core0.c
+gcc -O2 -pthread -lstdc++ -lm main.o barrier.o core0.o  -o smp1
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+
+Check output of radixsort (100000 lines):
+
++++  Files "compiler-output" and "library-output" are equal
+
+Check for FIFOs in radixsort:
+    int ___POP_BUFFER_2_1__281__35[16] = {0};
+    int ___POP_BUFFER_3_1__287__37[16] = {0};
+    int ___POP_BUFFER_4_1__293__39[16] = {0};
+    int ___POP_BUFFER_5_1__299__41[16] = {0};
+    int ___POP_BUFFER_6_1__305__43[16] = {0};
+    int ___POP_BUFFER_7_1__311__45[16] = {0};
+    int ___POP_BUFFER_8_1__317__47[16] = {0};
+    int ___POP_BUFFER_9_1__323__49[16] = {0};
+    int ___POP_BUFFER_10_1__329__51[16] = {0};
+    int ___POP_BUFFER_11_1__335__53[16] = {0};
+    int ___POP_BUFFER_12_1__341__55[16] = {0};
+      ((___POP_BUFFER_2_1__281__35[(int)0]) = current__9__350__60);
+      ((___POP_BUFFER_2_1__281__35[(int)(++___PUSH_INDEX_1_2__283__36)]) = current__10__351__61);
+      ((___POP_BUFFER_2_1__281__35[(int)(++___PUSH_INDEX_1_2__283__36)]) = current__11__352__62);
+      ((___POP_BUFFER_2_1__281__35[(int)(++___PUSH_INDEX_1_2__283__36)]) = current__12__353__63);
+      ((___POP_BUFFER_2_1__281__35[(int)(++___PUSH_INDEX_1_2__283__36)]) = current__13__354__64);
+      ((___POP_BUFFER_2_1__281__35[(int)(++___PUSH_INDEX_1_2__283__36)]) = current__14__355__65);
+      ((___POP_BUFFER_2_1__281__35[(int)(++___PUSH_INDEX_1_2__283__36)]) = current__15__356__66);
+      ((___POP_BUFFER_2_1__281__35[(int)(++___PUSH_INDEX_1_2__283__36)]) = current__16__357__67);
+      ((___POP_BUFFER_2_1__281__35[(int)(++___PUSH_INDEX_1_2__283__36)]) = current__17__358__68);
+      ((___POP_BUFFER_2_1__281__35[(int)(++___PUSH_INDEX_1_2__283__36)]) = current__18__359__69);
+      ((___POP_BUFFER_2_1__281__35[(int)(++___PUSH_INDEX_1_2__283__36)]) = current__19__360__70);
+      ((___POP_BUFFER_2_1__281__35[(int)(++___PUSH_INDEX_1_2__283__36)]) = current__20__361__71);
+      ((___POP_BUFFER_2_1__281__35[(int)(++___PUSH_INDEX_1_2__283__36)]) = current__21__362__72);
+      ((___POP_BUFFER_2_1__281__35[(int)(++___PUSH_INDEX_1_2__283__36)]) = current__22__363__73);
+      ((___POP_BUFFER_2_1__281__35[(int)(++___PUSH_INDEX_1_2__283__36)]) = current__23__364__74);
+      ((___POP_BUFFER_2_1__281__35[(int)(++___PUSH_INDEX_1_2__283__36)]) = current__24__365__75);
+        ((___POP_BUFFER_2_1__281__35[(int)(++___PUSH_INDEX_1_2__283__36)]) = (ordering__6__347__57[(int)i__8__349__59]));
+    (current__31__369__79 = (___POP_BUFFER_2_1__281__35[(int)0]));
+      ((___POP_BUFFER_3_1__287__37[(int)0]) = current__31__369__79);
+    (current__32__370__80 = (___POP_BUFFER_2_1__281__35[(int)1]));
+      ((___POP_BUFFER_3_1__287__37[(int)(++___PUSH_INDEX_1_3__289__38)]) = current__32__370__80);
+    (current__33__371__81 = (___POP_BUFFER_2_1__281__35[(int)2]));
+      ((___POP_BUFFER_3_1__287__37[(int)(++___PUSH_INDEX_1_3__289__38)]) = current__33__371__81);
+    (current__34__372__82 = (___POP_BUFFER_2_1__281__35[(int)3]));
+      ((___POP_BUFFER_3_1__287__37[(int)(++___PUSH_INDEX_1_3__289__38)]) = current__34__372__82);
+    (current__35__373__83 = (___POP_BUFFER_2_1__281__35[(int)4]));
+      ((___POP_BUFFER_3_1__287__37[(int)(++___PUSH_INDEX_1_3__289__38)]) = current__35__373__83);
+    (current__36__374__84 = (___POP_BUFFER_2_1__281__35[(int)5]));
+      ((___POP_BUFFER_3_1__287__37[(int)(++___PUSH_INDEX_1_3__289__38)]) = current__36__374__84);
+    (current__37__375__85 = (___POP_BUFFER_2_1__281__35[(int)6]));
+      ((___POP_BUFFER_3_1__287__37[(int)(++___PUSH_INDEX_1_3__289__38)]) = current__37__375__85);
+    (current__38__376__86 = (___POP_BUFFER_2_1__281__35[(int)7]));
+      ((___POP_BUFFER_3_1__287__37[(int)(++___PUSH_INDEX_1_3__289__38)]) = current__38__376__86);
+    (current__39__377__87 = (___POP_BUFFER_2_1__281__35[(int)8]));
+      ((___POP_BUFFER_3_1__287__37[(int)(++___PUSH_INDEX_1_3__289__38)]) = current__39__377__87);
+    (current__40__378__88 = (___POP_BUFFER_2_1__281__35[(int)9]));
+      ((___POP_BUFFER_3_1__287__37[(int)(++___PUSH_INDEX_1_3__289__38)]) = current__40__378__88);
+    (current__41__379__89 = (___POP_BUFFER_2_1__281__35[(int)10]));
+      ((___POP_BUFFER_3_1__287__37[(int)(++___PUSH_INDEX_1_3__289__38)]) = current__41__379__89);
+    (current__42__380__90 = (___POP_BUFFER_2_1__281__35[(int)11]));
+      ((___POP_BUFFER_3_1__287__37[(int)(++___PUSH_INDEX_1_3__289__38)]) = current__42__380__90);
+    (current__43__381__91 = (___POP_BUFFER_2_1__281__35[(int)12]));
+      ((___POP_BUFFER_3_1__287__37[(int)(++___PUSH_INDEX_1_3__289__38)]) = current__43__381__91);
+    (current__44__382__92 = (___POP_BUFFER_2_1__281__35[(int)13]));
+      ((___POP_BUFFER_3_1__287__37[(int)(++___PUSH_INDEX_1_3__289__38)]) = current__44__382__92);
+    (current__45__383__93 = (___POP_BUFFER_2_1__281__35[(int)14]));
+      ((___POP_BUFFER_3_1__287__37[(int)(++___PUSH_INDEX_1_3__289__38)]) = current__45__383__93);
+    (current__46__384__94 = (___POP_BUFFER_2_1__281__35[(int)15]));
+      ((___POP_BUFFER_3_1__287__37[(int)(++___PUSH_INDEX_1_3__289__38)]) = current__46__384__94);
+        ((___POP_BUFFER_3_1__287__37[(int)(++___PUSH_INDEX_1_3__289__38)]) = (ordering__28__366__76[(int)i__30__368__78]));
+    (current__53__388__98 = (___POP_BUFFER_3_1__287__37[(int)0]));
+      ((___POP_BUFFER_4_1__293__39[(int)0]) = current__53__388__98);
+    (current__54__389__99 = (___POP_BUFFER_3_1__287__37[(int)1]));
+      ((___POP_BUFFER_4_1__293__39[(int)(++___PUSH_INDEX_1_4__295__40)]) = current__54__389__99);
+    (current__55__390__100 = (___POP_BUFFER_3_1__287__37[(int)2]));
+      ((___POP_BUFFER_4_1__293__39[(int)(++___PUSH_INDEX_1_4__295__40)]) = current__55__390__100);
+    (current__56__391__101 = (___POP_BUFFER_3_1__287__37[(int)3]));
+      ((___POP_BUFFER_4_1__293__39[(int)(++___PUSH_INDEX_1_4__295__40)]) = current__56__391__101);
+    (current__57__392__102 = (___POP_BUFFER_3_1__287__37[(int)4]));
+      ((___POP_BUFFER_4_1__293__39[(int)(++___PUSH_INDEX_1_4__295__40)]) = current__57__392__102);
+    (current__58__393__103 = (___POP_BUFFER_3_1__287__37[(int)5]));
+      ((___POP_BUFFER_4_1__293__39[(int)(++___PUSH_INDEX_1_4__295__40)]) = current__58__393__103);
+    (current__59__394__104 = (___POP_BUFFER_3_1__287__37[(int)6]));
+      ((___POP_BUFFER_4_1__293__39[(int)(++___PUSH_INDEX_1_4__295__40)]) = current__59__394__104);
+    (current__60__395__105 = (___POP_BUFFER_3_1__287__37[(int)7]));
+      ((___POP_BUFFER_4_1__293__39[(int)(++___PUSH_INDEX_1_4__295__40)]) = current__60__395__105);
+    (current__61__396__106 = (___POP_BUFFER_3_1__287__37[(int)8]));
+      ((___POP_BUFFER_4_1__293__39[(int)(++___PUSH_INDEX_1_4__295__40)]) = current__61__396__106);
+    (current__62__397__107 = (___POP_BUFFER_3_1__287__37[(int)9]));
+      ((___POP_BUFFER_4_1__293__39[(int)(++___PUSH_INDEX_1_4__295__40)]) = current__62__397__107);
+    (current__63__398__108 = (___POP_BUFFER_3_1__287__37[(int)10]));
+      ((___POP_BUFFER_4_1__293__39[(int)(++___PUSH_INDEX_1_4__295__40)]) = current__63__398__108);
+    (current__64__399__109 = (___POP_BUFFER_3_1__287__37[(int)11]));
+      ((___POP_BUFFER_4_1__293__39[(int)(++___PUSH_INDEX_1_4__295__40)]) = current__64__399__109);
+    (current__65__400__110 = (___POP_BUFFER_3_1__287__37[(int)12]));
+      ((___POP_BUFFER_4_1__293__39[(int)(++___PUSH_INDEX_1_4__295__40)]) = current__65__400__110);
+    (current__66__401__111 = (___POP_BUFFER_3_1__287__37[(int)13]));
+      ((___POP_BUFFER_4_1__293__39[(int)(++___PUSH_INDEX_1_4__295__40)]) = current__66__401__111);
+    (current__67__402__112 = (___POP_BUFFER_3_1__287__37[(int)14]));
+      ((___POP_BUFFER_4_1__293__39[(int)(++___PUSH_INDEX_1_4__295__40)]) = current__67__402__112);
+    (current__68__403__113 = (___POP_BUFFER_3_1__287__37[(int)15]));
+      ((___POP_BUFFER_4_1__293__39[(int)(++___PUSH_INDEX_1_4__295__40)]) = current__68__403__113);
+        ((___POP_BUFFER_4_1__293__39[(int)(++___PUSH_INDEX_1_4__295__40)]) = (ordering__50__385__95[(int)i__52__387__97]));
+    (current__75__407__117 = (___POP_BUFFER_4_1__293__39[(int)0]));
+      ((___POP_BUFFER_5_1__299__41[(int)0]) = current__75__407__117);
+    (current__76__408__118 = (___POP_BUFFER_4_1__293__39[(int)1]));
+      ((___POP_BUFFER_5_1__299__41[(int)(++___PUSH_INDEX_1_5__301__42)]) = current__76__408__118);
+    (current__77__409__119 = (___POP_BUFFER_4_1__293__39[(int)2]));
+      ((___POP_BUFFER_5_1__299__41[(int)(++___PUSH_INDEX_1_5__301__42)]) = current__77__409__119);
+    (current__78__410__120 = (___POP_BUFFER_4_1__293__39[(int)3]));
+      ((___POP_BUFFER_5_1__299__41[(int)(++___PUSH_INDEX_1_5__301__42)]) = current__78__410__120);
+    (current__79__411__121 = (___POP_BUFFER_4_1__293__39[(int)4]));
+      ((___POP_BUFFER_5_1__299__41[(int)(++___PUSH_INDEX_1_5__301__42)]) = current__79__411__121);
+    (current__80__412__122 = (___POP_BUFFER_4_1__293__39[(int)5]));
+      ((___POP_BUFFER_5_1__299__41[(int)(++___PUSH_INDEX_1_5__301__42)]) = current__80__412__122);
+    (current__81__413__123 = (___POP_BUFFER_4_1__293__39[(int)6]));
+      ((___POP_BUFFER_5_1__299__41[(int)(++___PUSH_INDEX_1_5__301__42)]) = current__81__413__123);
+    (current__82__414__124 = (___POP_BUFFER_4_1__293__39[(int)7]));
+      ((___POP_BUFFER_5_1__299__41[(int)(++___PUSH_INDEX_1_5__301__42)]) = current__82__414__124);
+    (current__83__415__125 = (___POP_BUFFER_4_1__293__39[(int)8]));
+      ((___POP_BUFFER_5_1__299__41[(int)(++___PUSH_INDEX_1_5__301__42)]) = current__83__415__125);
+    (current__84__416__126 = (___POP_BUFFER_4_1__293__39[(int)9]));
+      ((___POP_BUFFER_5_1__299__41[(int)(++___PUSH_INDEX_1_5__301__42)]) = current__84__416__126);
+    (current__85__417__127 = (___POP_BUFFER_4_1__293__39[(int)10]));
+      ((___POP_BUFFER_5_1__299__41[(int)(++___PUSH_INDEX_1_5__301__42)]) = current__85__417__127);
+    (current__86__418__128 = (___POP_BUFFER_4_1__293__39[(int)11]));
+      ((___POP_BUFFER_5_1__299__41[(int)(++___PUSH_INDEX_1_5__301__42)]) = current__86__418__128);
+    (current__87__419__129 = (___POP_BUFFER_4_1__293__39[(int)12]));
+      ((___POP_BUFFER_5_1__299__41[(int)(++___PUSH_INDEX_1_5__301__42)]) = current__87__419__129);
+    (current__88__420__130 = (___POP_BUFFER_4_1__293__39[(int)13]));
+      ((___POP_BUFFER_5_1__299__41[(int)(++___PUSH_INDEX_1_5__301__42)]) = current__88__420__130);
+    (current__89__421__131 = (___POP_BUFFER_4_1__293__39[(int)14]));
+      ((___POP_BUFFER_5_1__299__41[(int)(++___PUSH_INDEX_1_5__301__42)]) = current__89__421__131);
+    (current__90__422__132 = (___POP_BUFFER_4_1__293__39[(int)15]));
+      ((___POP_BUFFER_5_1__299__41[(int)(++___PUSH_INDEX_1_5__301__42)]) = current__90__422__132);
+        ((___POP_BUFFER_5_1__299__41[(int)(++___PUSH_INDEX_1_5__301__42)]) = (ordering__72__404__114[(int)i__74__406__116]));
+    (current__97__426__136 = (___POP_BUFFER_5_1__299__41[(int)0]));
+      ((___POP_BUFFER_6_1__305__43[(int)0]) = current__97__426__136);
+    (current__98__427__137 = (___POP_BUFFER_5_1__299__41[(int)1]));
+      ((___POP_BUFFER_6_1__305__43[(int)(++___PUSH_INDEX_1_6__307__44)]) = current__98__427__137);
+    (current__99__428__138 = (___POP_BUFFER_5_1__299__41[(int)2]));
+      ((___POP_BUFFER_6_1__305__43[(int)(++___PUSH_INDEX_1_6__307__44)]) = current__99__428__138);
+    (current__100__429__139 = (___POP_BUFFER_5_1__299__41[(int)3]));
+      ((___POP_BUFFER_6_1__305__43[(int)(++___PUSH_INDEX_1_6__307__44)]) = current__100__429__139);
+    (current__101__430__140 = (___POP_BUFFER_5_1__299__41[(int)4]));
+      ((___POP_BUFFER_6_1__305__43[(int)(++___PUSH_INDEX_1_6__307__44)]) = current__101__430__140);
+    (current__102__431__141 = (___POP_BUFFER_5_1__299__41[(int)5]));
+      ((___POP_BUFFER_6_1__305__43[(int)(++___PUSH_INDEX_1_6__307__44)]) = current__102__431__141);
+    (current__103__432__142 = (___POP_BUFFER_5_1__299__41[(int)6]));
+      ((___POP_BUFFER_6_1__305__43[(int)(++___PUSH_INDEX_1_6__307__44)]) = current__103__432__142);
+    (current__104__433__143 = (___POP_BUFFER_5_1__299__41[(int)7]));
+      ((___POP_BUFFER_6_1__305__43[(int)(++___PUSH_INDEX_1_6__307__44)]) = current__104__433__143);
+    (current__105__434__144 = (___POP_BUFFER_5_1__299__41[(int)8]));
+      ((___POP_BUFFER_6_1__305__43[(int)(++___PUSH_INDEX_1_6__307__44)]) = current__105__434__144);
+    (current__106__435__145 = (___POP_BUFFER_5_1__299__41[(int)9]));
+      ((___POP_BUFFER_6_1__305__43[(int)(++___PUSH_INDEX_1_6__307__44)]) = current__106__435__145);
+    (current__107__436__146 = (___POP_BUFFER_5_1__299__41[(int)10]));
+      ((___POP_BUFFER_6_1__305__43[(int)(++___PUSH_INDEX_1_6__307__44)]) = current__107__436__146);
+    (current__108__437__147 = (___POP_BUFFER_5_1__299__41[(int)11]));
+      ((___POP_BUFFER_6_1__305__43[(int)(++___PUSH_INDEX_1_6__307__44)]) = current__108__437__147);
+    (current__109__438__148 = (___POP_BUFFER_5_1__299__41[(int)12]));
+      ((___POP_BUFFER_6_1__305__43[(int)(++___PUSH_INDEX_1_6__307__44)]) = current__109__438__148);
+    (current__110__439__149 = (___POP_BUFFER_5_1__299__41[(int)13]));
+      ((___POP_BUFFER_6_1__305__43[(int)(++___PUSH_INDEX_1_6__307__44)]) = current__110__439__149);
+    (current__111__440__150 = (___POP_BUFFER_5_1__299__41[(int)14]));
+      ((___POP_BUFFER_6_1__305__43[(int)(++___PUSH_INDEX_1_6__307__44)]) = current__111__440__150);
+    (current__112__441__151 = (___POP_BUFFER_5_1__299__41[(int)15]));
+      ((___POP_BUFFER_6_1__305__43[(int)(++___PUSH_INDEX_1_6__307__44)]) = current__112__441__151);
+        ((___POP_BUFFER_6_1__305__43[(int)(++___PUSH_INDEX_1_6__307__44)]) = (ordering__94__423__133[(int)i__96__425__135]));
+    (current__119__445__155 = (___POP_BUFFER_6_1__305__43[(int)0]));
+      ((___POP_BUFFER_7_1__311__45[(int)0]) = current__119__445__155);
+    (current__120__446__156 = (___POP_BUFFER_6_1__305__43[(int)1]));
+      ((___POP_BUFFER_7_1__311__45[(int)(++___PUSH_INDEX_1_7__313__46)]) = current__120__446__156);
+    (current__121__447__157 = (___POP_BUFFER_6_1__305__43[(int)2]));
+      ((___POP_BUFFER_7_1__311__45[(int)(++___PUSH_INDEX_1_7__313__46)]) = current__121__447__157);
+    (current__122__448__158 = (___POP_BUFFER_6_1__305__43[(int)3]));
+      ((___POP_BUFFER_7_1__311__45[(int)(++___PUSH_INDEX_1_7__313__46)]) = current__122__448__158);
+    (current__123__449__159 = (___POP_BUFFER_6_1__305__43[(int)4]));
+      ((___POP_BUFFER_7_1__311__45[(int)(++___PUSH_INDEX_1_7__313__46)]) = current__123__449__159);
+    (current__124__450__160 = (___POP_BUFFER_6_1__305__43[(int)5]));
+      ((___POP_BUFFER_7_1__311__45[(int)(++___PUSH_INDEX_1_7__313__46)]) = current__124__450__160);
+    (current__125__451__161 = (___POP_BUFFER_6_1__305__43[(int)6]));
+      ((___POP_BUFFER_7_1__311__45[(int)(++___PUSH_INDEX_1_7__313__46)]) = current__125__451__161);
+    (current__126__452__162 = (___POP_BUFFER_6_1__305__43[(int)7]));
+      ((___POP_BUFFER_7_1__311__45[(int)(++___PUSH_INDEX_1_7__313__46)]) = current__126__452__162);
+    (current__127__453__163 = (___POP_BUFFER_6_1__305__43[(int)8]));
+      ((___POP_BUFFER_7_1__311__45[(int)(++___PUSH_INDEX_1_7__313__46)]) = current__127__453__163);
+    (current__128__454__164 = (___POP_BUFFER_6_1__305__43[(int)9]));
+      ((___POP_BUFFER_7_1__311__45[(int)(++___PUSH_INDEX_1_7__313__46)]) = current__128__454__164);
+    (current__129__455__165 = (___POP_BUFFER_6_1__305__43[(int)10]));
+      ((___POP_BUFFER_7_1__311__45[(int)(++___PUSH_INDEX_1_7__313__46)]) = current__129__455__165);
+    (current__130__456__166 = (___POP_BUFFER_6_1__305__43[(int)11]));
+      ((___POP_BUFFER_7_1__311__45[(int)(++___PUSH_INDEX_1_7__313__46)]) = current__130__456__166);
+    (current__131__457__167 = (___POP_BUFFER_6_1__305__43[(int)12]));
+      ((___POP_BUFFER_7_1__311__45[(int)(++___PUSH_INDEX_1_7__313__46)]) = current__131__457__167);
+    (current__132__458__168 = (___POP_BUFFER_6_1__305__43[(int)13]));
+      ((___POP_BUFFER_7_1__311__45[(int)(++___PUSH_INDEX_1_7__313__46)]) = current__132__458__168);
+    (current__133__459__169 = (___POP_BUFFER_6_1__305__43[(int)14]));
+      ((___POP_BUFFER_7_1__311__45[(int)(++___PUSH_INDEX_1_7__313__46)]) = current__133__459__169);
+    (current__134__460__170 = (___POP_BUFFER_6_1__305__43[(int)15]));
+      ((___POP_BUFFER_7_1__311__45[(int)(++___PUSH_INDEX_1_7__313__46)]) = current__134__460__170);
+        ((___POP_BUFFER_7_1__311__45[(int)(++___PUSH_INDEX_1_7__313__46)]) = (ordering__116__442__152[(int)i__118__444__154]));
+    (current__141__464__174 = (___POP_BUFFER_7_1__311__45[(int)0]));
+      ((___POP_BUFFER_8_1__317__47[(int)0]) = current__141__464__174);
+    (current__142__465__175 = (___POP_BUFFER_7_1__311__45[(int)1]));
+      ((___POP_BUFFER_8_1__317__47[(int)(++___PUSH_INDEX_1_8__319__48)]) = current__142__465__175);
+    (current__143__466__176 = (___POP_BUFFER_7_1__311__45[(int)2]));
+      ((___POP_BUFFER_8_1__317__47[(int)(++___PUSH_INDEX_1_8__319__48)]) = current__143__466__176);
+    (current__144__467__177 = (___POP_BUFFER_7_1__311__45[(int)3]));
+      ((___POP_BUFFER_8_1__317__47[(int)(++___PUSH_INDEX_1_8__319__48)]) = current__144__467__177);
+    (current__145__468__178 = (___POP_BUFFER_7_1__311__45[(int)4]));
+      ((___POP_BUFFER_8_1__317__47[(int)(++___PUSH_INDEX_1_8__319__48)]) = current__145__468__178);
+    (current__146__469__179 = (___POP_BUFFER_7_1__311__45[(int)5]));
+      ((___POP_BUFFER_8_1__317__47[(int)(++___PUSH_INDEX_1_8__319__48)]) = current__146__469__179);
+    (current__147__470__180 = (___POP_BUFFER_7_1__311__45[(int)6]));
+      ((___POP_BUFFER_8_1__317__47[(int)(++___PUSH_INDEX_1_8__319__48)]) = current__147__470__180);
+    (current__148__471__181 = (___POP_BUFFER_7_1__311__45[(int)7]));
+      ((___POP_BUFFER_8_1__317__47[(int)(++___PUSH_INDEX_1_8__319__48)]) = current__148__471__181);
+    (current__149__472__182 = (___POP_BUFFER_7_1__311__45[(int)8]));
+      ((___POP_BUFFER_8_1__317__47[(int)(++___PUSH_INDEX_1_8__319__48)]) = current__149__472__182);
+    (current__150__473__183 = (___POP_BUFFER_7_1__311__45[(int)9]));
+      ((___POP_BUFFER_8_1__317__47[(int)(++___PUSH_INDEX_1_8__319__48)]) = current__150__473__183);
+    (current__151__474__184 = (___POP_BUFFER_7_1__311__45[(int)10]));
+      ((___POP_BUFFER_8_1__317__47[(int)(++___PUSH_INDEX_1_8__319__48)]) = current__151__474__184);
+    (current__152__475__185 = (___POP_BUFFER_7_1__311__45[(int)11]));
+      ((___POP_BUFFER_8_1__317__47[(int)(++___PUSH_INDEX_1_8__319__48)]) = current__152__475__185);
+    (current__153__476__186 = (___POP_BUFFER_7_1__311__45[(int)12]));
+      ((___POP_BUFFER_8_1__317__47[(int)(++___PUSH_INDEX_1_8__319__48)]) = current__153__476__186);
+    (current__154__477__187 = (___POP_BUFFER_7_1__311__45[(int)13]));
+      ((___POP_BUFFER_8_1__317__47[(int)(++___PUSH_INDEX_1_8__319__48)]) = current__154__477__187);
+    (current__155__478__188 = (___POP_BUFFER_7_1__311__45[(int)14]));
+      ((___POP_BUFFER_8_1__317__47[(int)(++___PUSH_INDEX_1_8__319__48)]) = current__155__478__188);
+    (current__156__479__189 = (___POP_BUFFER_7_1__311__45[(int)15]));
+      ((___POP_BUFFER_8_1__317__47[(int)(++___PUSH_INDEX_1_8__319__48)]) = current__156__479__189);
+        ((___POP_BUFFER_8_1__317__47[(int)(++___PUSH_INDEX_1_8__319__48)]) = (ordering__138__461__171[(int)i__140__463__173]));
+    (current__163__483__193 = (___POP_BUFFER_8_1__317__47[(int)0]));
+      ((___POP_BUFFER_9_1__323__49[(int)0]) = current__163__483__193);
+    (current__164__484__194 = (___POP_BUFFER_8_1__317__47[(int)1]));
+      ((___POP_BUFFER_9_1__323__49[(int)(++___PUSH_INDEX_1_9__325__50)]) = current__164__484__194);
+    (current__165__485__195 = (___POP_BUFFER_8_1__317__47[(int)2]));
+      ((___POP_BUFFER_9_1__323__49[(int)(++___PUSH_INDEX_1_9__325__50)]) = current__165__485__195);
+    (current__166__486__196 = (___POP_BUFFER_8_1__317__47[(int)3]));
+      ((___POP_BUFFER_9_1__323__49[(int)(++___PUSH_INDEX_1_9__325__50)]) = current__166__486__196);
+    (current__167__487__197 = (___POP_BUFFER_8_1__317__47[(int)4]));
+      ((___POP_BUFFER_9_1__323__49[(int)(++___PUSH_INDEX_1_9__325__50)]) = current__167__487__197);
+    (current__168__488__198 = (___POP_BUFFER_8_1__317__47[(int)5]));
+      ((___POP_BUFFER_9_1__323__49[(int)(++___PUSH_INDEX_1_9__325__50)]) = current__168__488__198);
+    (current__169__489__199 = (___POP_BUFFER_8_1__317__47[(int)6]));
+      ((___POP_BUFFER_9_1__323__49[(int)(++___PUSH_INDEX_1_9__325__50)]) = current__169__489__199);
+    (current__170__490__200 = (___POP_BUFFER_8_1__317__47[(int)7]));
+      ((___POP_BUFFER_9_1__323__49[(int)(++___PUSH_INDEX_1_9__325__50)]) = current__170__490__200);
+    (current__171__491__201 = (___POP_BUFFER_8_1__317__47[(int)8]));
+      ((___POP_BUFFER_9_1__323__49[(int)(++___PUSH_INDEX_1_9__325__50)]) = current__171__491__201);
+    (current__172__492__202 = (___POP_BUFFER_8_1__317__47[(int)9]));
+      ((___POP_BUFFER_9_1__323__49[(int)(++___PUSH_INDEX_1_9__325__50)]) = current__172__492__202);
+    (current__173__493__203 = (___POP_BUFFER_8_1__317__47[(int)10]));
+      ((___POP_BUFFER_9_1__323__49[(int)(++___PUSH_INDEX_1_9__325__50)]) = current__173__493__203);
+    (current__174__494__204 = (___POP_BUFFER_8_1__317__47[(int)11]));
+      ((___POP_BUFFER_9_1__323__49[(int)(++___PUSH_INDEX_1_9__325__50)]) = current__174__494__204);
+    (current__175__495__205 = (___POP_BUFFER_8_1__317__47[(int)12]));
+      ((___POP_BUFFER_9_1__323__49[(int)(++___PUSH_INDEX_1_9__325__50)]) = current__175__495__205);
+    (current__176__496__206 = (___POP_BUFFER_8_1__317__47[(int)13]));
+      ((___POP_BUFFER_9_1__323__49[(int)(++___PUSH_INDEX_1_9__325__50)]) = current__176__496__206);
+    (current__177__497__207 = (___POP_BUFFER_8_1__317__47[(int)14]));
+      ((___POP_BUFFER_9_1__323__49[(int)(++___PUSH_INDEX_1_9__325__50)]) = current__177__497__207);
+    (current__178__498__208 = (___POP_BUFFER_8_1__317__47[(int)15]));
+      ((___POP_BUFFER_9_1__323__49[(int)(++___PUSH_INDEX_1_9__325__50)]) = current__178__498__208);
+        ((___POP_BUFFER_9_1__323__49[(int)(++___PUSH_INDEX_1_9__325__50)]) = (ordering__160__480__190[(int)i__162__482__192]));
+    (current__185__502__212 = (___POP_BUFFER_9_1__323__49[(int)0]));
+      ((___POP_BUFFER_10_1__329__51[(int)0]) = current__185__502__212);
+    (current__186__503__213 = (___POP_BUFFER_9_1__323__49[(int)1]));
+      ((___POP_BUFFER_10_1__329__51[(int)(++___PUSH_INDEX_1_10__331__52)]) = current__186__503__213);
+    (current__187__504__214 = (___POP_BUFFER_9_1__323__49[(int)2]));
+      ((___POP_BUFFER_10_1__329__51[(int)(++___PUSH_INDEX_1_10__331__52)]) = current__187__504__214);
+    (current__188__505__215 = (___POP_BUFFER_9_1__323__49[(int)3]));
+      ((___POP_BUFFER_10_1__329__51[(int)(++___PUSH_INDEX_1_10__331__52)]) = current__188__505__215);
+    (current__189__506__216 = (___POP_BUFFER_9_1__323__49[(int)4]));
+      ((___POP_BUFFER_10_1__329__51[(int)(++___PUSH_INDEX_1_10__331__52)]) = current__189__506__216);
+    (current__190__507__217 = (___POP_BUFFER_9_1__323__49[(int)5]));
+      ((___POP_BUFFER_10_1__329__51[(int)(++___PUSH_INDEX_1_10__331__52)]) = current__190__507__217);
+    (current__191__508__218 = (___POP_BUFFER_9_1__323__49[(int)6]));
+      ((___POP_BUFFER_10_1__329__51[(int)(++___PUSH_INDEX_1_10__331__52)]) = current__191__508__218);
+    (current__192__509__219 = (___POP_BUFFER_9_1__323__49[(int)7]));
+      ((___POP_BUFFER_10_1__329__51[(int)(++___PUSH_INDEX_1_10__331__52)]) = current__192__509__219);
+    (current__193__510__220 = (___POP_BUFFER_9_1__323__49[(int)8]));
+      ((___POP_BUFFER_10_1__329__51[(int)(++___PUSH_INDEX_1_10__331__52)]) = current__193__510__220);
+    (current__194__511__221 = (___POP_BUFFER_9_1__323__49[(int)9]));
+      ((___POP_BUFFER_10_1__329__51[(int)(++___PUSH_INDEX_1_10__331__52)]) = current__194__511__221);
+    (current__195__512__222 = (___POP_BUFFER_9_1__323__49[(int)10]));
+      ((___POP_BUFFER_10_1__329__51[(int)(++___PUSH_INDEX_1_10__331__52)]) = current__195__512__222);
+    (current__196__513__223 = (___POP_BUFFER_9_1__323__49[(int)11]));
+      ((___POP_BUFFER_10_1__329__51[(int)(++___PUSH_INDEX_1_10__331__52)]) = current__196__513__223);
+    (current__197__514__224 = (___POP_BUFFER_9_1__323__49[(int)12]));
+      ((___POP_BUFFER_10_1__329__51[(int)(++___PUSH_INDEX_1_10__331__52)]) = current__197__514__224);
+    (current__198__515__225 = (___POP_BUFFER_9_1__323__49[(int)13]));
+      ((___POP_BUFFER_10_1__329__51[(int)(++___PUSH_INDEX_1_10__331__52)]) = current__198__515__225);
+    (current__199__516__226 = (___POP_BUFFER_9_1__323__49[(int)14]));
+      ((___POP_BUFFER_10_1__329__51[(int)(++___PUSH_INDEX_1_10__331__52)]) = current__199__516__226);
+    (current__200__517__227 = (___POP_BUFFER_9_1__323__49[(int)15]));
+      ((___POP_BUFFER_10_1__329__51[(int)(++___PUSH_INDEX_1_10__331__52)]) = current__200__517__227);
+        ((___POP_BUFFER_10_1__329__51[(int)(++___PUSH_INDEX_1_10__331__52)]) = (ordering__182__499__209[(int)i__184__501__211]));
+    (current__207__521__231 = (___POP_BUFFER_10_1__329__51[(int)0]));
+      ((___POP_BUFFER_11_1__335__53[(int)0]) = current__207__521__231);
+    (current__208__522__232 = (___POP_BUFFER_10_1__329__51[(int)1]));
+      ((___POP_BUFFER_11_1__335__53[(int)(++___PUSH_INDEX_1_11__337__54)]) = current__208__522__232);
+    (current__209__523__233 = (___POP_BUFFER_10_1__329__51[(int)2]));
+      ((___POP_BUFFER_11_1__335__53[(int)(++___PUSH_INDEX_1_11__337__54)]) = current__209__523__233);
+    (current__210__524__234 = (___POP_BUFFER_10_1__329__51[(int)3]));
+      ((___POP_BUFFER_11_1__335__53[(int)(++___PUSH_INDEX_1_11__337__54)]) = current__210__524__234);
+    (current__211__525__235 = (___POP_BUFFER_10_1__329__51[(int)4]));
+      ((___POP_BUFFER_11_1__335__53[(int)(++___PUSH_INDEX_1_11__337__54)]) = current__211__525__235);
+    (current__212__526__236 = (___POP_BUFFER_10_1__329__51[(int)5]));
+      ((___POP_BUFFER_11_1__335__53[(int)(++___PUSH_INDEX_1_11__337__54)]) = current__212__526__236);
+    (current__213__527__237 = (___POP_BUFFER_10_1__329__51[(int)6]));
+      ((___POP_BUFFER_11_1__335__53[(int)(++___PUSH_INDEX_1_11__337__54)]) = current__213__527__237);
+    (current__214__528__238 = (___POP_BUFFER_10_1__329__51[(int)7]));
+      ((___POP_BUFFER_11_1__335__53[(int)(++___PUSH_INDEX_1_11__337__54)]) = current__214__528__238);
+    (current__215__529__239 = (___POP_BUFFER_10_1__329__51[(int)8]));
+      ((___POP_BUFFER_11_1__335__53[(int)(++___PUSH_INDEX_1_11__337__54)]) = current__215__529__239);
+    (current__216__530__240 = (___POP_BUFFER_10_1__329__51[(int)9]));
+      ((___POP_BUFFER_11_1__335__53[(int)(++___PUSH_INDEX_1_11__337__54)]) = current__216__530__240);
+    (current__217__531__241 = (___POP_BUFFER_10_1__329__51[(int)10]));
+      ((___POP_BUFFER_11_1__335__53[(int)(++___PUSH_INDEX_1_11__337__54)]) = current__217__531__241);
+    (current__218__532__242 = (___POP_BUFFER_10_1__329__51[(int)11]));
+      ((___POP_BUFFER_11_1__335__53[(int)(++___PUSH_INDEX_1_11__337__54)]) = current__218__532__242);
+    (current__219__533__243 = (___POP_BUFFER_10_1__329__51[(int)12]));
+      ((___POP_BUFFER_11_1__335__53[(int)(++___PUSH_INDEX_1_11__337__54)]) = current__219__533__243);
+    (current__220__534__244 = (___POP_BUFFER_10_1__329__51[(int)13]));
+      ((___POP_BUFFER_11_1__335__53[(int)(++___PUSH_INDEX_1_11__337__54)]) = current__220__534__244);
+    (current__221__535__245 = (___POP_BUFFER_10_1__329__51[(int)14]));
+      ((___POP_BUFFER_11_1__335__53[(int)(++___PUSH_INDEX_1_11__337__54)]) = current__221__535__245);
+    (current__222__536__246 = (___POP_BUFFER_10_1__329__51[(int)15]));
+      ((___POP_BUFFER_11_1__335__53[(int)(++___PUSH_INDEX_1_11__337__54)]) = current__222__536__246);
+        ((___POP_BUFFER_11_1__335__53[(int)(++___PUSH_INDEX_1_11__337__54)]) = (ordering__204__518__228[(int)i__206__520__230]));
+    (current__229__540__250 = (___POP_BUFFER_11_1__335__53[(int)0]));
+      ((___POP_BUFFER_12_1__341__55[(int)0]) = current__229__540__250);
+    (current__230__541__251 = (___POP_BUFFER_11_1__335__53[(int)1]));
+      ((___POP_BUFFER_12_1__341__55[(int)(++___PUSH_INDEX_1_12__343__56)]) = current__230__541__251);
+    (current__231__542__252 = (___POP_BUFFER_11_1__335__53[(int)2]));
+      ((___POP_BUFFER_12_1__341__55[(int)(++___PUSH_INDEX_1_12__343__56)]) = current__231__542__252);
+    (current__232__543__253 = (___POP_BUFFER_11_1__335__53[(int)3]));
+      ((___POP_BUFFER_12_1__341__55[(int)(++___PUSH_INDEX_1_12__343__56)]) = current__232__543__253);
+    (current__233__544__254 = (___POP_BUFFER_11_1__335__53[(int)4]));
+      ((___POP_BUFFER_12_1__341__55[(int)(++___PUSH_INDEX_1_12__343__56)]) = current__233__544__254);
+    (current__234__545__255 = (___POP_BUFFER_11_1__335__53[(int)5]));
+      ((___POP_BUFFER_12_1__341__55[(int)(++___PUSH_INDEX_1_12__343__56)]) = current__234__545__255);
+    (current__235__546__256 = (___POP_BUFFER_11_1__335__53[(int)6]));
+      ((___POP_BUFFER_12_1__341__55[(int)(++___PUSH_INDEX_1_12__343__56)]) = current__235__546__256);
+    (current__236__547__257 = (___POP_BUFFER_11_1__335__53[(int)7]));
+      ((___POP_BUFFER_12_1__341__55[(int)(++___PUSH_INDEX_1_12__343__56)]) = current__236__547__257);
+    (current__237__548__258 = (___POP_BUFFER_11_1__335__53[(int)8]));
+      ((___POP_BUFFER_12_1__341__55[(int)(++___PUSH_INDEX_1_12__343__56)]) = current__237__548__258);
+    (current__238__549__259 = (___POP_BUFFER_11_1__335__53[(int)9]));
+      ((___POP_BUFFER_12_1__341__55[(int)(++___PUSH_INDEX_1_12__343__56)]) = current__238__549__259);
+    (current__239__550__260 = (___POP_BUFFER_11_1__335__53[(int)10]));
+      ((___POP_BUFFER_12_1__341__55[(int)(++___PUSH_INDEX_1_12__343__56)]) = current__239__550__260);
+    (current__240__551__261 = (___POP_BUFFER_11_1__335__53[(int)11]));
+      ((___POP_BUFFER_12_1__341__55[(int)(++___PUSH_INDEX_1_12__343__56)]) = current__240__551__261);
+    (current__241__552__262 = (___POP_BUFFER_11_1__335__53[(int)12]));
+      ((___POP_BUFFER_12_1__341__55[(int)(++___PUSH_INDEX_1_12__343__56)]) = current__241__552__262);
+    (current__242__553__263 = (___POP_BUFFER_11_1__335__53[(int)13]));
+      ((___POP_BUFFER_12_1__341__55[(int)(++___PUSH_INDEX_1_12__343__56)]) = current__242__553__263);
+    (current__243__554__264 = (___POP_BUFFER_11_1__335__53[(int)14]));
+      ((___POP_BUFFER_12_1__341__55[(int)(++___PUSH_INDEX_1_12__343__56)]) = current__243__554__264);
+    (current__244__555__265 = (___POP_BUFFER_11_1__335__53[(int)15]));
+      ((___POP_BUFFER_12_1__341__55[(int)(++___PUSH_INDEX_1_12__343__56)]) = current__244__555__265);
+        ((___POP_BUFFER_12_1__341__55[(int)(++___PUSH_INDEX_1_12__343__56)]) = (ordering__226__537__247[(int)i__228__539__249]));
+    ((x__246__253__1) = (___POP_BUFFER_12_1__341__55[(int)0]));
+    ((x__246__253__1) = (___POP_BUFFER_12_1__341__55[(int)1]));
+    ((x__246__253__1) = (___POP_BUFFER_12_1__341__55[(int)2]));
+    ((x__246__253__1) = (___POP_BUFFER_12_1__341__55[(int)3]));
+    ((x__246__253__1) = (___POP_BUFFER_12_1__341__55[(int)4]));
+    ((x__246__253__1) = (___POP_BUFFER_12_1__341__55[(int)5]));
+    ((x__246__253__1) = (___POP_BUFFER_12_1__341__55[(int)6]));
+    ((x__246__253__1) = (___POP_BUFFER_12_1__341__55[(int)7]));
+    ((x__246__253__1) = (___POP_BUFFER_12_1__341__55[(int)8]));
+    ((x__246__253__1) = (___POP_BUFFER_12_1__341__55[(int)9]));
+    ((x__246__253__1) = (___POP_BUFFER_12_1__341__55[(int)10]));
+    ((x__246__253__1) = (___POP_BUFFER_12_1__341__55[(int)11]));
+    ((x__246__253__1) = (___POP_BUFFER_12_1__341__55[(int)12]));
+    ((x__246__253__1) = (___POP_BUFFER_12_1__341__55[(int)13]));
+    ((x__246__253__1) = (___POP_BUFFER_12_1__341__55[(int)14]));
+    ((x__246__253__1) = (___POP_BUFFER_12_1__341__55[(int)15]));
+
+----------------------------------------------------------------------
+serpent
+
+Compile and run serpent:
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Starting Kopi2SIR... done.
+Entry to SMP Backend...
+Running Constant Prop and Unroll...
+Done Constant Prop and Unroll...
+Running Constant Field Propagation...
+Done Constant Field Propagation...
+Comp/Comm Ratio of original SIR graph: 18.748086290883787
+SIR Peeking Work: 0,  SIR Total Work: 242469
+SIR Filters: 1
+SIR Peeking Filters: 0
+ stateful work / total work = 1.0
+Performing fusion of stateful filters
+Packed 1 stateful filters.
+Comp/Comm Ratio of SIR graph: Infinity
+Flattening Graph..
+Done Flattening, Starting Sync Removal..
+Done Sync Removal..
+Slice Work Threshold: 1.01(101)
+Traces: 1
+Equalizing splits and joins by buffering...
+Fused_Ran_Int_Per_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_dum_Ano_Pos_Xor_Per_Bit_Ano__1041849_541
+Slice: at.dms.kjc.slicegraph.InputSliceNode@4f0e073e->Fused_Ran_Int_Per_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_dum_Ano_Pos_Xor_Per_Bit_Ano__1041849_541->...: 174464
+Cannot fiss: Fused_Ran_Int_Per_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_dum_Ano_Pos_Xor_Per_Bit_Ano__1041849_541
+Using fission steady multiplicity factor: 1
+Max fission amount: 0
+Slice: at.dms.kjc.slicegraph.InputSliceNode@4f0e073e->Fused_Ran_Int_Per_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_dum_Ano_Pos_Xor_Per_Bit_Ano__1041849_541->...: 174464
+Number of fizzed slices: 0
+Number of unfizzed slices: 1
+Core 0 has work: 174464
+Optimizing core 0...
+Final filter assignments:
+========================================
+Core 0: 
+Slice: at.dms.kjc.slicegraph.InputSliceNode@4f0e073e->Fused_Ran_Int_Per_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_dum_Ano_Pos_Xor_Per_Bit_Ano__1041849_541->...: 174464
+          174464 | Fused_Ran_Int_Per_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_raw_dum_Ano_Pos_Xor_Sbo_dum_Ano_Pos_Xor_Per_Bit_Ano__1041849_541
+          174464 | Total
+gcc -O2  -c main.c
+gcc -O2  -c barrier.c
+gcc -O2  -c core0.c
+gcc -O2 -pthread -lstdc++ -lm main.o barrier.o core0.o  -o smp1
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+
+Check output of serpent (100000 lines):
+No differences found
+
+Check for FIFOs in serpent:
+Found nothing
+
+----------------------------------------------------------------------
+figure1
+
+Compile and run figure1:
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Starting Kopi2SIR... done.
+Entry to SMP Backend...
+Running Constant Prop and Unroll...
+Done Constant Prop and Unroll...
+Running Constant Field Propagation...
+Done Constant Field Propagation...
+Comp/Comm Ratio of original SIR graph: 143.66666666666666
+SIR Peeking Work: 0,  SIR Total Work: 431
+SIR Filters: 1
+SIR Peeking Filters: 0
+ stateful work / total work = 1.0
+Performing fusion of stateful filters
+Packed 1 stateful filters.
+Comp/Comm Ratio of SIR graph: Infinity
+Flattening Graph..
+Done Flattening, Starting Sync Removal..
+Done Sync Removal..
+Slice Work Threshold: 1.01(101)
+Traces: 1
+Equalizing splits and joins by buffering...
+Fused_A___Ano_D____82_18
+Slice: at.dms.kjc.slicegraph.InputSliceNode@2f333739->Fused_A___Ano_D____82_18->...: 428
+Cannot fiss: Fused_A___Ano_D____82_18
+Using fission steady multiplicity factor: 1
+Max fission amount: 0
+Slice: at.dms.kjc.slicegraph.InputSliceNode@2f333739->Fused_A___Ano_D____82_18->...: 428
+Number of fizzed slices: 0
+Number of unfizzed slices: 1
+Core 0 has work: 428
+Optimizing core 0...
+Final filter assignments:
+========================================
+Core 0: 
+Slice: at.dms.kjc.slicegraph.InputSliceNode@2f333739->Fused_A___Ano_D____82_18->...: 428
+             428 | Fused_A___Ano_D____82_18
+             428 | Total
+gcc -O2  -c main.c
+gcc -O2  -c barrier.c
+gcc -O2  -c core0.c
+gcc -O2 -pthread -lstdc++ -lm main.o barrier.o core0.o  -o smp1
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+
+Check output of figure1 (100000 lines):
+
++++  Files "compiler-output" and "library-output" are equal
+
+Check for FIFOs in figure1:
+Found nothing
+
+----------------------------------------------------------------------
+simple-peek
+
+Compile and run simple-peek:
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Starting Kopi2SIR... done.
+Entry to SMP Backend...
+Running Constant Prop and Unroll...
+Done Constant Prop and Unroll...
+Running Constant Field Propagation...
+Done Constant Field Propagation...
+Comp/Comm Ratio of original SIR graph: 16.0
+SIR Peeking Work: 14,  SIR Total Work: 32
+SIR Filters: 1
+SIR Peeking Filters: 0
+ stateful work / total work = 1.0
+Performing fusion of stateful filters
+Packed 1 stateful filters.
+Comp/Comm Ratio of SIR graph: Infinity
+Flattening Graph..
+Done Flattening, Starting Sync Removal..
+Done Sync Removal..
+Slice Work Threshold: 1.01(101)
+Traces: 1
+Equalizing splits and joins by buffering...
+Fused_Ran_Mov_Pri__67_7
+Slice: at.dms.kjc.slicegraph.InputSliceNode@4d405ef7->Fused_Ran_Mov_Pri__67_7->...: 28
+Cannot fiss: Fused_Ran_Mov_Pri__67_7
+Using fission steady multiplicity factor: 1
+Max fission amount: 0
+Slice: at.dms.kjc.slicegraph.InputSliceNode@4d405ef7->Fused_Ran_Mov_Pri__67_7->...: 28
+Number of fizzed slices: 0
+Number of unfizzed slices: 1
+Core 0 has work: 28
+Optimizing core 0...
+Final filter assignments:
+========================================
+Core 0: 
+Slice: at.dms.kjc.slicegraph.InputSliceNode@4d405ef7->Fused_Ran_Mov_Pri__67_7->...: 28
+              28 | Fused_Ran_Mov_Pri__67_7
+              28 | Total
+gcc -O2  -c main.c
+gcc -O2  -c barrier.c
+gcc -O2  -c core0.c
+gcc -O2 -pthread -lstdc++ -lm main.o barrier.o core0.o  -o smp1
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+
+Check output of simple-peek (100000 lines):
+
++++  Files "compiler-output" and "library-output" are equal
+
+Check for FIFOs in simple-peek:
+Found nothing
+
+----------------------------------------------------------------------
+simple-twostage
+
+Compile and run simple-twostage:
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Starting Kopi2SIR... done.
+Entry to SMP Backend...
+Running Constant Prop and Unroll...
+Done Constant Prop and Unroll...
+Running Constant Field Propagation...
+Done Constant Field Propagation...
+Comp/Comm Ratio of original SIR graph: 12.0
+SIR Peeking Work: 0,  SIR Total Work: 24
+SIR Filters: 1
+SIR Peeking Filters: 0
+ stateful work / total work = 1.0
+Performing fusion of stateful filters
+Packed 1 stateful filters.
+Comp/Comm Ratio of SIR graph: Infinity
+Flattening Graph..
+Done Flattening, Starting Sync Removal..
+Done Sync Removal..
+Slice Work Threshold: 1.01(101)
+Traces: 1
+Equalizing splits and joins by buffering...
+Fused_Ran_Dup_Pri__66_7
+Slice: at.dms.kjc.slicegraph.InputSliceNode@20ad9418->Fused_Ran_Dup_Pri__66_7->...: 16
+Cannot fiss: Fused_Ran_Dup_Pri__66_7
+Using fission steady multiplicity factor: 1
+Max fission amount: 0
+Slice: at.dms.kjc.slicegraph.InputSliceNode@20ad9418->Fused_Ran_Dup_Pri__66_7->...: 16
+Number of fizzed slices: 0
+Number of unfizzed slices: 1
+Core 0 has work: 16
+Optimizing core 0...
+Final filter assignments:
+========================================
+Core 0: 
+Slice: at.dms.kjc.slicegraph.InputSliceNode@20ad9418->Fused_Ran_Dup_Pri__66_7->...: 16
+              16 | Fused_Ran_Dup_Pri__66_7
+              16 | Total
+gcc -O2  -c main.c
+gcc -O2  -c barrier.c
+gcc -O2  -c core0.c
+gcc -O2 -pthread -lstdc++ -lm main.o barrier.o core0.o  -o smp1
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=128M; support was removed in 8.0
+
+Check output of simple-twostage (100000 lines):
+
++++  Files "compiler-output" and "library-output" are equal
+
+Check for FIFOs in simple-twostage:
+Found nothing

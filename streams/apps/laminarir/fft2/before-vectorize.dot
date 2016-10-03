@@ -1,0 +1,50 @@
+digraph streamit {
+subgraph cluster_node1 {
+ label="FFT2_1";
+node2 [ label="RandomSource_31\npush=1\npop=0\npeek =0" ]
+subgraph cluster_node3 {
+ label="FFTKernel2_22";
+node4 [ label="WEIGHTED_ROUND_ROBIN(32,32)" ]
+node5 [ label="WEIGHTED_ROUND_ROBIN(32,32)" ]
+subgraph cluster_node6 {
+ label="AnonFilter_a1_24";
+node7 [ label="FFTReorderSimple_32\npush=32\npop=32\npeek =32" ]
+node8 [ label="FFTReorderSimple_33\npush=16\npop=16\npeek =16" ]
+node7 -> node8
+node9 [ label="FFTReorderSimple_34\npush=8\npop=8\npeek =8" ]
+node8 -> node9
+node10 [ label="CombineDFT_35\npush=4\npop=4\npeek =4" ]
+node9 -> node10
+node11 [ label="CombineDFT_36\npush=8\npop=8\npeek =8" ]
+node10 -> node11
+node12 [ label="CombineDFT_37\npush=16\npop=16\npeek =16" ]
+node11 -> node12
+node13 [ label="CombineDFT_38\npush=32\npop=32\npeek =32" ]
+node12 -> node13
+}
+node4 -> node7
+node13 -> node5
+subgraph cluster_node14 {
+ label="AnonFilter_a1_28";
+node15 [ label="FFTReorderSimple_39\npush=32\npop=32\npeek =32" ]
+node16 [ label="FFTReorderSimple_40\npush=16\npop=16\npeek =16" ]
+node15 -> node16
+node17 [ label="FFTReorderSimple_41\npush=8\npop=8\npeek =8" ]
+node16 -> node17
+node18 [ label="CombineDFT_42\npush=4\npop=4\npeek =4" ]
+node17 -> node18
+node19 [ label="CombineDFT_43\npush=8\npop=8\npeek =8" ]
+node18 -> node19
+node20 [ label="CombineDFT_44\npush=16\npop=16\npeek =16" ]
+node19 -> node20
+node21 [ label="CombineDFT_45\npush=32\npop=32\npeek =32" ]
+node20 -> node21
+}
+node4 -> node15
+node21 -> node5
+}
+node2 -> node4
+node22 [ label="FloatPrinter_46\npush=0\npop=1\npeek =1" ]
+node5 -> node22
+}
+}

@@ -1,0 +1,4 @@
+digraph Flattend {
+size = "8, 10.5";
+806353501 [ label="806353501\n***** at.dms.kjc.slicegraph.InputSliceNode@4d405ef7 INIT *****\n**********\n\n***** at.dms.kjc.slicegraph.InputSliceNode@4d405ef7 STEADY *****\n**********\n\nFused_Ran_Mov_Pri__67_7{}\npre:(peek, pop, push): (0, 0,0)\n(peek, pop, push: (0, 0, 0)\nMult: init 1, steady 1\n *** \n***** at.dms.kjc.slicegraph.OutputSliceNode@6193b845 INIT *****\n**********\n\n***** at.dms.kjc.slicegraph.OutputSliceNode@6193b845 STEADY *****\n**********\n" ];
+}

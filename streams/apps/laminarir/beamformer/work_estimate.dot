@@ -1,0 +1,9 @@
+digraph streamit {
+size="6.5,9"
+subgraph cluster_node1 {
+ color = black
+
+ label="BeamFormer";
+node2 [ label="Fused_Ran_Ano_Ano_Flo\nwork=156618\nI/O: 0->0\n*** STATEFUL ***" color="0.00555,0.81,0.84" style="filled" ]
+}
+}

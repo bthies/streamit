@@ -1,0 +1,6 @@
+digraph streamit {
+subgraph cluster_node1 {
+ label="SimpleTwoStage_8";
+node2 [ label="Fused_Ran_Dup_Pri_7\npush=0\npop=0\npeek =0\ninitPush=0\ninitPop=0\ninitPeek =0" ]
+}
+}

@@ -1,0 +1,72 @@
+digraph streamit {
+subgraph cluster_node1 {
+ label="FFT2_256";
+node2 [ label="RandomSource" ]
+subgraph cluster_node3 {
+ label="FFTKernel2";
+node4 [ label="roundrobin(128,128)" ]
+node5 [ label="roundrobin(128,128)" ]
+subgraph cluster_node6 {
+ label="AnonFilter_a1";
+subgraph cluster_node7 {
+ label="FFTReorder";
+node8 [ label="FFTReorderSimple" ]
+node9 [ label="FFTReorderSimple" ]
+node8 -> node9
+node10 [ label="FFTReorderSimple" ]
+node9 -> node10
+node11 [ label="FFTReorderSimple" ]
+node10 -> node11
+node12 [ label="FFTReorderSimple" ]
+node11 -> node12
+}
+node13 [ label="CombineDFT" ]
+node12 -> node13
+node14 [ label="CombineDFT" ]
+node13 -> node14
+node15 [ label="CombineDFT" ]
+node14 -> node15
+node16 [ label="CombineDFT" ]
+node15 -> node16
+node17 [ label="CombineDFT" ]
+node16 -> node17
+node18 [ label="CombineDFT" ]
+node17 -> node18
+}
+node4 -> node8
+node18 -> node5
+subgraph cluster_node19 {
+ label="AnonFilter_a1";
+subgraph cluster_node20 {
+ label="FFTReorder";
+node21 [ label="FFTReorderSimple" ]
+node22 [ label="FFTReorderSimple" ]
+node21 -> node22
+node23 [ label="FFTReorderSimple" ]
+node22 -> node23
+node24 [ label="FFTReorderSimple" ]
+node23 -> node24
+node25 [ label="FFTReorderSimple" ]
+node24 -> node25
+}
+node26 [ label="CombineDFT" ]
+node25 -> node26
+node27 [ label="CombineDFT" ]
+node26 -> node27
+node28 [ label="CombineDFT" ]
+node27 -> node28
+node29 [ label="CombineDFT" ]
+node28 -> node29
+node30 [ label="CombineDFT" ]
+node29 -> node30
+node31 [ label="CombineDFT" ]
+node30 -> node31
+}
+node4 -> node21
+node31 -> node5
+}
+node2 -> node4
+node32 [ label="FloatPrinter" ]
+node5 -> node32
+}
+}

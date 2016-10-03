@@ -1,0 +1,20 @@
+digraph streamit {
+size="7.5,10";subgraph cluster_Figure1_0 {
+label = "Figure1";
+A_1 -> AnonFilter_a4_2_split
+AnonFilter_a4_2_join -> D_3
+A_1 [ label="A" ]
+subgraph cluster_AnonFilter_a4_2 {
+label = "AnonFilter_a4";
+AnonFilter_a4_2_split [ label="duplicate" ]
+AnonFilter_a4_2_join [ label="roundrobin(1, 1)" ]
+B_4 [ label="B" ]
+AnonFilter_a4_2_split -> B_4
+B_4 -> AnonFilter_a4_2_join
+C_5 [ label="C" ]
+AnonFilter_a4_2_split -> C_5
+C_5 -> AnonFilter_a4_2_join
+}
+D_3 [ label="D" ]
+}
+}

@@ -1,0 +1,6 @@
+digraph streamit {
+subgraph cluster_node1 {
+ label="Figure1_19";
+node2 [ label="Fused_A___Ano_D____82_18\npush=0\npop=0\npeek =0" ]
+}
+}

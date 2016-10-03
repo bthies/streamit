@@ -1,0 +1,13 @@
+digraph streamit {
+subgraph cluster_node1 {
+ label="DCT_1";
+node2 [ label="RandomSource_74\npush=1\npop=0\npeek =0" ]
+subgraph cluster_node3 {
+ label="iDCT8x8_ieee_75";
+node4 [ label="iDCT_2D_reference_coarse_76\npush=64\npop=64\npeek =64" ]
+}
+node2 -> node4
+node5 [ label="FloatPrinter_77\npush=0\npop=16\npeek =16" ]
+node4 -> node5
+}
+}

@@ -1,0 +1,10 @@
+digraph streamit {
+subgraph cluster_node1 {
+ label="SimpleTwoStage";
+node2 [ label="RandomSource" ]
+node3 [ label="DuplicateFirstItem" ]
+node2 -> node3
+node4 [ label="Printer" ]
+node3 -> node4
+}
+}

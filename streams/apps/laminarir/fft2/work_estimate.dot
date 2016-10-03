@@ -1,0 +1,9 @@
+digraph streamit {
+size="6.5,9"
+subgraph cluster_node1 {
+ color = black
+
+ label="FFT";
+node2 [ label="Fused_Ran_FFT_Flo\nwork=4382\nI/O: 0->0\n*** STATEFUL ***" color="0.00555,0.81,0.84" style="filled" ]
+}
+}

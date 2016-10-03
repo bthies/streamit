@@ -1,0 +1,72 @@
+digraph streamit {
+size="7.5,10";subgraph cluster_FFT2_256_0 {
+label = "FFT2_256";
+RandomSource_pop_0_push_1_1 -> FFTKernel2_2_split
+FFTKernel2_2_join -> FloatPrinter_pop_1_push_0_3
+RandomSource_pop_0_push_1_1 [ label="RandomSource_pop_0_push_1" ]
+subgraph cluster_FFTKernel2_2 {
+label = "FFTKernel2";
+FFTKernel2_2_split [ label="roundrobin(128, 128)" ]
+FFTKernel2_2_join [ label="roundrobin(128, 128)" ]
+subgraph cluster_AnonFilter_a1_4 {
+label = "AnonFilter_a1";
+FFTReorderSimple_pop_8_push_8_17 -> CombineDFT_pop_4_push_4_7
+CombineDFT_pop_4_push_4_7 -> CombineDFT_pop_8_push_8_8
+CombineDFT_pop_8_push_8_8 -> CombineDFT_pop_16_push_16_9
+CombineDFT_pop_16_push_16_9 -> CombineDFT_pop_32_push_32_10
+CombineDFT_pop_32_push_32_10 -> CombineDFT_pop_64_push_64_11
+CombineDFT_pop_64_push_64_11 -> CombineDFT_pop_128_push_128_12
+subgraph cluster_FFTReorder_6 {
+label = "FFTReorder";
+FFTReorderSimple_pop_128_push_128_13 -> FFTReorderSimple_pop_64_push_64_14
+FFTReorderSimple_pop_64_push_64_14 -> FFTReorderSimple_pop_32_push_32_15
+FFTReorderSimple_pop_32_push_32_15 -> FFTReorderSimple_pop_16_push_16_16
+FFTReorderSimple_pop_16_push_16_16 -> FFTReorderSimple_pop_8_push_8_17
+FFTReorderSimple_pop_128_push_128_13 [ label="FFTReorderSimple_pop_128_push_128" ]
+FFTReorderSimple_pop_64_push_64_14 [ label="FFTReorderSimple_pop_64_push_64" ]
+FFTReorderSimple_pop_32_push_32_15 [ label="FFTReorderSimple_pop_32_push_32" ]
+FFTReorderSimple_pop_16_push_16_16 [ label="FFTReorderSimple_pop_16_push_16" ]
+FFTReorderSimple_pop_8_push_8_17 [ label="FFTReorderSimple_pop_8_push_8" ]
+}
+CombineDFT_pop_4_push_4_7 [ label="CombineDFT_pop_4_push_4" ]
+CombineDFT_pop_8_push_8_8 [ label="CombineDFT_pop_8_push_8" ]
+CombineDFT_pop_16_push_16_9 [ label="CombineDFT_pop_16_push_16" ]
+CombineDFT_pop_32_push_32_10 [ label="CombineDFT_pop_32_push_32" ]
+CombineDFT_pop_64_push_64_11 [ label="CombineDFT_pop_64_push_64" ]
+CombineDFT_pop_128_push_128_12 [ label="CombineDFT_pop_128_push_128" ]
+}
+FFTKernel2_2_split -> FFTReorderSimple_pop_128_push_128_13
+CombineDFT_pop_128_push_128_12 -> FFTKernel2_2_join
+subgraph cluster_AnonFilter_a1_5 {
+label = "AnonFilter_a1";
+FFTReorderSimple_pop_8_push_8_39 -> CombineDFT_pop_4_push_4_29
+CombineDFT_pop_4_push_4_29 -> CombineDFT_pop_8_push_8_30
+CombineDFT_pop_8_push_8_30 -> CombineDFT_pop_16_push_16_31
+CombineDFT_pop_16_push_16_31 -> CombineDFT_pop_32_push_32_32
+CombineDFT_pop_32_push_32_32 -> CombineDFT_pop_64_push_64_33
+CombineDFT_pop_64_push_64_33 -> CombineDFT_pop_128_push_128_34
+subgraph cluster_FFTReorder_28 {
+label = "FFTReorder";
+FFTReorderSimple_pop_128_push_128_35 -> FFTReorderSimple_pop_64_push_64_36
+FFTReorderSimple_pop_64_push_64_36 -> FFTReorderSimple_pop_32_push_32_37
+FFTReorderSimple_pop_32_push_32_37 -> FFTReorderSimple_pop_16_push_16_38
+FFTReorderSimple_pop_16_push_16_38 -> FFTReorderSimple_pop_8_push_8_39
+FFTReorderSimple_pop_128_push_128_35 [ label="FFTReorderSimple_pop_128_push_128" ]
+FFTReorderSimple_pop_64_push_64_36 [ label="FFTReorderSimple_pop_64_push_64" ]
+FFTReorderSimple_pop_32_push_32_37 [ label="FFTReorderSimple_pop_32_push_32" ]
+FFTReorderSimple_pop_16_push_16_38 [ label="FFTReorderSimple_pop_16_push_16" ]
+FFTReorderSimple_pop_8_push_8_39 [ label="FFTReorderSimple_pop_8_push_8" ]
+}
+CombineDFT_pop_4_push_4_29 [ label="CombineDFT_pop_4_push_4" ]
+CombineDFT_pop_8_push_8_30 [ label="CombineDFT_pop_8_push_8" ]
+CombineDFT_pop_16_push_16_31 [ label="CombineDFT_pop_16_push_16" ]
+CombineDFT_pop_32_push_32_32 [ label="CombineDFT_pop_32_push_32" ]
+CombineDFT_pop_64_push_64_33 [ label="CombineDFT_pop_64_push_64" ]
+CombineDFT_pop_128_push_128_34 [ label="CombineDFT_pop_128_push_128" ]
+}
+FFTKernel2_2_split -> FFTReorderSimple_pop_128_push_128_35
+CombineDFT_pop_128_push_128_34 -> FFTKernel2_2_join
+}
+FloatPrinter_pop_1_push_0_3 [ label="FloatPrinter_pop_1_push_0" ]
+}
+}

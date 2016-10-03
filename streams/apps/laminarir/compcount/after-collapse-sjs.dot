@@ -1,0 +1,67 @@
+digraph streamit {
+subgraph cluster_node1 {
+ label="ComparisonCounting_1";
+node2 [ label="RandomSource_20\npush=1\npop=0\npeek =0" ]
+subgraph cluster_node3 {
+ label="CountSortSplit_21";
+node4 [ label="DUPLICATE(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1)" ]
+node5 [ label="WEIGHTED_ROUND_ROBIN(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,16)" ]
+node6 [ label="Counter_22\npush=1\npop=16\npeek =16" ]
+node4 -> node6
+node6 -> node5
+node7 [ label="Counter_23\npush=1\npop=16\npeek =16" ]
+node4 -> node7
+node7 -> node5
+node8 [ label="Counter_24\npush=1\npop=16\npeek =16" ]
+node4 -> node8
+node8 -> node5
+node9 [ label="Counter_25\npush=1\npop=16\npeek =16" ]
+node4 -> node9
+node9 -> node5
+node10 [ label="Counter_26\npush=1\npop=16\npeek =16" ]
+node4 -> node10
+node10 -> node5
+node11 [ label="Counter_27\npush=1\npop=16\npeek =16" ]
+node4 -> node11
+node11 -> node5
+node12 [ label="Counter_28\npush=1\npop=16\npeek =16" ]
+node4 -> node12
+node12 -> node5
+node13 [ label="Counter_29\npush=1\npop=16\npeek =16" ]
+node4 -> node13
+node13 -> node5
+node14 [ label="Counter_30\npush=1\npop=16\npeek =16" ]
+node4 -> node14
+node14 -> node5
+node15 [ label="Counter_31\npush=1\npop=16\npeek =16" ]
+node4 -> node15
+node15 -> node5
+node16 [ label="Counter_32\npush=1\npop=16\npeek =16" ]
+node4 -> node16
+node16 -> node5
+node17 [ label="Counter_33\npush=1\npop=16\npeek =16" ]
+node4 -> node17
+node17 -> node5
+node18 [ label="Counter_34\npush=1\npop=16\npeek =16" ]
+node4 -> node18
+node18 -> node5
+node19 [ label="Counter_35\npush=1\npop=16\npeek =16" ]
+node4 -> node19
+node19 -> node5
+node20 [ label="Counter_36\npush=1\npop=16\npeek =16" ]
+node4 -> node20
+node20 -> node5
+node21 [ label="Counter_37\npush=1\npop=16\npeek =16" ]
+node4 -> node21
+node21 -> node5
+node22 [ label="Identity_38\npush=1\npop=1\npeek =1" ]
+node4 -> node22
+node22 -> node5
+}
+node2 -> node4
+node23 [ label="RearrangeIndices_39\npush=16\npop=32\npeek =32" ]
+node5 -> node23
+node24 [ label="IntPrinter_40\npush=0\npop=1\npeek =1" ]
+node23 -> node24
+}
+}
